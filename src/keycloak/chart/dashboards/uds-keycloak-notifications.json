@@ -25,7 +25,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 5,
+    "id": 4,
     "links": [],
     "panels": [
         {
@@ -46,7 +46,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:realm_modifications_count",
+            "description": "uds_keycloak:uds_realm_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -133,11 +133,24 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:realm_modifications_count",
+                    "expr": "uds_keycloak:uds_realm_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "uds_keycloak:master_realm_modifications_count",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "B"
                 }
             ],
             "title": "Realm modifications",
@@ -158,13 +171,15 @@
                         "cellOptions": {
                             "type": "auto"
                         },
+                        "filterable": true,
                         "footer": {
                             "reducers": []
                         },
                         "hideFrom": {
                             "viz": false
                         },
-                        "inspect": false
+                        "inspect": false,
+                        "wrapText": false
                     },
                     "mappings": [],
                     "thresholds": {
@@ -241,6 +256,7 @@
             "id": 6,
             "options": {
                 "cellHeight": "sm",
+                "frameIndex": 0,
                 "showHeader": true
             },
             "pluginVersion": "12.2.0",
@@ -253,8 +269,21 @@
                     "direction": "backward",
                     "editorMode": "code",
                     "expr": "{app=\"keycloak\", namespace=\"keycloak\"} | json | loggerName=\"uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider\" | eventType=\"ADMIN\"",
+                    "hide": false,
                     "queryType": "range",
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} !~ \"type=\" | json | loggerName=~`org.keycloak.events` | line_format \"{{.message}}\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "B"
                 }
             ],
             "title": "Realm Modification Logs",
@@ -263,40 +292,63 @@
                     "id": "extractFields",
                     "options": {
                         "delimiter": ",",
+                        "keepTime": true,
                         "replace": true,
                         "source": "Line"
                     }
                 },
                 {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
                     "id": "organize",
                     "options": {
                         "excludeByName": {
+                            "Time": false,
+                            "clientId": true,
+                            "details": true,
+                            "error": true,
                             "eventType": true,
                             "id": true,
+                            "ipAddress": true,
                             "loggerName": true,
                             "realmId": true,
+                            "resourceId": true,
                             "resourceTypeAsString": true,
-                            "time": true
+                            "time": false,
+                            "timestamp": true,
+                            "userId": true
                         },
                         "includeByName": {},
                         "indexByName": {
-                            "authDetails": 11,
-                            "details": 13,
-                            "error": 12,
-                            "eventType": 2,
-                            "id": 3,
-                            "loggerName": 1,
-                            "operationType": 8,
-                            "realmId": 5,
-                            "realmName": 6,
-                            "representation": 10,
-                            "resourcePath": 9,
-                            "resourceType": 7,
+                            "Time": 0,
+                            "authDetails": 12,
+                            "clientId": 16,
+                            "details": 6,
+                            "error": 13,
+                            "eventType": 9,
+                            "id": 10,
+                            "ipAddress": 18,
+                            "loggerName": 8,
+                            "operationType": 2,
+                            "realmId": 11,
+                            "realmName": 1,
+                            "representation": 5,
+                            "resourceId": 15,
+                            "resourcePath": 4,
+                            "resourceType": 3,
                             "resourceTypeAsString": 14,
-                            "time": 4,
-                            "timestamp": 0
+                            "time": 19,
+                            "timestamp": 7,
+                            "userId": 17
                         },
-                        "renameByName": {}
+                        "orderByMode": "manual",
+                        "renameByName": {
+                            "Time": "",
+                            "realmName": "",
+                            "time": "timestamp"
+                        }
                     }
                 }
             ],
@@ -320,7 +372,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:system_admin_modifications_count",
+            "description": "uds_keycloak:uds_system_admin_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -407,11 +459,24 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:system_admin_modifications_count",
+                    "expr": "uds_keycloak:uds_system_admin_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "uds_keycloak:master_system_admin_modifications_count",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "B"
                 }
             ],
             "title": "Admin User Modifications",
@@ -422,7 +487,7 @@
                 "type": "prometheus",
                 "uid": "PBFA97CFB590B2093"
             },
-            "description": "uds_keycloak:user_modifications_count",
+            "description": "uds_keycloak:uds_user_modifications_count",
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -509,11 +574,24 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:user_modifications_count",
+                    "expr": "uds_keycloak:uds_user_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "expr": "uds_keycloak:master_system_admin_modifications_count",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "B"
                 }
             ],
             "title": "User modifications",
@@ -534,13 +612,15 @@
                         "cellOptions": {
                             "type": "auto"
                         },
+                        "filterable": true,
                         "footer": {
                             "reducers": []
                         },
                         "hideFrom": {
                             "viz": false
                         },
-                        "inspect": false
+                        "inspect": false,
+                        "wrapText": false
                     },
                     "mappings": [],
                     "thresholds": {
@@ -557,7 +637,56 @@
                         ]
                     }
                 },
-                "overrides": []
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourcePath"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 290
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "operationType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 123
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourceType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 153
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "realmName"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 95
+                            }
+                        ]
+                    }
+                ]
             },
             "gridPos": {
                 "h": 8,
@@ -565,9 +694,10 @@
                 "x": 0,
                 "y": 25
             },
-            "id": 7,
+            "id": 8,
             "options": {
                 "cellHeight": "sm",
+                "frameIndex": 0,
                 "showHeader": true
             },
             "pluginVersion": "12.2.0",
@@ -580,8 +710,21 @@
                     "direction": "backward",
                     "editorMode": "code",
                     "expr": "{app=\"keycloak\", namespace=\"keycloak\"} | json | loggerName=\"uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider\" | eventType=\"ADMIN\" | resourceType=~\"USER|GROUP_MEMBERSHIP\"",
+                    "hide": false,
                     "queryType": "range",
                     "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} !~ \"type=\" | json | loggerName=~`org.keycloak.events` | line_format \"{{.message}}\" | logfmt | resourceType=~\"USER|GROUP_MEMBERSHIP\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "B"
                 }
             ],
             "title": "User Modification Logs",
@@ -590,40 +733,63 @@
                     "id": "extractFields",
                     "options": {
                         "delimiter": ",",
+                        "keepTime": true,
                         "replace": true,
                         "source": "Line"
                     }
                 },
                 {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
                     "id": "organize",
                     "options": {
                         "excludeByName": {
+                            "Time": false,
+                            "clientId": true,
+                            "details": true,
+                            "error": true,
                             "eventType": true,
                             "id": true,
+                            "ipAddress": true,
                             "loggerName": true,
                             "realmId": true,
+                            "resourceId": true,
                             "resourceTypeAsString": true,
-                            "time": true
+                            "time": false,
+                            "timestamp": true,
+                            "userId": true
                         },
                         "includeByName": {},
                         "indexByName": {
-                            "authDetails": 11,
-                            "details": 13,
-                            "error": 12,
-                            "eventType": 2,
-                            "id": 3,
-                            "loggerName": 1,
-                            "operationType": 8,
-                            "realmId": 5,
-                            "realmName": 6,
-                            "representation": 10,
-                            "resourcePath": 9,
-                            "resourceType": 7,
+                            "Time": 0,
+                            "authDetails": 12,
+                            "clientId": 16,
+                            "details": 6,
+                            "error": 13,
+                            "eventType": 9,
+                            "id": 10,
+                            "ipAddress": 18,
+                            "loggerName": 8,
+                            "operationType": 2,
+                            "realmId": 11,
+                            "realmName": 1,
+                            "representation": 5,
+                            "resourceId": 15,
+                            "resourcePath": 4,
+                            "resourceType": 3,
                             "resourceTypeAsString": 14,
-                            "time": 4,
-                            "timestamp": 0
+                            "time": 19,
+                            "timestamp": 7,
+                            "userId": 17
                         },
-                        "renameByName": {}
+                        "orderByMode": "manual",
+                        "renameByName": {
+                            "Time": "",
+                            "realmName": "",
+                            "time": "timestamp"
+                        }
                     }
                 }
             ],
@@ -648,6 +814,6 @@
     "timezone": "browser",
     "title": "UDS / Keycloak / Notifications",
     "uid": "sexp6bt",
-    "version": 1,
+    "version": 2,
     "weekStart": "monday"
 }

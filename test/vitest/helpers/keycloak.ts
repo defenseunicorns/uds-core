@@ -69,17 +69,17 @@ export async function createRandomClient(
   return clientId;
 }
 
-export async function createRandomUserAndJoinGroup(
+// Creates a user (idempotent) and returns the resolved userId and username
+export async function createUser(
   baseUrl: string,
   accessToken: string,
   username: string,
-  groupPath: string,
   realm = "uds",
-): Promise<{ userId: string; username: string; groupId: string }> {
+): Promise<{ userId: string; username: string }> {
   const headersAuth = { Authorization: `Bearer ${accessToken}` } as const;
   const headersJson = { ...headersAuth, "Content-Type": "application/json" } as const;
 
-  // Create user
+  // Create the user (201 on create, 409 if it exists)
   const createUserResp = await fetch(`${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users`, {
     method: "POST",
     headers: headersJson,
@@ -91,12 +91,14 @@ export async function createRandomUserAndJoinGroup(
     throw new Error(`Failed to create user: ${createUserResp.status} ${text}`);
   }
 
-  // Resolve userId
+  // Resolve userId from Location header when available
   let userId: string | undefined;
   const loc = createUserResp.headers.get("location");
   if (loc) {
     userId = loc.split("/").pop() ?? undefined;
   }
+
+  // Fallback: query the user by username
   if (!userId) {
     const usersQuery = await fetch(
       `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users?username=${encodeURIComponent(username)}&exact=true`,
@@ -114,7 +116,20 @@ export async function createRandomUserAndJoinGroup(
     throw new Error("Unable to resolve created user ID");
   }
 
-  // Resolve group
+  return { userId, username };
+}
+
+// Adds a user to a group path in the realm and returns the group id
+export async function addUserToGroup(
+  baseUrl: string,
+  accessToken: string,
+  userId: string,
+  groupPath: string,
+  realm = "uds",
+): Promise<{ userId: string; groupId: string }> {
+  const headersAuth = { Authorization: `Bearer ${accessToken}` } as const;
+
+  // Resolve group id by path
   const groupResp = await fetch(
     `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/group-by-path/${encodeURIComponent(groupPath)}`,
     { headers: headersAuth },
@@ -130,7 +145,7 @@ export async function createRandomUserAndJoinGroup(
     throw new Error(`Group not found for path ${groupPath}`);
   }
 
-  // Add membership
+  // Add membership (201/204 acceptable)
   const addGroupResp = await fetch(
     `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group.id)}`,
     { method: "PUT", headers: headersAuth },
@@ -141,5 +156,17 @@ export async function createRandomUserAndJoinGroup(
     throw new Error(`Failed to add user to group: ${addGroupResp.status} ${text}`);
   }
 
-  return { userId, username, groupId: group.id };
+  return { userId, groupId: group.id };
+}
+
+export async function createRandomUserAndJoinGroup(
+  baseUrl: string,
+  accessToken: string,
+  username: string,
+  groupPath: string,
+  realm = "uds",
+): Promise<{ userId: string; username: string; groupId: string }> {
+  const { userId } = await createUser(baseUrl, accessToken, username, realm);
+  const { groupId } = await addUserToGroup(baseUrl, accessToken, userId, groupPath, realm);
+  return { userId, username, groupId };
 }

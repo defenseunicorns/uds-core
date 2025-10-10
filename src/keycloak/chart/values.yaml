@@ -414,3 +414,5 @@ detailedObservability:
     enabled: false
   dashboards:
     enabled: true
+  logging:
+    enabled: true

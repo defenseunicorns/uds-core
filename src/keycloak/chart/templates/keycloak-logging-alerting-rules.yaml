@@ -16,8 +16,8 @@ spec:
   groups:
     - name: keycloak-logging-alerts
       rules:
-        - alert: KeycloakRealmModificationsDetected
-          expr: sum_over_time(uds_keycloak:realm_modifications_count[5m]) > 0
+        - alert: KeycloakUDSRealmModificationsDetected
+          expr: sum_over_time(uds_keycloak:uds_realm_modifications_count[5m]) > 0
           for: 1m
           labels:
             severity: warning
@@ -25,11 +25,23 @@ spec:
             source: loki
             namespace: {{ .Release.Namespace }}
           annotations:
-            summary: "Keycloak realm modifications detected"
+            summary: "Keycloak UDS realm modifications detected"
             description: "Realm {{`{{ $labels.realmName }}`}} had {{`{{ $value }}`}} modifications in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 
-        - alert: KeycloakUserModificationsDetected
-          expr: sum_over_time(uds_keycloak:user_modifications_count[5m]) > 0
+        - alert: KeycloakMasterRealmModificationsDetected
+          expr: sum_over_time(uds_keycloak:master_realm_modifications_count[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+            service: keycloak
+            source: loki
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: "Keycloak Master realm modifications detected"
+            description: "Realm {{`{{ $labels.realmName }}`}} had {{`{{ $value }}`}} modifications in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+
+        - alert: KeycloakUDSUserModificationsDetected
+          expr: sum_over_time(uds_keycloak:uds_user_modifications_count[5m]) > 0
           for: 1m
           labels:
             severity: warning
@@ -40,8 +52,8 @@ spec:
             summary: "Keycloak user modifications detected"
             description: "User-related administrative actions detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 
-        - alert: KeycloakSystemAdminModificationsDetected
-          expr: sum_over_time(uds_keycloak:system_admin_modifications_count[5m]) > 0
+        - alert: KeycloakUDSSystemAdminModificationsDetected
+          expr: sum_over_time(uds_keycloak:uds_system_admin_modifications_count[5m]) > 0
           for: 1m
           labels:
             severity: critical
@@ -49,6 +61,18 @@ spec:
             source: loki
             namespace: {{ .Release.Namespace }}
           annotations:
-            summary: "Keycloak system admin modifications detected"
+            summary: "Keycloak system admin (UDS Realm) modifications detected"
+            description: "Potentially sensitive admin changes involving system administrators detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+
+        - alert: KeycloakMasterSystemAdminModificationsDetected
+          expr: sum_over_time(uds_keycloak:master_system_admin_modifications_count[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+            service: keycloak
+            source: loki
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: "Keycloak system admin (Master Realm) modifications detected"
             description: "Potentially sensitive admin changes involving system administrators detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 {{- end }}

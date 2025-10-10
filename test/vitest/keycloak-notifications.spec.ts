@@ -11,6 +11,7 @@ import {
   getAdminToken,
   createRandomClient,
   createRandomUserAndJoinGroup,
+  createUser,
 } from "./helpers/keycloak";
 
 let alertmanagerProxy: { server: net.Server; url: string };
@@ -38,22 +39,30 @@ describe("integration - Keycloak Notifications", () => {
       // At first, we need to trigger some Realm and User modification events.
       const accessToken = await getAdminToken(keycloakProxy.url);
 
-      const randomClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createRandomClient(keycloakProxy.url, accessToken, randomClientId, "uds");
+      const randomUdsRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+      await createRandomClient(keycloakProxy.url, accessToken, randomUdsRealmClientId, "uds");
 
-      const randomUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+      const randomMasterRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+      await createRandomClient(keycloakProxy.url, accessToken, randomMasterRealmClientId, "master");
+
+      const randomUdsRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
       await createRandomUserAndJoinGroup(
         keycloakProxy.url,
         accessToken,
-        randomUsername,
+        randomUdsRealmUsername,
         "/UDS Core/Admin",
         "uds",
       );
 
+      const randomMasterRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+      await createUser(keycloakProxy.url, accessToken, randomMasterRealmUsername, "master");
+
       // Next, we wait until the alerts fire
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakUserModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakSystemAdminModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSRealmModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakMasterRealmModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSUserModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSSystemAdminModificationsDetected");
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakMasterSystemAdminModificationsDetected");
     },
     testTimeoutMs,
   );

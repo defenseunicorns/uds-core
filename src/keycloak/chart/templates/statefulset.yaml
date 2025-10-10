@@ -149,9 +149,16 @@ spec:
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
               value: "true"
-
+            {{- if .Values.detailedObservability.logging.enabled }}
+            - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL
+              value: "info"
+            - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SANITIZE
+              value: "true"
+            - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_INCLUDE_REPRESENTATION
+              value: "true"
+            {{- end }}
             # X509 configuration
-            - name: KC_HTTPS_CLIENT_AUTH
+              - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
             # Escape Slashes in Group Names
