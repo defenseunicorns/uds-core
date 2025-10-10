@@ -130,6 +130,11 @@ components:
       path: ../identity-authorization
 
   # Velero
+  - name: velero-crds
+    required: true
+    import:
+      path: ../backup-restore
+
   - name: velero
     required: true
     import:
