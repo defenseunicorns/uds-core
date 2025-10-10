@@ -5,11 +5,6 @@ image:
   repository: registry1.dso.mil/ironbank/opensource/velero/velero
   tag: v1.17.0
 
-kubectl:
-  image:
-    repository: registry1.dso.mil/ironbank/big-bang/base
-    tag: 2.1.0
-
 initContainers:
   - name: velero-plugin-for-aws
     image: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.13.0
