@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -12,7 +12,15 @@ metadata:
     {{- toYaml .Values.dashboardAnnotations | nindent 4 }}
 data:
   {{- $files := .Files }}
+  {{- /* Include all dashboards except the notifications one */ -}}
   {{- range $path, $bytes := .Files.Glob "dashboards/*.json" }}
+  {{- if ne (base $path) "uds-keycloak-notifications.json" }}
   {{ base $path }}: |-
     {{ $files.Get $path | nindent 4 }}
+  {{- end }}
+  {{- end }}
+
+  {{- if .Values.detailedObservability.dashboards.enabled }}
+  uds-keycloak-notifications.json: |-
+    {{ $files.Get "dashboards/uds-keycloak-notifications.json" | nindent 4 }}
   {{- end }}

@@ -131,6 +131,8 @@ packages:
               value: false
             - path: autoscaling.enabled
               value: true
+            - path: detailedObservability.alerts.enabled
+              value: true
           variables:
             - name: KEYCLOAK_DB_HOST
               path: postgresql.host

@@ -1,0 +1,26 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Detailed Observability Alerts
+templates:
+  - keycloak-logging-alerting-rules.yaml
+
+tests:
+  - it: should not render alerting rules by default
+    template: keycloak-logging-alerting-rules.yaml
+    asserts:
+      - notExists: {}
+
+  - it: should render PrometheusRule when alerts are enabled
+    set:
+      detailedObservability:
+        alerts:
+          enabled: true
+    template: keycloak-logging-alerting-rules.yaml
+    asserts:
+      - exists: {}
+      - equal:
+          path: kind
+          value: PrometheusRule
