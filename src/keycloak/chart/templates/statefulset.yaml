@@ -158,7 +158,7 @@ spec:
               value: "true"
             {{- end }}
             # X509 configuration
-              - name: KC_HTTPS_CLIENT_AUTH
+            - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
             # Escape Slashes in Group Names
