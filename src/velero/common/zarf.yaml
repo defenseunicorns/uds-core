@@ -53,7 +53,7 @@ components:
         before:
           - description: Handle Helm ownership metadata change on upgrade
             cmd: |
-              RELEASE_NAME="zarf-06ee059327936135c2152d44040c9f947f933034"
+              RELEASE_NAME=${ZARF_CONST_VELERO_CRD_HASH_NAME}
               RELEASE_NAMESPACE="default"
 
               for crd in \
@@ -70,7 +70,7 @@ components:
                 schedules.velero.io \
                 serverstatusrequests.velero.io \
                 volumesnapshotlocations.velero.io; do
-                echo " - Patching $crd"
+
                 kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite || true
                 kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite || true
                 kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite || true
