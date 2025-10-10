@@ -62,7 +62,10 @@ describe("integration - Keycloak Notifications", () => {
       await expectAlertFires(alertmanagerProxy.url, "KeycloakMasterRealmModificationsDetected");
       await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSUserModificationsDetected");
       await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSSystemAdminModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakMasterSystemAdminModificationsDetected");
+      await expectAlertFires(
+        alertmanagerProxy.url,
+        "KeycloakMasterSystemAdminModificationsDetected",
+      );
     },
     testTimeoutMs,
   );
