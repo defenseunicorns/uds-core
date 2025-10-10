@@ -30,6 +30,52 @@ variables:
     default: "cloud"
 
 components:
+  - name: velero-crds
+    required: true
+    manifests:
+      - name: velero-crds
+        files:
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backuprepositories.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backups.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backupstoragelocations.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/datadownloads.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/datauploads.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/deletebackuprequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/downloadrequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/podvolumebackups.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/podvolumerestores.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/restores.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/schedules.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/serverstatusrequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/volumesnapshotlocations.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Handle Helm ownership metadata change on upgrade
+            cmd: |
+              RELEASE_NAME="zarf-0e23ce035b6722c6e66014045bb9ecdae2c1bbe8"
+              RELEASE_NAMESPACE="default"
+
+              for crd in \
+                backuprepositories.velero.io \
+                backups.velero.io \
+                backupstoragelocations.velero.io \
+                datadownloads.velero.io \
+                datauploads.velero.io \
+                deletebackuprequests.velero.io \
+                downloadrequests.velero.io \
+                podvolumebackups.velero.io \
+                podvolumerestores.velero.io \
+                restores.velero.io \
+                schedules.velero.io \
+                serverstatusrequests.velero.io \
+                volumesnapshotlocations.velero.io; do
+                echo " - Patching $crd"
+                kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite || true
+                kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite || true
+                kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite || true
+              done
+
   - name: velero
     required: true
     charts:
@@ -45,49 +91,3 @@ components:
         releaseName: velero
         valuesFiles:
           - ../values/values.yaml
-
-  - name: velero-crds
-    required: true
-    manifests:
-      - name: velero-crds
-        files:
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/backups.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/backuprepositories.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/backupstoragelocations.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/deletebackuprequests.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/downloadrequests.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/podvolumebackups.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/podvolumerestores.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/resticrepositories.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/restores.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/schedules.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/serverstatusrequests.velero.io.yaml
-          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/ee1f0d5549f928bd27863b57b6263c79a3211c73/charts/velero/crds/volumesnapshotlocations.velero.io.yaml
-    actions:
-      onDeploy:
-        before:
-          - description: Handle Helm ownership metadata change on upgrade
-            cmd: |
-              echo "Patching Velero CRDs with Helm ownership metadata to prevent adoption errors..."
-              RELEASE_NAME="velero"
-              RELEASE_NAMESPACE="velero"
-
-              for crd in \
-                backups.velero.io \
-                backuprepositories.velero.io \
-                backupstoragelocations.velero.io \
-                deletebackuprequests.velero.io \
-                downloadrequests.velero.io \
-                podvolumebackups.velero.io \
-                podvolumerestores.velero.io \
-                resticrepositories.velero.io \
-                restores.velero.io \
-                schedules.velero.io \
-                serverstatusrequests.velero.io \
-                volumesnapshotlocations.velero.io; do
-                echo " - Patching $crd"
-                kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite || true
-                kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite || true
-                kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite || true
-              done
-              echo "Velero CRDs patched successfully."
