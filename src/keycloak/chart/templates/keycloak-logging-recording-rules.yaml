@@ -17,23 +17,57 @@ data:
       - name: keycloak-notifications-metrics
         interval: 30s
         rules:
-          - record: uds_keycloak:uds_realm_modifications_count
+          - record: uds_keycloak:realm_modifications_count
             expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
+              sum by (realmName) (
+                (
+                  count_over_time(
+                    {app="keycloak", namespace="keycloak"} | json
+                    | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider"
+                    | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}"
+                    [1m]
+                  )
+                )
+                or
+                (
+                  count_over_time(
+                    {app="keycloak", namespace="keycloak"} | json
+                    | loggerName=~"org.keycloak.events"
+                    | line_format "{{ "{{" }}.message{{ "}}" }}" | logfmt
+                    | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}"
+                    [1m]
+                  )
+                )
+              )
 
-          - record: uds_keycloak:master_realm_modifications_count
-            expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} !~ `type=` | json | loggerName =~ `org.keycloak.events` | line_format "{{ "{{" }}.message{{ "}}" }}" | logfmt | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
-
-          - record: uds_keycloak:uds_user_modifications_count
+          - record: uds_keycloak:user_modifications_count
             expr: |
               sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
 
-          - record: uds_keycloak:uds_system_admin_modifications_count
+          - record: uds_keycloak:system_admin_modifications_count
             expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" |= "/UDS Core/Admin" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
-
-          - record: uds_keycloak:master_system_admin_modifications_count
-            expr: |
-              sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} !~ `type=` | json | loggerName =~ `org.keycloak.events` | line_format "{{ "{{" }}.message{{ "}}" }}" | logfmt | resourceType=~"USER|GROUP_MEMBERSHIP" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
+              sum by (realmName) (
+                (
+                  count_over_time(
+                    {app="keycloak", namespace="keycloak"} | json
+                    | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider"
+                    | eventType="ADMIN"
+                    | resourceType=~"USER|GROUP_MEMBERSHIP"
+                    |= "/UDS Core/Admin"
+                    | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}"
+                    [1m]
+                  )
+                )
+                or
+                (
+                  count_over_time(
+                    {app="keycloak", namespace="keycloak"} | json
+                    | loggerName=~"org.keycloak.events"
+                    | line_format "{{ "{{" }}.message{{ "}}" }}" | logfmt
+                    | resourceType=~"USER|GROUP_MEMBERSHIP"
+                    | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}"
+                    [1m]
+                  )
+                )
+              )
 {{- end }}
