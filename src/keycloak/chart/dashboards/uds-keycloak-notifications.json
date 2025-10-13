@@ -25,7 +25,7 @@
     "editable": true,
     "fiscalYearStartMonth": 0,
     "graphTooltip": 0,
-    "id": 4,
+    "id": 35,
     "links": [],
     "panels": [
         {
@@ -133,24 +133,11 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:uds_realm_modifications_count",
+                    "expr": "uds_keycloak:realm_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
-                },
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "PBFA97CFB590B2093"
-                    },
-                    "editorMode": "code",
-                    "expr": "uds_keycloak:master_realm_modifications_count",
-                    "hide": false,
-                    "instant": false,
-                    "legendFormat": "{{realmName}}",
-                    "range": true,
-                    "refId": "B"
                 }
             ],
             "title": "Realm modifications",
@@ -459,24 +446,11 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:uds_system_admin_modifications_count",
+                    "expr": "uds_keycloak:system_admin_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
-                },
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "PBFA97CFB590B2093"
-                    },
-                    "editorMode": "code",
-                    "expr": "uds_keycloak:master_system_admin_modifications_count",
-                    "hide": false,
-                    "instant": false,
-                    "legendFormat": "{{realmName}}",
-                    "range": true,
-                    "refId": "B"
                 }
             ],
             "title": "Admin User Modifications",
@@ -574,24 +548,11 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "uds_keycloak:uds_user_modifications_count",
+                    "expr": "uds_keycloak:user_modifications_count",
                     "instant": false,
                     "legendFormat": "{{realmName}}",
                     "range": true,
                     "refId": "A"
-                },
-                {
-                    "datasource": {
-                        "type": "prometheus",
-                        "uid": "PBFA97CFB590B2093"
-                    },
-                    "editorMode": "code",
-                    "expr": "uds_keycloak:master_system_admin_modifications_count",
-                    "hide": false,
-                    "instant": false,
-                    "legendFormat": "{{realmName}}",
-                    "range": true,
-                    "refId": "B"
                 }
             ],
             "title": "User modifications",
@@ -814,6 +775,6 @@
     "timezone": "browser",
     "title": "UDS / Keycloak / Notifications",
     "uid": "sexp6bt",
-    "version": 2,
+    "version": 1,
     "weekStart": "monday"
 }
