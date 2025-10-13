@@ -1,10 +1,12 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# @lulaStart 7db76183-fb97-4a13-ae1e-a2b45ddd4430
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
   description: "Keycloak"
+# @lulaEnd 7db76183-fb97-4a13-ae1e-a2b45ddd4430
 
 variables:
   - name: DOMAIN
