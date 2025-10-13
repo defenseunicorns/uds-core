@@ -25,6 +25,27 @@ describe("integration - Keycloak Notifications", () => {
     alertmanagerProxy = await getForward("kube-prometheus-stack-alertmanager", "monitoring", 9093);
     prometheusProxy = await getForward("kube-prometheus-stack-prometheus", "monitoring", 9090);
     keycloakProxy = await getForward("keycloak-http", "keycloak", 8080);
+
+    // At first, we need to trigger some Realm and User modification events.
+    const accessToken = await getAdminToken(keycloakProxy.url);
+
+    const randomUdsRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+    await createRandomClient(keycloakProxy.url, accessToken, randomUdsRealmClientId, "uds");
+
+    const randomMasterRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+    await createRandomClient(keycloakProxy.url, accessToken, randomMasterRealmClientId, "master");
+
+    const randomUdsRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+    await createRandomUserAndJoinGroup(
+      keycloakProxy.url,
+      accessToken,
+      randomUdsRealmUsername,
+      "/UDS Core/Admin",
+      "uds",
+    );
+
+    const randomMasterRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
+    await createUser(keycloakProxy.url, accessToken, randomMasterRealmUsername, "master");
   });
 
   afterAll(async () => {
@@ -36,36 +57,23 @@ describe("integration - Keycloak Notifications", () => {
   test(
     "Keycloak Alerts should fire on Realm Modifications",
     async () => {
-      // At first, we need to trigger some Realm and User modification events.
-      const accessToken = await getAdminToken(keycloakProxy.url);
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakRealmModificationsDetected");
+    },
+    testTimeoutMs,
+  );
 
-      const randomUdsRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createRandomClient(keycloakProxy.url, accessToken, randomUdsRealmClientId, "uds");
+  test(
+    "Keycloak Alerts should fire on User Modifications",
+    async () => {
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakUserModificationsDetected");
+    },
+    testTimeoutMs,
+  );
 
-      const randomMasterRealmClientId = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createRandomClient(keycloakProxy.url, accessToken, randomMasterRealmClientId, "master");
-
-      const randomUdsRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createRandomUserAndJoinGroup(
-        keycloakProxy.url,
-        accessToken,
-        randomUdsRealmUsername,
-        "/UDS Core/Admin",
-        "uds",
-      );
-
-      const randomMasterRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
-      await createUser(keycloakProxy.url, accessToken, randomMasterRealmUsername, "master");
-
-      // Next, we wait until the alerts fire
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSRealmModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakMasterRealmModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSUserModificationsDetected");
-      await expectAlertFires(alertmanagerProxy.url, "KeycloakUDSSystemAdminModificationsDetected");
-      await expectAlertFires(
-        alertmanagerProxy.url,
-        "KeycloakMasterSystemAdminModificationsDetected",
-      );
+  test(
+    "Keycloak Alerts should fire on System Administrators Modifications",
+    async () => {
+      await expectAlertFires(alertmanagerProxy.url, "KeycloakSystemAdminModificationsDetected");
     },
     testTimeoutMs,
   );
