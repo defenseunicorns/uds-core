@@ -105,13 +105,11 @@ packages:
 When enabled, UDS Core converts Keycloak event logs into Prometheus metrics using
 [Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
 
-| Loki Recording Rule Name                               | Description                                                                                                                                 |
-|--------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `uds_keycloak:uds_realm_modifications_count`           | Total number of the `uds` realm configuration changes, aggregated into 1-minute windows                                                     |
-| `uds_keycloak:master_realm_modifications_count`        | Total number of `master` realm configuration changes, aggregated into 1-minute windows                                                      |
-| `uds_keycloak:uds_user_modifications_count`            | Total number of the `uds` realm user configuration changes, aggregated into 1-minute windows                                                |
-| `uds_keycloak:uds_system_admin_modifications_count`    | Total number of the `uds` realm system administrator configuration changes (members of `/UDS Core/Admin`), aggregated into 1-minute windows |
-| `uds_keycloak:master_system_admin_modifications_count` | Total number of system administrator configuration changes (within the `master` realm), aggregated into 1-minute windows                    |
+| Loki Recording Rule Name                        | Description                                                                                                                                                                                 |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `uds_keycloak:realm_modifications_count`        | Total number of Keycloak realm configuration changes, aggregated into 1-minute windows                                                                                                      |
+| `uds_keycloak:user_modifications_count`         | Total number of Keycloak user configuration changes, aggregated into 1-minute windows                                                                                                       |
+| `uds_keycloak:system_admin_modifications_count` | Total number of the Keycloak system administrator configuration changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm), aggregated into 1-minute windows |
 
 View these metrics in the built-in `UDS Keycloak Notifications` Grafana dashboard:
 
@@ -119,13 +117,11 @@ View these metrics in the built-in `UDS Keycloak Notifications` Grafana dashboar
 
 Based on these metrics, UDS Core provides the following alerts:
 
-| Alert name                                       | Metric used for alerting                               | Description                                                                                                                        |
-|--------------------------------------------------|--------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
-| `KeycloakUDSRealmModificationsDetected`          | `uds_keycloak:uds_realm_modifications_count`           | Alerts on the `uds` realm configuration changes within a 5-minute window                                                           |
-| `KeycloakUDSRealmModificationsDetected`          | `uds_keycloak:master_realm_modifications_count`        | Alerts on the `master` realm configuration changes within a 5-minute window                                                        |
-| `KeycloakUDSUserModificationsDetected`           | `uds_keycloak:uds_user_modifications_count`            | Alerts on the `uds` realm user configuration changes within a 5-minute window                                                      |
-| `KeycloakUDSSystemAdminModificationsDetected`    | `uds_keycloak:uds_system_admin_modifications_count`    | Alerts on the `uds` realm system administrator configuration changes (members of `/UDS Core/Admin` group) within a 5-minute window |
-| `KeycloakMasterSystemAdminModificationsDetected` | `uds_keycloak:master_system_admin_modifications_count` | Alerts on system administrator configuration changes (members of the `master` realm) within a 5-minute window                      |
+| Alert name                                 | Metric used for alerting                        | Description                                                                                                                                                                  |
+|--------------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `KeycloakRealmModificationsDetected`       | `uds_keycloak:realm_modifications_count`        | Alerts on the Keycloak realm configuration changes within a 5-minute window                                                                                                  |
+| `KeycloakUserModificationsDetected`        | `uds_keycloak:user_modifications_count`         | Alerts on the Keycloak user configuration changes within a 5-minute window                                                                                                   |
+| `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_count` | Alerts on the Keycloak system administrator configuration changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm) within a 5-minute window |
 
 ### Third-party integrations
 
