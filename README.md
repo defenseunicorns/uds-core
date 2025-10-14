@@ -120,7 +120,7 @@ uds run test-single-layer --set LAYER=identity-authorization
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
 
 ## UDS Core Architecture Overview
-
+<!-- @lulaStart 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
-
+<!-- @lulaEnd 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
 Diagrams are located in `/docs/.images`. See the [diagram README](./docs/.images/diagrams/README.md) for an explanation and help customizing.
