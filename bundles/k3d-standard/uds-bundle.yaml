@@ -182,6 +182,8 @@ packages:
               description: "Keycloak One Time Password Enabled"
               path: realmAuthFlows.OTP_ENABLED
           values:
+            - path: detailedObservability.alerts.enabled
+              value: true
             - path: realmInitEnv
               value:
                 GOOGLE_IDP_ENABLED: true
