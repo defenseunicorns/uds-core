@@ -407,3 +407,12 @@ extraVolumeMounts: []
 # Additional truststore paths for Keycloak to scan for certificates
 # These paths will be added to the --truststore-paths startup argument
 truststorePaths: []
+
+# Detailed observability settings (Dashboards, Alerts, etc)
+detailedObservability:
+  alerts:
+    enabled: false
+  dashboards:
+    enabled: true
+  logging:
+    enabled: true
