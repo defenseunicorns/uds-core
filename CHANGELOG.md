@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.54.1](https://github.com/defenseunicorns/uds-core/compare/v0.54.0...v0.54.1) (2025-10-15)
+
+
+### Bug Fixes
+
+* velero crd helm ownership ([#2029](https://github.com/defenseunicorns/uds-core/issues/2029)) ([8a3969c](https://github.com/defenseunicorns/uds-core/commit/8a3969c3ec3a644f556dae3ce9e9d1ab4786bcc0))
+
+
+### Miscellaneous
+
+* **docs:** add falco prerequisites section ([#2027](https://github.com/defenseunicorns/uds-core/issues/2027)) ([bb30ede](https://github.com/defenseunicorns/uds-core/commit/bb30edee03b9f8e41e7d2c676de5cf82c63b0fe3))
+* uds-compliance-66 ([#2019](https://github.com/defenseunicorns/uds-core/issues/2019)) ([674334c](https://github.com/defenseunicorns/uds-core/commit/674334c0ab6c0dbec26e5e04254171d8cf438cbe))
+
 ## [0.54.0](https://github.com/defenseunicorns/uds-core/compare/v0.53.1...v0.54.0) (2025-10-14)
 
 
