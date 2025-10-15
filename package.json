@@ -15,6 +15,7 @@
   "pepr": {
     "name": "UDS Core",
     "uuid": "uds-core",
+    "webhookTimeout": 30,
     "onError": "reject",
     "logLevel": "info",
     "alwaysIgnore": {
