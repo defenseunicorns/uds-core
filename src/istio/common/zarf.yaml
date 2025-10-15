@@ -108,6 +108,34 @@ components:
               else
                 echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
               fi
+          - description: "Wait for Pepr pods to have ambient redirection annotation"
+            cmd: |
+              echo "Waiting for Pepr pods to have ambient redirection annotation..."
+              ATTEMPTS=0
+              MAX_ATTEMPTS=30
+              while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+                # Check if any Pepr pods exist
+                PEPR_PODS=$(./zarf tools kubectl get pods -n pepr-system -o name 2>/dev/null)
+                if [ -z "$PEPR_PODS" ]; then
+                  echo "No Pepr pods found. Waiting..."
+                  ATTEMPTS=$((ATTEMPTS+1))
+                  sleep 5
+                  continue
+                fi
+                # Check if all pods have the ambient redirection annotation set to enabled
+                PODS_WITHOUT_AMBIENT=$(./zarf tools kubectl get pods -n pepr-system -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.annotations.ambient\.istio\.io/redirection}{"\n"}{end}' | grep -v "enabled" | wc -l)
+                if [ "$PODS_WITHOUT_AMBIENT" -gt 0 ]; then
+                  echo "Some Pepr pods don't have ambient redirection annotation yet. Waiting..."
+                  ATTEMPTS=$((ATTEMPTS+1))
+                  sleep 5
+                  continue
+                fi
+                break
+              done
+              if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+                echo "Timed out waiting for Pepr pods to have ambient redirection annotation"
+                exit 1
+              fi
 
   - name: gateway-api-crds
     required: true
