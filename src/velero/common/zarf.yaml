@@ -71,9 +71,12 @@ components:
                 serverstatusrequests.velero.io \
                 volumesnapshotlocations.velero.io; do
 
-                kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite 2>/dev/null || true
-                kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite 2>/dev/null || true
-                kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite 2>/dev/null || true
+                # Only apply the labels/annotations if the CRD exists
+                if ./zarf tools kubectl get crd "$crd" >/dev/null 2>&1; then
+                  ./zarf tools kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite
+                  ./zarf tools kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite
+                  ./zarf tools kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite
+                fi
               done
 
   - name: velero
