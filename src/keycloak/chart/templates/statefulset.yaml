@@ -166,13 +166,13 @@ spec:
               value: "true"
 
             ## Activate the nginx provider
-            - name: KC_SPI__X509CERT_LOOKUP__PROVIDER
+            - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
               value: {{ .Values.x509LookupProvider }}
             # Set nginx provider header name
-            - name: KC_SPI__X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT
               value: istio-mtls-client-certificate
             # Dumb value (not used in the nginx provider, but required by the SPI)
-            - name: KC_SPI__X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT_CHAIN_PREFIX
+            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
