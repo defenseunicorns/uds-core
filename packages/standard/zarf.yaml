@@ -1,10 +1,12 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6
 kind: ZarfPackageConfig
 metadata:
   name: core
   description: "UDS Core is a collection of several individual applications combined into a single Zarf Package, that establishes a secure baseline for secure cloud-native systems."
+  # @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "0.54.1"
@@ -18,8 +20,8 @@ metadata:
 
 constants:
   - name: VELERO_CRD_HASH_NAME
-    description: 'The Velero CRDs Zarf hash name'
-    value: 'zarf-06ee059327936135c2152d44040c9f947f933034'
+    description: "The Velero CRDs Zarf hash name"
+    value: "zarf-06ee059327936135c2152d44040c9f947f933034"
 
 components:
   - name: uds-crds

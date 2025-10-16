@@ -6,7 +6,9 @@ sidebar:
 
 ## What is UDS Core?
 
+<!-- @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6 -->
 UDS Core is a collection of several individual applications combined into a single Zarf Package, that establishes a secure baseline for secure cloud-native systems. It comes equipped with comprehensive compliance documentation and prioritizes seamless support for highly regulated and egress-limited environments. Building upon the achievements of Platform One, UDS Core enhances the security stance introduced by Big Bang. It introduces advanced automation through the UDS Operator and UDS Policy Engine.
+<!-- @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6 -->
 
 UDS Core enables your team to:
 
