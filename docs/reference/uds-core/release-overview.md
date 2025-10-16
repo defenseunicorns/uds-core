@@ -6,6 +6,7 @@ tableOfContents:
 
 This document outlines how UDS Core is versioned, released, tested, and maintained.
 
+<!-- @lulaStart 88df25e3-2abd-43f4-990b-8f0da08ee643 -->
 ## Release Cadence
 
 UDS Core follows a predictable release schedule to provide regular updates and improvements:
@@ -23,6 +24,8 @@ Hotfix releases are created for critical issues that cannot wait for the next re
 - Security vulnerabilities requiring immediate attention
 
 We reserve the right to cut releases outside the normal schedule whenever we deem necessary to address important issues.
+
+<!-- @lulaEnd 88df25e3-2abd-43f4-990b-8f0da08ee643 -->
 
 ## Versioning Strategy
 
