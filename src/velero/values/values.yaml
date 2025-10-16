@@ -48,3 +48,5 @@ schedules:
 metrics:
   serviceMonitor:
     enabled: true
+
+upgradeCRDs: false

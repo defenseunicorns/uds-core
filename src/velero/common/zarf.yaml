@@ -30,6 +30,55 @@ variables:
     default: "cloud"
 
 components:
+  - name: velero-crds
+    required: true
+    manifests:
+      - name: velero-crds
+        files:
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backuprepositories.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backups.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/backupstoragelocations.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/datadownloads.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/datauploads.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/deletebackuprequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/downloadrequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/podvolumebackups.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/podvolumerestores.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/restores.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/schedules.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/serverstatusrequests.yaml
+          - https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-11.0.0/charts/velero/crds/volumesnapshotlocations.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Handle Helm ownership metadata change on upgrade
+            cmd: |
+              RELEASE_NAME=${ZARF_CONST_VELERO_CRD_HASH_NAME:-zarf-757fff81e3625be0e18f645830e50a406dd1b0d8}
+              RELEASE_NAMESPACE="default"
+
+              for crd in \
+                backuprepositories.velero.io \
+                backups.velero.io \
+                backupstoragelocations.velero.io \
+                datadownloads.velero.io \
+                datauploads.velero.io \
+                deletebackuprequests.velero.io \
+                downloadrequests.velero.io \
+                podvolumebackups.velero.io \
+                podvolumerestores.velero.io \
+                restores.velero.io \
+                schedules.velero.io \
+                serverstatusrequests.velero.io \
+                volumesnapshotlocations.velero.io; do
+
+                # Only apply the labels/annotations if the CRD exists
+                if ./zarf tools kubectl get crd "$crd" >/dev/null 2>&1; then
+                  ./zarf tools kubectl label crd "$crd" app.kubernetes.io/managed-by=Helm --overwrite
+                  ./zarf tools kubectl annotate crd "$crd" meta.helm.sh/release-name="$RELEASE_NAME" --overwrite
+                  ./zarf tools kubectl annotate crd "$crd" meta.helm.sh/release-namespace="$RELEASE_NAMESPACE" --overwrite
+                fi
+              done
+
   - name: velero
     required: true
     charts:

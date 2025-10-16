@@ -1,0 +1,54 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.detailedObservability.alerts.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "keycloak.fullname" . }}-alerting-rules
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+    app.kubernetes.io/name: {{ include "keycloak.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: keycloak
+spec:
+  groups:
+    - name: keycloak-logging-alerts
+      rules:
+        - alert: KeycloakRealmModificationsDetected
+          expr: sum_over_time(uds_keycloak:realm_modifications_count[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+            service: keycloak
+            source: loki
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: "Keycloak realm modifications detected in {{`{{ $labels.realmName }}`}}"
+            description: "Realm {{`{{ $labels.realmName }}`}} had {{`{{ $value }}`}} modifications in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+
+        - alert: KeycloakUserModificationsDetected
+          expr: sum_over_time(uds_keycloak:user_modifications_count[5m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+            service: keycloak
+            source: loki
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: "Keycloak user modifications detected in {{`{{ $labels.realmName }}`}}"
+            description: "User-related administrative actions detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+
+        - alert: KeycloakSystemAdminModificationsDetected
+          expr: sum_over_time(uds_keycloak:system_admin_modifications_count[5m]) > 0
+          for: 1m
+          labels:
+            severity: critical
+            service: keycloak
+            source: loki
+            namespace: {{ .Release.Namespace }}
+          annotations:
+            summary: "Keycloak system admin modifications detected in {{`{{ $labels.realmName }}`}}"
+            description: "Potentially sensitive admin changes involving system administrators detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+{{- end }}

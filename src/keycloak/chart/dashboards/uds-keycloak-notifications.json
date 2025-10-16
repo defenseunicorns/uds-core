@@ -1,0 +1,780 @@
+{
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "grafana",
+                    "uid": "-- Grafana --"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            }
+        ]
+    },
+    "description": "This dashboard is used to preview Keycloak Notifications metrics that are used for alerting",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 35,
+    "links": [],
+    "panels": [
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 5,
+            "panels": [],
+            "title": "Realm modifications",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "uds_keycloak:uds_realm_modifications_count",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "noValue": "0",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 24,
+                "x": 0,
+                "y": 1
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.2.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "uds_keycloak:realm_modifications_count",
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Realm modifications",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "footer": {
+                            "reducers": []
+                        },
+                        "hideFrom": {
+                            "viz": false
+                        },
+                        "inspect": false,
+                        "wrapText": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourcePath"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 290
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "operationType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 123
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourceType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 153
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "realmName"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 95
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 8
+            },
+            "id": 6,
+            "options": {
+                "cellHeight": "sm",
+                "frameIndex": 0,
+                "showHeader": true
+            },
+            "pluginVersion": "12.2.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} | json | loggerName=\"uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider\" | eventType=\"ADMIN\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} !~ \"type=\" | json | loggerName=~`org.keycloak.events` | line_format \"{{.message}}\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "B"
+                }
+            ],
+            "title": "Realm Modification Logs",
+            "transformations": [
+                {
+                    "id": "extractFields",
+                    "options": {
+                        "delimiter": ",",
+                        "keepTime": true,
+                        "replace": true,
+                        "source": "Line"
+                    }
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": false,
+                            "clientId": true,
+                            "details": true,
+                            "error": true,
+                            "eventType": true,
+                            "id": true,
+                            "ipAddress": true,
+                            "loggerName": true,
+                            "realmId": true,
+                            "resourceId": true,
+                            "resourceTypeAsString": true,
+                            "time": false,
+                            "timestamp": true,
+                            "userId": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 0,
+                            "authDetails": 12,
+                            "clientId": 16,
+                            "details": 6,
+                            "error": 13,
+                            "eventType": 9,
+                            "id": 10,
+                            "ipAddress": 18,
+                            "loggerName": 8,
+                            "operationType": 2,
+                            "realmId": 11,
+                            "realmName": 1,
+                            "representation": 5,
+                            "resourceId": 15,
+                            "resourcePath": 4,
+                            "resourceType": 3,
+                            "resourceTypeAsString": 14,
+                            "time": 19,
+                            "timestamp": 7,
+                            "userId": 17
+                        },
+                        "orderByMode": "manual",
+                        "renameByName": {
+                            "Time": "",
+                            "realmName": "",
+                            "time": "timestamp"
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 16
+            },
+            "id": 4,
+            "panels": [],
+            "title": "User Modifications",
+            "type": "row"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "uds_keycloak:uds_system_admin_modifications_count",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "noValue": "0",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 17
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.2.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "uds_keycloak:system_admin_modifications_count",
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Admin User Modifications",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
+            "description": "uds_keycloak:uds_user_modifications_count",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 0,
+                        "gradientMode": "none",
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "linear",
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "auto",
+                        "showValues": false,
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "mappings": [],
+                    "noValue": "0",
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 17
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": true
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "single",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "12.2.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "PBFA97CFB590B2093"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "uds_keycloak:user_modifications_count",
+                    "instant": false,
+                    "legendFormat": "{{realmName}}",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "User modifications",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "custom": {
+                        "align": "auto",
+                        "cellOptions": {
+                            "type": "auto"
+                        },
+                        "filterable": true,
+                        "footer": {
+                            "reducers": []
+                        },
+                        "hideFrom": {
+                            "viz": false
+                        },
+                        "inspect": false,
+                        "wrapText": false
+                    },
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green",
+                                "value": 0
+                            },
+                            {
+                                "color": "red",
+                                "value": 80
+                            }
+                        ]
+                    }
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourcePath"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 290
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "operationType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 123
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "resourceType"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 153
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "realmName"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.width",
+                                "value": 95
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 24,
+                "x": 0,
+                "y": 25
+            },
+            "id": 8,
+            "options": {
+                "cellHeight": "sm",
+                "frameIndex": 0,
+                "showHeader": true
+            },
+            "pluginVersion": "12.2.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} | json | loggerName=\"uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider\" | eventType=\"ADMIN\" | resourceType=~\"USER|GROUP_MEMBERSHIP\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "loki",
+                        "uid": "P8E80F9AEF21F6940"
+                    },
+                    "direction": "backward",
+                    "editorMode": "code",
+                    "expr": "{app=\"keycloak\", namespace=\"keycloak\"} !~ \"type=\" | json | loggerName=~`org.keycloak.events` | line_format \"{{.message}}\" | logfmt | resourceType=~\"USER|GROUP_MEMBERSHIP\"",
+                    "hide": false,
+                    "queryType": "range",
+                    "refId": "B"
+                }
+            ],
+            "title": "User Modification Logs",
+            "transformations": [
+                {
+                    "id": "extractFields",
+                    "options": {
+                        "delimiter": ",",
+                        "keepTime": true,
+                        "replace": true,
+                        "source": "Line"
+                    }
+                },
+                {
+                    "id": "merge",
+                    "options": {}
+                },
+                {
+                    "id": "organize",
+                    "options": {
+                        "excludeByName": {
+                            "Time": false,
+                            "clientId": true,
+                            "details": true,
+                            "error": true,
+                            "eventType": true,
+                            "id": true,
+                            "ipAddress": true,
+                            "loggerName": true,
+                            "realmId": true,
+                            "resourceId": true,
+                            "resourceTypeAsString": true,
+                            "time": false,
+                            "timestamp": true,
+                            "userId": true
+                        },
+                        "includeByName": {},
+                        "indexByName": {
+                            "Time": 0,
+                            "authDetails": 12,
+                            "clientId": 16,
+                            "details": 6,
+                            "error": 13,
+                            "eventType": 9,
+                            "id": 10,
+                            "ipAddress": 18,
+                            "loggerName": 8,
+                            "operationType": 2,
+                            "realmId": 11,
+                            "realmName": 1,
+                            "representation": 5,
+                            "resourceId": 15,
+                            "resourcePath": 4,
+                            "resourceType": 3,
+                            "resourceTypeAsString": 14,
+                            "time": 19,
+                            "timestamp": 7,
+                            "userId": 17
+                        },
+                        "orderByMode": "manual",
+                        "renameByName": {
+                            "Time": "",
+                            "realmName": "",
+                            "time": "timestamp"
+                        }
+                    }
+                }
+            ],
+            "type": "table"
+        }
+    ],
+    "preload": false,
+    "refresh": "",
+    "schemaVersion": 42,
+    "tags": [
+        "keycloak",
+        "uds"
+    ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-30m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "UDS / Keycloak / Notifications",
+    "uid": "sexp6bt",
+    "version": 1,
+    "weekStart": "monday"
+}
