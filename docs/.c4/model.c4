@@ -1,16 +1,21 @@
 model {
   // personas
   admin = actor "Cluster Administrator" {
-    -> uds-core.istio-admin-gateway
-    -> uds-core.istio-admin-gateway.external-admin-loadbalancer
+    admin -> external-admin-loadbalancer
   }
 
   enduser = actor "End User" {
-    -> uds-core.istio-tenant-gateway
-    -> uds-core.istio-tenant-gateway.external-tenant-loadbalancer
+    enduser -> external-tenant-loadbalancer
   }
 
-  cloud = cloud "Cloud" {
+  infrastructure = infrastructure "Infrastructure" {
+
+    external-tenant-loadbalancer = loadbalancer "External Tenant LoadBalancer"
+    external-tenant-loadbalancer -> istio-tenant-ingress-gateway
+
+    external-admin-loadbalancer = loadbalancer "External Admin LoadBalancer"
+    external-admin-loadbalancer -> istio-admin-ingress-gateway
+
     cluster = cluster "Kubernetes Cluster" {
       // system
       uds-core = system "UDS Core" {
@@ -48,13 +53,7 @@ model {
         }
 
         istio-tenant-gateway = namespace "Istio Tenant Gateway Namespace" {
-          external-tenant-loadbalancer = loadbalancer "External Tenant LoadBalancer"
-          tenant-gw = pod "Tenant Ingress Gateway"
           istio-tenant-ingress-gateway = pod "Istio Tenant Ingress Gateway"
-
-          // internal relationships
-          external-tenant-loadbalancer -> tenant-gw
-          tenant-gw -> istio-tenant-ingress-gateway
 
           // external relationships
           istio-tenant-ingress-gateway -> keycloak
@@ -64,13 +63,7 @@ model {
         }
 
         istio-admin-gateway = namespace "Istio Admin Gateway Namespace" {
-          external-admin-loadbalancer = loadbalancer "External Admin LoadBalancer"
-          admin-gw = pod "Admin Ingress Gateway"
           istio-admin-ingress-gateway = pod "Istio Admin Ingress Gateway"
-
-          // internal relationships
-          external-admin-loadbalancer -> admin-gw
-          admin-gw -> istio-admin-ingress-gateway
 
           // external relationships
           istio-admin-ingress-gateway -> keycloak
@@ -85,6 +78,13 @@ model {
 
         istio-egress-gateway = namespace "Istio Egress Gateway Namespace" {
           istio-egress-gateway = pod "Istio Egress Gateway"
+        }
+
+        istio-egress-ambient = namespace "Istio Egress Ambient Namespace" {
+          istio-egress-ambient = pod "Istio Egress Ambient"
+
+          // external relationships
+          istio-egress-ambient -> ext-siem
         }
 
         monitoring = namespace "Monitoring Namespace" {
@@ -153,7 +153,7 @@ model {
           vector = pod "Vector"
 
           // external relationships
-          vector -> ext-siem
+          vector -> istio-egress-ambient.istio-egress-ambient
           vector -> loki
           vector -> loki.loki-gateway
         }

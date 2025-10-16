@@ -1,6 +1,6 @@
 views "uds-core" {
   // Overviews
-  view index of cloud.cluster {
+  view index of infrastructure {
     title "Overviews / Namespaces"
     autoLayout TopBottom 75 40
 
@@ -11,14 +11,12 @@ views "uds-core" {
 
       include
         *,
-        cloud,
-        external-apps,
         external-services,
         uds-core.*
     }
   }
 
-  view indepth-uds-core of cloud.cluster {
+  view indepth-uds-core of infrastructure {
     title "Overviews / Pods"
 
     group {
@@ -28,91 +26,87 @@ views "uds-core" {
 
       include
         *,
-        external-apps,
         external-apps.*,
-        cloud.**,
+        infrastructure.**,
     }
 	}
 
   // Functional Layers
-  view base-layer of cloud.cluster {
+  view base-layer of infrastructure {
     title "Functional Layers / Base"
 
     include
-      cloud,
       cluster,
       uds-core,
-      uds-core.pepr-system,
+      pepr-system,
       pepr-system.*,
-      uds-core.istio-system,
+      istio-system,
       istio-system.*,
-      uds-core.istio-admin-gateway.*,
-      uds-core.istio-tenant-gateway.*,
+      istio-admin-gateway,
+      istio-admin-gateway.*,
+      istio-tenant-gateway,
+      istio-tenant-gateway.*,
+      uds-core.istio-egress-ambient,
+      uds-core.istio-egress-ambient.*,
       uds-core.istio-egress-gateway,
-      uds-core.istio-passthrough-gateway,
       uds-core.istio-egress-gateway.*,
+      istio-passthrough-gateway,
       istio-passthrough-gateway.*,
   }
 
-  view identity-authorization-layer of cloud.cluster {
+  view identity-authorization-layer of infrastructure {
     title "Functional Layers / Identity & Authorization"
 
     include
-      cloud,
       cluster,
       uds-core,
       uds-core.keycloak.*,
       uds-core.authservice.*,
   }
 
-  view metrics-server-layer of cloud.cluster {
+  view metrics-server-layer of infrastructure {
     title "Functional Layers / Metrics Server"
 
     include
-      cloud,
       cluster,
       uds-core,
       uds-core.metrics-server,
       uds-core.metrics-server.*,
   }
 
-  view runtime-security-layer of cloud.cluster {
+  view runtime-security-layer of infrastructure {
     title "Functional Layers / Runtime Security"
 
     include
-      cloud,
       cluster,
       uds-core,
       uds-core.falco.*,
   }
 
-  view logging-layer of cloud.cluster {
+  view logging-layer of infrastructure {
     title "Functional Layers / Logging"
 
     include
-      cloud,
       cluster,
       uds-core,
       uds-core.loki.*,
       uds-core.vector.*,
   }
 
-  view monitoring-layer of cloud.cluster {
+  view monitoring-layer of infrastructure {
     title "Functional Layers / Monitoring"
 
     include
-      cloud,
       cluster,
       uds-core,
       uds-core.monitoring.*,
       uds-core.grafana.*,
   }
 
-  view backup-restore-layer of cloud.cluster {
+  view backup-restore-layer of infrastructure {
     title "Functional Layers / Backup & Restore"
 
     include
-      cloud,
       cluster,
       uds-core.velero,
       uds-core.velero.*,
