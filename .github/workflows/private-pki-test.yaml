@@ -1,7 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: Nightly
+name: Private PKI Testing
 
 on:
   schedule:
@@ -62,3 +62,10 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -private-pki-${{ matrix.flavor }}
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}

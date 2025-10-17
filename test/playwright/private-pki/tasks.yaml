@@ -7,7 +7,7 @@ tasks:
     actions:
       - description: "Check for sudo access"
         cmd: |
-          echo "This package requires elevated permissions to deploy - requesting sudo (if paused enter password)"
+          echo "This test requires elevated permissions to run - requesting sudo (if paused enter password)"
           sudo echo "got sudo! success!"
 
       - description: "Generate and Setup CA certs"
