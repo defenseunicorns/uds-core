@@ -169,6 +169,15 @@ packages:
             - name: KEYCLOAK_HEAP_OPTIONS
               description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
               path: env[0].value
+            - name: KEYCLOAK_EXTRA_VOLUME_MOUNTS
+              description: "Extra volume mounts for Keycloak"
+              path: extraVolumeMounts
+            - name: KEYCLOAK_EXTRA_VOLUMES
+              description: "Extra volumes for Keycloak"
+              path: extraVolumes
+            - name: KEYCLOAK_TRUSTSTORE_PATHS
+              description: "Truststore paths for Keycloak"
+              path: truststorePaths
           values:
             - path: detailedObservability.alerts.enabled
               value: true
@@ -188,6 +197,9 @@ packages:
       grafana:
         grafana:
           variables:
+            - name: GRAFANA_EXTRA_CONFIGMAP_MOUNTS
+              description: "Extra ConfigMap mounts for Grafana"
+              path: extraConfigmapMounts
             - name: GRAFANA_HA
               description: Enable HA Grafana
               path: autoscaling.enabled
