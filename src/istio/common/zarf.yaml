@@ -109,7 +109,7 @@ components:
                 echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
               fi
               echo "Giving Pepr some time to join the mesh"
-              sleep 10
+              sleep 20
 
   - name: gateway-api-crds
     required: true
