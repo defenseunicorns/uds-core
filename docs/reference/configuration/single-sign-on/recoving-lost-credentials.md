@@ -15,7 +15,7 @@ If your account has been locked out after the FIPS migration, you may want to mo
 The procedure involves creating a new user with administrator privileges, logging into that user, recovering the lost credentials and deleting it. First, create a new temporary admin user called `temp-admin` with a strong password:
 
 ```bash
-uds zarf tools kubectl exec -it keycloak-0 -n keycloak -- /opt/keycloak/bin/kc.sh bootstrap-admin user
+uds zarf tools kubectl exec -it keycloak-0 -n keycloak -- /opt/keycloak/bin/kc.sh bootstrap-admin user --verbose --optimized --http-management-port=9001
 ```
 
 When prompted, enter the `temp-admin` password:
@@ -26,7 +26,7 @@ Enter password: <temp-admin password>
 Enter password again: <temp-admin password>
 ```
 
-The command will exit with an error indicating that it can't bootstrap the Keycloak server (this is normal as there's already a Keycloak server running in this container). Ensure this line is present in the output:
+The command will exit with no errors. Ensure this line is present in the output:
 
 ```bash
 <timestamp> INFO  [org.keycloak.services] (main) KC-SERVICES0077: Created temporary admin user with username temp-admin
