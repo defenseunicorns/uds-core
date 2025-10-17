@@ -143,12 +143,16 @@ spec:
               value: "true"
             - name: KC_METRICS_ENABLED
               value: "true"
+
+            # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             - name: KC_EVENT_METRICS_USER_ENABLED
               value: "true"
+            # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
 
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
               value: "true"
+            # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             {{- if .Values.detailedObservability.logging.enabled }}
             - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL
               value: "info"
@@ -157,6 +161,7 @@ spec:
             - name: KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_INCLUDE_REPRESENTATION
               value: "true"
             {{- end }}
+            # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
             # X509 configuration
             - name: KC_HTTPS_CLIENT_AUTH
               value: request

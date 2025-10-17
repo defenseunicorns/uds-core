@@ -412,7 +412,9 @@ truststorePaths: []
 detailedObservability:
   alerts:
     enabled: false
+  # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
   dashboards:
     enabled: true
   logging:
     enabled: true
+  # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
