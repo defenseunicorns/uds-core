@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.54.2](https://github.com/defenseunicorns/uds-core/compare/v0.54.1...v0.54.2) (2025-10-17)
+
+
+### Bug Fixes
+
+* keycloak statefulset spi provider syntax ([#2030](https://github.com/defenseunicorns/uds-core/issues/2030)) ([0214dec](https://github.com/defenseunicorns/uds-core/commit/0214dec14adf4038ca943af714f9817017da3dd8))
+* remove setting --blocking-factor=64 when extracting the checkpoint image ([#2033](https://github.com/defenseunicorns/uds-core/issues/2033)) ([388d6b5](https://github.com/defenseunicorns/uds-core/commit/388d6b5d0509514a9ba8f2728398d4d9e5331e27))
+* revert statefulset change ([#2037](https://github.com/defenseunicorns/uds-core/issues/2037)) ([3abd38e](https://github.com/defenseunicorns/uds-core/commit/3abd38e99bb6bf5d2bc83815eff9de324e576d15))
+
+
+### Miscellaneous
+
+* add lula mappings for compliance pr ([#2034](https://github.com/defenseunicorns/uds-core/issues/2034)) ([15b41b6](https://github.com/defenseunicorns/uds-core/commit/15b41b60b8bca1caacd06335902ffc1cdb98cc36))
+* **deps:** update falco chart to v6.4.0 ([#2010](https://github.com/defenseunicorns/uds-core/issues/2010)) ([02f454f](https://github.com/defenseunicorns/uds-core/commit/02f454f629d997fc887a188a0a395009ceeea170))
+* **deps:** update pepr to v0.55.4 ([#2025](https://github.com/defenseunicorns/uds-core/issues/2025)) ([afa91fe](https://github.com/defenseunicorns/uds-core/commit/afa91fe6f0805f350c5fdd3de89d592c5bb5327b))
+* keycloak lula mappings ([#2012](https://github.com/defenseunicorns/uds-core/issues/2012)) ([1d217be](https://github.com/defenseunicorns/uds-core/commit/1d217be55f9f2ce5ea39c47a959d7c7579454990))
+* keycloak lula mappings ([#2036](https://github.com/defenseunicorns/uds-core/issues/2036)) ([101326e](https://github.com/defenseunicorns/uds-core/commit/101326eb978a503a31e3804e302bc6400669767b))
+* **test:** add private pki testing ([#2008](https://github.com/defenseunicorns/uds-core/issues/2008)) ([9bb5584](https://github.com/defenseunicorns/uds-core/commit/9bb55849ca4645717eac8d254a9e7e21129ccefe))
+* uds-compliance-67-mappings ([#2024](https://github.com/defenseunicorns/uds-core/issues/2024)) ([2c4eb90](https://github.com/defenseunicorns/uds-core/commit/2c4eb90912d38f1a230a2393cf0625775c8576f0))
+
+
+### Documentation
+
+* fix badge for k3d ha test ([#2043](https://github.com/defenseunicorns/uds-core/issues/2043)) ([f98f9ee](https://github.com/defenseunicorns/uds-core/commit/f98f9ee808ec7da5aa5dcedb20cc1aa66f1c2f05))
+
 ## [0.54.1](https://github.com/defenseunicorns/uds-core/compare/v0.54.0...v0.54.1) (2025-10-15)
 
 
