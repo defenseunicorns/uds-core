@@ -33,4 +33,3 @@ variables:
           name: private-ca
     KEYCLOAK_TRUSTSTORE_PATHS:
       - "/tmp/ca-certs"
-    KEYCLOAK_OTP_ENABLED: false

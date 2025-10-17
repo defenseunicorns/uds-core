@@ -178,9 +178,6 @@ packages:
             - name: KEYCLOAK_TRUSTSTORE_PATHS
               description: "Truststore paths for Keycloak"
               path: truststorePaths
-            - name: KEYCLOAK_OTP_ENABLED
-              description: "Keycloak One Time Password Enabled"
-              path: realmAuthFlows.OTP_ENABLED
           values:
             - path: detailedObservability.alerts.enabled
               value: true
