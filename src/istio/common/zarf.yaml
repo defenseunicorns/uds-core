@@ -90,26 +90,20 @@ components:
             setVariables:
               - name: CNI_BIN_DIR
         after:
-          - description: "Ensure istio ambient is enabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
-          - description: "Ensure istio-injection is disabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
-          - description: "Cycle Pepr to refresh connections post-ambient"
+          - description: "Ensure Istio Ambient is enabled for Pepr"
             cmd: |
-              echo "Checking if Pepr pods have sidecars and need restart..."
-              if ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
-                echo "Istio sidecar detected, restarting Pepr deployments..."
-                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
-                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-                fi
-                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
-                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
-                fi
-              else
-                echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
+              DATAPLANE_LABEL=$(./zarf tools kubectl get ns pepr-system -o jsonpath="{.metadata.labels.istio\.io/dataplane-mode}" 2>/dev/null || true)
+
+              if [ "$DATAPLANE_LABEL" != "ambient" ]; then
+                echo "Setting Ambient mode for pepr-system..."
+                ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
+
+                echo "Disabling istio-injection on pepr-system..."
+                ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
+
+                echo "Giving Pepr some time to join the mesh..."
+                sleep 30
               fi
-              echo "Giving Pepr some time to join the mesh"
-              sleep 20
 
   - name: gateway-api-crds
     required: true
