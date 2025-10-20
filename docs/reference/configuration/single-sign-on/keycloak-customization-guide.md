@@ -22,7 +22,8 @@ This guide helps you choose the right approach for your customization needs.
 |---------------|-------------|---------------|
 | Change logo, favicon, or background | Helm Chart Values | [Branding Customizations](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#branding-customizations) |
 | Adjust resources or scaling | Helm Chart Values | [UDS Core Keycloak Values](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/chart/values.yaml) |
-| Enable/disable auth methods | Helm Chart Values | [Templated Realm Values](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#templated-realm-values) |
+| Enable/disable auth methods (install only) | Helm Chart Values | [Authentication Flows](https://uds.defenseunicorns.com/reference/uds-core/idam/authentication-flows/) |
+| Configure realm settings    | Helm Chart Values | [Templated Realm Values](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#templated-realm-values) |
 | Add custom plugin/JAR | Identity Config Image | [Add Additional JARs](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#add-additional-jars) |
 | Customize theme beyond branding | Identity Config Image | [Customizing Theme](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-theme) |
 | Modify realm configuration | Identity Config Image | [Customizing Realm](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-realm) |
@@ -32,7 +33,7 @@ This guide helps you choose the right approach for your customization needs.
 
 ### Approach 1: Helm Chart Values
 
-**Use for**: Configuration changes that don't require custom code
+**Use for**: Configuration changes that don't require custom code, anything in the [chart values](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/chart/values.yaml)
 
 **Examples**:
 - Scaling replicas or adjusting resources
@@ -65,6 +66,8 @@ packages:
 
 **Key Point**: Requires building a custom identity-config image from the [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config).
 
+**Build and Deploy**: See [Testing and Deployment Customizations](https://uds.defenseunicorns.com/reference/uds-core/idam/testing-deployment-customizations/) for detailed instructions on building custom images, using Zarf packages, and deploying to UDS Core.
+
 ```yaml
 packages:
   - name: core
@@ -86,7 +89,7 @@ packages:
 - Configuring identity providers
 - Automating user provisioning
 
-**Key Point**: Manages running Keycloak resources without redeployment.
+**Key Point**: Manages running Keycloak resources declaratively in code without redeployment.
 
 ### Deployment Flow:
 1. **Helm values** configure Keycloak at deployment time
@@ -115,45 +118,23 @@ packages:
 - You're implementing custom Keycloak SPIs
 
 ### Choose OpenTofu/IaC When:
+- You need to configure external identity providers (SAML, OIDC, LDAP)
+- You want to manage advanced authentication flows post-deployment
 - You want to manage Keycloak resources as code
-- You need to automate client creation for applications
-- You want GitOps workflows for identity management
 - You need to manage groups, users, and roles declaratively
-- Changes should be applied without redeployment
+- You're handling upgrade scenarios with complex configurations
 
-## Common Use Cases
-
-### Simple Branding Update
-**Approach**: Helm Chart Values
-**Documentation**: [Branding Customizations](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#branding-customizations)
-
-Use ConfigMaps to override logo, favicon, and background images without rebuilding anything.
-
-### Adding a Custom Plugin
-**Approach**: Identity Config Image
-**Documentation**: [Add Additional JARs](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#add-additional-jars)
-
-1. Add JAR to `src/extra-jars/` in uds-identity-config
-2. Build custom image: `uds run build-and-publish`
-3. Override `configImage` in UDS Core bundle
-
-### Creating Application Clients
-**Approach**: OpenTofu/IaC
-**Documentation**: [OpenTofu Configuration](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#opentofu-keycloak-client-configuration)
-
-Use the Keycloak Terraform provider to manage clients declaratively.
-
-### Custom Theme Development
-**Approach**: Identity Config Image
-**Documentation**: [Customizing Theme](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-theme)
-
-1. Modify files in `src/theme/` in uds-identity-config
-2. Test locally: `uds run dev-theme`
-3. Build and publish custom image
+:::note
+  OpenTofu is better suited for:
+  - Complex identity provider configurations
+  - Managing resources during upgrades
+  - Advanced configurations not supported by Package CRs
+:::
 
 ## Additional Resources
 
 - **[UDS Identity Config Customization Guide](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#_top)** - Detailed implementation instructions
-- **[UDS Core Keycloak README](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/README.md)** - Package-specific information
+- **[UDS Core SSO Overview](https://uds.defenseunicorns.com/reference/configuration/single-sign-on/overview/)**
+- **[UDS Core Identity Config Overview](https://uds.defenseunicorns.com/reference/uds-core/idam/uds-identity-config-overview/)**
 - **[Keycloak Documentation](https://www.keycloak.org/documentation)** - Official Keycloak docs
 - **[UDS Identity Config Repository](https://github.com/defenseunicorns/uds-identity-config)** - Source code and examples
