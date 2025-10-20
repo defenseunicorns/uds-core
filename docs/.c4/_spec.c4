@@ -1,13 +1,17 @@
 specification {
   color background #011f66
   color actor #102349
-  color external #102349
-  color cloud #12488e
+  color externalAppsGroup #5b725d
+  color externalApps #102349
+  color infra #12488e
+  color infraServicesGroup #353333
+  color infraServices #8f74a8
+  color infraLBs #7e6250
   color cluster #bee7ff
-  color system #353333
-  color namespace #772828
-  color pod #bea6a6
-  color storage #bea6a6
+  color coreNamespaces #772828
+  color k8sNamespaces #d1bad3
+  color coreWebhooks #d8bf7a
+  color pods #bea6a6
 
   element actor {
     style {
@@ -19,62 +23,58 @@ specification {
     }
   }
 
+  element externalAppsGroup {
+    style {
+      border solid
+      color externalAppsGroup
+      opacity 100%
+    }
+  }
+
+  element alert_destination {
+    style {
+      size xs
+      icon ./images/alert_icon.svg
+      border solid
+      color externalApps
+      opacity 100%
+    }
+  }
+
+  element siem_tool {
+    style {
+      size xs
+      icon ./images/siem_icon.svg
+      border solid
+      color externalApps
+      opacity 100%
+    }
+  }
+
   element infrastructure {
-    notation "infrastructure Boundary"
+    notation "1. Infrastructure Boundary"
     style {
       size xs
       border solid
-      color cloud
+      color infra
       opacity 100%
     }
   }
 
-  element cluster {
-    notation "Cluster Boundary"
+  element infraServicesGroup {
     style {
-      size xs
       border solid
-      color cluster
+      color infraServicesGroup
       opacity 100%
     }
   }
 
-  element system {
-    notation "UDS Core"
+  element infraService {
     style {
       size xs
+      shape storage
       border solid
-      color system
-      opacity 100%
-    }
-  }
-
-  element namespace {
-    style {
-      size xs
-      icon ./images/namespace_icon.svg
-      border solid
-      color namespace
-      opacity 100%
-    }
-  }
-
-  element pod {
-    style {
-      size sm
-      icon ./images/pod_icon.svg
-      border solid
-      color pod
-      opacity 100%
-    }
-  }
-
-  element component {
-    style {
-      size xs
-      icon ./images/component_icon.svg
-      border solid
-      color pod
+      color infraServices
       opacity 100%
     }
   }
@@ -84,47 +84,59 @@ specification {
       size xs
       icon ./images/loadbalancer_icon.svg
       border solid
-      color pod
+      color infraLBs
       opacity 100%
     }
   }
 
-  element database {
+  element cluster {
+    notation "2. UDS Core Cluster"
     style {
       size xs
-      shape cylinder
       border solid
-      color storage
+      color cluster
       opacity 100%
     }
   }
 
-  element storage {
+  element coreNamespace {
+    notation "3. UDS Core Namespaces"
     style {
       size xs
-      shape storage
+      icon ./images/namespace_icon.svg
       border solid
-      color storage
+      color coreNamespaces
       opacity 100%
     }
   }
 
-  element alert_destination {
+  element k8sNamespace {
+    notation "4. Kubernetes Namespaces"
     style {
       size xs
-      icon ./images/alert_icon.png
+      icon ./images/namespace_icon.svg
       border solid
-      color external
+      color k8sNamespaces
       opacity 100%
     }
   }
 
-  element siem_tool {
+  element coreWebhook {
+    notation "5. UDS Core Webhooks"
     style {
       size xs
-      icon ./images/siem_icon.png
       border solid
-      color external
+      color coreWebhooks
+      opacity 100%
+    }
+  }
+
+  element pod {
+    notation "6. Cluster Pods"
+    style {
+      size sm
+      border solid
+      color pods
       opacity 100%
     }
   }

@@ -9,15 +9,4 @@ export default defineConfig({
   name: 'uds-core-arch-diagrams',
   sources: ['./docs/.c4'],
   outDir: './docs/.c4/diagrams',
-  styles: {
-    defaults: {
-      border: 'solid',
-      opacity: 100,
-      relationship: {
-        color: 'gray',
-        line: 'solid',
-        arrow: 'open'
-      }
-    }
-  }
 })

@@ -2,7 +2,7 @@ views "uds-core" {
   // Overviews
   view index of infrastructure {
     title "Overviews / Namespaces"
-    autoLayout TopBottom 75 40
+    autoLayout TopBottom 75 50
 
     group {
       border solid
@@ -11,13 +11,37 @@ views "uds-core" {
 
       include
         *,
+        cluster.generic-customer,
+        cluster.pepr-system,
+        cluster.istio-egress-ambient,
+        cluster.istio-egress-gateway,
+        cluster.istio-passthrough-gateway,
+        cluster.istio-system,
+        cluster.metrics-server,
+        cluster.velero,
+        cluster.vector,
+        cluster.grafana,
+        cluster.keycloak,
+        cluster.authservice,
+        cluster.falco,
+        cluster.zarf,
+        cluster.loki,
+        external-apps,
         external-services,
-        uds-core.*
+        istio-admin-gateway,
+        istio-tenant-gateway,
+        metrics-api-service,
+        pepr-validating-webhook,
+        pepr-mutating-webhook,
+        istio-mutating-webhook,
+        zarf-mutating-webhook,
+        kubernetes-control-plane,
     }
   }
 
   view indepth-uds-core of infrastructure {
     title "Overviews / Pods"
+    autoLayout TopBottom 150 50
 
     group {
       border solid
@@ -26,8 +50,35 @@ views "uds-core" {
 
       include
         *,
+        cluster.generic-customer.*,
+        cluster.pepr-system.*,
+        cluster.istio-egress-ambient.*,
+        cluster.istio-egress-gateway,
+        cluster.istio-egress-gateway.*,
+        cluster.istio-passthrough-gateway,
+        cluster.istio-passthrough-gateway.*,
+        cluster.istio-system.*,
+        cluster.metrics-server.*,
+        cluster.velero,
+        cluster.velero.*,
+        cluster.vector.*,
+        cluster.monitoring.*,
+        cluster.grafana.*,
+        cluster.keycloak.*,
+        cluster.authservice.*,
+        cluster.falco.*,
+        cluster.zarf.*,
+        cluster.loki.*,
         external-apps.*,
-        infrastructure.**,
+        external-services.*,
+        istio-admin-gateway.*,
+        istio-tenant-gateway.*,
+        metrics-api-service.*,
+        pepr-validating-webhook.*,
+        pepr-mutating-webhook.*,
+        istio-mutating-webhook.*,
+        zarf-mutating-webhook.*,
+        kubernetes-control-plane.*
     }
 	}
 
@@ -37,7 +88,6 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
       pepr-system,
       pepr-system.*,
       istio-system,
@@ -46,10 +96,10 @@ views "uds-core" {
       istio-admin-gateway.*,
       istio-tenant-gateway,
       istio-tenant-gateway.*,
-      uds-core.istio-egress-ambient,
-      uds-core.istio-egress-ambient.*,
-      uds-core.istio-egress-gateway,
-      uds-core.istio-egress-gateway.*,
+      cluster.istio-egress-ambient,
+      cluster.istio-egress-ambient.*,
+      cluster.istio-egress-gateway,
+      cluster.istio-egress-gateway.*,
       istio-passthrough-gateway,
       istio-passthrough-gateway.*,
   }
@@ -59,9 +109,8 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
-      uds-core.keycloak.*,
-      uds-core.authservice.*,
+      cluster.keycloak.*,
+      cluster.authservice.*,
   }
 
   view metrics-server-layer of infrastructure {
@@ -69,9 +118,8 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
-      uds-core.metrics-server,
-      uds-core.metrics-server.*,
+      cluster.metrics-server,
+      cluster.metrics-server.*,
   }
 
   view runtime-security-layer of infrastructure {
@@ -79,8 +127,7 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
-      uds-core.falco.*,
+      cluster.falco.*,
   }
 
   view logging-layer of infrastructure {
@@ -88,9 +135,8 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
-      uds-core.loki.*,
-      uds-core.vector.*,
+      cluster.loki.*,
+      cluster.vector.*,
   }
 
   view monitoring-layer of infrastructure {
@@ -98,9 +144,8 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core,
-      uds-core.monitoring.*,
-      uds-core.grafana.*,
+      cluster.monitoring.*,
+      cluster.grafana.*,
   }
 
   view backup-restore-layer of infrastructure {
@@ -108,7 +153,7 @@ views "uds-core" {
 
     include
       cluster,
-      uds-core.velero,
-      uds-core.velero.*,
+      cluster.velero,
+      cluster.velero.*,
   }
 }
