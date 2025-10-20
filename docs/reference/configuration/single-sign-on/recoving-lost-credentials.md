@@ -2,7 +2,7 @@
 title: Recovering lost Keycloak credentials
 ---
 
-This procedure describes how to recover lost Keycloak credentials for UDS Core. It leverages the [Admin bootstrap and recovery](https://www.keycloak.org/server/bootstrap-admin-recovery) feature of Keycloak.
+This procedure describes how to recover lost Keycloak credentials for UDS Core. It leverages the [Admin bootstrap and recovery](https://www.keycloak.org/server/bootstrap-admin-recovery) feature of Keycloak and works only when an external database (like PostgreSQL) is used. 
 
 :::caution
 This procedure requires at least 1.5G of memory allocated to the Keycloak container. You may need to temporarily increase the memory limit before starting the recovery process. If the `JAVA_OPTS_KC_HEAP` environment variable is used, ensure the -XX:MaxRAM setting corresponds to the container memory limits. More information might be found at Keycloak's part of the [UDS Prerequisites manual](/reference/uds-core/prerequisites/).
