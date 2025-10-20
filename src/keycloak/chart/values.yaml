@@ -54,6 +54,7 @@ realmConfig:
   maxInFlightLoginsPerUser: 300
 
 # UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+# @lulaStart 96b7aa1b-b307-45c0-af40-8b57f3726693
 realmAuthFlows:
   USERNAME_PASSWORD_AUTH_ENABLED: true
   X509_AUTH_ENABLED: true
@@ -61,6 +62,7 @@ realmAuthFlows:
   OTP_ENABLED: true
   WEBAUTHN_ENABLED: false
   X509_MFA_ENABLED: false
+# @lulaEnd 96b7aa1b-b307-45c0-af40-8b57f3726693
 
 # Theme customizations with allowed types. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/UDS%20Core/IdAM/customization.md#branding-customizations
 themeCustomizations:
@@ -412,7 +414,9 @@ truststorePaths: []
 detailedObservability:
   alerts:
     enabled: false
+  # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
   dashboards:
     enabled: true
   logging:
     enabled: true
+  # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
