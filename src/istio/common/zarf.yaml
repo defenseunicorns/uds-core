@@ -100,10 +100,16 @@ components:
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
-              # if [ "$DATAPLANE_LABEL" != "ambient" ]; then
-              #   echo "Giving Pepr some time to join the mesh..."
-              #   sleep 30
-              # fi
+              echo "Waiting for ztunnel DaemonSet to be ready on all nodes..."
+              ./zarf tools kubectl rollout status daemonset/ztunnel -n istio-system --timeout=60s
+
+              if [ "$DATAPLANE_LABEL" != "ambient" ]; then
+                echo "Namespace was not in ambient mode, waiting for Pepr pods to join the mesh..."
+                # Wait for pepr pods to be recreated/updated with ambient mode
+                sleep 10
+                # Verify pepr pods are ready
+                ./zarf tools kubectl wait --for=condition=ready pod -l app=pepr-uds-core -n pepr-system --timeout=60s || true
+              fi
 
   - name: gateway-api-crds
     required: true
