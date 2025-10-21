@@ -106,7 +106,7 @@ components:
               if [ "$DATAPLANE_LABEL" != "ambient" ]; then
                 echo "Namespace was not in ambient mode, waiting for Pepr pods to join the mesh..."
                 # Wait for pepr pods to be recreated/updated with ambient mode
-                sleep 10
+                # sleep 10
                 # Verify pepr pods are ready
                 ./zarf tools kubectl wait --for=condition=ready pod -l app=pepr-uds-core -n pepr-system --timeout=60s || true
               fi
