@@ -117,8 +117,8 @@ tasks:
             mv -v "${FLAVORED_PACKAGE}" "${BASE_NAME}"
           done
 
-  - name: check-unicorn-multiarch
-    description: "Script to check if/what Unicorn images are missing from registry."
+  - name: check-multiarch-images
+    description: "Script to check if/what Unicorn and Registry1 images are missing from registry."
     actions:
-      - description: Check Unicorn Multi-Arch images
+      - description: Check Unicorn and Registry1 Multi-Arch images
         cmd: ./scripts/check-multiarch.sh
