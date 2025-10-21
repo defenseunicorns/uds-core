@@ -10,6 +10,7 @@ on:
     # labeled is added to support renovate-ready labelling on PRs
     types: [milestoned, labeled, opened, reopened, synchronize]
     paths-ignore:
+      - "**"
       - "**.md"
       - "**.jpg"
       - "**.png"
