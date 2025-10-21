@@ -70,6 +70,7 @@ jobs:
       id-token: write # Needed for OIDC-related operations.
       contents: read # Allows reading the content of the repository.
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
+      packages: read # Allows pulling private images as needed
     steps:
       - name: Checkout the code
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
