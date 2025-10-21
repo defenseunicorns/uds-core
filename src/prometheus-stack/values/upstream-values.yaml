@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v3.6.0
+      tag: v3.7.1
 prometheus-node-exporter:
   image:
     registry: quay.io
@@ -43,9 +43,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.85.0
+    tag: v0.86.1
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.85.0
+      tag: v0.86.1
