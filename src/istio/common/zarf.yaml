@@ -92,13 +92,13 @@ components:
         after:
           - description: "Ensure Istio Ambient is enabled for Pepr"
             cmd: |
-              DATAPLANE_LABEL=$(./zarf tools kubectl get ns pepr-system -o jsonpath="{.metadata.labels.istio\.io/dataplane-mode}" 2>/dev/null || true)
+              # DATAPLANE_LABEL=$(./zarf tools kubectl get ns pepr-system -o jsonpath="{.metadata.labels.istio\.io/dataplane-mode}" 2>/dev/null || true)
 
-              echo "Setting Ambient mode for pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
+              # echo "Setting Ambient mode for pepr-system..."
+              # ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
 
-              echo "Disabling istio-injection on pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
+              # echo "Disabling istio-injection on pepr-system..."
+              # ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
               # if [ "$DATAPLANE_LABEL" != "ambient" ]; then
               #   echo "Giving Pepr some time to join the mesh..."
