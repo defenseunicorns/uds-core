@@ -12,10 +12,10 @@ TEMP_IMAGES=$(mktemp)
 TEMP_MISSING=$(mktemp)
 trap "rm -f $TEMP_IMAGES $TEMP_MISSING" EXIT
 
-echo "Scanning $SRC_DIR for unicorn images..."
+echo "Scanning $SRC_DIR for unicorn and registry1 images..."
 
-# Extract all quay.io/rfcurated/ images
-find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -h "quay.io/rfcurated/" {} \; | \
+# Extract all quay.io/rfcurated/ (unicorn) and registry1.dso.mil/ironbank/ (registry1) images
+find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -hE "quay.io/rfcurated/|registry1.dso.mil/ironbank/" {} \; | \
     sed 's/^[[:space:]]*-[[:space:]]*//' | \
     sed 's/"//g' | \
     sort -u > "$TEMP_IMAGES"
