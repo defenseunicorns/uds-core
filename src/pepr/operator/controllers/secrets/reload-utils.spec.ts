@@ -244,7 +244,7 @@ describe("reloadPods", () => {
     expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
-        reason: "SecretChanged",
+        reason: "ResourceChanged",
         message: "Restarted due to: Test eviction",
         involvedObject: expect.objectContaining({
           kind: "StatefulSet",
@@ -307,7 +307,7 @@ describe("reloadPods", () => {
     expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
-        reason: "SecretChanged",
+        reason: "ResourceChanged",
         message: "Restarted due to: Test eviction",
         involvedObject: expect.objectContaining({
           kind: "Deployment",
@@ -355,7 +355,7 @@ describe("reloadPods", () => {
     expect(mockK8sClient.Create).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "Normal",
-        reason: "SecretChanged",
+        reason: "ResourceChanged",
         message: "Restarted due to: Test eviction",
         involvedObject: expect.objectContaining({
           kind: "ReplicaSet",
@@ -476,7 +476,7 @@ describe("restartController", () => {
         namespace: "default",
       },
       message: "Restarted due to: Secret changed",
-      reason: "SecretChanged",
+      reason: "ResourceChanged",
       type: "Normal",
       reportingComponent: "uds.dev/operator",
     });

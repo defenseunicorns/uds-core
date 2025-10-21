@@ -202,7 +202,7 @@ export async function restartController(
         controller,
         {
           type: "Normal",
-          reason: "SecretChanged",
+          reason: "ResourceChanged",
           message: `Restarted due to: ${reason}`,
         },
         log,

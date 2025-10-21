@@ -92,7 +92,7 @@ async function checkForEvents(
       event =>
         event.involvedObject?.kind === options.targetKind &&
         event.involvedObject?.name === options.targetName &&
-        event.reason === "SecretChanged" &&
+        event.reason === "ResourceChanged" &&
         event.message?.includes(options.secretName),
     ) || [];
 
