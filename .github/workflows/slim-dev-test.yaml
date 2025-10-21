@@ -100,4 +100,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -slim-dev
+          suffix: -slim-dev-${{matrix.flavor}}
