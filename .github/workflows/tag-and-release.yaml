@@ -15,6 +15,7 @@ on:
       - main
 
 jobs:
+  # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
   tag-new-version:
     permissions: write-all
     runs-on: ubuntu-latest
@@ -38,6 +39,7 @@ jobs:
     with:
       snapshot: false
     secrets: inherit
+  # @lulaEnd d364a8e6-95ab-448c-bb97-9f456c85b54f
 
   scan-release:
     needs: publish-uds-core-release

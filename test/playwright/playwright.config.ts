@@ -24,6 +24,9 @@ export default defineConfig({
 
   outputDir: `${playwrightDir}/output`,
 
+  // ignore running private pki tests from top level to avoid failures
+  testIgnore: ["**/private-pki/**"],
+
   use: {
     trace: "retain-on-failure", // save trace for failed tests. See https://playwright.dev/docs/trace-viewer#opening-the-trace
   },

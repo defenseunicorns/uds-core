@@ -16,6 +16,8 @@ includes:
   - idam-layer: ../packages/identity-authorization/tasks.yaml
   - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.4/tasks/setup.yaml
   - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.4/tasks/compliance.yaml
+  - private-pki: ../test/playwright/private-pki/tasks.yaml
+
 
 tasks:
   - name: base
@@ -226,3 +228,29 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
+
+  - name: uds-core-private-pki
+    description: "Create and Deploy Private PKI Bundle"
+    actions:
+      - task: private-pki:private-pki-certs
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-private-pki
+      - task: validate-packages
+      - description: "Setup the Doug User for testing"
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
+      - description: "Setup Authservice App for Testing"
+        cmd: |
+          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
+          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
+      - task: private-pki:private-pki-tests
+      - description: "Follow on Instructions"
+        cmd: |
+          echo ""
+          echo "Load the build/private-pki/ca.crt into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
+          echo ""

@@ -1,13 +1,14 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# @lulaStart 4147b6a6-3339-4d5d-b10a-f16502b52206
 # @lulaStart 7db76183-fb97-4a13-ae1e-a2b45ddd4430
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
   description: "Keycloak"
 # @lulaEnd 7db76183-fb97-4a13-ae1e-a2b45ddd4430
-
+# @lulaEnd 4147b6a6-3339-4d5d-b10a-f16502b52206
 variables:
   - name: DOMAIN
     description: "Cluster domain"
@@ -28,7 +29,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:26.4.0
+      - quay.io/keycloak/keycloak:26.4.1
       - ghcr.io/defenseunicorns/uds/identity-config:0.19.0
 
   - name: keycloak
@@ -42,7 +43,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.4.0
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.4.1
       - ghcr.io/defenseunicorns/uds/identity-config:0.19.0
 
   - name: keycloak
@@ -56,5 +57,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - quay.io/rfcurated/keycloak:26.4.0-jammy-fips-rfcurated
+      - quay.io/rfcurated/keycloak:26.4.1-jammy-fips-rfcurated
       - ghcr.io/defenseunicorns/uds/identity-config:0.19.0
