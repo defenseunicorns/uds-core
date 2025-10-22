@@ -330,6 +330,7 @@ describe("pod-reload", () => {
         [matchingPod], // Only the matching pod should be passed
         "Secret test-secret change",
         expect.anything(),
+        "Secret",
       );
     });
 
@@ -427,6 +428,7 @@ describe("pod-reload", () => {
         [matchingPod],
         "Secret multi-selector-secret change",
         expect.anything(),
+        "Secret",
       );
     });
 
@@ -857,6 +859,7 @@ describe("pod-reload", () => {
         [matchingPod], // Only the matching pod should be passed
         "ConfigMap test-configmap change",
         expect.anything(),
+        "ConfigMap",
       );
     });
   });
