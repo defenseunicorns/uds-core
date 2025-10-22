@@ -116,3 +116,9 @@ tasks:
             BASE_NAME=$(echo "${FLAVORED_PACKAGE}" | sed "s/-${FLAVOR}\.tar\.zst/.tar.zst/")
             mv -v "${FLAVORED_PACKAGE}" "${BASE_NAME}"
           done
+
+  - name: check-multiarch-images
+    description: "Script to check if/what Unicorn and Registry1 images are missing from registry."
+    actions:
+      - description: Check Unicorn and Registry1 Multi-Arch images
+        cmd: ./scripts/check-multiarch.sh

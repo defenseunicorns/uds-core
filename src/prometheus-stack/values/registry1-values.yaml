@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.6.0
+      tag: v3.7.1
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
@@ -48,9 +48,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.85.0
+    tag: v0.86.1
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.85.0
+      tag: v0.86.1
