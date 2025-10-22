@@ -14,6 +14,7 @@ metadata:
     app.kubernetes.io/component: keycloak
 spec:
   groups:
+    # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
     - name: keycloak-logging-alerts
       rules:
         - alert: KeycloakRealmModificationsDetected
@@ -51,4 +52,5 @@ spec:
           annotations:
             summary: "Keycloak system admin modifications detected in {{`{{ $labels.realmName }}`}}"
             description: "Potentially sensitive admin changes involving system administrators detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+    # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
 {{- end }}
