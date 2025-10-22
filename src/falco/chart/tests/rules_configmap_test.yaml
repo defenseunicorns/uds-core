@@ -17,6 +17,9 @@ tests:
       disabledRules: []
       incubatingRulesEnabled: false
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -40,6 +43,9 @@ tests:
       disabledRules: []
       incubatingRulesEnabled: true
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -66,6 +72,9 @@ tests:
         - "Custom Rule 2"
       incubatingRulesEnabled: false
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -95,6 +104,9 @@ tests:
         - "Custom Rule 2"
       incubatingRulesEnabled: true
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -126,6 +138,9 @@ tests:
         - "Custom Rule"
       incubatingRulesEnabled: true
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -153,6 +168,9 @@ tests:
       disabledRules: []
       incubatingRulesEnabled: false
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-disabled-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -164,6 +182,9 @@ tests:
           pattern: '- rule: "Change thread namespace"'
 
   - it: should include stable rules by default
+    documentSelector:
+      path: metadata.name
+      value: falco-stable-rules
     asserts:
       - isNotEmpty:
           path: data["stable-rules.yaml"]
@@ -171,13 +192,20 @@ tests:
   - it: should not include sandbox rules when sandboxRulesEnabled is false
     set:
       sandboxRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-sandbox-rules
     asserts:
-      - isNull:
+      - matchRegex:
           path: data["sandbox-rules.yaml"]
+          pattern: '# Sandbox rules are disabled by default'
 
   - it: should include sandbox rules when sandboxRulesEnabled is true
     set:
       sandboxRulesEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: falco-sandbox-rules
     asserts:
       - isNotEmpty:
           path: data["sandbox-rules.yaml"]
@@ -185,13 +213,20 @@ tests:
   - it: should not include incubating rules when incubatingRulesEnabled is false
     set:
       incubatingRulesEnabled: false
+    documentSelector:
+      path: metadata.name
+      value: falco-incubating-rules
     asserts:
-      - isNull:
+      - matchRegex:
           path: data["incubating-rules.yaml"]
+          pattern: '# Incubating rules are disabled by default'
 
   - it: should include incubating rules when incubatingRulesEnabled is true
     set:
       incubatingRulesEnabled: true
+    documentSelector:
+      path: metadata.name
+      value: falco-incubating-rules
     asserts:
       - isNotEmpty:
           path: data["incubating-rules.yaml"]
