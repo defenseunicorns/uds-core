@@ -35,7 +35,7 @@ runs:
         uds run -f src/falco/tasks.yaml update-rules
 
         # Update Velero CRDs
-        uds run src/velero/tasks.yaml update-crds
+        uds run -f src/velero/tasks.yaml update-crds
 
     - name: Check generated files for diffs
       shell: bash
