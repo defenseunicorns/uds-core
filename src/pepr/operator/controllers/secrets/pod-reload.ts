@@ -166,10 +166,8 @@ export async function handleResourceUpdate(
   const { name, namespace } = resource.metadata;
   const cacheKey = `${namespace}/${name}`;
 
-  const data = resource.data;
-  if (!data) {
-    return;
-  }
+  // Use an empty object if data is undefined or null
+  const data = resource.data || {};
 
   // Compute checksum of the current resource data
   const currentChecksum = computeResourceChecksum(data);
@@ -265,7 +263,7 @@ export async function handleResourceUpdate(
   );
 
   try {
-    await reloadPods(namespace, podsToReload, `${resourceType} ${name} change`, log);
+    await reloadPods(namespace, podsToReload, `${resourceType} ${name} change`, log, resourceType);
   } catch (error) {
     log.error(
       { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },

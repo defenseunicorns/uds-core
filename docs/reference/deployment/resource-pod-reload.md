@@ -107,10 +107,10 @@ For more details on configuring Secret Pod Reload for SSO clients, see the [Secr
 
 ## Monitoring and Troubleshooting
 
-When a resource is updated and triggers a restart, the controller generates Kubernetes events with the reason `ResourceChanged`. You can view these events using:
+When a resource is updated and triggers a restart, the controller generates Kubernetes events with the reason `SecretChanged` or `ConfigMapChanged`. You can view these events using:
 
 ```bash
-kubectl get events -n <namespace> --field-selector reason=ResourceChanged
+kubectl get events -n <namespace> --field-selector reason=SecretChanged
 ```
 
 Additionally, when deployments are restarted, you'll see `ScalingReplicaSet` events for the affected deployments.
