@@ -34,6 +34,9 @@ runs:
         # Update Falco rules
         uds run -f src/falco/tasks.yaml update-rules
 
+        # Update Velero CRDs
+        uds run src/velero/tasks.yaml update-crds
+
     - name: Check generated files for diffs
       shell: bash
       run: |
@@ -56,6 +59,12 @@ runs:
           # Diffs for Falco rules
           DIFFS=true
           echo -e "\033[33m⚠️ Falco rules are not up to date, please run \`uds run -f src/falco/tasks.yaml update-rules\` and commit the changes.\033[0m"
+        fi
+
+        if [ ! -z "$(git status -s src/velero/chart/templates/crds/)" ]; then
+          # Diffs for Velero CRDs
+          DIFFS=true
+          echo -e "\033[33m⚠️ Velero CRDs are not up to date, please run \`uds run -f src/velero/tasks.yaml update-crds\` and commit the changes.\033[0m"
         fi
 
         if [ "${DIFFS}" = "true" ]; then

@@ -17,6 +17,7 @@ ignore:
   - "uds-docs/**"
   - "/tmp/**"
   - "src/falco/chart/rules/**"
+  - "src/velero/chart/templates/crds/**"
 
 rules:
   anchors: enable

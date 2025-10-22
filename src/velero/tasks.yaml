@@ -1,6 +1,11 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: VELERO_CRD_VERSION
+    # renovate: datasource=github-tags depName=vmware-tanzu/helm-charts extractVersion=^velero-(?<version>.*)$ versioning=semver
+    default: "11.1.0"  # Helm chart version, not app version
+
 tasks:
   - name: validate
     actions:
@@ -104,3 +109,34 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Velero E2E tests"
+
+  - name: update-crds
+    description: "Update Velero CRDs from upstream"
+    actions:
+      - description: "Download Velero CRDs from upstream"
+        cmd: |-
+          bash -c '
+          set -e
+          CHART_DIR="src/velero/chart/templates"
+          BASE_URL="https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-${VELERO_CRD_VERSION}/charts/velero/crds"
+
+          echo "Updating Velero CRDs to version ${VELERO_CRD_VERSION}"
+
+          # Fetch list of CRD files from GitHub API
+          echo "Fetching CRD list from upstream..."
+          CRD_FILES=$(curl -sSL "https://api.github.com/repos/vmware-tanzu/helm-charts/contents/charts/velero/crds?ref=velero-${VELERO_CRD_VERSION}" | grep -o "\"name\": \"[^\"]*\.yaml\"" | cut -d\" -f4)
+
+          if [ -z "$CRD_FILES" ]; then
+            echo "Error: Could not fetch CRD list from upstream"
+            exit 1
+          fi
+
+          # Download each CRD
+          for crd_file in $CRD_FILES; do
+            echo "Downloading ${crd_file}"
+            curl -sSL "${BASE_URL}/${crd_file}" -o "${CHART_DIR}/crds/${crd_file}"
+            sed -i "1i# Copyright 2025 Defense Unicorns\n# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial\n" "${CHART_DIR}/crds/${crd_file}"
+          done
+
+          echo "Successfully updated $(echo "$CRD_FILES" | wc -w) CRDs"
+          '
