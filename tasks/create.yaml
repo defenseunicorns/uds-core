@@ -15,7 +15,7 @@ variables:
 
   - name: UNICORN_PEPR_IMAGE
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
-    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.55.5
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v0.55.6
 
   - name: LAYER
 
