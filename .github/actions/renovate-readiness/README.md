@@ -15,7 +15,16 @@ The action performs the following steps:
 2. **Branch Name Processing**: The action extracts the package name from the branch name by removing the `renovate/` prefix.
 
 3. **Special Case Handling**:
-   - **Pepr Updates**: For Pepr updates, the action compares the version in `package.json` with the image versions in `tasks/create.yaml`. If they don't match, it adds the `waiting on ironbank` label.
+   - **Pepr Updates**: For Pepr updates, the action validates that all three Pepr versions are in sync:
+     - `package.json` dependency version
+     - `REGISTRY1_PEPR_IMAGE` in `tasks/create.yaml`
+     - `UNICORN_PEPR_IMAGE` in `tasks/create.yaml`
+
+     The action applies specific labels based on which versions are out of sync:
+     - `waiting on upstream`: If package.json version is behind both/either image versions (indicates a Pepr release issue)
+     - `waiting on ironbank`: If Ironbank image is behind package.json
+     - `waiting on unicorn`: If Unicorn image is behind package.json
+     - Multiple `waiting on` labels can be applied if multiple images are behind
    - **Support Dependencies**: For support dependency updates, the action adds the `needs-review` label and sets `should_process` to `false` to prevent excessive IAC runs.
 
 4. **Regular Package Updates**:
