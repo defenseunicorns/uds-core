@@ -127,7 +127,7 @@ tasks:
 
           # Fetch list of CRD files from GitHub API
           echo "Fetching CRD list from upstream..."
-          CRD_FILES=$(curl -sSL "https://api.github.com/repos/vmware-tanzu/helm-charts/contents/charts/velero/crds?ref=velero-${VELERO_CRD_VERSION}" | grep -o "\"name\": \"[^\"]*\.yaml\"" | cut -d\" -f4)
+          CRD_FILES=$(curl -sSL "https://api.github.com/repos/vmware-tanzu/helm-charts/contents/charts/velero/crds?ref=velero-${VELERO_CRD_VERSION}" | uds zarf tools yq '.[].name')
 
           if [ -z "$CRD_FILES" ]; then
             echo "Error: Could not fetch CRD list from upstream"
