@@ -1,6 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.4/tasks/lint.yaml
+
 variables:
   - name: VELERO_CRD_VERSION
     # renovate: datasource=github-tags depName=vmware-tanzu/helm-charts extractVersion=^velero-(?<version>.*)$ versioning=semver
@@ -114,9 +117,9 @@ tasks:
     description: "Update Velero CRDs from upstream"
     actions:
       - description: "Download Velero CRDs from upstream"
-        cmd: |-
-          bash -c '
-          set -e
+        shell:
+          linux: bash
+        cmd: |
           CHART_DIR="src/velero/chart/templates"
           BASE_URL="https://raw.githubusercontent.com/vmware-tanzu/helm-charts/refs/tags/velero-${VELERO_CRD_VERSION}/charts/velero/crds"
 
@@ -135,8 +138,8 @@ tasks:
           for crd_file in $CRD_FILES; do
             echo "Downloading ${crd_file}"
             curl -sSL "${BASE_URL}/${crd_file}" -o "${CHART_DIR}/crds/${crd_file}"
-            sed -i "1i# Copyright 2025 Defense Unicorns\n# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial\n" "${CHART_DIR}/crds/${crd_file}"
           done
 
           echo "Successfully updated $(echo "$CRD_FILES" | wc -w) CRDs"
-          '
+      - description: "Add License Headers to CRDs"
+        task: common-setup:fix-license

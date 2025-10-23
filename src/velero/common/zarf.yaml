@@ -51,8 +51,7 @@ components:
           - description: Handle Helm ownership metadata change on upgrade
             cmd: |
               # Update Helm ownership metadata for existing Velero CRDs
-              for crd in $(./zarf tools kubectl get crd -o name | grep velero.io); do
-                crd_name=$(echo "$crd" | cut -d/ -f2)
+              for crd_name in $(./zarf tools kubectl get crd -l 'component=velero' -o jsonpath='{.items[*].metadata.name}'); do
                 echo "Updating metadata for $crd_name"
                 ./zarf tools kubectl label crd "$crd_name" app.kubernetes.io/managed-by=Helm --overwrite
                 ./zarf tools kubectl annotate crd "$crd_name" meta.helm.sh/release-name="uds-velero-config" --overwrite
