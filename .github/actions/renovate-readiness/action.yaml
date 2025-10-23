@@ -87,31 +87,62 @@ runs:
         echo "Unicorn image version: $UNICORN_IMAGE_VERSION"
 
         # Check if all three versions are in sync
-        VERSIONS_MATCH=true
+        IRONBANK_MISMATCH=false
+        UNICORN_MISMATCH=false
+        UPSTREAM_BEHIND=false
+
         if [[ "$PEPR_VERSION" != "$IRONBANK_IMAGE_VERSION" ]]; then
           echo "ERROR: package.json version ($PEPR_VERSION) does not match Ironbank image version ($IRONBANK_IMAGE_VERSION)"
-          VERSIONS_MATCH=false
+          # Check if package.json version is less than image version (upstream is behind)
+          if printf '%s\n' "$PEPR_VERSION" "$IRONBANK_IMAGE_VERSION" | sort -V | head -n1 | grep -q "^$PEPR_VERSION$" && [[ "$PEPR_VERSION" != "$IRONBANK_IMAGE_VERSION" ]]; then
+            UPSTREAM_BEHIND=true
+          else
+            IRONBANK_MISMATCH=true
+          fi
         fi
 
         if [[ "$PEPR_VERSION" != "$UNICORN_IMAGE_VERSION" ]]; then
           echo "ERROR: package.json version ($PEPR_VERSION) does not match Unicorn image version ($UNICORN_IMAGE_VERSION)"
-          VERSIONS_MATCH=false
+          # Check if package.json version is less than image version (upstream is behind)
+          if printf '%s\n' "$PEPR_VERSION" "$UNICORN_IMAGE_VERSION" | sort -V | head -n1 | grep -q "^$PEPR_VERSION$" && [[ "$PEPR_VERSION" != "$UNICORN_IMAGE_VERSION" ]]; then
+            UPSTREAM_BEHIND=true
+          else
+            UNICORN_MISMATCH=true
+          fi
         fi
 
-        if [[ "$IRONBANK_IMAGE_VERSION" != "$UNICORN_IMAGE_VERSION" ]]; then
-          echo "ERROR: Ironbank image version ($IRONBANK_IMAGE_VERSION) does not match Unicorn image version ($UNICORN_IMAGE_VERSION)"
-          VERSIONS_MATCH=false
-        fi
-
-        # Apply labels based on version sync status
-        if [[ "$VERSIONS_MATCH" == "false" ]]; then
-          echo "Versions are not in sync. Waiting on image updates."
+        # Apply labels and exit if any mismatch
+        if [[ "$UPSTREAM_BEHIND" == "true" ]] || [[ "$IRONBANK_MISMATCH" == "true" ]] || [[ "$UNICORN_MISMATCH" == "true" ]]; then
+          echo "Pepr versions are not in sync. Waiting on updates."
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "needs-review" || true
-          gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on ironbank"
+
+          if [[ "$UPSTREAM_BEHIND" == "true" ]]; then
+            echo "Upstream package.json is behind image versions - possible Pepr release issue"
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on upstream"
+            gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
+            gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+          else
+            gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on upstream" || true
+
+            if [[ "$IRONBANK_MISMATCH" == "true" ]]; then
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on ironbank"
+            else
+              gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
+            fi
+
+            if [[ "$UNICORN_MISMATCH" == "true" ]]; then
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on unicorn"
+            else
+              gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+            fi
+          fi
+
           exit 1
         else
-          echo "Versions are in sync. Ready for review."
+          echo "All Pepr versions are in sync. Ready for review."
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on upstream" || true
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
           gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         fi
 
@@ -220,7 +251,7 @@ runs:
           echo "Current labels: $CURRENT_LABELS"
 
           # Define the managed labels we care about
-          MANAGED_LABELS=("waiting on ironbank" "waiting on rapidfort" "needs-review" "helm-chart-only" "major-helm-update" "major-image-update")
+          MANAGED_LABELS=("waiting on upstream" "waiting on ironbank" "waiting on unicorn" "waiting on rapidfort" "needs-review" "helm-chart-only" "major-helm-update" "major-image-update")
 
           # Remove labels that are currently on the PR but not in the new set
           for LABEL in "${MANAGED_LABELS[@]}"; do
