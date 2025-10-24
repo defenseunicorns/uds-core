@@ -44,7 +44,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.4.1
-      - ghcr.io/defenseunicorns/uds/identity-config:0.19.0
+      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.19.0
 
   - name: keycloak
     required: true
