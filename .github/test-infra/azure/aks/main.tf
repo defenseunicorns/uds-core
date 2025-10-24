@@ -41,7 +41,8 @@ resource "azurerm_role_assignment" "cluster_dns" {
 resource "azurerm_role_assignment" "aks_network_role" {
   principal_id         = azurerm_user_assigned_identity.cluster_identity.principal_id
   role_definition_name = "Network Contributor"
-  scope                = azurerm_resource_group.this.id
+  scope                = azurerm_virtual_network.cluster-vnet.id
+  depends_on           = [azurerm_user_assigned_identity.cluster_identity]
 }
 
 ## Cluster user assigned identity. Required for API server vnet integration
@@ -62,6 +63,8 @@ resource "azapi_resource" "aks_cluster" {
   tags = {
     "Owner" = "UDS Foundations"
   }
+
+  depends_on = [azurerm_role_assignment.aks_network_role]
 
   body = {
     identity = {

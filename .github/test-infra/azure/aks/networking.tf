@@ -54,6 +54,7 @@ resource "azurerm_subnet" "cluster_api_subnet" {
       name = "Microsoft.ContainerService/managedClusters"
       actions = [
         "Microsoft.Network/virtualNetworks/subnets/join/action",
+        "Microsoft.Network/virtualNetworks/subnets/joinLoadBalancer/action",
       ]
     }
   }
