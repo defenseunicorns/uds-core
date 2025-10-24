@@ -174,6 +174,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     "curl-pkg-remote-ns-ingress",
     "curl-ns-remote-ns-2",
   );
+  const INTERNAL_CURL_COMMAND_7 = getCurlCommand("curl-pkg-remote-cidr", "curl-ns-remote-cidr");
 
   const GOOGLE_CURL = [
     "curl",
@@ -259,20 +260,20 @@ describe("Network Policy Validation", { retry: 2 }, () => {
   });
 
   test.concurrent("Ingress Gateway Bypass", async () => {
-    const authservice_curl = [
+    const authservice_curl_header = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
+      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
     ];
 
-    // Validate that request is not success when using Ingress Gateway Bypass
-    const failed_response = await execInPod(
+    // Validate that request is not successful when using Ingress Gateway Bypass
+    const failed_response2 = await execInPod(
       "test-admin-app",
       testAdminApp,
       "curl",
-      authservice_curl,
+      authservice_curl_header,
     );
-    expect(failed_response.stdout).toBe("403");
+    expect(failed_response2.stdout).toBe("403");
   });
 
   test.concurrent("RemoteNamespace Ingress and Egress", async () => {
@@ -284,6 +285,20 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       INTERNAL_CURL_COMMAND_5,
     );
     expect(success_response.stdout).toBe("200");
+
+    // Default Deny for Blocked Port
+    const blocked_port_curl = getCurlCommand(
+      "curl-pkg-remote-ns-ingress",
+      "curl-ns-remote-ns-2",
+      9999,
+    );
+    const denied_port_response = await execInPod(
+      "curl-ns-remote-ns-1",
+      curlPodName6,
+      "curl-pkg-remote-ns-egress",
+      blocked_port_curl,
+    );
+    expect(isResponseError(denied_port_response)).toBe(true);
   });
 
   test.concurrent("Kube API Restrictions", async () => {
@@ -301,22 +316,32 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       kubeApi_curl,
     );
     expect(success_unauthorized_response.stdout).toContain("200");
+
+    // Default Deny for Blocked Port
+    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
+    const denied_port_response = await execInPod(
+      "curl-ns-kube-api",
+      curlPodName8,
+      "curl-pkg-kube-api",
+      blocked_port_curl,
+    );
+    expect(isResponseError(denied_port_response)).toBe(true);
   });
 
   test.concurrent("RemoteCidr Restrictions", async () => {
-    const success_google_response = await execInPod(
+    // Validate successful request when using RemoteCidr
+    const success_response = await execInPod(
       "test-admin-app",
       testAdminApp,
       "curl",
-      GOOGLE_CURL,
+      INTERNAL_CURL_COMMAND_7,
     );
-    expect(success_google_response.stdout).toBe("200");
+    expect(success_response.stdout).toBe("200");
   });
 
   test("Egress Ambient", { concurrent: true, retry: 3 }, async () => {
     // Wait 10 seconds for waypoint to be ready
     await new Promise(resolve => setTimeout(resolve, 10000));
-
     const egress_ambient_http_curl = [
       "sh",
       "-c",
