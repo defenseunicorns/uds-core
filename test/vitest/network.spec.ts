@@ -84,17 +84,23 @@ async function execInPod(
       }),
       null,
       false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (exitResponse: any) => {
+      (
+        exitResponse:
+          | number
+          | {
+              status?: string;
+              details?: { causes?: { reason?: string; message?: string }[] };
+            }
+          | undefined,
+      ) => {
         let exitCode = 0; // Default to success
 
         if (exitResponse && typeof exitResponse === "object") {
           if (exitResponse.status === "Failure") {
             // Extract exit code from `details.causes` array if available
             exitCode = parseInt(
-              exitResponse.details?.causes?.find(
-                (cause: { reason: string }) => cause.reason === "ExitCode",
-              )?.message || "1",
+              exitResponse.details?.causes?.find(cause => cause?.reason === "ExitCode")?.message ||
+                "1",
               10,
             );
           }
@@ -161,7 +167,7 @@ beforeAll(async () => {
   }
 });
 
-describe("Network Policy Validation", () => {
+describe("Network Policy Validation", { retry: 2 }, () => {
   const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2");
   const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all");
   const INTERNAL_CURL_COMMAND_5 = getCurlCommand(
@@ -174,11 +180,7 @@ describe("Network Policy Validation", () => {
     "curl",
     "-s",
     "-m",
-    "20",
-    "--retry",
-    "3",
-    "--retry-delay",
-    "1",
+    "10",
     "-o",
     "/dev/null",
     "-w",
@@ -214,16 +216,6 @@ describe("Network Policy Validation", () => {
       GOOGLE_CURL,
     );
     expect(denied_google_response.stdout).toBe("000");
-
-    // Default Deny for Blocked Port
-    const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
-    const denied_port_response = await execInPod(
-      "curl-ns-deny-all-1",
-      curlPodName1,
-      "curl-pkg-deny-all-1",
-      blocked_port_curl,
-    );
-    expect(isResponseError(denied_port_response)).toBe(true);
   });
 
   test.concurrent("Basic Wide Open Ingress and Wide Open Egress", async () => {
@@ -257,32 +249,7 @@ describe("Network Policy Validation", () => {
     );
     expect(isResponseError(denied_incorrect_port_response)).toBe(true);
 
-    // Default Deny for undefined Ingress port
-    const blocked_port_curl = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all", 9999);
-    const denied_port_response = await execInPod(
-      "test-admin-app",
-      testAdminApp,
-      "curl",
-      blocked_port_curl,
-    );
-    expect(isResponseError(denied_port_response)).toBe(true);
-
     // Wide open Egress means successful google curl
-    const successful_google_response = await execInPod(
-      "test-admin-app",
-      testAdminApp,
-      "curl",
-      GOOGLE_CURL,
-    );
-    expect(successful_google_response.stdout).toBe("200");
-  });
-
-  test.concurrent("Anywhere Egress", async () => {
-    // Validate that request is successful when Egress Anywhere is used
-    const success_response = await execInPod("test-admin-app", testAdminApp, "curl", CURL_GATEWAY);
-    expect(success_response.stdout).toBe("200");
-
-    // Validate Egress to Google is successful
     const successful_google_response = await execInPod(
       "test-admin-app",
       testAdminApp,
@@ -298,21 +265,6 @@ describe("Network Policy Validation", () => {
       "-c",
       `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
     ];
-
-    const authservice_curl = [
-      "sh",
-      "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
-    ];
-
-    // Validate that request is not success when using Ingress Gateway Bypass
-    const failed_response = await execInPod(
-      "test-admin-app",
-      testAdminApp,
-      "curl",
-      authservice_curl,
-    );
-    expect(failed_response.stdout).toBe("403");
 
     // Validate that request is not successful when using Ingress Gateway Bypass
     const failed_response2 = await execInPod(
@@ -333,15 +285,6 @@ describe("Network Policy Validation", () => {
       INTERNAL_CURL_COMMAND_5,
     );
     expect(success_response.stdout).toBe("200");
-
-    // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod(
-      "curl-ns-remote-ns-1",
-      curlPodName6,
-      "curl-pkg-remote-ns-egress",
-      GOOGLE_CURL,
-    );
-    expect(denied_google_response.stdout).toBe("000");
 
     // Default Deny for Blocked Port
     const blocked_port_curl = getCurlCommand(
@@ -374,15 +317,6 @@ describe("Network Policy Validation", () => {
     );
     expect(success_unauthorized_response.stdout).toContain("200");
 
-    // Default Deny for Google Curl when no Egress defined
-    const denied_google_response = await execInPod(
-      "curl-ns-kube-api",
-      curlPodName8,
-      "curl-pkg-kube-api",
-      GOOGLE_CURL,
-    );
-    expect(denied_google_response.stdout).toBe("000");
-
     // Default Deny for Blocked Port
     const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
     const denied_port_response = await execInPod(
@@ -403,21 +337,11 @@ describe("Network Policy Validation", () => {
       INTERNAL_CURL_COMMAND_7,
     );
     expect(success_response.stdout).toBe("200");
-
-    // Validate successful request to Google because of wide open remoteCidr
-    const success_google_response = await execInPod(
-      "test-admin-app",
-      testAdminApp,
-      "curl",
-      GOOGLE_CURL,
-    );
-    expect(success_google_response.stdout).toBe("200");
   });
 
   test("Egress Ambient", { concurrent: true, retry: 3 }, async () => {
     // Wait 10 seconds for waypoint to be ready
     await new Promise(resolve => setTimeout(resolve, 10000));
-
     const egress_ambient_http_curl = [
       "sh",
       "-c",

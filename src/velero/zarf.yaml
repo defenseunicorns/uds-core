@@ -8,11 +8,6 @@ metadata:
   url: https://velero.io/
 
 components:
-  - name: velero-crds
-    required: true
-    import:
-      path: common
-
   - name: velero
     required: true
     only:

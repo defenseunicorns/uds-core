@@ -13,4 +13,4 @@ securityContext:
   capabilities:
     drop:
       - ALL
-# configImage: registry1.dso.mil/opensource/defense-unicorns/uds-identity-config:x.x.x
+configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.19.0

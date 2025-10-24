@@ -36,7 +36,7 @@ metadata:
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.27.0-upstream
+    ref: 0.54.1-upstream
 
 overrides:
  istio-admin-gateway:
