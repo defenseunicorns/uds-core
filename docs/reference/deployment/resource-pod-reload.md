@@ -1,14 +1,14 @@
 ---
-title: Resource Pod Reload
+title: Pod Reload
 tableOfContents:
   maxHeadingLevel: 4
 ---
 
-UDS Core provides a Resource Pod Reload mechanism that automatically reloads pods when secrets or ConfigMaps are updated. This feature is particularly useful for credentials, certificates, and configuration data that applications need to refresh without manual intervention.
+UDS Core provides a Pod Reload mechanism that automatically reloads pods when Secrets or ConfigMaps are updated. This feature is particularly useful for credentials, certificates, and configuration data that applications need to refresh without manual intervention.
 
 ## How It Works
 
-The resource pod reload controller watches for changes to Kubernetes secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When such a resource is updated, the controller will:
+The pod reload controller watches for changes to Kubernetes Secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When such a resource is updated, the controller will:
 
 1. Identify which pods or deployments should be restarted
 2. For pods managed by standard controllers (Deployments, ReplicaSets, StatefulSets, DaemonSets), restart by patching the controller's pod template annotations
@@ -17,7 +17,7 @@ The resource pod reload controller watches for changes to Kubernetes secrets and
 
 ## Configuration
 
-### Enabling Resource Pod Reload
+### Enabling Pod Reload
 
 To enable automatic pod reload when a secret or ConfigMap changes, add the following label to your resource:
 
@@ -46,9 +46,9 @@ This will restart all pods matching the specified label selector when the resour
 #### 2. Auto-Discovery (Default)
 
 If you don't specify a pod selector, UDS Core will automatically discover and restart pods that are consuming the resource through:
-- Volume mounts (secret or ConfigMap volumes)
+- Volume mounts (Secret or ConfigMap volumes)
 - Environment variables (env or envFrom)
-- Projected volumes using the secret or ConfigMap
+- Projected volumes using the Secret or ConfigMap
 
 This auto-discovery approach ensures that only pods actually using the resource are restarted.
 
@@ -56,7 +56,7 @@ This auto-discovery approach ensures that only pods actually using the resource 
 
 ### Secret Example
 
-Here's an example of a secret with pod reload enabled:
+Here's an example of a Secret with pod reload enabled:
 
 ```yaml
 apiVersion: v1
@@ -101,9 +101,9 @@ When this ConfigMap is updated (for example, when adding new security rules), al
 
 ## Integration with SSO
 
-The Resource Pod Reload functionality can be used with SSO client secrets. You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `secretLabels` field in your Package CR.
+The Pod Reload functionality can be used with SSO client secrets. You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `secretLabels` field in your Package CR.
 
-For more details on configuring Secret Pod Reload for SSO clients, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
+For more details on configuring Pod Reload for SSO clients, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
 
 ## Monitoring and Troubleshooting
 
@@ -111,6 +111,7 @@ When a resource is updated and triggers a restart, the controller generates Kube
 
 ```bash
 kubectl get events -n <namespace> --field-selector reason=SecretChanged
+kubectl get events -n <namespace> --field-selector reason=ConfigMapChanged
 ```
 
 Additionally, when deployments are restarted, you'll see `ScalingReplicaSet` events for the affected deployments.
