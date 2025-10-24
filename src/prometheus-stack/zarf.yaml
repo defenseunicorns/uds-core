@@ -30,12 +30,12 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - "quay.io/prometheus/node-exporter:v1.9.1"
+      - "quay.io/prometheus/node-exporter:v1.10.0"
       - "quay.io/prometheus-operator/prometheus-operator:v0.86.1"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0"
       - "quay.io/prometheus/alertmanager:v0.28.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.86.1"
-      - "quay.io/prometheus/prometheus:v3.7.1"
+      - "quay.io/prometheus/prometheus:v3.7.2"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.3"
 
   - name: kube-prometheus-stack
@@ -55,7 +55,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.17.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.28.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.86.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.7.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.7.2"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.3"
 
   - name: kube-prometheus-stack
