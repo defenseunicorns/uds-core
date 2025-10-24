@@ -8,7 +8,7 @@ UDS Core provides three distinct approaches for customizing Keycloak, each servi
 
 1. **Helm Chart Values** - Configure operational settings and simple branding via bundle overrides
 2. **UDS Identity Config Image** - Add custom code, themes, and plugins by building a custom image
-3. **OpenTofu/IaC** - Manage Keycloak resources (clients, groups, users) declaratively after deployment
+3. **OpenTofu/IaC** - Manage Keycloak resources (auth flows, identity providers, groups, users) declaratively after deployment
 
 This guide helps you choose the right approach for your customization needs.
 
@@ -27,7 +27,7 @@ This guide helps you choose the right approach for your customization needs.
 | Add custom plugin/JAR | Identity Config Image | [Add Additional JARs](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#add-additional-jars) |
 | Customize theme beyond branding | Identity Config Image | [Customizing Theme](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-theme) |
 | Modify realm configuration | Identity Config Image | [Customizing Realm](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#customizing-realm) |
-| Manage clients/groups as code | OpenTofu/IaC | [OpenTofu Configuration](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#opentofu-keycloak-client-configuration) |
+| Manage auth flows/identity providers/groups as code | OpenTofu/IaC | [OpenTofu Configuration](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/#opentofu-keycloak-client-configuration) |
 
 ## Customization Approaches
 
@@ -38,7 +38,7 @@ This guide helps you choose the right approach for your customization needs.
 **Examples**:
 - Scaling replicas or adjusting resources
 - Configuring session timeouts
-- Enabling/disabling authentication methods
+- Enabling/disabling authentication methods at install time
 - Simple branding (logo, favicon, background)
 
 **Key Point**: Changes are applied via UDS bundle overrides and don't require rebuilding images.
@@ -84,7 +84,7 @@ packages:
 **Use for**: Managing Keycloak resources declaratively after deployment
 
 **Examples**:
-- Creating clients for applications
+- Managing complex auth flows
 - Managing groups and role mappings
 - Configuring identity providers
 - Automating user provisioning
@@ -105,7 +105,7 @@ packages:
 
 ### Choose Helm Chart Values When:
 - You need to adjust operational settings (resources, replicas, timeouts)
-- You want to enable/disable built-in authentication methods
+- You want to enable/disable built-in authentication methods at install time
 - You need simple branding changes (logo, favicon, background)
 - Changes are environment-specific
 - You don't want to rebuild images
