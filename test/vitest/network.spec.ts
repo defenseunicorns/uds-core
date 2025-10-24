@@ -161,7 +161,7 @@ beforeAll(async () => {
   }
 });
 
-describe("Network Policy Validation", () => {
+describe("Network Policy Validation", { retry: 2 }, () => {
   const INTERNAL_CURL_COMMAND_1 = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2");
   const INTERNAL_CURL_COMMAND_2 = getCurlCommand("curl-pkg-allow-all", "curl-ns-allow-all");
   const INTERNAL_CURL_COMMAND_5 = getCurlCommand(
@@ -174,11 +174,7 @@ describe("Network Policy Validation", () => {
     "curl",
     "-s",
     "-m",
-    "20",
-    "--retry",
-    "3",
-    "--retry-delay",
-    "1",
+    "10",
     "-o",
     "/dev/null",
     "-w",
