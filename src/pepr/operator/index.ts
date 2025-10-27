@@ -19,7 +19,7 @@ import {
   handleConfigMapUpdate,
   handleSecretDelete,
   handleSecretUpdate,
-} from "./controllers/secrets/pod-reload";
+} from "./controllers/reload/pod-reload";
 
 // Controller imports
 import {
