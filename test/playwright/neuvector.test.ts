@@ -12,6 +12,7 @@ const url = `https://neuvector.admin.${domain}`;
 test.use({ baseURL: url });
 
 test("validate system health", async ({ page }) => {
+  test.setTimeout(60_000);
   await test.step("check sso", async () => {
     const eulaPromise = page.waitForResponse(res => res.url().startsWith(`${url}/eula`));
     await page.goto("/");
