@@ -13,7 +13,7 @@ test.use({ baseURL: url });
 
 test("validate system health", async ({ page }) => {
   await test.step("check sso", async () => {
-    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    const eulaPromise = page.waitForResponse(res => res.url().startsWith(`${url}/eula`));
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
     await eulaPromise;
