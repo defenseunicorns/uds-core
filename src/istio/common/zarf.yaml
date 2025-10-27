@@ -20,11 +20,11 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.26.2
+        version: 1.27.3
         namespace: istio-system
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.26.2
+        version: 1.27.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
@@ -43,13 +43,13 @@ components:
           - "chart/values.yaml"
       - name: cni
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.26.2
+        version: 1.27.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml"
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.26.2
+        version: 1.27.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-ztunnel.yaml"
@@ -90,28 +90,18 @@ components:
             setVariables:
               - name: CNI_BIN_DIR
         after:
-          - description: "Ensure istio ambient is enabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio.io/dataplane-mode=ambient --overwrite"
-          - description: "Ensure istio-injection is disabled for Pepr"
-            cmd: "./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite"
-          - description: "Cycle Pepr to refresh connections post-ambient"
+          - description: "Ensure Istio Ambient is enabled for Pepr"
             cmd: |
-              echo "Checking if Pepr pods have sidecars and need restart..."
-              if ./zarf tools kubectl get pods -n pepr-system -o jsonpath="{range .items[*]}{.metadata.name}:{range .spec.initContainers[*]}{.name} {end}{range .spec.containers[*]}{.name} {end}{'\n'}{end}" | grep -q 'istio-proxy'; then
-                echo "Istio sidecar detected, restarting Pepr deployments..."
-                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core-watcher > /dev/null 2>&1; then
-                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core-watcher
-                fi
-                if ./zarf tools kubectl get deploy -n pepr-system pepr-uds-core > /dev/null 2>&1; then
-                  ./zarf tools kubectl rollout restart -n pepr-system deploy/pepr-uds-core
-                fi
-              else
-                echo "No sidecars detected. Pepr pods are already Ambient-compatible. Skipping restart."
-              fi
+              # This is a duplicate of the action in src/pepr/zarf.yaml, just to ensure the labels are still correct after Istio installs
+              echo "Setting Ambient mode for pepr-system..."
+              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
+
+              echo "Disabling istio-injection on pepr-system..."
+              ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
   - name: gateway-api-crds
     required: true
     manifests:
       - name: gateway-api-crds
         files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.3.0/standard-install.yaml
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.4.0/standard-install.yaml

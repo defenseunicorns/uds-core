@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.3.5"
+  tag: "26.4.1"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.18.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.19.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -54,6 +54,7 @@ realmConfig:
   maxInFlightLoginsPerUser: 300
 
 # UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+# @lulaStart 96b7aa1b-b307-45c0-af40-8b57f3726693
 realmAuthFlows:
   USERNAME_PASSWORD_AUTH_ENABLED: true
   X509_AUTH_ENABLED: true
@@ -61,6 +62,7 @@ realmAuthFlows:
   OTP_ENABLED: true
   WEBAUTHN_ENABLED: false
   X509_MFA_ENABLED: false
+# @lulaEnd 96b7aa1b-b307-45c0-af40-8b57f3726693
 
 # Theme customizations with allowed types. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/UDS%20Core/IdAM/customization.md#branding-customizations
 themeCustomizations:
@@ -407,3 +409,14 @@ extraVolumeMounts: []
 # Additional truststore paths for Keycloak to scan for certificates
 # These paths will be added to the --truststore-paths startup argument
 truststorePaths: []
+
+# Detailed observability settings (Dashboards, Alerts, etc)
+# @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
+detailedObservability:
+  alerts:
+    enabled: false
+  dashboards:
+    enabled: true
+  logging:
+    enabled: true
+# @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12

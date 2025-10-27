@@ -8,7 +8,12 @@ import { K8s, kind } from "pepr";
 import { GenericKind } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { StatusObject as Status, StatusEnum } from "../crd/generated/package-v1alpha1";
+import { buildMigratedAuthserviceStatus } from "../crd/migrate";
+import {
+  AuthserviceClient,
+  StatusObject as Status,
+  StatusEnum,
+} from "../crd/generated/package-v1alpha1";
 
 export const uidSeen = new Set<string>();
 
@@ -70,13 +75,21 @@ export function shouldSkip(cr: UDSPackage) {
 export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
   log.debug(`Updating ${cr.metadata?.name}/${cr.metadata?.namespace} status to ${status.phase}`);
 
+  // Migrate legacy fields before patching status to satisfy CRD validation
+  // Specifically, older packages stored authserviceClients as string[]; new schema expects object[]
+  const migratedStatus: PkgStatus & { authserviceClients?: AuthserviceClient[] } = { ...status };
+  const normalized = buildMigratedAuthserviceStatus(cr);
+  if (normalized) {
+    migratedStatus.authserviceClients = normalized;
+  }
+
   // Update the status of the CRD
   await K8s(UDSPackage).PatchStatus({
     metadata: {
       name: cr.metadata!.name,
       namespace: cr.metadata!.namespace,
     },
-    status,
+    status: migratedStatus,
   });
 
   // Track the UID of the CRD to know if it has been seen before

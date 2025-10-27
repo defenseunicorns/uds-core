@@ -26,25 +26,25 @@ metadata:
 packages:
   - name: core-base
     repository: ghcr.io/defenseunicorns/packages/uds/core-base
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-identity-authorization
     repository: ghcr.io/defenseunicorns/packages/uds/core-identity-authorization
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-metrics-server
     repository: ghcr.io/defenseunicorns/packages/uds/core-metrics-server
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-runtime-security
     repository: ghcr.io/defenseunicorns/packages/uds/core-runtime-security
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-logging
     repository: ghcr.io/defenseunicorns/packages/uds/core-logging
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-monitoring
     repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
   - name: core-backup-restore
     repository: ghcr.io/defenseunicorns/packages/uds/core-backup-restore
-    ref: 0.29.0-upstream
+    ref: 0.54.1-upstream
 ```
 
 ## Layer Selection

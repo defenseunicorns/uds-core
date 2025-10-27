@@ -7,7 +7,7 @@ metadata:
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.53.0"
+  version: "0.54.1"
   # x-release-please-end
 
 variables:
@@ -88,7 +88,7 @@ components:
               DATA_DIR="${TMPDIR}/uds-checkpoint-data"
               mkdir -p "$DATA_DIR"
 
-              sudo tar --blocking-factor=64 -xpf uds-checkpoint.tar -C "$DATA_DIR"
+              sudo tar -xpf uds-checkpoint.tar -C "$DATA_DIR"
               K8S_TOKEN="$(sudo cat ${DATA_DIR}/k3s_data/server/token)"
               echo $K8S_TOKEN
               sudo docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"

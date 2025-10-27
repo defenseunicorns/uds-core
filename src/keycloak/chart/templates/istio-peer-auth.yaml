@@ -10,15 +10,4 @@ metadata:
 spec:
   mtls:
     mode: STRICT
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: keycloak
-  portLevelMtls:
-    # Keycloak 26.2.0 introduced transport layer encryption for cache (Infinispan) connections. This requires
-    # to disable mTLS at Istio layer
-    # See:
-    # - https://www.keycloak.org/server/caching#_running_inside_a_service_mesh
-    # - https://github.com/keycloak/keycloak/issues/39454
-    "7800":
-      mode: PERMISSIVE
 {{- end }}

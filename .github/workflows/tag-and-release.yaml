@@ -15,6 +15,7 @@ on:
       - main
 
 jobs:
+  # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
   tag-new-version:
     permissions: write-all
     runs-on: ubuntu-latest
@@ -23,7 +24,7 @@ jobs:
     steps:
       - name: Create release tag
         id: tag
-        uses: googleapis/release-please-action@c2a5a2bd6a758a0937f1ddb1e8950609867ed15c # v4.3.0
+        uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
       - id: release-flag
         run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
 
@@ -38,6 +39,7 @@ jobs:
     with:
       snapshot: false
     secrets: inherit
+  # @lulaEnd d364a8e6-95ab-448c-bb97-9f456c85b54f
 
   scan-release:
     needs: publish-uds-core-release

@@ -6,7 +6,7 @@ metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "0.53.0"
+  version: "0.54.1"
   # x-release-please-end
 
 packages:
@@ -32,12 +32,12 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.62.0
+    ref: v0.64.0
 
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 0.53.0
+    ref: 0.54.1
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
@@ -169,7 +169,18 @@ packages:
             - name: KEYCLOAK_HEAP_OPTIONS
               description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
               path: env[0].value
+            - name: KEYCLOAK_EXTRA_VOLUME_MOUNTS
+              description: "Extra volume mounts for Keycloak"
+              path: extraVolumeMounts
+            - name: KEYCLOAK_EXTRA_VOLUMES
+              description: "Extra volumes for Keycloak"
+              path: extraVolumes
+            - name: KEYCLOAK_TRUSTSTORE_PATHS
+              description: "Truststore paths for Keycloak"
+              path: truststorePaths
           values:
+            - path: detailedObservability.alerts.enabled
+              value: true
             - path: realmInitEnv
               value:
                 GOOGLE_IDP_ENABLED: true
@@ -186,6 +197,9 @@ packages:
       grafana:
         grafana:
           variables:
+            - name: GRAFANA_EXTRA_CONFIGMAP_MOUNTS
+              description: "Extra ConfigMap mounts for Grafana"
+              path: extraConfigmapMounts
             - name: GRAFANA_HA
               description: Enable HA Grafana
               path: autoscaling.enabled

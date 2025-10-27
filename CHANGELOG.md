@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.54.1](https://github.com/defenseunicorns/uds-core/compare/v0.54.0...v0.54.1) (2025-10-15)
+
+
+### Bug Fixes
+
+* velero crd helm ownership ([#2029](https://github.com/defenseunicorns/uds-core/issues/2029)) ([8a3969c](https://github.com/defenseunicorns/uds-core/commit/8a3969c3ec3a644f556dae3ce9e9d1ab4786bcc0))
+
+
+### Miscellaneous
+
+* **docs:** add falco prerequisites section ([#2027](https://github.com/defenseunicorns/uds-core/issues/2027)) ([bb30ede](https://github.com/defenseunicorns/uds-core/commit/bb30edee03b9f8e41e7d2c676de5cf82c63b0fe3))
+* uds-compliance-66 ([#2019](https://github.com/defenseunicorns/uds-core/issues/2019)) ([674334c](https://github.com/defenseunicorns/uds-core/commit/674334c0ab6c0dbec26e5e04254171d8cf438cbe))
+
+## [0.54.0](https://github.com/defenseunicorns/uds-core/compare/v0.53.1...v0.54.0) (2025-10-14)
+
+
+### Features
+
+* keycloak log-based alerting ([#1974](https://github.com/defenseunicorns/uds-core/issues/1974)) ([7b58b19](https://github.com/defenseunicorns/uds-core/commit/7b58b19b54fc28f962c012521bab9debf962bd15))
+* keycloak relies on Istio for mTLS ([#1993](https://github.com/defenseunicorns/uds-core/issues/1993)) ([c06d3ff](https://github.com/defenseunicorns/uds-core/commit/c06d3ff82c7fd99e726ee0b612d74c45a5250923))
+
+
+### Bug Fixes
+
+* velero crd upgrade process ([#2013](https://github.com/defenseunicorns/uds-core/issues/2013)) ([dd481a6](https://github.com/defenseunicorns/uds-core/commit/dd481a6b907f9a957f5509e9edec1809423420e7))
+
+
+### Miscellaneous
+
+* add icon annotations to packages ([#2007](https://github.com/defenseunicorns/uds-core/issues/2007)) ([11d1217](https://github.com/defenseunicorns/uds-core/commit/11d1217fffe4bd82ba91469e3ffbf5c612f6ba26))
+* add lula compliance mapping for keycloak ([#2004](https://github.com/defenseunicorns/uds-core/issues/2004)) ([d028cb6](https://github.com/defenseunicorns/uds-core/commit/d028cb6121fce29d290caa244e9d2c2bf0847096))
+* **deps:** update istio to 1.27.1 ([#1770](https://github.com/defenseunicorns/uds-core/issues/1770)) ([f35551b](https://github.com/defenseunicorns/uds-core/commit/f35551b3f301fff9e312426bc4af38babc54435e))
+* **deps:** update istio to v1.4.0 ([#2002](https://github.com/defenseunicorns/uds-core/issues/2002)) ([2a9dd4e](https://github.com/defenseunicorns/uds-core/commit/2a9dd4e433ad8fe98f87cd6a33132bc8a2640b68))
+* **deps:** update keycloak to v26.4.0 ([#1977](https://github.com/defenseunicorns/uds-core/issues/1977)) ([76cfa7e](https://github.com/defenseunicorns/uds-core/commit/76cfa7e47d9d5cc61b89d7472216b780cb8fe6e7))
+* **deps:** update support-deps ([#1978](https://github.com/defenseunicorns/uds-core/issues/1978)) ([de3c014](https://github.com/defenseunicorns/uds-core/commit/de3c014e33c143cc71640791ceaf68cde34a700c))
+* **deps:** update support-deps ([#2006](https://github.com/defenseunicorns/uds-core/issues/2006)) ([4a47e5b](https://github.com/defenseunicorns/uds-core/commit/4a47e5b4aa5db00b9ff299cb6be8c2ecc70a4531))
+* **deps:** update uds-identity-config to v0.19.0 ([#2020](https://github.com/defenseunicorns/uds-core/issues/2020)) ([622509b](https://github.com/defenseunicorns/uds-core/commit/622509bfa0332dad261462a196416069f4589d4f))
+* mappings ([#2005](https://github.com/defenseunicorns/uds-core/issues/2005)) ([f9c525a](https://github.com/defenseunicorns/uds-core/commit/f9c525a666d8456b3d8048b7d60f401f762517bc))
+
+## [0.53.1](https://github.com/defenseunicorns/uds-core/compare/v0.53.0...v0.53.1) (2025-10-06)
+
+
+### Bug Fixes
+
+* handle legacy authservice client status ([#1992](https://github.com/defenseunicorns/uds-core/issues/1992)) ([f877047](https://github.com/defenseunicorns/uds-core/commit/f877047d764daa6cb2f9a3a4afa276def72d4e5d))
+
+
+### Miscellaneous
+
+* **deps:** update grafana to v12.2.0 ([#1943](https://github.com/defenseunicorns/uds-core/issues/1943)) ([f6d486e](https://github.com/defenseunicorns/uds-core/commit/f6d486e948ac6983965978549d4672f3081e6844))
+* **deps:** update kube-webhook-certgen to 1.6.3 ([#1966](https://github.com/defenseunicorns/uds-core/issues/1966)) ([0962fe3](https://github.com/defenseunicorns/uds-core/commit/0962fe35ddac15be2e027452df831d8c2fbf37c0))
+* **deps:** update pepr to v0.55.3 ([#1983](https://github.com/defenseunicorns/uds-core/issues/1983)) ([0cd873a](https://github.com/defenseunicorns/uds-core/commit/0cd873a2132c9e442150dcb92c376b9c325de6cd))
+* **deps:** update vector to 0.50.0 ([#1942](https://github.com/defenseunicorns/uds-core/issues/1942)) ([8c6de9c](https://github.com/defenseunicorns/uds-core/commit/8c6de9c3f871350b850cd64f0ea27f9070d27784))
+* **deps:** update velero to 1.17.0 ([#1869](https://github.com/defenseunicorns/uds-core/issues/1869)) ([4c6724b](https://github.com/defenseunicorns/uds-core/commit/4c6724b447549d40a87ecab045c74efa43cf3831))
+* enable sandbox incubating falco rules for iac tests ([#1982](https://github.com/defenseunicorns/uds-core/issues/1982)) ([f144a10](https://github.com/defenseunicorns/uds-core/commit/f144a10515733852e213755e16e53221c81a04be))
+* lula workflow ([#1985](https://github.com/defenseunicorns/uds-core/issues/1985)) ([2f7906d](https://github.com/defenseunicorns/uds-core/commit/2f7906dc4b468efcca796ae86a8f469e7744e32a))
+* remove lula1/oscal compliance information ([#1984](https://github.com/defenseunicorns/uds-core/issues/1984)) ([8638b92](https://github.com/defenseunicorns/uds-core/commit/8638b92195470c5b3e7d83ed09da8ee26197f415))
+
 ## [0.53.0](https://github.com/defenseunicorns/uds-core/compare/v0.52.1...v0.53.0) (2025-09-30)
 
 
