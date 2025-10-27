@@ -91,7 +91,7 @@ test("validate system health", async ({ page }) => {
 
 test("validate local login is blocked", async ({ page }) => {
   await test.step("check local login", async () => {
-    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    const eulaPromise = page.waitForResponse(res => res.url().startsWith(`${url}/eula`));
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
     await eulaPromise;
