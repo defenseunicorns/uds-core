@@ -34,9 +34,9 @@ mounts:
     - name: sandbox-rules
       configMap:
         name: falco-sandbox-rules
-    - name: disabled-rules
+    - name: disable-rules
       configMap:
-        name: falco-disabled-rules
+        name: falco-disable-rules
   volumeMounts:
     - name: stable-rules
       mountPath: /etc/falco/rules.d/stable-rules.yaml
@@ -50,9 +50,9 @@ mounts:
       mountPath: /etc/falco/rules.d/sandbox-rules.yaml
       subPath: sandbox-rules.yaml
       readOnly: true
-    - name: disabled-rules
-      mountPath: /etc/falco/rules.d/disabled-rules.yaml
-      subPath: disabled-rules.yaml
+    - name: disable-rules
+      mountPath: /etc/falco/rules.d/disable-rules.yaml
+      subPath: disable-rules.yaml
       readOnly: true
 
 falcosidekick:
