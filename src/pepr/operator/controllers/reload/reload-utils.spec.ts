@@ -231,7 +231,7 @@ describe("reloadPods", () => {
     const testStatefulSet = makeTestStatefulSet();
     mockK8sClient.Get.mockResolvedValueOnce(testStatefulSet);
 
-    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
+    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the StatefulSet with restart annotation
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testStatefulSet));
@@ -294,7 +294,7 @@ describe("reloadPods", () => {
     const testDeployment = makeTestDeployment();
     mockK8sClient.Get.mockResolvedValueOnce(testDeployment);
 
-    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
+    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the Deployment with restart annotation
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testDeployment));
@@ -342,7 +342,7 @@ describe("reloadPods", () => {
     const testReplicaSet = makeTestReplicaSet();
     mockK8sClient.Get.mockResolvedValue(testReplicaSet);
 
-    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
+    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the ReplicaSet directly with restart annotation
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testReplicaSet));
@@ -454,7 +454,7 @@ describe("restartController", () => {
       "test-deployment",
       "Secret changed",
       mockLogger,
-      "Secret",
+      "SecretChanged",
     );
 
     // Verify Apply was called with the correct annotation

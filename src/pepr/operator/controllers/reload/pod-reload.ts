@@ -157,7 +157,7 @@ export async function handleResourceUpdate(
   resource: kind.Secret | kind.ConfigMap,
   checksumCache: Map<string, string>,
   discoverResourceConsumers: (namespace: string, name: string) => Promise<kind.Pod[]>,
-  resourceType: string,
+  resourceType: ResourceType,
 ) {
   if (!resource.metadata?.name || !resource.metadata?.namespace) {
     return;
@@ -263,7 +263,13 @@ export async function handleResourceUpdate(
   );
 
   try {
-    await reloadPods(namespace, podsToReload, `${resourceType} ${name} change`, log, resourceType);
+    await reloadPods(
+      namespace,
+      podsToReload,
+      `${resourceType} ${name} change`,
+      log,
+      `${resourceType}Changed`,
+    );
   } catch (error) {
     log.error(
       { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
@@ -278,7 +284,6 @@ export async function handleResourceUpdate(
  *
  * @param resourceType Type of resource ("Secret" or "ConfigMap")
  * @param resource The Kubernetes resource that was deleted
- * @param checksumCache The cache to use for this resource type
  */
 export function handleResourceDelete(
   resource: kind.Secret | kind.ConfigMap,

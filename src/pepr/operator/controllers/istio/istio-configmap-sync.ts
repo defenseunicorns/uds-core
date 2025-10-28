@@ -47,7 +47,7 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
         tenantGatewayPods.items,
         RESTART_REASON,
         log,
-        istioConfig.kind!,
+        "ConfigMapChanged",
       );
 
       log.info({ ADMIN_GATEWAY_NAMESPACE }, "Restarting {} pods to apply new configuration");
@@ -56,7 +56,7 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
         adminGatewayPods.items,
         RESTART_REASON,
         log,
-        istioConfig.kind!,
+        "ConfigMapChanged",
       );
     }
   }
