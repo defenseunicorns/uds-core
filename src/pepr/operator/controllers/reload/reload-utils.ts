@@ -20,10 +20,17 @@ import { createEvent, retryWithDelay } from "../utils";
  *
  * @param namespace The namespace containing the pods
  * @param pods List of pods to evict or restart
- * @param reason The reason for eviction/restart (for logging)
+ * @param message The reason for eviction/restart (for logging)
  * @param log Logger instance for logging
+ * @param reason Resource type responsible for eviction/restart (for logging)
  */
-export async function reloadPods(namespace: string, pods: kind.Pod[], reason: string, log: Logger) {
+export async function reloadPods(
+  namespace: string,
+  pods: kind.Pod[],
+  message: string,
+  log: Logger,
+  reason: string,
+) {
   if (pods.length === 0) {
     log.warn(`No pods provided for eviction in namespace ${namespace}`);
     return;
@@ -68,16 +75,37 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
     try {
       if (controllerRef.kind === "ReplicaSet") {
         // For ReplicaSets, try to find the parent Deployment
-        await handleReplicaSetOwner(namespace, controllerRef.name, reason, log);
+        await handleReplicaSetOwner(namespace, controllerRef.name, message, log, reason);
       } else if (controllerRef.kind === "Deployment") {
         // Handle Deployment directly
-        await restartController(namespace, kind.Deployment, controllerRef.name, reason, log);
+        await restartController(
+          namespace,
+          kind.Deployment,
+          controllerRef.name,
+          message,
+          log,
+          reason,
+        );
       } else if (controllerRef.kind === "StatefulSet") {
         // Handle StatefulSet directly
-        await restartController(namespace, kind.StatefulSet, controllerRef.name, reason, log);
+        await restartController(
+          namespace,
+          kind.StatefulSet,
+          controllerRef.name,
+          message,
+          log,
+          reason,
+        );
       } else if (controllerRef.kind === "DaemonSet") {
         // Handle DaemonSet directly
-        await restartController(namespace, kind.DaemonSet, controllerRef.name, reason, log);
+        await restartController(
+          namespace,
+          kind.DaemonSet,
+          controllerRef.name,
+          message,
+          log,
+          reason,
+        );
       } else {
         // Unhandled controller type, evict the pod directly
         standalonePodsToEvict.push(pod);
@@ -95,14 +123,14 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
           controllerName: controllerRef.name,
           error,
         },
-        `Failed to handle controller for pod: ${reason}`,
+        `Failed to handle controller for pod: ${message}`,
       );
     }
   }
 
   // Now handle any standalone pods with direct eviction
   if (standalonePodsToEvict.length > 0) {
-    await evictStandalonePods(namespace, standalonePodsToEvict, reason, log);
+    await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
   }
 }
 
@@ -112,8 +140,9 @@ export async function reloadPods(namespace: string, pods: kind.Pod[], reason: st
 async function handleReplicaSetOwner(
   namespace: string,
   replicaSetName: string,
-  reason: string,
+  message: string,
   log: Logger,
+  reason: string,
 ): Promise<void> {
   try {
     // Get the ReplicaSet
@@ -127,15 +156,22 @@ async function handleReplicaSetOwner(
 
     if (deploymentOwner?.name) {
       // Found a Deployment owner, restart it
-      await restartController(namespace, kind.Deployment, deploymentOwner.name, reason, log);
+      await restartController(
+        namespace,
+        kind.Deployment,
+        deploymentOwner.name,
+        message,
+        log,
+        reason,
+      );
     } else {
       // Standalone ReplicaSet - restart it directly using the same annotation pattern
-      await restartController(namespace, kind.ReplicaSet, replicaSetName, reason, log);
+      await restartController(namespace, kind.ReplicaSet, replicaSetName, message, log, reason);
     }
   } catch (error) {
     log.error(
       { replicaSet: replicaSetName, namespace, error },
-      `Failed to handle ReplicaSet owner: ${reason}`,
+      `Failed to handle ReplicaSet owner: ${message}`,
     );
     throw error;
   }
@@ -148,8 +184,9 @@ export async function restartController(
   namespace: string,
   controllerKind: GenericClass,
   name: string,
-  reason: string,
+  message: string,
   log: Logger,
+  reason: string,
 ): Promise<void> {
   // Get the controller kind name for logging
   const controllerKindName = controllerKind?.name ?? String(controllerKind);
@@ -190,7 +227,7 @@ export async function restartController(
   } catch (error) {
     log.error(
       { controller: controllerKindName, name, namespace, error },
-      `Failed to apply ${controllerKindName} controller update: ${reason}`,
+      `Failed to apply ${controllerKindName} controller update: ${message}`,
     );
     throw error;
   }
@@ -202,8 +239,8 @@ export async function restartController(
         controller,
         {
           type: "Normal",
-          reason: "SecretChanged",
-          message: `Restarted due to: ${reason}`,
+          reason: `${reason}`,
+          message: `Restarted due to: ${message}`,
         },
         log,
       );
@@ -218,7 +255,7 @@ export async function restartController(
   }
 
   // Log success if we got here (apply was successful)
-  log.info(`Successfully restarted ${controllerKindName} ${namespace}/${name}: ${reason}`);
+  log.info(`Successfully restarted ${controllerKindName} ${namespace}/${name}: ${message}`);
 }
 
 /**

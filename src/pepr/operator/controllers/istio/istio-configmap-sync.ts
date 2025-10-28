@@ -6,7 +6,7 @@
 import yaml from "js-yaml";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { reloadPods } from "../secrets/reload-utils";
+import { reloadPods } from "../reload/reload-utils";
 
 export const TENANT_GATEWAY_NAMESPACE = "istio-tenant-gateway";
 export const ADMIN_GATEWAY_NAMESPACE = "istio-admin-gateway";
@@ -42,10 +42,22 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
       const adminGatewayPods = await K8s(kind.Pod).InNamespace(ADMIN_GATEWAY_NAMESPACE).Get();
 
       log.info({ TENANT_GATEWAY_NAMESPACE }, "Restarting {} pods to apply new configuration");
-      await reloadPods(TENANT_GATEWAY_NAMESPACE, tenantGatewayPods.items, RESTART_REASON, log);
+      await reloadPods(
+        TENANT_GATEWAY_NAMESPACE,
+        tenantGatewayPods.items,
+        RESTART_REASON,
+        log,
+        "ConfigMapChanged",
+      );
 
       log.info({ ADMIN_GATEWAY_NAMESPACE }, "Restarting {} pods to apply new configuration");
-      await reloadPods(ADMIN_GATEWAY_NAMESPACE, adminGatewayPods.items, RESTART_REASON, log);
+      await reloadPods(
+        ADMIN_GATEWAY_NAMESPACE,
+        adminGatewayPods.items,
+        RESTART_REASON,
+        log,
+        "ConfigMapChanged",
+      );
     }
   }
 }
