@@ -22,7 +22,7 @@ components:
       - docker.io/grafana/loki:3.5.7
       - docker.io/nginxinc/nginx-unprivileged:1.29-alpine
       - docker.io/memcached:1.6.39-alpine
-      - ghcr.io/kiwigrid/k8s-sidecar:1.30.11
+      - ghcr.io/kiwigrid/k8s-sidecar:1.30.10
 
   - name: loki
     required: true
@@ -39,7 +39,7 @@ components:
       - registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.7
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.29.2
       - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.39
-      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.11
+      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.10
 
   - name: loki
     required: true
