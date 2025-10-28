@@ -33,7 +33,7 @@ metadata:
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.23.0-upstream
+    ref: 0.54.1-upstream
     # You must specify the istio-passthrough-gateway as an optionalComponent or else it will not be deployed
     optionalComponents:
       - istio-passthrough-gateway
@@ -55,7 +55,7 @@ metadata:
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.23.0-upstream
+    ref: 0.54.1-upstream
     overrides:
       istio-admin-gateway:
         uds-istio-config:
@@ -124,7 +124,7 @@ metadata:
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.23.0-upstream
+    ref: 0.54.1-upstream
     overrides:
       istio-admin-gateway:
         uds-istio-config:
@@ -150,7 +150,7 @@ If you want your application to be reachable at `https://uds.dev`, enable root (
 ```yaml
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.23.0-upstream
+    ref: 0.54.1-upstream
     overrides:
       istio-tenant-gateway:
         uds-istio-config:
