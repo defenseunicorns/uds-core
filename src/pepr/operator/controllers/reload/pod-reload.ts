@@ -282,8 +282,8 @@ export async function handleResourceUpdate(
 /**
  * Generic function to handle resource deletion (Secret or ConfigMap)
  *
- * @param resourceType Type of resource ("Secret" or "ConfigMap")
  * @param resource The Kubernetes resource that was deleted
+ * @param checksumCache The cache to use for this resource type
  */
 export function handleResourceDelete(
   resource: kind.Secret | kind.ConfigMap,
