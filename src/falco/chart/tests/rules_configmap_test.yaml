@@ -19,7 +19,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -45,7 +45,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -74,7 +74,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -106,7 +106,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -140,7 +140,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]
@@ -170,7 +170,7 @@ tests:
       sandboxRulesEnabled: false
     documentSelector:
       path: metadata.name
-      value: falco-disabled-rules
+      value: falco-disable-rules
     asserts:
       - isNotEmpty:
           path: data["disable-rules.yaml"]

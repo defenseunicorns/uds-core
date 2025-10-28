@@ -61,7 +61,7 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: falco-disabled-rules
+  name: falco-disable-rules
   namespace: falco
   labels:
     uds.dev/pod-reload: "true"
