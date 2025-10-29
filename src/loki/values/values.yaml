@@ -99,6 +99,7 @@ loki:
     allowPrivilegeEscalation: false
 
   # Loki Ruler configuration
+  # @lulaStart c9a40198-a55e-4769-a5de-44ffe7636593
   rulerConfig:
     alertmanager_url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
     enable_alertmanager_v2: true
@@ -118,7 +119,7 @@ loki:
       clients:
         prometheus:
           url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
-
+  # @lulaEnd c9a40198-a55e-4769-a5de-44ffe7636593
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
