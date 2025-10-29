@@ -44,16 +44,20 @@ tasks:
               -days 365 -sha256 -extensions v3_req -extfile hack/private-pki/openssl.cnf
 
             # Base64 encode
-            base64 -w 0 build/private-pki/${gateway}-gateway.crt > build/private-pki/${gateway}-gateway.crt.b64
-            base64 -w 0 build/private-pki/${gateway}-gateway.key > build/private-pki/${gateway}-gateway.key.b64
+            base64 < build/private-pki/${gateway}-gateway.crt | tr -d '\n' > build/private-pki/${gateway}-gateway.crt.b64
+            base64 < build/private-pki/${gateway}-gateway.key | tr -d '\n' > build/private-pki/${gateway}-gateway.key.b64
           done
 
           # Base64 encode CA
-          base64 -w 0 build/private-pki/ca.crt > build/private-pki/ca.crt.b64
+          base64 < build/private-pki/ca.crt | tr -d '\n' > build/private-pki/ca.crt.b64
 
           # Add CA to system trust store
-          sudo cp build/private-pki/ca.crt /usr/local/share/ca-certificates/uds-test-ca.crt
-          sudo update-ca-certificates
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain build/private-pki/ca.crt
+          else
+            sudo cp build/private-pki/ca.crt /usr/local/share/ca-certificates/uds-test-ca.crt
+            sudo update-ca-certificates
+          fi
 
           # Configure UDS with certificates
           cp bundles/k3d-standard/uds-private-pki-config.yaml build/private-pki/uds-private-pki-config.yaml
