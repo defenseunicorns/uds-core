@@ -146,30 +146,11 @@ The example above allows Grafana to query a remote Thanos instance in your clust
 
 Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
 
-### NeuVector
+### Falco
 
-It may be desired send alerts from NeuVector to locations in or outside of the cluster. To facilitate this, you can provide a bundle override as follows:
+It may be desired send alerts from falco to locations in or outside of the cluster. To facilitate this, you can provide this [bundle override](https://uds.defenseunicorns.com/reference/configuration/runtime-security/alerting/#external-alert-forwarding)
 
-```yaml
-packages:
-  - name: uds-core
-    repository: ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.x.x-upstream
-    overrides:
-      neuvector:
-        uds-neuvector-config:
-          values:
-            - path: additionalNetworkAllow
-              value:
-                - direction: Egress
-                  selector:
-                    app: neuvector-manager-pod
-                  remoteGenerated: Anywhere
-                  description: "from neuvector to anywhere"
-                  port: 443
-```
-
-The example above allows NeuVector to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
+The example above allows Falco to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
 
 Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
 

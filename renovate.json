@@ -9,9 +9,6 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "separateMajorMinor": false,
-  "helm-values": {
-    "ignorePaths": ["src/neuvector/values"]
-  },
   "packageRules": [
     {
       "matchFileNames": ["src/authservice/**"],
@@ -37,11 +34,6 @@
       "matchFileNames": ["src/prometheus-stack/**"],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
-    },
-    {
-      "matchFileNames": ["src/neuvector/**"],
-      "groupName": "neuvector",
-      "commitMessageTopic": "neuvector"
     },
     {
       "matchFileNames": ["src/falco/**"],

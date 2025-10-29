@@ -56,54 +56,16 @@ spec:
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
-  name: neuvector
+  name: falco
   namespace: uds-policy-exemptions
 spec:
   exemptions:
     - policies:
-        - DisallowHostNamespaces
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-enforcer-pod.*"
-        kind: pod
-      title: "neuvector-enforcer-pod"
-      description: "Neuvector requires HostPath volume types
-          Neuvector mounts the following hostPaths:
-          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
-          `/var/run`: communication to docker daemon
-          `/proc`: monitoring of processes for malicious activity
-          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
-          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
-
-    - policies:
-        - DisallowPrivileged
-        - RequireNonRootUser
-        - DropAllCapabilities
-        - RestrictHostPathWrite
-        - RestrictVolumeTypes
-      matcher:
-        namespace: neuvector
-        name: "^neuvector-controller-pod.*"
-      title: "neuvector-controller-pod"
-      description: "Neuvector requires HostPath volume types.
-          Neuvector mounts the following hostPaths:
-          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
-          `/var/run`: communication to docker daemon
-          `/proc`: monitoring of processes for malicious activity
-          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
-          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
-
-    - policies:
         - DropAllCapabilities
       matcher:
-        namespace: neuvector
-        name: "^neuvector-prometheus-exporter-pod.*"
-      title: "neuvector-prometheus-exporter-pod"
+        namespace: falco
+        name: "^falco-pod.*"
+      title: "falco-pod"
 ```
 
 ### Example UDS Package CR with SSO Templating
