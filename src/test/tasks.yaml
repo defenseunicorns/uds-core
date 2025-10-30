@@ -23,6 +23,8 @@ tasks:
         with:
           validate_egress: ${{ .inputs.validate_egress }}
       - task: tests
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
       - description: "Remove Test Apps resources"
         task: remove
 
