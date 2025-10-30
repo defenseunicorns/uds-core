@@ -17,12 +17,12 @@ model {
       pepr-system = coreNamespace {
         title 'Pepr System Namespace'
         summary ' '
-        description 'Namespace containing Pepr controller pods for policy enforcement and mutation. Pepr is a Kubernetes controller built with TypeScript that implements UDS Core security policies including network policies, pod security standards, volume restrictions, and Istio configuration management.'
+        description 'Namespace containing Pepr controller and admission pods for policy enforcement and automated integration. Pepr is a Kubernetes controller built with TypeScript that implements UDS Core security policies and automates integration with the rest of the platform via custom resources.'
 
         pepr-watcher = pod {
           title 'Pepr Watcher'
           summary ' '
-          description 'Watches Kubernetes resources and applies Pepr policies. The watcher controller monitors resource changes and executes reconciliation logic for UDS Core policies including namespace labeling, network policy generation, and authorization policy creation for Istio ambient mode.'
+          description 'Watches Kubernetes resources and automates integrations with the platform. The watcher monitors resource changes and executes reconciliation logic for UDS Core integrations such as network policy generation, Istio service mesh integration, and SSO configuration.'
 
           // external relationship
           pepr-watcher -> kubernetes-control-plane.api-server
@@ -92,7 +92,7 @@ model {
         istiod = pod {
           title 'Istiod'
           summary ' '
-          description 'Istio control plane managing service mesh configuration and certificate issuance. Istiod handles service discovery, certificate rotation for mTLS, configuration distribution to proxies, and manages both Envoy sidecars and ztunnel proxies in ambient mode. Integrates with Pepr for dynamic authorization policy generation.'
+          description 'Istio control plane managing service mesh configuration and certificate issuance. Istiod handles service discovery, certificate rotation for mTLS, configuration distribution to proxies, and manages both Envoy sidecars and ztunnel proxies in ambient mode.'
 
           // external relationship
           istiod -> kubernetes-control-plane.api-server
@@ -114,12 +114,12 @@ model {
       istio-tenant-gateway = coreNamespace {
         title 'Istio Tenant Gateway Namespace'
         summary ' '
-        description 'Namespace containing the tenant-facing ingress gateway for application traffic. This gateway handles external HTTPS traffic for tenant applications deployed on UDS Core, enforcing TLS termination, routing rules, and integration with Keycloak for authentication.'
+        description 'Namespace containing the tenant-facing ingress gateway for application traffic. This gateway handles external HTTPS traffic for tenant applications deployed on UDS Core, enforcing TLS termination and routing rules.'
 
         istio-tenant-ingress-gateway = pod {
           title 'Istio Tenant Ingress Gateway'
           summary ' '
-          description 'Ingress gateway handling external traffic for tenant applications. Routes incoming requests to application waypoints or services based on virtual service configurations, enforces TLS policies, and integrates with Authservice for SSO authentication flows.'
+          description 'Ingress gateway handling external traffic for tenant applications. Routes incoming requests to application waypoints or services based on virtual service configurations and enforces TLS policies.'
 
           // external relationships
           istio-tenant-ingress-gateway -> keycloak-waypoint
@@ -135,7 +135,7 @@ model {
         istio-admin-ingress-gateway = pod {
           title 'Istio Admin Ingress Gateway'
           summary ' '
-          description 'Ingress gateway handling external traffic for administrative interfaces like Grafana. Enforces authentication through Keycloak SSO and routes requests to monitoring and observability dashboards with appropriate authorization policies.'
+          description 'Ingress gateway handling external traffic for administrative interfaces like Grafana. Routes incoming requests to application waypoints or services based on virtual service configurations and enforces TLS policies.'
 
           // external relationships
           istio-admin-ingress-gateway -> keycloak-waypoint
@@ -170,12 +170,12 @@ model {
       istio-egress-ambient = coreNamespace {
         title 'Istio Egress Ambient Namespace'
         summary ' '
-        description 'Namespace containing the ambient mode egress gateway for L4 outbound traffic. Provides controlled egress for applications running in Istio ambient mode, enabling secure communication with external services like SIEM systems while maintaining zero-trust principles.'
+        description 'Namespace containing the ambient mode egress waypoint for outbound traffic. Provides controlled egress for applications running in Istio ambient mode, enabling secure communication with external services like SIEM systems while maintaining zero-trust principles.'
 
         istio-egress-ambient = pod {
           title 'Istio Egress Ambient'
           summary ' '
-          description 'Ambient mode egress gateway for L4 outbound traffic to external services. Handles outbound connections from ambient mesh workloads to external systems, enforcing network policies and providing observability for traffic leaving the cluster.'
+          description 'Ambient mode egress waypoint for outbound traffic to external services. Handles outbound connections from ambient mesh workloads to external systems, enforcing authorization policies and providing observability for traffic leaving the cluster.'
 
           // external relationship
           istio-egress-ambient -> ext-siem
@@ -190,7 +190,7 @@ model {
         grafana = pod {
           title 'Grafana'
           summary ' '
-          description 'Visualization platform for metrics from Prometheus and logs from Loki. Grafana provides pre-configured dashboards for monitoring UDS Core components, Kubernetes resources, and application performance. Supports custom CA certificates for private PKI environments through ConfigMap mounts at /etc/ssl/certs/ca.pem.'
+          description 'Visualization platform for metrics from Prometheus and logs from Loki. Grafana provides pre-configured dashboards for monitoring UDS Core components, Kubernetes resources, and application performance.'
 
           // external relationships
           grafana -> keycloak-waypoint
@@ -251,7 +251,7 @@ model {
         falco = pod {
           title 'Falco'
           summary ' '
-          description 'Runtime security monitoring detecting anomalous activity in containers and hosts. Falco uses eBPF or kernel modules to monitor system calls, detecting suspicious activities like privilege escalation, unauthorized file access, unexpected network connections, and container escapes based on configurable rules.'
+          description 'Runtime security monitoring detecting anomalous activity in containers and hosts. Falco uses eBPF to monitor system calls, detecting suspicious activities like privilege escalation, unauthorized file access, unexpected network connections, and container escapes based on configurable rules.'
 
           // internal relationship
           falco -> falcosidekick
@@ -362,7 +362,7 @@ model {
         authservice = pod {
           title 'AuthService'
           summary ' '
-          description 'External authentication filter integrating with Keycloak for SSO. Authservice implements the OAuth2 authorization code flow, redirecting unauthenticated users to Keycloak for login, validating tokens, and injecting authentication headers into requests. Configured via Pepr-generated authorization policies in ambient mode. Supports custom CA certificates via UDS_CA_CERT environment variable.'
+          description 'External authentication filter integrating with Keycloak for SSO. Authservice implements the OAuth2 authorization code flow, redirecting unauthenticated users to Keycloak for login, validating tokens, and injecting authentication headers into requests. Automatically configured via Pepr managed configuration and authorization policies.'
 
           // external relationship
           authservice -> keycloak-waypoint
@@ -372,12 +372,12 @@ model {
       keycloak = coreNamespace {
         title 'Keycloak Namespace'
         summary ' '
-        description 'Namespace containing Keycloak identity and access management components. Keycloak provides centralized identity and access management for UDS Core, offering SSO, user federation, identity brokering, and fine-grained authorization. Runs in ambient mesh mode with a dedicated waypoint proxy for L7 traffic management.'
+        description 'Namespace containing Keycloak identity and access management components. Keycloak provides centralized identity and access management for UDS Core, offering SSO, user federation, identity brokering, and fine-grained authorization.'
 
         keycloak = pod {
           title 'Keycloak'
           summary ' '
-          description 'Identity and access management providing SSO, user federation, and identity brokering. Keycloak manages user authentication and authorization for all UDS Core services and deployed applications. Stores configuration in an external PostgreSQL database and supports custom CA certificates via truststorePaths for private PKI environments. Integrates with Pepr for dynamic client registration and realm configuration.'
+          description 'Identity and access management providing SSO, user federation, and identity brokering. Keycloak manages user authentication and authorization for all UDS Core services and deployed applications. Stores data in an external PostgreSQL database and integrates with Pepr for automated client provisioning for applications.'
 
           // hack to avoid crazy relationship rendering
           keycloak -> pepr-watcher {
@@ -391,7 +391,7 @@ model {
         keycloak-waypoint = pod {
           title 'Istio-Waypoint'
           summary ' '
-          description 'Istio ambient mode waypoint proxy for Keycloak traffic management. Provides L7 routing and policy enforcement for Keycloak traffic in ambient mesh mode. Handles connections from ingress gateways, Authservice, Grafana, and other clients requiring authentication services. Manages database connections to the external PostgreSQL instance.'
+          description 'Istio ambient mode waypoint proxy for Keycloak traffic management. Provides L7 routing and policy enforcement for Keycloak traffic in ambient mesh mode. Handles connections from ingress gateways, Authservice, Grafana, and other clients requiring authentication services.'
 
           // internal bi-directional relationship
           keycloak-waypoint -> keycloak {
@@ -472,7 +472,7 @@ model {
       pepr-mutating-webhook = coreWebhook {
         title 'Pepr Mutating Webhook'
         summary ' '
-        description 'Mutating webhook applying Pepr policy mutations to Kubernetes resources. Intercepts resource creation and modification requests to inject labels, modify security contexts, add network policies, and enforce UDS Core standards before resources are persisted to etcd.'
+        description 'Mutating webhook applying Pepr policy mutations to Kubernetes resources. Intercepts resource creation and modification requests to inject labels, modify security contexts, and enforce UDS Core standards before resources are persisted to etcd.'
 
         // external relationship
         pepr-mutating-webhook -> api-server
@@ -541,7 +541,7 @@ model {
       ext-keycloak-db = infraService {
         title 'External Keycloak Database'
         summary ' '
-        description 'External PostgreSQL database storing Keycloak configuration and user data. Hosts Keycloak realms, clients, users, roles, and session information. Must be highly available and backed up regularly as it contains critical identity and access management data. Accessed via the Keycloak waypoint proxy over SSL/TLS on port 5432.'
+        description 'External PostgreSQL database storing Keycloak configuration and user data. Hosts Keycloak realms, clients, users, roles, and session information. Must be highly available and backed up regularly as it contains critical identity and access management data. Accessed by Keycloak over SSL/TLS on port 5432.'
       }
 
       ext-loki-storage = infraService {
@@ -561,7 +561,7 @@ model {
   admin = actor {
     title 'Cluster Administrator'
     summary ' '
-    description 'Administrator managing and monitoring the UDS Core platform. Platform operators and SREs who deploy, configure, and maintain UDS Core. Access administrative interfaces like Grafana for monitoring, Prometheus for metrics analysis, and Keycloak for identity management. Authenticate via Keycloak SSO with elevated privileges.'
+    description 'Administrator managing and monitoring the UDS Core platform. Platform operators and SREs who deploy, configure, and maintain UDS Core. Access administrative interfaces like Grafana for monitoring and Keycloak for identity management. Authenticate via Keycloak SSO with elevated privileges.'
 
     // external relationship
     admin -> external-admin-loadbalancer
@@ -570,7 +570,7 @@ model {
   enduser = actor {
     title 'End User'
     summary ' '
-    description 'End user accessing applications deployed on the UDS Core platform. Application users who access tenant workloads through the tenant ingress gateway. Authenticate via Keycloak SSO and benefit from UDS Core security features including mTLS encryption, network policies, and runtime security monitoring without requiring application-level changes.'
+    description 'End user accessing applications deployed on the UDS Core platform. Application users who access tenant workloads through the tenant ingress gateway.'
 
     // external relationship
     enduser -> external-tenant-loadbalancer
