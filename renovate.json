@@ -69,15 +69,24 @@
       "commitMessageTopic": "grafana"
     },
     {
-      "matchFileNames": ["test/**/*", ".github/**", "bundles/**", "tasks/*.yaml", ".vscode/settings.json", "src/test/**", "README.md", "scripts/**"],
+      "matchFileNames": [
+        "test/**/*",
+        ".github/**",
+        "bundles/**",
+        "tasks/*.yaml",
+        ".vscode/settings.json",
+        "src/test/**",
+        "README.md",
+        "scripts/**"
+      ],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
     },
     {
       "matchFileNames": ["package.json", "package-lock.json"],
       "groupName": "operator-deps",
-      "excludeDepNames": ["pepr"],
-      "commitMessageTopic": "operator-deps"
+      "commitMessageTopic": "operator-deps",
+      "matchDepNames": ["!pepr"]
     },
     {
       "matchFileNames": ["package.json", "package-lock.json"],
@@ -86,19 +95,31 @@
       "commitMessageTopic": "support dependencies"
     },
     {
-      "matchFileNames": ["package.json", "package-lock.json", "tasks/create.yaml"],
-      "matchDepNames": ["pepr", "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller", "defenseunicorns/pepr"],
+      "matchFileNames": [
+        "package.json",
+        "package-lock.json",
+        "tasks/create.yaml"
+      ],
+      "matchDepNames": [
+        "pepr",
+        "registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller",
+        "defenseunicorns/pepr"
+      ],
       "groupName": "pepr",
       "commitMessageTopic": "pepr"
     },
     {
-      "matchPackageNames": ["defenseunicorns/uds-common", "mcr.microsoft.com/playwright", "defenseunicorns/kubernetes-fluent-client"],
+      "matchPackageNames": [
+        "defenseunicorns/uds-common",
+        "mcr.microsoft.com/playwright",
+        "defenseunicorns/kubernetes-fluent-client"
+      ],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
     },
     {
       "matchPackageNames": [
-          "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
+        "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],
       "allowedVersions": "!/99.99.99/"
     }
