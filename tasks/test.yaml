@@ -98,10 +98,6 @@ tasks:
         default: ${UDS_ARCH}
     # Run each e2e test type from the e2e folder
     actions:
-      - description: "Setup the Doug User for testing"
-        task: common-setup:keycloak-user
-        with:
-          group: "/UDS Core/Admin"
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
         with:
@@ -189,6 +185,10 @@ tasks:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
+      - task: test-resources:create-deploy
+        with:
+          validate_egress: "true"
+      - task: test-resources:tests
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
@@ -199,7 +199,10 @@ tasks:
           export UDS_CONFIG="${{ .inputs.configFile }}"
           uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
       - task: validate-packages
-      - task: e2e-tests
+      - task: test-resources:tests
+        with:
+          validate_egress: "true"
+      - task: test-resources:remove
 
   - name: compliance-validate
     description: "validate against the required compliance"
