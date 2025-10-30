@@ -16,9 +16,16 @@ tasks:
           mkdir -p build/private-pki
 
           # remove existing local private pki certs
-          if [ -f /usr/local/share/ca-certificates/uds-test-ca.crt ]; then
-            sudo rm /usr/local/share/ca-certificates/uds-test-ca.crt
-            sudo update-ca-certificates --fresh
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # Remove from macOS keychain
+            for HASH in $(sudo security find-certificate -c "UDS Test CA" -a -Z /Library/Keychains/System.keychain 2>/dev/null | awk '/SHA-1/{print $3}'); do
+              sudo security delete-certificate -Z "$HASH" /Library/Keychains/System.keychain
+            done
+          else
+            if [ -f /usr/local/share/ca-certificates/uds-test-ca.crt ]; then
+              sudo rm /usr/local/share/ca-certificates/uds-test-ca.crt
+              sudo update-ca-certificates --fresh
+            fi
           fi
 
           # Generate CA key and certificate
@@ -51,7 +58,7 @@ tasks:
           # Base64 encode CA
           base64 < build/private-pki/ca.crt | tr -d '\n' > build/private-pki/ca.crt.b64
 
-          # Add CA to system trust store
+          # Add CA to trust store
           if [[ "$OSTYPE" == "darwin"* ]]; then
             sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain build/private-pki/ca.crt
           else

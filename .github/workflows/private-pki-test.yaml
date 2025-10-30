@@ -14,7 +14,7 @@ on:
     paths:
       - ".github/workflows/private-pki-test.yaml"
       - "bundles/k3d-standard/**"
-      - "test/private-pki/**"
+      - "test/playwright/private-pki/**"
 
 permissions:
   contents: read
