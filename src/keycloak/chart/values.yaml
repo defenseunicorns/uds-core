@@ -189,10 +189,10 @@ podLabels: {}
 resources:
   requests:
     cpu: "100m"
-    memory: "1Gi"
+    memory: "700Mi"
   limits:
     cpu: "1"
-    memory: "2Gi"
+    memory: "1Gi"
 
 # Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
 # `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d

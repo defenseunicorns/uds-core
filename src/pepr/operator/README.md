@@ -56,16 +56,52 @@ spec:
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
-  name: falco
+  name: my-pods
   namespace: uds-policy-exemptions
 spec:
   exemptions:
     - policies:
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: my-pods
+        name: "^my-privileged-pod.*"
+        kind: pod
+      title: "my-privileged-pod"
+      description: "my-privileged-pod requires HostPath volume types
+          my-privileged-pod mounts the following hostPaths:
+          `/var/mount`: (as writable) for my-privileged-pod's buffering and persistent state
+          `/var/run`: communication to docker daemon
+          `/proc`: monitoring of processes for malicious activity
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content"
+
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: my-pods
+        name: "^my-hostpath-pod.*"
+      title: "my-hostpath-pod"
+      description: "my-hostpath-pod requires HostPath volume types.
+          my-hostpath-pod mounts the following hostPaths:
+          `/var/mount`: (as writable) for my-hostpath-pod's buffering and persistent state
+          `/var/run`: communication to docker daemon
+          `/proc`: monitoring of processes for malicious activity
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content"
+
+    - policies:
         - DropAllCapabilities
       matcher:
-        namespace: falco
-        name: "^falco-pod.*"
-      title: "falco-pod"
+        namespace: my-pods
+        name: "^my-exempt-pod.*"
+      title: "my-exempt-pod"
 ```
 
 ### Example UDS Package CR with SSO Templating

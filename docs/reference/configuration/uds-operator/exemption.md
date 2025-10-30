@@ -19,7 +19,7 @@ tableOfContents:
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
-  name: falco
+  name: my-pods
   namespace: uds-policy-exemptions
 spec:
   exemptions:
@@ -31,8 +31,24 @@ spec:
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
-        namespace: falco
-        name: "^falco-pod.*"
+        namespace: my-pods
+        name: "^my-privileged-pod.*"
+
+    - policies:
+        - DisallowPrivileged
+        - RequireNonRootUser
+        - DropAllCapabilities
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+      matcher:
+        namespace: my-pods
+        name: "^my-hostpath-pod.*"
+
+    - policies:
+        - DropAllCapabilities
+      matcher:
+        namespace: my-pods
+        name: "^my-exempt-pod.*"
 ```
 
 :::note

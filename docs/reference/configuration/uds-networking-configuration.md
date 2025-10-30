@@ -148,9 +148,7 @@ Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configu
 
 ### Falco
 
-It may be desired send alerts from falco to locations in or outside of the cluster. To facilitate this, you can provide this [bundle override](https://uds.defenseunicorns.com/reference/configuration/runtime-security/alerting/#external-alert-forwarding)
-
-The example above allows Falco to send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
+It may be desired send alerts from falco to locations in or outside of the cluster. To facilitate this, you can provide this [bundle override](https://uds.defenseunicorns.com/reference/configuration/runtime-security/alerting/#external-alert-forwarding) send alerts to any external destination. Alternatively, you could use the remoteNamespace key to specify another namespace within the Kubernetes cluster (i.e. Mattermost).
 
 Reference the [spec for allow](https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow) for all available fields.
 

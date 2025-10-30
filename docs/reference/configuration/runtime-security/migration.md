@@ -8,7 +8,7 @@ UDS Core now:
 - Includes Falco by default in the `core-runtime-security` layer.
 - Does not manage NeuVector. If you still need NeuVector, deploy it as a standalone package.
 
-## Choose your path
+## Different Scenarios
 
 - **Falco only (remove legacy NeuVector on upgrade)**
   - Enable the cleanup gate during runtime-security deploy to remove legacy NeuVector resources (upgrade-only):
