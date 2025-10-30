@@ -180,6 +180,10 @@ tasks:
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the deployments"
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        required: true
+        default: ${UDS_ARCH}
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
@@ -188,7 +192,10 @@ tasks:
       - task: test-resources:create-deploy
         with:
           validate_egress: "true"
+          architecture: ${{ .inputs.architecture }}
       - task: test-resources:tests
+        with:
+          validate_egress: "true"
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
