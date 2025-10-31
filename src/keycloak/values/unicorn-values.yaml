@@ -16,3 +16,8 @@ image:
 
 migrations:
   deleteGeneratedTrustStore: true
+
+env:
+  # Drop unicorn's javaagent export to avoid duplicate BC-FIPS; keep required exports only.
+  - name: JDK_JAVA_OPTIONS
+    value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
