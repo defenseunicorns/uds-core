@@ -89,7 +89,12 @@
       "matchDepNames": ["!pepr"]
     },
     {
-      "matchFileNames": ["package.json", "package-lock.json"],
+      "matchFileNames": [
+        "package.json",
+        "package-lock.json",
+        "docs/.c4/package.json",
+        "docs/.c4/package-lock.json"
+      ],
       "groupName": "support-deps",
       "matchDepTypes": ["devDependencies"],
       "commitMessageTopic": "support dependencies"
