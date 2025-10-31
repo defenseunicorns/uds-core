@@ -9,6 +9,9 @@ variables:
   - name: SNAPSHOT
     description: Whether this is a snapshot release
     default: "false"
+  - name: CA_PRIVATE_KEY
+    description: "Base64 encoded private key for the UDS CA (optional, will generate new CA if not provided)"
+    default: ""
 
 tasks:
   - name: determine-repo
@@ -122,3 +125,87 @@ tasks:
     actions:
       - description: Check Unicorn and Registry1 Multi-Arch images
         cmd: ./scripts/check-multiarch.sh
+
+  - name: generate-certs
+    description: "Generate *.uds.dev and *.admin.uds.dev certificates using mkcert and templates them into the necessary places"
+    actions:
+      - description: Generate certificates and update Istio gateway values
+        cmd: |
+          # Create certs directory
+          mkdir -p certs
+
+          # Handle CA private key from environment variable or existing file
+          if [ -n "$CA_PRIVATE_KEY" ]; then
+            echo "Using CA private key from environment variable..."
+            # Decode base64 CA private key and write to certs directory
+            echo "$CA_PRIVATE_KEY" | base64 -d > certs/rootCA-key.pem
+            chmod 600 certs/rootCA-key.pem
+
+            # Generate CA certificate from the provided private key
+            openssl req -new -x509 -days 3650 -key certs/rootCA-key.pem -out certs/rootCA.pem \
+              -subj "/C=US/ST=Local/L=Local/O=UDS/OU=UDS/CN=UDS Local CA"
+            chmod 644 certs/rootCA.pem
+
+            echo "Generated CA certificate from provided private key"
+          elif [ ! -f certs/rootCA.pem ]; then
+            echo "No existing CA found and no CA_PRIVATE_KEY provided, generating new CA..."
+            # Generate custom CA with proper subject information
+            openssl genrsa -out certs/rootCA-key.pem 4096
+            openssl req -new -x509 -days 3650 -key certs/rootCA-key.pem -out certs/rootCA.pem \
+              -subj "/C=US/ST=Local/L=Local/O=UDS/OU=UDS/CN=UDS Local CA"
+
+            # Set proper file permissions so everyone can read the CA
+            chmod 644 certs/rootCA.pem
+            chmod 600 certs/rootCA-key.pem
+
+            echo "Created custom UDS Local CA with proper permissions"
+            echo "CA private key created locally"
+          else
+            echo "Using existing CA from certs/rootCA.pem"
+          fi
+
+          # Generate domain certificates using OpenSSL with proper subject fields
+          # Generate tenant domain certificate (*.uds.dev)
+          openssl genrsa -out certs/uds-dev.key 4096
+          openssl req -new -key certs/uds-dev.key -out certs/uds-dev.csr -config certs/uds-dev.conf
+          openssl x509 -req -in certs/uds-dev.csr -CA certs/rootCA.pem -CAkey certs/rootCA-key.pem -CAcreateserial \
+            -out certs/uds-dev.crt -days 730 -extensions v3_req -extfile certs/uds-dev.conf
+
+          # Generate admin domain certificate (*.admin.uds.dev)
+          openssl genrsa -out certs/admin-uds-dev.key 4096
+          openssl req -new -key certs/admin-uds-dev.key -out certs/admin-uds-dev.csr -config certs/admin-uds-dev.conf
+          openssl x509 -req -in certs/admin-uds-dev.csr -CA certs/rootCA.pem -CAkey certs/rootCA-key.pem -CAcreateserial \
+            -out certs/admin-uds-dev.crt -days 730 -extensions v3_req -extfile certs/admin-uds-dev.conf
+
+          # Clean up temporary files
+          rm -f certs/uds-dev.csr certs/admin-uds-dev.csr certs/rootCA.srl
+
+          # Clean up CA private key if it was provided via environment variable
+          if [ -n "$CA_PRIVATE_KEY" ]; then
+            echo "Cleaning up CA private key from local filesystem..."
+            rm -f certs/rootCA-key.pem
+          fi
+
+          # Base64 encode certificates and keys (compatible with both macOS and Linux)
+          ADMIN_CERT_B64=$(cat certs/admin-uds-dev.crt | base64 | tr -d '\n')
+          ADMIN_KEY_B64=$(cat certs/admin-uds-dev.key | base64 | tr -d '\n')
+          TENANT_CERT_B64=$(cat certs/uds-dev.crt | base64 | tr -d '\n')
+          TENANT_KEY_B64=$(cat certs/uds-dev.key | base64 | tr -d '\n')
+          CA_CERT_B64=$(cat certs/rootCA.pem | base64 | tr -d '\n')
+
+          # Update Istio gateway values using yq
+          ./uds zarf tools yq eval ".tls.cert = \"$ADMIN_CERT_B64\"" -i src/istio/values/config-admin.yaml
+          ./uds zarf tools yq eval ".tls.key = \"$ADMIN_KEY_B64\"" -i src/istio/values/config-admin.yaml
+          ./uds zarf tools yq eval ".tls.cacert = \"$CA_CERT_B64\"" -i src/istio/values/config-admin.yaml
+
+          ./uds zarf tools yq eval ".tls.cert = \"$TENANT_CERT_B64\"" -i src/istio/values/config-tenant.yaml
+          ./uds zarf tools yq eval ".tls.key = \"$TENANT_KEY_B64\"" -i src/istio/values/config-tenant.yaml
+          ./uds zarf tools yq eval ".tls.cacert = \"$CA_CERT_B64\"" -i src/istio/values/config-tenant.yaml
+
+          # Update bundle CA_CERT variables
+          ./uds zarf tools yq eval ".variables.core.CA_CERT = \"$CA_CERT_B64\"" -i bundles/k3d-standard/uds-bundle.yaml
+          ./uds zarf tools yq eval ".variables.core-base.CA_CERT = \"$CA_CERT_B64\"" -i bundles/k3d-slim-dev/uds-bundle.yaml
+          ./uds zarf tools yq eval ".variables.core-base.CA_CERT = \"$CA_CERT_B64\"" -i bundles/base-shim/uds-bundle.yaml
+
+          echo "Certificates generated and Istio gateway values updated successfully!"
+          echo "CA certificate also templated into bundle files"
