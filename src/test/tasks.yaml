@@ -35,17 +35,13 @@ tasks:
         default: "true"
 
     actions:
-      - description: "Install test dependencies"
-        cmd: |
-          npm ci
-        dir: test/vitest
       - description: "Run Network Tests"
         cmd: |
-          EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+          npm ci && EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
         dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
-          npx vitest run "test-resources.spec.ts"
+          npm ci && npx vitest run "test-resources.spec.ts"
         dir: test/vitest
       - description: "Run Ambient Playwright Test"
         cmd: |
@@ -58,7 +54,7 @@ tasks:
         dir: test/playwright
       - description: "Run Secret Reload Tests"
         cmd: |
-          npx vitest run "pod-reload.spec.ts"
+          npm ci && npx vitest run "pod-reload.spec.ts"
         dir: test/vitest
 
   - name: create-deploy
