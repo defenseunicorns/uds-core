@@ -6,17 +6,33 @@ sidebar:
 
 UDS Core provides runtime security capabilities to monitor and protect applications during execution. Runtime security solutions detect threats and malicious behavior in real-time across containerized workloads.
 
+## NeuVector (Deprecated)
+
+Currently, UDS Core includes [NeuVector](https://neuvector.com/) as the default runtime security solution in the `runtime-security` package layer. NeuVector provides container runtime protection, network security monitoring, vulnerability scanning, and compliance reporting.
+
+:::caution[Deprecation Notice]
+**NeuVector will be removed from UDS Core in a future release.** We recommend transitioning to Falco and deploying it as an optional component along side Neuvector as soon as possible.
+:::
+
 ## Falco
 
-[Falco](https://falco.org/) is the default runtime security solution in `runtime-security` package layer. Falco is a CNCF graduated project that provides cloud-native runtime security and real-time threat detection.
+[Falco](https://falco.org/) is now available as an optional runtime security zarf component and is the recommended path forward. Falco is a CNCF graduated project that provides cloud-native runtime security and real-time threat detection.
 
-### Optional: cleanup legacy NeuVector during upgrade
+### Deploying Falco
 
-By default, UDS Core does not remove legacy NeuVector resources. To have the runtime-security layer remove the legacy `neuvector` namespace and any `neuvector` CRDs during deploy/upgrade, set:
+To deploy Falco, add it as an optional component in your UDS bundle:
 
-```bash
-# Example: deploy the runtime-security layer with cleanup enabled
-zarf package deploy packages/runtime-security --set CLEANUP_LEGACY_NEUVECTOR=true
+```yaml
+kind: UDSBundle
+metadata:
+  name: my-uds-bundle
+  description: UDS bundle with Falco runtime security
+  version: x.x.x
+
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x-upstream
+    optionalComponents:
+      - falco # Deploys Falco as an optional component
 ```
-
-If you plan to deploy the standalone NeuVector package without Falco, do not enable this gate and skip the runtime-security layer entirely. See the [Runtime Security Migration Guide](./migration.md) and [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) for advanced scenarios.

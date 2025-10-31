@@ -19,7 +19,7 @@ tableOfContents:
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
-  name: my-pods
+  name: neuvector
   namespace: uds-policy-exemptions
 spec:
   exemptions:
@@ -31,8 +31,8 @@ spec:
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
-        namespace: my-pods
-        name: "^my-privileged-pod.*"
+        namespace: neuvector
+        name: "^neuvector-enforcer-pod.*"
 
     - policies:
         - DisallowPrivileged
@@ -41,14 +41,14 @@ spec:
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
-        namespace: my-pods
-        name: "^my-hostpath-pod.*"
+        namespace: neuvector
+        name: "^neuvector-controller-pod.*"
 
     - policies:
         - DropAllCapabilities
       matcher:
-        namespace: my-pods
-        name: "^my-exempt-pod.*"
+        namespace: neuvector
+        name: "^neuvector-prometheus-exporter-pod.*"
 ```
 
 :::note

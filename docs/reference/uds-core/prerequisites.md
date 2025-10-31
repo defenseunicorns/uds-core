@@ -154,6 +154,10 @@ uds zarf package deploy uds-core --set CNI_CONF_DIR=/etc/cni/net.d --set CNI_BIN
 
 If you are using Cilium you will also need to make some additional configuration changes and add a cluster wide network policy to prevent Cilium's CNI from interfering with the Istio CNI plugin (part of the ambient stack). See the [upstream documentation](https://istio.io/latest/docs/ambient/install/platform-prerequisites/#cilium) for these required changes.
 
+#### NeuVector
+
+NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts.
+
 #### Falco
 
 The UDS Core deployment of Falco utilizes the [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe). The main advantage it brings to the table is that it is embedded into Falco, which means that you don't have to download or build anything, if your kernel is recent enough Falco will automatically inject it!
