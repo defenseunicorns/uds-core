@@ -44,7 +44,7 @@ components:
             cmd: |
               if [ "${ZARF_VAR_CLEANUP_LEGACY_NEUVECTOR}" = "true" ]; then
                 echo "[cleanup] Removing legacy NeuVector CRDs if present..."
-                NV_CRDS="$(./zarf tools kubectl get crd -o name | grep -i neuvector || true)"
+                NV_CRDS="$(./zarf tools kubectl get crd -o name | grep -E '\.neuvector\.com$' || true)"
                 if [ -n "$NV_CRDS" ]; then
                   echo "$NV_CRDS" | xargs -r ./zarf tools kubectl delete
                 else
