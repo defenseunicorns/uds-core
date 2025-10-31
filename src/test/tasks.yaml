@@ -37,11 +37,11 @@ tasks:
     actions:
       - description: "Run Network Tests"
         cmd: |
-          npm ci && EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+          EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
         dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
-          npm ci && npx vitest run "test-resources.spec.ts"
+          npx vitest run "test-resources.spec.ts"
         dir: test/vitest
       - description: "Run Ambient Playwright Test"
         cmd: |
@@ -54,7 +54,7 @@ tasks:
         dir: test/playwright
       - description: "Run Secret Reload Tests"
         cmd: |
-          npm ci && npx vitest run "pod-reload.spec.ts"
+          npx vitest run "pod-reload.spec.ts"
         dir: test/vitest
 
   - name: create-deploy

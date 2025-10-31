@@ -193,6 +193,8 @@ tasks:
         with:
           validate_egress: "true"
           architecture: ${{ .inputs.architecture }}
+      - description: "Install Node deps for tests (pre-upgrade)"
+        cmd: npm ci
       - task: test-resources:tests
         with:
           validate_egress: "true"
@@ -206,6 +208,8 @@ tasks:
           export UDS_CONFIG="${{ .inputs.configFile }}"
           uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
       - task: validate-packages
+      - description: "Install Node deps for tests (post-upgrade)"
+        cmd: npm ci
       - task: test-resources:tests
         with:
           validate_egress: "true"
