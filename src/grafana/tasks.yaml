@@ -16,24 +16,17 @@ tasks:
             condition: Ready
       - description: Validate grafana virtual service
         cmd: |
-          # Note: this check forces to use /usr/bin/curl if it exists
-          # This is to force using the system curl on macos which is needed for our private-pki tests
-          CURL_CMD="/usr/bin/curl"
-          if [ ! -x "$CURL_CMD" ]; then
-            CURL_CMD="curl"
-          fi
-
-          if [ "$($CURL_CMD -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" = "302" ]; then
+          if [ "$(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}')" = "302" ]; then
             echo "Grafana is up and running."
           else
-            echo "ERROR: Grafana returned a $($CURL_CMD -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}') code."
+            echo "ERROR: Grafana returned a $(curl -isS https://grafana.admin.uds.dev --output /dev/null -w '%{http_code}') code."
             exit 1
           fi
 
-          if $CURL_CMD -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}' | grep "sso.uds.dev" 2>&1 1>/dev/null; then
+          if curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}' | grep "sso.uds.dev" 2>&1 1>/dev/null; then
             echo "Grafana is redirecting to SSO as expected."
           else
-            echo "ERROR: Grafana is redirecting to $($CURL_CMD -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}')."
+            echo "ERROR: Grafana is redirecting to $(curl -L -isS https://grafana.admin.uds.dev --output /dev/null -w '%{url_effective}')."
             exit 1
           fi
 
