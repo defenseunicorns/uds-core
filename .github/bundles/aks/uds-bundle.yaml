@@ -109,20 +109,6 @@ packages:
               description: Grafana postgresql username
               path: postgresql.user
 
-      neuvector:
-        core:
-          values:
-            - path: runtimePath
-              value: /run/containerd/containerd.sock
-            - path: enforcer.tolerations
-              value:
-                - effect: NoSchedule
-                  key: node-role.kubernetes.io/master
-                - effect: NoSchedule
-                  key: node-role.kubernetes.io/control-plane
-                - effect: NoSchedule
-                  key: dedicated
-                  operator: Exists
       velero:
         velero:
           variables:

@@ -14,8 +14,8 @@ describe("test registering exemptions", () => {
     ExemptionStore.init();
     vi.spyOn(ExemptionStore, "getByPolicy").mockReturnValue([
       {
-        namespace: "neuvector",
-        name: "^neuvector-enforcer-pod-.*",
+        namespace: "falco",
+        name: "^falco-.*",
         kind: MatcherKind.Pod,
         owner: "uid",
       },
@@ -26,8 +26,8 @@ describe("test registering exemptions", () => {
     const req = {
       Raw: {
         metadata: {
-          name: "neuvector-enforcer-pod-x",
-          namespace: "neuvector",
+          name: "falco-pod-x",
+          namespace: "falco",
         },
       },
     } as unknown as PeprValidateRequest<kind.Pod>;

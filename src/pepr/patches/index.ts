@@ -40,17 +40,3 @@ When(a.Service)
       grpcPort.appProtocol = "tcp";
     }
   });
-
-/**
- * Mutate the Neuvector UI service to add labels to use the waypoint
- * This can be moved to values when labels are supported in the chart: https://github.com/neuvector/neuvector-helm/pull/487
- */
-When(a.Service)
-  .IsCreatedOrUpdated()
-  .InNamespace("neuvector")
-  .WithName("neuvector-service-webui")
-  .Mutate(async svc => {
-    log.debug("Patching NeuVector Manager service to use the waypoint");
-    svc.SetLabel("istio.io/ingress-use-waypoint", "true");
-    svc.SetLabel("istio.io/use-waypoint", "neuvector-manager-waypoint");
-  });

@@ -392,83 +392,96 @@ describe("authorization policy generation", () => {
     );
   });
 
-  test("should generate correct policies for Neuvector", async () => {
+  test("should generate correct policies for Falco", async () => {
     const pkg: UDSPackage = {
-      metadata: { name: "neuvector", namespace: "neuvector", generation: 1 },
+      metadata: { name: "falco", namespace: "falco", generation: 1 },
       spec: {
         network: {
-          expose: [
-            {
-              service: "neuvector-service-webui",
-              selector: { app: "neuvector-manager-pod" },
-              gateway: Gateway.Admin,
-              host: "neuvector",
-              port: 8443,
-            },
-          ],
           allow: [
             { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
-            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace }, // Skipped.
+            // Egress IntraNamespace is intentionally skipped by the generator
             {
               direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "neuvector-controller-pod" },
-              port: 30443,
-              description: "Webhook",
+              selector: { "app.kubernetes.io/name": "falco" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              remoteServiceAccount: "kube-prometheus-stack-prometheus",
+              port: 8765,
+              description: "Prometheus Falco Metrics",
+            },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "falcosidekick" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              remoteServiceAccount: "kube-prometheus-stack-prometheus",
+              port: 2801,
+              description: "Prometheus Falcosidekick Metrics",
             },
           ],
         },
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "neuvector", IstioState.Ambient);
-    // With the current per-rule design we expect three policies
+    const policies = await generateAuthorizationPolicies(pkg, "falco", IstioState.Ambient);
+    // With current design we expect three policies (Ingress IntraNamespace + two Prometheus metrics)
     expect(policies.length).toBe(3);
 
     // Policy for the IntraNamespace allow rule (no selector)
     const nsPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-ingress-all-pods-intranamespace",
+      p => p.metadata?.name === "protect-falco-ingress-all-pods-intranamespace",
     );
     expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("neuvector");
+    expect(nsPolicy?.metadata?.namespace).toBe("falco");
     expect(nsPolicy?.spec?.action).toBe(Action.Allow);
     expect(nsPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([{ from: [{ source: { namespaces: ["neuvector"] } }] }]),
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["falco"] } }] }]),
     );
 
-    // Policy for the controller allow rule ("Webhook")
-    const controllerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-ingress-webhook",
+    // Policy for Falco metrics (Prometheus -> Falco)
+    const falcoMetrics = policies.find(
+      p => p.metadata?.name === "protect-falco-ingress-prometheus-falco-metrics",
     );
-    expect(controllerPolicy).toBeDefined();
-    expect(controllerPolicy?.spec?.selector?.matchLabels).toEqual({
-      app: "neuvector-controller-pod",
+    expect(falcoMetrics).toBeDefined();
+    expect(falcoMetrics?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "falco",
     });
-    expect(controllerPolicy?.spec?.action).toBe(Action.Allow);
-    expect(controllerPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([{ to: [{ operation: { ports: ["30443"] } }] }]),
-    );
-
-    // Policy for the expose rule (should use default base name)
-    const exposePolicy = policies.find(
-      p =>
-        p.metadata?.name ===
-        "protect-neuvector-ingress-8443-neuvector-manager-pod-istio-admin-gateway",
-    );
-    expect(exposePolicy).toBeDefined();
-    expect(exposePolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
-    expect(exposePolicy?.spec?.action).toBe(Action.Allow);
-    expect(exposePolicy?.spec?.rules).toEqual(
+    expect(falcoMetrics?.spec?.action).toBe(Action.Allow);
+    expect(falcoMetrics?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [
             {
               source: {
-                principals: ["cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway"],
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
               },
             },
           ],
-          to: [{ operation: { ports: ["8443"] } }],
+          to: [{ operation: { ports: ["8765"] } }],
+        },
+      ]),
+    );
+
+    // Policy for Falcosidekick metrics (Prometheus -> Falcosidekick)
+    const sidekickMetrics = policies.find(
+      p => p.metadata?.name === "protect-falco-ingress-prometheus-falcosidekick-metrics",
+    );
+    expect(sidekickMetrics).toBeDefined();
+    expect(sidekickMetrics?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "falcosidekick",
+    });
+    expect(sidekickMetrics?.spec?.action).toBe(Action.Allow);
+    expect(sidekickMetrics?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["2801"] } }],
         },
       ]),
     );

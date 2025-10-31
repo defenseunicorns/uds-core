@@ -89,15 +89,9 @@ components:
     import:
       path: ../identity-authorization
 
-  # Neuvector
-  - name: neuvector
-    required: true
-    import:
-      path: ../runtime-security
-
   # Falco
   - name: falco
-    required: false # Optional component until we swap out Neuvector
+    required: true
     import:
       path: ../runtime-security
 

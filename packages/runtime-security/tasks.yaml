@@ -2,13 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - neuvector: ../../src/neuvector/tasks.yaml
   - falco: ../../src/falco/tasks.yaml
 
 tasks:
   - name: validate
     actions:
-      - task: neuvector:validate
-      - task: neuvector:e2e-test
       - task: falco:validate
       - task: falco:e2e-test

@@ -11,7 +11,7 @@ metadata:
 components:
   - name: falco
     description: "Deploy Falco"
-    required: false # Optional component until we swap out Neuvector
+    required: true
     only:
       flavor: upstream
     import:
@@ -26,7 +26,7 @@ components:
 
   - name: falco
     description: "Deploy Falco"
-    required: false # Optional component until we swap out Neuvector
+    required: true
     only:
       flavor: registry1
     import:
@@ -41,7 +41,7 @@ components:
 
   - name: falco
     description: "Deploy Falco"
-    required: false # Optional component until we swap out Neuvector
+    required: true
     only:
       flavor: unicorn
     import:

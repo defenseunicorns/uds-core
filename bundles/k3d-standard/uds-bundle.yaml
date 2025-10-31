@@ -43,7 +43,6 @@ packages:
       - istio-passthrough-gateway
       - istio-egress-gateway
       - metrics-server
-      - falco
     overrides:
       pepr-uds-core:
         module:

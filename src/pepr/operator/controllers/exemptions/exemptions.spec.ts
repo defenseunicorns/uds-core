@@ -10,36 +10,36 @@ import { Exemption } from "../../crd/generated/exemption-v1alpha1";
 import { ExemptionStore } from "./exemption-store";
 import { processExemptions } from "./exemptions";
 
-const enforcerMatcher = {
-  namespace: "neuvector",
-  name: "^neuvector-enforcer-pod.*",
+const falcoMatcher = {
+  namespace: "falco",
+  name: "^falco-pod.*",
   kind: MatcherKind.Pod,
 };
-const controllerMatcher = {
-  namespace: "neuvector",
-  name: "^neuvector-controller-pod.*",
+const falcosidekickMatcher = {
+  namespace: "falco",
+  name: "^falcosidekick-pod.*",
   kind: MatcherKind.Pod,
 };
 const prometheusMatcher = {
-  namespace: "neuvector",
-  name: "^neuvector-prometheus-exporter-pod.*",
+  namespace: "falco",
+  name: "^falco-prometheus-exporter-pod.*",
   kind: MatcherKind.Pod,
 };
 const vectorMatcher = { namespace: "vector", name: "^vector-.*", kind: MatcherKind.Pod };
 const exemption1UID = "exemption-1-uid";
 const exemption2UID = "exemption-2-uid";
-const storedEnforcerMatcher = { ...enforcerMatcher, owner: exemption1UID };
-const storedControllerMatcher = { ...controllerMatcher, owner: exemption1UID };
+const storedfalcoMatcher = { ...falcoMatcher, owner: exemption1UID };
+const storedfalcosidekickMatcher = { ...falcosidekickMatcher, owner: exemption1UID };
 const storedPrometheusMatcher = { ...prometheusMatcher, owner: exemption1UID };
 const storedVectorMatcher = { ...vectorMatcher, owner: exemption2UID };
-const neuvectorMockExemption = {
+const falcoMockExemption = {
   metadata: {
     uid: exemption1UID,
   },
   spec: {
     exemptions: [
       {
-        matcher: enforcerMatcher,
+        matcher: falcoMatcher,
         policies: [
           Policy.DisallowPrivileged,
           Policy.DropAllCapabilities,
@@ -47,7 +47,7 @@ const neuvectorMockExemption = {
         ],
       },
       {
-        matcher: controllerMatcher,
+        matcher: falcosidekickMatcher,
         policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
       },
       {
@@ -64,50 +64,50 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
   });
 
   it("Add exemptions for the first time", async () => {
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
       storedPrometheusMatcher,
     ]);
   });
 
   it("Does not re-add matchers on updates", async () => {
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    processExemptions(neuvectorMockExemption, WatchPhase.Modified);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
+    processExemptions(falcoMockExemption, WatchPhase.Modified);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
       storedPrometheusMatcher,
     ]);
   });
 
   it("Handles updates -- remove policy, remove matcher, add policy, add matcher", async () => {
-    // remove RequireNonRootUser from enforcerMatcher
+    // remove RequireNonRootUser from falcoMatcher
     // remove prometheusMatcher
-    // add DisallowHostNamespaces to controllerMatcher
+    // add DisallowHostNamespaces to falcosidekickMatcher
     // add vectorMatcher with RequireNonRootUser
-    const updatedNeuvectorExemption = {
+    const updatedFalcoExemption = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [Policy.DisallowPrivileged, Policy.DropAllCapabilities],
           },
           {
-            matcher: controllerMatcher,
+            matcher: falcosidekickMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -122,33 +122,33 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    processExemptions(updatedNeuvectorExemption, WatchPhase.Modified);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
+    processExemptions(updatedFalcoExemption, WatchPhase.Modified);
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([
       { ...storedVectorMatcher, owner: exemption1UID },
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowHostNamespaces)).toEqual([
-      storedControllerMatcher,
+      storedfalcosidekickMatcher,
     ]);
   });
 
   it("Adds duplicate exemptions set by same CR if different matcher kind", async () => {
-    const neuvectorMockExemption2 = {
+    const falcoMockExemption2 = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -156,33 +156,33 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
             ],
           },
           {
-            matcher: { ...enforcerMatcher, kind: MatcherKind.Service },
+            matcher: { ...falcoMatcher, kind: MatcherKind.Service },
             policies: [Policy.DisallowNodePortServices],
           },
         ],
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption2, WatchPhase.Added);
+    processExemptions(falcoMockExemption2, WatchPhase.Added);
 
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowNodePortServices)).toEqual([
-      { ...storedEnforcerMatcher, kind: MatcherKind.Service },
+      { ...storedfalcoMatcher, kind: MatcherKind.Service },
     ]);
   });
 
   it("Adds duplicate exemptions set by same CR if different namespace", async () => {
     const diffNS = "differentNS";
-    const neuvectorMockExemption2 = {
+    const falcoMockExemption2 = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -190,7 +190,7 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
             ],
           },
           {
-            matcher: { ...enforcerMatcher, namespace: diffNS },
+            matcher: { ...falcoMatcher, namespace: diffNS },
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -201,26 +201,26 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption2, WatchPhase.Added);
+    processExemptions(falcoMockExemption2, WatchPhase.Added);
 
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
+      storedfalcoMatcher,
       {
-        ...storedEnforcerMatcher,
+        ...storedfalcoMatcher,
         namespace: diffNS,
       },
     ]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([
-      storedEnforcerMatcher,
+      storedfalcoMatcher,
       {
-        ...storedEnforcerMatcher,
+        ...storedfalcoMatcher,
         namespace: diffNS,
       },
     ]);
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([
-      storedEnforcerMatcher,
+      storedfalcoMatcher,
       {
-        ...storedEnforcerMatcher,
+        ...storedfalcoMatcher,
         namespace: diffNS,
       },
     ]);
@@ -228,14 +228,14 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
 
   it("Adds duplicate exemptions set by same CR if different namespace and different policy list", async () => {
     const diffNS = "differentNS";
-    const neuvectorMockExemption2 = {
+    const falcoMockExemption2 = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -243,24 +243,24 @@ describe("Test processExemptions() no duplicate matchers in same CR", () => {
             ],
           },
           {
-            matcher: { ...enforcerMatcher, namespace: diffNS },
+            matcher: { ...falcoMatcher, namespace: diffNS },
             policies: [Policy.DisallowPrivileged],
           },
         ],
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption2, WatchPhase.Added);
+    processExemptions(falcoMockExemption2, WatchPhase.Added);
 
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
+      storedfalcoMatcher,
       {
-        ...storedEnforcerMatcher,
+        ...storedfalcoMatcher,
         namespace: diffNS,
       },
     ]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
   });
 });
 
@@ -276,15 +276,15 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
     spec: {
       exemptions: [
         {
-          matcher: enforcerMatcher,
+          matcher: falcoMatcher,
           policies: [Policy.DisallowPrivileged],
         },
         {
-          matcher: enforcerMatcher,
+          matcher: falcoMatcher,
           policies: [Policy.RequireNonRootUser],
         },
         {
-          matcher: enforcerMatcher,
+          matcher: falcoMatcher,
           policies: [Policy.DropAllCapabilities],
         },
       ],
@@ -293,24 +293,24 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
 
   it("Adds same matchers with different policies", () => {
     processExemptions(sameMatcherMockExemption, WatchPhase.Added);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
   });
 
   it("Does not re-add matchers on updates", () => {
     processExemptions(sameMatcherMockExemption, WatchPhase.Added);
     processExemptions(sameMatcherMockExemption, WatchPhase.Modified);
 
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
   });
 
   it("Handles updates - remove policy, remove matcher, add policy, add matcher", async () => {
-    // remove RequireNonRoot from enforcerMatcher (satisfies remove matcher in this duplicate case)
-    // add DisallowHostNamespaces to enforcerMatcher
-    // add controllerMatcher with DisallowPrivileged
+    // remove RequireNonRoot from falcoMatcher (satisfies remove matcher in this duplicate case)
+    // add DisallowHostNamespaces to falcoMatcher
+    // add falcosidekickMatcher with DisallowPrivileged
     const updateSameMatcherMock = {
       metadata: {
         uid: exemption1UID,
@@ -318,19 +318,19 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [Policy.DisallowPrivileged],
           },
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [Policy.DropAllCapabilities],
           },
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [Policy.DisallowHostNamespaces],
           },
           {
-            matcher: controllerMatcher,
+            matcher: falcosidekickMatcher,
             policies: [Policy.DisallowPrivileged],
           },
         ],
@@ -342,13 +342,11 @@ describe("Test processExemptions() duplicate matchers in same CR", () => {
 
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([
-      storedEnforcerMatcher,
-      storedControllerMatcher,
+      storedfalcoMatcher,
+      storedfalcosidekickMatcher,
     ]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DisallowHostNamespaces)).toEqual([
-      storedEnforcerMatcher,
-    ]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowHostNamespaces)).toEqual([storedfalcoMatcher]);
   });
 });
 
@@ -358,8 +356,8 @@ describe("Test processExemptions(); phase DELETED", () => {
   });
 
   it("Removes all CRs exemptions when deleted", async () => {
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
-    processExemptions(neuvectorMockExemption, WatchPhase.Deleted);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
+    processExemptions(falcoMockExemption, WatchPhase.Deleted);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([]);
   });
@@ -383,9 +381,9 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
     processExemptions(vectorMockExemption, WatchPhase.Added);
-    processExemptions(neuvectorMockExemption, WatchPhase.Deleted);
+    processExemptions(falcoMockExemption, WatchPhase.Deleted);
 
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedVectorMatcher]);
     expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedVectorMatcher]);
@@ -393,14 +391,14 @@ describe("Test processExemptions(); phase DELETED", () => {
   });
 
   it("Does not delete duplicate exemptions if set by separate CRs", async () => {
-    const neuvectorMockExemption2 = {
+    const falcoMockExemption2 = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -411,14 +409,14 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    const neuvectorDuplicateMockExemption = {
+    const falcoDuplicateMockExemption = {
       metadata: {
         uid: exemption2UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [
               Policy.DisallowPrivileged,
               Policy.DropAllCapabilities,
@@ -429,24 +427,24 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption2, WatchPhase.Added);
-    processExemptions(neuvectorDuplicateMockExemption, WatchPhase.Added);
-    processExemptions(neuvectorDuplicateMockExemption, WatchPhase.Deleted);
+    processExemptions(falcoMockExemption2, WatchPhase.Added);
+    processExemptions(falcoDuplicateMockExemption, WatchPhase.Added);
+    processExemptions(falcoDuplicateMockExemption, WatchPhase.Deleted);
 
-    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
-    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([storedfalcoMatcher]);
   });
 
   it("Does not delete exemptions for the same policies from separate CRs during modification", async () => {
-    const neuvectorMockExemption = {
+    const falcoMockExemption = {
       metadata: {
         uid: exemption1UID,
       },
       spec: {
         exemptions: [
           {
-            matcher: enforcerMatcher,
+            matcher: falcoMatcher,
             policies: [Policy.RequireNonRootUser, Policy.DropAllCapabilities],
           },
         ],
@@ -481,15 +479,15 @@ describe("Test processExemptions(); phase DELETED", () => {
       },
     } as Exemption;
 
-    processExemptions(neuvectorMockExemption, WatchPhase.Added);
+    processExemptions(falcoMockExemption, WatchPhase.Added);
     processExemptions(vectorMockExemption, WatchPhase.Added);
     processExemptions(vectorUpdatedMockExemption, WatchPhase.Modified);
 
     expect(ExemptionStore.getByPolicy(Policy.RequireNonRootUser)).toEqual([
-      storedEnforcerMatcher,
+      storedfalcoMatcher,
       storedVectorMatcher,
     ]);
-    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedEnforcerMatcher]);
+    expect(ExemptionStore.getByPolicy(Policy.DropAllCapabilities)).toEqual([storedfalcoMatcher]);
     expect(ExemptionStore.getByPolicy(Policy.DisallowPrivileged)).toEqual([storedVectorMatcher]);
   });
 });

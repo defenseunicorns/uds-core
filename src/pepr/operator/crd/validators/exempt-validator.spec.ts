@@ -20,8 +20,8 @@ const mockExemptions = [
   {
     policies: [Policy.DisallowPrivileged],
     matcher: {
-      name: "^neuvector-enforcer-pod.*",
-      namespace: "neuvector",
+      name: "^falco-pod.*",
+      namespace: "falco",
       kind: MatcherKind.Pod,
     },
   },
@@ -55,7 +55,7 @@ describe("Test validation of Exemption CRs", () => {
   });
 
   it("denies non default namespace if allow all === false", async () => {
-    const mockReq = makeMockReq({ ns: "neuvector" });
+    const mockReq = makeMockReq({ ns: "falco" });
     await exemptValidator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
     expect(mockReq.Deny).toHaveBeenCalledWith(
@@ -65,13 +65,13 @@ describe("Test validation of Exemption CRs", () => {
 
   it("allows all namespaces", async () => {
     UDSConfig.allowAllNSExemptions = true;
-    const mockReq = makeMockReq({ ns: "neuvector" });
+    const mockReq = makeMockReq({ ns: "falco" });
     await exemptValidator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("denies matcher regex patterns with leading and trailing slashes", async () => {
-    const wrongMatcherName = "/^neuvector-enforcer-pod*/";
+    const wrongMatcherName = "/^falco-pod*/";
     const mockReq = makeMockReq({
       exempts: [
         {
@@ -91,13 +91,13 @@ describe("Test validation of Exemption CRs", () => {
       exempts: [
         {
           ...mockExemptions[0],
-          matcher: { ...mockExemptions[0].matcher, name: ")^neuvector-enforcer-pod*" },
+          matcher: { ...mockExemptions[0].matcher, name: ")^falco-pod*" },
         },
       ],
     });
     await exemptValidator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      `Invalid regular expression pattern )^neuvector-enforcer-pod*: SyntaxError: Invalid regular expression: /)^neuvector-enforcer-pod*/: Unmatched ')'`,
+      `Invalid regular expression pattern )^falco-pod*: SyntaxError: Invalid regular expression: /)^falco-pod*/: Unmatched ')'`,
     );
   });
 
