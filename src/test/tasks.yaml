@@ -35,6 +35,10 @@ tasks:
         default: "true"
 
     actions:
+      - description: "Install test dependencies"
+        cmd: |
+          npm ci
+        dir: test/vitest
       - description: "Run Network Tests"
         cmd: |
           EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
