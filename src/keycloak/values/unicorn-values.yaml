@@ -12,7 +12,12 @@ securityContext:
       - ALL
 image:
   repository: quay.io/rfcurated/keycloak
-  tag: "26.4.1-jammy-fips-rfcurated"
+  tag: "26.4.2-jammy-fips-rfcurated"
 
 migrations:
   deleteGeneratedTrustStore: true
+
+env:
+  # Drop unicorn's javaagent export to avoid duplicate BC-FIPS; keep required exports only.
+  - name: JDK_JAVA_OPTIONS
+    value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
