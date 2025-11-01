@@ -28,7 +28,7 @@ prometheus-node-exporter:
   image:
     registry: quay.io
     repository: rfcurated/prometheus/node-exporter
-    tag: 1.9.1-jammy-scratch-fips-rfcurated
+    tag: 1.10.2-jammy-scratch-fips-rfcurated
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
