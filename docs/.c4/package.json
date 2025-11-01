@@ -5,7 +5,7 @@
         "setup": "playwright install chromium"
     },
     "devDependencies": {
-        "@types/node": "^22.18.6",
+        "@types/node": "^24.0.0",
         "likec4": "^1.43.0",
         "typescript": "^5.9.2",
         "playwright": "^1.48.2"
