@@ -1,0 +1,36 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: c4-dev
+    description: "Setup live server to dev on C4 diagrams"
+    actions:
+      - cmd: npx likec4 start
+        dir: docs/.c4/
+
+  - name: c4-validation
+    description: "Check for syntax errors and layout drift (outdated manual layout)"
+    actions:
+      - cmd: npx likec4 validate
+        dir: docs/.c4/
+
+  - name: c4-update
+    description: "Generate new diagrams"
+    actions:
+      - cmd: |
+          npm ci
+          npm run setup
+          rm -rf diagrams
+          npx likec4 export png -o diagrams
+        dir: docs/.c4/
+
+  - name: d2-update
+    description: "Regenerate D2 Diagrams for the Docs Site"
+    actions:
+      - description: "Regenerate operator resource tree"
+        cmd: |
+          d2 fmt docs/.images/diagrams/operator-resource-tree.d2
+          # Using Poppins font from https://fonts.google.com/specimen/Poppins, license: https://fonts.google.com/specimen/Poppins/license
+          d2 docs/.images/diagrams/operator-resource-tree.d2 docs/.images/diagrams/operator-resource-tree.png --layout elk --pad 20 \
+            --font-regular docs/.images/fonts/Poppins-Regular.ttf --font-italic docs/.images/fonts/Poppins-Italic.ttf \
+            --font-bold docs/.images/fonts/Poppins-Bold.ttf --font-semibold docs/.images/fonts/Poppins-SemiBold.ttf

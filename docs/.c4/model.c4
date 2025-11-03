@@ -1,0 +1,596 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+model {
+  infrastructure = infrastructure {
+    title 'Infrastructure'
+    summary ' '
+    description 'The infrastructure layer containing all Kubernetes clusters and external services required to support UDS Core deployments. This includes cloud provider resources, load balancers, and external data stores.'
+
+    cluster = cluster {
+      title 'Kubernetes Cluster'
+      summary ' '
+      description 'The Kubernetes cluster hosting UDS Core and its components. UDS Core supports various Kubernetes distributions including K3d (development), EKS, AKS, and RKE2 for production deployments.'
+
+      pepr-system = coreNamespace {
+        title 'Pepr System Namespace'
+        summary ' '
+        description 'Namespace containing Pepr controller and admission pods for policy enforcement and automated integration. Pepr is a Kubernetes controller built with TypeScript that implements UDS Core security policies and automates integration with the rest of the platform via custom resources.'
+
+        pepr-watcher = pod {
+          title 'Pepr Watcher'
+          summary ' '
+          description 'Watches Kubernetes resources and automates integrations with the platform. The watcher monitors resource changes and executes reconciliation logic for UDS Core integrations such as network policy generation, Istio service mesh integration, and SSO configuration.'
+
+          // external relationship
+          pepr-watcher -> kubernetes-control-plane.api-server
+        }
+
+        pepr-admission = pod {
+          title 'Pepr Admission'
+          summary ' '
+          description 'Handles admission webhook requests for resource validation and mutation. Processes incoming Kubernetes API requests to enforce policies such as restricting host path volumes, validating security contexts, mutating pod specifications, and ensuring compliance with UDS Core security standards before resources are persisted.'
+
+          // external bi-directional relationships
+          pepr-admission -> pepr-mutating-webhook {
+            style {
+              head normal
+              tail normal
+            }
+          }
+
+          pepr-admission -> pepr-validating-webhook {
+            style {
+              head normal
+              tail normal
+            }
+          }
+        }
+      }
+
+      zarf = coreNamespace {
+        title 'Zarf Namespace'
+        summary ' '
+        description 'Namespace containing Zarf components for package deployment and image registry. Zarf enables air-gapped deployments by packaging and deploying UDS Core with all dependencies, including container images, Helm charts, and manifests.'
+
+        zarf-agent = pod {
+          title 'Zarf Agent'
+          summary ' '
+          description 'Mutates pod specifications to inject Zarf registry configuration. The agent intercepts pod creation requests and rewrites image references to point to the local Zarf registry, enabling air-gapped deployments without modifying application manifests.'
+
+          // external bi-directional relationship
+          zarf-agent -> zarf-mutating-webhook {
+            style {
+              head normal
+              tail normal
+            }
+          }
+        }
+
+        zarf-registry = pod {
+          title 'Zarf Registry'
+          summary ' '
+          description 'Local container image registry for air-gapped deployments. Hosts all container images required by UDS Core and deployed applications, eliminating the need for external registry access in disconnected environments.'
+
+          // external bi-directional relationship
+          zarf-registry -> kubernetes-control-plane.kubelet {
+            style {
+              head normal
+              tail normal
+            }
+          }
+        }
+      }
+
+      istio-system = coreNamespace {
+        title 'Istio System Namespace'
+        summary ' '
+        description 'Namespace containing core Istio service mesh control plane components. UDS Core uses Istio to provide mTLS encryption, traffic management, and zero-trust networking. Supports both sidecar injection and ambient mesh modes for flexible deployment options.'
+
+        istiod = pod {
+          title 'Istiod'
+          summary ' '
+          description 'Istio control plane managing service mesh configuration and certificate issuance. Istiod handles service discovery, certificate rotation for mTLS, configuration distribution to proxies, and manages both Envoy sidecars and ztunnel proxies in ambient mode.'
+
+          // external relationship
+          istiod -> kubernetes-control-plane.api-server
+        }
+
+        istio-cni = pod {
+          title 'Istio CNI'
+          summary ' '
+          description 'CNI plugin for configuring pod network traffic redirection to Istio proxies. Runs as a DaemonSet on each node to configure iptables rules that transparently intercept pod traffic and redirect it through Istio proxies without requiring init containers or elevated pod privileges.'
+        }
+
+        ztunnel = pod {
+          title 'Ztunnel'
+          summary ' '
+          description 'Zero-trust tunnel providing L4 networking for Istio ambient mesh mode. Ztunnel is a lightweight, per-node proxy that handles mTLS encryption and L4 authorization for pods in ambient mode, eliminating the need for sidecar containers while maintaining zero-trust security.'
+        }
+      }
+
+      istio-tenant-gateway = coreNamespace {
+        title 'Istio Tenant Gateway Namespace'
+        summary ' '
+        description 'Namespace containing the tenant-facing ingress gateway for application traffic. This gateway handles external HTTPS traffic for tenant applications deployed on UDS Core, enforcing TLS termination and routing rules.'
+
+        istio-tenant-ingress-gateway = pod {
+          title 'Istio Tenant Ingress Gateway'
+          summary ' '
+          description 'Ingress gateway handling external traffic for tenant applications. Routes incoming requests to application waypoints or services based on virtual service configurations and enforces TLS policies.'
+
+          // external relationships
+          istio-tenant-ingress-gateway -> keycloak-waypoint
+          istio-tenant-ingress-gateway -> customer-waypoint
+        }
+      }
+
+      istio-admin-gateway = coreNamespace {
+        title 'Istio Admin Gateway Namespace'
+        summary ' '
+        description 'Namespace containing the admin-facing ingress gateway for administrative interfaces. Provides secure access to UDS Core administrative tools like Grafana, separated from tenant traffic for enhanced security and access control.'
+
+        istio-admin-ingress-gateway = pod {
+          title 'Istio Admin Ingress Gateway'
+          summary ' '
+          description 'Ingress gateway handling external traffic for administrative interfaces like Grafana. Routes incoming requests to application waypoints or services based on virtual service configurations and enforces TLS policies.'
+
+          // external relationships
+          istio-admin-ingress-gateway -> keycloak-waypoint
+          istio-admin-ingress-gateway -> grafana.grafana
+        }
+      }
+
+      istio-passthrough-gateway = coreNamespace {
+        title 'Istio Passthrough Gateway Namespace'
+        summary ' '
+        description 'Namespace containing the passthrough gateway for TLS passthrough traffic. Enables applications to handle their own TLS termination by passing encrypted traffic through the gateway without decryption, useful for applications with specific certificate requirements.'
+
+        istio-passthrough-ingress-gateway = pod {
+          title 'Istio Passthrough Ingress Gateway'
+          summary ' '
+          description 'Ingress gateway for TLS passthrough traffic without termination. Routes encrypted traffic directly to backend services based on SNI information without decrypting, allowing applications to maintain end-to-end encryption with their own certificates.'
+        }
+      }
+
+      istio-egress-gateway = coreNamespace {
+        title 'Istio Egress Gateway Namespace'
+        summary ' '
+        description 'Namespace containing the egress gateway for controlled outbound traffic. Provides a centralized exit point for outbound traffic from the mesh, enabling monitoring, access control, and compliance for external service communications in sidecar mode.'
+
+        istio-egress-gateway = pod {
+          title 'Istio Egress Gateway'
+          summary ' '
+          description 'Egress gateway controlling and monitoring outbound traffic from the mesh. Enforces egress policies, provides visibility into external service calls, and enables centralized TLS origination for outbound connections in sidecar-based deployments.'
+        }
+      }
+
+      istio-egress-ambient = coreNamespace {
+        title 'Istio Egress Ambient Namespace'
+        summary ' '
+        description 'Namespace containing the ambient mode egress waypoint for outbound traffic. Provides controlled egress for applications running in Istio ambient mode, enabling secure communication with external services like SIEM systems while maintaining zero-trust principles.'
+
+        istio-egress-ambient = pod {
+          title 'Istio Egress Ambient'
+          summary ' '
+          description 'Ambient mode egress waypoint for outbound traffic to external services. Handles outbound connections from ambient mesh workloads to external systems, enforcing authorization policies and providing observability for traffic leaving the cluster.'
+
+          // external relationship
+          istio-egress-ambient -> ext-siem
+        }
+      }
+
+      grafana = coreNamespace {
+        title 'Grafana Namespace'
+        summary ' '
+        description 'Namespace containing Grafana for metrics and logs visualization. Grafana provides the primary observability dashboard for UDS Core, integrating with Prometheus for metrics and Loki for logs. Protected by Keycloak SSO for secure access to monitoring data.'
+
+        grafana = pod {
+          title 'Grafana'
+          summary ' '
+          description 'Visualization platform for metrics from Prometheus and logs from Loki. Grafana provides pre-configured dashboards for monitoring UDS Core components, Kubernetes resources, and application performance.'
+
+          // external relationships
+          grafana -> keycloak-waypoint
+          grafana -> monitoring.prometheus
+          grafana -> loki-gateway
+        }
+      }
+
+      monitoring = coreNamespace {
+        title 'Monitoring Namespace'
+        summary ' '
+        description 'Namespace containing Prometheus-based monitoring stack for metrics collection and alerting. This namespace hosts the complete metrics pipeline including Prometheus for time-series storage, Prometheus Operator for declarative configuration, exporters for system metrics, and Alertmanager for alert routing and notification.'
+
+        prometheus = pod {
+          title 'Prometheus'
+          summary ' '
+          description 'Time-series database collecting and storing metrics from cluster components. Prometheus scrapes metrics from Kubernetes components, Istio service mesh, application pods, and infrastructure exporters. Configured via ServiceMonitor and PodMonitor CRDs managed by Prometheus Operator for dynamic service discovery.'
+
+          // internal relationships
+          prometheus -> kube-state-metrics
+          prometheus -> node-exporter
+          prometheus -> alertmanager
+        }
+
+        prometheus-operator = pod {
+          title 'Prometheus Operator'
+          summary ' '
+          description 'Kubernetes operator managing Prometheus instances and monitoring configurations. Automates deployment and configuration of Prometheus, Alertmanager, and related monitoring components. Watches for ServiceMonitor, PodMonitor, and PrometheusRule CRDs to dynamically update scrape configurations and alerting rules.'
+
+          // external relationship
+          prometheus-operator -> kubernetes-control-plane.api-server
+        }
+
+        kube-state-metrics = pod {
+          title 'Kube State Metrics'
+          summary ' '
+          description 'Service exposing Kubernetes object state as Prometheus metrics. Generates metrics about the state of Kubernetes objects including deployments, pods, nodes, and services. Provides visibility into resource status, capacity, and health for cluster monitoring.'
+        }
+
+        node-exporter = pod {
+          title 'Node Exporter'
+          summary ' '
+          description 'Exports hardware and OS metrics from Kubernetes nodes. Runs as a DaemonSet on each node to collect CPU, memory, disk, and network metrics. Provides foundational infrastructure monitoring data for capacity planning and performance analysis.'
+        }
+
+        alertmanager = pod {
+          title 'Alertmanager'
+          summary ' '
+          description 'Handles alerts from Prometheus, including deduplication, grouping, and routing. Manages alert notifications by grouping related alerts, silencing during maintenance windows, and routing to external systems like PagerDuty, Slack, or custom webhooks based on configured receivers.'
+        }
+      }
+
+      falco = coreNamespace {
+        title 'Falco Namespace'
+        summary ' '
+        description 'Namespace containing Falco runtime security monitoring components. Falco provides runtime threat detection for UDS Core by monitoring system calls and Kubernetes audit logs to detect anomalous behavior, policy violations, and potential security threats in real-time.'
+
+        falco = pod {
+          title 'Falco'
+          summary ' '
+          description 'Runtime security monitoring detecting anomalous activity in containers and hosts. Falco uses eBPF to monitor system calls, detecting suspicious activities like privilege escalation, unauthorized file access, unexpected network connections, and container escapes based on configurable rules.'
+
+          // internal relationship
+          falco -> falcosidekick
+        }
+
+        falcosidekick = pod {
+          title 'FalcoSidekick'
+          summary ' '
+          description 'Forwards Falco security alerts to external systems and log aggregators. FalcoSidekick receives security events from Falco and routes them to multiple destinations including Loki for log storage, external SIEM systems for security analysis, and alerting platforms for incident response.'
+
+          // external relationships
+          falcosidekick -> ext-alerts
+          falcosidekick -> loki-gateway
+        }
+      }
+
+      loki = coreNamespace {
+        title 'Loki Namespace'
+        summary ' '
+        description 'Namespace containing Loki log aggregation system components. Loki provides scalable log aggregation for UDS Core using a distributed architecture with separate read, write, and backend components. Stores logs in external S3-compatible object storage for cost-effective long-term retention.'
+
+        loki-gateway = pod {
+          title 'Loki Gateway'
+          summary ' '
+          description 'Gateway handling incoming log queries and writes, distributing to read/write components. Acts as the entry point for all Loki operations, routing write requests to loki-write instances and read/query requests to loki-read instances for optimal performance and scalability.'
+
+          // internal relationships
+          loki-gateway -> loki-read
+          loki-gateway -> loki-write
+          loki-gateway -> loki-backend
+        }
+
+        loki-write = pod {
+          title 'Loki Write'
+          summary ' '
+          description 'Handles log ingestion and writes to backend storage. Receives log streams from Vector and other sources, processes and indexes them, then writes to both the backend component and external object storage. Optimized for high-throughput log ingestion.'
+
+          // internal relationship
+          loki-write -> loki-backend
+
+          // external relationship
+          loki-write -> external-services.ext-loki-storage
+        }
+
+        loki-read = pod {
+          title 'Loki Read'
+          summary ' '
+          description 'Handles log queries and reads from backend storage. Processes LogQL queries from Grafana and other clients, retrieving logs from the backend cache and external object storage. Optimized for query performance with caching and parallel processing.'
+
+          // internal bi-directional relationship
+          loki-read -> loki-backend {
+            style {
+              head normal
+              tail normal
+            }
+          }
+
+          // external relationship
+          loki-read -> external-services.ext-loki-storage
+        }
+
+        loki-backend = pod {
+          title 'Loki Backend'
+          summary ' '
+          description 'Backend component managing log storage and compaction. Handles log chunk storage, index management, and compaction operations. Interfaces with external S3-compatible storage for persistent log retention and retrieval.'
+
+          // external relationship
+          loki-backend -> external-services.ext-loki-storage
+        }
+      }
+
+      vector = coreNamespace {
+        title 'Vector Namespace'
+        summary ' '
+        description 'Namespace containing Vector for log collection and forwarding. Vector serves as the primary log collection agent for UDS Core, gathering logs from all pods and nodes, transforming them as needed, and forwarding to Loki for storage and to external SIEM systems for security analysis.'
+
+        vector = pod {
+          title 'Vector'
+          summary ' '
+          description 'High-performance log collector and forwarder sending logs to Loki and external systems. Collects logs from Kubernetes pods via the container runtime, enriches them with metadata, applies transformations and filtering, then routes to multiple destinations including Loki for observability and external SIEM tools for security monitoring.'
+
+          // external relationships
+          vector -> istio-egress-ambient.istio-egress-ambient
+          vector -> loki-gateway
+        }
+      }
+
+      velero = coreNamespace {
+        title 'Velero Namespace'
+        summary ' '
+        description 'Namespace containing Velero for backup and disaster recovery. Velero provides backup and restore capabilities for UDS Core, enabling cluster migration, disaster recovery, and scheduled backups of Kubernetes resources and persistent volumes to external object storage.'
+
+        velero = pod {
+          title 'Velero'
+          summary ' '
+          description 'Backup and restore solution for Kubernetes cluster resources and persistent volumes. Velero creates backups of cluster state including namespaces, deployments, ConfigMaps, and persistent volume data, storing them in S3-compatible object storage for disaster recovery and cluster migration scenarios.'
+
+          // external relationship
+          velero -> external-services.ext-velero-storage
+        }
+      }
+
+      authservice = coreNamespace {
+        title 'Authservice Namespace'
+        summary ' '
+        description 'Namespace containing Authservice for external authentication integration. Authservice acts as an external authentication filter for Istio, intercepting requests and enforcing OAuth2/OIDC authentication flows with Keycloak before allowing access to protected applications.'
+
+        authservice = pod {
+          title 'AuthService'
+          summary ' '
+          description 'External authentication filter integrating with Keycloak for SSO. Authservice implements the OAuth2 authorization code flow, redirecting unauthenticated users to Keycloak for login, validating tokens, and injecting authentication headers into requests. Automatically configured via Pepr managed configuration and authorization policies.'
+
+          // external relationship
+          authservice -> keycloak-waypoint
+        }
+      }
+
+      keycloak = coreNamespace {
+        title 'Keycloak Namespace'
+        summary ' '
+        description 'Namespace containing Keycloak identity and access management components. Keycloak provides centralized identity and access management for UDS Core, offering SSO, user federation, identity brokering, and fine-grained authorization.'
+
+        keycloak = pod {
+          title 'Keycloak'
+          summary ' '
+          description 'Identity and access management providing SSO, user federation, and identity brokering. Keycloak manages user authentication and authorization for all UDS Core services and deployed applications. Stores data in an external PostgreSQL database and integrates with Pepr for automated client provisioning for applications.'
+
+          // hack to avoid crazy relationship rendering
+          keycloak -> pepr-watcher {
+            style {
+              head none
+              tail normal
+            }
+          }
+        }
+
+        keycloak-waypoint = pod {
+          title 'Istio-Waypoint'
+          summary ' '
+          description 'Istio ambient mode waypoint proxy for Keycloak traffic management. Provides L7 routing and policy enforcement for Keycloak traffic in ambient mesh mode. Handles connections from ingress gateways, Authservice, Grafana, and other clients requiring authentication services.'
+
+          // internal bi-directional relationship
+          keycloak-waypoint -> keycloak {
+            style {
+              head normal
+              tail normal
+            }
+          }
+
+          // external relationship
+          keycloak-waypoint -> external-services.ext-keycloak-db
+        }
+      }
+
+      generic-customer = coreNamespace {
+        title 'Generic Customer Namespace'
+        summary ' '
+        description 'Example namespace representing a customer application deployment. Demonstrates how tenant applications are deployed on UDS Core with Istio ambient mesh protection, Authservice integration for SSO, and Pepr policy enforcement. Serves as a reference architecture for application onboarding.'
+
+        customer-waypoint = pod {
+          title 'Istio-Waypoint'
+          summary ' '
+          description 'Istio ambient mode waypoint proxy for customer application traffic. Provides L7 traffic management for the customer application, enforcing authorization policies generated by Pepr. Routes authenticated requests from the tenant ingress gateway to the application after Authservice validates user credentials.'
+
+          // internal bi-directional relationship
+          customer-waypoint -> custom-application {
+            style {
+              head normal
+              tail normal
+            }
+          }
+
+          // external relationship
+          customer-waypoint -> authservice.authservice
+        }
+
+        custom-application = pod {
+          title 'Customer Application'
+          summary ' '
+          description 'Example customer application protected by UDS Core security policies. Represents a tenant workload running in ambient mesh mode with automatic mTLS encryption, network policy enforcement, and SSO integration. Benefits from UDS Core observability, security monitoring, and backup capabilities without application code changes.'
+        }
+      }
+
+      metrics-server = coreNamespace {
+        title 'Metrics Server'
+        summary ' '
+        description 'Namespace containing Metrics Server for resource metrics collection. Metrics Server provides resource usage metrics for Kubernetes workloads, enabling horizontal pod autoscaling (HPA) and kubectl top commands for capacity management.'
+
+        metrics-server = pod {
+          title 'Metrics Server'
+          summary ' '
+          description 'Collects resource metrics from Kubelets for horizontal pod autoscaling and kubectl top. Aggregates CPU and memory usage data from all nodes, exposing them via the Kubernetes Metrics API for autoscaling decisions and resource monitoring.'
+
+          // external relationship
+          metrics-server -> metrics-api-service
+        }
+      }
+
+      istio-mutating-webhook = coreWebhook {
+        title 'Istio Mutating Webhook'
+        summary ' '
+        description 'Mutating webhook injecting Istio sidecar proxies into pods. Automatically adds Envoy sidecar containers to pods in namespaces with istio-injection enabled, configuring them for service mesh participation with mTLS, traffic management, and observability.'
+
+        // external relationships
+        istio-mutating-webhook -> istiod
+        istio-mutating-webhook -> api-server
+      }
+
+      metrics-api-service = coreWebhook {
+        title 'Metrics API Service'
+        summary ' '
+        description 'API service exposing resource metrics from Metrics Server. Extends the Kubernetes API to provide the metrics.k8s.io API group, enabling HPA controllers and kubectl top to query real-time resource usage data.'
+
+        // external relationship
+        metrics-api-service -> api-server
+      }
+
+      pepr-mutating-webhook = coreWebhook {
+        title 'Pepr Mutating Webhook'
+        summary ' '
+        description 'Mutating webhook applying Pepr policy mutations to Kubernetes resources. Intercepts resource creation and modification requests to inject labels, modify security contexts, and enforce UDS Core standards before resources are persisted to etcd.'
+
+        // external relationship
+        pepr-mutating-webhook -> api-server
+      }
+
+      pepr-validating-webhook = coreWebhook {
+        title 'Pepr Validating Webhook'
+        summary ' '
+        description 'Validating webhook enforcing Pepr policy validations on Kubernetes resources. Validates incoming API requests against UDS Core security policies, rejecting non-compliant resources such as pods with prohibited volume types, insecure security contexts, or policy violations.'
+
+        // external relationship
+        pepr-validating-webhook -> api-server
+      }
+
+      zarf-mutating-webhook = coreWebhook {
+        title 'Zarf Mutating Webhook'
+        summary ' '
+        description 'Mutating webhook injecting Zarf registry configuration into pods. Rewrites container image references in pod specifications to point to the local Zarf registry, enabling seamless air-gapped deployments without modifying application manifests.'
+
+        // external relationship
+        zarf-mutating-webhook -> api-server
+      }
+
+      kubernetes-control-plane = k8sNamespace {
+        title 'Kubernetes ControlPlane'
+        summary ' '
+        description 'Kubernetes control plane components managing the cluster. These core Kubernetes components handle API requests, schedule workloads, and manage node operations. UDS Core components interact with the control plane for resource management and cluster state synchronization.'
+
+        kubelet = pod {
+          title 'Kubelet'
+          summary ' '
+          description 'Node agent managing pod lifecycle and container runtime on each node. Kubelet ensures containers are running in pods, reports node and pod status to the API server, and provides the metrics endpoint that Metrics Server queries for resource usage data.'
+        }
+
+        api-server = pod {
+          title 'API Server'
+          summary ' '
+          description 'Kubernetes API server handling all REST requests for cluster operations. The API server is the central management point for the cluster, processing all API requests from kubectl, controllers, and webhooks. UDS Core components like Pepr, Prometheus Operator, and Istiod interact extensively with the API server for resource management and cluster state monitoring.'
+        }
+      }
+    }
+    // Infrastructure
+    external-tenant-loadbalancer = loadbalancer {
+      title 'External Tenant LoadBalancer'
+      summary ' '
+      description 'Infrastructure defined load balancer for the tenant gateway. Provides external access to tenant applications deployed on UDS Core. Typically implemented as a cloud provider load balancer (ELB, Azure Load Balancer) or MetalLB in on-premises environments, routing HTTPS traffic on port 443 to the Istio tenant ingress gateway.'
+
+      // external relationship
+      external-tenant-loadbalancer -> istio-tenant-ingress-gateway
+    }
+
+    external-admin-loadbalancer = loadbalancer {
+      title 'External Admin LoadBalancer'
+      summary ' '
+      description 'Infrastructure defined load balancer for the admin gateway. Provides secure external access to UDS Core administrative interfaces like Grafana. Separated from tenant traffic for enhanced security and access control, typically restricted to administrative networks or VPNs.'
+
+      // external relationship
+      external-admin-loadbalancer -> istio-admin-ingress-gateway
+    }
+
+    external-services = infraServicesGroup {
+      title 'External Infrastructure Services'
+      summary ' '
+      description 'External infrastructure services supporting UDS Core components. These services run outside the Kubernetes cluster and provide persistent storage, databases, and other infrastructure dependencies required by UDS Core. Typically managed by cloud providers or infrastructure teams.'
+
+      ext-keycloak-db = infraService {
+        title 'External Keycloak Database'
+        summary ' '
+        description 'External PostgreSQL database storing Keycloak configuration and user data. Hosts Keycloak realms, clients, users, roles, and session information. Must be highly available and backed up regularly as it contains critical identity and access management data. Accessed by Keycloak over SSL/TLS on port 5432.'
+      }
+
+      ext-loki-storage = infraService {
+        title 'External Loki Storage'
+        summary ' '
+        description 'External object storage (S3-compatible) for Loki log data. Stores compressed log chunks and indexes for long-term retention. Supports AWS S3, MinIO, Azure Blob Storage, or other S3-compatible backends. Provides cost-effective, scalable storage for high-volume log data with configurable retention policies.'
+      }
+
+      ext-velero-storage = infraService {
+        title 'External Velero Storage'
+        summary ' '
+        description 'External object storage (S3-compatible) for Velero backups. Stores cluster backups including Kubernetes resource manifests and persistent volume snapshots. Critical for disaster recovery and cluster migration scenarios. Should be in a different failure domain than the cluster for true disaster recovery protection.'
+      }
+    }
+  }
+  // personas
+  admin = actor {
+    title 'Cluster Administrator'
+    summary ' '
+    description 'Administrator managing and monitoring the UDS Core platform. Platform operators and SREs who deploy, configure, and maintain UDS Core. Access administrative interfaces like Grafana for monitoring and Keycloak for identity management. Authenticate via Keycloak SSO with elevated privileges.'
+
+    // external relationship
+    admin -> external-admin-loadbalancer
+  }
+
+  enduser = actor {
+    title 'End User'
+    summary ' '
+    description 'End user accessing applications deployed on the UDS Core platform. Application users who access tenant workloads through the tenant ingress gateway.'
+
+    // external relationship
+    enduser -> external-tenant-loadbalancer
+  }
+
+  external-apps = externalAppsGroup {
+    title 'External Apps'
+    summary ' '
+    description 'External applications and services receiving data from UDS Core. Third-party systems that integrate with UDS Core for security monitoring, alerting, and compliance. Receive data via egress gateways with appropriate network policies and access controls.'
+
+    ext-siem = siem_tool {
+      title 'External SIEM Tool'
+      summary ' '
+      description 'External Security Information and Event Management system receiving security alerts. Receives Falco runtime security events and other security telemetry from UDS Core via Vector through the ambient egress gateway. Enables centralized security monitoring, threat detection, and compliance reporting across multiple clusters.'
+    }
+
+    ext-alerts = alert_destination {
+      title 'External Alerting Destination'
+      summary ' '
+      description 'External alerting system receiving notifications from Alertmanager. Receives alert notifications for operational issues, capacity problems, and service degradation. May include PagerDuty for on-call escalation, Slack for team notifications, or custom webhook integrations for incident management workflows.'
+    }
+  }
+}
