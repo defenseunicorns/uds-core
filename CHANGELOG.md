@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.55.1](https://github.com/defenseunicorns/uds-core/compare/v0.55.0...v0.55.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* **docs:** diagram task setup fix ([#2097](https://github.com/defenseunicorns/uds-core/issues/2097)) ([c413e22](https://github.com/defenseunicorns/uds-core/commit/c413e22f7bdee20fa7acac29893f36709fa5cf4d))
+
+
+### Miscellaneous
+
+* **ci:** remove iptables from save-logs ([#2096](https://github.com/defenseunicorns/uds-core/issues/2096)) ([155bfa9](https://github.com/defenseunicorns/uds-core/commit/155bfa98be2b9f667f8bea578be1ed14f843aa4e))
+* **config:** migrate renovate config ([#2084](https://github.com/defenseunicorns/uds-core/issues/2084)) ([d54c18b](https://github.com/defenseunicorns/uds-core/commit/d54c18b0a89a20d8c9fcdd6cd9880d75a5db297b))
+* **deps-dev:** bump vite from 7.1.7 to 7.1.12 in /docs/.c4 ([#2089](https://github.com/defenseunicorns/uds-core/issues/2089)) ([bb5b631](https://github.com/defenseunicorns/uds-core/commit/bb5b631b5066d91025bbbb9399c3e99f4f598a0f))
+* **deps:** update falco ([#2052](https://github.com/defenseunicorns/uds-core/issues/2052)) ([f65f042](https://github.com/defenseunicorns/uds-core/commit/f65f0429ab7c42d408f5167459ef143044c99653))
+* **docs:** diagrams as code with likec4 ([#2000](https://github.com/defenseunicorns/uds-core/issues/2000)) ([b41e3b2](https://github.com/defenseunicorns/uds-core/commit/b41e3b21dab126c6628058f94c2fee6f878739cd))
+* make private-pki task macos compatible ([#2081](https://github.com/defenseunicorns/uds-core/issues/2081)) ([2478065](https://github.com/defenseunicorns/uds-core/commit/24780657d73b30d1e87aec049ba1de15ba0d0ac1))
+* rotate development uds.dev certs ([#2100](https://github.com/defenseunicorns/uds-core/issues/2100)) ([5307bd4](https://github.com/defenseunicorns/uds-core/commit/5307bd42d3995634a354ccda436e1a5a37eb821d))
+* update renovate for likec4 ([#2093](https://github.com/defenseunicorns/uds-core/issues/2093)) ([eac3d36](https://github.com/defenseunicorns/uds-core/commit/eac3d36a5b4a6377d4177384f932374b22834ba8))
+
 ## [0.55.0](https://github.com/defenseunicorns/uds-core/compare/v0.54.1...v0.55.0) (2025-10-28)
 
 
