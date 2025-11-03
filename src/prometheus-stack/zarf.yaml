@@ -3,7 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart 6c2c36b4-6a7b-4640-ab37-29243ef6d2ec
+  # @lulaStart c9a40198-a55e-4769-a5de-44ffe7636593
   name: uds-core-prometheus-stack
+    # @lulaEnd c9a40198-a55e-4769-a5de-44ffe7636593
+    # @lulaEnd 6c2c36b4-6a7b-4640-ab37-29243ef6d2ec
   description: "UDS Core Prometheus-Stack"
 
 components:
