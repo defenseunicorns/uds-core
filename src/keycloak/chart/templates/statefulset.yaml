@@ -132,6 +132,11 @@ spec:
           {{- if .Values.env }}
             {{- tpl (toYaml .Values.env) . | nindent 12 }}
           {{- end }}
+            {{- if or (contains "rfcurated" .Values.image.repository) (contains "rfcurated" (toString .Values.image.tag)) }}
+            # Ensure javaagent is disabled (only for rfcurated unicorn flavor)
+            - name: JDK_JAVA_OPTIONS
+              value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
+            {{- end }}
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"
