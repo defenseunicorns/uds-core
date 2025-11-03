@@ -32,7 +32,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - A running container environment for K3D to interact with for dev & test environments
 - [K3D](https://k3d.io/) v5.7.1 or later for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.27.14 or later
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.27.16 or later
 
 ---
 
@@ -56,7 +56,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.53.0
+uds deploy k3d-core-demo:0.55.1
 ```
 
 <!-- x-release-please-end -->
@@ -70,7 +70,7 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.53.0
+uds deploy k3d-core-slim-dev:0.55.1
 ```
 
 <!-- x-release-please-end -->
@@ -120,7 +120,7 @@ uds run test-single-layer --set LAYER=identity-authorization
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
 
 ## UDS Core Architecture Overview
-
+<!-- @lulaStart 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
-
+<!-- @lulaEnd 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
 Diagrams are located in `/docs/.images`. See the [diagram README](./docs/.images/diagrams/README.md) for an explanation and help customizing.

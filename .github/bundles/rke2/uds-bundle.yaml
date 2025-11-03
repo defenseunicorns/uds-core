@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "0.53.0"
+  version: "0.55.1"
   # x-release-please-end
 
 packages:
@@ -16,7 +16,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.62.0
+    ref: v0.64.0
     overrides:
       zarf-registry:
         docker-registry:
@@ -38,7 +38,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.53.0
+    ref: 0.55.1
     # x-release-please-end
     optionalComponents:
       - metrics-server
@@ -131,6 +131,8 @@ packages:
               value: false
             - path: autoscaling.enabled
               value: true
+            - path: detailedObservability.alerts.enabled
+              value: true
           variables:
             - name: KEYCLOAK_DB_HOST
               path: postgresql.host
@@ -147,8 +149,8 @@ packages:
             - name: FALCO_SANDBOX_RULES_ENABLED
               description: Enable sandbox rules
               path: sandboxRulesEnabled
-              default: "false" # TODO: enable this when we fix flakey test
+              default: "true"
             - name: FALCO_INCUBATING_RULES_ENABLED
               description: Enable incubating rules
               path: incubatingRulesEnabled
-              default: "false" # TODO: enable this when we fix flakey test
+              default: "true"

@@ -143,29 +143,41 @@ spec:
               value: "true"
             - name: KC_METRICS_ENABLED
               value: "true"
+
+            # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             - name: KC_EVENT_METRICS_USER_ENABLED
               value: "true"
+            # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
 
             # Enable access log
             - name: QUARKUS_HTTP_ACCESS_LOG_ENABLED
               value: "true"
-
+            # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
+            {{- if .Values.detailedObservability.logging.enabled }}
+            - name: KC_SPI_EVENTS_LISTENER__JBOSS_LOGGING__SUCCESS_LEVEL
+              value: "info"
+            - name: KC_SPI_EVENTS_LISTENER__JBOSS_LOGGING__SANITIZE
+              value: "true"
+            - name: KC_SPI_EVENTS_LISTENER__JBOSS_LOGGING__INCLUDE_REPRESENTATION
+              value: "true"
+            {{- end }}
+            # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
             # X509 configuration
             - name: KC_HTTPS_CLIENT_AUTH
               value: request
 
             # Escape Slashes in Group Names
-            - name: KC_SPI_GROUP_JPA_ESCAPE_SLASHES_IN_GROUP_PATH
+            - name: KC_SPI_GROUP__JPA__ESCAPE_SLASHES_IN_GROUP_PATH
               value: "true"
 
             ## Activate the nginx provider
-            - name: KC_SPI_X509CERT_LOOKUP_PROVIDER
+            - name: KC_SPI_X509CERT_LOOKUP__PROVIDER
               value: {{ .Values.x509LookupProvider }}
             # Set nginx provider header name
-            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT
+            - name: KC_SPI_X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT
               value: istio-mtls-client-certificate
             # Dumb value (not used in the nginx provider, but required by the SPI)
-            - name: KC_SPI_X509CERT_LOOKUP_{{ .Values.x509LookupProvider | upper }}_SSL_CLIENT_CERT_CHAIN_PREFIX
+            - name: KC_SPI_X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
@@ -192,18 +204,27 @@ spec:
             - name: KC_DB_PASSWORD
               value: password
           {{- end }}
-          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
+          {{- if .Values.autoscaling.enabled }}
+          {{- if ne (include "keycloak.postgresql.config" .) "true" -}}
+              {{- fail "You must configure PostgreSQL when using Autoscaling (HA Mode)" -}}
+          {{- end -}}
             # Use Infinispan distributes caches
             - name: KC_CACHE
               value: ispn
             # Hints Infinispan to distribute data across machines in a Multi AZ environment
-            - name: KC_SPI_CACHE_EMBEDDED_DEFAULT_MACHINE_NAME
+            - name: KC_SPI_CACHE_EMBEDDED__DEFAULT__MACHINE_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
                   apiVersion: v1
-            - name: KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE
+            - name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
               value: "false"
+            # Rely on Istio mTLS encryption
+            # See https://www.keycloak.org/server/caching#_running_inside_a_service_mesh
+            - name: KC_CACHE_EMBEDDED_MTLS_ENABLED
+              value: "false"
+          {{- end }}
+          {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Postgres database configuration
             - name: KC_DB
               value: postgres

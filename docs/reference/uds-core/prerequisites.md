@@ -158,6 +158,18 @@ If you are using Cilium you will also need to make some additional configuration
 
 NeuVector historically has functioned best when the host is using cgroup v2. Cgroup v2 is enabled by default on many modern Linux distributions, but you may need to enable it depending on your operating system. Enabling this tends to be OS specific, so you will need to evaluate this for your specific hosts.
 
+#### Falco
+
+The UDS Core deployment of Falco utilizes the [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe). The main advantage it brings to the table is that it is embedded into Falco, which means that you don't have to download or build anything, if your kernel is recent enough Falco will automatically inject it!
+
+At bare minimum this setup requires:
+
+- Kernel version ≥5.8 (typically)
+- [BPF ring buffer](https://www.kernel.org/doc/html/next/bpf/ringbuf.html) support
+- [BTF](https://docs.kernel.org/bpf/btf.html) (BPF Type Format) exposure
+
+Most modern OS distributions meet these requirements out of the box. See the [upstream kernel requirements documentation](https://falco.org/docs/concepts/event-sources/kernel/#requirements) for full compatibility details.
+
 #### Vector
 
 In order to ensure that Vector is able to scrape the necessary logs concurrently you may need to adjust some kernel parameters for your hosts. The below is a script that can be used to adjust these parameters to suitable values and ensure they are persisted across reboots. Ideally this script is used as part of an image build or cloud-init process on each node.
@@ -184,7 +196,7 @@ Metrics server is provided as an optional component in UDS Core and can be enabl
 ```yaml
 - name: uds-core
   repository: ghcr.io/defenseunicorns/packages/private/uds/core
-  ref: 0.25.2-unicorn
+  ref: 0.54.1-unicorn
   optionalComponents:
     - metrics-server
 ```

@@ -6,7 +6,7 @@ autoGenerateCert: true
 
 registry: quay.io
 # renovate: datasource=docker depName=quay.io/rfcurated/neuvector/controller versioning=docker
-tag: 5.4.6-jammy-scratch-fips-rfcurated
+tag: 5.4.7-jammy-scratch-fips-rfcurated
 
 manager:
   image:

@@ -1,0 +1,72 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Private PKI Testing
+
+on:
+  schedule:
+    # Runs every morning at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths:
+      - ".github/workflows/private-pki-test.yaml"
+      - "bundles/k3d-standard/**"
+      - "test/playwright/private-pki/**"
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+  pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
+
+jobs:
+  uds-core-private-pki-nightly:
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 45
+    name: Private PKI
+
+    strategy:
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
+        uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      - name: Run UDS Core Private PKI Test
+        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -private-pki-${{ matrix.flavor }}
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}

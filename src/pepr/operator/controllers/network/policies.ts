@@ -46,6 +46,8 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
+// @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
+// @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
 export async function networkPolicies(pkg: UDSPackage, namespace: string, istioMode: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
@@ -318,3 +320,5 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   // Return the list of policies
   return policies;
 }
+// @lulaEnd cd540e07-153b-424c-90e0-c0daec56b18f
+// @lulaEnd cd540e07-153b-424c-90e0-c0daec56b16a

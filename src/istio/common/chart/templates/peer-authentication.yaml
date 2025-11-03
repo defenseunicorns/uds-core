@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 ---
+# @lulaStart 4bc74dfa-60b7-4716-af4b-b492a12eec42
 # Source: istio/templates/bigbang/peerAuthentication.yaml
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
@@ -11,3 +12,4 @@ metadata:
 spec:
   mtls:
     mode: STRICT
+# @lulaEnd 4bc74dfa-60b7-4716-af4b-b492a12eec42

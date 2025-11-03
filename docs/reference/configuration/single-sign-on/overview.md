@@ -44,7 +44,7 @@ To enable this functionality for SSO client secrets, you can add the `uds.dev/po
 1. Restart pods matching the selector specified in the `uds.dev/pod-reload-selector` annotation (which can be added via the `secretAnnotations` field), or
 2. Automatically discover and restart pods that are consuming the secret through volume mounts, environment variables, or projected volumes
 
-For more details on configuring Secret Pod Reload, see the [Secret Pod Reload documentation](/reference/deployment/secret-pod-reload) or the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
+For more details on configuring Secret Pod Reload, see the [Secret Pod Reload documentation](/reference/deployment/pod-reload) or the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
 
 ## User Groups
 
@@ -118,14 +118,15 @@ All groups are under the `UDS Core` parent group. Frequently a group will be ref
 
 ## Single Sign-On Contents
 
+1. [Customizing Identity Config Guide](/reference/configuration/single-sign-on/keycloak-customization-guide/)
 1. [Authservice Protection](/reference/configuration/single-sign-on/auth-service/)
-2. [Device Flow Clients](/reference/configuration/single-sign-on/device-flow/)
-3. [Group Based Authorization](/reference/configuration/single-sign-on/group-based-auth/)
-4. [Keycloak Session Management](/reference/configuration/single-sign-on/keycloak-session-management/)
-5. [L7 Load Balancer](/reference/configuration/single-sign-on/l7-load-balancer/)
-6. [Notifications and Alerts](/reference/configuration/single-sign-on/notifications-and-alerts/)
-7. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
-8. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
-9. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
-10. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
-11. [Trusted Certificate Authority](/reference/configuration/single-sign-on/trusted-ca/)
+1. [Device Flow Clients](/reference/configuration/single-sign-on/device-flow/)
+1. [Group Based Authorization](/reference/configuration/single-sign-on/group-based-auth/)
+1. [Keycloak Session Management](/reference/configuration/single-sign-on/keycloak-session-management/)
+1. [L7 Load Balancer](/reference/configuration/single-sign-on/l7-load-balancer/)
+1. [Notifications and Alerts](/reference/configuration/single-sign-on/notifications-and-alerts/)
+1. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
+1. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
+1. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
+1. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
+1. [Trusted Certificate Authority](/reference/configuration/single-sign-on/trusted-ca/)

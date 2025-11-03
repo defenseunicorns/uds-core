@@ -40,8 +40,20 @@ components:
       - name: velero
         namespace: velero
         url: https://vmware-tanzu.github.io/helm-charts
-        version: 10.1.0
+        version: 11.0.0
         repoName: velero
         releaseName: velero
         valuesFiles:
           - ../values/values.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Handle Helm ownership metadata change on upgrade
+            cmd: |
+              # Update Helm ownership metadata for existing Velero CRDs
+              for crd_name in $(./zarf tools kubectl get crd -l 'component=velero' -o jsonpath='{.items[*].metadata.name}'); do
+                echo "Updating metadata for $crd_name"
+                ./zarf tools kubectl label crd "$crd_name" app.kubernetes.io/managed-by=Helm --overwrite
+                ./zarf tools kubectl annotate crd "$crd_name" meta.helm.sh/release-name="uds-velero-config" --overwrite
+                ./zarf tools kubectl annotate crd "$crd_name" meta.helm.sh/release-namespace="velero" --overwrite
+              done

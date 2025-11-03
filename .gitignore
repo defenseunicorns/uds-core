@@ -12,7 +12,7 @@ env.ts
 **/node_modules
 **/node_modules/**
 dist
-dist/**
+**/dist/**
 insecure*
 .env
 zarf
@@ -36,3 +36,5 @@ uds-docs/**
 test-results/**
 
 coverage/**
+
+**/ca.crt

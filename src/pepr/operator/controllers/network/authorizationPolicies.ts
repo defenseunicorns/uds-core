@@ -199,6 +199,9 @@ function buildAuthPolicy(
 
 /**
  * Generate and apply Istio Authorization Policies for a given UDSPackage.
+ *
+ * @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
+ * @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
  */
 export async function generateAuthorizationPolicies(
   pkg: UDSPackage,
@@ -407,7 +410,8 @@ export async function generateAuthorizationPolicies(
 
   return policies;
 }
-
+// @lulaEnd cd540e07-153b-424c-90e0-c0daec56b18f
+// @lulaEnd cd540e07-153b-424c-90e0-c0daec56b16a
 /**
  * Finds the first SSO client that matches the given selector.
  * @returns The matching SSO client, or undefined if no match found

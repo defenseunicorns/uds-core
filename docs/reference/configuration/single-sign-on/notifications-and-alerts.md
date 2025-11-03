@@ -4,9 +4,9 @@ title: Notifications and Alerts
 
 ## Keycloak event logging
 
-UDS Core provides built-in logging for user activity events and administrative events for the `uds` Realm.
+UDS Core provides built-in logging for user activity and administrative events in the `uds` realm.
 
-A typical user activity event looks like the following:
+Example user activity event:
 
 ```json
 {
@@ -37,7 +37,7 @@ A typical user activity event looks like the following:
 }
 ```
 
-Example administrative event may look like this:
+Example administrative event:
 
 ```json
 {
@@ -65,11 +65,66 @@ Example administrative event may look like this:
 }
 ```
 
-### Master realm event logging
+By default, Keycloak uses the standard `JBossLoggingEventListenerProvider` and emits logs like:
 
-Event logging is not enabled in the `master` realm by default because this realm may not exist. To enable it:
+```
+{"timestamp":"2025-10-10T09:22:55.91473092Z","sequence":60286,"loggerClassName":"org.jboss.logging.Logger","loggerName":"org.keycloak.events","level":"INFO","message":"operationType=\"CREATE\", realmId=\"5f2749ba-d7f7-46e5-b096-6f0bf77f979f\", realmName=\"master\", clientId=\"48da20f6-5286-4f43-818b-7e10c378be6b\", userId=\"9f2a35fb-acbb-4ae5-ab54-ff46dd720b54\", ipAddress=\"127.0.0.1\", resourceType=\"CLIENT\", resourcePath=\"clients/2a7390a6-f645-49dc-9a9d-6e99fdb83b31\"","threadName":"executor-thread-40","threadId":306,"mdc":{},"ndc":"","hostName":"keycloak-0","processName":"/usr/local/openjdk-21/bin/java","processId":1}
+```
+
+### Enhanced `master` realm event logging
+
+The UDS `JSONLogEventListenerProvider` is not enabled by default in the `master` realm. You can rely on the
+built-in `JBossLoggingEventListenerProvider` or switch to `JSONLogEventListenerProvider` for more detailed events. To
+enable it:
 
 1. In the Keycloak Admin Console, select the `master` realm.
 2. Go to Realm Settings > Events.
 3. Add `jsonlog-event-listener` to Event Listeners.
 4. Click Save.
+
+## Keycloak notifications and alerting
+
+Detailed notifications and alerting for Keycloak are optional and disabled by default. Enable them to receive alerts
+about Keycloak configuration changes.
+
+To enable detailed observability, add the following override to your Bundle configuration:
+
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: x.x.x
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: detailedObservability.alerts.enabled
+              value: true
+```
+
+When enabled, UDS Core converts Keycloak event logs into Prometheus metrics using
+[Loki recording rules](/reference/configuration/observability/logging-alerting/#deploying-recording-rules):
+
+| Loki Recording Rule Name                        | Description                                                                                                                                                                                 |
+|-------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `uds_keycloak:realm_modifications_count`        | Total number of Keycloak realm configuration changes, aggregated into 1-minute windows                                                                                                      |
+| `uds_keycloak:user_modifications_count`         | Total number of Keycloak user configuration changes, aggregated into 1-minute windows                                                                                                       |
+| `uds_keycloak:system_admin_modifications_count` | Total number of the Keycloak system administrator configuration changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm), aggregated into 1-minute windows |
+
+View these metrics in the built-in `UDS Keycloak Notifications` Grafana dashboard:
+
+![Keycloak Notifications Grafana Dashboard](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/sso/keycloak-notifications-grafana.png?raw=true)
+
+Based on these metrics, UDS Core provides the following alerts:
+
+| Alert name                                 | Metric used for alerting                        | Description                                                                                                                                                                  |
+|--------------------------------------------|-------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `KeycloakRealmModificationsDetected`       | `uds_keycloak:realm_modifications_count`        | Alerts on the Keycloak realm configuration changes within a 5-minute window                                                                                                  |
+| `KeycloakUserModificationsDetected`        | `uds_keycloak:user_modifications_count`         | Alerts on the Keycloak user configuration changes within a 5-minute window                                                                                                   |
+| `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_count` | Alerts on the Keycloak system administrator configuration changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm) within a 5-minute window |
+
+### Third-party integrations
+
+All Keycloak notification alerts are sent to Alertmanager. Use Alertmanager to route notifications to external systems.
+See [Alertmanager Configuration](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings)
+for configuration details.
