@@ -12,8 +12,9 @@ const url = `https://neuvector.admin.${domain}`;
 test.use({ baseURL: url });
 
 test("validate system health", async ({ page }) => {
+  test.setTimeout(60_000);
   await test.step("check sso", async () => {
-    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    const eulaPromise = page.waitForResponse(res => res.url().startsWith(`${url}/eula`));
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
     await eulaPromise;
@@ -23,9 +24,13 @@ test("validate system health", async ({ page }) => {
     if (await termsCheckbox.isVisible()) {
       await termsCheckbox.click();
     }
+
+    const openIdPromise = page.waitForResponse(res => res.url().startsWith(`${url}/openId_auth`));
     await page.getByRole("button", { name: "Login with OpenID" }).click();
-    await expect(page).toHaveURL("/#/dashboard");
-    await expect(page.locator(".navbar-header")).toBeVisible();
+    await openIdPromise;
+    // Timeout extended to allow for longer runs on IaC testing or with slower response times (single-layer, services still coming up)
+    await expect(page).toHaveURL("/#/dashboard", { timeout: FIFTEEN_SECONDS });
+    await expect(page.locator(".navbar-header")).toBeVisible({ timeout: FIFTEEN_SECONDS });
   });
 
   // Expect counts for scanner, controller, enforcer are based on chart defaults
@@ -91,7 +96,7 @@ test("validate system health", async ({ page }) => {
 
 test("validate local login is blocked", async ({ page }) => {
   await test.step("check local login", async () => {
-    const eulaPromise = page.waitForResponse(`${url}/eula`);
+    const eulaPromise = page.waitForResponse(res => res.url().startsWith(`${url}/eula`));
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
     await eulaPromise;

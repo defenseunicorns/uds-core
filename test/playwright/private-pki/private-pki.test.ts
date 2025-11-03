@@ -5,7 +5,7 @@
 
 import { expect, test } from "@playwright/test";
 
-test.describe("Grafana SSO with Private PKI", () => {
+test.describe("Private PKI tests", () => {
   test("Grafana SSO authentication flow", async ({ page }) => {
     // Step 1: Navigate to Grafana which should redirect to Keycloak
     await page.goto(`https://grafana.admin.uds.dev`);
