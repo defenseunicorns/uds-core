@@ -120,6 +120,7 @@ jobs:
           echo combined=$COMBINED >> $GITHUB_OUTPUT
           echo The following packages will be triggered: $COMBINED
 
+  # lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
@@ -147,15 +148,4 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
     secrets: inherit # Inherits all secrets from the parent workflow.
-
-# evaluate-package-compliance:
-#   needs: run-package-test
-#   name: Compliance Evaluation
-#   strategy:
-#     matrix:
-#       flavor: [upstream, registry1, unicorn]
-#     fail-fast: false
-#   uses: ./.github/workflows/compliance.yaml
-#   with:
-#     flavor: ${{ matrix.flavor }}
-#   secrets: inherit # Inherits all secrets from the parent workflow.
+# lulaEnd 11948466-9230-4498-be44-dbac784d86d1

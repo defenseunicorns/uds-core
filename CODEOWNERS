@@ -1,6 +1,8 @@
+# @lulaStart f93daf61-d44d-4893-b49f-c88d2df3ee14
 * @defenseunicorns/uds-core
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth
 # NOTE: No E to catch LICENSE and LICENSING
 /LICENS* @jeff-mccoy @austenbryan
+# @lulaEnd f93daf61-d44d-4893-b49f-c88d2df3ee14
