@@ -119,6 +119,21 @@ tasks:
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
 
+  - name: main-branch-test-resources
+    actions:
+      - description: "Get uds-core main branch for test resources"
+        cmd: |
+          # Create temp directory
+          mkdir -p tmp/test-shim
+
+          #Download Main branch
+          curl -sSL https://codeload.github.com/defenseunicorns/uds-core/tar.gz/refs/heads/main | tar -xz -C tmp/test-shim
+      - description: "Deploy Main Branch Test Resources"
+        cmd: uds run -f src/test/tasks.yaml create-deploy
+        dir: tmp/test-shim/uds-core-main/
+      - description: "Clean up temporary files"
+        cmd: rm -rf tmp/test-shim
+
   - name: latest-slim-bundle-release
     actions:
       - description: "Deploy the latest UDS Core package release"

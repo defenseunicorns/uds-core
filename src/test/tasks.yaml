@@ -22,19 +22,6 @@ tasks:
         task: create-deploy
         with:
           validate_egress: ${{ .inputs.validate_egress }}
-      - task: tests
-        with:
-          validate_egress: ${{ .inputs.validate_egress }}
-      - description: "Remove Test Apps resources"
-        task: remove
-
-  - name: tests
-    inputs:
-      validate_egress:
-        description: Whether to validate egress controls with the egress gateway
-        default: "true"
-
-    actions:
       - description: "Run Network Tests"
         cmd: |
           EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
@@ -43,6 +30,10 @@ tasks:
         cmd: |
           npx vitest run "test-resources.spec.ts"
         dir: test/vitest
+      - description: "Setup the Doug User for testing"
+        task: uds-common:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: "Run Ambient Playwright Test"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
@@ -56,6 +47,8 @@ tasks:
         cmd: |
           npx vitest run "pod-reload.spec.ts"
         dir: test/vitest
+      - description: "Remove Test Apps resources"
+        task: remove
 
   - name: create-deploy
     description: Test app used for UDS Core validation
@@ -81,11 +74,6 @@ tasks:
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
-
-      - description: "Setup the Doug User for testing"
-        task: uds-common:keycloak-user
-        with:
-          group: "/UDS Core/Admin"
 
       - description: Verify the admin app is accessible
         wait:

@@ -98,6 +98,10 @@ tasks:
         default: ${UDS_ARCH}
     # Run each e2e test type from the e2e folder
     actions:
+      - description: "Setup the Doug User for testing"
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
       - description: "Create and Deploy Test App Package"
         task: test-resources:create-deploy
         with:
@@ -180,24 +184,12 @@ tasks:
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the deployments"
-      architecture:
-        description: "System architecture that the test-apps package should be built for."
-        required: true
-        default: ${UDS_ARCH}
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
-      - task: test-resources:create-deploy
-        with:
-          validate_egress: "true"
-          architecture: ${{ .inputs.architecture }}
-      - description: "Install Node deps for tests (pre-upgrade)"
-        cmd: npm ci
-      - task: test-resources:tests
-        with:
-          validate_egress: "true"
+      - task: deploy:main-branch-test-resources
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
@@ -208,12 +200,7 @@ tasks:
           export UDS_CONFIG="${{ .inputs.configFile }}"
           uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
       - task: validate-packages
-      - description: "Install Node deps for tests (post-upgrade)"
-        cmd: npm ci
-      - task: test-resources:tests
-        with:
-          validate_egress: "true"
-      - task: test-resources:remove
+      - task: e2e-tests
 
   - name: compliance-validate
     description: "validate against the required compliance"
@@ -263,8 +250,3 @@ tasks:
           uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
           uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
       - task: private-pki:private-pki-tests
-      - description: "Follow on Instructions"
-        cmd: |
-          echo ""
-          echo "Load the build/private-pki/ca.crt into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
-          echo ""
