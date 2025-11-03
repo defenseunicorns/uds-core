@@ -12,7 +12,7 @@ metadata:
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.19.0-airgap
+    ref: 0.19.1-airgap
     overrides:
       uds-dev-stack:
         minio:
@@ -47,10 +47,6 @@ packages:
     overrides:
       pepr-uds-core:
         module:
-          values:
-            - path: additionalIgnoredNamespaces
-              value:
-                - uds-dev-stack
           variables:
             - name: PEPR_WATCHER_MEMORY_REQUEST
               description: "Memory requests for the pepr watcher pod"
