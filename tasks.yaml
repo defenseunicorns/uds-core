@@ -190,10 +190,11 @@ tasks:
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
-          rm -rf uds-docs/src/content/docs/reference uds-docs/src/content/docs/.images
-          # This only symlinks the reference and images folders since these are the only docs we use in the docs site
+          rm -rf uds-docs/src/content/docs/reference uds-docs/src/content/docs/.images uds-docs/src/content/docs/.c4
+          # This only symlinks the reference, images, and c4 folders since these are the only docs we use in the docs site
           ln -s $(pwd)/docs/reference uds-docs/src/content/docs/reference
           ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
+          ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
