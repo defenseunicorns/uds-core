@@ -2,6 +2,7 @@
 title: Recovering lost Keycloak credentials
 ---
 
+<!-- @lulaStart feeffdc0-3ecb-45b2-a7f7-46519b629472 -->
 This procedure describes how to recover lost Keycloak credentials for UDS Core. It leverages the [Admin bootstrap and recovery](https://www.keycloak.org/server/bootstrap-admin-recovery) feature of Keycloak and works only when an external database (like PostgreSQL) is used. 
 
 :::caution
@@ -33,3 +34,4 @@ The command will exit with no errors. Ensure this line is present in the output:
 ```
 
 Navigate to https://keycloak.admin.uds.dev/ and log in with the `temp-admin` user. Once logged in, reset the admin user password by navigating to the `Users` tab, selecting `admin`, going to the `Credentials` tab, and clicking on `Reset Password`. Once the `admin` password has been updated, delete the `temp-admin` user.
+<!-- @lulaEnd feeffdc0-3ecb-45b2-a7f7-46519b629472 -->
