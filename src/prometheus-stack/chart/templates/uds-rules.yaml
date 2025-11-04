@@ -1,6 +1,6 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
-
+{{- if .Values.clusterHealthRules.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -49,3 +49,4 @@ spec:
           annotations:
             summary: "UDS Cluster Health Score: Critical"
             description: "The UDS cluster health score has been below 80% for more than 1 minute."
+{{- end -}}
