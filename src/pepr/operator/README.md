@@ -56,7 +56,7 @@ spec:
 apiVersion: uds.dev/v1alpha1
 kind: Exemption
 metadata:
-  name: neuvector
+  name: my-pods
   namespace: uds-policy-exemptions
 spec:
   exemptions:
@@ -68,17 +68,16 @@ spec:
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
-        namespace: neuvector
-        name: "^neuvector-enforcer-pod.*"
+        namespace: my-pods
+        name: "^my-privileged-pod.*"
         kind: pod
-      title: "neuvector-enforcer-pod"
-      description: "Neuvector requires HostPath volume types
-          Neuvector mounts the following hostPaths:
-          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+      title: "my-privileged-pod"
+      description: "my-privileged-pod requires HostPath volume types
+          my-privileged-pod mounts the following hostPaths:
+          `/var/mount`: (as writable) for my-privileged-pod's buffering and persistent state
           `/var/run`: communication to docker daemon
           `/proc`: monitoring of processes for malicious activity
-          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
-          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content"
 
     - policies:
         - DisallowPrivileged
@@ -87,23 +86,22 @@ spec:
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
-        namespace: neuvector
-        name: "^neuvector-controller-pod.*"
-      title: "neuvector-controller-pod"
-      description: "Neuvector requires HostPath volume types.
-          Neuvector mounts the following hostPaths:
-          `/var/neuvector`: (as writable) for Neuvector's buffering and persistent state
+        namespace: my-pods
+        name: "^my-hostpath-pod.*"
+      title: "my-hostpath-pod"
+      description: "my-hostpath-pod requires HostPath volume types.
+          my-hostpath-pod mounts the following hostPaths:
+          `/var/mount`: (as writable) for my-hostpath-pod's buffering and persistent state
           `/var/run`: communication to docker daemon
           `/proc`: monitoring of processes for malicious activity
-          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content
-          https://github.com/neuvector/neuvector-helm/blob/master/charts/core/templates/enforcer-daemonset.yaml#L108"
+          `/sys/fs/cgroup`: important files the controller wants to monitor for malicious content"
 
     - policies:
         - DropAllCapabilities
       matcher:
-        namespace: neuvector
-        name: "^neuvector-prometheus-exporter-pod.*"
-      title: "neuvector-prometheus-exporter-pod"
+        namespace: my-pods
+        name: "^my-exempt-pod.*"
+      title: "my-exempt-pod"
 ```
 
 ### Example UDS Package CR with SSO Templating

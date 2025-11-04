@@ -19,7 +19,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
-- [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Falco](https://falco.org/docs/) - Container Security
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Vector](https://vector.dev/) - Log Aggregation
