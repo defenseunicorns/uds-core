@@ -9,9 +9,11 @@ import {
   IstioAction,
   IstioAuthorizationPolicy,
   IstioRequestAuthentication,
+  Monitor,
   UDSPackage,
 } from "../../../crd";
 import { UDSConfig } from "../../config/config";
+import { matchesLabels } from "../../istio/waypoint-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
@@ -48,12 +50,55 @@ function setPolicyTarget(
   }
 }
 
+interface MonitorExemption {
+  port?: string;
+  path?: string;
+}
+
+// Build 'to' entries to exempt ONLY exact (port, path) pairs across multiple monitors
+function buildToEntriesFromMonitorExemptions(
+  monitorExemptions: MonitorExemption[],
+): Array<{ operation: { ports?: string[]; notPorts?: string[]; notPaths?: string[] } }> {
+  const entries: Array<{
+    operation: { ports?: string[]; notPorts?: string[]; notPaths?: string[] };
+  }> = [];
+
+  // Group monitor exemptions by port -> set of paths
+  const portToPaths = new Map<string, Set<string>>();
+  for (const ex of monitorExemptions) {
+    if (!ex.port) continue;
+    const paths = portToPaths.get(ex.port) ?? new Set<string>();
+    if (ex.path) paths.add(ex.path);
+    portToPaths.set(ex.port, paths);
+  }
+
+  // Per-port entries: ports:[P], notPaths:[...paths] to exempt only listed paths on that port
+  for (const [port, paths] of portToPaths.entries()) {
+    const arrPaths = Array.from(paths);
+    if (arrPaths.length > 0) {
+      entries.push({ operation: { ports: [port], notPaths: arrPaths } });
+    } else {
+      // If no paths recorded, default to exempting '/metrics'
+      entries.push({ operation: { ports: [port], notPaths: ["/metrics"] } });
+    }
+  }
+
+  // Catch-all for all other ports: notPorts:[all exempt ports]
+  const monitorPorts = Array.from(portToPaths.keys());
+  if (monitorPorts.length > 0) {
+    entries.push({ operation: { notPorts: monitorPorts } });
+  }
+
+  return entries;
+}
+
 function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
   namespace: string,
   isAmbient = false,
   waypointName?: string,
+  monitorExemptions: MonitorExemption[] = [],
 ): IstioAuthorizationPolicy {
   // Create base policy with spec explicitly typed
   const policy: IstioAuthorizationPolicy & { spec: NonNullable<IstioAuthorizationPolicy["spec"]> } =
@@ -76,19 +121,7 @@ function authserviceAuthorizationPolicy(
                 notValues: ["*"],
               },
             ],
-            // Only add the 'to' block if not in ambient mode
-            ...(isAmbient
-              ? []
-              : {
-                  to: [
-                    {
-                      operation: {
-                        notPorts: ["15020"],
-                        notPaths: ["/stats/prometheus"],
-                      },
-                    },
-                  ],
-                }),
+            to: buildToEntriesFromMonitorExemptions(monitorExemptions),
           },
         ],
       },
@@ -104,6 +137,7 @@ function jwtAuthZAuthorizationPolicy(
   namespace: string,
   isAmbient = false,
   waypointName?: string,
+  monitorExemptions: MonitorExemption[] = [],
 ): IstioAuthorizationPolicy {
   // Create a base policy with the common properties
   const policy: IstioAuthorizationPolicy = {
@@ -123,19 +157,7 @@ function jwtAuthZAuthorizationPolicy(
               },
             },
           ],
-          // Only add the 'to' block if not in ambient mode
-          ...(isAmbient
-            ? []
-            : {
-                to: [
-                  {
-                    operation: {
-                      notPorts: ["15020"],
-                      notPaths: ["/stats/prometheus"],
-                    },
-                  },
-                ],
-              }),
+          to: buildToEntriesFromMonitorExemptions(monitorExemptions),
         },
       ],
     },
@@ -190,6 +212,13 @@ async function updatePolicy(
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerReferences = getOwnerRef(pkg);
 
+  // Compute per-monitor exemptions (port + path) that should bypass authservice/JWT deny
+  const monitorExemptions = computeMonitorExemptions(pkg, labelSelector);
+  if (!isAmbient) {
+    // Add 15020 /stats/prometheus like a monitor exemption for sidecar mode
+    monitorExemptions.push({ port: "15020", path: "/stats/prometheus" });
+  }
+
   const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
@@ -209,6 +238,7 @@ async function updatePolicy(
           namespace,
           isAmbient,
           waypointName,
+          monitorExemptions,
         ),
       ),
     );
@@ -223,7 +253,14 @@ async function updatePolicy(
     // Apply the JWT authorization policy
     await K8s(IstioAuthorizationPolicy)[operation](
       updateMetadata(
-        jwtAuthZAuthorizationPolicy(labelSelector, event.name, namespace, isAmbient, waypointName),
+        jwtAuthZAuthorizationPolicy(
+          labelSelector,
+          event.name,
+          namespace,
+          isAmbient,
+          waypointName,
+          monitorExemptions,
+        ),
       ),
     );
   } catch (e) {
@@ -250,7 +287,33 @@ async function purgeOrphanPolicies(generation: string, namespace: string, pkgNam
 export {
   authNRequestAuthentication,
   authserviceAuthorizationPolicy,
+  computeMonitorExemptions,
   jwtAuthZAuthorizationPolicy,
   UDSConfig,
   updatePolicy,
 };
+
+/**
+ * Compute monitor-based exemptions for authservice policies by selecting monitors
+ * whose selectors intersect with the protected labelSelector. If the labelSelector
+ * is empty (namespace-wide protection), all monitors in the package are exempted.
+ */
+function computeMonitorExemptions(
+  pkg: UDSPackage,
+  labelSelector: Record<string, string>,
+): MonitorExemption[] {
+  const monitors: Monitor[] = pkg.spec?.monitor ?? [];
+  const out: MonitorExemption[] = [];
+
+  for (const m of monitors) {
+    const sel: Record<string, string> = m.podSelector ?? m.selector;
+    // If labelSelector is empty, treat as namespace-wide (matches all);
+    // otherwise require ALL labels in labelSelector to match the monitor selector
+    const labelSelectorIsEmpty = Object.keys(labelSelector).length === 0;
+    if (labelSelectorIsEmpty || matchesLabels(sel, labelSelector)) {
+      out.push({ port: String(m.targetPort), path: m.path || "/metrics" });
+    }
+  }
+
+  return out;
+}

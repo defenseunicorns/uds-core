@@ -30,3 +30,11 @@ spec:
       portName: http
       description: "svcmonitor"
       kind: ServiceMonitor
+  # TODO: remove/update tests based on this, just for testing for now.
+  sso:
+    - name: podinfo
+      clientId: podinfo
+      redirectUris:
+        - https://podinfo.uds.dev/login
+      enableAuthserviceSelector:
+        app.kubernetes.io/name: podinfo
