@@ -25,12 +25,18 @@ packages:
       kube-prometheus-stack:
         kube-prometheus-stack:
           values:
+            # Disable specific individual rules by name
             - path: defaultRules.disabled
               value:
                 KubeControllerManagerDown: true
                 KubeSchedulerDown: true
+            # Disable entire rule groups with boolean toggles
+            - path: defaultRules.rules.kubeControllerManager
+              value: false
+            - path: defaultRules.rules.kubeSchedulerAlerting
+              value: false
 ```
-This example disables the `KubeControllerManagerDown` and `KubeSchedulerDown` rules.
+This example shows both approaches: disabling individual rules (`KubeControllerManagerDown` and `KubeSchedulerDown`) and disabling entire rule groups (`kubeControllerManager` and `kubeSchedulerAlerting`). Use individual rule disabling for fine-tuned control and rule group disabling for broader changes.
 
 ## Creating Custom Alert Rules
 

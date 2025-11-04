@@ -17,6 +17,14 @@ specification {
   color k8sNamespaces #d1bad3
   color coreWebhooks #d8bf7a
   color pods #bea6a6
+  color crds #9e9e9e
+  color configmaps #5a6b5d
+
+  // Relationships for observability focused views
+  relationship observability
+
+  // Tags for observability focused views
+  tag observability
 
   element actor {
     style {
@@ -142,6 +150,26 @@ specification {
       size sm
       border solid
       color pods
+      opacity 100%
+    }
+  }
+
+  element cr {
+    notation "7. Custom Resources"
+    style {
+      size xs
+      border solid
+      color crds
+      opacity 100%
+    }
+  }
+
+  element configmap {
+    notation "8. ConfigMaps"
+    style {
+      size xs
+      border solid
+      color configmaps
       opacity 100%
     }
   }

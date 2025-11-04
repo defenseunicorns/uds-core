@@ -196,6 +196,11 @@ model {
           grafana -> keycloak-waypoint
           grafana -> monitoring.prometheus
           grafana -> loki-gateway
+
+          // observability relationships
+          grafana -[observability]-> monitoring.prometheus 'queries metrics data'
+          grafana -[observability]-> loki-gateway 'queries logs data'
+          grafana -[observability]-> monitoring.alertmanager 'queries and manages alerts'
         }
       }
 
@@ -213,6 +218,10 @@ model {
           prometheus -> kube-state-metrics
           prometheus -> node-exporter
           prometheus -> alertmanager
+
+          // observability relationships
+          prometheus -[observability]-> custom-application 'scrapes application metrics'
+          prometheus -[observability]-> alertmanager 'sends alerts'
         }
 
         prometheus-operator = pod {
@@ -240,6 +249,9 @@ model {
           title 'Alertmanager'
           summary ' '
           description 'Handles alerts from Prometheus, including deduplication, grouping, and routing. Manages alert notifications by grouping related alerts, silencing during maintenance windows, and routing to external systems like PagerDuty, Slack, or custom webhooks based on configured receivers.'
+
+          // observability relationships
+          alertmanager -[observability]-> ext-alerts 'routes alerts to external systems'
         }
       }
 
@@ -318,8 +330,12 @@ model {
           summary ' '
           description 'Backend component managing log storage and compaction. Handles log chunk storage, index management, and compaction operations. Interfaces with external S3-compatible storage for persistent log retention and retrieval.'
 
-          // external relationship
+          // external relationships
           loki-backend -> external-services.ext-loki-storage
+
+          // observability relationships
+          loki-backend -[observability]-> monitoring.prometheus 'pushes loki ruler metrics'
+          loki-backend -[observability]-> monitoring.alertmanager 'sends loki ruler alerts'
         }
       }
 
@@ -336,6 +352,10 @@ model {
           // external relationships
           vector -> istio-egress-ambient.istio-egress-ambient
           vector -> loki-gateway
+
+          // observability relationships
+          vector -[observability]-> custom-application 'collects application logs'
+          vector -[observability]-> loki-gateway 'forwards logs for storage'
         }
       }
 
@@ -432,6 +452,56 @@ model {
           title 'Customer Application'
           summary ' '
           description 'Example customer application protected by UDS Core security policies. Represents a tenant workload running in ambient mesh mode with automatic mTLS encryption, network policy enforcement, and SSO integration. Benefits from UDS Core observability, security monitoring, and backup capabilities without application code changes.'
+        }
+
+        prometheus-rule = cr {
+          #observability
+          title 'PrometheusRule CR'
+          summary ' '
+          description 'Custom resource defining Prometheus alerting and recording rules for the customer application. Contains alert thresholds, recording rules for derived metrics, and routing labels for Alertmanager. Automatically discovered and loaded by Prometheus Operator.'
+
+          // observability relationships
+          prometheus-rule -[observability]-> monitoring.prometheus-operator 'defines alerting rules'
+        }
+
+        loki-ruler-config = configmap {
+          #observability
+          title 'Loki Ruler ConfigMap'
+          summary ' '
+          description 'ConfigMap containing Loki alerting and recording rules for log-based monitoring. Defines LogQL queries for detecting log patterns, creating alerts, and generating metrics from logs. Automatically discovered by Loki sidecar via the loki_rule label.'
+
+          // observability relationships
+          loki-ruler-config -[observability]-> loki.loki-backend 'provides log-based rules'
+        }
+
+        grafana-dashboard-config = configmap {
+          #observability
+          title 'Grafana Dashboard ConfigMap'
+          summary ' '
+          description 'ConfigMap containing custom Grafana dashboard definitions for the customer application. Includes JSON dashboard configurations with panels, queries, and visualizations for application-specific metrics and logs. Automatically discovered by Grafana sidecar via dashboard provider labels.'
+
+          // observability relationships
+          grafana-dashboard-config -[observability]-> grafana.grafana 'provides custom dashboards'
+        }
+
+        service-monitor = cr {
+          #observability
+          title 'ServiceMonitor CR'
+          summary ' '
+          description 'Custom resource defining service-based metrics collection for the customer application. Specifies which services to scrape, endpoints, intervals, and authentication. Automatically discovered by Prometheus Operator to configure metric collection from application services.'
+
+          // observability relationships
+          service-monitor -[observability]-> monitoring.prometheus-operator 'configures service metrics collection'
+        }
+
+        pod-monitor = cr {
+          #observability
+          title 'PodMonitor CR'
+          summary ' '
+          description 'Custom resource defining pod-based metrics collection for the customer application. Specifies which pods to scrape directly, metrics ports, and collection intervals. Used when applications expose metrics on pod level rather than through services.'
+
+          // observability relationships
+          pod-monitor -[observability]-> monitoring.prometheus-operator 'configures pod metrics collection'
         }
       }
 
