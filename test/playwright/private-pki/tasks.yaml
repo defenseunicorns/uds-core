@@ -16,9 +16,16 @@ tasks:
           mkdir -p build/private-pki
 
           # remove existing local private pki certs
-          if [ -f /usr/local/share/ca-certificates/uds-test-ca.crt ]; then
-            sudo rm /usr/local/share/ca-certificates/uds-test-ca.crt
-            sudo update-ca-certificates --fresh
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # Remove from macOS keychain
+            for HASH in $(sudo security find-certificate -c "UDS Test CA" -a -Z /Library/Keychains/System.keychain 2>/dev/null | awk '/SHA-1/{print $3}'); do
+              sudo security delete-certificate -Z "$HASH" /Library/Keychains/System.keychain
+            done
+          else
+            if [ -f /usr/local/share/ca-certificates/uds-test-ca.crt ]; then
+              sudo rm /usr/local/share/ca-certificates/uds-test-ca.crt
+              sudo update-ca-certificates --fresh
+            fi
           fi
 
           # Generate CA key and certificate
@@ -44,16 +51,20 @@ tasks:
               -days 365 -sha256 -extensions v3_req -extfile hack/private-pki/openssl.cnf
 
             # Base64 encode
-            base64 -w 0 build/private-pki/${gateway}-gateway.crt > build/private-pki/${gateway}-gateway.crt.b64
-            base64 -w 0 build/private-pki/${gateway}-gateway.key > build/private-pki/${gateway}-gateway.key.b64
+            base64 < build/private-pki/${gateway}-gateway.crt | tr -d '\n' > build/private-pki/${gateway}-gateway.crt.b64
+            base64 < build/private-pki/${gateway}-gateway.key | tr -d '\n' > build/private-pki/${gateway}-gateway.key.b64
           done
 
           # Base64 encode CA
-          base64 -w 0 build/private-pki/ca.crt > build/private-pki/ca.crt.b64
+          base64 < build/private-pki/ca.crt | tr -d '\n' > build/private-pki/ca.crt.b64
 
-          # Add CA to system trust store
-          sudo cp build/private-pki/ca.crt /usr/local/share/ca-certificates/uds-test-ca.crt
-          sudo update-ca-certificates
+          # Add CA to trust store
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain build/private-pki/ca.crt
+          else
+            sudo cp build/private-pki/ca.crt /usr/local/share/ca-certificates/uds-test-ca.crt
+            sudo update-ca-certificates
+          fi
 
           # Configure UDS with certificates
           cp bundles/k3d-standard/uds-private-pki-config.yaml build/private-pki/uds-private-pki-config.yaml
@@ -65,6 +76,8 @@ tasks:
 
   - name: private-pki-tests
     description: "Run Private PKI Tests"
+    # Note: if you have curl installed with hombebrew on macOS, you may need to explicitly trust the CA Cert generated. You can do so by running the following command before running the tests:
+    # export CURL_CA_BUNDLE=path/to/uds-core/build/private-pki/ca.crt
     actions:
       - description: "Move Cert to Testing directory"
         cmd: cp build/private-pki/ca.crt test/playwright/private-pki
@@ -72,7 +85,7 @@ tasks:
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.56.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.56.1-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test --config=private-pki/playwright.private-pki.config.ts private-pki/private-pki.test.ts\

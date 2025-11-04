@@ -13,8 +13,13 @@ import {
   updateAPIServerCIDRFromService,
 } from "./controllers/network/generators/kubeAPI";
 
-// Secret Pod Reload controller
-import { handleSecretDelete, handleSecretUpdate } from "./controllers/secrets/pod-reload";
+// Resource Pod Reload controllers
+import {
+  handleConfigMapDelete,
+  handleConfigMapUpdate,
+  handleSecretDelete,
+  handleSecretUpdate,
+} from "./controllers/reload/pod-reload";
 
 // Controller imports
 import {
@@ -142,6 +147,18 @@ When(a.Secret)
 
 // Watch for deleted secrets to clean up the checksum cache
 When(a.Secret).IsDeleted().WithLabel("uds.dev/pod-reload", "true").Reconcile(handleSecretDelete);
+
+// Watch for ConfigMaps with the uds.dev/pod-reload label for pod reload
+When(a.ConfigMap)
+  .IsCreatedOrUpdated()
+  .WithLabel("uds.dev/pod-reload", "true")
+  .Reconcile(handleConfigMapUpdate);
+
+// Watch for deleted ConfigMaps to clean up the checksum cache
+When(a.ConfigMap)
+  .IsDeleted()
+  .WithLabel("uds.dev/pod-reload", "true")
+  .Reconcile(handleConfigMapDelete);
 
 // Istio Gateway Pods are not restarted automatically when the Istio ConfigMap is updated.
 When(a.ConfigMap)

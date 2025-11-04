@@ -29,18 +29,6 @@ runs:
         fi
       shell: bash
 
-    - name: Pull iptables rules (network policies)
-      if: ${{ inputs.distro == 'k3d' }}
-      run: |
-        CONTAINER_NAME="k3d-uds-server-0"
-        if docker ps | grep -q "$CONTAINER_NAME"; then
-          echo "Container $CONTAINER_NAME is running. Proceeding with iptables-save..."
-          docker exec -i ${CONTAINER_NAME} iptables-save > /tmp/uds-iptables.log
-        else
-          echo "Container $CONTAINER_NAME is not running. Skipping iptables-save."
-        fi
-      shell: bash
-
     - name: Dump Node Logs
       if: ${{ inputs.distro == 'k3d' }}
       run: |
@@ -90,7 +78,7 @@ runs:
         echo "::endgroup::"
       shell: bash
 
-    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
       with:
         name: debug-log${{ inputs.suffix }}
         retention-days: 7

@@ -25,12 +25,34 @@ falco:
 
 mounts:
   volumes:
-    - name: extra-rules
+    - name: stable-rules
       configMap:
-        name: falco-extra-rules
+        name: falco-stable-rules
+    - name: incubating-rules
+      configMap:
+        name: falco-incubating-rules
+    - name: sandbox-rules
+      configMap:
+        name: falco-sandbox-rules
+    - name: disable-rules
+      configMap:
+        name: falco-disable-rules
   volumeMounts:
-    - name: extra-rules
-      mountPath: /etc/falco/rules.d
+    - name: stable-rules
+      mountPath: /etc/falco/rules.d/stable-rules.yaml
+      subPath: stable-rules.yaml
+      readOnly: true
+    - name: incubating-rules
+      mountPath: /etc/falco/rules.d/incubating-rules.yaml
+      subPath: incubating-rules.yaml
+      readOnly: true
+    - name: sandbox-rules
+      mountPath: /etc/falco/rules.d/sandbox-rules.yaml
+      subPath: sandbox-rules.yaml
+      readOnly: true
+    - name: disable-rules
+      mountPath: /etc/falco/rules.d/disable-rules.yaml
+      subPath: disable-rules.yaml
       readOnly: true
 
 falcosidekick:

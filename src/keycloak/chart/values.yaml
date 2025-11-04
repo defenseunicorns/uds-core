@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.4.0"
+  tag: "26.4.1"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.19.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.19.1
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -411,12 +411,12 @@ extraVolumeMounts: []
 truststorePaths: []
 
 # Detailed observability settings (Dashboards, Alerts, etc)
+# @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
 detailedObservability:
   alerts:
     enabled: false
-  # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
   dashboards:
     enabled: true
   logging:
     enabled: true
-  # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
+# @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12

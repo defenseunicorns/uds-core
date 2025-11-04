@@ -6,9 +6,9 @@
     "test:watch": "vitest"
   },
   "devDependencies": {
-    "@types/node": "^22.7.4",
+    "@types/node": "^24.0.0",
     "kubernetes-fluent-client": "^3.6.3",
     "typescript": "^5.6.2",
-    "vitest": "^3.2.3"
+    "vitest": "^4.0.0"
   }
 }
