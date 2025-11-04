@@ -120,7 +120,7 @@ jobs:
           echo combined=$COMBINED >> $GITHUB_OUTPUT
           echo The following packages will be triggered: $COMBINED
 
-  # lulaStart 11948466-9230-4498-be44-dbac784d86d1
+  # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
