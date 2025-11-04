@@ -192,7 +192,9 @@ views "uds-core" {
       cluster.grafana.*,
       cluster.generic-customer.*,
       cluster.loki.*,
+      cluster.vector.*,
       external-apps.ext-alerts,
+      admin,
 
     exclude
       cluster.generic-customer.customer-waypoint,
@@ -203,6 +205,6 @@ views "uds-core" {
       * -> *
         where kind is not observability
 
-      autoLayout TopBottom 300 100
+      autoLayout LeftRight 200 100
   }
 }

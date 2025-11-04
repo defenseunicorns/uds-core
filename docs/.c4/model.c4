@@ -635,6 +635,9 @@ model {
 
     // external relationship
     admin -> external-admin-loadbalancer
+
+    // observability relationships
+    admin -[observability]-> grafana.grafana 'views observability data'
   }
 
   enduser = actor {
