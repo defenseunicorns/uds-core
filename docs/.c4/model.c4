@@ -420,7 +420,7 @@ model {
           customer-waypoint -> custom-application {
             style {
               head normal
-              tail normal
+              tail none
             }
           }
 
