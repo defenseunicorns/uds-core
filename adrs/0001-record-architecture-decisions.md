@@ -1,3 +1,4 @@
+<!-- @lulaStart 4b7df2ce-182f-4266-9116-c386517c2f10 -->
 # 1. Record architecture decisions
 
 Date: 2024-07-17
@@ -21,3 +22,4 @@ We will use Architecture Decision Records, as [described by Michael Nygard](http
 ## Consequences
 
 See Michael Nygard's article, linked above. For a lightweight ADR toolset, see Nat Pryce's [adr-tools](https://github.com/npryce/adr-tools).
+<!-- @lulaEnd 4b7df2ce-182f-4266-9116-c386517c2f10 -->
