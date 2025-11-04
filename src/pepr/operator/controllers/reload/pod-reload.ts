@@ -84,7 +84,7 @@ export async function discoverSecretConsumers(namespace: string, secretName: str
  */
 export function parseSelectorString(value: string): Record<string, string> | null {
   try {
-    // Handle key=value format (like "app=neuvector-controller-pod")
+    // Handle key=value format (like "app=falco-pod")
     const result: Record<string, string> = {};
 
     // Split by commas if multiple key=value pairs
