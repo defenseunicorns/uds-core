@@ -22,9 +22,6 @@ packages:
       pepr-uds-core:
         module:
           values:
-            - path: additionalIgnoredNamespaces
-              value:
-                - uds-dev-stack
             - path: "watcher.resources.requests.memory"
               value: "64Mi"
             - path: "admission.resources.requests.memory"
