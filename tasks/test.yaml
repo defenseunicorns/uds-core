@@ -189,6 +189,7 @@ tasks:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
+      - task: deploy:latest-release-test-resources
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
