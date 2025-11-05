@@ -3,7 +3,7 @@
 
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
 
-suite: UDS Rules - Cluster Health Rules Functionality
+suite: UDS Rules
 templates:
   - templates/uds-rules.yaml
 

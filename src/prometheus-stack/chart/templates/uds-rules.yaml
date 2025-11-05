@@ -16,20 +16,23 @@ spec:
         - record: uds_cluster_health_score
           expr: |
             (
-              # 50% weight for Kubernetes API Server health
-              (max by (scope_member_id) (up{job="apiserver"}) or vector(1)) * 50
+              # 25% weight for API Server health
+              (avg(up{job="apiserver"}) or vector(1)) * 25
+              +
+              # 25% weight for Kubelet health
+              (avg(up{job="kubelet"}) or vector(1)) * 25
               +
               # 15% weight for CoreDNS health
-              (max by (scope_member_id) (up{job="coredns"}) or vector(1)) * 15
+              (avg(up{job="coredns"}) or vector(1)) * 15
               +
-              # 20% weight for Pepr health
-              (max by (scope_member_id) (up{job="pepr-uds-core"}) or vector(1)) * 20
+              # 15% weight for Pepr health
+              (avg(up{job="pepr-uds-core"}) or vector(1)) * 15
               +
               # 10% weight for Keycloak health
-              (max by (scope_member_id) (up{job="keycloak-http"}) or vector(1)) * 10
+              (avg(up{job="keycloak-http"}) or vector(1)) * 10
               +
-              # 5% weight for Grafana health
-              (max by (scope_member_id) (up{job="grafana"}) or vector(1)) * 5
+              # 10% weight for Prometheus health
+              (avg(up{job="kube-prometheus-stack-prometheus"}) or vector(1)) * 10
             )
         - alert: UDSClusterHealthScoreWarning
           expr: uds_cluster_health_score < 95
