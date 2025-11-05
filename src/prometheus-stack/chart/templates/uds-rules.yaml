@@ -41,15 +41,15 @@ spec:
             severity: warning
             reason: "UDS cluster health score is below 95%"
           annotations:
-            summary: "UDS Cluster Health Score: Warning"
+            summary: "UDS Cluster Health Score Warning"
             description: "The UDS cluster health score has been below 95% for more than 1 minute."
         - alert: UDSClusterHealthScoreCritical
-          expr: uds_cluster_health_score < 80
+          expr: uds_cluster_health_score < 90
           for: 1m
           labels:
             severity: critical
-            reason: "UDS cluster health score is below 80%"
+            reason: "UDS cluster health score is below 90%"
           annotations:
-            summary: "UDS Cluster Health Score: Critical"
-            description: "The UDS cluster health score has been below 80% for more than 1 minute."
+            summary: "UDS Cluster Health Score Critical"
+            description: "The UDS cluster health score has been below 90% for more than 1 minute."
 {{- end -}}
