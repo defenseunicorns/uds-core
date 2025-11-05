@@ -41,6 +41,12 @@ views "uds-core" {
         istio-mutating-webhook,
         zarf-mutating-webhook,
         kubernetes-control-plane,
+
+      // exclude any observability relationships and tagged elements
+      exclude
+        * where tag is #observability,
+        * -> *
+          where kind is observability
     }
   }
 
@@ -84,6 +90,12 @@ views "uds-core" {
         istio-mutating-webhook.*,
         zarf-mutating-webhook.*,
         kubernetes-control-plane.*
+
+      // exclude any observability relationships and tagged elements
+      exclude
+        * where tag is #observability,
+        * -> *
+          where kind is observability
     }
 	}
 
@@ -142,6 +154,11 @@ views "uds-core" {
       cluster,
       cluster.loki.*,
       cluster.vector.*,
+
+
+    // exclude any observability relationships
+    exclude * -> *
+      where kind is observability
   }
 
   view monitoring-layer of infrastructure {
@@ -151,6 +168,10 @@ views "uds-core" {
       cluster,
       cluster.monitoring.*,
       cluster.grafana.*,
+
+    // exclude any observability relationships
+    exclude * -> *
+      where kind is observability
   }
 
   view backup-restore-layer of infrastructure {
@@ -160,5 +181,30 @@ views "uds-core" {
       cluster,
       cluster.velero,
       cluster.velero.*,
+  }
+
+  view observability-reference-architecture of infrastructure {
+    title "Reference Architecture / Observability Stack"
+
+    include
+      cluster,
+      cluster.monitoring.*,
+      cluster.grafana.*,
+      cluster.generic-customer.*,
+      cluster.loki.*,
+      cluster.vector.*,
+      external-apps.ext-alerts,
+      admin,
+
+    exclude
+      cluster.generic-customer.customer-waypoint,
+      cluster.loki.loki-read,
+      cluster.loki.loki-write,
+      cluster.monitoring.kube-state-metrics,
+      cluster.monitoring.node-exporter,
+      * -> *
+        where kind is not observability
+
+      autoLayout LeftRight 200 100
   }
 }
