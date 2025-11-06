@@ -345,7 +345,7 @@
                 "label": "Namespace",
                 "name": "namespace",
                 "query": {
-                    "query": "label_values(kube_pod_info{namespace!~\"kube-system|istio-system|istio-admin-gateway|istio-tenant-gateway|istio-passthrough-gateway|pepr-system|neuvector|loki|monitoring|grafana|vector|velero|keycloak|authservice|zarf|uds-dev-stack\"}, namespace)",
+                    "query": "label_values(kube_pod_info{namespace!~\"kube-system|istio-system|istio-admin-gateway|istio-tenant-gateway|istio-passthrough-gateway|pepr-system|falco|loki|monitoring|grafana|vector|velero|keycloak|authservice|zarf|uds-dev-stack\"}, namespace)",
                     "refId": "StandardVariableQuery"
                 },
                 "type": "query"

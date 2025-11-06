@@ -1,0 +1,210 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+views "uds-core" {
+  // Overviews
+  view index of infrastructure {
+    title "Overviews / Namespaces"
+    autoLayout TopBottom 75 50
+
+    group {
+      border solid
+      color background
+      opacity 100%
+
+      include
+        *,
+        cluster.generic-customer,
+        cluster.pepr-system,
+        cluster.istio-egress-ambient,
+        cluster.istio-egress-gateway,
+        cluster.istio-passthrough-gateway,
+        cluster.istio-system,
+        cluster.metrics-server,
+        cluster.velero,
+        cluster.vector,
+        cluster.grafana,
+        cluster.keycloak,
+        cluster.authservice,
+        cluster.falco,
+        cluster.zarf,
+        cluster.loki,
+        external-apps,
+        external-services,
+        istio-admin-gateway,
+        istio-tenant-gateway,
+        metrics-api-service,
+        pepr-validating-webhook,
+        pepr-mutating-webhook,
+        istio-mutating-webhook,
+        zarf-mutating-webhook,
+        kubernetes-control-plane,
+
+      // exclude any observability relationships and tagged elements
+      exclude
+        * where tag is #observability,
+        * -> *
+          where kind is observability
+    }
+  }
+
+  view indepth-uds-core of infrastructure {
+    title "Overviews / Pods"
+    autoLayout TopBottom 150 50
+
+    group {
+      border solid
+      color background
+      opacity 100%
+
+      include
+        *,
+        cluster.generic-customer.*,
+        cluster.pepr-system.*,
+        cluster.istio-egress-ambient.*,
+        cluster.istio-egress-gateway,
+        cluster.istio-egress-gateway.*,
+        cluster.istio-passthrough-gateway,
+        cluster.istio-passthrough-gateway.*,
+        cluster.istio-system.*,
+        cluster.metrics-server.*,
+        cluster.velero,
+        cluster.velero.*,
+        cluster.vector.*,
+        cluster.monitoring.*,
+        cluster.grafana.*,
+        cluster.keycloak.*,
+        cluster.authservice.*,
+        cluster.falco.*,
+        cluster.zarf.*,
+        cluster.loki.*,
+        external-apps.*,
+        external-services.*,
+        istio-admin-gateway.*,
+        istio-tenant-gateway.*,
+        metrics-api-service.*,
+        pepr-validating-webhook.*,
+        pepr-mutating-webhook.*,
+        istio-mutating-webhook.*,
+        zarf-mutating-webhook.*,
+        kubernetes-control-plane.*
+
+      // exclude any observability relationships and tagged elements
+      exclude
+        * where tag is #observability,
+        * -> *
+          where kind is observability
+    }
+	}
+
+  // Functional Layers
+  view base-layer of infrastructure {
+    title "Functional Layers / Base"
+
+    include
+      cluster,
+      pepr-system,
+      pepr-system.*,
+      istio-system,
+      istio-system.*,
+      istio-admin-gateway,
+      istio-admin-gateway.*,
+      istio-tenant-gateway,
+      istio-tenant-gateway.*,
+      cluster.istio-egress-ambient,
+      cluster.istio-egress-ambient.*,
+      cluster.istio-egress-gateway,
+      cluster.istio-egress-gateway.*,
+      istio-passthrough-gateway,
+      istio-passthrough-gateway.*,
+  }
+
+  view identity-authorization-layer of infrastructure {
+    title "Functional Layers / Identity & Authorization"
+
+    include
+      cluster,
+      cluster.keycloak.*,
+      cluster.authservice.*,
+  }
+
+  view metrics-server-layer of infrastructure {
+    title "Functional Layers / Metrics Server"
+
+    include
+      cluster,
+      cluster.metrics-server,
+      cluster.metrics-server.*,
+  }
+
+  view runtime-security-layer of infrastructure {
+    title "Functional Layers / Runtime Security"
+
+    include
+      cluster,
+      cluster.falco.*,
+  }
+
+  view logging-layer of infrastructure {
+    title "Functional Layers / Logging"
+
+    include
+      cluster,
+      cluster.loki.*,
+      cluster.vector.*,
+
+
+    // exclude any observability relationships
+    exclude * -> *
+      where kind is observability
+  }
+
+  view monitoring-layer of infrastructure {
+    title "Functional Layers / Monitoring"
+
+    include
+      cluster,
+      cluster.monitoring.*,
+      cluster.grafana.*,
+
+    // exclude any observability relationships
+    exclude * -> *
+      where kind is observability
+  }
+
+  view backup-restore-layer of infrastructure {
+    title "Functional Layers / Backup & Restore"
+
+    include
+      cluster,
+      cluster.velero,
+      cluster.velero.*,
+  }
+
+  view observability-reference-architecture of infrastructure {
+    title "Reference Architecture / Observability Stack"
+
+    include
+      cluster,
+      cluster.monitoring.*,
+      cluster.grafana.*,
+      cluster.generic-customer.*,
+      cluster.loki.*,
+      cluster.vector.*,
+      external-apps.ext-alerts,
+      admin,
+
+    exclude
+      cluster.generic-customer.customer-waypoint,
+      cluster.loki.loki-read,
+      cluster.loki.loki-write,
+      cluster.monitoring.kube-state-metrics,
+      cluster.monitoring.node-exporter,
+      * -> *
+        where kind is not observability
+
+      autoLayout LeftRight 200 100
+  }
+}

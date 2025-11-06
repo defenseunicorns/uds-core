@@ -196,7 +196,7 @@ Metrics server is provided as an optional component in UDS Core and can be enabl
 ```yaml
 - name: uds-core
   repository: ghcr.io/defenseunicorns/packages/private/uds/core
-  ref: 0.25.2-unicorn
+  ref: 0.54.1-unicorn
   optionalComponents:
     - metrics-server
 ```

@@ -83,16 +83,16 @@ Typically the actual version update is as easy as updating your version referenc
 packages:
   - name: core
     repository: ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.9.0-upstream
+    ref: 0.53.1-upstream
 ```
 
-Upgrading to 0.10.0 would be as easy as updating this to:
+Upgrading to 0.54.1 would be as easy as updating this to:
 
 ```yaml
 packages:
   - name: core
     repository: ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.10.0-upstream
+    ref: 0.54.1-upstream
 ```
 
 Try to avoid other concurrent package upgrades (e.g., zarf init or other UDS packages) or larger changes, such as switching between flavors, unless you have restrictive maintenance windows. Where possible, it is often better to perform these upgrades independently to simplify troubleshooting if issues occur.

@@ -1,0 +1,176 @@
+/**
+ * Copyright 2025 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ */
+
+specification {
+  color background #011f66
+  color actor #102349
+  color externalAppsGroup #5b725d
+  color externalApps #102349
+  color infra #12488e
+  color infraServicesGroup #353333
+  color infraServices #8f74a8
+  color infraLBs #7e6250
+  color cluster #bee7ff
+  color coreNamespaces #772828
+  color k8sNamespaces #d1bad3
+  color coreWebhooks #d8bf7a
+  color pods #bea6a6
+  color crds #9e9e9e
+  color configmaps #5a6b5d
+
+  // Relationships for observability focused views
+  relationship observability
+
+  // Tags for observability focused views
+  tag observability
+
+  element actor {
+    style {
+      size xs
+      shape person
+      border solid
+      color actor
+      opacity 100%
+    }
+  }
+
+  element externalAppsGroup {
+    style {
+      border solid
+      color externalAppsGroup
+      opacity 100%
+    }
+  }
+
+  element alert_destination {
+    style {
+      size xs
+      icon ./images/alert_icon.svg
+      border solid
+      color externalApps
+      opacity 100%
+    }
+  }
+
+  element siem_tool {
+    style {
+      size xs
+      icon ./images/siem_icon.svg
+      border solid
+      color externalApps
+      opacity 100%
+    }
+  }
+
+  element infrastructure {
+    notation "1. Infrastructure Boundary"
+    style {
+      size xs
+      border solid
+      color infra
+      opacity 100%
+    }
+  }
+
+  element infraServicesGroup {
+    style {
+      border solid
+      color infraServicesGroup
+      opacity 100%
+    }
+  }
+
+  element infraService {
+    style {
+      size xs
+      shape storage
+      border solid
+      color infraServices
+      opacity 100%
+    }
+  }
+
+  element loadbalancer {
+    style {
+      size xs
+      icon ./images/loadbalancer_icon.svg
+      border solid
+      color infraLBs
+      opacity 100%
+    }
+  }
+
+  element cluster {
+    notation "2. UDS Core Cluster"
+    style {
+      size xs
+      border solid
+      color cluster
+      opacity 100%
+    }
+  }
+
+  element coreNamespace {
+    notation "3. UDS Core Namespaces"
+    style {
+      size xs
+      icon ./images/namespace_icon.svg
+      border solid
+      color coreNamespaces
+      opacity 100%
+    }
+  }
+
+  element k8sNamespace {
+    notation "4. Kubernetes Namespaces"
+    style {
+      size xs
+      icon ./images/namespace_icon.svg
+      border solid
+      color k8sNamespaces
+      opacity 100%
+    }
+  }
+
+  element coreWebhook {
+    notation "5. UDS Core Webhooks"
+    style {
+      size xs
+      border solid
+      color coreWebhooks
+      opacity 100%
+    }
+  }
+
+  element pod {
+    notation "6. Cluster Pods"
+    style {
+      size sm
+      border solid
+      color pods
+      opacity 100%
+    }
+  }
+
+  element cr {
+    notation "7. Custom Resources"
+    style {
+      size xs
+      border solid
+      color crds
+      opacity 100%
+    }
+  }
+
+  element configmap {
+    notation "8. ConfigMaps"
+    style {
+      size xs
+      border solid
+      color configmaps
+      opacity 100%
+    }
+  }
+}
