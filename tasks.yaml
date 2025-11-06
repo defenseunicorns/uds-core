@@ -149,21 +149,6 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
-  - name: test-compliance-compose
-    description: "Compose OSCAL Component Definition"
-    actions:
-      - task: test:local-compliance-compose
-
-  - name: test-compliance-validate
-    description: "Validate Compliance of UDS Core to produce Assessment Results"
-    actions:
-      - task: test:compliance-validate
-
-  - name: test-compliance-evaluate
-    description: "Evaluate Compliance of UDS Core against an established threshold"
-    actions:
-      - task: test:compliance-evaluate
-
   - name: lint-check
     description: "Run linting checks"
     actions:
@@ -173,10 +158,6 @@ tasks:
     description: "Fix linting issues"
     actions:
       - task: lint:fix
-
-  - name: lint-oscal
-    actions:
-      - task: lint:oscal
 
   # Note that due to cloning the docs repo (which is private) this task will require organization access to the repo
   # This task does not clone in/manage docs outside of the core repo so you may hit some 404s during development
