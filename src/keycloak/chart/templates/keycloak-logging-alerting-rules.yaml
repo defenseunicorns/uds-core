@@ -41,6 +41,7 @@ spec:
             summary: "Keycloak user modifications detected in {{`{{ $labels.realmName }}`}}"
             description: "User-related administrative actions detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
 
+        # @lulaStart b45ff148-f52e-43aa-b9e7-88055123948f
         - alert: KeycloakSystemAdminModificationsDetected
           expr: sum_over_time(uds_keycloak:system_admin_modifications_count[5m]) > 0
           for: 1m
@@ -52,5 +53,6 @@ spec:
           annotations:
             summary: "Keycloak system admin modifications detected in {{`{{ $labels.realmName }}`}}"
             description: "Potentially sensitive admin changes involving system administrators detected in Keycloak logs for realm {{`{{ $labels.realmName }}`}} in the last 5 minutes. Check the \"UDS Keycloak Notifications\" Dashboard as well as Keycloak logs in Loki for more details."
+          # @lulaEnd b45ff148-f52e-43aa-b9e7-88055123948f
     # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
 {{- end }}
