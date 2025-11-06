@@ -69,6 +69,8 @@ themeCustomizations:
   settings:
     # Extra Registration Form Fields ( Affiliation, Pay Grade, Unit Organization or Company Name )
     enableRegistrationFields: true
+    # Enable Access Request Notes field on the registration page
+    enableAccessRequestNotes: false
 #   resources:
 #     images:
 #       - name: background.png

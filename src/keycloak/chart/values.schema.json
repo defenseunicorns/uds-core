@@ -522,6 +522,9 @@
           "properties": {
             "enableRegistrationFields": {
               "type": "boolean"
+            },
+            "enableAccessRequestNotes": {
+              "type": "boolean"
             }
           },
           "additionalProperties": true
