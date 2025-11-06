@@ -115,9 +115,7 @@ defaultRules:
     kubePrometheusNodeRecording: true
     kubernetesApps: true
     kubernetesResources: true
-    # @lulaStart 72ad1c4c-8772-4f33-bb4c-e64d644896a9
     kubernetesStorage: true
-    # @lulaEnd 72ad1c4c-8772-4f33-bb4c-e64d644896a9
     kubernetesSystem: true
     kubeSchedulerAlerting: true
     kubeSchedulerRecording: true
