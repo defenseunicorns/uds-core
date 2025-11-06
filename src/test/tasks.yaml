@@ -153,23 +153,11 @@ tasks:
             address: ${{ .inputs.address }}
             code: 200
 
-      - description: Get tenant gateway IP
-        maxRetries: 3
-        task: utils:tenant-gw-ip
-
       - description: Verify the service at ${{ .inputs.address }} is protected by checking redirect
         maxRetries: 3
         cmd: |
           set -e
-          # If running locally with k3d, access via the hostname directly
-          if curl --connect-timeout 2 -s "https://${{ .inputs.address }}" >/dev/null 2>&1; then
-            echo "Running in local environment, accessing via hostname"
-            SSO_REDIRECT=$(curl -Ls -o /dev/null -w %{url_effective} "https://${{ .inputs.address }}")
-          # If running in CI or another environment, resolve via tenant gateway IP
-          else
-            echo "Running in CI/remote environment, resolving via tenant gateway IP"
-            SSO_REDIRECT=$(curl --resolve '${{ .inputs.address }}:443:$TENANT_GW_IP' -Ls -o /dev/null -w %{url_effective} "https://${{ .inputs.address }}")
-          fi
+          SSO_REDIRECT=$(curl -Ls -o /dev/null -w %{url_effective} "https://${{ .inputs.address }}")
 
           case "${SSO_REDIRECT}" in
           "https://sso.uds.dev"*)
