@@ -107,6 +107,7 @@ components:
     import:
       path: ../monitoring
 
+  # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
   # Vector
   - name: vector
     required: true
@@ -118,6 +119,7 @@ components:
     required: true
     import:
       path: ../monitoring
+  # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
 
   # Authservice
   - name: authservice
