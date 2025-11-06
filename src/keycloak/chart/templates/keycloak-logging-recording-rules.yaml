@@ -10,6 +10,7 @@ metadata:
   labels:
     loki_rule: "1"
 data:
+   # @lulaStart a5540198-a55e-4769-a5de-44ffe7636555
   recording-rules.yaml: |
     groups:
       # Keycloak Notifications Recording Rules don't include the "realmName" filtering on purpose. Adding it would omit newly created Realms from any
@@ -71,3 +72,4 @@ data:
                 )
               )
 {{- end }}
+# @lulaEnd a5540198-a55e-4769-a5de-44ffe7636555
