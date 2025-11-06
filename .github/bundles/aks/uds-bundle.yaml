@@ -6,7 +6,7 @@ metadata:
   name: uds-core-aks-nightly
   description: A UDS bundle for deploying UDS Core on AKS
   # x-release-please-start-version
-  version: "0.55.0"
+  version: "0.55.1"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.55.0
+    ref: 0.55.1
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
@@ -109,20 +109,6 @@ packages:
               description: Grafana postgresql username
               path: postgresql.user
 
-      neuvector:
-        core:
-          values:
-            - path: runtimePath
-              value: /run/containerd/containerd.sock
-            - path: enforcer.tolerations
-              value:
-                - effect: NoSchedule
-                  key: node-role.kubernetes.io/master
-                - effect: NoSchedule
-                  key: node-role.kubernetes.io/control-plane
-                - effect: NoSchedule
-                  key: dedicated
-                  operator: Exists
       velero:
         velero:
           variables:

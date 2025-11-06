@@ -19,7 +19,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - [KeyCloak](https://www.keycloak.org/) - Identity & Access Management
 - [Loki](https://grafana.com/oss/loki/) - Log Aggregation
 - [Metrics Server](https://github.com/kubernetes-sigs/metrics-server) - Metrics
-- [Neuvector](https://open-docs.neuvector.com/) - Container Security
+- [Falco](https://falco.org/docs/) - Container Security
 - [Pepr](https://pepr.dev) - UDS policy engine & operator
 - [Prometheus Stack](https://github.com/prometheus-operator/kube-prometheus) - Monitoring
 - [Vector](https://vector.dev/) - Log Aggregation
@@ -56,7 +56,7 @@ If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundle
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-demo:0.55.0
+uds deploy k3d-core-demo:0.55.1
 ```
 
 <!-- x-release-please-end -->
@@ -70,7 +70,7 @@ Deploy Istio, Keycloak and Pepr:
 <!-- x-release-please-start-version -->
 
 ```bash
-uds deploy k3d-core-slim-dev:0.55.0
+uds deploy k3d-core-slim-dev:0.55.1
 ```
 
 <!-- x-release-please-end -->

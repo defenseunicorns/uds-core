@@ -189,6 +189,7 @@ tasks:
       - task: deploy:latest-bundle-release
         with:
           configFile: ${{ .inputs.configFile }}
+      - task: deploy:latest-release-test-resources
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
@@ -249,8 +250,3 @@ tasks:
           uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
           uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
       - task: private-pki:private-pki-tests
-      - description: "Follow on Instructions"
-        cmd: |
-          echo ""
-          echo "Load the build/private-pki/ca.crt into your browser if you want to use the Grafana, Keycloak, or httpbin UIs."
-          echo ""

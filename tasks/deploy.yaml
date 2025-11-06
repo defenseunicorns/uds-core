@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.55.0"
+    default: "0.55.1"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -118,6 +118,32 @@ tasks:
           uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
+
+  - name: latest-release-test-resources
+    actions:
+      - task: utils:determine-repo
+      - description: "Get latest tag version from OCI for aligning test resources"
+        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+        setVariables:
+          - name: LATEST_VERSION
+      - description: "Extract unflavored version for git tag"
+        cmd: echo ${LATEST_VERSION} | cut -d'-' -f1 # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
+        setVariables:
+          - name: LATEST_CORE_TAG
+      - description: "Fetch src/test from tagged release"
+        cmd: |
+          # Create temp directory
+          mkdir -p tmp/test-shim
+
+          # Clone only the src/test directory
+          git clone --depth 1 --filter=blob:none --sparse --branch v${LATEST_CORE_TAG} https://github.com/defenseunicorns/uds-core.git tmp/test-shim/uds-core
+          cd tmp/test-shim/uds-core
+          git sparse-checkout set src/test tasks
+      - description: "Deploy Latest Release Test Resources"
+        cmd: uds run -f src/test/tasks.yaml create-deploy
+        dir: tmp/test-shim/uds-core/
+      - description: "Clean up temporary files"
+        cmd: rm -rf tmp/test-shim
 
   - name: latest-slim-bundle-release
     actions:

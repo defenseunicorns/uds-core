@@ -125,7 +125,7 @@ All groups are under the `UDS Core` parent group. Frequently a group will be ref
 1. [Keycloak Session Management](/reference/configuration/single-sign-on/keycloak-session-management/)
 1. [L7 Load Balancer](/reference/configuration/single-sign-on/l7-load-balancer/)
 1. [Notifications and Alerts](/reference/configuration/single-sign-on/notifications-and-alerts/)
-1. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
+1. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recovering-lost-credentials/)
 1. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
 1. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
 1. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
