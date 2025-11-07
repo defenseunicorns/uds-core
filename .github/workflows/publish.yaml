@@ -14,7 +14,7 @@ on:
   workflow_call:
     inputs:
       snapshot:
-        description: 'true - for snapshot release'
+        description: "true - for snapshot release"
         required: true
         type: boolean
 
@@ -24,13 +24,13 @@ jobs:
       fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
-    runs-on: "uds-ubuntu-big-boy-8-core"
+    runs-on: ubuntu-latest
     name: Publish packages
 
     permissions:
       contents: read
       packages: write
-      id-token: write  # This is needed for OIDC federation.
+      id-token: write # This is needed for OIDC federation.
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -103,15 +103,23 @@ jobs:
       fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
-        layer: [base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
+        layer: [
+          base,
+          identity-authorization,
+          runtime-security,
+          backup-restore,
+          logging,
+          metrics-server,
+          monitoring,
+        ]
         arch: [amd64, arm64]
-    runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-24-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
+    runs-on: ubuntu-latest
     name: Publish package layers
 
     permissions:
       contents: read
       packages: write
-      id-token: write  # This is needed for OIDC federation.
+      id-token: write # This is needed for OIDC federation.
 
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

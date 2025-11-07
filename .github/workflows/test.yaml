@@ -47,7 +47,7 @@ permissions:
 jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
+    runs-on: ubuntu-latest
     # Increase the timeout for longer upgrades - temporarily increased to 60 for longer upgrade from cgr -> rf
     timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
@@ -71,11 +71,6 @@ jobs:
         run: |
           TV="${{ inputs.target_version }}"
           if [ -n "$TV" ]; then
-            # Normalize value: accept either 'X.Y' or 'release/X.Y' and export as 'X.Y'
-            case "$TV" in
-              release/*) TV="${TV#release/}" ;;
-            esac
-            # External env var prefix for CI, and internal var consumed by tasks
             echo "UDS_TARGET_VERSION=$TV" >> $GITHUB_ENV
             echo "TARGET_VERSION=$TV" >> $GITHUB_ENV
             echo "Pinned UDS_TARGET_VERSION=$TV"
