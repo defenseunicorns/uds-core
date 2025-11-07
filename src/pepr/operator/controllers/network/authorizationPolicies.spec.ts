@@ -6,9 +6,11 @@
 import { describe, expect, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import {
   createDenyAllExceptWaypointPolicy,
+  findMatchingSsoClient,
   generateAuthorizationPolicies,
 } from "./authorizationPolicies";
 
@@ -1110,5 +1112,131 @@ describe("createDenyAllExceptWaypointPolicy", () => {
     expect(policy.spec?.rules?.[0].from?.[0].source?.notPrincipals).toEqual([
       "cluster.local/ns/test-ns/sa/test-waypoint",
     ]);
+  });
+});
+
+describe("findMatchingSsoClient", () => {
+  test("returns undefined when selector is undefined", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(
+      findMatchingSsoClient(pkg, undefined as unknown as Record<string, string>),
+    ).toBeUndefined();
+  });
+
+  test("returns undefined when mesh mode is not Ambient", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a" } }],
+        network: { serviceMesh: { mode: Mode.Sidecar } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, { app: "a" })).toBeUndefined();
+  });
+
+  test("prefilters to enabled clients only (missing/null/undefined selector are ignored)", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "d1", name: "" },
+          { clientId: "d3", name: "", enableAuthserviceSelector: undefined },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, { app: "anything" })).toBeUndefined();
+  });
+
+  test("empty SSO selector ({}) matches any provided selector (namespace-wide)", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: {} }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, {})).toMatchObject({ clientId: "c1" });
+    expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "c1" });
+  });
+
+  test("non-empty SSO selector uses all-label matching semantics", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a", tier: "prod" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // Matches only when all labels match
+    expect(findMatchingSsoClient(pkg, { app: "a", tier: "prod" })).toMatchObject({
+      clientId: "c1",
+    });
+    // Does not match when only a subset matches
+    expect(findMatchingSsoClient(pkg, { tier: "prod" })).toBeUndefined();
+  });
+
+  test("two enabled clients both match; first match wins", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "first", name: "", enableAuthserviceSelector: { app: "x", tier: "prod" } },
+          { clientId: "second", name: "", enableAuthserviceSelector: { app: "x" } },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // All-label semantics: with selector { app: "x", tier: "prod" }, both clients match.
+    // Order matters: ensure the first matching client is returned.
+    expect(findMatchingSsoClient(pkg, { app: "x", tier: "prod" })).toMatchObject({
+      clientId: "first",
+    });
+  });
+
+  test("ordering: {} selector client wins over specific-label client", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "wide", name: "", enableAuthserviceSelector: {} },
+          { clientId: "specific", name: "", enableAuthserviceSelector: { app: "x" } },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // {} means namespace-wide; it matches any provided selector.
+    // Verify ordering: the {} client appears first and should win.
+    expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "wide" });
+  });
+
+  test("empty-string selector value matches only empty-string label", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "empty", name: "", enableAuthserviceSelector: { foo: "" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // Exact-value requirement: empty-string label matches only empty-string selector value.
+    expect(findMatchingSsoClient(pkg, { foo: "" })).toMatchObject({ clientId: "empty" });
+    // Non-empty value should not match empty-string selector value.
+    expect(findMatchingSsoClient(pkg, { foo: "bar" })).toBeUndefined();
+    // Empty provided selector has no keys -> no labels to match -> no match.
+    expect(findMatchingSsoClient(pkg, {})).toBeUndefined();
   });
 });

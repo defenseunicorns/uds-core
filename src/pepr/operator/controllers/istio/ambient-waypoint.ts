@@ -7,7 +7,7 @@ import { a, K8s, kind } from "pepr";
 import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
-import { getOwnerRef } from "../utils";
+import { getAuthserviceClients, getOwnerRef } from "../utils";
 import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
 import { getSharedAnnotationKey, log } from "./istio-resources";
 import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
@@ -217,10 +217,10 @@ export async function reconcileService(svc: a.Service): Promise<void> {
     return;
   }
 
-  // Find the SSO client that matches this service's selector
-  const matchingSso = pkg.spec?.sso?.find(
-    sso =>
-      sso.enableAuthserviceSelector && serviceMatchesSelector(svc, sso.enableAuthserviceSelector),
+  // Find the SSO client that matches this service's selector (only authservice-enabled)
+  const authClients = getAuthserviceClients(pkg);
+  const matchingSso = authClients.find(sso =>
+    serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
   );
 
   if (!matchingSso?.clientId) return;
@@ -274,11 +274,10 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     return;
   }
 
-  // Find the SSO client that matches this pod's labels
-  const matchingSso = pkg.spec?.sso?.find(
-    sso =>
-      sso.enableAuthserviceSelector &&
-      matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector),
+  // Find the SSO client that matches this pod's labels (only authservice-enabled)
+  const authClients = getAuthserviceClients(pkg);
+  const matchingSso = authClients.find(sso =>
+    matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
   );
 
   if (!matchingSso?.clientId) return;

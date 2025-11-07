@@ -6,7 +6,8 @@
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { createEvent, retryWithDelay, validateNamespace } from "./utils";
+import { UDSPackage } from "../crd";
+import { createEvent, getAuthserviceClients, retryWithDelay, validateNamespace } from "./utils";
 
 // Mock K8s client and Log
 vi.mock("pepr", () => {
@@ -316,5 +317,28 @@ describe("test validateNamespace", () => {
     );
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
+  });
+});
+
+describe("getAuthserviceClients", () => {
+  it("returns only SSO clients with enableAuthserviceSelector present (not null/undefined)", () => {
+    const pkg = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          { clientId: "a", name: "", enableAuthserviceSelector: {} },
+          { clientId: "b", name: "", enableAuthserviceSelector: { foo: "bar" } },
+          { clientId: "c", name: "", enableAuthserviceSelector: { foo: "" } },
+          { clientId: "d", name: "" }, // missing key
+          { clientId: "e", name: "", enableAuthserviceSelector: null },
+          { clientId: "f", name: "", enableAuthserviceSelector: undefined }, // undefined value
+        ],
+      },
+    } as unknown as UDSPackage;
+
+    const res = getAuthserviceClients(pkg);
+    expect(res.map(c => c.clientId)).toEqual(["a", "b", "c"]);
   });
 });
