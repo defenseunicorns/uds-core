@@ -15,12 +15,14 @@ components:
         namespace: monitoring
         version: 0.1.0
         localPath: ../chart
+      # @lulaStart 4yw40198-a55e-4769-a5de-44ffe7636093
       # @lulaStart eff0012d-fdc2-4085-b014-b845f2ae38e0
       # @lulaStart c9a40198-a55e-4769-a5de-44ffe7636593
       - name: kube-prometheus-stack
         namespace: monitoring
       # @lulaEnd c9a40198-a55e-4769-a5de-44ffe7636593
       # @lulaEnd eff0012d-fdc2-4085-b014-b845f2ae38e0
+      # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
         url: https://prometheus-community.github.io/helm-charts
         version: 78.4.0
         valuesFiles:

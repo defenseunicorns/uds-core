@@ -113,7 +113,9 @@ defaultRules:
     kubeProxy: true
     kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
+    # @lulaStart 4yw40198-a55e-4769-a5de-44ffe7636093
     kubernetesApps: true
+    # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
     kubernetesResources: true
     kubernetesStorage: true
     kubernetesSystem: true
