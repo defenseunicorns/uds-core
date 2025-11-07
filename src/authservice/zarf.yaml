@@ -2,10 +2,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
+# @lulaStart 8e61ff56-f455-499b-b51c-035227cb691d
 metadata:
   name: uds-core-authservice
   description: "UDS Core Authservice"
   url: https://github.com/istio-ecosystem/authservice
+# @lulaEnd 8e61ff56-f455-499b-b51c-035227cb691d
 
 components:
   - name: authservice

@@ -3,12 +3,14 @@
 
 # @lulaStart 4147b6a6-3339-4d5d-b10a-f16502b52206
 # @lulaStart 7db76183-fb97-4a13-ae1e-a2b45ddd4430
+# @lulaStart 8e61ff56-f455-499b-b51c-035227cb691d
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
   description: "Keycloak"
 # @lulaEnd 7db76183-fb97-4a13-ae1e-a2b45ddd4430
 # @lulaEnd 4147b6a6-3339-4d5d-b10a-f16502b52206
+# @lulaEnd 8e61ff56-f455-499b-b51c-035227cb691d
 variables:
   - name: DOMAIN
     description: "Cluster domain"
