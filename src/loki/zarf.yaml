@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaState d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
   # @lulaStart ac7739bd-39bd-407b-9dcc-2e501062fe7f
   name: uds-core-loki
   # @lulaEnd ac7739bd-39bd-407b-9dcc-2e501062fe7f
+  # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
   description: "UDS Core Loki"
 
 components:
