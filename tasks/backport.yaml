@@ -1,0 +1,77 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: backport
+    description: "Create a backport branch from release/* and cherry-pick commits"
+    inputs:
+      target_version:
+        description: "Target minor version (e.g., 0.54)"
+      commits:
+        description: "Comma-separated list of commit SHAs to cherry-pick, in order"
+      name:
+        description: "Optional short name to include in branch name (defaults to first SHA)"
+        default: ""
+    actions:
+      - description: "Create backport branch and cherry-pick commits"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD || echo "")
+          # Require a clean working tree
+          if ! git diff-index --quiet HEAD --; then
+            echo "Working tree is dirty. Please commit or stash your changes before running the backport task." >&2
+            exit 1
+          fi
+          TV='${{ .inputs.target_version }}'
+          COMMITS='${{ .inputs.commits }}'
+          NAME_INPUT='${{ .inputs.name }}'
+
+          if [[ -z "$TV" ]]; then
+            echo "target_version input is required (e.g., 0.54)" >&2
+            exit 1
+          fi
+
+          RB="release/${TV}"
+          git fetch origin --tags
+          if ! git show-ref --verify --quiet "refs/remotes/origin/${RB}"; then
+            echo "Remote branch ${RB} not found. Ensure it exists (cut from v${TV}.0) or create it first." >&2
+            exit 1
+          fi
+
+          MINOR="$TV"
+
+          if [[ -z "$COMMITS" ]]; then
+            echo "No commits specified. Provide 'prs' and/or 'commits'." >&2
+            exit 1
+          fi
+
+          if [[ -z "$NAME_INPUT" ]]; then
+            NAME_INPUT="$(echo "$COMMITS" | cut -d',' -f1 | xargs)"
+          fi
+
+          BRANCH="backport/${NAME_INPUT}-to-${MINOR}"
+          BRANCH="${BRANCH// /-}"
+          BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
+
+          echo "Creating branch: ${BRANCH} from ${RB}"
+          git switch -c "${BRANCH}" "origin/${RB}"
+
+          IFS=',' read -ra ARR <<< "$COMMITS"
+          for C in "${ARR[@]}"; do
+            C="$(echo "$C" | xargs)"
+            if [[ -n "$C" ]]; then
+              echo "Cherry-picking ${C}"
+              git cherry-pick -x "$C"
+            fi
+          done
+
+          git push -u origin "${BRANCH}"
+          echo "Backport branch created: ${BRANCH}"
+          echo "Open a PR with base=${RB} and compare=${BRANCH}"
+          if [[ -n "$CURR_BRANCH" ]]; then
+            git switch "$CURR_BRANCH"
+            echo "Returned to branch: $CURR_BRANCH"
+          fi

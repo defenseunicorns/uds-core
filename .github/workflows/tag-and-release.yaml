@@ -20,13 +20,13 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release-flag.outputs.release_created }}
+      release_created: ${{ steps.tag.outputs.release_created }}
+      major: ${{ steps.tag.outputs.major }}
+      minor: ${{ steps.tag.outputs.minor }}
     steps:
       - name: Create release tag
         id: tag
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
-      - id: release-flag
-        run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
 
   publish-uds-core-release:
     needs: tag-new-version
@@ -62,3 +62,26 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
+
+  cut-release-branch:
+    needs: tag-new-version
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+      - name: Create release/X.Y from vX.Y.0
+        shell: bash
+        run: |
+          if [[ -z "${{ needs.tag-new-version.outputs.major }}" || -z "${{ needs.tag-new-version.outputs.minor }}" ]]; then
+            echo "major/minor outputs missing; cannot cut release branch" >&2
+            exit 1
+          fi
+          MINOR="${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}"
+          TAG="v${MINOR}.0"
+          git fetch origin --tags
+          git switch -c "release/${MINOR}" "$TAG"
+          git push origin "release/${MINOR}"

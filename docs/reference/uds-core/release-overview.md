@@ -41,6 +41,10 @@ Breaking changes are clearly documented in the [CHANGELOG.md](https://github.com
 
 While UDS Core has not yet reached version 1.0, it is considered production-ready and stable. The pre-1.0 versioning reflects our commitment to maintaining flexibility as we continue to enhance our security posture.
 
+## Version Support
+
+UDS Core provides patch support for the latest three minor versions (the current minor and the two previous minors), where applicable. Minor and major releases are cut from `main`, while patch releases are published from dedicated `release/X.Y` branches for each supported minor stream.
+
 ## Release Process
 
 ### Official Releases

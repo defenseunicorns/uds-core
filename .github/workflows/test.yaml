@@ -34,6 +34,10 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
+      target_version:
+        type: string
+        description: "Optional X.Y to pin 'latest' resolution to a specific minor stream"
+        required: false
 
 permissions:
   contents: read
@@ -62,6 +66,20 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      - name: Set target version (optional)
+        run: |
+          TV="${{ inputs.target_version }}"
+          if [ -n "$TV" ]; then
+            # Normalize value: accept either 'X.Y' or 'release/X.Y' and export as 'X.Y'
+            case "$TV" in
+              release/*) TV="${TV#release/}" ;;
+            esac
+            # External env var prefix for CI, and internal var consumed by tasks
+            echo "UDS_TARGET_VERSION=$TV" >> $GITHUB_ENV
+            echo "TARGET_VERSION=$TV" >> $GITHUB_ENV
+            echo "Pinned UDS_TARGET_VERSION=$TV"
+          fi
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
