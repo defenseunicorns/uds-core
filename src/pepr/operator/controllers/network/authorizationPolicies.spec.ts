@@ -1170,7 +1170,7 @@ describe("findMatchingSsoClient", () => {
     expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "c1" });
   });
 
-  test("non-empty SSO selector uses any-label matching semantics", () => {
+  test("non-empty SSO selector uses all-label matching semantics", () => {
     const pkg: UDSPackage = {
       metadata: { name: "app", namespace: "ns" },
       spec: {
@@ -1179,10 +1179,12 @@ describe("findMatchingSsoClient", () => {
       },
     };
 
-    // Matches because 'tier' label matches (any-label semantics)
-    expect(findMatchingSsoClient(pkg, { tier: "prod" })).toMatchObject({ clientId: "c1" });
-    // Does not match when none of the labels match
-    expect(findMatchingSsoClient(pkg, { env: "prod" })).toBeUndefined();
+    // Matches only when all labels match
+    expect(findMatchingSsoClient(pkg, { app: "a", tier: "prod" })).toMatchObject({
+      clientId: "c1",
+    });
+    // Does not match when only a subset matches
+    expect(findMatchingSsoClient(pkg, { tier: "prod" })).toBeUndefined();
   });
 
   test("two enabled clients both match; first match wins", () => {
@@ -1197,9 +1199,11 @@ describe("findMatchingSsoClient", () => {
       },
     };
 
-    // Any-label semantics: both clients match { app: "x" }.
+    // All-label semantics: with selector { app: "x", tier: "prod" }, both clients match.
     // Order matters: ensure the first matching client is returned.
-    expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "first" });
+    expect(findMatchingSsoClient(pkg, { app: "x", tier: "prod" })).toMatchObject({
+      clientId: "first",
+    });
   });
 
   test("ordering: {} selector client wins over specific-label client", () => {

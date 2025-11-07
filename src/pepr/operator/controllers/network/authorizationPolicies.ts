@@ -433,8 +433,8 @@ export function findMatchingSsoClient(
       return true;
     }
 
-    // For non-empty selectors, check if any label matches
-    return Object.entries(waypointSelector!).some(([key, value]) => selector[key] === value);
+    // For non-empty selectors, require all labels to match
+    return Object.entries(waypointSelector!).every(([key, value]) => selector[key] === value);
   });
 }
 
