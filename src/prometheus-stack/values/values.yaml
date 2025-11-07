@@ -117,7 +117,9 @@ defaultRules:
     kubernetesApps: true
     # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
     kubernetesResources: true
+    # @lulaStart eff0012d-fdc2-4085-b014-b845f2ae38e0
     kubernetesStorage: true
+    # @lulaEnd eff0012d-fdc2-4085-b014-b845f2ae38e0
     kubernetesSystem: true
     kubeSchedulerAlerting: true
     kubeSchedulerRecording: true
