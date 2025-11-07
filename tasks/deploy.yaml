@@ -86,8 +86,16 @@ tasks:
         description: "UDS_CONFIG file to use for the deployment"
     actions:
       - task: utils:determine-repo
-      - description: "Get latest tag version from OCI"
-        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+      - description: "Get latest tag version from OCI (optionally pinned to TARGET_VERSION minor stream)"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          if [ -n "${TARGET_VERSION}" ]; then
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
+          else
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
+          fi
         setVariables:
           - name: LATEST_VERSION
       - description: "Extract unflavored version for git tag"
@@ -122,8 +130,16 @@ tasks:
   - name: latest-release-test-resources
     actions:
       - task: utils:determine-repo
-      - description: "Get latest tag version from OCI for aligning test resources"
-        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+      - description: "Get latest tag version from OCI for aligning test resources (optionally pinned to TARGET_VERSION minor stream)"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          if [ -n "${TARGET_VERSION}" ]; then
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
+          else
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
+          fi
         setVariables:
           - name: LATEST_VERSION
       - description: "Extract unflavored version for git tag"

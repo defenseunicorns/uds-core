@@ -34,6 +34,10 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
+      target_version:
+        type: string
+        description: "Optional X.Y to pin 'latest' resolution to a specific minor stream"
+        required: false
 
 permissions:
   contents: read
@@ -43,7 +47,7 @@ permissions:
 jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
-    runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
+    runs-on: ubuntu-latest
     # Increase the timeout for longer upgrades - temporarily increased to 60 for longer upgrade from cgr -> rf
     timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
@@ -62,6 +66,15 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      - name: Set target version (optional)
+        run: |
+          TV="${{ inputs.target_version }}"
+          if [ -n "$TV" ]; then
+            echo "UDS_TARGET_VERSION=$TV" >> $GITHUB_ENV
+            echo "TARGET_VERSION=$TV" >> $GITHUB_ENV
+            echo "Pinned UDS_TARGET_VERSION=$TV"
+          fi
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}

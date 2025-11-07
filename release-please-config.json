@@ -12,6 +12,7 @@
       ],
       "bump-minor-pre-major": true,
       "versioning": "default",
+      "always-bump-minor": true,
       "extra-files": [
         "README.md",
         "packages/checkpoint-dev/zarf.yaml",
