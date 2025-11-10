@@ -29,7 +29,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - quay.io/keycloak/keycloak:26.4.4
+      - quay.io/keycloak/keycloak:26.4.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.20.0
 
   - name: keycloak
@@ -43,7 +43,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.4.4
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.4.2
       - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.20.0
 
   - name: keycloak
