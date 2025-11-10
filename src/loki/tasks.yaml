@@ -15,7 +15,7 @@ tasks:
         wait:
           cluster:
             kind: Service
-            name: app.kubernetes.io/component=uds-loki-dns
+            name: uds-loki-dns
             namespace: kube-system
       - description: Validate loki-gw
         wait:
