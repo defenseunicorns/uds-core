@@ -132,16 +132,20 @@ components:
         valuesFiles:
           - "values/config-passthrough.yaml"
 
+  # @lulaStart 4abf5c2b-08f7-4eb3-b50e-030ae1c23d59
   - name: istio-egress-ambient
     required: true
+  # @lulaEnd 4abf5c2b-08f7-4eb3-b50e-030ae1c23d59
     charts:
       - name: uds-istio-egress-config
         version: 0.1.0
         localPath: charts/uds-istio-egress-config
         namespace: istio-egress-ambient
 
+  # @lulaStart 4abf5c2b-08f7-4eb3-b50e-030ae1c23d59
   - name: istio-egress-gateway
     required: false
+  # @lulaEnd 4abf5c2b-08f7-4eb3-b50e-030ae1c23d59
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
