@@ -53,6 +53,7 @@ jobs:
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
+      STUB_MODE: ${{ github.repository_owner != 'defenseunicorns' }}
 
     steps:
       - name: Checkout repository

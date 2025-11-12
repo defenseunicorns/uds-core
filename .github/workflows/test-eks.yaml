@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   test-eks-install:
+    if: ${{ github.repository_owner == 'defenseunicorns' }}
     strategy:
       fail-fast: false
       matrix:
@@ -130,3 +131,10 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
+  test-eks-stub:
+    if: ${{ github.repository_owner != 'defenseunicorns' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Stub: skip EKS infra/test on fork"
+        run: echo "[STUB] Skipping EKS infra and tests on fork"

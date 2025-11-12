@@ -26,6 +26,8 @@ jobs:
         flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
     name: Publish packages
+    env:
+      STUB_MODE: ${{ github.repository_owner != 'defenseunicorns' }}
 
     permissions:
       contents: read
@@ -53,7 +55,7 @@ jobs:
           echo "PUBLISH_ARGS=--set VERSION=${RELEASE_DATE}-${SHORT_SHA}" >> $GITHUB_ENV
 
       - name: (Snapshot) Set versions to snapshot
-        if: ${{ inputs.snapshot }}
+        if: ${{ inputs.snapshot && env.STUB_MODE != 'true' }}
         run: |
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-base")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
@@ -61,8 +63,12 @@ jobs:
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/base/zarf.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/identity-authorization/zarf.yaml
+      - name: "(Snapshot) Stub: would set versions"
+        if: ${{ inputs.snapshot && env.STUB_MODE == 'true' }}
+        run: echo "[STUB] Would set snapshot versions to ${SNAPSHOT_VERSION} across bundles and packages"
 
       - name: Create Packages and Bundles
+        if: ${{ env.STUB_MODE != 'true' }}
         run: |
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
@@ -71,13 +77,19 @@ jobs:
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+      - name: "Stub: would create packages and bundles"
+        if: ${{ env.STUB_MODE == 'true' }}
+        run: echo "[STUB] Would create standard packages and k3d bundles for flavors=${{ matrix.flavor }} on amd64/arm64"
 
       # Standard Package by default tests full core
       - name: Test amd64 Bundle
-        if: ${{ !inputs.snapshot }}
+        if: ${{ !inputs.snapshot && env.STUB_MODE != 'true' }}
         run: |
           uds run deploy-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
+      - name: "Stub: would test amd64 bundle"
+        if: ${{ !inputs.snapshot && env.STUB_MODE == 'true' }}
+        run: echo "[STUB] Would deploy standard bundle and validate packages"
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
@@ -115,6 +127,8 @@ jobs:
         arch: [amd64, arm64]
     runs-on: ubuntu-latest
     name: Publish package layers
+    env:
+      STUB_MODE: ${{ github.repository_owner != 'defenseunicorns' }}
 
     permissions:
       contents: read

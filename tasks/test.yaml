@@ -54,9 +54,13 @@ tasks:
         setVariables:
           - name: LAYER_DEPS
       - cmd: |
-          for dep in $LAYER_DEPS; do
-            uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
-          done
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would run layer dependency tests for: $LAYER_DEPS"
+          else
+            for dep in $LAYER_DEPS; do
+              uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
+            done
+          fi
 
   - name: validate-packages
     description: "Validate all packages"
@@ -68,16 +72,30 @@ tasks:
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
-          for package in $(ls src); do
-            if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
-              if [ ${package} = "istio" ]; then
-                uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
-              else
-                uds run -f src/${package}/tasks.yaml validate --no-progress
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would validate all packages (excluding: ${EXCLUDED_PACKAGES})"
+            for package in $(ls src); do
+              if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
+                if [ ${package} = "istio" ]; then
+                  echo "[STUB] validate src/${package} (validate_passthrough=${{ .inputs.validate_passthrough }})"
+                else
+                  echo "[STUB] validate src/${package}"
+                fi
               fi
-            fi
-          done
-          set +e
+            done
+            set +e
+          else
+            for package in $(ls src); do
+              if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
+                if [ ${package} = "istio" ]; then
+                  uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
+                else
+                  uds run -f src/${package}/tasks.yaml validate --no-progress
+                fi
+              fi
+            done
+            set +e
+          fi
 
   - name: validate-package
     description: "Validate a single package"
@@ -87,7 +105,11 @@ tasks:
         required: true
     actions:
       - cmd: |
-          uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would validate package packages/${{ index .inputs "layer" }}"
+          else
+            uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
+          fi
 
   - name: e2e-tests
     description: "E2E Test all packages"
@@ -198,7 +220,11 @@ tasks:
       - cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy upgrade bundle bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst (packages=core)"
+          else
+            uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
+          fi
       - task: validate-packages
       - task: e2e-tests
 

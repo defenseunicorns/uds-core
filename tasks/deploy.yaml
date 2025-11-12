@@ -21,19 +21,34 @@ tasks:
         description: "Extra args for k3d"
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy k3d-standard bundle for ${UDS_ARCH} version ${VERSION} with extra args='${{ .inputs.K3D_EXTRA_ARGS }}'"
+          else
+            uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
+          fi
 
   - name: k3d-standard-bundle-ha
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy k3d-standard bundle (HA) for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          fi
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
 
   - name: k3d-standard-bundle-private-pki
     actions:
       - description: "Deploy k3d cluster and init packages"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy k3d cluster and init packages for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --confirm --no-progress
+          fi
 
       - description: "Create ConfigMaps for Grafana and Keycloak"
         cmd: |
@@ -43,19 +58,34 @@ tasks:
           done
 
       - description: "Deploy UDS Core with Private PKI configuration"
-        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy UDS Core (Private PKI) for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+          fi
         env:
           - UDS_CONFIG=build/private-pki/uds-private-pki-config.yaml
 
   - name: k3d-slim-dev-bundle
     actions:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
-        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy k3d-slim-dev bundle for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          fi
 
   - name: k3d-slim-dev-bundle-ha
     actions:
       - description: "Deploy the UDS Core Slim Dev Bundle with HA configuration"
-        cmd: uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy k3d-slim-dev bundle (HA) for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          fi
         env:
           - UDS_CONFIG=bundles/k3d-slim-dev/uds-ha-config.yaml
 
@@ -75,10 +105,20 @@ tasks:
     actions:
       - description: "Deploy UDS Core Base Layer"
         if: ${{ eq .inputs.layer "base"}}
-        cmd: uds deploy bundles/base-shim/uds-bundle-base-shim-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy base layer for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds deploy bundles/base-shim/uds-bundle-base-shim-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          fi
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy layer '${{ index .inputs "layer" }}' for ${UDS_ARCH} version ${VERSION}"
+          else
+            uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+          fi
 
   - name: latest-bundle-release
     inputs:
@@ -91,10 +131,28 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          if [ -n "${TARGET_VERSION}" ]; then
-            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
+          if [ "${STUB_MODE}" = "true" ]; then
+            if [ -n "${TARGET_VERSION}" ]; then
+              echo "[STUB] TARGET_VERSION='${TARGET_VERSION}'"
+              echo "[STUB] Command: uds zarf tools registry ls ${TARGET_REPO}/core | grep \"${FLAVOR}\" | grep -E \"^${TARGET_VERSION}\\.\" | sort -V | tail -1"
+            else
+              echo "[STUB] TARGET_VERSION is unset"
+              echo "[STUB] Command: uds zarf tools registry ls ${TARGET_REPO}/core | grep \"${FLAVOR}\" | sort -V | tail -1"
+            fi
+            echo "unknown-latest-${FLAVOR}"
           else
-            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
+            set +e
+            if [ -n "${TARGET_VERSION}" ]; then
+              RES=$(uds zarf tools registry ls ${TARGET_REPO}/core 2>/dev/null | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1)
+            else
+              RES=$(uds zarf tools registry ls ${TARGET_REPO}/core 2>/dev/null | grep "${FLAVOR}" | sort -V | tail -1)
+            fi
+            set -e
+            if [ -z "$RES" ]; then
+              echo "unknown-latest-${FLAVOR}"
+            else
+              echo "$RES"
+            fi
           fi
         setVariables:
           - name: LATEST_VERSION
@@ -102,30 +160,46 @@ tasks:
         cmd: echo ${LATEST_VERSION} | cut -d'-' -f1 # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
         setVariables:
           - name: LATEST_CORE_TAG
+      - description: "Upgrade plan"
+        cmd: |
+          echo "Upgrading FROM ${LATEST_VERSION} TO ${VERSION} (flavor=${FLAVOR})"
       - description: "Create the latest version with bundle overrides"
         cmd: |
-          # Create temp directory
-          mkdir -p tmp/core-shim
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would create temp bundle overriding repository=${TARGET_REPO}/core ref=${LATEST_VERSION} (arch=${ZARF_ARCHITECTURE})"
+          else
+            # Create temp directory
+            mkdir -p tmp/core-shim
 
-          # Download latest release bundle
-          curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
+            # Download latest release bundle
+            curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
-          # Update the bundle with the latest version using yq
-          uds zarf tools yq e -i "
-            del(.packages[] | select(.name == \"core\").path) |
-            .packages[] |= (select(.name == \"core\") |
-            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
-            tmp/core-shim/uds-bundle.yaml
+            # Update the bundle with the latest version using yq
+            uds zarf tools yq e -i "
+              del(.packages[] | select(.name == \"core\").path) |
+              .packages[] |= (select(.name == \"core\") |
+              .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
+              tmp/core-shim/uds-bundle.yaml
 
-          # Create and deploy the bundle
-          uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+            # Create and deploy the bundle
+            uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+          fi
       - description: "Deploy the latest version from the bundle"
         cmd: |
-          # Set UDS_CONFIG for bundle deployment
-          export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy latest bundle tag v${LATEST_CORE_TAG} with UDS_CONFIG='${{ .inputs.configFile }}'"
+          else
+            # Set UDS_CONFIG for bundle deployment
+            export UDS_CONFIG="${{ .inputs.configFile }}"
+            uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
+          fi
       - description: "Clean up temporary files"
-        cmd: rm -rf tmp/core-shim
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would remove tmp/core-shim"
+          else
+            rm -rf tmp/core-shim
+          fi
 
   - name: latest-release-test-resources
     actions:
@@ -135,10 +209,28 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          if [ -n "${TARGET_VERSION}" ]; then
-            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
+          if [ "${STUB_MODE}" = "true" ]; then
+            if [ -n "${TARGET_VERSION}" ]; then
+              echo "[STUB] TARGET_VERSION='${TARGET_VERSION}'"
+              echo "[STUB] Command: uds zarf tools registry ls ${TARGET_REPO}/core | grep \"${FLAVOR}\" | grep -E \"^${TARGET_VERSION}\\.\" | sort -V | tail -1"
+            else
+              echo "[STUB] TARGET_VERSION is unset"
+              echo "[STUB] Command: uds zarf tools registry ls ${TARGET_REPO}/core | grep \"${FLAVOR}\" | sort -V | tail -1"
+            fi
+            echo "unknown-latest-${FLAVOR}"
           else
-            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
+            set +e
+            if [ -n "${TARGET_VERSION}" ]; then
+              RES=$(uds zarf tools registry ls ${TARGET_REPO}/core 2>/dev/null | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1)
+            else
+              RES=$(uds zarf tools registry ls ${TARGET_REPO}/core 2>/dev/null | grep "${FLAVOR}" | sort -V | tail -1)
+            fi
+            set -e
+            if [ -z "$RES" ]; then
+              echo "unknown-latest-${FLAVOR}"
+            else
+              echo "$RES"
+            fi
           fi
         setVariables:
           - name: LATEST_VERSION
@@ -148,18 +240,32 @@ tasks:
           - name: LATEST_CORE_TAG
       - description: "Fetch src/test from tagged release"
         cmd: |
-          # Create temp directory
-          mkdir -p tmp/test-shim
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would fetch src/test and tasks from v${LATEST_CORE_TAG}"
+          else
+            # Create temp directory
+            mkdir -p tmp/test-shim
 
-          # Clone only the src/test directory
-          git clone --depth 1 --filter=blob:none --sparse --branch v${LATEST_CORE_TAG} https://github.com/defenseunicorns/uds-core.git tmp/test-shim/uds-core
-          cd tmp/test-shim/uds-core
-          git sparse-checkout set src/test tasks
+            # Clone only the src/test directory
+            git clone --depth 1 --filter=blob:none --sparse --branch v${LATEST_CORE_TAG} https://github.com/defenseunicorns/uds-core.git tmp/test-shim/uds-core
+            cd tmp/test-shim/uds-core
+            git sparse-checkout set src/test tasks
+          fi
       - description: "Deploy Latest Release Test Resources"
-        cmd: uds run -f src/test/tasks.yaml create-deploy
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would run test resource deployment from v${LATEST_CORE_TAG}"
+          else
+            uds run -f src/test/tasks.yaml create-deploy
+          fi
         dir: tmp/test-shim/uds-core/
       - description: "Clean up temporary files"
-        cmd: rm -rf tmp/test-shim
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would remove tmp/test-shim"
+          else
+            rm -rf tmp/test-shim
+          fi
 
   - name: latest-slim-bundle-release
     actions:

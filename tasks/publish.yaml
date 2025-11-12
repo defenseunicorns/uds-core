@@ -27,15 +27,23 @@ tasks:
       - task: utils:determine-repo
       - description: "Publish amd64/arm64 packages per flavor"
         cmd: |
-          echo "Publishing package to ${TARGET_REPO}"
-          uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
-          uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would publish core version ${VERSION}-${FLAVOR} (amd64, arm64) to oci://${TARGET_REPO}"
+          else
+            echo "Publishing package to ${TARGET_REPO}"
+            uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
+            uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          fi
 
       - description: "Tag the latest package (if a snapshot release)"
         cmd: |
           if [ $(echo "${TARGET_REPO}" | grep 'snapshot') ]; then
              pkgPath="${TARGET_REPO}/core"
-             uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
+             if [ "${STUB_MODE}" = "true" ]; then
+               echo "[STUB] Would tag ${pkgPath}:${VERSION}-${FLAVOR} as ${pkgPath}:latest-${FLAVOR}"
+             else
+               uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
+             fi
           fi
 
   - name: checkpoint-package
@@ -43,7 +51,11 @@ tasks:
     actions:
       - description: "Publish the checkpoint package for the current UDS_ARCH"
         cmd: |
-          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would publish checkpoint package ${UDS_ARCH} ${VERSION} to oci://ghcr.io/defenseunicorns/dev/uds/checkpoints"
+          else
+            uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
+          fi
 
   - name: bundles
     description: "Publish UDS Bundles"
@@ -51,19 +63,31 @@ tasks:
       - task: utils:determine-repo
       - description: "Publish amd64 and arm64 bundles"
         cmd: |
-          echo "Publishing bundles to ${TARGET_REPO}"
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would publish bundles version ${VERSION} to oci://${TARGET_REPO}/bundles (amd64, arm64)"
+          else
+            echo "Publishing bundles to ${TARGET_REPO}"
+            uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+            uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+            uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+            uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          fi
 
       - description: "Tag the latest bundles"
         cmd: |
           pkgPath="${TARGET_REPO}/bundles/k3d-core-demo"
-          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would tag ${pkgPath}:${VERSION} as ${pkgPath}:latest"
+          else
+            uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          fi
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
-          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would tag ${pkgPath}:${VERSION} as ${pkgPath}:latest"
+          else
+            uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          fi
 
   - name: single-layer
     description: "Test and Publish UDS Core layer"
@@ -80,4 +104,9 @@ tasks:
           layer: ${LAYER}
       - task: utils:determine-repo
       - description: "Publish build of layer"
-        cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would publish build of layer ${LAYER} ${UDS_ARCH} ${VERSION} to oci://${TARGET_REPO}"
+          else
+            uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
+          fi
