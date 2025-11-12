@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.56.0](https://github.com/defenseunicorns/uds-core/compare/v0.55.1...v0.56.0) (2025-11-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove neuvector and require falco ([#2083](https://github.com/defenseunicorns/uds-core/issues/2083))
+
+### Features
+
+* conditional access request notes ([#2116](https://github.com/defenseunicorns/uds-core/issues/2116)) ([73cef02](https://github.com/defenseunicorns/uds-core/commit/73cef02c7333b5bafa9f290fefc8300b92b2a49f))
+* remove neuvector and require falco ([#2083](https://github.com/defenseunicorns/uds-core/issues/2083)) ([e43bcc3](https://github.com/defenseunicorns/uds-core/commit/e43bcc3bde2eca1de63dce073d99141a9b180a72))
+
+
+### Bug Fixes
+
+* **docs:** broken link in sso overview ([#2114](https://github.com/defenseunicorns/uds-core/issues/2114)) ([6738d42](https://github.com/defenseunicorns/uds-core/commit/6738d427bd64774008b971b4510f8617b0394fdb))
+* install test apps preupgrade and validate ([#2088](https://github.com/defenseunicorns/uds-core/issues/2088)) ([ed1211a](https://github.com/defenseunicorns/uds-core/commit/ed1211af6bcf78ed347546a730f0dd63f3388f27))
+* prevent network policies from selecting non-authservice SSO clients ([#2127](https://github.com/defenseunicorns/uds-core/issues/2127)) ([b95d997](https://github.com/defenseunicorns/uds-core/commit/b95d997f338f7ca34f7e4f592f9d6cb4b6761092))
+
+
+### Miscellaneous
+
+* add lula compliance mapping ([#2049](https://github.com/defenseunicorns/uds-core/issues/2049)) ([23d0163](https://github.com/defenseunicorns/uds-core/commit/23d0163b208f9dd238654ca3f4ead65ce1230c2a))
+* add lula mappings ([#2119](https://github.com/defenseunicorns/uds-core/issues/2119)) ([b8a5811](https://github.com/defenseunicorns/uds-core/commit/b8a581118fb83428abf42fe73b2dee2e4417cda8))
+* add lula mappings for controls ([#2102](https://github.com/defenseunicorns/uds-core/issues/2102)) ([3855b53](https://github.com/defenseunicorns/uds-core/commit/3855b539094633cde7e8cf92abecb20ff949518a))
+* add observability reference architecture docs ([#1987](https://github.com/defenseunicorns/uds-core/issues/1987)) ([afdac07](https://github.com/defenseunicorns/uds-core/commit/afdac07613560a38062001bdccd31167324f672a))
+* cleanup unused oscal/lula1 tasks ([#2122](https://github.com/defenseunicorns/uds-core/issues/2122)) ([fd5c767](https://github.com/defenseunicorns/uds-core/commit/fd5c767fb7207648db94d509384961223022eec9))
+* **deps:** update keycloak ([#2124](https://github.com/defenseunicorns/uds-core/issues/2124)) ([6a2097b](https://github.com/defenseunicorns/uds-core/commit/6a2097bab2268ccf29dc81e969641445319dd029))
+* **deps:** update keycloak to v26.4.2 ([#2061](https://github.com/defenseunicorns/uds-core/issues/2061)) ([5dd5cf8](https://github.com/defenseunicorns/uds-core/commit/5dd5cf8f8cce5639e841158a97fd3e71faec8b32))
+* **deps:** update keycloak to v26.4.4 ([#2130](https://github.com/defenseunicorns/uds-core/issues/2130)) ([f0563a6](https://github.com/defenseunicorns/uds-core/commit/f0563a6e6f85e5007212e51b2f2334ba82806d3d))
+* **deps:** update pepr to v1 ([#2118](https://github.com/defenseunicorns/uds-core/issues/2118)) ([8cf4543](https://github.com/defenseunicorns/uds-core/commit/8cf4543c19a10de259f92621906e206af409943f))
+* **deps:** update support-deps ([#2128](https://github.com/defenseunicorns/uds-core/issues/2128)) ([ba26eed](https://github.com/defenseunicorns/uds-core/commit/ba26eed7a029120bf6cbd19f072dda53b7d6cceb))
+* **docs:** add doc warning around remoteHost egress ([#2104](https://github.com/defenseunicorns/uds-core/issues/2104)) ([3d9bce5](https://github.com/defenseunicorns/uds-core/commit/3d9bce56c0d751aa5d6d85239cba674c8a7e43a5))
+* **docs:** remove neuvector docs ([#2095](https://github.com/defenseunicorns/uds-core/issues/2095)) ([29e92a1](https://github.com/defenseunicorns/uds-core/commit/29e92a1c33c3fef4b3fbab1fef4d74839cb9d98b))
+* **docs:** update diagrams ([#2109](https://github.com/defenseunicorns/uds-core/issues/2109)) ([ee2a67d](https://github.com/defenseunicorns/uds-core/commit/ee2a67d8dd94a28d3d537935c37a65eff73edbd8))
+* **docs:** update likec4 diagram ([#2108](https://github.com/defenseunicorns/uds-core/issues/2108)) ([b90df25](https://github.com/defenseunicorns/uds-core/commit/b90df2559490799e1d7dabe7ccb3d7b3f680e565))
+* fix spelling in name of file ([#2112](https://github.com/defenseunicorns/uds-core/issues/2112)) ([bfe818c](https://github.com/defenseunicorns/uds-core/commit/bfe818c1a1f1e1a382b5ca3bb00b85414a57c3c8))
+* fix test task to check authservice protection ([#2121](https://github.com/defenseunicorns/uds-core/issues/2121)) ([81d4d34](https://github.com/defenseunicorns/uds-core/commit/81d4d345ac411934f573ca7acf0dfef742b06842))
+* lula annotations ([#2074](https://github.com/defenseunicorns/uds-core/issues/2074)) ([03d497d](https://github.com/defenseunicorns/uds-core/commit/03d497d718edb6b535af43a76be425540381a77a))
+* mappings ([#2123](https://github.com/defenseunicorns/uds-core/issues/2123)) ([91d3756](https://github.com/defenseunicorns/uds-core/commit/91d37563a1c4f83d17a097d8ab78e83f0d1e394e))
+* update to uds-k3d 0.19.1, remove uds-dev-stack exemption ([#2098](https://github.com/defenseunicorns/uds-core/issues/2098)) ([1f33957](https://github.com/defenseunicorns/uds-core/commit/1f33957f9e23921465137024285718f652ceff86))
+
 ## [0.55.1](https://github.com/defenseunicorns/uds-core/compare/v0.55.0...v0.55.1) (2025-11-03)
 
 
