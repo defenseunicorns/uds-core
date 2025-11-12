@@ -19,4 +19,11 @@ By default, UDS Core does not remove legacy NeuVector resources. To have the run
 zarf package deploy packages/runtime-security --set CLEANUP_LEGACY_NEUVECTOR=true
 ```
 
+```yaml
+# Example: deploy a bundle with cleanup enabled in the uds-config.yaml bundle config
+variables:
+  core:
+    CLEANUP_LEGACY_NEUVECTOR: "true"
+```
+
 If you plan to deploy the standalone NeuVector package without Falco, do not enable this gate and skip the runtime-security layer entirely. See the [Runtime Security Migration Guide](/reference/configuration/runtime-security/migration) and [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) for advanced scenarios.
