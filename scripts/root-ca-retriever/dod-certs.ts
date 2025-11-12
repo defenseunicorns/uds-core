@@ -6,6 +6,8 @@
 import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
+import * as os from "os";
+import * as crypto from "crypto";
 import AdmZip from "adm-zip";
 
 export interface DoDCert {
@@ -93,7 +95,19 @@ export async function inventoryDoDCertificates(dirName: string): Promise<DoDCert
         } else if (entry.isFile()) {
           const ext = path.extname(entry.name).toLowerCase();
           if (ext === ".cer") {
-            const content = await fs.promises.readFile(fullPath, "utf8");
+            // Read as binary to handle both PEM and DER formats
+            const binaryContent = await fs.promises.readFile(fullPath);
+
+            // Validate and convert to PEM using crypto library
+            let content: string;
+            try {
+              const cert = new crypto.X509Certificate(binaryContent);
+              content = cert.toString(); // This returns PEM format
+            } catch (error) {
+              throw new Error(
+                `Invalid certificate ${entry.name}: ${error instanceof Error ? error.message : String(error)}`,
+              );
+            }
 
             // Get the organization folder - find the folder directly under the version directory
             const relativePath = path.relative(certDir, fullPath);
@@ -144,4 +158,70 @@ export function diffDoDCerts(existing: DoDCert[], downloaded: DoDCert[]) {
     .map(cert => ({ old: existingMap.get(getKey(cert))!, new: cert }));
 
   return { added, removed, modified };
+}
+
+/**
+ * Handle DoD certificate processing based on check mode
+ */
+export async function handleDoDCerts(checkMode: boolean, outputDir: string): Promise<DoDCert[]> {
+  if (checkMode) {
+    // In check mode, use a temporary directory to download and extract certs
+    const tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "dod-certs-"));
+
+    // Download and extract DoD certs to temp directory
+    await retrieveDoDCertificates(tempDir);
+
+    // Inventory the downloaded certs
+    const certs = await inventoryDoDCertificates(tempDir);
+
+    // Inventory the existing certs from the standard location
+    const existingCerts = await inventoryDoDCertificates(outputDir);
+
+    // Calculate the diff
+    const diff = diffDoDCerts(existingCerts, certs);
+
+    console.log(`Diff Results:`);
+    console.log(`Added: ${diff.added.length}`);
+    console.log(`Removed: ${diff.removed.length}`);
+    console.log(`Modified: ${diff.modified.length}`);
+
+    if (diff.added.length > 0) {
+      console.log("\nAdded certificates:");
+      diff.added.forEach(cert => console.log(`+ ${cert.organization}: ${cert.filename}`));
+    }
+
+    if (diff.removed.length > 0) {
+      console.log("\nRemoved certificates:");
+      diff.removed.forEach(cert => console.log(`- ${cert.organization}: ${cert.filename}`));
+    }
+
+    if (diff.modified.length > 0) {
+      console.log("\nModified certificates:");
+      diff.modified.forEach(cert =>
+        console.log(`~ ${cert.new.organization}: ${cert.new.filename}`),
+      );
+    }
+
+    // error out if there are any differences
+    if (diff.added.length > 0 || diff.removed.length > 0 || diff.modified.length > 0) {
+      throw new Error("Differences detected in DoD certificates.");
+    } else {
+      console.log("No differences detected in DoD certificates.");
+    }
+
+    return certs;
+  } else {
+    // Clean up existing DoD certs directory before downloading new ones
+    const dodCertPath = path.join(outputDir, TARGET_DOD_CERT_DIR);
+    if (fs.existsSync(dodCertPath)) {
+      fs.rmSync(dodCertPath, { recursive: true, force: true });
+      console.log(`Cleared existing DoD certificates from: ${dodCertPath}`);
+    }
+
+    // Download and extract DoD certs to standard directory
+    await retrieveDoDCertificates(outputDir);
+    const certs = await inventoryDoDCertificates(outputDir);
+
+    return certs;
+  }
 }
