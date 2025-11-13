@@ -367,6 +367,11 @@ waypoint:
     limits:
       cpu: 2
       memory: 1Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+    priorityClassName: ""
   horizontalPodAutoscaler:
     enabled: true
     minReplicas: 1
