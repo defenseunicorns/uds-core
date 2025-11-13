@@ -108,10 +108,10 @@ tasks:
         if: ${{ eq .inputs.layer "base" }}
       - description: "Create build output directory"
         cmd: "mkdir -p build"
-      - description: "Create the UDS Core Zarf Package"
+      - description: "Create the layer"
         cmd: |
           if [ "${STUB_MODE}" = "true" ]; then
-            echo "[STUB] Would run: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress ${ { .inputs.create_options } } --architecture=${ZARF_ARCHITECTURE}"
+            echo '[STUB] Would run: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress ${{ .inputs.create_options }} --architecture=${ZARF_ARCHITECTURE}'
           else
             uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress ${{ .inputs.create_options }} --architecture=${ZARF_ARCHITECTURE}
           fi
