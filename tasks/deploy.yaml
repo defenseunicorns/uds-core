@@ -254,9 +254,15 @@ tasks:
       - description: "Deploy Latest Release Test Resources"
         cmd: |
           if [ "${STUB_MODE}" = "true" ]; then
-            echo "[STUB] Would run test resource deployment from v${LATEST_CORE_TAG}"
+            echo "[STUB] Would run: (cd tmp/test-shim/uds-core && uds run -f src/test/tasks.yaml create-deploy) for v${LATEST_CORE_TAG}"
           else
-            uds run -f src/test/tasks.yaml create-deploy
+            echo "Executing: uds run -f src/test/tasks.yaml create-deploy"
+            echo "CWD=$(pwd)"
+            ls -la || true
+            echo "---- head src/test/tasks.yaml ----" || true
+            head -n 50 src/test/tasks.yaml || true
+            set -euo pipefail
+            uds run -f src/test/tasks.yaml create-deploy || { echo "ERROR: 'uds run create-deploy' failed"; exit 1; }
           fi
         dir: tmp/test-shim/uds-core/
       - description: "Clean up temporary files"

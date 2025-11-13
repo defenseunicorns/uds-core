@@ -28,6 +28,7 @@ on:
 
 jobs:
   checkpoint:
+    if: ${{ github.repository_owner == 'defenseunicorns' }}
     strategy:
       matrix:
         architecture: [amd64, arm64]
@@ -95,3 +96,10 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ matrix.architecture }}
+
+  checkpoint-stub:
+    if: ${{ github.repository_owner != 'defenseunicorns' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Stub: skip checkpoint on fork"
+        run: echo "[STUB] Skipping checkpoint build/test/publish on fork"
