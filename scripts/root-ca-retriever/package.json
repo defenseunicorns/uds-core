@@ -10,14 +10,14 @@
     "@types/adm-zip": "^0.5.7",
     "@types/csv-parse": "^1.1.12",
     "@types/node": "^24.0.0",
-    "adm-zip": "^0.5.16",
-    "csv-parse": "^6.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "vitest": "^4.0.0",
     "@types/js-yaml": "^4.0.9",
-    "js-yaml": "^4.1.1"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
+    "csv-parse": "^6.1.0",
+    "js-yaml": "^4.1.1"
   }
 }
