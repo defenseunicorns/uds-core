@@ -32,7 +32,7 @@ Examples:
 - With a descriptive name and specific commit SHAs:
 
 ```sh
-uds run backport \
+uds run backport:backport \
   --with target_version=0.54 \
   --with commits=abcd1234,ef567890 \
   --with name="keycloak-fix"
@@ -41,7 +41,7 @@ uds run backport \
 - Without a name (defaults to the first SHA or PR-derived SHA):
 
 ```sh
-uds run backport \
+uds run backport:backport \
   --with target_version=0.54 \
   --with commits=abcd1234,ef567890
 ```
