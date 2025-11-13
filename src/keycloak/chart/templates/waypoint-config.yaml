@@ -21,6 +21,25 @@ data:
               limits:
                 cpu: {{ .limits.cpu }}
                 memory: {{ .limits.memory }}
+          {{- if .nodeSelector }}
+          nodeSelector:
+            {{- toYaml .nodeSelector | nindent 12 }}
+          {{- end }}
+          {{- if .tolerations }}
+          tolerations:
+            {{- toYaml .tolerations | nindent 12 }}
+          {{- end }}
+          {{- if .affinity }}
+          affinity:
+            {{- toYaml .affinity | nindent 12 }}
+          {{- end }}
+          {{- if .topologySpreadConstraints }}
+          topologySpreadConstraints:
+            {{- toYaml .topologySpreadConstraints | nindent 12 }}
+          {{- end }}
+          {{- if .priorityClassName }}
+          priorityClassName: {{ .priorityClassName }}
+          {{- end }}
   {{- end }}
   {{- if .Values.waypoint.horizontalPodAutoscaler.enabled }}
   {{- with .Values.waypoint.horizontalPodAutoscaler }}
