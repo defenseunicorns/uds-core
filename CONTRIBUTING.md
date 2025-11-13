@@ -39,7 +39,7 @@ Before starting, ensure that you have the following installed:
 - **Go** (for pre-commit tooling): [Install Go](https://go.dev/doc/install)
 - **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
 - **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)
-- **uv** is required for running linting tooling:  [Install uv](https://docs.astral.sh/uv/getting-started/installation/#installing-uv).  The `lint` tasks will install latest if not already installed.
+- **uv** is required for running linting tooling:  [Install uv](https://docs.astral.sh/uv/getting-started/installation/#installing-uv).
 
 #### Setting Up Your Local Repository
 
@@ -83,7 +83,7 @@ The easiest way to install all required dependencies is:
 # Install the helm-unittest plugin
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
 
-# Run the lint-check task (installs uv if not installed)
+# Run the lint-check task
 uds run lint-check
 ```
 

@@ -11,8 +11,9 @@ tasks:
       - description: Check if uv is installed
         cmd: |
           if ! command -v uv; then
-            echo "⚠️  uv is not installed. Installing now..."
-            curl -LsSf https://astral.sh/uv/install.sh | sh
+            echo "⚠️  uv is not installed."
+            echo "💡 Refer to installation steps: https://docs.astral.sh/uv/getting-started/installation/"
+            exit 1
           fi
 
   - name: fix
