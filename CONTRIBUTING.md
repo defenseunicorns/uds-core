@@ -39,7 +39,7 @@ Before starting, ensure that you have the following installed:
 - **Go** (for pre-commit tooling): [Install Go](https://go.dev/doc/install)
 - **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
 - **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)
-- **uv** is required for running linting tooling:  [Install uv](https://docs.astral.sh/uv/getting-started/installation/#installing-uv).
+- **uv** is required for running linting tooling:  [Install uv](https://docs.astral.sh/uv/getting-started/installation).
 
 #### Setting Up Your Local Repository
 
