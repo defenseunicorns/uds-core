@@ -40,7 +40,12 @@ tasks:
     description: "Create the K3d-UDS Core Bundle"
     actions:
       - description: "Create the UDS Core Standard Bundle"
-        cmd: uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would create k3d-standard bundle (arch=${ZARF_ARCHITECTURE})"
+          else
+            uds create bundles/k3d-standard --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+          fi
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity)"
@@ -57,7 +62,12 @@ tasks:
           layer: identity-authorization
 
       - description: "Create the slim dev bundle (Base and Identity)"
-        cmd: uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would create k3d-slim-dev bundle (arch=${ZARF_ARCHITECTURE})"
+          else
+            uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+          fi
 
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
@@ -65,7 +75,12 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Checkpoint Zarf Package"
-        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would run: uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+          else
+            uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom
+          fi
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable
@@ -94,12 +109,12 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Zarf Package"
-        task: common:package
-        with:
-          path: packages/${{ index .inputs "layer" }}
-          config: ./zarf-config.yaml
-          options: ${{ .inputs.create_options }}
-          architecture: ${ZARF_ARCHITECTURE}
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would run: uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress ${ { .inputs.create_options } } --architecture=${ZARF_ARCHITECTURE}"
+          else
+            uds zarf package create packages/${{ index .inputs "layer" }} --confirm --no-progress ${{ .inputs.create_options }} --architecture=${ZARF_ARCHITECTURE}
+          fi
       - description: "Rename flavored package files by removing the flavor suffix"
         task: utils:rename-flavored-packages
       - description: "Create the shim bundle (Base only)"
@@ -109,7 +124,11 @@ tasks:
           linux: bash
         cmd: |
           if [[ ${{.inputs.shim_bundle}} == "true" ]]; then
-            uds create bundles/base-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+            if [ "${STUB_MODE}" = "true" ]; then
+              echo "[STUB] Would create base-shim bundle (arch=${ZARF_ARCHITECTURE})"
+            else
+              uds create bundles/base-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+            fi
           else
             echo "Skipping base-shim bundle creation."
           fi
@@ -119,16 +138,29 @@ tasks:
     actions:
       - description: "Build the UDS Core Pepr Module"
         cmd: |
-          if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
-            # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
-            PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
-          elif [ "${FLAVOR}" = "registry1" ] ; then
-            PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
-          elif [ "${FLAVOR}" = "unicorn" ] ; then
-            PEPR_OVERRIDE_IMAGE="--custom-image ${UNICORN_PEPR_IMAGE}"
+          if [ "${STUB_MODE}" = "true" ]; then
+            if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
+              PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
+            elif [ "${FLAVOR}" = "registry1" ] ; then
+              PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
+            elif [ "${FLAVOR}" = "unicorn" ] ; then
+              PEPR_OVERRIDE_IMAGE="--custom-image ${UNICORN_PEPR_IMAGE}"
+            else
+              PEPR_OVERRIDE_IMAGE=""
+            fi
+            echo "[STUB] Would build Pepr module with: npx pepr build -z chart ${PEPR_OVERRIDE_IMAGE}"
           else
-            PEPR_OVERRIDE_IMAGE=""
+            if [ -n "${PEPR_CUSTOM_IMAGE}" ] ; then
+              # e.g. PEPR_CUSTOM_IMAGE="pepr:dev uds run slim-dev"
+              PEPR_OVERRIDE_IMAGE="--custom-image ${PEPR_CUSTOM_IMAGE}"
+            elif [ "${FLAVOR}" = "registry1" ] ; then
+              PEPR_OVERRIDE_IMAGE="--custom-image ${REGISTRY1_PEPR_IMAGE}"
+            elif [ "${FLAVOR}" = "unicorn" ] ; then
+              PEPR_OVERRIDE_IMAGE="--custom-image ${UNICORN_PEPR_IMAGE}"
+            else
+              PEPR_OVERRIDE_IMAGE=""
+            fi
+            rm -fr dist
+            npm ci
+            npx pepr build -z chart $PEPR_OVERRIDE_IMAGE
           fi
-          rm -fr dist
-          npm ci
-          npx pepr build -z chart $PEPR_OVERRIDE_IMAGE

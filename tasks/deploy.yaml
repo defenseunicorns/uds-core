@@ -276,14 +276,29 @@ tasks:
   - name: latest-slim-bundle-release
     actions:
       - description: "Deploy the latest UDS Core package release"
-        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy: oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest with INSECURE_ADMIN_PASSWORD_GENERATION=true"
+          else
+            uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+          fi
 
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy zarf package: build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --components '*'"
+          else
+            uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+          fi
 
   - name: checkpoint-package
     actions:
       - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
-        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: |
+          if [ "${STUB_MODE}" = "true" ]; then
+            echo "[STUB] Would deploy zarf package: build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst"
+          else
+            uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+          fi
