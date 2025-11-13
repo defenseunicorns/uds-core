@@ -29,7 +29,7 @@ jobs:
       - name: Configure release-please for patch releases
         shell: bash
         run: |
-          jq '.packages["."] |= (del(."always-bump-minor") + {"always-bump-patch": true, "skip-changelog": true})' release-please-config.json > rp.tmp
+          jq '.packages["."] |= (.versioning = "always-bump-patch" | .["skip-changelog"] = true)' release-please-config.json > rp.tmp
           mv rp.tmp release-please-config.json
 
       - name: Create release tag
