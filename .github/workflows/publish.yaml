@@ -148,7 +148,12 @@ jobs:
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Test and Publish Core Package Layer
+        if: ${{ env.STUB_MODE != 'true' }}
         run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+      - name: "Stub: would test and publish core package layer"
+        if: ${{ env.STUB_MODE == 'true' }}
+        run: |
+          echo "[STUB] Would run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress"
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
