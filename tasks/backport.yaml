@@ -5,13 +5,16 @@ tasks:
   - name: backport
     description: "Create a backport branch from release/* and cherry-pick commits"
     inputs:
-      target_version:
-        description: "Target minor version (e.g., 0.54)"
+      target_versions:
+        description: "Comma-separated target minor versions (e.g., 0.54,0.55)"
       commits:
         description: "Comma-separated list of commit SHAs to cherry-pick, in order"
       name:
         description: "Optional short name to include in branch name (defaults to first SHA)"
         default: ""
+      auto_pr:
+        description: "Automatically open PRs for each backport branch"
+        default: "true"
     actions:
       - description: "Create backport branch and cherry-pick commits"
         shell:
@@ -25,23 +28,16 @@ tasks:
             echo "Working tree is dirty. Please commit or stash your changes before running the backport task." >&2
             exit 1
           fi
-          TV='${{ .inputs.target_version }}'
+          TVS='${{ .inputs.target_versions }}'
           COMMITS='${{ .inputs.commits }}'
           NAME_INPUT='${{ .inputs.name }}'
+          AUTO_PR='${{ .inputs.auto_pr }}'
 
-          if [[ -z "$TV" ]]; then
-            echo "target_version input is required (e.g., 0.54)" >&2
+          if [[ -z "$TVS" ]]; then
+            echo "target_versions input is required (e.g., 0.54 or 0.54,0.55)" >&2
             exit 1
           fi
-
-          RB="release/${TV}"
           git fetch origin --tags
-          if ! git show-ref --verify --quiet "refs/remotes/origin/${RB}"; then
-            echo "Remote branch ${RB} not found. Ensure it exists (cut from v${TV}.0) or create it first." >&2
-            exit 1
-          fi
-
-          MINOR="$TV"
 
           if [[ -z "$COMMITS" ]]; then
             echo "No commits specified. Provide 'prs' and/or 'commits'." >&2
@@ -52,25 +48,48 @@ tasks:
             NAME_INPUT="$(echo "$COMMITS" | cut -d',' -f1 | xargs)"
           fi
 
-          BRANCH="backport/${NAME_INPUT}-to-${MINOR}"
-          BRANCH="${BRANCH// /-}"
-          BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
+          MINOR_LIST=()
+          IFS=',' read -ra MINOR_LIST <<< "$TVS"
 
-          echo "Creating branch: ${BRANCH} from ${RB}"
-          git switch -c "${BRANCH}" "origin/${RB}"
+          for MINOR in "${MINOR_LIST[@]}"; do
+            MINOR="$(echo "$MINOR" | xargs)"
+            if [[ -z "$MINOR" ]]; then
+              continue
+            fi
+            RB="release/${MINOR}"
+            if ! git show-ref --verify --quiet "refs/remotes/origin/${RB}"; then
+              echo "Remote branch ${RB} not found. Ensure it exists (cut from v${MINOR}.0) or create it first." >&2
+              exit 1
+            fi
 
-          IFS=',' read -ra ARR <<< "$COMMITS"
-          for C in "${ARR[@]}"; do
-            C="$(echo "$C" | xargs)"
-            if [[ -n "$C" ]]; then
-              echo "Cherry-picking ${C}"
-              git cherry-pick -x "$C"
+            BRANCH="backport/${NAME_INPUT}-to-${MINOR}"
+            BRANCH="${BRANCH// /-}"
+            BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
+
+            echo "Creating branch: ${BRANCH} from ${RB}"
+            git switch -c "${BRANCH}" "origin/${RB}"
+
+            IFS=',' read -ra ARR <<< "$COMMITS"
+            for C in "${ARR[@]}"; do
+              C="$(echo "$C" | xargs)"
+              if [[ -n "$C" ]]; then
+                echo "Cherry-picking ${C}"
+                git cherry-pick -x "$C"
+              fi
+            done
+
+            git push -u origin "${BRANCH}"
+            echo "Backport branch created: ${BRANCH}"
+
+            if [[ "${AUTO_PR}" == "true" ]] && command -v gh >/dev/null 2>&1; then
+              TITLE="Backport: ${NAME_INPUT} to ${MINOR}"
+              BODY="Backport of commits: ${COMMITS}"
+              gh pr create --title "${TITLE}" --body "${BODY}" --base "${RB}" --head "${BRANCH}"
+            else
+              echo "Open a PR with base=${RB} and compare=${BRANCH}"
             fi
           done
 
-          git push -u origin "${BRANCH}"
-          echo "Backport branch created: ${BRANCH}"
-          echo "Open a PR with base=${RB} and compare=${BRANCH}"
           if [[ -n "$CURR_BRANCH" ]]; then
             git switch "$CURR_BRANCH"
             echo "Returned to branch: $CURR_BRANCH"

@@ -33,7 +33,7 @@ Examples:
 
 ```sh
 uds run backport:backport \
-  --with target_version=0.54 \
+  --with target_versions=0.54,0.55 \
   --with commits=abcd1234,ef567890 \
   --with name="keycloak-fix"
 ```
@@ -42,6 +42,6 @@ uds run backport:backport \
 
 ```sh
 uds run backport:backport \
-  --with target_version=0.54 \
+  --with target_versions=0.54,0.55 \
   --with commits=abcd1234,ef567890
 ```
