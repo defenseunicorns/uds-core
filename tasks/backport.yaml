@@ -7,14 +7,17 @@ tasks:
     inputs:
       target_versions:
         description: "Comma-separated target minor versions (e.g., 0.54,0.55)"
-      commits:
-        description: "Comma-separated list of commit SHAs to cherry-pick, in order"
+        required: true
+      commit:
+        description: "Single commit SHA to cherry-pick"
+        required: true
       name:
         description: "Optional short name to include in branch name (defaults to first SHA)"
         default: ""
       auto_pr:
         description: "Automatically open PRs for each backport branch"
         default: "true"
+
     actions:
       - description: "Create backport branch and cherry-pick commits"
         shell:
@@ -29,23 +32,14 @@ tasks:
             exit 1
           fi
           TVS='${{ .inputs.target_versions }}'
-          COMMITS='${{ .inputs.commits }}'
+          COMMIT='${{ .inputs.commit }}'
           NAME_INPUT='${{ .inputs.name }}'
           AUTO_PR='${{ .inputs.auto_pr }}'
 
-          if [[ -z "$TVS" ]]; then
-            echo "target_versions input is required (e.g., 0.54 or 0.54,0.55)" >&2
-            exit 1
-          fi
           git fetch origin --tags
 
-          if [[ -z "$COMMITS" ]]; then
-            echo "No commits specified. Provide 'prs' and/or 'commits'." >&2
-            exit 1
-          fi
-
           if [[ -z "$NAME_INPUT" ]]; then
-            NAME_INPUT="$(echo "$COMMITS" | cut -d',' -f1 | xargs)"
+            NAME_INPUT="$(echo "$COMMIT" | xargs)"
           fi
 
           MINOR_LIST=()
@@ -69,21 +63,20 @@ tasks:
             echo "Creating branch: ${BRANCH} from ${RB}"
             git switch -c "${BRANCH}" "origin/${RB}"
 
-            IFS=',' read -ra ARR <<< "$COMMITS"
-            for C in "${ARR[@]}"; do
-              C="$(echo "$C" | xargs)"
-              if [[ -n "$C" ]]; then
-                echo "Cherry-picking ${C}"
-                git cherry-pick -x "$C"
-              fi
-            done
+            C="$(echo "$COMMIT" | xargs)"
+            echo "Cherry-picking ${C}"
+            git cherry-pick -x "$C"
 
             git push -u origin "${BRANCH}"
             echo "Backport branch created: ${BRANCH}"
 
             if [[ "${AUTO_PR}" == "true" ]] && command -v gh >/dev/null 2>&1; then
-              TITLE="Backport: ${NAME_INPUT} to ${MINOR}"
-              BODY="Backport of commits: ${COMMITS}"
+              DEFAULT_TITLE="$(git log -1 --pretty=%s "$COMMIT" 2>/dev/null || echo "")"
+              if [[ -z "${DEFAULT_TITLE}" ]]; then
+                DEFAULT_TITLE="chore: backport of ${COMMIT}"
+              fi
+              TITLE="${DEFAULT_TITLE} (backport-${MINOR})"
+              BODY="Backport of commit: ${COMMIT}"
               gh pr create --title "${TITLE}" --body "${BODY}" --base "${RB}" --head "${BRANCH}"
             else
               echo "Open a PR with base=${RB} and compare=${BRANCH}"

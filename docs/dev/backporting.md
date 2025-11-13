@@ -13,7 +13,7 @@ This guide explains how to backport bug/security fixes from `main` to supported 
 ## Branch and PR flow
 
 1. Land the fix on `main` via the normal PR process.
-2. Create a backport branch from `release/X.Y`, cherry-pick the commits, and push.
+2. Create a backport branch from `release/X.Y`, cherry-pick the commit, and push.
 3. Open a PR from the backport branch to `release/X.Y`.
 4. After merge to `release/X.Y`, a patch Release PR will be opened by release-please;
    merge it to create `vX.Y.Z` and publish.
@@ -25,7 +25,7 @@ This guide explains how to backport bug/security fixes from `main` to supported 
 
 ## Helper task
 
-Use the helper to create a backport branch and cherry-pick commits in order.
+Use the helper to create backport branches, cherry-pick a single commit, and open PRs. This does require `gh` CLI for automatic PR creation.
 
 Examples:
 
@@ -34,7 +34,7 @@ Examples:
 ```sh
 uds run backport:backport \
   --with target_versions=0.54,0.55 \
-  --with commits=abcd1234,ef567890 \
+  --with commit=abcd1234 \
   --with name="keycloak-fix"
 ```
 
@@ -43,5 +43,5 @@ uds run backport:backport \
 ```sh
 uds run backport:backport \
   --with target_versions=0.54,0.55 \
-  --with commits=abcd1234,ef567890
+  --with commit=abcd1234
 ```
