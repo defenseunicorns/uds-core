@@ -252,26 +252,19 @@ tasks:
             git sparse-checkout set src/test tasks
           fi
       - description: "Deploy Latest Release Test Resources"
-        shell:
-          darwin: bash
-          linux: bash
-        timeout: 900s
         cmd: |
           if [ "${STUB_MODE}" = "true" ]; then
             echo "[STUB] Would run: (cd tmp/test-shim/uds-core && uds run -f src/test/tasks.yaml create-deploy) for v${LATEST_CORE_TAG}"
           else
-            echo "Executing: (cd tmp/test-shim/uds-core && uds run -f src/test/tasks.yaml create-deploy)"
-            set -euo pipefail
-            (
-              cd tmp/test-shim/uds-core
+            echo "Executing: uds run -f src/test/tasks.yaml create-deploy"
               echo "CWD=$(pwd)"
               ls -la || true
               echo "---- head src/test/tasks.yaml ----" || true
               head -n 50 src/test/tasks.yaml || true
-              uds run -f src/test/tasks.yaml create-deploy
-            ) || { echo "ERROR: 'uds run create-deploy' failed"; exit 1; }
+            set -euo pipefail
+            uds run -f src/test/tasks.yaml create-deploy || { echo "ERROR: 'uds run create-deploy' failed"; exit 1; }
           fi
-        
+
       - description: "Clean up temporary files"
         cmd: |
           if [ "${STUB_MODE}" = "true" ]; then
