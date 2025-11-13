@@ -5,60 +5,41 @@ includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.3/tasks/lint.yaml
 
 tasks:
-  - name: ensure-python-tools
+  - name: ensure-uv
     description: Install linting tool dependencies
     actions:
-      - description: Check if pipx is installed
+      - description: Check if uv is installed
         cmd: |
-          if ! command -v pipx; then
-            echo "⚠️  pipx is not installed."
-
-            # Detect the OS and suggest the appropriate install method
-            if [ "$(uname)" = "Darwin" ]; then
-              echo "💡 Install pipx with: brew install pipx"
-            elif [ -f /etc/debian_version ]; then
-              echo "💡 Install pipx with: sudo apt update && sudo apt install pipx"
-            else
-              echo "💡 Please refer to your package manager to install pipx."
-            fi
-            exit 1
-          fi
-      - description: Ensure yamllint is installed
-        cmd: |
-          if ! pipx list | grep -q yamllint; then
-            pipx install yamllint
-          fi
-      - description: Ensure codespell is installed
-        cmd: |
-          if ! pipx list | grep -q codespell; then
-            pipx install codespell
+          if ! command -v uv; then
+            echo "⚠️  uv is not installed. Installing now..."
+            curl -LsSf https://astral.sh/uv/install.sh | sh
           fi
 
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
-      - description: Ensure python tools are installed
-        task: ensure-python-tools
+      - description: Ensure uv is installed
+        task: ensure-uv
       - description: "Pepr Format"
         cmd: npx pepr format
       - description: Fix codespell lint issues
         cmd: |
-          codespell || true
-          codespell -w
+          uvx codespell || true
+          uvx codespell -w
 
   - name: check
     description: "Run linting checks"
     actions:
-      - description: Ensure python tools are installed
-        task: ensure-python-tools
+      - description: Ensure uv is installed
+        task: ensure-uv
       - description: install pepr deps
         cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
       - description: yaml lint
-        cmd: yamllint . -c .yamllint --no-warnings
+        cmd: uvx yamllint . -c .yamllint --no-warnings
       - description: codespell lint
-        cmd: codespell
+        cmd: uvx codespell
       - description: Install addlicense dep
         # renovate: datasource=github-tags depName=google/addlicense versioning=semver
         cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
