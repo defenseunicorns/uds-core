@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.56.0](https://github.com/BagelLab/uds-core/compare/v0.55.1...v0.56.0) (2025-11-13)
+
+
+### Features
+
+* backport support in core ([#83](https://github.com/BagelLab/uds-core/issues/83)) ([c0d17ac](https://github.com/BagelLab/uds-core/commit/c0d17ac8dfd93f09d04e18188b2b78d66e3e0b69))
+
+
+### Bug Fixes
+
+* ci dir ([21ba3bf](https://github.com/BagelLab/uds-core/commit/21ba3bf5a31512e89ec63b72179ded5e26af6996))
+* last autogen shim ([104d339](https://github.com/BagelLab/uds-core/commit/104d339e502a9e530bf900264068f3d08d22ccd0))
+* last shimmitty shim shim ([301b904](https://github.com/BagelLab/uds-core/commit/301b90424762b63bfb7dd9bb0ab6baa511155699))
+* last shims I hope ([7ae366b](https://github.com/BagelLab/uds-core/commit/7ae366b28f77dec6606d08854ef1f60bf901e11d))
+* spacing ([4d2ac35](https://github.com/BagelLab/uds-core/commit/4d2ac35ae40a67d91e383fce94084286aa690867))
+* stubs ([846e85c](https://github.com/BagelLab/uds-core/commit/846e85cebc4d85665a2cab2507e369f69c5b6716))
+
+
+### Miscellaneous
+
+* **ci:** more shimmin ([ec78c1a](https://github.com/BagelLab/uds-core/commit/ec78c1a70651ad4f45eb2c726f87423741d94904))
+* **ci:** more stubs ([08f5e5c](https://github.com/BagelLab/uds-core/commit/08f5e5cc0ded598d7b44273a5bb0b0bb97c7ae6a))
+* **ci:** stub out workflows and testing ([09f6572](https://github.com/BagelLab/uds-core/commit/09f6572e9b4df1451c4af9f1e4385dcc7875839d))
+* e2e test shims ([8bfb366](https://github.com/BagelLab/uds-core/commit/8bfb36636993da288e250fc6a7a478f29d8fc64b))
+
 ## [0.55.1](https://github.com/defenseunicorns/uds-core/compare/v0.55.0...v0.55.1) (2025-11-03)
 
 
