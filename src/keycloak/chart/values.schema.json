@@ -639,6 +639,13 @@
         }
       },
       "additionalProperties": false
+    },
+    "podAnnotations": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Custom annotations to add to the pod template"
     }
   }
 }

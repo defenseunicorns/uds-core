@@ -187,6 +187,9 @@ tolerations: []
 # Additional Pod labels
 podLabels: {}
 
+# Additional Pod annotations
+podAnnotations: {}
+
 # Pod resource requests and limits
 resources:
   requests:
