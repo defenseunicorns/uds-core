@@ -1,0 +1,89 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Annotations block
+templates:
+  - statefulset.yaml
+  - secret-kc-realm.yaml
+  - secret-postgresql.yaml
+
+tests:
+  - it: should render only hash annotations when podAnnotations is not set and devMode is false
+    set:
+      devMode: false
+      postgresql:
+        username: "test-user-12345"
+        password: "test-password-67890"
+        database: "test-database-name"
+        host: "test-postgres-host.example.com"
+        port: 5432
+    template: statefulset.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations.postgres-hash
+          pattern: "^[a-f0-9]{64}$"
+      - matchRegex:
+          path: spec.template.metadata.annotations.kc-realm-hash
+          pattern: "^[a-f0-9]{64}$"
+      - notExists:
+          path: spec.template.metadata.annotations.foo
+
+  - it: should render empty annotations block when podAnnotations is not set and devMode is true
+    set:
+      devMode: true
+    template: statefulset.yaml
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations
+      - notExists:
+          path: spec.template.metadata.annotations.postgres-hash
+      - notExists:
+          path: spec.template.metadata.annotations.kc-realm-hash
+
+  - it: should render both hash and custom annotations when podAnnotations is set and devMode is false
+    set:
+      devMode: false
+      postgresql:
+        username: "test-user-12345"
+        password: "test-password-67890"
+        database: "test-database-name"
+        host: "test-postgres-host.example.com"
+        port: 5432
+      podAnnotations:
+        foo: bar
+        custom: "baz"
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.foo
+          value: bar
+      - equal:
+          path: spec.template.metadata.annotations.custom
+          value: baz
+      - matchRegex:
+          path: spec.template.metadata.annotations.postgres-hash
+          pattern: "^[a-f0-9]{64}$"
+      - matchRegex:
+          path: spec.template.metadata.annotations.kc-realm-hash
+          pattern: "^[a-f0-9]{64}$"
+
+  - it: should render only custom annotations when podAnnotations is set and devMode is true
+    set:
+      devMode: true
+      podAnnotations:
+        foo: bar
+        custom: "baz"
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations.foo
+          value: bar
+      - equal:
+          path: spec.template.metadata.annotations.custom
+          value: baz
+      - notExists:
+          path: spec.template.metadata.annotations.postgres-hash
+      - notExists:
+          path: spec.template.metadata.annotations.kc-realm-hash

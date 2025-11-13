@@ -5,11 +5,40 @@ includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.3/tasks/lint.yaml
 
 tasks:
+  - name: ensure-python-tools
+    description: Install linting tool dependencies
+    actions:
+      - description: Check if pipx is installed
+        cmd: |
+          if ! command -v pipx; then
+            echo "⚠️  pipx is not installed."
+
+            # Detect the OS and suggest the appropriate install method
+            if [ "$(uname)" = "Darwin" ]; then
+              echo "💡 Install pipx with: brew install pipx"
+            elif [ -f /etc/debian_version ]; then
+              echo "💡 Install pipx with: sudo apt update && sudo apt install pipx"
+            else
+              echo "💡 Please refer to your package manager to install pipx."
+            fi
+            exit 1
+          fi
+      - description: Ensure yamllint is installed
+        cmd: |
+          if ! pipx list | grep -q yamllint; then
+            pipx install yamllint
+          fi
+      - description: Ensure codespell is installed
+        cmd: |
+          if ! pipx list | grep -q codespell; then
+            pipx install codespell
+          fi
+
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
-      - description: install codespell deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install codespell
+      - description: Ensure python tools are installed
+        task: ensure-python-tools
       - description: "Pepr Format"
         cmd: npx pepr format
       - description: Fix codespell lint issues
@@ -20,12 +49,12 @@ tasks:
   - name: check
     description: "Run linting checks"
     actions:
+      - description: Ensure python tools are installed
+        task: ensure-python-tools
       - description: install pepr deps
         cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
-      - description: install yamllint and codespell deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint codespell
       - description: yaml lint
         cmd: yamllint . -c .yamllint --no-warnings
       - description: codespell lint
