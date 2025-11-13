@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart d3f0db2b-460d-453e-8f0f-121f29ac56a2
   # @lulaStart d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
   name: uds-core-grafana
   # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
+  # @lulaEnd d3f0db2b-460d-453e-8f0f-121f29ac56a2
   description: "UDS Core Grafana"
   url: https://grafana.com/grafana
 
