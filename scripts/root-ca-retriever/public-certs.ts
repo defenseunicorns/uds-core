@@ -40,9 +40,11 @@ const MOZILLA_CSV_URL =
 const TARGET_PUBLIC_CERT_DIR = "public"; // subdirectory in certs directory to put public CA certs
 
 /**
- * Function to retrieve public CA certificates from curl.se and return content
+ * Retrieves public CA certificates bundle from curl.se (Mozilla's curated list)
+ * and returns the raw PEM content as a string
+ * @returns Promise that resolves to the raw PEM bundle content
+ * @throws {Error} When HTTP request fails or returns non-200 status code
  */
-
 export async function retrievePublicCACertificates(): Promise<string> {
   console.log("Starting public CA certificate download...");
 
@@ -75,7 +77,10 @@ export async function retrievePublicCACertificates(): Promise<string> {
 }
 
 /**
- * Download and parse Mozilla CSV data
+ * Downloads and parses Mozilla's Common CA Database (CCDB) CSV data containing
+ * certificate metadata including issuer organization, geographic focus, and owner information
+ * @returns Promise that resolves to an array of parsed CSV records
+ * @throws {Error} When HTTP request fails or CSV parsing fails
  */
 export async function downloadMozillaCSVData(): Promise<MozillaCSVRecord[]> {
   console.log("Downloading Mozilla CSV data...");
@@ -115,7 +120,10 @@ export async function downloadMozillaCSVData(): Promise<MozillaCSVRecord[]> {
 }
 
 /**
- * Extract individual certificates from PEM bundle with their preceding comments
+ * Extracts individual certificates from a PEM bundle along with their preceding comments.
+ * The certificate name is extracted from the comment block that precedes each certificate.
+ * @param pemContent - The raw PEM bundle content containing multiple certificates
+ * @returns Array of objects containing certificate name and PEM content
  */
 export function extractCertificatesFromPEM(
   pemContent: string,
@@ -142,7 +150,11 @@ export function extractCertificatesFromPEM(
 }
 
 /**
- * Inventory public CA certificates using names from comments
+ * Creates an inventory of public CA certificates, validating each certificate's format
+ * using Node.js crypto library and converting to PublicCACert objects
+ * @param certsWithNames - Array of certificates with extracted names and PEM content
+ * @returns Array of validated PublicCACert objects
+ * @throws {Error} When certificate validation fails
  */
 export function inventoryPublicCACertificates(
   certsWithNames: { name: string; content: string }[],
@@ -165,7 +177,12 @@ export function inventoryPublicCACertificates(
 }
 
 /**
- * Enrich PublicCACert objects with metadata from Mozilla CSV
+ * Enriches PublicCACert objects with metadata from Mozilla's CCDB CSV data.
+ * Attempts exact matches, organizational unit matches, and case-insensitive matches.
+ * Sets unknown values for certificates not found in the CSV data.
+ * @param certs - Array of PublicCACert objects to enrich
+ * @param csvRecords - Array of Mozilla CSV records containing metadata
+ * @returns Array of enriched PublicCACert objects with additional metadata
  */
 export function enrichCertificatesWithCSVData(
   certs: PublicCACert[],
@@ -242,7 +259,11 @@ export function enrichCertificatesWithCSVData(
 }
 
 /**
- * Read public CA trust configuration
+ * Reads and parses the public CA trust configuration YAML file containing
+ * include and exclude lists for certificate filtering
+ * @param configPath - Path to the YAML configuration file
+ * @returns Promise that resolves to the parsed trust configuration
+ * @throws {Error} When file reading or YAML parsing fails
  */
 export async function readPublicCATrustConfig(configPath: string): Promise<PublicCATrustConfig> {
   try {
@@ -260,7 +281,11 @@ export async function readPublicCATrustConfig(configPath: string): Promise<Publi
 }
 
 /**
- * Filter public CA certificates based on trust configuration
+ * Filters public CA certificates based on the trust configuration,
+ * only including certificates that are explicitly listed in the include array
+ * @param certs - Array of PublicCACert objects to filter
+ * @param config - Trust configuration containing include/exclude lists
+ * @returns Array of filtered PublicCACert objects that match the include criteria
  */
 export function filterPublicCACerts(
   certs: PublicCACert[],
@@ -276,22 +301,98 @@ export function filterPublicCACerts(
 }
 
 /**
- * Check for certificates that are not in include/exclude lists and return unaccounted certs
+ * Checks for certificates that are not present in either the include or exclude lists.
+ * If unaccounted certificates are found, prints detailed error information and throws an error.
+ * @param certs - Array of PublicCACert objects to check
+ * @param config - Trust configuration containing include/exclude lists
+ * @param configPath - Path to the configuration file for error messages
+ * @throws {Error} When unaccounted certificates are found
  */
 export function checkForUnaccountedCerts(
   certs: PublicCACert[],
   config: PublicCATrustConfig,
-): PublicCACert[] {
+  configPath: string,
+): void {
   const includedNames = (config.include || []).map(cert => cert.commonName);
   const excludedNames = (config.exclude || []).map(cert => cert.commonName);
 
-  return certs.filter(
+  const unaccountedCerts = certs.filter(
     cert => !includedNames.includes(cert.commonName) && !excludedNames.includes(cert.commonName),
   );
+
+  if (unaccountedCerts.length > 0) {
+    console.error(
+      `\nError: Found ${unaccountedCerts.length} certificates that are not in the include or exclude list:`,
+    );
+    console.error("\nYAML entries for copy-paste into your config file:");
+    console.error("include:");
+    unaccountedCerts.forEach(cert => {
+      console.error(`  - commonName: "${cert.commonName}"`);
+      console.error(`    owner: "${cert.owner || "Unknown"}"`);
+      console.error(
+        `    certificateIssuerOrganization: "${cert.certificateIssuerOrganization || "Unknown"}"`,
+      );
+      console.error(`    geographicFocus: "${cert.geographicFocus || "Unknown"}"`);
+      console.error(`    companyWebsite: "${cert.companyWebsite || "Unknown"}"`);
+    });
+    console.error(`\nPlease update the configuration file at: ${configPath}`);
+    console.error(
+      'Copy the YAML entries above and add them to either the "include" or "exclude" list.',
+    );
+    throw new Error("Unaccounted certificates found in public CA bundle.");
+  }
 }
 
 /**
- * Write filtered CA certificates to bundle file
+ * Reads existing public CA bundle file and returns the certificates as PublicCACert objects.
+ * Throws an error if the file cannot be read.
+ * @param outputDir - Base directory where the bundle file is located
+ * @returns Array of existing PublicCACert objects from the bundle file
+ * @throws {Error} When the bundle file cannot be read or parsed
+ */
+export async function readExistingPublicCABundle(outputDir: string): Promise<PublicCACert[]> {
+  const bundlePath = path.join(outputDir, TARGET_PUBLIC_CERT_DIR, "ca-bundle.pem");
+
+  try {
+    const bundleContent = await fs.promises.readFile(bundlePath, "utf8");
+    const certsWithNames = extractCertificatesFromPEM(bundleContent);
+    return inventoryPublicCACertificates(certsWithNames);
+  } catch (error) {
+    throw new Error(
+      `Failed to read existing public CA bundle from ${bundlePath}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Compares two arrays of PublicCACert objects and returns differences including
+ * added, removed, and modified certificates based on commonName and content
+ * @param existing - Array of existing public CA certificates
+ * @param downloaded - Array of newly downloaded public CA certificates
+ * @returns Object containing arrays of added, removed, and modified certificates
+ */
+export function diffPublicCACerts(existing: PublicCACert[], downloaded: PublicCACert[]) {
+  const existingMap = new Map(existing.map(cert => [cert.commonName, cert]));
+  const downloadedMap = new Map(downloaded.map(cert => [cert.commonName, cert]));
+
+  const added = downloaded.filter(cert => !existingMap.has(cert.commonName));
+  const removed = existing.filter(cert => !downloadedMap.has(cert.commonName));
+  const modified = downloaded
+    .filter(cert => {
+      const existingCert = existingMap.get(cert.commonName);
+      return existingCert && existingCert.content !== cert.content;
+    })
+    .map(cert => ({ old: existingMap.get(cert.commonName)!, new: cert }));
+
+  return { added, removed, modified };
+}
+
+/**
+ * Writes filtered CA certificates to a PEM bundle file with certificate names as headers.
+ * Creates the output directory if it doesn't exist and formats certificates with separators.
+ * @param certs - Array of PublicCACert objects to write to the bundle
+ * @param outputDir - Base output directory where the bundle file will be created
+ * @throws {Error} When directory creation or file writing fails
  */
 export async function writePublicCABundle(certs: PublicCACert[], outputDir: string) {
   const bundleContent = certs
@@ -310,102 +411,4 @@ export async function writePublicCABundle(certs: PublicCACert[], outputDir: stri
 
   await fs.promises.writeFile(bundlePath, bundleContent);
   console.log(`Wrote ${certs.length} trusted CA certificates to: ${bundlePath}`);
-}
-
-/**
- * Handle public certificate processing based on check mode
- */
-export async function handlePublicCerts(
-  checkMode: boolean,
-  outputDir: string,
-  configPath: string,
-): Promise<PublicCACert[]> {
-  if (checkMode) {
-    // In check mode, only validate configuration
-    const publicCAContent = await retrievePublicCACertificates();
-    const csvData = await downloadMozillaCSVData();
-    const certsWithNames = extractCertificatesFromPEM(publicCAContent);
-    const publicCertsRaw = inventoryPublicCACertificates(certsWithNames);
-    console.log(`Found ${publicCertsRaw.length} public CA certificates in bundle`);
-
-    // Enrich certificates with CSV metadata
-    const publicCerts = enrichCertificatesWithCSVData(publicCertsRaw, csvData);
-    console.log(`Enriched ${publicCerts.length} certificates with CSV metadata`);
-
-    // Read trust configuration and check for unaccounted certificates
-    const trustConfig = await readPublicCATrustConfig(configPath);
-    const unaccountedCerts = checkForUnaccountedCerts(publicCerts, trustConfig);
-
-    // If certs are unaccounted for, log error with YAML entries for easy copy-paste
-    if (unaccountedCerts.length > 0) {
-      console.error(
-        `\nError: Found ${unaccountedCerts.length} certificates that are not in the include or exclude list:`,
-      );
-      console.error("\nYAML entries for copy-paste into your config file:");
-      console.error("include:");
-      unaccountedCerts.forEach(cert => {
-        console.error(`  - commonName: "${cert.commonName}"`);
-        console.error(`    owner: "${cert.owner || "Unknown"}"`);
-        console.error(
-          `    certificateIssuerOrganization: "${cert.certificateIssuerOrganization || "Unknown"}"`,
-        );
-        console.error(`    geographicFocus: "${cert.geographicFocus || "Unknown"}"`);
-        console.error(`    companyWebsite: "${cert.companyWebsite || "Unknown"}"`);
-      });
-      console.error(`\nPlease update the configuration file at: ${configPath}`);
-      console.error(
-        'Copy the YAML entries above and add them to either the "include" or "exclude" list.',
-      );
-      throw new Error("Unaccounted certificates found in public CA bundle.");
-    }
-
-    return publicCerts;
-  } else {
-    // Process and write certificates
-    const publicCAContent = await retrievePublicCACertificates();
-    const csvData = await downloadMozillaCSVData();
-    const certsWithNames = extractCertificatesFromPEM(publicCAContent);
-    const publicCertsRaw = inventoryPublicCACertificates(certsWithNames);
-    console.log(`Found ${publicCertsRaw.length} public CA certificates in bundle`);
-
-    // Enrich certificates with CSV metadata
-    const publicCerts = enrichCertificatesWithCSVData(publicCertsRaw, csvData);
-    console.log(`Enriched ${publicCerts.length} certificates with CSV metadata`);
-
-    // Read trust configuration and check for unaccounted certificates
-    const trustConfig = await readPublicCATrustConfig(configPath);
-    const unaccountedCerts = checkForUnaccountedCerts(publicCerts, trustConfig);
-
-    // If certs are unaccounted for, log error with YAML entries for easy copy-paste
-    if (unaccountedCerts.length > 0) {
-      console.error(
-        `\nError: Found ${unaccountedCerts.length} certificates that are not in the include or exclude list:`,
-      );
-      console.error("\nYAML entries for copy-paste into your config file:");
-      console.error("include:");
-      unaccountedCerts.forEach(cert => {
-        console.error(`  - commonName: "${cert.commonName}"`);
-        console.error(`    owner: "${cert.owner || "Unknown"}"`);
-        console.error(
-          `    certificateIssuerOrganization: "${cert.certificateIssuerOrganization || "Unknown"}"`,
-        );
-        console.error(`    geographicFocus: "${cert.geographicFocus || "Unknown"}"`);
-        console.error(`    companyWebsite: "${cert.companyWebsite || "Unknown"}"`);
-      });
-      console.error(`\nPlease update the configuration file at: ${configPath}`);
-      console.error(
-        'Copy the YAML entries above and add them to either the "include" or "exclude" list.',
-      );
-      throw new Error("Unaccounted certificates found in public CA bundle.");
-    }
-
-    // Filter certificates and write bundle
-    const trustedCerts = filterPublicCACerts(publicCerts, trustConfig);
-    console.log(`Filtered to ${trustedCerts.length} trusted certificates based on config`);
-
-    // Write filtered public certificates to ca-bundle.pem
-    await writePublicCABundle(trustedCerts, outputDir);
-
-    return trustedCerts;
-  }
 }
