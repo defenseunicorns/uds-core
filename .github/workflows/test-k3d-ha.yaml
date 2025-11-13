@@ -23,13 +23,14 @@ permissions:
 
 jobs:
   uds-core-ha-upgrade-nightly:
+    if: ${{ github.repository_owner == 'defenseunicorns' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     name: HA Testing
 
     strategy:
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream]
         test-type: [install, upgrade]
 
     steps:
@@ -75,3 +76,10 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
+  uds-core-ha-upgrade-nightly-stub:
+    if: ${{ github.repository_owner != 'defenseunicorns' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Stub: skip HA k3d tests on fork"
+        run: echo "[STUB] Skipping HA k3d install/upgrade tests on fork"

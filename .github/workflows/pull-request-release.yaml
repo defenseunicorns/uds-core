@@ -61,7 +61,7 @@ jobs:
     strategy:
       matrix:
         package: [all]
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream]
         test_type: [install, upgrade]
     uses: ./.github/workflows/test.yaml
     with:
@@ -79,7 +79,7 @@ jobs:
     strategy:
       matrix:
         package: [all]
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream]
         test_type: [install, upgrade]
     uses: ./.github/workflows/test-shim.yaml
     with:

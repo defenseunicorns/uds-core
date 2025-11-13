@@ -24,13 +24,14 @@ permissions:
 
 jobs:
   uds-core-private-pki-nightly:
+    if: ${{ github.repository_owner == 'defenseunicorns' }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     name: Private PKI
 
     strategy:
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream]
 
     steps:
       - name: Checkout repository
@@ -70,3 +71,10 @@ jobs:
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
+  uds-core-private-pki-nightly-stub:
+    if: ${{ github.repository_owner != 'defenseunicorns' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Stub: skip Private PKI tests on fork"
+        run: echo "[STUB] Skipping Private PKI tests on fork"

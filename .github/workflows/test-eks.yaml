@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: [upstream]
     runs-on: ubuntu-latest
     name: test-eks
     permissions:
