@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   uds-core-private-pki-nightly:
-    runs-on: ubuntu-latest
+    runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 45
     name: Private PKI
 

@@ -3,7 +3,7 @@
 
 variables:
   - name: BASE_REPO
-    default: "ghcr.io/bagellab/packages"
+    default: "ghcr.io/defenseunicorns/packages"
   - name: FLAVOR
     default: "upstream"
   - name: SNAPSHOT

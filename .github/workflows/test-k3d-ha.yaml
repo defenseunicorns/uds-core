@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   uds-core-ha-upgrade-nightly:
-    runs-on: ubuntu-latest
+    runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 45
     name: HA Testing
 
