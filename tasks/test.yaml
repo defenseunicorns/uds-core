@@ -14,8 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.5/tasks/setup.yaml
-  - compliance: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.20.5/tasks/compliance.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.3/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
 
 
@@ -201,23 +200,6 @@ tasks:
           uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
       - task: validate-packages
       - task: e2e-tests
-
-  - name: compliance-validate
-    description: "validate against the required compliance"
-    actions:
-      - task: compliance:validate
-        with:
-          oscalfile: ./compliance/oscal-component-composed.yaml
-          assessment_results: ./compliance/oscal-assessment-results.yaml
-          options: -t il4
-
-  - name: compliance-evaluate
-    description: "evaluate against the required compliance"
-    actions:
-      - task: compliance:evaluate
-        with:
-          assessment_results: ./compliance/oscal-assessment-results.yaml
-          options: -t il4
 
   - name: slim-dev
     description: "Run validate for the components contained in the slim dev bundle"

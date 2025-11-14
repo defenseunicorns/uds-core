@@ -244,6 +244,72 @@ describe("findMatchingClient", () => {
     // Should also match pods with labels
     expect(findMatchingClient(pkg, { app: "test" })?.clientId).toBe("client1");
   });
+
+  it("should only match pods with empty string value when selector value is empty string", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          {
+            clientId: "client1",
+            enableAuthserviceSelector: { foo: "" },
+            name: "",
+          },
+        ],
+      },
+    };
+    // Should match only when the pod has foo: ""
+    expect(findMatchingClient(pkg, { foo: "" })?.clientId).toBe("client1");
+    expect(findMatchingClient(pkg, {})).toBeUndefined();
+    expect(findMatchingClient(pkg, { foo: "bar" })).toBeUndefined();
+  });
+
+  it("should return undefined when SSO clients exist but none are authservice-enabled", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          { clientId: "a", name: "" }, // missing enableAuthserviceSelector
+          { clientId: "c", name: "", enableAuthserviceSelector: undefined }, // undefined
+        ],
+      },
+    };
+    expect(findMatchingClient(pkg, { app: "anything" })).toBeUndefined();
+  });
+
+  it("should match when pod labels are a superset of selector labels", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [{ clientId: "client1", name: "", enableAuthserviceSelector: { app: "frontend" } }],
+      },
+    };
+    expect(findMatchingClient(pkg, { app: "frontend", tier: "prod", extra: "x" })?.clientId).toBe(
+      "client1",
+    );
+  });
+
+  it("should skip non-enabled clients and still match an enabled one", () => {
+    const pkg: UDSPackage = {
+      apiVersion: "uds.dev/v1",
+      kind: "UDSPackage",
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {
+        sso: [
+          { clientId: "disabled1", name: "" },
+          { clientId: "disabled2", name: "", enableAuthserviceSelector: undefined },
+          { clientId: "enabled", name: "", enableAuthserviceSelector: { app: "match" } },
+        ],
+      },
+    };
+    expect(findMatchingClient(pkg, { app: "match" })?.clientId).toBe("enabled");
+  });
 });
 
 describe("networkPolicies", () => {

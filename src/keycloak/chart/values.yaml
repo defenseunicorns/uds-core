@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.4.2"
+  tag: "26.4.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.19.1
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.20.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -69,6 +69,8 @@ themeCustomizations:
   settings:
     # Extra Registration Form Fields ( Affiliation, Pay Grade, Unit Organization or Company Name )
     enableRegistrationFields: true
+    # Enable Access Request Notes field on the registration page
+    enableAccessRequestNotes: false
 #   resources:
 #     images:
 #       - name: background.png
@@ -184,6 +186,9 @@ tolerations: []
 
 # Additional Pod labels
 podLabels: {}
+
+# Additional Pod annotations
+podAnnotations: {}
 
 # Pod resource requests and limits
 resources:
@@ -362,6 +367,11 @@ waypoint:
     limits:
       cpu: 2
       memory: 1Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+    priorityClassName: ""
   horizontalPodAutoscaler:
     enabled: true
     minReplicas: 1

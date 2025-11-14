@@ -89,21 +89,6 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
-      # - name: Compose UDS Core Component Definitions
-      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-      #   run: uds run test-compliance-compose --no-progress
-
-      # - name: Validate UDS Core Compliance
-      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-      #   run: uds run test-compliance-validate --no-progress
-
-      # - name: Upload Assessment
-      #   if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-      #   uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
-      #   with:
-      #     name: ${{ inputs.flavor }}-assessment-results
-      #     path: ./compliance/oscal-assessment-results.yaml
-
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress

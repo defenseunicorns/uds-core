@@ -150,21 +150,6 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
-  - name: test-compliance-compose
-    description: "Compose OSCAL Component Definition"
-    actions:
-      - task: test:local-compliance-compose
-
-  - name: test-compliance-validate
-    description: "Validate Compliance of UDS Core to produce Assessment Results"
-    actions:
-      - task: test:compliance-validate
-
-  - name: test-compliance-evaluate
-    description: "Evaluate Compliance of UDS Core against an established threshold"
-    actions:
-      - task: test:compliance-evaluate
-
   - name: lint-check
     description: "Run linting checks"
     actions:
@@ -174,10 +159,6 @@ tasks:
     description: "Fix linting issues"
     actions:
       - task: lint:fix
-
-  - name: lint-oscal
-    actions:
-      - task: lint:oscal
 
   # Note that due to cloning the docs repo (which is private) this task will require organization access to the repo
   # This task does not clone in/manage docs outside of the core repo so you may hit some 404s during development
@@ -191,8 +172,8 @@ tasks:
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
-          rm -rf uds-docs/src/content/docs/reference uds-docs/src/content/docs/.images
-          # This only symlinks the reference and images folders since these are the only docs we use in the docs site
+          rm -rf uds-docs/src/content/docs/reference uds-docs/src/content/docs/.images uds-docs/src/content/docs/.c4
+          # This only symlinks the reference, images, and c4 folders since these are the only docs we use in the docs site
           ln -s $(pwd)/docs/reference uds-docs/src/content/docs/reference
           ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4

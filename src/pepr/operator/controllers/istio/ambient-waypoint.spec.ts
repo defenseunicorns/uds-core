@@ -126,16 +126,20 @@ vi.mock("./waypoint-utils", async () => {
 });
 
 // Mock the utils module
-vi.mock("../utils", () => ({
-  getOwnerRef: vi.fn().mockReturnValue([
-    {
-      kind: "Package",
-      name: "test-pkg",
-      uid: "test-uid",
-      apiVersion: "uds.dev/v1alpha1",
-    },
-  ]),
-}));
+vi.mock("../utils", async () => {
+  const actual = await vi.importActual("../utils");
+  return {
+    ...actual,
+    getOwnerRef: vi.fn().mockReturnValue([
+      {
+        kind: "Package",
+        name: "test-pkg",
+        uid: "test-uid",
+        apiVersion: "uds.dev/v1alpha1",
+      },
+    ]),
+  };
+});
 
 // Create a mock for the log functions
 const mockLog = vi.hoisted(() => ({
