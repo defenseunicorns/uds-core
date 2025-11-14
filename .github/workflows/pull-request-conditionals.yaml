@@ -80,7 +80,6 @@ jobs:
       combined: ${{ steps.combine-path-filters.outputs.combined }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
       run_full_tests: ${{ steps.test-routing.outputs.run_full_tests }}
-      run_shim_tests: ${{ steps.test-routing.outputs.run_shim_tests }}
       target_version: ${{ steps.test-routing.outputs.target_version }}
 
     steps:
@@ -134,7 +133,6 @@ jobs:
           COMBINED='${{ steps.combine-path-filters.outputs.combined }}'
 
           RUN_FULL=false
-          RUN_SHIM=false
           TARGET_VERSION=""
 
           if [[ -n "$COMBINED" && "$COMBINED" != "[]" ]]; then
@@ -144,14 +142,11 @@ jobs:
               if [[ "$HEAD" == release-please* ]]; then
                 RUN_FULL=true
                 TARGET_VERSION="$BASE"
-              else
-                RUN_SHIM=true
               fi
             fi
           fi
 
           echo "run_full_tests=$RUN_FULL" >> $GITHUB_OUTPUT
-          echo "run_shim_tests=$RUN_SHIM" >> $GITHUB_OUTPUT
           echo "target_version=$TARGET_VERSION" >> $GITHUB_OUTPUT
 
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
@@ -188,7 +183,7 @@ jobs:
   # Shim out required heavy tests for non-release-please PRs to release/*.
   run-package-test-shim:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.run_shim_tests == 'true' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests != 'true' }}
     name: Schedule
     strategy:
       matrix:
