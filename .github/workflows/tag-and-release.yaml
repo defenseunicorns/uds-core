@@ -13,6 +13,7 @@ on:
   push:
     branches:
       - main
+      - "release/**"
 
 jobs:
   # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
@@ -27,6 +28,9 @@ jobs:
       - name: Create release tag
         id: tag
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
+        with:
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
 
   publish-uds-core-release:
     needs: tag-new-version
@@ -43,6 +47,7 @@ jobs:
 
   scan-release:
     needs: publish-uds-core-release
+    if: ${{ github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
       packages: read
@@ -65,7 +70,7 @@ jobs:
 
   cut-release-branch:
     needs: tag-new-version
-    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

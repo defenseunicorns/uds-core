@@ -6,7 +6,9 @@ name: Filter
 # This workflow is triggered on pull requests
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - "release/**"
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     # labeled is added to support renovate-ready labelling on PRs
     types: [milestoned, labeled, opened, reopened, synchronize]
@@ -77,6 +79,9 @@ jobs:
     outputs:
       combined: ${{ steps.combine-path-filters.outputs.combined }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
+      run_full_tests: ${{ steps.test-routing.outputs.run_full_tests }}
+      run_shim_tests: ${{ steps.test-routing.outputs.run_shim_tests }}
+      target_version: ${{ steps.test-routing.outputs.target_version }}
 
     steps:
       - name: Checkout the code
@@ -121,11 +126,39 @@ jobs:
           echo combined=$COMBINED >> $GITHUB_OUTPUT
           echo The following packages will be triggered: $COMBINED
 
+      - name: Compute test routing
+        id: test-routing
+        run: |
+          BASE="${{ github.base_ref }}"
+          HEAD="${{ github.head_ref }}"
+          COMBINED='${{ steps.combine-path-filters.outputs.combined }}'
+
+          RUN_FULL=false
+          RUN_SHIM=false
+          TARGET_VERSION=""
+
+          if [[ -n "$COMBINED" && "$COMBINED" != "[]" ]]; then
+            if [[ "$BASE" == "main" ]]; then
+              RUN_FULL=true
+            elif [[ "$BASE" == release/* ]]; then
+              if [[ "$HEAD" == release-please* ]]; then
+                RUN_FULL=true
+                TARGET_VERSION="$BASE"
+              else
+                RUN_SHIM=true
+              fi
+            fi
+          fi
+
+          echo "run_full_tests=$RUN_FULL" >> $GITHUB_OUTPUT
+          echo "run_shim_tests=$RUN_SHIM" >> $GITHUB_OUTPUT
+          echo "target_version=$TARGET_VERSION" >> $GITHUB_OUTPUT
+
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.combined != '' && needs.check-paths.outputs.combined != '[]' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' }}
     name: Schedule
     strategy:
       matrix:
@@ -148,5 +181,23 @@ jobs:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
+      target_version: ${{ needs.check-paths.outputs.target_version }}
     secrets: inherit # Inherits all secrets from the parent workflow.
-# @lulaEnd 11948466-9230-4498-be44-dbac784d86d1
+  # @lulaEnd 11948466-9230-4498-be44-dbac784d86d1
+
+  # Shim out required heavy tests for non-release-please PRs to release/*.
+  run-package-test-shim:
+    needs: check-paths
+    if: ${{ needs.check-paths.outputs.run_shim_tests == 'true' }}
+    name: Schedule
+    strategy:
+      matrix:
+        package: [all]
+        flavor: [upstream, registry1, unicorn]
+        test_type: [install, upgrade]
+    uses: ./.github/workflows/test-shim.yaml
+    with:
+      package: ${{ matrix.package }}
+      flavor: ${{ matrix.flavor }}
+      test_type: ${{ matrix.test_type }}
+    secrets: inherit

@@ -71,14 +71,9 @@ jobs:
         run: |
           TV="${{ inputs.target_version }}"
           if [ -n "$TV" ]; then
-            ORIG_TV="$TV"
-            TV="${TV#refs/heads/}"
-            TV="${TV#refs/remotes/}"
-            TV="${TV#origin/}"
             TV="${TV#release/}"
-            echo "UDS_TARGET_VERSION=$TV" >> $GITHUB_ENV
             echo "TARGET_VERSION=$TV" >> $GITHUB_ENV
-            echo "Pinned UDS_TARGET_VERSION=$TV"
+            echo "Pinned TARGET_VERSION=$TV"
           fi
 
       - name: Test a single layer package
