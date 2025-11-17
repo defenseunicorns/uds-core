@@ -83,7 +83,7 @@ tasks:
   - name: resolve-latest-core-release
     actions:
       - task: utils:determine-repo
-      - description: "Get latest tag version from OCI (optionally pinned to TARGET_VERSION minor stream)"
+      - description: "Get latest tag version from OCI (conditionally pinned to specific minor stream)"
         shell:
           darwin: bash
           linux: bash
