@@ -175,10 +175,10 @@ jobs:
     secrets: inherit # Inherits all secrets from the parent workflow.
   # @lulaEnd 11948466-9230-4498-be44-dbac784d86d1
 
-  # Shim out required heavy tests for non-release-please PRs to release/*.
+  # Shim out required tests for non-release-please PRs to release/*.
   run-package-test-shim:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.run_full_tests != 'true' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests != 'true' && startsWith(github.base_ref, 'release/') }}
     name: Schedule
     strategy:
       matrix:
