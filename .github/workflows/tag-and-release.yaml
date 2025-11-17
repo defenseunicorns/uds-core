@@ -34,7 +34,7 @@ jobs:
 
   publish-uds-core-release:
     needs: tag-new-version
-    if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
     permissions:
       contents: write
       packages: write
@@ -69,8 +69,8 @@ jobs:
     secrets: inherit
 
   cut-release-branch:
-    needs: publish-uds-core-release
-    if: ${{ github.ref == 'refs/heads/main' }}
+    needs: [publish-uds-core-release, tag-new-version]
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
