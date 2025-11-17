@@ -80,7 +80,6 @@ jobs:
       combined: ${{ steps.combine-path-filters.outputs.combined }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
       run_full_tests: ${{ steps.test-routing.outputs.run_full_tests }}
-      target_version: ${{ steps.test-routing.outputs.target_version }}
 
     steps:
       - name: Checkout the code
@@ -133,7 +132,6 @@ jobs:
           COMBINED='${{ steps.combine-path-filters.outputs.combined }}'
 
           RUN_FULL=false
-          TARGET_VERSION=""
 
           if [[ -n "$COMBINED" && "$COMBINED" != "[]" ]]; then
             if [[ "$BASE" == "main" ]]; then
@@ -141,13 +139,11 @@ jobs:
             elif [[ "$BASE" == release/* ]]; then
               if [[ "$HEAD" == release-please* ]]; then
                 RUN_FULL=true
-                TARGET_VERSION="$BASE"
               fi
             fi
           fi
 
           echo "run_full_tests=$RUN_FULL" >> $GITHUB_OUTPUT
-          echo "target_version=$TARGET_VERSION" >> $GITHUB_OUTPUT
 
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
@@ -176,7 +172,6 @@ jobs:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
-      target_version: ${{ needs.check-paths.outputs.target_version }}
     secrets: inherit # Inherits all secrets from the parent workflow.
   # @lulaEnd 11948466-9230-4498-be44-dbac784d86d1
 

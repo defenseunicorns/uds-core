@@ -34,10 +34,6 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
-      target_version:
-        type: string
-        description: "Optional X.Y to pin 'latest' resolution to a specific minor stream"
-        required: false
 
 permissions:
   contents: read
@@ -66,15 +62,6 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
-
-      - name: Set target version (optional)
-        run: |
-          TV="${{ inputs.target_version }}"
-          if [ -n "$TV" ]; then
-            TV="${TV#release/}"
-            echo "TARGET_VERSION=$TV" >> $GITHUB_ENV
-            echo "Pinned TARGET_VERSION=$TV"
-          fi
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
