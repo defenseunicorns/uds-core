@@ -83,6 +83,11 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+      - name: Clean up space on the GitHub runner
+        continue-on-error: true
+        shell: bash
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
       - name: Deploy Slim Dev Bundle
         run: uds run slim-dev --no-progress
       - name: Test Slim Dev Bundle
