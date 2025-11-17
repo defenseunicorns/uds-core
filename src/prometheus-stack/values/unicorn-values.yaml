@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: quay.io
       repository: rfcurated/prometheus/alertmanager
-      tag: 0.28.1-jammy-fips-rfcurated-rfhardened
+      tag: 0.29.0-jammy-fips-rfcurated-rfhardened
 kube-state-metrics:
   image:
     registry: quay.io
@@ -23,12 +23,12 @@ prometheus:
     image:
       registry: quay.io
       repository: rfcurated/prometheus
-      tag: 3.7.1-jammy-fips-rfcurated-rfhardened
+      tag: 3.7.3-jammy-fips-rfcurated-rfhardened
 prometheus-node-exporter:
   image:
     registry: quay.io
     repository: rfcurated/prometheus/node-exporter
-    tag: 1.9.1-jammy-scratch-fips-rfcurated
+    tag: 1.10.2-jammy-scratch-fips-rfcurated
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -40,7 +40,7 @@ prometheusOperator:
       image:
         registry: quay.io
         repository: rfcurated/ingress-nginx/kube-webhook-certgen
-        tag: 1.6.3-jammy-fips-rfcurated-rfhardened
+        tag: 1.6.4-jammy-fips-rfcurated-rfhardened
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
@@ -48,9 +48,9 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: rfcurated/prometheus-operator
-    tag: 0.86.1-jammy-scratch-fips-rfcurated
+    tag: 0.86.2-jammy-scratch-fips-rfcurated
   prometheusConfigReloader:
     image:
       registry: quay.io
       repository: rfcurated/prometheus-operator/prometheus-config-reloader
-      tag: 0.86.1-jammy-scratch-fips-rfcurated
+      tag: 0.86.2-jammy-scratch-fips-rfcurated
