@@ -74,6 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      workflows: write
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -85,8 +86,7 @@ jobs:
             echo "major/minor outputs missing; cannot cut release branch" >&2
             exit 1
           fi
-          MINOR="${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}"
-          TAG="v${MINOR}.0"
+          TAG="v${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}.0"
           git fetch origin --tags
           git switch -c "release/${MINOR}" "$TAG"
           git push origin "release/${MINOR}"
