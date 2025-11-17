@@ -35,6 +35,8 @@ uds run -f tasks/backport.yaml backport \
   --with commit=b4068116c
 ```
 
+The task is designed to fail if there are conflicts when cherry-picking commits to the release branches. If this happens you will need to resolve conflicts and follow the instructions that are outputted to complete the backport, then re-run the task for any subsequent releases if applicable.
+
 > [!NOTE]
 > `target_versions` should be plain `X.Y` values (no `v` or `release/` prefix) and match the `MAJOR.MINOR` version you want to backport to.
 > Multiple versions must be comma-separated with no spaces (e.g. `0.54,0.55`).

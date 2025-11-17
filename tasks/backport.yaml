@@ -57,22 +57,61 @@ tasks:
             git switch -c "${BRANCH}" "origin/${RB}"
 
             C="$(echo "$COMMIT" | xargs)"
-            echo "Cherry-picking ${C}"
-            git cherry-pick -x "$C"
+            echo "Cherry-picking ${C} into ${BRANCH}..."
 
-            git push -u origin "${BRANCH}"
-            echo "Backport branch created: ${BRANCH}"
-
-            if [[ "${AUTO_PR}" == "true" ]] && command -v gh >/dev/null 2>&1; then
+            # Suppress noisy git output; on failure, show clear next steps instead.
+            if ! git cherry-pick -x "$C" >/dev/null 2>&1; then
+              echo
+              echo "======================================================================"
+              echo "Backport to ${RB} hit conflicts while cherry-picking ${C}."
+              echo "You are now on branch: ${BRANCH}"
+              echo
+              echo "To resolve the conflicts and finish this backport, run (copy/paste):"
+              echo
+              echo "  git status"
+              echo "  # edit files to resolve conflicts"
+              echo "  git add <files-you-resolved>"
+              echo "  git cherry-pick --continue"
+              echo "  git push -u origin ${BRANCH}"
+              echo
               DEFAULT_TITLE="$(git log -1 --pretty=%s "$COMMIT" 2>/dev/null || echo "")"
               if [[ -z "${DEFAULT_TITLE}" ]]; then
                 DEFAULT_TITLE="chore: backport of ${COMMIT}"
               fi
               TITLE="${DEFAULT_TITLE} (backport-${MINOR})"
               BODY="Backport of commit: ${COMMIT}"
+
+              if command -v gh >/dev/null 2>&1; then
+                echo "  gh pr create --title \"${TITLE}\" --body \"${BODY}\" --base \"${RB}\" --head \"${BRANCH}\""
+              else
+                echo "  # After pushing, open a PR with base=${RB} and compare=${BRANCH}"
+              fi
+
+              if [[ -n "${CURR_BRANCH}" ]]; then
+                echo
+                echo "After finishing the backport and pushing, you can return to your original branch with:"
+                echo
+                echo "  git switch ${CURR_BRANCH}"
+              fi
+              echo "======================================================================"
+              exit 1
+            fi
+
+            git push -u origin "${BRANCH}" >/dev/null 2>&1
+
+            DEFAULT_TITLE="$(git log -1 --pretty=%s "$COMMIT" 2>/dev/null || echo "")"
+            if [[ -z "${DEFAULT_TITLE}" ]]; then
+              DEFAULT_TITLE="chore: backport of ${COMMIT}"
+            fi
+            TITLE="${DEFAULT_TITLE} (backport-${MINOR})"
+            BODY="Backport of commit: ${COMMIT}"
+
+            echo "✅ Backport branch created and pushed: ${BRANCH} (base: ${RB})"
+
+            if [[ "${AUTO_PR}" == "true" ]] && command -v gh >/dev/null 2>&1; then
               gh pr create --title "${TITLE}" --body "${BODY}" --base "${RB}" --head "${BRANCH}"
             else
-              echo "Open a PR with base=${RB} and compare=${BRANCH}"
+              echo "  # After pushing, open a PR with base=${RB} and compare=${BRANCH}"
             fi
           done
 
