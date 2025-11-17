@@ -25,23 +25,16 @@ This guide explains how to backport bug/security fixes from `main` to supported 
 
 ## Helper task
 
-Use the helper to create backport branches, cherry-pick a single commit, and open PRs. This does require `gh` CLI for automatic PR creation.
+Use the helper task (in `tasks/backport.yaml`) to create backport branches, cherry-pick a single commit, and open PRs. This does require `gh` CLI for automatic PR creation.
 
-Examples:
+The helper task requires inputs for the specific "target versions" (minor version to backport to) as well as the specific commit SHA you want to backport. For example:
 
-- With a descriptive name and specific commit SHAs:
-
-```sh
-uds run backport:backport \
-  --with target_versions=0.54,0.55 \
-  --with commit=abcd1234 \
-  --with name="keycloak-fix"
+```console
+uds run -f tasks/backport.yaml backport \
+  --with target_versions=0.54,0.55,0.56 \
+  --with commit=b4068116c
 ```
 
-- Without a name (defaults to the first SHA or PR-derived SHA):
-
-```sh
-uds run backport:backport \
-  --with target_versions=0.54,0.55 \
-  --with commit=abcd1234
-```
+> [!NOTE]
+> `target_versions` should be plain `X.Y` values (no `v` or `release/` prefix) and match the `MAJOR.MINOR` version you want to backport to.
+> Multiple versions must be comma-separated with no spaces (e.g. `0.54,0.55`).

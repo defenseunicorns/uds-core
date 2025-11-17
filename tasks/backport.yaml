@@ -11,9 +11,6 @@ tasks:
       commit:
         description: "Single commit SHA to cherry-pick"
         required: true
-      name:
-        description: "Optional short name to include in branch name (defaults to first SHA)"
-        default: ""
       auto_pr:
         description: "Automatically open PRs for each backport branch"
         default: "true"
@@ -33,14 +30,10 @@ tasks:
           fi
           TVS='${{ .inputs.target_versions }}'
           COMMIT='${{ .inputs.commit }}'
-          NAME_INPUT='${{ .inputs.name }}'
           AUTO_PR='${{ .inputs.auto_pr }}'
+          NAME="$(echo "$COMMIT" | xargs)"
 
           git fetch origin --tags
-
-          if [[ -z "$NAME_INPUT" ]]; then
-            NAME_INPUT="$(echo "$COMMIT" | xargs)"
-          fi
 
           MINOR_LIST=()
           IFS=',' read -ra MINOR_LIST <<< "$TVS"
@@ -56,7 +49,7 @@ tasks:
               exit 1
             fi
 
-            BRANCH="backport/${NAME_INPUT}-to-${MINOR}"
+            BRANCH="backport/${NAME}-to-${MINOR}"
             BRANCH="${BRANCH// /-}"
             BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
 

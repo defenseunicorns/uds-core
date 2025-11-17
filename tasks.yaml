@@ -14,7 +14,6 @@ includes:
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
   - diagrams: ./tasks/diagrams.yaml
-  - backport: ./tasks/backport.yaml
 
 tasks:
   - name: default
