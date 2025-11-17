@@ -202,7 +202,7 @@ function buildAuthPolicy(
  */
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
-// @lulaStart 8e61ff56-f455-499b-b51c-035227cb691d
+// @lulaStart bb071e49-f94d-4ff6-b07c-7594912e0a61
 export async function generateAuthorizationPolicies(
   pkg: UDSPackage,
   pkgNamespace: string,
@@ -410,9 +410,9 @@ export async function generateAuthorizationPolicies(
 
   return policies;
 }
+// @lulaEnd bb071e49-f94d-4ff6-b07c-7594912e0a61
 // @lulaEnd cd540e07-153b-424c-90e0-c0daec56b18f
 // @lulaEnd cd540e07-153b-424c-90e0-c0daec56b16a
-// @lulaEnd 8e61ff56-f455-499b-b51c-035227cb691d
 
 /**
  * Finds the first SSO client that matches the given selector.
