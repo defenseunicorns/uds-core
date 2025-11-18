@@ -48,6 +48,7 @@ const log = setupLogger(Component.OPERATOR_NETWORK);
 
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
+// @lulaStart a9d420a8-1ad2-479f-a438-aa4ca0f57473
 export async function networkPolicies(pkg: UDSPackage, namespace: string, istioMode: string) {
   const customPolicies = pkg.spec?.network?.allow ?? [];
   const pkgName = pkg.metadata!.name!;
@@ -320,5 +321,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   // Return the list of policies
   return policies;
 }
+// @lulaEnd a9d420a8-1ad2-479f-a438-aa4ca0f57473
 // @lulaEnd cd540e07-153b-424c-90e0-c0daec56b18f
 // @lulaEnd cd540e07-153b-424c-90e0-c0daec56b16a
