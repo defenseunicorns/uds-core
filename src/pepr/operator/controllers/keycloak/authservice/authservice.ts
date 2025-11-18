@@ -10,7 +10,7 @@ import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
-import { purgeOrphans } from "../../utils";
+import { getAuthserviceClients, purgeOrphans } from "../../utils";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
@@ -43,11 +43,8 @@ export async function authservice(
   const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
   const isAmbient = istioMode === Mode.Ambient;
 
-  // Get the list of clients from the package
-  const authServiceClients = R.filter(
-    sso => R.isNotNil(sso.enableAuthserviceSelector),
-    pkg.spec?.sso || [],
-  );
+  // Get the list of authservice-enabled clients from the package
+  const authServiceClients = getAuthserviceClients(pkg);
 
   // Build the new client status objects
   const newAuthserviceClients = authServiceClients.map(sso => ({

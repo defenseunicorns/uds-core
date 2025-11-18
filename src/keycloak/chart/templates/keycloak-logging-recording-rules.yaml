@@ -44,6 +44,7 @@ data:
             expr: |
               sum by (realmName) (count_over_time({app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider" | eventType="ADMIN" | resourceType=~"USER|GROUP_MEMBERSHIP" | label_format realmName="{{ "{{" }}.realmName{{ "}}" }}" [1m]))
 
+          # @lulaStart b45ff148-f52e-43aa-b9e7-88055123948f
           - record: uds_keycloak:system_admin_modifications_count
             expr: |
               sum by (realmName) (
@@ -70,4 +71,5 @@ data:
                   )
                 )
               )
+          # @lulaEnd b45ff148-f52e-43aa-b9e7-88055123948f
 {{- end }}

@@ -7,6 +7,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind, WatchCfg } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
+import { UDSPackage } from "../crd";
 
 /**
  * Watch configuration for use in KFC watches
@@ -231,4 +232,13 @@ export async function validateNamespace(
       throw e;
     }
   }
+}
+
+/**
+ * Get SSO clients with authservice enabled.
+ * Filters to entries where enableAuthserviceSelector is present (not null/undefined).
+ */
+export function getAuthserviceClients(pkg: UDSPackage) {
+  const list = pkg.spec?.sso || [];
+  return list.filter(sso => sso?.enableAuthserviceSelector != null);
 }

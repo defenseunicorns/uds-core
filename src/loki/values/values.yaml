@@ -118,7 +118,6 @@ loki:
       clients:
         prometheus:
           url: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090/api/v1/write
-
 enterprise:
   # Enable enterprise features, license must be provided
   enabled: false
@@ -205,7 +204,3 @@ write:
 backend:
   # Remove default anti-affinity to support single node
   affinity: null
-  # Temporary label to trigger mutation for istio service patch
-  service:
-    labels:
-      uds/istio-patch: "true"

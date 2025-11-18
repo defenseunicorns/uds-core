@@ -10,7 +10,7 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -20,24 +20,24 @@ import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
 
 /**
  * Finds an SSO client that matches the given pod labels.
- * - If the client has no selector, it matches all pods in the namespace (namespace-wide protection)
+ * - If the selector is an empty object ({}), it matches all pods in the namespace.
  * - If the client has a selector, it matches only pods with all the specified labels
  */
 export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, string>) {
-  if (!podLabels || !pkg.spec?.sso?.length) {
-    return undefined;
-  }
+  const authserviceClients = getAuthserviceClients(pkg);
 
-  return pkg.spec.sso.find(sso => {
+  if (!podLabels || authserviceClients.length === 0) return undefined;
+
+  return authserviceClients.find(sso => {
     const selector = sso.enableAuthserviceSelector;
 
-    // If no selector is defined, it matches all pods in the namespace
-    if (!selector || Object.keys(selector).length === 0) {
+    // If the selector is empty, it matches all pods in the namespace
+    if (Object.keys(selector!).length === 0) {
       return true;
     }
 
     // Otherwise, check that every label in the selector exists and matches in podLabels
-    return Object.entries(selector).every(
+    return Object.entries(selector!).every(
       ([key, value]) => key in podLabels && podLabels[key] === value,
     );
   });
@@ -128,7 +128,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   }
 
   // Add network policies for each SSO client with authservice enabled
-  const ssos = pkg.spec?.sso?.filter(sso => sso.enableAuthserviceSelector) || [];
+  const ssos = getAuthserviceClients(pkg);
 
   for (const sso of ssos) {
     const waypointName = getWaypointName(sso.clientId);
