@@ -6,6 +6,9 @@ profile: ambient
 cniConfDir: ###ZARF_VAR_CNI_CONF_DIR###
 cniBinDir: ###ZARF_VAR_CNI_BIN_DIR###
 
+podLabels:
+  zarf.dev/agent: ignore
+
 # SELinux enforcing environments require the spc_t SELinux type
 seLinuxOptions:
   type: spc_t
