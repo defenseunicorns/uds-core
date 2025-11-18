@@ -47,6 +47,8 @@ realmInitEnv:
   # Maximum number of concurrent active sessions per user. Set to 0 to disable the limit (unlimited).
   SSO_SESSION_MAX_PER_USER: "0"
   # @lulaEnd ef276ec4-7921-4287-a18c-80dec5f8e742
+  SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS: ""
+  REALM_SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES: ""
 
 # Realm-level configuration
 realmConfig:
