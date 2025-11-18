@@ -49,8 +49,10 @@ grafana.ini:
     use_refresh_token: true
     allow_sign_up: true
     # Require a UDS Core group to access Grafana
+    # @lulaStart 58c54d48-11e4-422e-b386-ae61acfb2828
     role_attribute_path: "contains(groups[], '/UDS Core/Admin') && 'Admin' || contains(groups[], '/UDS Core/Auditor') && 'Viewer' || 'Unauthorized'"
     role_attribute_strict: true
+    # @lulaEnd 58c54d48-11e4-422e-b386-ae61acfb2828
     # Automatically redirect to the SSO login page
     auto_login: true
 
