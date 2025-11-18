@@ -6,8 +6,9 @@ profile: ambient
 cniConfDir: ###ZARF_VAR_CNI_CONF_DIR###
 cniBinDir: ###ZARF_VAR_CNI_BIN_DIR###
 
-podLabels:
-  zarf.dev/agent: ignore
+excludeNamespaces:
+  - kube-system
+  - zarf
 
 # SELinux enforcing environments require the spc_t SELinux type
 seLinuxOptions:
