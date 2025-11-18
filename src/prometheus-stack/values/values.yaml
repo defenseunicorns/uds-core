@@ -88,3 +88,46 @@ prometheusOperator:
 alertmanager:
   alertmanagerSpec:
     scheme: "http"
+## Create default rules for monitoring the cluster
+##
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: true
+    configReloaders: true
+    general: true
+    k8sContainerCpuUsageSecondsTotal: true
+    k8sContainerMemoryCache: true
+    k8sContainerMemoryRss: true
+    k8sContainerMemorySwap: true
+    k8sContainerResource: true
+    k8sContainerMemoryWorkingSetBytes: true
+    k8sPodOwner: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubeControllerManager: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    # @lulaStart 4yw40198-a55e-4769-a5de-44ffe7636093
+    kubernetesApps: true
+    # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
+    kubernetesResources: true
+    # @lulaStart eff0012d-fdc2-4085-b014-b845f2ae38e0
+    kubernetesStorage: true
+    # @lulaEnd eff0012d-fdc2-4085-b014-b845f2ae38e0
+    kubernetesSystem: true
+    kubeSchedulerAlerting: true
+    kubeSchedulerRecording: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+    windows: true
