@@ -15,7 +15,7 @@ import {
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
 import { kubeNodes } from "./generators/kubeNodes";
@@ -424,21 +424,17 @@ export function findMatchingSsoClient(
     return undefined;
   }
 
-  return pkg.spec.sso?.find(sso => {
-    const waypointSelector = sso.enableAuthserviceSelector;
-
-    // Skip if no selector defined
-    if (waypointSelector === undefined || waypointSelector === null) {
-      return false;
-    }
+  const authserviceClients = getAuthserviceClients(pkg);
+  return authserviceClients.find(client => {
+    const waypointSelector = client.enableAuthserviceSelector;
 
     // Empty object means namespace-wide protection
-    if (Object.keys(waypointSelector).length === 0) {
+    if (Object.keys(waypointSelector!).length === 0) {
       return true;
     }
 
-    // For non-empty selectors, check if any label matches
-    return Object.entries(waypointSelector).some(([key, value]) => selector[key] === value);
+    // For non-empty selectors, require all labels to match
+    return Object.entries(waypointSelector!).every(([key, value]) => selector[key] === value);
   });
 }
 

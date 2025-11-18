@@ -1,0 +1,47 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Unicorn JDK_JAVA_OPTIONS env injection
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should render JDK_JAVA_OPTIONS when image.repository contains "rfcurated"
+    set:
+      image:
+        repository: quay.io/rfcurated/keycloak
+        tag: "26.4.2"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JDK_JAVA_OPTIONS
+            value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
+
+  - it: should render JDK_JAVA_OPTIONS when image.tag contains "rfcurated"
+    set:
+      image:
+        repository: quay.io/keycloak/keycloak
+        tag: "26.4.2-jammy-fips-rfcurated"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JDK_JAVA_OPTIONS
+            value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
+
+  - it: should NOT render JDK_JAVA_OPTIONS when image is not rfcurated
+    set:
+      image:
+        repository: quay.io/keycloak/keycloak
+        tag: "26.4.4"
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JDK_JAVA_OPTIONS

@@ -7,15 +7,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { Matcher, MatcherKind, Policy } from "../../crd";
 import { ExemptionStore } from "./exemption-store";
 
-const enforcerMatcher = {
-  namespace: "neuvector",
-  name: "^neuvector-enforcer-pod.*",
+const falcoMatcher = {
+  namespace: "falco",
+  name: "^falco-pod.*",
   kind: MatcherKind.Pod,
 };
 
-const controllerMatcher = {
-  namespace: "neuvector",
-  name: "^neuvector-controller-pod.*",
+const falcosidekickMatcher = {
+  namespace: "falco",
+  name: "^falcosidekick-pod.*",
   kind: MatcherKind.Pod,
 };
 
@@ -41,7 +41,7 @@ describe("Exemption Store", () => {
   });
 
   it("Add exemption", async () => {
-    const e = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const e = getExemption("uid", falcoMatcher, [Policy.DisallowPrivileged]);
     ExemptionStore.add(e);
     const matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
 
@@ -49,7 +49,7 @@ describe("Exemption Store", () => {
   });
 
   it("Delete exemption", async () => {
-    const e = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const e = getExemption("uid", falcoMatcher, [Policy.DisallowPrivileged]);
     ExemptionStore.add(e);
     let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
@@ -60,13 +60,15 @@ describe("Exemption Store", () => {
   });
 
   it("Update exemption", async () => {
-    const enforcerException = getExemption("uid", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const enforcerException = getExemption("uid", falcoMatcher, [Policy.DisallowPrivileged]);
     ExemptionStore.add(enforcerException);
 
     let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
-    const controllerExemption = getExemption("uid", controllerMatcher, [Policy.RequireNonRootUser]);
+    const controllerExemption = getExemption("uid", falcosidekickMatcher, [
+      Policy.RequireNonRootUser,
+    ]);
     ExemptionStore.add(controllerExemption);
 
     matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
@@ -74,13 +76,15 @@ describe("Exemption Store", () => {
   });
 
   it("Add multiple policies", async () => {
-    const enforcerException = getExemption("foo", enforcerMatcher, [Policy.DisallowPrivileged]);
+    const enforcerException = getExemption("foo", falcoMatcher, [Policy.DisallowPrivileged]);
     ExemptionStore.add(enforcerException);
 
     let matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
     expect(matchers).toHaveLength(1);
 
-    const controllerExemption = getExemption("bar", controllerMatcher, [Policy.RequireNonRootUser]);
+    const controllerExemption = getExemption("bar", falcosidekickMatcher, [
+      Policy.RequireNonRootUser,
+    ]);
     ExemptionStore.add(controllerExemption);
 
     matchers = ExemptionStore.getByPolicy(Policy.DisallowPrivileged);
@@ -91,10 +95,8 @@ describe("Exemption Store", () => {
   });
 
   it("Add duplicate exemptions owned by different owners", async () => {
-    const enforcerException = getExemption("foo", enforcerMatcher, [Policy.DisallowPrivileged]);
-    const otherEnforcerException = getExemption("bar", enforcerMatcher, [
-      Policy.DisallowPrivileged,
-    ]);
+    const enforcerException = getExemption("foo", falcoMatcher, [Policy.DisallowPrivileged]);
+    const otherEnforcerException = getExemption("bar", falcoMatcher, [Policy.DisallowPrivileged]);
     ExemptionStore.add(enforcerException);
     ExemptionStore.add(otherEnforcerException);
 

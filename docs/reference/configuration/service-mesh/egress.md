@@ -87,6 +87,14 @@ Currently, only HTTP and TLS protocols are supported. The configuration will def
 Wildcards in host names are NOT currently supported.
 :::
 
+:::caution
+Adding any `remoteHost` egress creates/uses a shared L7 waypoint in ambient. This can change egress for other namespaces and break L4-only allowances (e.g., `remoteGenerated: Anywhere`), sometimes causing TLS failures. This behavior is by design in Istio ambient today.
+
+Recommendations:
+- Prefer explicit `remoteHost` entries for required external hosts (even with broad L4 egress).
+- Re‑verify critical egress after adding `remoteHost` in any namespace.
+:::
+
 ### Ambient Mode
 
 The following sample Package CR shows configuring egress to a specific host, "httpbin.org", on port 443.

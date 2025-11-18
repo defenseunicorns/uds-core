@@ -6,9 +6,11 @@
 import { describe, expect, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import {
   createDenyAllExceptWaypointPolicy,
+  findMatchingSsoClient,
   generateAuthorizationPolicies,
 } from "./authorizationPolicies";
 
@@ -392,83 +394,96 @@ describe("authorization policy generation", () => {
     );
   });
 
-  test("should generate correct policies for Neuvector", async () => {
+  test("should generate correct policies for Falco", async () => {
     const pkg: UDSPackage = {
-      metadata: { name: "neuvector", namespace: "neuvector", generation: 1 },
+      metadata: { name: "falco", namespace: "falco", generation: 1 },
       spec: {
         network: {
-          expose: [
-            {
-              service: "neuvector-service-webui",
-              selector: { app: "neuvector-manager-pod" },
-              gateway: Gateway.Admin,
-              host: "neuvector",
-              port: 8443,
-            },
-          ],
           allow: [
             { direction: Direction.Ingress, remoteGenerated: RemoteGenerated.IntraNamespace },
-            { direction: Direction.Egress, remoteGenerated: RemoteGenerated.IntraNamespace }, // Skipped.
+            // Egress IntraNamespace is intentionally skipped by the generator
             {
               direction: Direction.Ingress,
-              remoteGenerated: RemoteGenerated.Anywhere,
-              selector: { app: "neuvector-controller-pod" },
-              port: 30443,
-              description: "Webhook",
+              selector: { "app.kubernetes.io/name": "falco" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              remoteServiceAccount: "kube-prometheus-stack-prometheus",
+              port: 8765,
+              description: "Prometheus Falco Metrics",
+            },
+            {
+              direction: Direction.Ingress,
+              selector: { "app.kubernetes.io/name": "falcosidekick" },
+              remoteNamespace: "monitoring",
+              remoteSelector: { "app.kubernetes.io/name": "prometheus" },
+              remoteServiceAccount: "kube-prometheus-stack-prometheus",
+              port: 2801,
+              description: "Prometheus Falcosidekick Metrics",
             },
           ],
         },
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "neuvector", IstioState.Ambient);
-    // With the current per-rule design we expect three policies
+    const policies = await generateAuthorizationPolicies(pkg, "falco", IstioState.Ambient);
+    // With current design we expect three policies (Ingress IntraNamespace + two Prometheus metrics)
     expect(policies.length).toBe(3);
 
     // Policy for the IntraNamespace allow rule (no selector)
     const nsPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-ingress-all-pods-intranamespace",
+      p => p.metadata?.name === "protect-falco-ingress-all-pods-intranamespace",
     );
     expect(nsPolicy).toBeDefined();
-    expect(nsPolicy?.metadata?.namespace).toBe("neuvector");
+    expect(nsPolicy?.metadata?.namespace).toBe("falco");
     expect(nsPolicy?.spec?.action).toBe(Action.Allow);
     expect(nsPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([{ from: [{ source: { namespaces: ["neuvector"] } }] }]),
+      expect.arrayContaining([{ from: [{ source: { namespaces: ["falco"] } }] }]),
     );
 
-    // Policy for the controller allow rule ("Webhook")
-    const controllerPolicy = policies.find(
-      p => p.metadata?.name === "protect-neuvector-ingress-webhook",
+    // Policy for Falco metrics (Prometheus -> Falco)
+    const falcoMetrics = policies.find(
+      p => p.metadata?.name === "protect-falco-ingress-prometheus-falco-metrics",
     );
-    expect(controllerPolicy).toBeDefined();
-    expect(controllerPolicy?.spec?.selector?.matchLabels).toEqual({
-      app: "neuvector-controller-pod",
+    expect(falcoMetrics).toBeDefined();
+    expect(falcoMetrics?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "falco",
     });
-    expect(controllerPolicy?.spec?.action).toBe(Action.Allow);
-    expect(controllerPolicy?.spec?.rules).toEqual(
-      expect.arrayContaining([{ to: [{ operation: { ports: ["30443"] } }] }]),
-    );
-
-    // Policy for the expose rule (should use default base name)
-    const exposePolicy = policies.find(
-      p =>
-        p.metadata?.name ===
-        "protect-neuvector-ingress-8443-neuvector-manager-pod-istio-admin-gateway",
-    );
-    expect(exposePolicy).toBeDefined();
-    expect(exposePolicy?.spec?.selector?.matchLabels).toEqual({ app: "neuvector-manager-pod" });
-    expect(exposePolicy?.spec?.action).toBe(Action.Allow);
-    expect(exposePolicy?.spec?.rules).toEqual(
+    expect(falcoMetrics?.spec?.action).toBe(Action.Allow);
+    expect(falcoMetrics?.spec?.rules).toEqual(
       expect.arrayContaining([
         {
           from: [
             {
               source: {
-                principals: ["cluster.local/ns/istio-admin-gateway/sa/admin-ingressgateway"],
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
               },
             },
           ],
-          to: [{ operation: { ports: ["8443"] } }],
+          to: [{ operation: { ports: ["8765"] } }],
+        },
+      ]),
+    );
+
+    // Policy for Falcosidekick metrics (Prometheus -> Falcosidekick)
+    const sidekickMetrics = policies.find(
+      p => p.metadata?.name === "protect-falco-ingress-prometheus-falcosidekick-metrics",
+    );
+    expect(sidekickMetrics).toBeDefined();
+    expect(sidekickMetrics?.spec?.selector?.matchLabels).toEqual({
+      "app.kubernetes.io/name": "falcosidekick",
+    });
+    expect(sidekickMetrics?.spec?.action).toBe(Action.Allow);
+    expect(sidekickMetrics?.spec?.rules).toEqual(
+      expect.arrayContaining([
+        {
+          from: [
+            {
+              source: {
+                principals: ["cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"],
+              },
+            },
+          ],
+          to: [{ operation: { ports: ["2801"] } }],
         },
       ]),
     );
@@ -1097,5 +1112,131 @@ describe("createDenyAllExceptWaypointPolicy", () => {
     expect(policy.spec?.rules?.[0].from?.[0].source?.notPrincipals).toEqual([
       "cluster.local/ns/test-ns/sa/test-waypoint",
     ]);
+  });
+});
+
+describe("findMatchingSsoClient", () => {
+  test("returns undefined when selector is undefined", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(
+      findMatchingSsoClient(pkg, undefined as unknown as Record<string, string>),
+    ).toBeUndefined();
+  });
+
+  test("returns undefined when mesh mode is not Ambient", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a" } }],
+        network: { serviceMesh: { mode: Mode.Sidecar } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, { app: "a" })).toBeUndefined();
+  });
+
+  test("prefilters to enabled clients only (missing/null/undefined selector are ignored)", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "d1", name: "" },
+          { clientId: "d3", name: "", enableAuthserviceSelector: undefined },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, { app: "anything" })).toBeUndefined();
+  });
+
+  test("empty SSO selector ({}) matches any provided selector (namespace-wide)", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: {} }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, {})).toMatchObject({ clientId: "c1" });
+    expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "c1" });
+  });
+
+  test("non-empty SSO selector uses all-label matching semantics", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a", tier: "prod" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // Matches only when all labels match
+    expect(findMatchingSsoClient(pkg, { app: "a", tier: "prod" })).toMatchObject({
+      clientId: "c1",
+    });
+    // Does not match when only a subset matches
+    expect(findMatchingSsoClient(pkg, { tier: "prod" })).toBeUndefined();
+  });
+
+  test("two enabled clients both match; first match wins", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "first", name: "", enableAuthserviceSelector: { app: "x", tier: "prod" } },
+          { clientId: "second", name: "", enableAuthserviceSelector: { app: "x" } },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // All-label semantics: with selector { app: "x", tier: "prod" }, both clients match.
+    // Order matters: ensure the first matching client is returned.
+    expect(findMatchingSsoClient(pkg, { app: "x", tier: "prod" })).toMatchObject({
+      clientId: "first",
+    });
+  });
+
+  test("ordering: {} selector client wins over specific-label client", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [
+          { clientId: "wide", name: "", enableAuthserviceSelector: {} },
+          { clientId: "specific", name: "", enableAuthserviceSelector: { app: "x" } },
+        ],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // {} means namespace-wide; it matches any provided selector.
+    // Verify ordering: the {} client appears first and should win.
+    expect(findMatchingSsoClient(pkg, { app: "x" })).toMatchObject({ clientId: "wide" });
+  });
+
+  test("empty-string selector value matches only empty-string label", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        sso: [{ clientId: "empty", name: "", enableAuthserviceSelector: { foo: "" } }],
+        network: { serviceMesh: { mode: Mode.Ambient } },
+      },
+    };
+
+    // Exact-value requirement: empty-string label matches only empty-string selector value.
+    expect(findMatchingSsoClient(pkg, { foo: "" })).toMatchObject({ clientId: "empty" });
+    // Non-empty value should not match empty-string selector value.
+    expect(findMatchingSsoClient(pkg, { foo: "bar" })).toBeUndefined();
+    // Empty provided selector has no keys -> no labels to match -> no match.
+    expect(findMatchingSsoClient(pkg, {})).toBeUndefined();
   });
 });

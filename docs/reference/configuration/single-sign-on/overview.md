@@ -84,34 +84,6 @@ grafana:
 
 ```
 
-#### Neuvector
-
-Neuvector [maps the groups](https://github.com/defenseunicorns/uds-core/blob/main/src/neuvector/chart/templates/uds-package.yaml#L31-L35) from Keycloak to its internal `admin` and `reader` groups.
-
-| Keycloak Group | Mapped Neuvector Group |
-|----------------|------------------------|
-| `Admin`        | `admin`                |
-| `Auditor`      | `reader`               |
-
-##### Overriding Neuvector Groups
-
-To override the Keycloak -> Neuvector group mapping you can provide the following bundle overrides:
-
-```yaml
-neuvector:
-  uds-neuvector-config:
-    values:
-        # Sets this as an allowed group for the Keycloak Client and maps to Neuvector admin group
-        - path: sso.adminGroups
-          value:
-            - KEYCLOAK_ADMIN_GROUP # name of an existing Keycloak group
-        # Sets this as an allowed group for the Keycloak Client and maps to Neuvector reader group
-        - path: sso.readerGroups
-          value:
-            - KEYCLOAK_AUDITOR_GROUP # name of an existing Keycloak group
-
-```
-
 #### Keycloak
 
 All groups are under the `UDS Core` parent group. Frequently a group will be referred to as `UDS Core/Admin` or `UDS Core/Auditor`. In the Keycloak UI this requires an additional click to get down to the sub groups.
@@ -125,7 +97,7 @@ All groups are under the `UDS Core` parent group. Frequently a group will be ref
 1. [Keycloak Session Management](/reference/configuration/single-sign-on/keycloak-session-management/)
 1. [L7 Load Balancer](/reference/configuration/single-sign-on/l7-load-balancer/)
 1. [Notifications and Alerts](/reference/configuration/single-sign-on/notifications-and-alerts/)
-1. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recoving-lost-credentials/)
+1. [Recovering lost Keycloak credentials](/reference/configuration/single-sign-on/recovering-lost-credentials/)
 1. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
 1. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
 1. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
