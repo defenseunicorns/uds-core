@@ -54,16 +54,15 @@ tasks:
             BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
 
             echo "Creating branch: ${BRANCH} from ${RB}"
-            git switch -c "${BRANCH}" "origin/${RB}"
+            git switch -C "${BRANCH}" "origin/${RB}"
 
-            C="$(echo "$COMMIT" | xargs)"
-            echo "Cherry-picking ${C} into ${BRANCH}..."
+            echo "Cherry-picking ${NAME} into ${BRANCH}..."
 
             # Suppress noisy git output; on failure, show clear next steps instead.
-            if ! git cherry-pick -x "$C" >/dev/null 2>&1; then
+            if ! git cherry-pick -x "$NAME" >/dev/null 2>&1; then
               echo
               echo "======================================================================"
-              echo "Backport to ${RB} hit conflicts while cherry-picking ${C}."
+              echo "Backport to ${RB} hit conflicts while cherry-picking ${NAME}."
               echo "You are now on branch: ${BRANCH}"
               echo
               echo "To resolve the conflicts and finish this backport, run (copy/paste):"
@@ -84,7 +83,7 @@ tasks:
               if command -v gh >/dev/null 2>&1; then
                 echo "  gh pr create --title \"${TITLE}\" --body \"${BODY}\" --base \"${RB}\" --head \"${BRANCH}\""
               else
-                echo "  # After pushing, open a PR with base=${RB} and compare=${BRANCH}"
+                echo "  # Branch '${BRANCH}' has been pushed. Open a PR with base='${RB}' and compare='${BRANCH}'."
               fi
 
               if [[ -n "${CURR_BRANCH}" ]]; then

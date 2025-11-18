@@ -31,7 +31,7 @@ The helper task requires inputs for the specific "target versions" (minor versio
 
 ```console
 uds run -f tasks/backport.yaml backport \
-  --with target_versions=0.54,0.55,0.56 \
+  --with target_versions="0.54,0.55,0.56" \
   --with commit=b4068116c
 ```
 
@@ -39,4 +39,4 @@ The task is designed to fail if there are conflicts when cherry-picking commits 
 
 > [!NOTE]
 > `target_versions` should be plain `X.Y` values (no `v` or `release/` prefix) and match the `MAJOR.MINOR` version you want to backport to.
-> Multiple versions must be comma-separated with no spaces (e.g. `0.54,0.55`).
+> Multiple versions must be comma-separated (e.g. `0.54,0.55` or `"0.54, 0.55, 0.56"`).

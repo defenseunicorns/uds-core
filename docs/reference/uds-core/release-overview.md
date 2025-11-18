@@ -11,8 +11,8 @@ This document outlines how UDS Core is versioned, released, tested, and maintain
 
 UDS Core follows a predictable release schedule to provide regular updates and improvements:
 
-- **Regular Releases**: New versions are published every 2 weeks (typically on Tuesdays)
-- **Hotfix Releases**: Critical bug fixes may be released outside the regular cycle when necessary
+- **Regular Releases** (minor or major): New versions are published every 2 weeks (typically on Tuesdays)
+- **Patch Releases**: Critical bug fixes are released as patches outside the regular cycle when necessary
 
 ### Patch Policy
 

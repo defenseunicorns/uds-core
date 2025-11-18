@@ -88,5 +88,5 @@ jobs:
           BRANCH="release/${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}"
           TAG="v${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}.0"
           git fetch origin --tags
-          git switch -c "$BRANCH" "$TAG"
+          git switch -C "$BRANCH" "$TAG"
           git push origin "$BRANCH"
