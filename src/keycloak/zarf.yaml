@@ -3,10 +3,12 @@
 
 # @lulaStart 4147b6a6-3339-4d5d-b10a-f16502b52206
 # @lulaStart 7db76183-fb97-4a13-ae1e-a2b45ddd4430
+# @lulaStart 9fbf58ca-572f-4a20-a161-a77418dfb1ab
 kind: ZarfPackageConfig
 metadata:
   name: uds-core-keycloak
   description: "Keycloak"
+# @lulaEnd 9fbf58ca-572f-4a20-a161-a77418dfb1ab
 # @lulaEnd 7db76183-fb97-4a13-ae1e-a2b45ddd4430
 # @lulaEnd 4147b6a6-3339-4d5d-b10a-f16502b52206
 variables:
