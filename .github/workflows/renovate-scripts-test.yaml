@@ -1,7 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: Renovate Readiness Tests
+name: Scripts Tests
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -11,11 +11,15 @@ on:
   pull_request:
     paths:
       - "scripts/renovate/**"
+      - "scripts/root-ca-retriever/**"
 
 jobs:
   test:
-    name: Vitest Tests
+    name: ${{ matrix.script-dir }} Tests
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        script-dir: [renovate, root-ca-retriever]
 
     steps:
       - name: Checkout code
@@ -25,9 +29,9 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
 
       - name: Install dependencies
-        working-directory: scripts/renovate
+        working-directory: scripts/${{ matrix.script-dir }}
         run: npm ci
 
       - name: Run tests
-        working-directory: scripts/renovate
+        working-directory: scripts/${{ matrix.script-dir }}
         run: npm run test

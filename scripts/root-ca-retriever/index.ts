@@ -250,25 +250,55 @@ async function main() {
   // Parse command line arguments
   const isCheckMode = process.argv.includes("--check");
 
+  const outputDir = CERTS_BASE_DIR;
+  const errors: string[] = [];
+  let dodCerts: DoDCert[] = [];
+  let publicCerts: publicCerts.PublicCACert[] = [];
+
+  // Handle DoD certificates with individual error handling in check mode
   try {
-    const outputDir = CERTS_BASE_DIR;
+    dodCerts = await handleDoDCerts(isCheckMode, outputDir);
+  } catch (error) {
+    if (isCheckMode) {
+      errors.push(`DoD certificates: ${error instanceof Error ? error.message : String(error)}`);
+    } else {
+      console.error(`${error}`);
+      process.exit(1);
+    }
+  }
 
-    // Handle DoD certificates
-    const dodCerts = await handleDoDCerts(isCheckMode, outputDir);
+  // Handle public certificates with individual error handling in check mode
+  try {
+    publicCerts = await handlePublicCerts(isCheckMode, outputDir);
+  } catch (error) {
+    if (isCheckMode) {
+      errors.push(`Public certificates: ${error instanceof Error ? error.message : String(error)}`);
+    } else {
+      console.error(`${error}`);
+      process.exit(1);
+    }
+  }
 
-    // Handle public certificates
-    const publicCerts = await handlePublicCerts(isCheckMode, outputDir);
+  // In check mode, report all collected errors
+  if (isCheckMode && errors.length > 0) {
+    console.error(`\nFound ${errors.length} issue(s):`);
+    errors.forEach((error, index) => {
+      console.error(`${index + 1}. ${error}`);
+    });
+    process.exit(1);
+  }
 
-    if (!isCheckMode) {
-      // Update ConfigMap with base64 encoded certificates
+  // Only proceed with ConfigMap update if not in check mode and no errors occurred
+  if (!isCheckMode) {
+    try {
       await updateConfigMapWithCerts(dodCerts, publicCerts);
       console.log(
         `Successfully updated ${dodCerts.length} DoD certificates and ${publicCerts.length} public certificates`,
       );
+    } catch (error) {
+      console.error(`${error}`);
+      process.exit(1);
     }
-  } catch (error) {
-    console.error(`${error}`);
-    process.exit(1);
   }
 }
 

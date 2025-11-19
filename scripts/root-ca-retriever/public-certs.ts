@@ -77,7 +77,7 @@ export async function retrievePublicCACertificates(): Promise<string> {
 }
 
 /**
- * Downloads and parses Mozilla's Common CA Database (CCDB) CSV data containing
+ * Downloads and parses Mozilla's Common CA Database (CCADB) CSV data containing
  * certificate metadata including issuer organization, geographic focus, and owner information
  * @returns Promise that resolves to an array of parsed CSV records
  * @throws {Error} When HTTP request fails or CSV parsing fails
@@ -177,7 +177,7 @@ export function inventoryPublicCACertificates(
 }
 
 /**
- * Enriches PublicCACert objects with metadata from Mozilla's CCDB CSV data.
+ * Enriches PublicCACert objects with metadata from Mozilla's CCADB CSV data.
  * Attempts exact matches, organizational unit matches, and case-insensitive matches.
  * Sets unknown values for certificates not found in the CSV data.
  * @param certs - Array of PublicCACert objects to enrich
@@ -325,7 +325,7 @@ export function checkForUnaccountedCerts(
       `\nError: Found ${unaccountedCerts.length} certificates that are not in the include or exclude list:`,
     );
     console.error("\nYAML entries for copy-paste into your config file:");
-    console.error("include:");
+    console.error("<include/exclude>:");
     unaccountedCerts.forEach(cert => {
       console.error(`  - commonName: "${cert.commonName}"`);
       console.error(`    owner: "${cert.owner || "Unknown"}"`);
@@ -395,7 +395,9 @@ export function diffPublicCACerts(existing: PublicCACert[], downloaded: PublicCA
  * @throws {Error} When directory creation or file writing fails
  */
 export async function writePublicCABundle(certs: PublicCACert[], outputDir: string) {
-  const bundleContent = certs
+  const sortedCerts = [...certs].sort((a, b) => a.commonName.localeCompare(b.commonName));
+
+  const bundleContent = sortedCerts
     .map(cert => {
       const separator = "=".repeat(cert.commonName.length);
       return `${cert.commonName}\n${separator}\n${cert.content}\n`;

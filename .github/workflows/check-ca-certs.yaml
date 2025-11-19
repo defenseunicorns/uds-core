@@ -5,12 +5,11 @@ name: Check CA Cert Updates
 
 on:
   schedule:
-    - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
-  workflow_call: {}
+    # Runs every morning at 2:00 AM UTC
+    - cron: "0 2 * * *"
 
 permissions:
   contents: read
-  packages: read
 
 jobs:
   test-ca-certs:

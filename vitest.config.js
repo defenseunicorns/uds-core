@@ -12,7 +12,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.spec.ts'],
-    exclude: ['test/vitest/**'],
+    exclude: ['test/vitest/**', 'scripts/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

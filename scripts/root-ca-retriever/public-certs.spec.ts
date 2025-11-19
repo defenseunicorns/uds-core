@@ -739,7 +739,7 @@ SECOND_CERT_CONTENT_HERE
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         "\nYAML entries for copy-paste into your config file:",
       );
-      expect(consoleErrorSpy).toHaveBeenCalledWith("include:");
+      expect(consoleErrorSpy).toHaveBeenCalledWith("<include/exclude>:");
       expect(consoleErrorSpy).toHaveBeenCalledWith('  - commonName: "Unknown CA 1"');
       expect(consoleErrorSpy).toHaveBeenCalledWith('    owner: "Unknown Owner"');
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -1004,6 +1004,42 @@ exclude: 123
       expect(consoleLogSpy).toHaveBeenCalledWith(
         expect.stringContaining("Wrote 1 trusted CA certificates to:"),
       );
+    });
+
+    it("should write certificates in alphabetical order by commonName", async () => {
+      const certs: PublicCACert[] = [
+        {
+          commonName: "Zebra Root CA",
+          content: realPEMCert,
+        },
+        {
+          commonName: "Alpha Root CA",
+          content: realPEMCert,
+        },
+        {
+          commonName: "Beta Root CA",
+          content: realPEMCert,
+        },
+      ];
+
+      await writePublicCABundle(certs, tempDir);
+
+      const bundlePath = path.join(tempDir, "public", "ca-bundle.pem");
+      const bundleContent = await fs.promises.readFile(bundlePath, "utf8");
+
+      // Extract the certificate names from the bundle in order they appear
+      // Look for lines that are followed by separator lines (===)
+      const nameMatches = bundleContent.match(/^(.+)\n=+\n/gm);
+      const certNames = nameMatches?.map(match => match.split("\n")[0]) || [];
+      expect(certNames).toEqual(["Alpha Root CA", "Beta Root CA", "Zebra Root CA"]);
+
+      // Verify the actual order in the content
+      const alphaIndex = bundleContent.indexOf("Alpha Root CA");
+      const betaIndex = bundleContent.indexOf("Beta Root CA");
+      const zebraIndex = bundleContent.indexOf("Zebra Root CA");
+
+      expect(alphaIndex).toBeLessThan(betaIndex);
+      expect(betaIndex).toBeLessThan(zebraIndex);
     });
   });
 
