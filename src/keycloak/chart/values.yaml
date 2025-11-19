@@ -5,12 +5,12 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.4.2"
+  tag: "26.4.4"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.19.1
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.20.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -30,7 +30,7 @@ pathParameterProtection: true
 # The primary Keycloak realm
 realm: uds
 
-# UDS Identity Config Realm Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+# UDS Identity Config Realm Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/customization.md#templated-realm-values
 realmInitEnv:
   GOOGLE_IDP_ENABLED: false
   # GOOGLE_IDP_ID: ""
@@ -41,6 +41,7 @@ realmInitEnv:
   # GOOGLE_IDP_AUDITOR_GROUP: ""
   # PASSWORD_POLICY: "hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(90) and specialChars(2) and lowerCase(0) and upperCase(0) and passwordHistory(5) and length(12) and notUsername(undefined) and digits(0)"
   # EMAIL_VERIFICATION_ENABLED: true
+  # EMAIL_AS_USERNAME: false
   # TERMS_AND_CONDITIONS_ENABLED: true
   # X509_OCSP_FAIL_OPEN: true
   # @lulaStart ef276ec4-7921-4287-a18c-80dec5f8e742
@@ -55,7 +56,7 @@ realmConfig:
   # Maximum number of in-flight (ongoing) login attempts per user to prevent login storms.
   maxInFlightLoginsPerUser: 300
 
-# UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/CUSTOMIZE.md#templated-realm-values
+# UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/customization.md#templated-realm-values
 # @lulaStart 96b7aa1b-b307-45c0-af40-8b57f3726693
 realmAuthFlows:
   USERNAME_PASSWORD_AUTH_ENABLED: true
@@ -188,6 +189,9 @@ tolerations: []
 
 # Additional Pod labels
 podLabels: {}
+
+# Additional Pod annotations
+podAnnotations: {}
 
 # Pod resource requests and limits
 resources:
@@ -366,6 +370,11 @@ waypoint:
     limits:
       cpu: 2
       memory: 1Gi
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+    priorityClassName: ""
   horizontalPodAutoscaler:
     enabled: true
     minReplicas: 1

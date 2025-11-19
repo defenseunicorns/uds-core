@@ -46,6 +46,27 @@ tests:
       waypoint.deployment.requests.memory: 512Mi
       waypoint.deployment.limits.cpu: 4
       waypoint.deployment.limits.memory: 2Gi
+      waypoint.deployment.nodeSelector.disktype: ssd
+      waypoint.deployment.tolerations:
+        - foo: bar
+      waypoint.deployment.affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: topology.kubernetes.io/zone
+                    operator: In
+                    values:
+                      - mars-north1
+                      - mars-south1
+      waypoint.deployment.topologySpreadConstraints:
+        - labelSelector:
+            matchLabels:
+              foo: bar
+          maxSkew: 1
+          topologyKey: zone
+          whenUnsatisfiable: DoNotSchedule
+      waypoint.deployment.priorityClassName: most-urgent
     template: waypoint-config.yaml
     asserts:
       - equal:
@@ -63,6 +84,28 @@ tests:
                       limits:
                         cpu: 4
                         memory: 2Gi
+                  nodeSelector:
+                    disktype: ssd
+                  tolerations:
+                    - foo: bar
+                  affinity:
+                    nodeAffinity:
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                        - matchExpressions:
+                          - key: topology.kubernetes.io/zone
+                            operator: In
+                            values:
+                            - mars-north1
+                            - mars-south1
+                  topologySpreadConstraints:
+                    - labelSelector:
+                        matchLabels:
+                          foo: bar
+                      maxSkew: 1
+                      topologyKey: zone
+                      whenUnsatisfiable: DoNotSchedule
+                  priorityClassName: most-urgent
 
   - it: should not render horizontalPodAutoscaler when disabled
     set:

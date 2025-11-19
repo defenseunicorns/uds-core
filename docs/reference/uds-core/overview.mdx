@@ -4,11 +4,13 @@ sidebar:
     order: 1
 ---
 
+import LikeC4View from '@components/LikeC4View.astro';
+
 ## What is UDS Core?
 
-<!-- @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6 -->
+{/* @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6 */}
 UDS Core is a collection of several individual applications combined into a single Zarf Package, that establishes a secure baseline for secure cloud-native systems. It comes equipped with comprehensive compliance documentation and prioritizes seamless support for highly regulated and egress-limited environments. Building upon the achievements of Platform One, UDS Core enhances the security stance introduced by Big Bang. It introduces advanced automation through the UDS Operator and UDS Policy Engine.
-<!-- @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6 -->
+{/* @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6 */}
 
 UDS Core enables your team to:
 
@@ -16,7 +18,7 @@ UDS Core enables your team to:
 - Leverage specific functional applications to deliver a versatile platform that caters to diverse mission objectives.
 - Enhance the efficiency, security, and success of software delivery and operations process.
 
-![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
+<LikeC4View viewId="index" />
 
 :::note
 The above diagram captures an overview of the UDS Core architecture, primarily focusing on Kubernetes pod communications and namespace separation. In some cases this diagram omits some more complex connections for the sake of simplicity, for example:

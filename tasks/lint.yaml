@@ -5,31 +5,42 @@ includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.3/tasks/lint.yaml
 
 tasks:
+  - name: ensure-uv
+    description: Install linting tool dependencies
+    actions:
+      - description: Check if uv is installed
+        cmd: |
+          if ! command -v uv; then
+            echo "⚠️  uv is not installed."
+            echo "💡 Refer to installation steps: https://docs.astral.sh/uv/getting-started/installation/"
+            exit 1
+          fi
+
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
-      - description: install codespell deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install codespell
+      - description: Ensure uv is installed
+        task: ensure-uv
       - description: "Pepr Format"
         cmd: npx pepr format
       - description: Fix codespell lint issues
         cmd: |
-          codespell || true
-          codespell -w
+          uvx codespell || true
+          uvx codespell -w
 
   - name: check
     description: "Run linting checks"
     actions:
+      - description: Ensure uv is installed
+        task: ensure-uv
       - description: install pepr deps
         cmd: npm ci
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
-      - description: install yamllint and codespell deps
-        cmd: CMD=pip && which $CMD || CMD=pip3 && $CMD install yamllint codespell
       - description: yaml lint
-        cmd: yamllint . -c .yamllint --no-warnings
+        cmd: uvx yamllint . -c .yamllint --no-warnings
       - description: codespell lint
-        cmd: codespell
+        cmd: uvx codespell
       - description: Install addlicense dep
         # renovate: datasource=github-tags depName=google/addlicense versioning=semver
         cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
