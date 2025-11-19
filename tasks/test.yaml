@@ -127,7 +127,6 @@ tasks:
     actions:
       - cmd: |
           npm ci
-          # Install dependencies for script directories that have package.json
           npx vitest run
 
   - name: uds-core
