@@ -1,0 +1,81 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.logoutConfirmation }}
+# Enforce logout confirmation by stripping `id_token_hint` from logout URLs
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: enforce-logout-confirmation
+  namespace: istio-system
+spec:
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: GATEWAY
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.lua
+          typed_config:
+            "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+            inlineCode: |
+              function envoy_on_request(request_handle)
+                local headers = request_handle:headers()
+                local path = headers:get(":path")
+                local host = headers:get(":authority")
+
+                if not host then
+                  return
+                end
+
+                if not path then
+                  return
+                end
+
+                -- Only apply to keycloak hosts
+                -- local is_keycloak_host = (host == "sso.{{ .Values.domain }}") or (host == "keycloak.{{ tpl .Values.adminDomain . }}")
+                local is_keycloak_host = (host == "sso.uds.dev") or (host == "keycloak.admin.uds.dev")
+                if not is_keycloak_host then
+                  return
+                end
+
+                -- Only process OIDC logout endpoint requests
+                if not string.find(path, "/protocol/openid%-connect/logout") then
+                  return
+                end
+
+                -- Split the path into the portion before '?' and the raw query string
+                -- 'query' is an empty string when no '?' present
+                local path_only, query = string.match(path, "^([^?]*)%??(.*)$")
+
+                -- No query string => nothing to strip
+                if #query == 0 then
+                  return
+                end
+
+                -- Filter out id_token_hint from the query parameters
+                local new_params = {}
+                for param in string.gmatch(query, "[^&]+") do
+                  local key = string.match(param, "^([^=]+)=?")
+                  -- if key ~= "id_token_hint" and key ~= "post_logout_redirect_uri" then
+                  -- Keycloak displays a logout confirmation only then it doesn't end up with a redirect.
+                  if key ~= "post_logout_redirect_uri" then
+                    table.insert(new_params, param)
+                  end
+                end
+
+                -- Rebuild the query string from kept params
+                local new_query = table.concat(new_params, "&")
+                local new_path = (#new_query > 0) and (path_only .. "?" .. new_query) or path_only
+
+                -- Only rewrite when something actually changed
+                if new_path ~= path then
+                  headers:replace(":path", new_path)
+                end
+              end
+{{- end }}
