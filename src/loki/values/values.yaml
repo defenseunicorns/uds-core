@@ -204,7 +204,3 @@ write:
 backend:
   # Remove default anti-affinity to support single node
   affinity: null
-  # Temporary label to trigger mutation for istio service patch
-  service:
-    labels:
-      uds/istio-patch: "true"
