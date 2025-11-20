@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- if .Values.logoutConfirmation }}
-# Enforce logout confirmation by stripping `id_token_hint` from logout URLs
+# Enforce logout confirmation by stripping `post_logout_redirect_uri` from logout URLs
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -58,12 +58,12 @@ spec:
                   return
                 end
 
-                -- Filter out id_token_hint from the query parameters
+                -- Filter out post_logout_redirect_uri from the query parameters
                 local new_params = {}
                 for param in string.gmatch(query, "[^&]+") do
                   local key = string.match(param, "^([^=]+)=?")
                   -- if key ~= "id_token_hint" and key ~= "post_logout_redirect_uri" then
-                  -- Keycloak displays a logout confirmation only then it doesn't end up with a redirect.
+                  -- Keycloak displays a logout confirmation only when it doesn't end up with a redirect.
                   if key ~= "post_logout_redirect_uri" then
                     table.insert(new_params, param)
                   end

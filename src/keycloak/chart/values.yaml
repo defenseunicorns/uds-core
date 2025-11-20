@@ -27,7 +27,7 @@ additionalGatewayNamespaces: []
 # Should only be disabled if this is incorrectly blocking paths you expect to be allowed
 pathParameterProtection: true
 
-# Always enforce a logout confirmation screen by stripping id_token_hint from logout URLs
+# Always enforce a logout confirmation screen by stripping post_logout_redirect_uri from logout URLs
 logoutConfirmation: true
 
 # The primary Keycloak realm
