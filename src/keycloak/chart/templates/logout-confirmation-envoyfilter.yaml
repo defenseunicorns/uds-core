@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- if .Values.logoutConfirmation }}
-# Enforce logout confirmation by stripping `id_token_hint` from logout URLs
+# Enforce logout confirmation by stripping `post_logout_redirect_uri` from logout URLs
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
