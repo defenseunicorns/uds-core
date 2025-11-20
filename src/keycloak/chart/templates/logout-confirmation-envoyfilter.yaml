@@ -58,7 +58,7 @@ spec:
                   return
                 end
 
-                -- Filter out id_token_hint from the query parameters
+                -- Filter out post_logout_redirect_uri from the query parameters
                 local new_params = {}
                 for param in string.gmatch(query, "[^&]+") do
                   local key = string.match(param, "^([^=]+)=?")
