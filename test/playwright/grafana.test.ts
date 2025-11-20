@@ -159,6 +159,6 @@ test("validate logout functionality", async ({ page }) => {
     await page.waitForURL(/.*sso\.uds\.dev.*/, { timeout: 15000 });
 
     // Verify we're at the Keycloak login page
-    await expect(page.locator('h3:has-text("Sign in")')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('p:has-text("You are logged out")')).toBeVisible({ timeout: 10000 });
   });
 });

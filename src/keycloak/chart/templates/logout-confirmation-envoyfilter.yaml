@@ -38,8 +38,7 @@ spec:
                 end
 
                 -- Only apply to keycloak hosts
-                -- local is_keycloak_host = (host == "sso.{{ .Values.domain }}") or (host == "keycloak.{{ tpl .Values.adminDomain . }}")
-                local is_keycloak_host = (host == "sso.uds.dev") or (host == "keycloak.admin.uds.dev")
+                local is_keycloak_host = (host == "sso.{{ .Values.domain }}") or (host == "keycloak.{{ tpl .Values.adminDomain . }}")
                 if not is_keycloak_host then
                   return
                 end
