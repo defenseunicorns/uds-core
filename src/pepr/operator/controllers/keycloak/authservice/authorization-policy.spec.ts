@@ -4,19 +4,20 @@
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
+import type { UDSPackage } from "../../../crd";
+import type {
+  Operation as IstioOperation,
+  Rule as IstioRule,
+  To as IstioTo,
+} from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { PROMETHEUS_PRINCIPAL } from "../../utils";
 import {
   authNRequestAuthentication,
   authserviceAuthorizationPolicy,
+  computeMonitorExemptions,
   jwtAuthZAuthorizationPolicy,
   UDSConfig,
-  computeMonitorExemptions,
 } from "./authorization-policy";
-import type { UDSPackage } from "../../../crd";
-import type {
-  Rule as IstioRule,
-  To as IstioTo,
-  Operation as IstioOperation,
-} from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
 
 // Patch UDSConfig for deterministic output
 beforeAll(() => {
@@ -27,6 +28,28 @@ const labelSelector = { app: "test-app" };
 const name = "my-app";
 const namespace = "test-ns";
 const waypointName = "my-waypoint";
+
+function collectOperations(rules: IstioRule[]): IstioOperation[] {
+  return rules.flatMap(r => (r.to ?? []) as IstioTo[]).map(t => t.operation as IstioOperation);
+}
+
+function splitMetricsAndNonMetrics(ops: IstioOperation[]) {
+  const metricsOps = ops.filter(op => Array.isArray(op.paths));
+  const nonMetricsOps = ops.filter(op => Array.isArray(op.notPaths) || Array.isArray(op.notPorts));
+  return { metricsOps, nonMetricsOps };
+}
+
+function collectCatchAllPorts(nonMetricsOps: IstioOperation[]): string[] {
+  return nonMetricsOps.filter(op => Array.isArray(op.notPorts)).flatMap(op => op.notPorts ?? []);
+}
+
+function expectHasMetric(ops: IstioOperation[], port: string, path: string) {
+  expect(ops.some(op => op.ports?.includes(port) && op.paths?.includes(path))).toBe(true);
+}
+
+function expectHasNonMetricExclusion(ops: IstioOperation[], port: string, path: string) {
+  expect(ops.some(op => op.ports?.includes(port) && op.notPaths?.includes(path))).toBe(true);
+}
 
 describe("authorization-policy.ts", () => {
   it("sets selector for non-ambient authservice policy", () => {
@@ -46,7 +69,6 @@ describe("authorization-policy.ts", () => {
       [],
     );
     const rule1 = pol1.spec!.rules?.[0] as IstioRule;
-    expect(Array.isArray(rule1.to)).toBe(true);
     expect((rule1.to ?? []).length).toBe(0);
 
     const pol2 = jwtAuthZAuthorizationPolicy(
@@ -58,8 +80,36 @@ describe("authorization-policy.ts", () => {
       [],
     );
     const rule2 = pol2.spec!.rules?.[0] as IstioRule;
-    expect(Array.isArray(rule2.to)).toBe(true);
     expect((rule2.to ?? []).length).toBe(0);
+  });
+
+  it("authservice metrics rule uses Prometheus-only from.source and non-metrics rule has no from", () => {
+    const monitorExemptions = [{ port: "8080", path: "/metrics" }];
+    const pol = authserviceAuthorizationPolicy(
+      labelSelector,
+      name,
+      namespace,
+      false,
+      undefined,
+      monitorExemptions,
+    );
+
+    const rules = (pol.spec!.rules ?? []) as IstioRule[];
+    expect(rules.length).toBeGreaterThanOrEqual(1);
+
+    const metricsRule = rules[0];
+    const nonMetricsRule = rules[1];
+
+    // Metrics rule: from.source.notPrincipals should exclude Prometheus only
+    const metricsFrom = metricsRule.from?.[0].source as {
+      notPrincipals?: string[];
+    };
+    expect(metricsFrom.notPrincipals).toEqual([PROMETHEUS_PRINCIPAL]);
+    expect(metricsRule.when).toBeDefined();
+
+    // Non-metrics rule: no from.source filter, only when clause
+    expect(nonMetricsRule.from).toBeUndefined();
+    expect(nonMetricsRule.when).toBeDefined();
   });
 
   it("computeMonitorExemptions excludes non-matching monitors", () => {
@@ -88,26 +138,32 @@ describe("authorization-policy.ts", () => {
     expect(toList.length).toBe(0);
   });
 
-  it("ambient jwtAuthZ policy includes only monitor 'to' exclusions (no base)", () => {
+  it("ambient jwtAuthZ policy builds separate metrics and non-metrics rules from monitor exemptions", () => {
     const pol = jwtAuthZAuthorizationPolicy(labelSelector, name, namespace, true, waypointName, [
       { port: "8080", path: "/metrics" },
     ]);
-    const rule = pol.spec!.rules?.[0] as IstioRule;
-    expect(rule).toBeDefined();
-    const toList = (rule.to ?? []) as IstioTo[];
-    expect(Array.isArray(toList)).toBe(true);
-    expect(toList.length).toBe(2);
-    const ops = toList.map(t => t.operation as IstioOperation);
-    const hasPerPort = ops.some(
-      op =>
-        Array.isArray(op.ports) &&
-        op.ports!.includes("8080") &&
-        Array.isArray(op.notPaths) &&
-        op.notPaths!.includes("/metrics"),
-    );
-    const hasCatchAll = ops.some(op => Array.isArray(op.notPorts) && op.notPorts!.includes("8080"));
-    expect(hasPerPort).toBe(true);
-    expect(hasCatchAll).toBe(true);
+
+    const rules = (pol.spec!.rules ?? []) as IstioRule[];
+    expect(rules.length).toBe(2);
+
+    const metricsRule = rules[0];
+    const nonMetricsRule = rules[1];
+
+    // Metrics rule: should target only the metrics endpoint with ports+paths
+    const metricsTo = (metricsRule.to ?? []) as IstioTo[];
+    expect(metricsTo.length).toBe(1);
+    const metricsOp = metricsTo[0].operation as IstioOperation;
+    expect(metricsOp.ports).toEqual(["8080"]);
+    expect(metricsOp.paths).toEqual(["/metrics"]);
+
+    // Non-metrics rule: should have per-port notPaths and a catch-all notPorts
+    const nonMetricsTo = (nonMetricsRule.to ?? []) as IstioTo[];
+    expect(nonMetricsTo.length).toBe(2);
+    const nonOps = nonMetricsTo.map(t => t.operation as IstioOperation);
+    const perPort = nonOps.find(op => Array.isArray(op.ports) && op.ports!.includes("8080"));
+    expect(perPort?.notPaths).toEqual(expect.arrayContaining(["/metrics"]));
+    const catchAll = nonOps.find(op => Array.isArray(op.notPorts) && op.notPorts!.includes("8080"));
+    expect(catchAll).toBeDefined();
   });
 
   it("sets targetRef for ambient authservice policy", () => {
@@ -157,7 +213,7 @@ describe("authorization-policy.ts", () => {
     expect(pol.spec!.selector).toBeUndefined();
   });
 
-  it("non-ambient authservice policy has base (sidecar) per-port monitor entries and a catch-all", () => {
+  it("non-ambient authservice policy builds metrics and non-metrics operations from monitor exemptions", () => {
     const monitorExemptions = [
       { port: "15020", path: "/stats/prometheus" },
       { port: "8080", path: "/metrics" },
@@ -171,36 +227,29 @@ describe("authorization-policy.ts", () => {
       undefined,
       monitorExemptions,
     );
-    const rule = pol.spec!.rules?.[0] as IstioRule;
-    expect(rule).toBeDefined();
-    const toList = (rule.to ?? []) as IstioTo[];
-    expect(Array.isArray(toList)).toBe(true);
-    // Expect per-port entries for each monitor, then a catch-all; first per-port should be 15020
-    const baseOp = toList[0].operation as IstioOperation;
-    expect(baseOp.ports).toEqual(expect.arrayContaining(["15020"]));
-    expect(baseOp.notPaths).toEqual(expect.arrayContaining(["/stats/prometheus"]));
-    const perPortOps = toList.slice(1, -1).map((e: IstioTo) => e.operation as IstioOperation);
-    const has8080Metrics = perPortOps.some(
-      op =>
-        Array.isArray(op.ports) &&
-        op.ports!.includes("8080") &&
-        Array.isArray(op.notPaths) &&
-        op.notPaths!.includes("/metrics"),
-    );
-    const has9090Custom = perPortOps.some(
-      op =>
-        Array.isArray(op.ports) &&
-        op.ports!.includes("9090") &&
-        Array.isArray(op.notPaths) &&
-        op.notPaths!.includes("/custommetrics"),
-    );
-    expect(has8080Metrics).toBe(true);
-    expect(has9090Custom).toBe(true);
-    const catchAll = (toList[toList.length - 1].operation as IstioOperation).notPorts as string[];
-    expect(catchAll).toEqual(expect.arrayContaining(["15020", "8080", "9090"]));
+
+    const rules = (pol.spec!.rules ?? []) as IstioRule[];
+    expect(rules.length).toBeGreaterThanOrEqual(1);
+
+    const allOps = collectOperations(rules);
+    const { metricsOps, nonMetricsOps } = splitMetricsAndNonMetrics(allOps);
+
+    // Metrics ops: exact metrics endpoints
+    expectHasMetric(metricsOps, "15020", "/stats/prometheus");
+    expectHasMetric(metricsOps, "8080", "/metrics");
+    expectHasMetric(metricsOps, "9090", "/custommetrics");
+
+    // Non-metrics ops: per-port notPaths plus catch-all notPorts
+    const perPortNonMetrics = nonMetricsOps.filter(op => Array.isArray(op.ports));
+    expectHasNonMetricExclusion(perPortNonMetrics, "15020", "/stats/prometheus");
+    expectHasNonMetricExclusion(perPortNonMetrics, "8080", "/metrics");
+    expectHasNonMetricExclusion(perPortNonMetrics, "9090", "/custommetrics");
+
+    const catchAllPorts = collectCatchAllPorts(nonMetricsOps);
+    expect(catchAllPorts).toEqual(expect.arrayContaining(["15020", "8080", "9090"]));
   });
 
-  it("non-ambient jwtAuthZ policy has base (sidecar) per-port monitor entries and a catch-all", () => {
+  it("non-ambient jwtAuthZ policy builds metrics and non-metrics operations from monitor exemptions", () => {
     const monitorExemptions = [
       { port: "15020", path: "/stats/prometheus" },
       { port: "8080", path: "/metrics" },
@@ -213,45 +262,47 @@ describe("authorization-policy.ts", () => {
       undefined,
       monitorExemptions,
     );
-    const rule = pol.spec!.rules?.[0] as IstioRule;
-    expect(rule).toBeDefined();
-    const toList = (rule.to ?? []) as IstioTo[];
-    expect(Array.isArray(toList)).toBe(true);
-    const baseOp2 = toList[0].operation as IstioOperation;
-    expect(baseOp2.ports).toEqual(expect.arrayContaining(["15020"]));
-    expect(baseOp2.notPaths).toEqual(expect.arrayContaining(["/stats/prometheus"]));
-    const perPortOps2 = toList.slice(1, -1).map((e: IstioTo) => e.operation as IstioOperation);
-    const has8080Metrics2 = perPortOps2.some(
-      op =>
-        Array.isArray(op.ports) &&
-        op.ports!.includes("8080") &&
-        Array.isArray(op.notPaths) &&
-        op.notPaths!.includes("/metrics"),
-    );
-    expect(has8080Metrics2).toBe(true);
-    const catchAll2 = (toList[toList.length - 1].operation as IstioOperation).notPorts as string[];
-    expect(catchAll2).toEqual(expect.arrayContaining(["15020", "8080"]));
+
+    const rules = (pol.spec!.rules ?? []) as IstioRule[];
+    expect(rules.length).toBeGreaterThanOrEqual(1);
+
+    const metricsRule = rules[0];
+    const nonMetricsRule = rules[1];
+
+    // Metrics rule: deny for non-Prometheus callers without a valid UDS JWT
+    const metricsFrom = metricsRule.from?.[0].source as {
+      notPrincipals?: string[];
+      notRequestPrincipals?: string[];
+    };
+    expect(metricsFrom.notPrincipals).toEqual([PROMETHEUS_PRINCIPAL]);
+    expect(metricsFrom.notRequestPrincipals).toEqual(["https://sso.example.com/realms/uds/*"]);
+
+    // Non-metrics rule: deny for callers without a valid UDS JWT, regardless of principal
+    const nonMetricsFrom = nonMetricsRule.from?.[0].source as {
+      notPrincipals?: string[];
+      notRequestPrincipals?: string[];
+    };
+    expect(nonMetricsFrom.notPrincipals).toBeUndefined();
+    expect(nonMetricsFrom.notRequestPrincipals).toEqual(["https://sso.example.com/realms/uds/*"]);
   });
 
-  it("ambient authservice policy includes only per-port and catch-all entries (no base)", () => {
+  it("ambient authservice policy builds metrics and non-metrics operations from monitor exemptions", () => {
     const pol = authserviceAuthorizationPolicy(labelSelector, name, namespace, true, waypointName, [
       { port: "8080", path: "/metrics" },
     ]);
-    const rule = pol.spec!.rules?.[0] as IstioRule;
-    expect(rule).toBeDefined();
-    const toList = (rule.to ?? []) as IstioTo[];
-    expect(Array.isArray(toList)).toBe(true);
-    expect(toList.length).toBe(2);
-    const ops = toList.map(t => t.operation as IstioOperation);
-    const hasPerPort = ops.some(
-      op =>
-        Array.isArray(op.ports) &&
-        op.ports!.includes("8080") &&
-        Array.isArray(op.notPaths) &&
-        op.notPaths!.includes("/metrics"),
-    );
-    const hasCatchAll = ops.some(op => Array.isArray(op.notPorts) && op.notPorts!.includes("8080"));
-    expect(hasPerPort).toBe(true);
-    expect(hasCatchAll).toBe(true);
+
+    const rules = (pol.spec!.rules ?? []) as IstioRule[];
+    expect(rules.length).toBe(2);
+
+    const allOps = collectOperations(rules);
+    const { metricsOps, nonMetricsOps } = splitMetricsAndNonMetrics(allOps);
+
+    expectHasMetric(metricsOps, "8080", "/metrics");
+
+    const perPortNonMetrics = nonMetricsOps.filter(op => Array.isArray(op.ports));
+    expectHasNonMetricExclusion(perPortNonMetrics, "8080", "/metrics");
+
+    const catchAllPorts = collectCatchAllPorts(nonMetricsOps);
+    expect(catchAllPorts).toEqual(expect.arrayContaining(["8080"]));
   });
 });

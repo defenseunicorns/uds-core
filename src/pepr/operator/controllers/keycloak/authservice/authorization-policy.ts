@@ -14,7 +14,7 @@ import {
 } from "../../../crd";
 import { UDSConfig } from "../../config/config";
 import { matchesLabels } from "../../istio/waypoint-utils";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
+import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
 
@@ -55,8 +55,10 @@ interface MonitorExemption {
   path?: string;
 }
 
-// Build 'to' entries to exempt ONLY exact (port, path) pairs across multiple monitors
-function buildToEntriesFromMonitorExemptions(
+// Build 'to.operation' entries that represent NON-metrics traffic for the
+// given monitor exemptions (i.e., all ports/paths except the metrics
+// endpoints captured in the exemptions).
+function buildNonMetricsOperations(
   monitorExemptions: MonitorExemption[],
 ): Array<{ operation: { ports?: string[]; notPorts?: string[]; notPaths?: string[] } }> {
   const entries: Array<{
@@ -92,6 +94,35 @@ function buildToEntriesFromMonitorExemptions(
   return entries;
 }
 
+// Build 'to.operation' entries that represent the METRICS traffic for the
+// given monitor exemptions (the exact port + path combinations to treat as
+// metrics endpoints).
+function buildMetricsOperations(
+  monitorExemptions: MonitorExemption[],
+): Array<{ operation: { ports?: string[]; paths?: string[] } }> {
+  const entries: Array<{ operation: { ports?: string[]; paths?: string[] } }> = [];
+
+  const portToPaths = new Map<string, Set<string>>();
+  for (const ex of monitorExemptions) {
+    if (!ex.port) continue;
+    const paths = portToPaths.get(ex.port) ?? new Set<string>();
+    if (ex.path) paths.add(ex.path);
+    portToPaths.set(ex.port, paths);
+  }
+
+  for (const [port, paths] of portToPaths.entries()) {
+    const arrPaths = Array.from(paths);
+    if (arrPaths.length > 0) {
+      entries.push({ operation: { ports: [port], paths: arrPaths } });
+    } else {
+      // If no paths recorded, default to treating '/metrics' as the metrics endpoint
+      entries.push({ operation: { ports: [port], paths: ["/metrics"] } });
+    }
+  }
+
+  return entries;
+}
+
 function authserviceAuthorizationPolicy(
   labelSelector: { [key: string]: string },
   name: string,
@@ -101,6 +132,56 @@ function authserviceAuthorizationPolicy(
   monitorExemptions: MonitorExemption[] = [],
 ): IstioAuthorizationPolicy {
   // Create base policy with spec explicitly typed
+  const metricsOps = buildMetricsOperations(monitorExemptions);
+  const nonMetricsOps = buildNonMetricsOperations(monitorExemptions);
+
+  const rules: NonNullable<IstioAuthorizationPolicy["spec"]>["rules"] = [];
+
+  if (metricsOps.length === 0 && nonMetricsOps.length === 0) {
+    // No monitor-based exemptions: send all unauthenticated traffic to Authservice.
+    rules.push({
+      when: [
+        {
+          key: "request.headers[authorization]",
+          notValues: ["*"],
+        },
+      ],
+    });
+  } else {
+    // Metrics from non-Prometheus callers without an Authorization header should go through Authservice
+    if (metricsOps.length > 0) {
+      rules.push({
+        from: [
+          {
+            source: {
+              notPrincipals: [PROMETHEUS_PRINCIPAL],
+            },
+          },
+        ],
+        to: metricsOps,
+        when: [
+          {
+            key: "request.headers[authorization]",
+            notValues: ["*"],
+          },
+        ],
+      });
+    }
+
+    // All other unauthenticated traffic (non-metrics paths/ports) should be sent to Authservice
+    if (nonMetricsOps.length > 0) {
+      rules.push({
+        to: nonMetricsOps,
+        when: [
+          {
+            key: "request.headers[authorization]",
+            notValues: ["*"],
+          },
+        ],
+      });
+    }
+  }
+
   const policy: IstioAuthorizationPolicy & { spec: NonNullable<IstioAuthorizationPolicy["spec"]> } =
     {
       kind: "AuthorizationPolicy",
@@ -113,17 +194,7 @@ function authserviceAuthorizationPolicy(
         provider: {
           name: "authservice",
         },
-        rules: [
-          {
-            when: [
-              {
-                key: "request.headers[authorization]",
-                notValues: ["*"],
-              },
-            ],
-            to: buildToEntriesFromMonitorExemptions(monitorExemptions),
-          },
-        ],
+        rules,
       },
     };
 
@@ -140,6 +211,53 @@ function jwtAuthZAuthorizationPolicy(
   monitorExemptions: MonitorExemption[] = [],
 ): IstioAuthorizationPolicy {
   // Create a base policy with the common properties
+  const metricsOps = buildMetricsOperations(monitorExemptions);
+  const nonMetricsOps = buildNonMetricsOperations(monitorExemptions);
+
+  const rules: NonNullable<IstioAuthorizationPolicy["spec"]>["rules"] = [];
+
+  if (metricsOps.length === 0 && nonMetricsOps.length === 0) {
+    // No monitor-based exemptions: deny any request that does not present a UDS JWT principal.
+    rules.push({
+      from: [
+        {
+          source: {
+            notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+          },
+        },
+      ],
+    });
+  } else {
+    // Deny metrics requests for callers that are not Prometheus and do not have a valid UDS JWT principal.
+    if (metricsOps.length > 0) {
+      rules.push({
+        from: [
+          {
+            source: {
+              notPrincipals: [PROMETHEUS_PRINCIPAL],
+              notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+            },
+          },
+        ],
+        to: metricsOps,
+      });
+    }
+
+    // Deny requests to all other endpoints that do not present a valid UDS JWT principal.
+    if (nonMetricsOps.length > 0) {
+      rules.push({
+        from: [
+          {
+            source: {
+              notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+            },
+          },
+        ],
+        to: nonMetricsOps,
+      });
+    }
+  }
+
   const policy: IstioAuthorizationPolicy = {
     kind: "AuthorizationPolicy",
     metadata: {
@@ -148,18 +266,7 @@ function jwtAuthZAuthorizationPolicy(
     },
     spec: {
       action: IstioAction.Deny,
-      rules: [
-        {
-          from: [
-            {
-              source: {
-                notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
-              },
-            },
-          ],
-          to: buildToEntriesFromMonitorExemptions(monitorExemptions),
-        },
-      ],
+      rules,
     },
   };
 
@@ -241,6 +348,7 @@ async function updatePolicy(
           monitorExemptions,
         ),
       ),
+      { force: true },
     );
 
     // Apply the JWT authentication policy
@@ -248,6 +356,7 @@ async function updatePolicy(
       updateMetadata(
         authNRequestAuthentication(labelSelector, event.name, namespace, isAmbient, waypointName),
       ),
+      { force: true },
     );
 
     // Apply the JWT authorization policy
@@ -262,6 +371,7 @@ async function updatePolicy(
           monitorExemptions,
         ),
       ),
+      { force: true },
     );
   } catch (e) {
     const msg = `Failed to update auth policy for ${event.name} in ${namespace}: ${e}`;
@@ -285,11 +395,11 @@ async function purgeOrphanPolicies(generation: string, namespace: string, pkgNam
 }
 
 export {
+  UDSConfig,
   authNRequestAuthentication,
   authserviceAuthorizationPolicy,
   computeMonitorExemptions,
   jwtAuthZAuthorizationPolicy,
-  UDSConfig,
   updatePolicy,
 };
 
