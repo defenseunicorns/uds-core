@@ -130,6 +130,9 @@ module "eks" {
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
       })
+      # Needed because of https://github.com/terraform-aws-modules/terraform-aws-eks/issues/3582
+      resolve_conflicts_on_create = "OVERWRITE"
+      resolve_conflicts_on_update = "OVERWRITE"
     }
     aws-ebs-csi-driver = {
       most_recent = true

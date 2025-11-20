@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart 21e01692-d68c-42a1-86ea-e2ce744e1736
   # @lulaStart d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
   name: uds-core-vector
   # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
+  # @lulaEnd 21e01692-d68c-42a1-86ea-e2ce744e1736
   description: "UDS Core Vector"
   url: "https://vector.dev/"
 
@@ -22,7 +24,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - timberio/vector:0.50.0-distroless-static
+      - timberio/vector:0.51.0-distroless-static
 
   - name: vector
     required: true
@@ -36,7 +38,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.50.0
+      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.51.0
 
   - name: vector
     required: true
@@ -50,4 +52,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/vector:0.50.0-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/vector:0.51.0-jammy-fips-rfcurated-rfhardened

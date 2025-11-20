@@ -6,7 +6,7 @@ metadata:
   name: uds-core-aks-nightly
   description: A UDS bundle for deploying UDS Core on AKS
   # x-release-please-start-version
-  version: "0.55.1"
+  version: "0.56.0"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.55.1
+    ref: 0.56.0
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
