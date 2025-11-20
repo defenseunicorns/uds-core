@@ -63,7 +63,7 @@ spec:
                 for param in string.gmatch(query, "[^&]+") do
                   local key = string.match(param, "^([^=]+)=?")
                   -- if key ~= "id_token_hint" and key ~= "post_logout_redirect_uri" then
-                  -- Keycloak displays a logout confirmation only then it doesn't end up with a redirect.
+                  -- Keycloak displays a logout confirmation only when it doesn't end up with a redirect.
                   if key ~= "post_logout_redirect_uri" then
                     table.insert(new_params, param)
                   end
