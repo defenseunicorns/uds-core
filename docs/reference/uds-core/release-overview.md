@@ -11,12 +11,12 @@ This document outlines how UDS Core is versioned, released, tested, and maintain
 
 UDS Core follows a predictable release schedule to provide regular updates and improvements:
 
-- **Regular Releases**: New versions are published every 2 weeks (typically on Tuesdays)
-- **Hotfix Releases**: Critical bug fixes may be released outside the regular cycle when necessary
+- **Regular Releases** (minor or major): New versions are published every 2 weeks (typically on Tuesdays)
+- **Patch Releases**: Critical bug fixes are released as patches outside the regular cycle when necessary
 
-### Hotfix Policy
+### Patch Policy
 
-Hotfix releases are created for critical issues that cannot wait for the next regular release cycle. We typically cut hotfix releases for:
+Patch releases are created for critical issues that cannot wait for the next regular release cycle. We typically cut patch releases for:
 
 - Bugs preventing installation or upgrade (even if only affecting specific configurations)
 - Issues limiting access to core services (UIs/APIs) or ability to configure/communicate with external dependencies
@@ -40,6 +40,10 @@ Breaking changes are clearly documented in the [CHANGELOG.md](https://github.com
 ### Current Stability Status
 
 While UDS Core has not yet reached version 1.0, it is considered production-ready and stable. The pre-1.0 versioning reflects our commitment to maintaining flexibility as we continue to enhance our security posture.
+
+## Version Support
+
+UDS Core provides patch support for the latest three minor versions (the current minor and the two previous minors), where applicable. Minor and major releases are cut from `main`, while patch releases are published from dedicated `release/X.Y` branches for each supported minor stream. Patch releases follow the [patch policy](#patch-policy) and are not present in the main repository changelog (but are documented in GitHub releases).
 
 ## Release Process
 

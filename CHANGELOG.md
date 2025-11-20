@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+> [!IMPORTANT]
+> This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
+
 ## [0.56.0](https://github.com/defenseunicorns/uds-core/compare/v0.55.1...v0.56.0) (2025-11-12)
 
 
@@ -91,7 +94,7 @@ All notable changes to this project will be documented in this file.
 
 * add lula mappings for compliance pr ([#2034](https://github.com/defenseunicorns/uds-core/issues/2034)) ([15b41b6](https://github.com/defenseunicorns/uds-core/commit/15b41b60b8bca1caacd06335902ffc1cdb98cc36))
 * add/update lula mapping keycloak observability ([#2044](https://github.com/defenseunicorns/uds-core/issues/2044)) ([91f4c21](https://github.com/defenseunicorns/uds-core/commit/91f4c21ad77cf2557ea4d388970d41847e0602c3))
-* bumb version references ([#2067](https://github.com/defenseunicorns/uds-core/issues/2067)) ([da828f9](https://github.com/defenseunicorns/uds-core/commit/da828f9d6c2f529f0edebbbb87d9b2a949e1b6c1))
+* bump version references ([#2067](https://github.com/defenseunicorns/uds-core/issues/2067)) ([da828f9](https://github.com/defenseunicorns/uds-core/commit/da828f9d6c2f529f0edebbbb87d9b2a949e1b6c1))
 * **ci:** handle timing with pepr joining the mesh ([#2040](https://github.com/defenseunicorns/uds-core/issues/2040)) ([5e93bf0](https://github.com/defenseunicorns/uds-core/commit/5e93bf030b1da5bc2b3900d2d6e9400378799751))
 * **deps-dev:** bump vite from 7.1.5 to 7.1.11 in /test/vitest ([#2051](https://github.com/defenseunicorns/uds-core/issues/2051)) ([6551c5a](https://github.com/defenseunicorns/uds-core/commit/6551c5a3a435b9737815a7c99874f23cd2279472))
 * **deps:** identity-config update to v0.19.1 ([#2073](https://github.com/defenseunicorns/uds-core/issues/2073)) ([953d1b4](https://github.com/defenseunicorns/uds-core/commit/953d1b409f58325558663738ae35eeb928b11508))
@@ -473,7 +476,7 @@ All notable changes to this project will be documented in this file.
 * **deps:** update support-deps ([#1793](https://github.com/defenseunicorns/uds-core/issues/1793)) ([0a6773e](https://github.com/defenseunicorns/uds-core/commit/0a6773ee2a652cf1c02d043ae268a4ba38953050))
 * **docs:** fix broken link to app-authservice-tenant.yaml example ([#1789](https://github.com/defenseunicorns/uds-core/issues/1789)) ([8d44a6a](https://github.com/defenseunicorns/uds-core/commit/8d44a6a58bf9c5e49574833279c2d009c1c25b2d))
 * **docs:** fix broken link to pepr enqueue and reconciler ([#1790](https://github.com/defenseunicorns/uds-core/issues/1790)) ([5e2d44a](https://github.com/defenseunicorns/uds-core/commit/5e2d44aa735b7a6ad67a44bb3c33cdf9beb4387d))
-* **docs:** fix cluster config referrence ([#1780](https://github.com/defenseunicorns/uds-core/issues/1780)) ([684c290](https://github.com/defenseunicorns/uds-core/commit/684c290b9c0d0896de65edbe2cf07d3c67d9869f))
+* **docs:** fix cluster config reference ([#1780](https://github.com/defenseunicorns/uds-core/issues/1780)) ([684c290](https://github.com/defenseunicorns/uds-core/commit/684c290b9c0d0896de65edbe2cf07d3c67d9869f))
 * improved istio container detection in policies ([#1777](https://github.com/defenseunicorns/uds-core/issues/1777)) ([3e18944](https://github.com/defenseunicorns/uds-core/commit/3e18944e7020175e93b20c9ea0ce536a885747e4))
 * revert security context change on neuvector ([#1765](https://github.com/defenseunicorns/uds-core/issues/1765)) ([823a8ae](https://github.com/defenseunicorns/uds-core/commit/823a8aea8db86bbf4f61c12dbca1511ee41519e7))
 * switch single-layer tests to use airgapped k3d ([#1755](https://github.com/defenseunicorns/uds-core/issues/1755)) ([08334ed](https://github.com/defenseunicorns/uds-core/commit/08334eda27d31995e75ec040d27e8ee13e71b164))

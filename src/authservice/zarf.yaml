@@ -3,7 +3,9 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart dd88d780-5e5f-49dd-9104-3a92d33a190c
   name: uds-core-authservice
+  # @lulaEnd dd88d780-5e5f-49dd-9104-3a92d33a190c
   description: "UDS Core Authservice"
   url: https://github.com/istio-ecosystem/authservice
 

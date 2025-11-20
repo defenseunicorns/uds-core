@@ -13,6 +13,7 @@ on:
   push:
     branches:
       - main
+      - "release/**"
 
 jobs:
   # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
@@ -20,17 +21,20 @@ jobs:
     permissions: write-all
     runs-on: ubuntu-latest
     outputs:
-      release_created: ${{ steps.release-flag.outputs.release_created }}
+      release_created: ${{ steps.tag.outputs.release_created }}
+      major: ${{ steps.tag.outputs.major }}
+      minor: ${{ steps.tag.outputs.minor }}
     steps:
       - name: Create release tag
         id: tag
         uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4.4.0
-      - id: release-flag
-        run: echo "release_created=${{ steps.tag.outputs.release_created || false }}" >> $GITHUB_OUTPUT
+        with:
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
 
   publish-uds-core-release:
     needs: tag-new-version
-    if: ${{ needs.tag-new-version.outputs.release_created == 'true'}}
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
     permissions:
       contents: write
       packages: write
@@ -43,6 +47,7 @@ jobs:
 
   scan-release:
     needs: publish-uds-core-release
+    if: ${{ github.ref == 'refs/heads/main' }}
     permissions:
       contents: read
       packages: read
@@ -62,3 +67,26 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
+
+  cut-release-branch:
+    needs: [publish-uds-core-release, tag-new-version]
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+      - name: Create release/X.Y from vX.Y.0
+        shell: bash
+        run: |
+          if [[ -z "${{ needs.tag-new-version.outputs.major }}" || -z "${{ needs.tag-new-version.outputs.minor }}" ]]; then
+            echo "major/minor outputs missing; cannot cut release branch" >&2
+            exit 1
+          fi
+          BRANCH="release/${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}"
+          TAG="v${{ needs.tag-new-version.outputs.major }}.${{ needs.tag-new-version.outputs.minor }}.0"
+          git fetch origin --tags
+          git switch -C "$BRANCH" "$TAG"
+          git push origin "$BRANCH"
