@@ -10,15 +10,7 @@ import { beforeAll, describe, expect, test, vi } from "vitest";
 // Set timeout for all tests
 vi.setConfig({ testTimeout: 30000 });
 
-const CURL_GATEWAY = [
-  "curl",
-  "-s",
-  "-o",
-  "/dev/null",
-  "-w",
-  "%{http_code}",
-  "https://demo-8080.uds.dev",
-];
+const CURL_GATEWAY = ["curl", "-s", "-w", " HTTP_CODE:%{http_code}", "https://demo-8080.uds.dev"];
 
 function getCurlCommand(serviceName: string, namespaceName: string, port = 8080) {
   return [
@@ -26,10 +18,8 @@ function getCurlCommand(serviceName: string, namespaceName: string, port = 8080)
     "-s",
     "-m",
     "3",
-    "-o",
-    "/dev/null",
     "-w",
-    "%{http_code}",
+    " HTTP_CODE:%{http_code}",
     `http://${serviceName}.${namespaceName}.svc.cluster.local:${port}`,
   ];
 }
@@ -125,16 +115,28 @@ async function execInPod(
 // HTTP response status code reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status
 // Expects curlOutput.stdout to only contain a string indicating the HTTP response code
 function isResponseError(curlOutput: { stdout: string; stderr: string }) {
-  if (!curlOutput.stderr) {
-    const httpResponseCode = Number(curlOutput.stdout);
-    if (httpResponseCode < 100 || httpResponseCode > 399) {
-      return true;
-    } else {
-      return false;
-    }
-  } else {
+  if (curlOutput.stderr) {
     return true;
   }
+
+  const stdout = curlOutput.stdout ?? "";
+  let httpResponseCode: number;
+
+  // Prefer parsing a labeled HTTP code (e.g. ... HTTP_CODE:200) when present
+  const labeledMatch = stdout.match(/HTTP_CODE:(\d{3})\s*$/);
+  if (labeledMatch) {
+    httpResponseCode = Number(labeledMatch[1]);
+  } else {
+    // Fallback for legacy usage where stdout is just the numeric status code
+    httpResponseCode = Number(stdout);
+  }
+
+  // No valid number found during parsing, treat as an error
+  if (Number.isNaN(httpResponseCode)) {
+    return true;
+  }
+
+  return httpResponseCode < 100 || httpResponseCode > 399;
 }
 
 // Check if egress tests should run
@@ -181,10 +183,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     "-s",
     "-m",
     "10",
-    "-o",
-    "/dev/null",
     "-w",
-    "%{http_code}",
+    " HTTP_CODE:%{http_code}",
     "https://www.google.com",
   ];
 
@@ -197,7 +197,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-deny-all-1",
       CURL_GATEWAY,
     );
-    expect(isResponseError(denied_external_response)).toBe(true);
+    const deniedExternalDebug = `Denied external response: stdout=${denied_external_response.stdout}, stderr=${denied_external_response.stderr}`;
+    expect(isResponseError(denied_external_response), deniedExternalDebug).toBe(true);
 
     // Default deny when no Ingress or Egress for internal curl command
     const denied_internal_response = await execInPod(
@@ -206,7 +207,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-deny-all-1",
       INTERNAL_CURL_COMMAND_1,
     );
-    expect(isResponseError(denied_internal_response)).toBe(true);
+    const deniedInternalDebug = `Denied internal response: stdout=${denied_internal_response.stdout}, stderr=${denied_internal_response.stderr}`;
+    expect(isResponseError(denied_internal_response), deniedInternalDebug).toBe(true);
 
     // Default Deny for Google Curl when no Egress defined
     const denied_google_response = await execInPod(
@@ -215,7 +217,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-deny-all-1",
       GOOGLE_CURL,
     );
-    expect(denied_google_response.stdout).toBe("000");
+    const deniedGoogleDebug = `Denied Google response: stdout=${denied_google_response.stdout}, stderr=${denied_google_response.stderr}`;
+    expect(denied_google_response.stdout, deniedGoogleDebug).toContain("000");
   });
 
   test.concurrent("Basic Wide Open Ingress and Wide Open Egress", async () => {
@@ -226,17 +229,16 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       INTERNAL_CURL_COMMAND_2,
     );
-    expect(success_response.stdout).toBe("200");
+    const wideOpenIngressDebug = `Wide open ingress response: stdout=${success_response.stdout}, stderr=${success_response.stderr}`;
+    expect(success_response.stdout, wideOpenIngressDebug).toContain("HTTP_CODE:200");
 
     const CURL_INTERNAL_8081 = [
       "curl",
       "-s",
       "-m",
       "3",
-      "-o",
-      "/dev/null",
       "-w",
-      "%{http_code}",
+      " HTTP_CODE:%{http_code}",
       "http://curl-pkg-allow-all.curl-ns-allow-all.svc.cluster.local:8081",
     ];
 
@@ -247,7 +249,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       CURL_INTERNAL_8081,
     );
-    expect(isResponseError(denied_incorrect_port_response)).toBe(true);
+    const deniedIncorrectPortDebug = `Denied incorrect port response: stdout=${denied_incorrect_port_response.stdout}, stderr=${denied_incorrect_port_response.stderr}`;
+    expect(isResponseError(denied_incorrect_port_response), deniedIncorrectPortDebug).toBe(true);
 
     // Wide open Egress means successful google curl
     const successful_google_response = await execInPod(
@@ -256,14 +259,15 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       GOOGLE_CURL,
     );
-    expect(successful_google_response.stdout).toBe("200");
+    const wideOpenGoogleDebug = `Wide open Google response: stdout=${successful_google_response.stdout}, stderr=${successful_google_response.stderr}`;
+    expect(successful_google_response.stdout, wideOpenGoogleDebug).toContain("HTTP_CODE:200");
   });
 
   test.concurrent("Ingress Gateway Bypass", async () => {
     const authservice_curl_header = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
+      `curl -s -w " HTTP_CODE:%{http_code}" -k -H "Authorization: foobar" http://httpbin.authservice-sidecar-test-app.svc.cluster.local:8000`,
     ];
 
     // Validate that request is not successful when using Ingress Gateway Bypass
@@ -273,7 +277,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       authservice_curl_header,
     );
-    expect(failed_response2.stdout).toBe("403");
+    const ingressBypassDebug = `Ingress gateway bypass response: stdout=${failed_response2.stdout}, stderr=${failed_response2.stderr}`;
+    expect(failed_response2.stdout, ingressBypassDebug).toContain("HTTP_CODE:403");
   });
 
   test.concurrent("RemoteNamespace Ingress and Egress", async () => {
@@ -284,7 +289,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-remote-ns-egress",
       INTERNAL_CURL_COMMAND_5,
     );
-    expect(success_response.stdout).toBe("200");
+    const remoteNamespaceSuccessDebug = `RemoteNamespace response: stdout=${success_response.stdout}, stderr=${success_response.stderr}`;
+    expect(success_response.stdout, remoteNamespaceSuccessDebug).toContain("HTTP_CODE:200");
 
     // Default Deny for Blocked Port
     const blocked_port_curl = getCurlCommand(
@@ -298,14 +304,15 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-remote-ns-egress",
       blocked_port_curl,
     );
-    expect(isResponseError(denied_port_response)).toBe(true);
+    const remoteNamespaceDeniedPortDebug = `RemoteNamespace denied port response: stdout=${denied_port_response.stdout}, stderr=${denied_port_response.stderr}`;
+    expect(isResponseError(denied_port_response), remoteNamespaceDeniedPortDebug).toBe(true);
   });
 
   test.concurrent("Kube API Restrictions", async () => {
     const kubeApi_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo '')" https://kubernetes.default.svc.cluster.local/api`,
+      `curl -s -w " HTTP_CODE:%{http_code}" -k -H "Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token 2>/dev/null || echo '')" https://kubernetes.default.svc.cluster.local/api`,
     ];
 
     // Validate successful kubeApi request with token
@@ -315,7 +322,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-kube-api",
       kubeApi_curl,
     );
-    expect(success_unauthorized_response.stdout).toContain("200");
+    const kubeApiSuccessDebug = `Kube API response: stdout=${success_unauthorized_response.stdout}, stderr=${success_unauthorized_response.stderr}`;
+    expect(success_unauthorized_response.stdout, kubeApiSuccessDebug).toContain("HTTP_CODE:200");
 
     // Default Deny for Blocked Port
     const blocked_port_curl = getCurlCommand("curl-pkg-deny-all-2", "curl-ns-deny-all-2", 9999);
@@ -325,7 +333,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl-pkg-kube-api",
       blocked_port_curl,
     );
-    expect(isResponseError(denied_port_response)).toBe(true);
+    const kubeApiDeniedPortDebug = `Kube API denied port response: stdout=${denied_port_response.stdout}, stderr=${denied_port_response.stderr}`;
+    expect(isResponseError(denied_port_response), kubeApiDeniedPortDebug).toBe(true);
   });
 
   test.concurrent("RemoteCidr Restrictions", async () => {
@@ -336,7 +345,8 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       INTERNAL_CURL_COMMAND_7,
     );
-    expect(success_response.stdout).toBe("200");
+    const remoteCidrSuccessDebug = `RemoteCidr response: stdout=${success_response.stdout}, stderr=${success_response.stderr}`;
+    expect(success_response.stdout, remoteCidrSuccessDebug).toContain("HTTP_CODE:200");
   });
 
   test("Egress Ambient", { concurrent: true, retry: 3 }, async () => {
@@ -345,13 +355,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_ambient_http_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://api.github.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" http://api.github.com`,
     ];
 
     const egress_ambient_tls_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" https://api.github.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://api.github.com`,
     ];
 
     // Validate successful tls request when using Egress for egress-ambient-1
@@ -361,7 +371,10 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       egress_ambient_tls_curl,
     );
-    expect(isResponseError(success_response_tls)).toBe(false);
+
+    const tlsDebugMessage = `TLS github curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
+
+    expect(isResponseError(success_response_tls), tlsDebugMessage).toBe(false);
 
     // Validate denied http request when using Egress for egress-ambient-1
     const denied_response_http = await execInPod(
@@ -404,13 +417,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_gateway_http_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" http://example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" http://example.com`,
     ];
 
     const egress_gateway_tls_curl = [
       "sh",
       "-c",
-      `curl -s -o /dev/null -w "%{http_code}" https://example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://example.com`,
     ];
 
     // Validate successful tls request when using Egress Gateway for egress-gw-1
