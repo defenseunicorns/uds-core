@@ -3,8 +3,8 @@
 
 variables:
   core:
-    # CA certificate for Authservice
-    CA_CERT: "PLACEHOLDER_CA_CERT"
+    # CA_CERTS
+    CA_BUNDLE_CERTS: "PLACEHOLDER_CA_BUNDLE_CERTS"
 
     # Admin Gateway TLS certificate and key
     ADMIN_TLS_CERT: "PLACEHOLDER_ADMIN_TLS_CERT"
@@ -18,9 +18,9 @@ variables:
     GRAFANA_EXTRA_CONFIGMAP_MOUNTS:
       - name: ca-certs
         mountPath: /etc/ssl/certs/ca.pem
-        configMap: private-ca
+        configMap: uds-trust-bundle
         readOnly: true
-        subPath: ca.pem
+        subPath: ca-bundle.pem
 
     # Keycloak private PKI configuration
     KEYCLOAK_EXTRA_VOLUME_MOUNTS:
@@ -30,6 +30,6 @@ variables:
     KEYCLOAK_EXTRA_VOLUMES:
       - name: ca-certs
         configMap:
-          name: private-ca
+          name: uds-trust-bundle
     KEYCLOAK_TRUSTSTORE_PATHS:
       - "/tmp/ca-certs"

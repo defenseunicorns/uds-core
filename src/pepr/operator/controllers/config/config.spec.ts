@@ -6,7 +6,7 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig, Phase } from "../../crd";
+import { ClusterConfig, ConfigPhase as Phase } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
