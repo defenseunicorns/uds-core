@@ -21,7 +21,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ghcr.io/istio-ecosystem/authservice/authservice:1.1.1
+      - ghcr.io/istio-ecosystem/authservice/authservice:1.1.2
 
   - name: authservice
     required: true
