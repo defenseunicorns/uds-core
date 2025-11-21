@@ -6,26 +6,30 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig, Name } from "../../crd";
+import { ClusterConfig, Phase } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import {
   ConfigAction,
-  ConfigPhase,
+  ConfigStep,
   configLog,
   decodeSecret,
   getConfigLogMessage,
   loadUDSConfig,
   shouldUpdateClusterResources,
+  shouldSkip,
   UDSConfig,
   handleCfg,
   handleCfgSecret,
 } from "./config";
+import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 
 // Mock dependencies
 const mockClusterConfGet = vi.fn();
 const mockSecretGet = vi.fn();
+const mockConfigMapGet = vi.fn();
+const mockPatchStatus = vi.fn();
 
 vi.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: vi.fn(),
@@ -37,6 +41,14 @@ vi.mock("../network/generators/kubeAPI", () => ({
 
 vi.mock("../network/generators/kubeNodes", () => ({
   initAllNodesTarget: vi.fn(),
+}));
+
+vi.mock("../../crd/validators/clusterconfig-validator", () => ({
+  validateCfg: vi.fn(),
+}));
+
+vi.mock("../ca-bundles/ca-bundle", () => ({
+  updateAllCaBundleConfigMaps: vi.fn(),
 }));
 
 vi.mock("../../../logger", () => {
@@ -63,25 +75,60 @@ vi.mock("pepr", async importOriginal => {
     ...actual,
     K8s: vi.fn().mockImplementation(resourceKind => {
       if (resourceKind === ClusterConfig) {
-        return { Get: mockClusterConfGet };
+        return {
+          Get: mockClusterConfGet,
+          PatchStatus: mockPatchStatus,
+        };
       }
       if (resourceKind === kind.Secret) {
         return { InNamespace: vi.fn().mockReturnValue({ Get: mockSecretGet }) };
+      }
+      if (resourceKind === kind.ConfigMap) {
+        return { InNamespace: vi.fn().mockReturnValue({ Get: mockConfigMapGet }) };
       }
     }),
   };
 });
 
+const exampleCACert = `-----BEGIN CERTIFICATE-----
+MIIDTDCCAjSgAwIBAgIId3cGJyapsXwwDQYJKoZIhvcNAQELBQAwRDELMAkGA1UEBhMCVVMxFDAS
+BgNVBAoMC0FmZmlybVRydXN0MR8wHQYDVQQDDBZBZmZpcm1UcnVzdCBDb21tZXJjaWFsMB4XDTEw
+MDEyOTE0MDYwNloXDTMwMTIzMTE0MDYwNlowRDELMAkGA1UEBhMCVVMxFDASBgNVBAoMC0FmZmly
+bVRydXN0MR8wHQYDVQQDDBZBZmZpcm1UcnVzdCBDb21tZXJjaWFsMIIBIjANBgkqhkiG9w0BAQEF
+AAOCAQ8AMIIBCgKCAQEA9htPZwcroRX1BiLLHwGy43NFBkRJLLtJJRTWzsO3qyxPxkEylFf6Eqdb
+DuKPHx6GGaeqtS25Xw2Kwq+FNXkyLbscYjfysVtKPcrNcV/pQr6U6Mje+SJIZMblq8Yrba0F8PrV
+C8+a5fBQpIs7R6UjW3p6+DM/uO+Zl+MgwdYoic+U+7lF7eNAFxHUdPALMeIrJmqbTFeurCA+ukV6
+BfO9m2kVrn1OIGPENXY6BwLJN/3HR+7o8XYdcxXyl6S1yHp52UKqK39c/s4mT6NmgTWvRLpUHhww
+MmWd5jyTXlBOeuM61G7MGvv50jeuJCqrVwMiKA1JdX+3KNp1v47j3A55MQIDAQABo0IwQDAdBgNV
+HQ4EFgQUnZPGU4teyq8/nx4P5ZmVvCT2lI8wDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC
+AQYwDQYJKoZIhvcNAQELBQADggEBAFis9AQOzcAN/wr91LoWXym9e2iZWEnStB03TX8nfUYGXUPG
+hi4+c7ImfU+TqbbEKpqrIZcUsd6M06uJFdhrJNTxFq7YpFzUf1GO7RgBsZNjvbz4YYCanrHOQnDi
+qX0GJX0nof5v7LMeJNrjS1UaADs1tDvZ110w/YETifLCBivtZ8SOyUOyXGsViQK8YvxO8rUzqrJv
+0wqiUOP2O+guRMLbZjipM1ZI8W0bM40NjD9gN53Tym1+NH4Nn3J2ixufcv1SNUFFApYvHLKac0kh
+sUlHRUe072o0EclNmsxZt9YCnlpOZbWUrhvfKbAW8b8Angc6F2S1BLUjIZkKlTuXfO8=
+-----END CERTIFICATE-----
+`;
+
+const exampleCACertBase64 = btoa(exampleCACert);
+
 let mockCfg: ClusterConfig;
 const defaultConfig: ClusterConfig = {
   metadata: {
-    name: Name.UdsClusterConfig,
+    name: "uds-cluster-config",
+    generation: 1,
+  },
+  status: {
+    observedGeneration: 0, // Different from generation to ensure not skipped
   },
   spec: {
+    caBundle: {
+      certs: exampleCACertBase64,
+      includeDoDCerts: false,
+      includePublicCerts: false,
+    },
     expose: {
       domain: "mock-domain",
       adminDomain: "mock-admin-domain",
-      caCert: btoa("mock-ca-cert"),
     },
     networking: {
       kubeApiCIDR: "mock-cidr",
@@ -113,12 +160,18 @@ describe("initial config load", () => {
     mockSecret = defaultSecret;
     mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(mockSecret);
+    mockConfigMapGet.mockResolvedValue({
+      data: {
+        dodCACerts: "",
+        publicCACerts: "",
+      },
+    });
   });
 
   it("loads initial config", async () => {
     await loadUDSConfig();
 
-    expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
+    expect(UDSConfig.caBundle.certs).toBe(exampleCACertBase64);
     expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
     expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
@@ -177,22 +230,22 @@ describe("initial config load", () => {
 describe("Config Helper Functions", () => {
   describe("getConfigLogMessage", () => {
     it("should generate loading start message", () => {
-      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.START, "test-resource");
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigStep.START, "test-resource");
       expect(message).toBe("Loading UDS Config from test-resource");
     });
 
     it("should generate loading finish message", () => {
-      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigPhase.FINISH, "test-resource");
+      const message = getConfigLogMessage(ConfigAction.LOAD, ConfigStep.FINISH, "test-resource");
       expect(message).toBe("Loaded UDS Config from test-resource");
     });
 
     it("should generate updating start message with change", () => {
-      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.START, "test-resource");
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigStep.START, "test-resource");
       expect(message).toBe("Updating UDS Config from test-resource change");
     });
 
     it("should generate updating finish message with change", () => {
-      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigPhase.FINISH, "test-resource");
+      const message = getConfigLogMessage(ConfigAction.UPDATE, ConfigStep.FINISH, "test-resource");
       expect(message).toBe("Updated UDS Config from test-resource change");
     });
   });
@@ -222,6 +275,79 @@ describe("Config Helper Functions", () => {
 
     it("should return false for UPDATE action with no env vars set", () => {
       expect(shouldUpdateClusterResources(ConfigAction.UPDATE)).toBe(false);
+    });
+  });
+
+  describe("shouldSkip", () => {
+    it("should return true when status phase is Pending", () => {
+      const cfg: ClusterConfig = {
+        metadata: {
+          name: "test-config",
+          generation: 1,
+        },
+        status: {
+          phase: Phase.Pending,
+          observedGeneration: 0,
+        },
+      };
+
+      expect(shouldSkip(cfg)).toBe(true);
+    });
+
+    it("should return true when current generation already processed", () => {
+      const cfg: ClusterConfig = {
+        metadata: {
+          name: "test-config",
+          generation: 1,
+        },
+        status: {
+          phase: Phase.Ready,
+          observedGeneration: 1,
+        },
+      };
+
+      expect(shouldSkip(cfg)).toBe(true);
+    });
+
+    it("should return false when generation is different from observedGeneration", () => {
+      const cfg: ClusterConfig = {
+        metadata: {
+          name: "test-config",
+          generation: 2,
+        },
+        status: {
+          phase: Phase.Ready,
+          observedGeneration: 1,
+        },
+      };
+
+      expect(shouldSkip(cfg)).toBe(false);
+    });
+
+    it("should return false when no status exists", () => {
+      const cfg: ClusterConfig = {
+        metadata: {
+          name: "test-config",
+          generation: 1,
+        },
+      };
+
+      expect(shouldSkip(cfg)).toBe(false);
+    });
+
+    it("should return false when status phase is not Pending and generation differs", () => {
+      const cfg: ClusterConfig = {
+        metadata: {
+          name: "test-config",
+          generation: 3,
+        },
+        status: {
+          phase: Phase.Failed,
+          observedGeneration: 2,
+        },
+      };
+
+      expect(shouldSkip(cfg)).toBe(false);
     });
   });
 });
@@ -273,7 +399,9 @@ describe("handleUDSConfig", () => {
     mockSecret = defaultSecret;
     mockClusterConfGet.mockResolvedValue(mockCfg);
     mockSecretGet.mockResolvedValue(mockSecret);
-    UDSConfig.caCert = "";
+    UDSConfig.caBundle.certs = "";
+    UDSConfig.caBundle.includeDoDCerts = false;
+    UDSConfig.caBundle.includePublicCerts = false;
     UDSConfig.authserviceRedisUri = "";
     UDSConfig.kubeApiCIDR = "";
     UDSConfig.kubeNodeCIDRs = [];
@@ -293,7 +421,7 @@ describe("handleUDSConfig", () => {
   it("handles updates to ClusterConfig and updates UDSConfig", async () => {
     await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-    expect(UDSConfig.caCert).toBe(btoa("mock-ca-cert"));
+    expect(UDSConfig.caBundle.certs).toBe(exampleCACertBase64);
     expect(UDSConfig.kubeApiCIDR).toBe("mock-cidr");
     expect(UDSConfig.kubeNodeCIDRs).toStrictEqual(["mock-node-cidrs"]);
     expect(UDSConfig.domain).toBe("mock-domain");
@@ -303,7 +431,7 @@ describe("handleUDSConfig", () => {
 
   describe("reconcileAuthservice", () => {
     it("calls if CA Cert changes", async () => {
-      UDSConfig.caCert = "old-ca-cert";
+      UDSConfig.caBundle.certs = "old-ca-cert";
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
@@ -311,15 +439,21 @@ describe("handleUDSConfig", () => {
         name: "global-config-update",
         action: "UpdateGlobalConfig",
         redisUri: "",
-        trustedCA: "mock-ca-cert",
+        trustedCA: exampleCACert,
       });
     });
 
     it("calls if CA Cert changes to empty string (dev mode)", async () => {
-      UDSConfig.caCert = "old-ca-cert";
+      UDSConfig.caBundle.certs = "old-ca-cert";
       const cfg = {
         ...mockCfg,
-        spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
+        spec: {
+          ...mockCfg.spec,
+          caBundle: {
+            ...mockCfg.spec!.caBundle,
+            certs: "###ZARF_VAR_CA_BUNDLE_CERTS###",
+          },
+        },
       } as ClusterConfig;
 
       await handleCfg(cfg, ConfigAction.UPDATE);
@@ -333,8 +467,17 @@ describe("handleUDSConfig", () => {
     });
 
     it("does not call if CA Cert key is undefined", async () => {
-      UDSConfig.caCert = "old-ca-cert";
-      const cfg = { ...mockCfg, spec: { ...mockCfg.spec, expose: {} } } as ClusterConfig;
+      UDSConfig.caBundle.certs = "old-ca-cert";
+      const cfg = {
+        ...mockCfg,
+        spec: {
+          ...mockCfg.spec,
+          caBundle: {
+            ...mockCfg.spec!.caBundle,
+            certs: undefined,
+          },
+        },
+      } as ClusterConfig;
 
       await handleCfg(cfg, ConfigAction.UPDATE);
 
@@ -347,10 +490,16 @@ describe("handleUDSConfig", () => {
     });
 
     it("does not call if CA Cert is still empty string (dev mode)", async () => {
-      UDSConfig.caCert = "";
+      UDSConfig.caBundle.certs = "";
       const cfg = {
         ...mockCfg,
-        spec: { ...mockCfg.spec, expose: { caCert: "###ZARF_VAR_CA_CERT###" } },
+        spec: {
+          ...mockCfg.spec,
+          caBundle: {
+            ...mockCfg.spec!.caBundle,
+            certs: "###ZARF_VAR_CA_BUNDLE_CERTS###",
+          },
+        },
       } as ClusterConfig;
 
       await handleCfg(cfg, ConfigAction.UPDATE);
@@ -359,7 +508,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("calls if Redis URI changes", async () => {
-      UDSConfig.caCert = btoa("old-ca-cert");
+      UDSConfig.caBundle.certs = btoa("old-ca-cert");
       UDSConfig.authserviceRedisUri = "old-redis-uri";
 
       await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
@@ -458,7 +607,7 @@ describe("handleUDSConfig", () => {
 
   it("does not call unnecessary updates if no values change", async () => {
     // Set UDSConfig to match mockCfg
-    UDSConfig.caCert = btoa("mock-ca-cert");
+    UDSConfig.caBundle.certs = exampleCACertBase64;
     UDSConfig.kubeApiCIDR = "mock-cidr";
     UDSConfig.kubeNodeCIDRs = ["mock-node-cidrs"];
     UDSConfig.domain = "mock-domain";
@@ -492,5 +641,288 @@ describe("handleUDSConfig", () => {
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
     expect(reconcileAuthservice).not.toHaveBeenCalled();
+  });
+
+  describe("CA Bundle ConfigMaps update logic", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockCfg = {
+        ...defaultConfig,
+        metadata: { ...defaultConfig.metadata, generation: 2 },
+        status: { observedGeneration: 1 },
+      };
+      mockClusterConfGet.mockResolvedValue(mockCfg);
+      mockSecretGet.mockResolvedValue(mockSecret);
+      mockConfigMapGet.mockResolvedValue({
+        data: { dodCACerts: "", publicCACerts: "" },
+      });
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = "";
+      UDSConfig.caBundle.publicCerts = "";
+      process.env.PEPR_WATCH_MODE = "true";
+    });
+
+    it("calls updateAllCaBundleConfigMaps when certs change", async () => {
+      UDSConfig.caBundle.certs = "old-cert";
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("calls updateAllCaBundleConfigMaps when includeDoDCerts changes", async () => {
+      UDSConfig.caBundle.includeDoDCerts = false;
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("calls updateAllCaBundleConfigMaps when DoD cert content changes", async () => {
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.dodCerts = "old-dod-certs";
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockConfigMapGet.mockResolvedValue({
+        data: { dodCACerts: "new-dod-certs", publicCACerts: "" },
+      });
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("does not call updateAllCaBundleConfigMaps when nothing changes", async () => {
+      // Set UDSConfig to exactly match the mockCfg state
+      UDSConfig.caBundle.certs = exampleCACertBase64;
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = "";
+      UDSConfig.caBundle.publicCerts = "";
+
+      // Make sure the mockCfg matches UDSConfig state
+      mockCfg.spec!.caBundle.certs = exampleCACertBase64;
+      mockCfg.spec!.caBundle.includeDoDCerts = false;
+      mockCfg.spec!.caBundle.includePublicCerts = false;
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DoD/Public cert loading logic", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockCfg = {
+        ...defaultConfig,
+        metadata: { ...defaultConfig.metadata, generation: 2 },
+        status: { observedGeneration: 1 },
+      };
+      mockClusterConfGet.mockResolvedValue(mockCfg);
+      mockSecretGet.mockResolvedValue(mockSecret);
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = "";
+      UDSConfig.caBundle.publicCerts = "";
+      process.env.PEPR_WATCH_MODE = "true";
+    });
+
+    it("loads DoD certs when includeDoDCerts is true and ConfigMap has data", async () => {
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockConfigMapGet.mockResolvedValue({
+        data: {
+          dodCACerts: "dod-cert-data",
+          publicCACerts: "public-cert-data",
+        },
+      });
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
+      expect(UDSConfig.caBundle.dodCerts).toBe("dod-cert-data");
+    });
+
+    it("loads Public certs when includePublicCerts is true and ConfigMap has data", async () => {
+      mockCfg.spec!.caBundle.includePublicCerts = true;
+      mockConfigMapGet.mockResolvedValue({
+        data: {
+          dodCACerts: "dod-cert-data",
+          publicCACerts: "public-cert-data",
+        },
+      });
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includePublicCerts).toBe(true);
+      expect(UDSConfig.caBundle.publicCerts).toBe("public-cert-data");
+    });
+
+    it("does not load DoD certs when includeDoDCerts is false", async () => {
+      mockCfg.spec!.caBundle.includeDoDCerts = false;
+      mockConfigMapGet.mockResolvedValue({
+        data: {
+          dodCACerts: "dod-cert-data",
+          publicCACerts: "public-cert-data",
+        },
+      });
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(false);
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+    });
+
+    it("does not load DoD certs when ConfigMap has no dodCACerts data", async () => {
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockConfigMapGet.mockResolvedValue({
+        data: {
+          publicCACerts: "public-cert-data",
+        },
+      });
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+    });
+
+    it("handles missing ConfigMap gracefully", async () => {
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockConfigMapGet.mockResolvedValue(null);
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.publicCerts).toBe("");
+    });
+
+    it("handles ConfigMap with no data field", async () => {
+      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle.includePublicCerts = true;
+      mockConfigMapGet.mockResolvedValue({});
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
+      expect(UDSConfig.caBundle.includePublicCerts).toBe(true);
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.publicCerts).toBe("");
+    });
+  });
+
+  describe("Error handling & Status updates", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockPatchStatus.mockResolvedValue({});
+
+      mockCfg = {
+        ...defaultConfig,
+        metadata: { ...defaultConfig.metadata, generation: 2 },
+        status: { observedGeneration: 1 },
+      };
+      mockClusterConfGet.mockResolvedValue(mockCfg);
+      mockSecretGet.mockResolvedValue(mockSecret);
+      mockConfigMapGet.mockResolvedValue({
+        data: { dodCACerts: "", publicCACerts: "" },
+      });
+    });
+
+    it("patches status to Failed when error occurs and re-throws error", async () => {
+      // Force an error by making updateAllCaBundleConfigMaps throw
+      vi.mocked(updateAllCaBundleConfigMaps).mockRejectedValue(
+        new Error("ConfigMap update failed"),
+      );
+
+      UDSConfig.caBundle.certs = "different-cert";
+      process.env.PEPR_WATCH_MODE = "true";
+
+      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow(
+        "ConfigMap update failed",
+      );
+
+      // Should patch status to Failed
+      expect(mockPatchStatus).toHaveBeenCalledWith({
+        metadata: { name: "uds-cluster-config" },
+        status: {
+          phase: "Failed",
+          observedGeneration: 2,
+        },
+      });
+    });
+
+    it("sets status to Pending at start and Ready on success", async () => {
+      // Reset the mock to not throw an error
+      vi.mocked(updateAllCaBundleConfigMaps).mockResolvedValue();
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      // Should patch to Pending first, then Ready
+      expect(mockPatchStatus).toHaveBeenNthCalledWith(1, {
+        metadata: { name: "uds-cluster-config" },
+        status: {
+          phase: "Pending",
+          observedGeneration: 2,
+        },
+      });
+
+      expect(mockPatchStatus).toHaveBeenNthCalledWith(2, {
+        metadata: { name: "uds-cluster-config" },
+        status: {
+          phase: "Ready",
+          observedGeneration: 2,
+        },
+      });
+    });
+  });
+
+  describe("Legacy CA cert placeholder handling", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockCfg = {
+        ...defaultConfig,
+        metadata: { ...defaultConfig.metadata, generation: 2 },
+        status: { observedGeneration: 1 },
+      };
+      mockClusterConfGet.mockResolvedValue(mockCfg);
+      mockSecretGet.mockResolvedValue(mockSecret);
+      mockConfigMapGet.mockResolvedValue({
+        data: { dodCACerts: "", publicCACerts: "" },
+      });
+      mockPatchStatus.mockResolvedValue({});
+    });
+
+    it("handles legacy ###ZARF_VAR_CA_CERT### placeholder", async () => {
+      mockCfg.spec!.caBundle.certs = "###ZARF_VAR_CA_CERT###";
+      UDSConfig.caBundle.certs = "old-cert";
+
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      expect(UDSConfig.caBundle.certs).toBe("");
+    });
+  });
+
+  describe("shouldSkip early return", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockPatchStatus.mockResolvedValue({});
+    });
+
+    it("returns early when shouldSkip is true without processing", async () => {
+      const skippableCfg: ClusterConfig = {
+        metadata: { name: "uds-cluster-config", generation: 1 },
+        status: { phase: Phase.Pending, observedGeneration: 1 },
+      };
+
+      await handleCfg(skippableCfg, ConfigAction.UPDATE);
+
+      // Should not patch status or call any update functions
+      expect(mockPatchStatus).not.toHaveBeenCalled();
+      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
   });
 });

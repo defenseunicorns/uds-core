@@ -503,6 +503,45 @@ const sso = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const caBundle = {
+  description: "CA bundle configuration for the package",
+  type: "object",
+  properties: {
+    configMap: {
+      description: "ConfigMap configuration for CA bundle",
+      type: "object",
+      properties: {
+        name: {
+          description: "The name of the ConfigMap to create (default: uds-trust-bundle)",
+          type: "string",
+          default: "uds-trust-bundle",
+        },
+        key: {
+          description: "The key name inside the ConfigMap (default: ca-bundle.pem)",
+          type: "string",
+          default: "ca-bundle.pem",
+        },
+        labels: {
+          description: "Additional labels to apply to the generated ConfigMap (default: {})",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+          default: {},
+        },
+        annotations: {
+          description: "Additional annotations to apply to the generated ConfigMap (default: {})",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+          default: {},
+        },
+      },
+    },
+  },
+} as V1JSONSchemaProps;
+
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
@@ -671,6 +710,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             },
             monitor,
             sso,
+            caBundle,
           },
         } as V1JSONSchemaProps,
       },

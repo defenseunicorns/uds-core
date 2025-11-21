@@ -36,7 +36,43 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">monitor</td><td style="white-space: nowrap;"><a href="#Monitor">Monitor[]</a></td><td>Create Service or Pod Monitor configurations</td></tr><tr><td style="white-space: nowrap;">network</td><td style="white-space: nowrap;"><a href="#Network">Network</a></td><td>Network configuration for the package</td></tr><tr><td style="white-space: nowrap;">sso</td><td style="white-space: nowrap;"><a href="#Sso">Sso[]</a></td><td>Create SSO client configurations</td></tr>
+    <tr><td style="white-space: nowrap;">caBundle</td><td style="white-space: nowrap;"><a href="#CaBundle">CaBundle</a></td><td>CA bundle configuration for the package</td></tr><tr><td style="white-space: nowrap;">monitor</td><td style="white-space: nowrap;"><a href="#Monitor">Monitor[]</a></td><td>Create Service or Pod Monitor configurations</td></tr><tr><td style="white-space: nowrap;">network</td><td style="white-space: nowrap;"><a href="#Network">Network</a></td><td>Network configuration for the package</td></tr><tr><td style="white-space: nowrap;">sso</td><td style="white-space: nowrap;"><a href="#Sso">Sso[]</a></td><td>Create SSO client configurations</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="CaBundle"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### CaBundle
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">configMap</td><td style="white-space: nowrap;"><a href="#ConfigMap">ConfigMap</a></td><td>ConfigMap configuration for CA bundle</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="ConfigMap"></a>
+<div style="margin-left: 80px; padding-top: 30px;">
+
+#### ConfigMap
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">annotations</td><td style="white-space: nowrap;"></td><td>Additional annotations to apply to the generated ConfigMap (default: {})</td></tr><tr><td style="white-space: nowrap;">key</td><td style="white-space: nowrap;">string</td><td>The key name inside the ConfigMap (default: ca-bundle.pem)</td></tr><tr><td style="white-space: nowrap;">labels</td><td style="white-space: nowrap;"></td><td>Additional labels to apply to the generated ConfigMap (default: {})</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name of the ConfigMap to create (default: uds-trust-bundle)</td></tr>
   </tbody>
 </table>
 </div>

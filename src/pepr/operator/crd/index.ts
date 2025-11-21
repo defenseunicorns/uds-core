@@ -37,7 +37,8 @@ export {
   ClusterConfig,
   Expose as ConfigExpose,
   Policy as ConfigPolicy,
-  Name,
+  CABundle as ConfigCABundle,
+  Phase as ConfigPhase,
   Networking,
 } from "./generated/clusterconfig-v1alpha1";
 
