@@ -158,7 +158,7 @@ test("validate logout functionality", async ({ page }) => {
     // First to /login/generic_oauth, then to SSO
     await page.waitForURL(/.*sso\.uds\.dev.*/, { timeout: 15000 });
 
-    // Verify we're at the Keycloak login page
+    // Verify we're at the Keycloak logout confirmation page
     await expect(page.locator('p:has-text("You are logged out")')).toBeVisible({ timeout: 10000 });
   });
 });
