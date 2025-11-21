@@ -43,10 +43,6 @@ function collectCatchAllPorts(nonMetricsOps: IstioOperation[]): string[] {
   return nonMetricsOps.filter(op => Array.isArray(op.notPorts)).flatMap(op => op.notPorts ?? []);
 }
 
-function expectHasMetric(ops: IstioOperation[], port: string, path: string) {
-  expect(ops.some(op => op.ports?.includes(port) && op.paths?.includes(path))).toBe(true);
-}
-
 function expectHasNonMetricExclusion(ops: IstioOperation[], port: string, path: string) {
   expect(ops.some(op => op.ports?.includes(port) && op.notPaths?.includes(path))).toBe(true);
 }
@@ -83,7 +79,7 @@ describe("authorization-policy.ts", () => {
     expect((rule2.to ?? []).length).toBe(0);
   });
 
-  it("authservice metrics rule uses Prometheus-only from.source and non-metrics rule has no from", () => {
+  it("authservice policy with monitor exemptions only includes non-metrics operations", () => {
     const monitorExemptions = [{ port: "8080", path: "/metrics" }];
     const pol = authserviceAuthorizationPolicy(
       labelSelector,
@@ -95,19 +91,16 @@ describe("authorization-policy.ts", () => {
     );
 
     const rules = (pol.spec!.rules ?? []) as IstioRule[];
-    expect(rules.length).toBeGreaterThanOrEqual(1);
+    expect(rules.length).toBe(1);
 
-    const metricsRule = rules[0];
-    const nonMetricsRule = rules[1];
+    const allOps = collectOperations(rules);
+    const { metricsOps, nonMetricsOps } = splitMetricsAndNonMetrics(allOps);
 
-    // Metrics rule: from.source.notPrincipals should exclude Prometheus only
-    const metricsFrom = metricsRule.from?.[0].source as {
-      notPrincipals?: string[];
-    };
-    expect(metricsFrom.notPrincipals).toEqual([PROMETHEUS_PRINCIPAL]);
-    expect(metricsRule.when).toBeDefined();
+    // Authservice CUSTOM policy does not target metrics endpoints when monitor exemptions are present
+    expect(metricsOps.length).toBe(0);
+    expect(nonMetricsOps.length).toBeGreaterThan(0);
 
-    // Non-metrics rule: no from.source filter, only when clause
+    const nonMetricsRule = rules[0];
     expect(nonMetricsRule.from).toBeUndefined();
     expect(nonMetricsRule.when).toBeDefined();
   });
@@ -213,7 +206,7 @@ describe("authorization-policy.ts", () => {
     expect(pol.spec!.selector).toBeUndefined();
   });
 
-  it("non-ambient authservice policy builds metrics and non-metrics operations from monitor exemptions", () => {
+  it("non-ambient authservice policy builds non-metrics operations from monitor exemptions", () => {
     const monitorExemptions = [
       { port: "15020", path: "/stats/prometheus" },
       { port: "8080", path: "/metrics" },
@@ -229,15 +222,12 @@ describe("authorization-policy.ts", () => {
     );
 
     const rules = (pol.spec!.rules ?? []) as IstioRule[];
-    expect(rules.length).toBeGreaterThanOrEqual(1);
+    expect(rules.length).toBe(1);
 
     const allOps = collectOperations(rules);
     const { metricsOps, nonMetricsOps } = splitMetricsAndNonMetrics(allOps);
-
-    // Metrics ops: exact metrics endpoints
-    expectHasMetric(metricsOps, "15020", "/stats/prometheus");
-    expectHasMetric(metricsOps, "8080", "/metrics");
-    expectHasMetric(metricsOps, "9090", "/custommetrics");
+    // Authservice CUSTOM policy does not contain metrics operations
+    expect(metricsOps.length).toBe(0);
 
     // Non-metrics ops: per-port notPaths plus catch-all notPorts
     const perPortNonMetrics = nonMetricsOps.filter(op => Array.isArray(op.ports));
@@ -286,18 +276,18 @@ describe("authorization-policy.ts", () => {
     expect(nonMetricsFrom.notRequestPrincipals).toEqual(["https://sso.example.com/realms/uds/*"]);
   });
 
-  it("ambient authservice policy builds metrics and non-metrics operations from monitor exemptions", () => {
+  it("ambient authservice policy builds non-metrics operations from monitor exemptions", () => {
     const pol = authserviceAuthorizationPolicy(labelSelector, name, namespace, true, waypointName, [
       { port: "8080", path: "/metrics" },
     ]);
 
     const rules = (pol.spec!.rules ?? []) as IstioRule[];
-    expect(rules.length).toBe(2);
+    expect(rules.length).toBe(1);
 
     const allOps = collectOperations(rules);
     const { metricsOps, nonMetricsOps } = splitMetricsAndNonMetrics(allOps);
-
-    expectHasMetric(metricsOps, "8080", "/metrics");
+    // Authservice CUSTOM policy does not contain metrics operations in ambient mode
+    expect(metricsOps.length).toBe(0);
 
     const perPortNonMetrics = nonMetricsOps.filter(op => Array.isArray(op.ports));
     expectHasNonMetricExclusion(perPortNonMetrics, "8080", "/metrics");

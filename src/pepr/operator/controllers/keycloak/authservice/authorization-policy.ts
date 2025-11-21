@@ -147,39 +147,18 @@ function authserviceAuthorizationPolicy(
         },
       ],
     });
-  } else {
-    // Metrics from non-Prometheus callers without an Authorization header should go through Authservice
-    if (metricsOps.length > 0) {
-      rules.push({
-        from: [
-          {
-            source: {
-              notPrincipals: [PROMETHEUS_PRINCIPAL],
-            },
-          },
-        ],
-        to: metricsOps,
-        when: [
-          {
-            key: "request.headers[authorization]",
-            notValues: ["*"],
-          },
-        ],
-      });
-    }
-
-    // All other unauthenticated traffic (non-metrics paths/ports) should be sent to Authservice
-    if (nonMetricsOps.length > 0) {
-      rules.push({
-        to: nonMetricsOps,
-        when: [
-          {
-            key: "request.headers[authorization]",
-            notValues: ["*"],
-          },
-        ],
-      });
-    }
+  } else if (nonMetricsOps.length > 0) {
+    // With monitor exemptions present, treat all metrics endpoints as outside of Authservice
+    // and send only non-metrics unauthenticated traffic through Authservice.
+    rules.push({
+      to: nonMetricsOps,
+      when: [
+        {
+          key: "request.headers[authorization]",
+          notValues: ["*"],
+        },
+      ],
+    });
   }
 
   const policy: IstioAuthorizationPolicy & { spec: NonNullable<IstioAuthorizationPolicy["spec"]> } =
