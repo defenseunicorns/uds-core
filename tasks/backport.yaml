@@ -1,0 +1,120 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: backport
+    description: "Create a backport branch from release/* and cherry-pick commits"
+    inputs:
+      target_versions:
+        description: "Comma-separated target minor versions (e.g., 0.54,0.55)"
+        required: true
+      commit:
+        description: "Single commit SHA to cherry-pick"
+        required: true
+      auto_pr:
+        description: "Automatically open PRs for each backport branch"
+        default: "true"
+
+    actions:
+      - description: "Create backport branch and cherry-pick commits"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          CURR_BRANCH=$(git rev-parse --abbrev-ref HEAD || echo "")
+          # Require a clean working tree
+          if ! git diff-index --quiet HEAD --; then
+            echo "Working tree is dirty. Please commit or stash your changes before running the backport task." >&2
+            exit 1
+          fi
+          TVS='${{ .inputs.target_versions }}'
+          COMMIT='${{ .inputs.commit }}'
+          AUTO_PR='${{ .inputs.auto_pr }}'
+          NAME="$(echo "$COMMIT" | xargs)"
+
+          git fetch origin --tags
+
+          MINOR_LIST=()
+          IFS=',' read -ra MINOR_LIST <<< "$TVS"
+
+          for MINOR in "${MINOR_LIST[@]}"; do
+            MINOR="$(echo "$MINOR" | xargs)"
+            if [[ -z "$MINOR" ]]; then
+              continue
+            fi
+            RB="release/${MINOR}"
+            if ! git show-ref --verify --quiet "refs/remotes/origin/${RB}"; then
+              echo "Remote branch ${RB} not found. Ensure it exists (cut from v${MINOR}.0) or create it first." >&2
+              exit 1
+            fi
+
+            BRANCH="backport/${NAME}-to-${MINOR}"
+            BRANCH="${BRANCH// /-}"
+            BRANCH="$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]')"
+
+            echo "Creating branch: ${BRANCH} from ${RB}"
+            git switch -C "${BRANCH}" "origin/${RB}"
+
+            echo "Cherry-picking ${NAME} into ${BRANCH}..."
+
+            # Suppress noisy git output; on failure, show clear next steps instead.
+            if ! git cherry-pick -x "$NAME" >/dev/null 2>&1; then
+              echo
+              echo "======================================================================"
+              echo "Backport to ${RB} hit conflicts while cherry-picking ${NAME}."
+              echo "You are now on branch: ${BRANCH}"
+              echo
+              echo "To resolve the conflicts and finish this backport, run (copy/paste):"
+              echo
+              echo "  git status"
+              echo "  # edit files to resolve conflicts"
+              echo "  git add <files-you-resolved>"
+              echo "  git cherry-pick --continue"
+              echo "  git push -u origin ${BRANCH}"
+              echo
+              DEFAULT_TITLE="$(git log -1 --pretty=%s "$COMMIT" 2>/dev/null || echo "")"
+              if [[ -z "${DEFAULT_TITLE}" ]]; then
+                DEFAULT_TITLE="chore: backport of ${COMMIT}"
+              fi
+              TITLE="${DEFAULT_TITLE} (backport-${MINOR})"
+              BODY="Backport of commit: ${COMMIT}"
+
+              if command -v gh >/dev/null 2>&1; then
+                echo "  gh pr create --title \"${TITLE}\" --body \"${BODY}\" --base \"${RB}\" --head \"${BRANCH}\""
+              else
+                echo "  # Branch '${BRANCH}' has been pushed. Open a PR with base='${RB}' and compare='${BRANCH}'."
+              fi
+
+              if [[ -n "${CURR_BRANCH}" ]]; then
+                echo
+                echo "After finishing the backport and pushing, you can return to your original branch with:"
+                echo
+                echo "  git switch ${CURR_BRANCH}"
+              fi
+              echo "======================================================================"
+              exit 1
+            fi
+
+            git push -u origin "${BRANCH}" >/dev/null 2>&1
+
+            DEFAULT_TITLE="$(git log -1 --pretty=%s "$COMMIT" 2>/dev/null || echo "")"
+            if [[ -z "${DEFAULT_TITLE}" ]]; then
+              DEFAULT_TITLE="chore: backport of ${COMMIT}"
+            fi
+            TITLE="${DEFAULT_TITLE} (backport-${MINOR})"
+            BODY="Backport of commit: ${COMMIT}"
+
+            echo "✅ Backport branch created and pushed: ${BRANCH} (base: ${RB})"
+
+            if [[ "${AUTO_PR}" == "true" ]] && command -v gh >/dev/null 2>&1; then
+              gh pr create --title "${TITLE}" --body "${BODY}" --base "${RB}" --head "${BRANCH}"
+            else
+              echo "  # After pushing, open a PR with base=${RB} and compare=${BRANCH}"
+            fi
+          done
+
+          if [[ -n "$CURR_BRANCH" ]]; then
+            git switch "$CURR_BRANCH"
+            echo "Returned to branch: $CURR_BRANCH"
+          fi
