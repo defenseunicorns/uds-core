@@ -99,7 +99,7 @@ customConfig:
       type: prometheus_exporter
       inputs: [internal_metrics]
       address: 0.0.0.0:9090
-# @lulaEnd ac7739bd-39bd-407b-9dcc-2e501062fe7f
+    # @lulaEnd ac7739bd-39bd-407b-9dcc-2e501062fe7f
 persistence:
   enabled: true
   hostPath:

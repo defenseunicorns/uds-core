@@ -1,0 +1,46 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Check CA Cert Updates
+
+on:
+  schedule:
+    # Runs every morning at 2:00 AM UTC
+    - cron: "0 2 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  test-ca-certs:
+    runs-on: ubuntu-latest
+    name: check-certs
+    permissions:
+      contents: read
+      packages: read
+    env:
+      SHA: ${{ github.sha }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      - name: Check CA Certs for Updates
+        run:
+          uds run check-ca-certs
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}

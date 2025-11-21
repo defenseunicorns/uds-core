@@ -1,0 +1,31 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "draft": false,
+      "bump-minor-pre-major": true,
+      "versioning": "always-bump-patch",
+      "skip-changelog": true,
+      "extra-files": [
+        "README.md",
+        "packages/checkpoint-dev/zarf.yaml",
+        "packages/base/zarf.yaml",
+        "packages/identity-authorization/zarf.yaml",
+        "packages/logging/zarf.yaml",
+        "packages/backup-restore/zarf.yaml",
+        "packages/runtime-security/zarf.yaml",
+        "packages/monitoring/zarf.yaml",
+        "packages/metrics-server/zarf.yaml",
+        "packages/standard/zarf.yaml",
+        "bundles/k3d-slim-dev/uds-bundle.yaml",
+        "bundles/k3d-standard/uds-bundle.yaml",
+        "bundles/base-shim/uds-bundle.yaml",
+        ".github/bundles/rke2/uds-bundle.yaml",
+        ".github/bundles/eks/uds-bundle.yaml",
+        ".github/bundles/aks/uds-bundle.yaml",
+        "tasks/deploy.yaml",
+        "tasks/publish.yaml"
+      ]
+    }
+  }
+}

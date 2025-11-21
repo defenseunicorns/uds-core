@@ -80,20 +80,39 @@ tasks:
         if: ${{ ne .inputs.layer "base"}}
         cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
 
-  - name: latest-bundle-release
-    inputs:
-      configFile:
-        description: "UDS_CONFIG file to use for the deployment"
+  - name: resolve-latest-core-release
     actions:
       - task: utils:determine-repo
-      - description: "Get latest tag version from OCI"
-        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
+      - description: "Get latest tag version from OCI (conditionally pinned to specific minor stream)"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")}}"
+
+          TARGET_VERSION=""
+          if [[ "$BRANCH" == release-please--branches--release/* ]]; then
+            TARGET_VERSION="${BRANCH#release-please--branches--release/}"
+          fi
+
+          if [ -n "${TARGET_VERSION}" ]; then
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | grep -E "^${TARGET_VERSION}\\." | sort -V | tail -1
+          else
+            uds zarf tools registry ls ${TARGET_REPO}/core | grep "${FLAVOR}" | sort -V | tail -1
+          fi
         setVariables:
           - name: LATEST_VERSION
       - description: "Extract unflavored version for git tag"
         cmd: echo ${LATEST_VERSION} | cut -d'-' -f1 # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
         setVariables:
           - name: LATEST_CORE_TAG
+
+  - name: latest-bundle-release
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployment"
+    actions:
+      - task: resolve-latest-core-release
       - description: "Create the latest version with bundle overrides"
         cmd: |
           # Create temp directory
@@ -121,15 +140,7 @@ tasks:
 
   - name: latest-release-test-resources
     actions:
-      - task: utils:determine-repo
-      - description: "Get latest tag version from OCI for aligning test resources"
-        cmd: uds zarf tools registry ls ${TARGET_REPO}/core | grep ${FLAVOR} | sort -V | tail -1
-        setVariables:
-          - name: LATEST_VERSION
-      - description: "Extract unflavored version for git tag"
-        cmd: echo ${LATEST_VERSION} | cut -d'-' -f1 # Extract version before any hyphen (e.g., "0.52.0" from "0.52.0-upstream")
-        setVariables:
-          - name: LATEST_CORE_TAG
+      - task: resolve-latest-core-release
       - description: "Fetch src/test from tagged release"
         cmd: |
           # Create temp directory

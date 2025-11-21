@@ -11,7 +11,7 @@
         { "type": "docs", "section": "Documentation", "hidden": false }
       ],
       "bump-minor-pre-major": true,
-      "versioning": "default",
+      "versioning": "always-bump-minor",
       "extra-files": [
         "README.md",
         "packages/checkpoint-dev/zarf.yaml",
