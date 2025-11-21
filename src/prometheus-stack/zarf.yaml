@@ -13,7 +13,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 24.0.2
+        version: 25.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -31,10 +31,10 @@ components:
           - "values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.10.2"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.86.2"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.87.0"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0"
       - "quay.io/prometheus/alertmanager:v0.29.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.86.2"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.87.0"
       - "quay.io/prometheus/prometheus:v3.7.3"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.4"
 
