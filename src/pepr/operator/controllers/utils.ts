@@ -9,6 +9,9 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { UDSPackage } from "../crd";
 
+export const PROMETHEUS_PRINCIPAL =
+  "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
+
 /**
  * Watch configuration for use in KFC watches
  * This is primarily used for any watches occurring in admission pods

@@ -15,15 +15,18 @@ import {
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import {
+  PROMETHEUS_PRINCIPAL,
+  getAuthserviceClients,
+  getOwnerRef,
+  purgeOrphans,
+  sanitizeResourceName,
+} from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
 import { kubeAPI } from "./generators/kubeAPI";
 import { kubeNodes } from "./generators/kubeNodes";
 
 const log = setupLogger(Component.OPERATOR_NETWORK);
-
-// Constants for principals.
-const PROMETHEUS_PRINCIPAL = "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
 
 /**
  * Generates a unique name for a Monitor rule.
