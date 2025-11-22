@@ -1,0 +1,29 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Logout Confirmation EnvoyFilter
+templates:
+  - logout-confirmation-envoyfilter.yaml
+
+tests:
+  - it: should render EnvoyFilter to strip post_logout_redirect_uri from logout URLs by default
+    template: logout-confirmation-envoyfilter.yaml
+    asserts:
+      - isKind:
+          of: EnvoyFilter
+      - equal:
+          path: metadata.namespace
+          value: istio-system
+      - equal:
+          path: spec.configPatches[0].match.context
+          value: GATEWAY
+
+  - it: should not render when logoutConfirmation is false
+    set:
+      logoutConfirmation: false
+    template: logout-confirmation-envoyfilter.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

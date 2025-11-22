@@ -131,6 +131,9 @@
     "pathParameterProtection": {
       "type": "boolean"
     },
+    "logoutConfirmation": {
+      "type": "boolean"
+    },
     "additionalNetworkAllow": {
       "type": "array",
       "items": {
