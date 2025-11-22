@@ -9,16 +9,36 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
   storage: true,
+  additionalPrinterColumns: [
+    {
+      name: "Status",
+      type: "string",
+      description: "The status of the cluster config",
+      jsonPath: ".status.phase",
+    },
+    {
+      name: "Age",
+      type: "date",
+      description: "The age of the cluster config",
+      jsonPath: ".metadata.creationTimestamp",
+    },
+  ],
+  subresources: {
+    status: {},
+  },
   schema: {
     openAPIV3Schema: {
       type: "object",
       properties: {
-        metadata: {
+        status: {
           type: "object",
           properties: {
-            name: {
+            observedGeneration: {
+              type: "integer",
+            },
+            phase: {
+              enum: ["Pending", "Ready", "Failed"],
               type: "string",
-              enum: ["uds-cluster-config"],
             },
           },
         } as V1JSONSchemaProps,
@@ -59,6 +79,25 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                 },
               },
             },
+            caBundle: {
+              type: "object",
+              properties: {
+                certs: {
+                  type: "string",
+                  description: "Contents of user provided CA bundle certificates",
+                },
+                includeDoDCerts: {
+                  type: "boolean",
+                  description: "Include DoD CA certificates in the bundle",
+                  default: false,
+                },
+                includePublicCerts: {
+                  type: "boolean",
+                  description: "Include public CA certificates in the bundle",
+                  default: false,
+                },
+              },
+            },
             expose: {
               type: "object",
               properties: {
@@ -92,7 +131,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               required: ["allowAllNsExemptions"],
             },
           },
-          required: ["expose", "policy"],
+          required: ["expose", "policy", "caBundle"],
         } as V1JSONSchemaProps,
       },
       required: ["spec"],

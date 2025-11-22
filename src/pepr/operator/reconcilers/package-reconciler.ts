@@ -24,6 +24,7 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
+import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import { Phase, UDSPackage } from "../crd";
 import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
@@ -126,6 +127,9 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   const monitors: string[] = [];
   monitors.push(...(await podMonitor(pkg, namespace!)));
   monitors.push(...(await serviceMonitor(pkg, namespace!)));
+
+  // Create the CA Bundle Config Map if needed
+  await caBundleConfigMap(pkg, namespace!);
 
   await updateStatus(pkg, {
     phase: Phase.Ready,

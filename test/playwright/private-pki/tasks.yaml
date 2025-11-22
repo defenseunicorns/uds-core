@@ -68,7 +68,7 @@ tasks:
 
           # Configure UDS with certificates
           cp bundles/k3d-standard/uds-private-pki-config.yaml build/private-pki/uds-private-pki-config.yaml
-          yq -i '.variables.core.CA_CERT = "'"$(cat build/private-pki/ca.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
+          yq -i '.variables.core.CA_BUNDLE_CERTS = "'"$(cat build/private-pki/ca.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.ADMIN_TLS_CERT = "'"$(cat build/private-pki/admin-gateway.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.ADMIN_TLS_KEY = "'"$(cat build/private-pki/admin-gateway.key.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.TENANT_TLS_CERT = "'"$(cat build/private-pki/tenant-gateway.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml

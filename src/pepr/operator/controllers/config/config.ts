@@ -6,7 +6,7 @@
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { ClusterConfig, ConfigExpose } from "../../crd";
+import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
@@ -14,12 +14,21 @@ import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { watchCfg } from "../utils";
 import { Config } from "./types";
+import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
+
+export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
 // Set default UDSConfig for build time compiling
 export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
-  caCert: "",
+  caBundle: {
+    certs: "",
+    includeDoDCerts: false,
+    includePublicCerts: false,
+    dodCerts: "",
+    publicCerts: "",
+  },
   authserviceRedisUri: "",
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
@@ -27,12 +36,12 @@ export const UDSConfig: Config = {
   isIdentityDeployed: false,
 };
 
-// Enums for tracking the config action and "phase" of the action
+// Enums for tracking the config action and step of the action
 export enum ConfigAction {
   LOAD,
   UPDATE,
 }
-export enum ConfigPhase {
+export enum ConfigStep {
   START,
   FINISH,
 }
@@ -40,12 +49,12 @@ export enum ConfigPhase {
 // Helper function to generate config log messages
 export function getConfigLogMessage(
   action: ConfigAction,
-  phase: ConfigPhase,
+  step: ConfigStep,
   resourceName: string,
 ): string {
   const isLoad = action === ConfigAction.LOAD;
   const verb =
-    phase === ConfigPhase.START ? (isLoad ? "Loading" : "Updating") : isLoad ? "Loaded" : "Updated";
+    step === ConfigStep.START ? (isLoad ? "Loading" : "Updating") : isLoad ? "Loaded" : "Updated";
   const change = isLoad ? "" : " change";
 
   return `${verb} UDS Config from ${resourceName}${change}`;
@@ -59,7 +68,31 @@ export function shouldUpdateClusterResources(action: ConfigAction): boolean {
   );
 }
 
-export const configLog = setupLogger(Component.OPERATOR_CONFIG);
+/**
+ * Checks if the ClusterConfig CRD has been processed already (pending)
+ *
+ * @param cr The custom resource to check
+ * @returns true if the CRD is or the current generation has already been processed
+ */
+export function shouldSkip(cr: ClusterConfig) {
+  const isPending = cr.status?.phase === Phase.Pending;
+  const isCurrentGeneration = cr.metadata?.generation === cr.status?.observedGeneration;
+
+  // The CR is pending and should be skipped
+  if (isPending) {
+    configLog.trace(cr, `Should skip? Yes, is pending`);
+    return true;
+  }
+
+  if (isCurrentGeneration) {
+    configLog.trace(cr, `Should skip? Yes, current generation already processed`);
+    return true;
+  }
+
+  configLog.trace(cr, `Should skip? No, not pending or current generation`);
+
+  return false;
+}
 
 // Exported for testing purposes
 export function decodeSecret(secret: kind.Secret) {
@@ -83,7 +116,7 @@ export function decodeSecret(secret: kind.Secret) {
 
 export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
   const resourceName = "uds-operator-config secret";
-  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
+  configLog.info(getConfigLogMessage(action, ConfigStep.START, resourceName));
 
   // Only update cluster resources in the watcher pod if not on the first load
   const updateClusterResources = shouldUpdateClusterResources(action);
@@ -109,78 +142,157 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
     }
   }
 
-  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
+  configLog.info(getConfigLogMessage(action, ConfigStep.FINISH, resourceName));
 }
 
-async function handleCAUpdate(expose: ConfigExpose, updateClusterResources?: boolean) {
+async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResources?: boolean) {
   // no caCert then set to empty string
-  if (!expose.caCert) {
-    expose.caCert = "";
+  if (!caBundle.certs) {
+    caBundle.certs = "";
   }
 
   // handle dev mode placeholder
-  if (expose.caCert === "###ZARF_VAR_CA_CERT###") {
-    expose.caCert = "";
+  if (caBundle.certs === "###ZARF_VAR_CA_BUNDLE_CERTS###") {
+    caBundle.certs = "";
+  } else if (caBundle.certs === "###ZARF_VAR_CA_CERT###") {
+    caBundle.certs = "";
   }
 
-  if (UDSConfig.caCert !== expose.caCert) {
-    UDSConfig.caCert = expose.caCert || "";
+  // Load in the DoD and Public certs from the configmap
+  const caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
+  // TODO: Add error handling here??
 
+  // Check if CA bundle ConfigMaps need updates based on configuration changes
+  const caBundleConfigMapsNeedUpdate =
+    UDSConfig.caBundle.certs !== caBundle.certs ||
+    UDSConfig.caBundle.includeDoDCerts !== (caBundle.includeDoDCerts === true) ||
+    UDSConfig.caBundle.includePublicCerts !== (caBundle.includePublicCerts === true) ||
+    (caBundle.includeDoDCerts &&
+      UDSConfig.caBundle.dodCerts !== (caCertsConfigMap?.data?.["dodCACerts"] || "")) ||
+    (caBundle.includePublicCerts &&
+      UDSConfig.caBundle.publicCerts !== (caCertsConfigMap?.data?.["publicCACerts"] || ""));
+
+  if (UDSConfig.caBundle.certs !== caBundle.certs) {
+    UDSConfig.caBundle.certs = caBundle.certs || "";
+
+    // Handle changes to the Authservice configuration for CA Certs
     if (updateClusterResources) {
       await performAuthserviceUpdate("change to CA Cert");
     }
   }
+
+  UDSConfig.caBundle.includeDoDCerts = caBundle.includeDoDCerts === true;
+  UDSConfig.caBundle.includePublicCerts = caBundle.includePublicCerts === true;
+
+  if (caCertsConfigMap && caCertsConfigMap.data) {
+    if (UDSConfig.caBundle.includeDoDCerts && caCertsConfigMap.data["dodCACerts"]) {
+      UDSConfig.caBundle.dodCerts = caCertsConfigMap.data["dodCACerts"];
+    }
+
+    if (UDSConfig.caBundle.includePublicCerts && caCertsConfigMap.data["publicCACerts"]) {
+      UDSConfig.caBundle.publicCerts = caCertsConfigMap.data["publicCACerts"];
+    }
+  }
+
+  // Handle global updates to Trust Bundle Configmaps
+  if (caBundleConfigMapsNeedUpdate && updateClusterResources) {
+    await updateAllCaBundleConfigMaps();
+  }
 }
 
 export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
-  const resourceName = "uds-operator-config ClusterConfig";
-  configLog.info(getConfigLogMessage(action, ConfigPhase.START, resourceName));
-
-  // Only update cluster resources in the watcher pod if not on the first load
-  const updateClusterResources = shouldUpdateClusterResources(action);
-
-  const { expose, policy, networking } = cfg.spec!;
-
-  // Handle changes to the Authservice configuration for CA Cert
-  await handleCAUpdate(expose, updateClusterResources);
-
-  // Handle changes to the kubeApiCidr
-  if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
-    UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR || "";
-    if (updateClusterResources) {
-      // This re-runs the "init" function to update netpols if necessary
-      configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
-      await initAPIServerCIDR();
-    }
+  if (shouldSkip(cfg)) {
+    configLog.debug("Skipping ClusterConfig processing as it is already pending or current");
+    return;
   }
 
-  if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCIDRs)) {
-    UDSConfig.kubeNodeCIDRs = networking?.kubeNodeCIDRs || [];
-    if (updateClusterResources) {
-      // This re-runs the "init" function to update netpols if necessary
-      configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
-      await initAllNodesTarget();
+  try {
+    // Patch the status to Pending and set currentGeneration while we process the update
+    await K8s(ClusterConfig).PatchStatus({
+      metadata: {
+        name: cfg.metadata!.name,
+      },
+      status: {
+        phase: Phase.Pending,
+        observedGeneration: cfg.metadata!.generation,
+      },
+    });
+
+    const resourceName = "uds-operator-config ClusterConfig";
+    configLog.info(getConfigLogMessage(action, ConfigStep.START, resourceName));
+
+    // Only update cluster resources in the watcher pod if not on the first load
+    const updateClusterResources = shouldUpdateClusterResources(action);
+
+    const { expose, policy, networking, caBundle } = cfg.spec!;
+
+    // Handle changes to the Authservice configuration for CA Cert
+    await handleCABundleUpdate(caBundle, updateClusterResources);
+
+    // Handle changes to the kubeApiCidr
+    if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
+      UDSConfig.kubeApiCIDR = networking?.kubeApiCIDR || "";
+      if (updateClusterResources) {
+        // This re-runs the "init" function to update netpols if necessary
+        configLog.debug("Updating KubeAPI network policies based on change to kubeApiCidr");
+        await initAPIServerCIDR();
+      }
     }
+
+    if (!areKubeNodeCidrsEqual(networking?.kubeNodeCIDRs, UDSConfig.kubeNodeCIDRs)) {
+      UDSConfig.kubeNodeCIDRs = networking?.kubeNodeCIDRs || [];
+      if (updateClusterResources) {
+        // This re-runs the "init" function to update netpols if necessary
+        configLog.debug("Updating KubeNodes network policies based on change to kubeNodeCidrs");
+        await initAllNodesTarget();
+      }
+    }
+
+    if (expose.domain !== UDSConfig.domain || expose.adminDomain !== UDSConfig.adminDomain) {
+      if (expose.domain && expose.domain !== "###ZARF_VAR_DOMAIN###") {
+        UDSConfig.domain = expose.domain;
+      } else {
+        UDSConfig.domain = "uds.dev";
+      }
+      if (expose.adminDomain && expose.adminDomain !== "###ZARF_VAR_ADMIN_DOMAIN###") {
+        UDSConfig.adminDomain = expose.adminDomain;
+      } else {
+        UDSConfig.adminDomain = `admin.${UDSConfig.domain}`;
+      }
+      // todo: Add logic to handle domain changes and update across virtualservices, authservice config, etc
+    }
+
+    // Update other config values (no need for special handling)
+    UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
+
+    configLog.info(getConfigLogMessage(action, ConfigStep.FINISH, resourceName));
+
+    // Finally, patch status to Ready and set observedGeneration
+    await K8s(ClusterConfig).PatchStatus({
+      metadata: {
+        name: cfg.metadata!.name,
+      },
+      status: {
+        phase: Phase.Ready,
+        observedGeneration: cfg.metadata!.generation,
+      },
+    });
+  } catch (e) {
+    configLog.error("Error processing ClusterConfig", e);
+
+    // patch status to Failed and set observedGeneration
+    await K8s(ClusterConfig).PatchStatus({
+      metadata: {
+        name: cfg.metadata!.name,
+      },
+      status: {
+        phase: Phase.Failed,
+        observedGeneration: cfg.metadata!.generation,
+      },
+    });
+
+    throw e;
   }
-
-  if (expose.domain !== UDSConfig.domain || expose.adminDomain !== UDSConfig.adminDomain) {
-    if (expose.domain && expose.domain !== "###ZARF_VAR_DOMAIN###") {
-      UDSConfig.domain = expose.domain;
-    } else {
-      UDSConfig.domain = "uds.dev";
-    }
-    if (expose.adminDomain && expose.adminDomain !== "###ZARF_VAR_ADMIN_DOMAIN###") {
-      UDSConfig.adminDomain = expose.adminDomain;
-    } else {
-      UDSConfig.adminDomain = `admin.${UDSConfig.domain}`;
-    }
-    // todo: Add logic to handle domain changes and update across virtualservices, authservice config, etc
-  }
-
-  // Update other config values (no need for special handling)
-  UDSConfig.allowAllNSExemptions = policy.allowAllNsExemptions === true;
-
-  configLog.info(getConfigLogMessage(action, ConfigPhase.FINISH, resourceName));
 }
 
 // Loads the UDS Config on startup
@@ -246,7 +358,7 @@ async function performAuthserviceUpdate(reason: string) {
     name: "global-config-update",
     action: Action.UpdateGlobalConfig,
     // Base64 decode the CA cert before passing to the update function
-    trustedCA: atob(UDSConfig.caCert),
+    trustedCA: atob(UDSConfig.caBundle.certs),
     redisUri: UDSConfig.authserviceRedisUri,
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);
