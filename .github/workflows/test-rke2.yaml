@@ -48,7 +48,7 @@ jobs:
           echo "TF_VAR_uds_images_aws_account_id=${UDS_IMAGES_AWS_ACCOUNT_ID}" >> $GITHUB_ENV
 
       - name: Checkout repository
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
 
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
