@@ -37,8 +37,10 @@ spec:
                   return
                 end
 
-                -- Only apply to keycloak hosts
-                local is_keycloak_host = (host == "sso.{{ .Values.domain }}") or (host == "keycloak.{{ tpl .Values.adminDomain . }}")
+                -- Only apply to Keycloak hosts.
+                -- Note that the :authority header may include a port, so we use string.find
+                -- local is_keycloak_host = string.find(host, "sso.{{ .Values.domain }}") or string.find(host, "keycloak.{{ tpl .Values.adminDomain . }}")
+                local is_keycloak_host = string.find(host, "sso.uds.dev") or string.find(host, "keycloak.admin.uds.dev")
                 if not is_keycloak_host then
                   return
                 end
@@ -57,26 +59,11 @@ spec:
                   return
                 end
 
-                -- Replace post_logout_redirect_uri with uds_post_logout_redirect_uri in the query parameters
-                local new_params = {}
-                local logout_redirect_value = nil
-                for param in string.gmatch(query, "[^&]+") do
-                  local key = string.match(param, "^([^=]+)=?")
-                  -- Keycloak displays a logout confirmation only when it doesn't end up with a redirect.
-                  -- We remove the original "post_logout_redirect_uri" and re-add its value under
-                  -- the name "uds_post_logout_redirect_uri" so that downstream apps can still read it.
-                  if key == "post_logout_redirect_uri" then
-                    logout_redirect_value = string.match(param, "^[^=]+=(.*)$") or ""
-                  else
-                    table.insert(new_params, param)
-                  end
-                end
-                if logout_redirect_value ~= nil then
-                  table.insert(new_params, "uds_post_logout_redirect_uri=" .. logout_redirect_value)
-                end
-
-                -- Rebuild the query string from kept params
-                local new_query = table.concat(new_params, "&")
+                -- Keycloak displays a logout confirmation only when it doesn't end up with a redirect.
+                -- We rename the OIDC "post_logout_redirect_uri" to a custom name - "uds_post_logout_redirect_uri"
+                -- This prevents Keycloak from executing the redirect automatically and gives UDS a chance
+                -- to show a confirmation page first.
+                local new_query = string.gsub(query, "post_logout_redirect_uri=", "uds_post_logout_redirect_uri=")
                 local new_path = (#new_query > 0) and (path_only .. "?" .. new_query) or path_only
 
                 -- Only rewrite when something actually changed
