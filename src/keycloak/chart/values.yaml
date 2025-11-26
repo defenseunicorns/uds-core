@@ -27,6 +27,9 @@ additionalGatewayNamespaces: []
 # Should only be disabled if this is incorrectly blocking paths you expect to be allowed
 pathParameterProtection: true
 
+# Always enforce a logout confirmation screen by stripping post_logout_redirect_uri from logout URLs
+logoutConfirmation: false
+
 # The primary Keycloak realm
 realm: uds
 

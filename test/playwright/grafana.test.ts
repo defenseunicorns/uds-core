@@ -160,5 +160,9 @@ test("validate logout functionality", async ({ page }) => {
 
     // Verify we're at the Keycloak login page
     await expect(page.locator('h3:has-text("Sign in")')).toBeVisible({ timeout: 10000 });
+
+    // TODO: To be enabled once logoutConfirmation is set to true in Keycloak
+    // Verify we're at the Keycloak logout confirmation page
+    // await expect(page.locator('p:has-text("You are logged out")')).toBeVisible({ timeout: 10000 });
   });
 });
