@@ -8,7 +8,9 @@ templates:
   - logout-confirmation-envoyfilter.yaml
 
 tests:
-  - it: should render EnvoyFilter to strip post_logout_redirect_uri from logout URLs by default
+  - it: should not render the EnvoyFilter when logoutConfirmation is true
+    set:
+      logoutConfirmation: true
     template: logout-confirmation-envoyfilter.yaml
     asserts:
       - isKind:
@@ -20,7 +22,7 @@ tests:
           path: spec.configPatches[0].match.context
           value: GATEWAY
 
-  - it: should not render when logoutConfirmation is false
+  - it: should not render the EnvoyFilter when logoutConfirmation is false
     set:
       logoutConfirmation: false
     template: logout-confirmation-envoyfilter.yaml
