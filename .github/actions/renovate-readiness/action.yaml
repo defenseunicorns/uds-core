@@ -171,7 +171,7 @@ runs:
     # Checkout PR branch (sparse checkout of src/<pkg>)
     - name: Checkout PR branch
       if: steps.process-branch.outputs.needs_comparison == 'true'
-      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
       with:
         ref: ${{ github.event.pull_request.head.ref }}
         path: new
@@ -182,7 +182,7 @@ runs:
     # Checkout main branch (sparse checkout of src/<pkg>)
     - name: Checkout main branch
       if: steps.process-branch.outputs.needs_comparison == 'true'
-      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
       with:
         ref: main
         path: old
