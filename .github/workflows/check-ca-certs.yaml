@@ -7,8 +7,6 @@ on:
   schedule:
     # Runs every morning at 2:00 AM UTC
     - cron: "0 2 * * *"
-  # TODO: Remove this after testing
-  pull_request:
 
 permissions:
   contents: read
