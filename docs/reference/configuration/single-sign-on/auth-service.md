@@ -86,6 +86,18 @@ When using `network.expose` with protected services:
 ## Limitations:
 Authservice is intended for simple, basic protection scenarios where an absolute level of protection is acceptable (such as a Web UI or dashboard). For more advanced authentication requirements, you should implement authentication directly in your application or via a more comprehensive solution.
 
+## Metrics Scraping
+
+When you enable Authservice for a workload (using `sso[].enableAuthserviceSelector`) and also configure Prometheus monitors for the same pods (using the `monitor` field on the `Package`):
+
+- The UDS Operator automatically configures Istio policies so that **Prometheus can scrape the declared metrics endpoints** without going through Authservice or presenting a Keycloak JWT.
+- The same metrics endpoints **remain protected from normal callers**:
+  - Direct browser or curl access to `/metrics` will be denied unless a valid UDS JWT is presented.
+  - Metrics scraping from Prometheus continues to work as long as the corresponding `PodMonitor`/`ServiceMonitor` entries are defined in the `Package`.
+- All **non-metrics** paths and ports remain protected by Authservice as described above.
+
+In order for this behavior to take place, ensure that the `sso[].enableAuthserviceSelector` is identical to the `monitor[].podSelector` if you are exposing metrics on the protected workload. This allows the operator to identify the proper protection to allow Prometheus scraping to occur.
+
 ## Ambient Mode Support
 
 Authservice is fully supported for packages running in Istio Ambient Mesh mode (`spec.network.serviceMesh.mode: ambient`).
