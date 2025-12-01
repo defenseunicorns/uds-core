@@ -36,6 +36,10 @@ jobs:
           rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
+      - name: Install script dependencies
+        run: npm ci
+        working-directory: scripts/root-ca-retriever
+
       - name: Check CA Certs for Updates
         run:
           uds run check-ca-certs
