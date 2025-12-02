@@ -201,8 +201,9 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
 }
 
 export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
-  if (shouldSkip(cfg)) {
-    configLog.debug("Skipping ClusterConfig processing as it is already pending or current");
+  // Determine if we need to skip processing
+  // Don't skip on initial load - we need to process the config regardless of pending state
+  if (action !== ConfigAction.LOAD && shouldSkip(cfg)) {
     return;
   }
 

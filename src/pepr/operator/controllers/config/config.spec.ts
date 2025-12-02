@@ -912,7 +912,7 @@ describe("handleUDSConfig", () => {
       mockPatchStatus.mockResolvedValue({});
     });
 
-    it("returns early when shouldSkip is true without processing", async () => {
+    it("returns early when shouldSkip is true for UPDATE action without processing", async () => {
       const skippableCfg: ClusterConfig = {
         metadata: { name: "uds-cluster-config", generation: 1 },
         status: { phase: Phase.Pending, observedGeneration: 1 },
@@ -923,6 +923,54 @@ describe("handleUDSConfig", () => {
       // Should not patch status or call any update functions
       expect(mockPatchStatus).not.toHaveBeenCalled();
       expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
+
+    it("processes config during LOAD action even when shouldSkip would return true", async () => {
+      const skippableCfg: ClusterConfig = {
+        metadata: { name: "uds-cluster-config", generation: 1 },
+        status: { phase: Phase.Pending, observedGeneration: 1 },
+        spec: {
+          caBundle: {
+            certs: "",
+            includeDoDCerts: false,
+            includePublicCerts: false,
+          },
+          expose: {
+            domain: "test-domain",
+            adminDomain: "admin.test-domain",
+          },
+          networking: {},
+          policy: {
+            allowAllNsExemptions: false,
+          },
+        },
+      };
+
+      mockConfigMapGet.mockResolvedValue({
+        data: { dodCACerts: "", publicCACerts: "" },
+      });
+
+      await handleCfg(skippableCfg, ConfigAction.LOAD);
+
+      // Should process config despite pending status during LOAD
+      expect(mockPatchStatus).toHaveBeenCalledWith({
+        metadata: { name: "uds-cluster-config" },
+        status: {
+          phase: "Pending",
+          observedGeneration: 1,
+        },
+      });
+
+      expect(mockPatchStatus).toHaveBeenCalledWith({
+        metadata: { name: "uds-cluster-config" },
+        status: {
+          phase: "Ready",
+          observedGeneration: 1,
+        },
+      });
+
+      expect(UDSConfig.domain).toBe("test-domain");
+      expect(UDSConfig.adminDomain).toBe("admin.test-domain");
     });
   });
 });
