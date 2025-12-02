@@ -6,7 +6,7 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig, ConfigPhase as Phase } from "../../crd";
+import { ClusterConfig, ConfigPhase as Phase, ClusterConfigName } from "../../crd";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
@@ -114,7 +114,7 @@ const exampleCACertBase64 = btoa(exampleCACert);
 let mockCfg: ClusterConfig;
 const defaultConfig: ClusterConfig = {
   metadata: {
-    name: "uds-cluster-config",
+    name: ClusterConfigName.UdsClusterConfig,
     generation: 1,
   },
   status: {
@@ -282,7 +282,7 @@ describe("Config Helper Functions", () => {
     it("should return true when status phase is Pending", () => {
       const cfg: ClusterConfig = {
         metadata: {
-          name: "test-config",
+          name: ClusterConfigName.UdsClusterConfig,
           generation: 1,
         },
         status: {
@@ -297,7 +297,7 @@ describe("Config Helper Functions", () => {
     it("should return true when current generation already processed", () => {
       const cfg: ClusterConfig = {
         metadata: {
-          name: "test-config",
+          name: ClusterConfigName.UdsClusterConfig,
           generation: 1,
         },
         status: {
@@ -312,7 +312,7 @@ describe("Config Helper Functions", () => {
     it("should return false when generation is different from observedGeneration", () => {
       const cfg: ClusterConfig = {
         metadata: {
-          name: "test-config",
+          name: ClusterConfigName.UdsClusterConfig,
           generation: 2,
         },
         status: {
@@ -327,7 +327,7 @@ describe("Config Helper Functions", () => {
     it("should return false when no status exists", () => {
       const cfg: ClusterConfig = {
         metadata: {
-          name: "test-config",
+          name: ClusterConfigName.UdsClusterConfig,
           generation: 1,
         },
       };
@@ -338,7 +338,7 @@ describe("Config Helper Functions", () => {
     it("should return false when status phase is not Pending and generation differs", () => {
       const cfg: ClusterConfig = {
         metadata: {
-          name: "test-config",
+          name: ClusterConfigName.UdsClusterConfig,
           generation: 3,
         },
         status: {
@@ -847,7 +847,7 @@ describe("handleUDSConfig", () => {
 
       // Should patch status to Failed
       expect(mockPatchStatus).toHaveBeenCalledWith({
-        metadata: { name: "uds-cluster-config" },
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Failed",
           observedGeneration: 2,
@@ -863,7 +863,7 @@ describe("handleUDSConfig", () => {
 
       // Should patch to Pending first, then Ready
       expect(mockPatchStatus).toHaveBeenNthCalledWith(1, {
-        metadata: { name: "uds-cluster-config" },
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Pending",
           observedGeneration: 2,
@@ -871,7 +871,7 @@ describe("handleUDSConfig", () => {
       });
 
       expect(mockPatchStatus).toHaveBeenNthCalledWith(2, {
-        metadata: { name: "uds-cluster-config" },
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Ready",
           observedGeneration: 2,
@@ -914,7 +914,7 @@ describe("handleUDSConfig", () => {
 
     it("returns early when shouldSkip is true for UPDATE action without processing", async () => {
       const skippableCfg: ClusterConfig = {
-        metadata: { name: "uds-cluster-config", generation: 1 },
+        metadata: { name: ClusterConfigName.UdsClusterConfig, generation: 1 },
         status: { phase: Phase.Pending, observedGeneration: 1 },
       };
 
@@ -927,7 +927,7 @@ describe("handleUDSConfig", () => {
 
     it("processes config during LOAD action even when shouldSkip would return true", async () => {
       const skippableCfg: ClusterConfig = {
-        metadata: { name: "uds-cluster-config", generation: 1 },
+        metadata: { name: ClusterConfigName.UdsClusterConfig, generation: 1 },
         status: { phase: Phase.Pending, observedGeneration: 1 },
         spec: {
           caBundle: {
@@ -954,7 +954,7 @@ describe("handleUDSConfig", () => {
 
       // Should process config despite pending status during LOAD
       expect(mockPatchStatus).toHaveBeenCalledWith({
-        metadata: { name: "uds-cluster-config" },
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Pending",
           observedGeneration: 1,
@@ -962,7 +962,7 @@ describe("handleUDSConfig", () => {
       });
 
       expect(mockPatchStatus).toHaveBeenCalledWith({
-        metadata: { name: "uds-cluster-config" },
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Ready",
           observedGeneration: 1,

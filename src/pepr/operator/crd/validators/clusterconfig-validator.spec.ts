@@ -5,7 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 import { describe, expect, it, vi } from "vitest";
-import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
+import { ClusterConfig, Name } from "../generated/clusterconfig-v1alpha1";
 import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator";
 
 const validCert = `-----BEGIN CERTIFICATE-----
@@ -31,7 +31,7 @@ nlpOZbWUrhvfKbAW8b8Angc6F2S1BLUjIZkKlTuXfO8=
 
 const mockCfg: ClusterConfig = {
   metadata: {
-    name: "uds-cluster-config",
+    name: Name.UdsClusterConfig,
   },
   spec: {
     caBundle: {
