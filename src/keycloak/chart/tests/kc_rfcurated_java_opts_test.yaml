@@ -38,7 +38,7 @@ tests:
     set:
       image:
         repository: quay.io/keycloak/keycloak
-        tag: "26.4.5"
+        tag: "26.4.7"
     template: statefulset.yaml
     asserts:
       - notContains:
