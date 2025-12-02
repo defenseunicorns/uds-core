@@ -29,6 +29,13 @@ spec:
       schema:
         openAPIV3Schema:
           properties:
+            metadata:
+              properties:
+                name:
+                  enum:
+                    - uds-cluster-config
+                  type: string
+              type: object
             spec:
               properties:
                 attributes:

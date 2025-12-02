@@ -6,6 +6,9 @@
       "type": "object",
       "additionalProperties": {},
       "properties": {
+        "metadata": {
+          "$ref": "#/definitions/Metadata"
+        },
         "spec": {
           "$ref": "#/definitions/Spec"
         },
@@ -17,6 +20,17 @@
         "spec"
       ],
       "title": "ClusterConfig"
+    },
+    "Metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/definitions/Name"
+        }
+      },
+      "required": [],
+      "title": "Metadata"
     },
     "Spec": {
       "type": "object",
@@ -152,6 +166,13 @@
       },
       "required": [],
       "title": "Status"
+    },
+    "Name": {
+      "type": "string",
+      "enum": [
+        "uds-cluster-config"
+      ],
+      "title": "Name"
     },
     "Phase": {
       "type": "string",

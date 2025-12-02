@@ -18,7 +18,25 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">spec</td><td style="white-space: nowrap;"><a href="#Spec">Spec</a></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">metadata</td><td style="white-space: nowrap;"><a href="#Metadata">Metadata</a></td><td></td></tr><tr><td style="white-space: nowrap;">spec</td><td style="white-space: nowrap;"><a href="#Spec">Spec</a></td><td></td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Metadata"></a>
+<div style="margin-left: 40px; padding-top: 30px;">
+
+## Metadata
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string (enum):<ul><li><code>uds-cluster-config</code></li></ul></td><td></td></tr>
   </tbody>
 </table>
 </div>

@@ -46,7 +46,14 @@ export enum ConfigStep {
   FINISH,
 }
 
-// Helper function to generate config log messages
+/**
+ * Generates standardized log messages for config operations
+ *
+ * @param action The config action being performed (LOAD or UPDATE)
+ * @param step The step of the action (START or FINISH)
+ * @param resourceName The name of the resource being processed
+ * @returns A formatted log message string
+ */
 export function getConfigLogMessage(
   action: ConfigAction,
   step: ConfigStep,
@@ -60,7 +67,15 @@ export function getConfigLogMessage(
   return `${verb} UDS Config from ${resourceName}${change}`;
 }
 
-// Helper function to determine if cluster resources should be updated
+/**
+ * Determines if cluster resources should be updated based on the action and environment
+ *
+ * Cluster resources are only updated for UPDATE actions in watcher mode or dev mode.
+ * LOAD actions never trigger cluster resource updates to avoid side effects during startup.
+ *
+ * @param action The config action being performed
+ * @returns true if cluster resources should be updated, false otherwise
+ */
 export function shouldUpdateClusterResources(action: ConfigAction): boolean {
   return (
     action === ConfigAction.UPDATE &&
@@ -69,10 +84,14 @@ export function shouldUpdateClusterResources(action: ConfigAction): boolean {
 }
 
 /**
- * Checks if the ClusterConfig CRD has been processed already (pending)
+ * Checks if the ClusterConfig should be skipped during UPDATE operations
  *
- * @param cr The custom resource to check
- * @returns true if the CRD is or the current generation has already been processed
+ * A ClusterConfig is skipped if:
+ * - It is currently in Pending state (guards against infinite loop when pepr patches status to Pending)
+ * - The current generation has already been processed (observedGeneration matches generation)
+ *
+ * @param cr The ClusterConfig custom resource to check
+ * @returns true if the config should be skipped, false if it should be processed
  */
 export function shouldSkip(cr: ClusterConfig) {
   const isPending = cr.status?.phase === Phase.Pending;
@@ -94,7 +113,12 @@ export function shouldSkip(cr: ClusterConfig) {
   return false;
 }
 
-// Exported for testing purposes
+/**
+ * Decodes base64 secret data into plain text values
+ *
+ * @param secret The Kubernetes secret to decode
+ * @returns Object with decoded string values, empty strings for invalid base64
+ */
 export function decodeSecret(secret: kind.Secret) {
   // Base64 decode the secret data
   const decodedData: { [key: string]: string } = {};
@@ -114,6 +138,12 @@ export function decodeSecret(secret: kind.Secret) {
   return decodedData;
 }
 
+/**
+ * Processes operator config secret changes and updates the global UDS configuration
+ *
+ * @param cfg The operator config secret to process
+ * @param action The type of action being performed (LOAD or UPDATE)
+ */
 export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
   const resourceName = "uds-operator-config secret";
   configLog.info(getConfigLogMessage(action, ConfigStep.START, resourceName));
@@ -145,6 +175,12 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
   configLog.info(getConfigLogMessage(action, ConfigStep.FINISH, resourceName));
 }
 
+/**
+ * Handles updates to CA bundle configuration including DoD and public certificates
+ *
+ * @param caBundle The CA bundle configuration from the ClusterConfig
+ * @param updateClusterResources Whether to update cluster resources (ConfigMaps, etc.)
+ */
 async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResources?: boolean) {
   // no caCert then set to empty string
   if (!caBundle.certs) {
@@ -160,7 +196,6 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
 
   // Load in the DoD and Public certs from the configmap
   const caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
-  // TODO: Add error handling here??
 
   // Check if CA bundle ConfigMaps need updates based on configuration changes
   const caBundleConfigMapsNeedUpdate =
@@ -200,6 +235,16 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   }
 }
 
+/**
+ * Processes ClusterConfig changes and updates the global UDS configuration
+ *
+ * For LOAD actions, the config is always processed regardless of pending state to ensure
+ * initial configuration is loaded. For UPDATE actions, processing is skipped if the config
+ * is pending or already processed.
+ *
+ * @param cfg The ClusterConfig custom resource to process
+ * @param action The type of action being performed (LOAD or UPDATE)
+ */
 export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
   // Determine if we need to skip processing
   // Don't skip on initial load - we need to process the config regardless of pending state
@@ -296,7 +341,14 @@ export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
   }
 }
 
-// Loads the UDS Config on startup
+/**
+ * Loads the initial UDS configuration from ClusterConfig and operator secret on startup
+ *
+ * This function only runs in watcher pods or dev mode. It fetches the ClusterConfig
+ * and operator secret, validates them, and populates the global UDS configuration.
+ *
+ * @throws {Error} When configuration resources cannot be found or are invalid
+ */
 export async function loadUDSConfig() {
   // Run in Admission and Watcher pods
   if (process.env.PEPR_WATCH_MODE || process.env.PEPR_MODE === "dev") {
@@ -337,7 +389,11 @@ export async function loadUDSConfig() {
   }
 }
 
-// Helper function for redacting sensitive values from the UDS Config
+/**
+ * Creates a redacted copy of UDS config for logging (hides sensitive values)
+ *
+ * @returns UDS config with sensitive fields replaced with masked values
+ */
 function redactConfig() {
   const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : "";
   return { ...UDSConfig, authserviceRedisUri };
@@ -353,7 +409,11 @@ function areKubeNodeCidrsEqual(newCidrs: string[] = [], currentCidrs: string[] =
   return sortedNewCidrs.every((cidr, index) => cidr === sortedCurrentCidrs[index]);
 }
 
-// Runs `reconcileAuthservice` with the global config update event based on the current config
+/**
+ * Triggers an authservice configuration update with current global config values
+ *
+ * @param reason Description of what triggered the authservice update
+ */
 async function performAuthserviceUpdate(reason: string) {
   const authserviceUpdate: AuthServiceEvent = {
     name: "global-config-update",
@@ -366,7 +426,13 @@ async function performAuthserviceUpdate(reason: string) {
   await reconcileAuthservice(authserviceUpdate);
 }
 
-// Starts a watch of the cluster config, used for Admission pods
+/**
+ * Starts a watch of the ClusterConfig resource for handling configuration updates
+ *
+ * This function only runs in admission controller pods or dev mode. It sets up
+ * a watch to listen for changes to the ClusterConfig and processes
+ * them using UPDATE actions.
+ */
 export async function startConfigWatch() {
   // only run in admission controller or dev mode
   if (process.env.PEPR_WATCH_MODE === "false" || process.env.PEPR_MODE === "dev") {
