@@ -674,7 +674,7 @@ describe("handleUDSConfig", () => {
 
     it("calls updateAllCaBundleConfigMaps when includeDoDCerts changes", async () => {
       UDSConfig.caBundle.includeDoDCerts = false;
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
@@ -684,7 +684,7 @@ describe("handleUDSConfig", () => {
     it("calls updateAllCaBundleConfigMaps when DoD cert content changes", async () => {
       UDSConfig.caBundle.includeDoDCerts = true;
       UDSConfig.caBundle.dodCerts = "old-dod-certs";
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockResolvedValue({
         data: { dodCACerts: "new-dod-certs", publicCACerts: "" },
       });
@@ -703,9 +703,9 @@ describe("handleUDSConfig", () => {
       UDSConfig.caBundle.publicCerts = "";
 
       // Make sure the mockCfg matches UDSConfig state
-      mockCfg.spec!.caBundle.certs = exampleCACertBase64;
-      mockCfg.spec!.caBundle.includeDoDCerts = false;
-      mockCfg.spec!.caBundle.includePublicCerts = false;
+      mockCfg.spec!.caBundle!.certs = exampleCACertBase64;
+      mockCfg.spec!.caBundle!.includeDoDCerts = false;
+      mockCfg.spec!.caBundle!.includePublicCerts = false;
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
@@ -732,7 +732,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("loads DoD certs when includeDoDCerts is true and ConfigMap has data", async () => {
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockResolvedValue({
         data: {
           dodCACerts: "dod-cert-data",
@@ -747,7 +747,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("loads Public certs when includePublicCerts is true and ConfigMap has data", async () => {
-      mockCfg.spec!.caBundle.includePublicCerts = true;
+      mockCfg.spec!.caBundle!.includePublicCerts = true;
       mockConfigMapGet.mockResolvedValue({
         data: {
           dodCACerts: "dod-cert-data",
@@ -762,7 +762,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("does not load DoD certs when includeDoDCerts is false", async () => {
-      mockCfg.spec!.caBundle.includeDoDCerts = false;
+      mockCfg.spec!.caBundle!.includeDoDCerts = false;
       mockConfigMapGet.mockResolvedValue({
         data: {
           dodCACerts: "dod-cert-data",
@@ -777,7 +777,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("does not load DoD certs when ConfigMap has no dodCACerts data", async () => {
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockResolvedValue({
         data: {
           publicCACerts: "public-cert-data",
@@ -791,7 +791,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("handles missing ConfigMap gracefully", async () => {
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockResolvedValue(null);
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
@@ -802,8 +802,8 @@ describe("handleUDSConfig", () => {
     });
 
     it("handles ConfigMap with no data field", async () => {
-      mockCfg.spec!.caBundle.includeDoDCerts = true;
-      mockCfg.spec!.caBundle.includePublicCerts = true;
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
+      mockCfg.spec!.caBundle!.includePublicCerts = true;
       mockConfigMapGet.mockResolvedValue({});
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
@@ -897,7 +897,7 @@ describe("handleUDSConfig", () => {
     });
 
     it("handles legacy ###ZARF_VAR_CA_CERT### placeholder", async () => {
-      mockCfg.spec!.caBundle.certs = "###ZARF_VAR_CA_CERT###";
+      mockCfg.spec!.caBundle!.certs = "###ZARF_VAR_CA_CERT###";
       UDSConfig.caBundle.certs = "old-cert";
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);

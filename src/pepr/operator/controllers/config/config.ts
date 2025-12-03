@@ -273,7 +273,7 @@ export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
     const { expose, policy, networking, caBundle } = cfg.spec!;
 
     // Handle changes to the Authservice configuration for CA Cert
-    await handleCABundleUpdate(caBundle, updateClusterResources);
+    await handleCABundleUpdate(caBundle || {}, updateClusterResources);
 
     // Handle changes to the kubeApiCidr
     if (networking?.kubeApiCIDR !== UDSConfig.kubeApiCIDR) {
