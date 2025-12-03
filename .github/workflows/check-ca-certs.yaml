@@ -14,6 +14,7 @@ on:
     paths:
       - "certs/**"
       - "src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"
+      - ".github/workflows/check-ca-certs.yaml"
 
 permissions:
   contents: read
