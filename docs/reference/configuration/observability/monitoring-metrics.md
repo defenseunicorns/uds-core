@@ -48,7 +48,7 @@ spec:
         type: "Bearer"
 ```
 
-:::tip[Checking Prometheus targets and alerts]
+:::tip[Checking Prometheus Targets]
 When debugging metrics scraping or verifying a new `ServiceMonitor` / `PodMonitor`, you can connect directly to Prometheus from your workstation:
 
 ```console
