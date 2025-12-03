@@ -20,28 +20,25 @@ const mockK8sApply = vi.fn();
 const mockK8sGet = vi.fn();
 const mockWithLabelGet = vi.fn();
 
+// Create a mock for the log functions
+const mockLog = vi.hoisted(() => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+}));
+
 vi.mock("../utils", () => ({
   getOwnerRef: vi.fn(),
   purgeOrphans: vi.fn(),
 }));
 
-vi.mock("../../../logger", () => {
-  const mockLogger = {
-    warn: vi.fn(),
-    level: vi.fn(),
-    fatal: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-    trace: vi.fn(),
-  };
-  return {
-    Component: {
-      OPERATOR_MONITORING: "operator-monitoring",
-    },
-    setupLogger: vi.fn(() => mockLogger),
-  };
-});
+vi.mock("../../../logger", () => ({
+  Component: {
+    OPERATOR_CA_BUNDLE: "operator-ca-bundle",
+  },
+  setupLogger: vi.fn(() => mockLog),
+}));
 
 vi.mock("pepr", async importOriginal => {
   const actual: typeof import("pepr") = await importOriginal();
@@ -118,6 +115,7 @@ describe("CA Bundle ConfigMap", () => {
     vi.mocked(getOwnerRef).mockReturnValue(mockOwnerRefs);
     vi.mocked(purgeOrphans).mockResolvedValue();
     mockK8sApply.mockResolvedValue({});
+    mockLog.warn.mockClear();
 
     // Reset UDSConfig
     UDSConfig.caBundle.certs = "";
@@ -350,6 +348,15 @@ describe("CA Bundle ConfigMap", () => {
         }),
       );
     });
+
+    it("handles invalid base64 data gracefully", async () => {
+      // Set invalid base64 data that will cause atob() to throw
+      UDSConfig.caBundle.certs = "invalid-base64-data-!@#$%^&*()";
+
+      await expect(caBundleConfigMap(mockPackage, "test-namespace")).rejects.toThrow(
+        /Failed to process CA Bundle ConfigMap for test-package/,
+      );
+    });
   });
 
   describe("updateAllCaBundleConfigMaps", () => {
@@ -493,6 +500,52 @@ describe("CA Bundle ConfigMap", () => {
         expect.objectContaining({
           data: {
             "trust-bundle.pem": expectedCombinedCerts,
+          },
+        }),
+      );
+    });
+
+    it("skips ConfigMaps with no data keys and continues processing others", async () => {
+      mockWithLabelGet.mockResolvedValue({
+        items: [
+          {
+            metadata: {
+              name: "configmap-no-data",
+              namespace: "namespace1",
+            },
+            data: {}, // ConfigMap with no data keys
+          },
+          {
+            metadata: {
+              name: "configmap-with-data",
+              namespace: "namespace2",
+            },
+            data: {
+              "ca-bundle.pem": "old-cert-content",
+            },
+          },
+        ],
+      });
+
+      UDSConfig.caBundle.certs = validCertBase64;
+
+      await updateAllCaBundleConfigMaps();
+
+      // Should warn about the ConfigMap with no data
+      expect(mockLog.warn).toHaveBeenCalledWith(
+        "No suitable key found in ConfigMap configmap-no-data, skipping update",
+      );
+
+      // Should only apply to the ConfigMap with data (1 call, not 2)
+      expect(mockK8sApply).toHaveBeenCalledTimes(1);
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            name: "configmap-with-data",
+            namespace: "namespace2",
+          }),
+          data: {
+            "ca-bundle.pem": validCert,
           },
         }),
       );

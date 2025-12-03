@@ -149,7 +149,7 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     // Update each ConfigMap with the new CA bundle content
     for (const configMap of caBundleConfigMaps.items) {
       if (!configMap.metadata?.name || !configMap.metadata?.namespace) {
-        log.warn(`ConfigMap missing name or namespace, skipping update`);
+        // This should not happen, but needed for type safety
         continue;
       }
 

@@ -140,7 +140,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               required: ["allowAllNsExemptions"],
             },
           },
-          required: ["expose", "policy", "caBundle"],
+          required: ["expose", "policy"],
         } as V1JSONSchemaProps,
       },
       required: ["spec"],

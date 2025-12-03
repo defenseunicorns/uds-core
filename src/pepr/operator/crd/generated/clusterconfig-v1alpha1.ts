@@ -22,7 +22,7 @@ export enum Name {
 
 export interface Spec {
   attributes?: Attributes;
-  caBundle: CABundle;
+  caBundle?: CABundle;
   expose: Expose;
   networking?: Networking;
   policy: Policy;

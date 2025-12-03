@@ -43,7 +43,9 @@ export function validateCfg(cfg: ClusterConfig) {
       try {
         new X509Certificate(certPem);
       } catch (e) {
-        throw new Error(`ClusterConfig: Invalid certificate at index ${index}: ${e.message}`);
+        throw new Error(
+          `ClusterConfig: Invalid certificate at index ${index}: ${e instanceof Error ? e.message : String(e)}`,
+        );
       }
     });
   }

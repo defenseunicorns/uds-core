@@ -100,7 +100,6 @@ spec:
               required:
                 - expose
                 - policy
-                - caBundle
               type: object
             status:
               properties:
