@@ -11,7 +11,7 @@ The UDS Core Observability Architecture is designed around using Alertmanager as
 
 If you happen to utilize Grafana Managed Alerts, it is recommended to also route those alerts to Alertmanager. This ensures that all alerting is centralized and can be managed consistently.
 :::
-<!-- # @lulaStart eff0012d-fdc2-4085-b014-b845f2ae38e0 -->
+<!-- # @lulaStart 4yw40198-a55e-4769-a5de-44ffe7636093 -->
 ## Configuring Alertmanager
 
 It is recommended to configure Alertmanager to send alerts to a location that is actively monitored by your team. Common options include email, Slack, Mattermost, Microsoft Teams, or a paging service like PagerDuty or OpsGenie.
@@ -74,7 +74,7 @@ packages:
 ```
 
 You can find more information on configuring Alertmanager in the [official documentation](https://prometheus.io/docs/alerting/latest/configuration/).
-<!-- # @lulaEnd eff0012d-fdc2-4085-b014-b845f2ae38e0 -->
+<!-- # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093 -->
 ## Viewing Alertmanager Alerts
 
 :::note[Alertmanager UI]
