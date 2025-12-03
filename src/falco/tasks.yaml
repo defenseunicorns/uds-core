@@ -39,7 +39,7 @@ tasks:
           echo "Downloading latest Falco rules..."
 
           # renovate: datasource=github-tags depName=falcosecurity/rules extractVersion=^falco-rules-(?<version>\d+\.\d+\.\d+)$
-          STABLE_RULES_TAG="4.0.0"
+          STABLE_RULES_TAG="5.0.0"
           if ! curl -sSfL --connect-timeout 30 --max-time 60 \
                https://raw.githubusercontent.com/falcosecurity/rules/falco-rules-${STABLE_RULES_TAG}/rules/falco_rules.yaml \
                -o "${RULES_DIR}/stable-rules.yaml"; then
@@ -48,7 +48,7 @@ tasks:
           fi
 
           # renovate: datasource=github-tags depName=falcosecurity/rules extractVersion=^falco-sandbox-rules-(?<version>\d+\.\d+\.\d+)$
-          SANDBOX_RULES_TAG="5.0.1"
+          SANDBOX_RULES_TAG="6.0.0"
           if ! curl -sSfL --connect-timeout 30 --max-time 60 \
                https://raw.githubusercontent.com/falcosecurity/rules/falco-sandbox-rules-${SANDBOX_RULES_TAG}/rules/falco-sandbox_rules.yaml \
                -o "${RULES_DIR}/sandbox-rules.yaml"; then
@@ -57,7 +57,7 @@ tasks:
           fi
 
           # renovate: datasource=github-tags depName=falcosecurity/rules extractVersion=^falco-incubating-rules-(?<version>\d+\.\d+\.\d+)$
-          INCUBATING_RULES_TAG="5.0.1"
+          INCUBATING_RULES_TAG="6.0.0"
           if ! curl -sSfL --connect-timeout 30 --max-time 60 \
                https://raw.githubusercontent.com/falcosecurity/rules/falco-incubating-rules-${INCUBATING_RULES_TAG}/rules/falco-incubating_rules.yaml \
                -o "${RULES_DIR}/incubating-rules.yaml"; then
