@@ -48,3 +48,12 @@ spec:
         type: "Bearer"
 ```
 
+::::tip[Checking Prometheus targets and alerts]
+When debugging metrics scraping or verifying a new `ServiceMonitor` / `PodMonitor`, you can connect directly to Prometheus from your workstation:
+
+```console
+uds zarf connect prometheus
+```
+
+This opens a local port-forward to the Prometheus server. In the Prometheus UI you can check `Status -> Target health` to confirm your application’s metrics endpoint is being scraped and is up.
+:::
