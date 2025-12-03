@@ -23,6 +23,12 @@ nodeExporter:
 prometheus:
   serviceMonitor:
     selfMonitor: true
+  # Enables "zarf connect prometheus"
+  service:
+    labels:
+      zarf.dev/connect-name: prometheus
+    annotations:
+      zarf.dev/connect-description: "Directly connect to the Prometheus HTTP service"
   prometheusSpec:
     podMetadata:
       labels:
@@ -88,6 +94,12 @@ prometheusOperator:
 alertmanager:
   alertmanagerSpec:
     scheme: "http"
+  # Enables "zarf connect alertmanager"
+  service:
+    labels:
+      zarf.dev/connect-name: alertmanager
+    annotations:
+      zarf.dev/connect-description: "Directly connect to the Alertmanager HTTP service"
 ## Create default rules for monitoring the cluster
 ##
 defaultRules:
