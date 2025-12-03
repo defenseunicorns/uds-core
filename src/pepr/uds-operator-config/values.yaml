@@ -14,8 +14,8 @@ cluster:
     clusterTags: []
   caBundle:
     certs: "###ZARF_VAR_CA_BUNDLE_CERTS###"
-    includeDoDCerts: "###ZARF_VAR_INCLUDE_DOD_CERTS###"
-    includePublicCerts: "###ZARF_VAR_INCLUDE_PUBLIC_CERTS###"
+    includeDoDCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_DOD_CERTS###"
+    includePublicCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_PUBLIC_CERTS###"
   expose:
     # Note caCert is deprecated, use caBundle.certs instead
     caCert: "###ZARF_VAR_CA_CERT###"

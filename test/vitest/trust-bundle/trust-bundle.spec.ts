@@ -4,7 +4,7 @@
  */
 
 import { K8s, kind } from "pepr";
-import { describe, expect, test, vi } from "vitest";
+import { beforeAll, describe, expect, test, vi } from "vitest";
 import { execInPod } from "../helpers/k8s";
 
 // Set timeout for all tests
@@ -22,6 +22,43 @@ async function getPodName(): Promise<string> {
   }
   return podName;
 }
+
+beforeAll(async () => {
+  // Wait for deployment to be ready
+  let attempts = 0;
+  const maxAttempts = 30; // 30 seconds timeout
+
+  while (attempts < maxAttempts) {
+    try {
+      // Check if deployment exists and is ready
+      const deployment = await K8s(kind.Deployment)
+        .InNamespace(namespace)
+        .Get("trust-bundle-tests-deployment-1");
+
+      if (deployment.status?.readyReplicas === deployment.spec?.replicas) {
+        // Also verify pods are actually running and ready
+        const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
+        const pod = pods.items[0];
+
+        if (pod?.status?.phase === "Running") {
+          const ready = pod.status.containerStatuses?.every(status => status.ready) ?? false;
+          if (ready) {
+            break;
+          }
+        }
+      }
+    } catch {
+      // Deployment might not exist yet, continue waiting
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    attempts++;
+  }
+
+  if (attempts >= maxAttempts) {
+    throw new Error("Deployment did not become ready within timeout");
+  }
+});
 
 describe("Trust Bundle Tests", () => {
   test("container with public certs should successfully reach google.com", async () => {
