@@ -1,0 +1,15 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: trust-bundle-tests
+    description: "Run vitest Trust Bundle Tests"
+    actions:
+      - description: "Apply Trust Bundle test manifests"
+        dir: test/vitest/trust-bundle
+        cmd: |
+          ./uds zarf tools kubectl apply -f manifests
+      - description: "Run Trust Bundle tests"
+        dir: test/vitest/trust-bundle
+        cmd: |
+          npx vitest

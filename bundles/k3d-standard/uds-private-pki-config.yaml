@@ -5,6 +5,8 @@ variables:
   core:
     # CA_CERTS
     CA_BUNDLE_CERTS: "PLACEHOLDER_CA_BUNDLE_CERTS"
+    CA_BUNDLE_INCLUDE_DOD_CERTS: "true"
+    CA_BUNDLE_INCLUDE_PUBLIC_CERTS: "true"
 
     # Admin Gateway TLS certificate and key
     ADMIN_TLS_CERT: "PLACEHOLDER_ADMIN_TLS_CERT"
