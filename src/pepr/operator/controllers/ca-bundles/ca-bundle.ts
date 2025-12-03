@@ -13,13 +13,16 @@ export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify C
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";
 const DEFAULT_CONFIGMAP_KEY = "ca-bundle.pem";
 
-const log = setupLogger(Component.OPERATOR_MONITORING);
+const log = setupLogger(Component.OPERATOR_CA_BUNDLE);
 
 /**
- * Creates a CA Bundle ConfigMap for the package based on the caBundle specification
+ * Creates or updates a CA Bundle ConfigMap for the given UDS Package in the specified namespace.
+ * The ConfigMap contains the combined CA bundle from user-provided, DoD, and public certificates
+ * as configured in the global UDS configuration.
  *
- * @param pkg the UDS package
- * @param namespace the namespace to create the ConfigMap in
+ * @param pkg The UDS Package CR that defines the ConfigMap configuration
+ * @param namespace The target namespace where the ConfigMap will be created
+ * @throws Error if ConfigMap creation or orphan cleanup fails
  */
 export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Promise<void> {
   const pkgName = pkg.metadata!.name!;
@@ -77,9 +80,12 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
- * Builds the combined CA bundle content from available certificate sources
+ * Builds the combined CA bundle content from all configured certificate sources.
+ * Combines user-provided certificates, DoD certificates, and public certificates
+ * based on the current UDS configuration settings.
  *
- * @returns The combined PEM-formatted certificate bundle
+ * @returns The combined PEM-formatted certificate bundle as a string.
+ *          Returns empty string if no certificate sources are configured.
  */
 function buildCABundleContent(): string {
   const certs: string[] = [];
@@ -116,8 +122,12 @@ function buildCABundleContent(): string {
 }
 
 /**
- * Updates all existing CA Bundle ConfigMaps across the cluster based on global UDS Config
- * Always updates ConfigMaps with current cert data (or empty string if no certs)
+ * Updates all existing CA Bundle ConfigMaps across the cluster with the latest certificate data.
+ * This function is typically called when the global UDS configuration changes (e.g., when
+ * certificates are rotated or configuration is updated). It finds all ConfigMaps labeled as
+ * CA bundles and updates their certificate content with the current UDS configuration.
+ *
+ * @throws Error if the global ConfigMap update operation fails
  */
 export async function updateAllCaBundleConfigMaps(): Promise<void> {
   try {
