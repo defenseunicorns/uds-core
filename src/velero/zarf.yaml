@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart 95b605a4-c57d-4776-9e4d-37888602b2df
   name: uds-core-velero
   description: "UDS Core Velero"
   url: https://velero.io/
+  # @lulaEnd 95b605a4-c57d-4776-9e4d-37888602b2df
 
 components:
   - name: velero
