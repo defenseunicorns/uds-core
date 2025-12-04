@@ -254,7 +254,7 @@ describe("authorization-policy.ts", () => {
     );
 
     const rules = (pol.spec!.rules ?? []) as IstioRule[];
-    expect(rules.length).toBeGreaterThanOrEqual(1);
+    expect(rules.length).toBe(2);
 
     const metricsRule = rules[0];
     const nonMetricsRule = rules[1];

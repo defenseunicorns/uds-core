@@ -131,33 +131,27 @@ function authserviceAuthorizationPolicy(
   waypointName?: string,
   monitorExemptions: MonitorExemption[] = [],
 ): IstioAuthorizationPolicy {
-  // Create base policy with spec explicitly typed
-  const metricsOps = buildMetricsOperations(monitorExemptions);
   const nonMetricsOps = buildNonMetricsOperations(monitorExemptions);
-
+  const unauthenticatedWhen = [
+    {
+      key: "request.headers[authorization]",
+      notValues: ["*"],
+    },
+  ];
   const rules: NonNullable<IstioAuthorizationPolicy["spec"]>["rules"] = [];
+  const hasMonitorExemptions = nonMetricsOps.length > 0;
 
-  if (metricsOps.length === 0 && nonMetricsOps.length === 0) {
+  if (!hasMonitorExemptions) {
     // No monitor-based exemptions: send all unauthenticated traffic to Authservice.
     rules.push({
-      when: [
-        {
-          key: "request.headers[authorization]",
-          notValues: ["*"],
-        },
-      ],
+      when: unauthenticatedWhen,
     });
-  } else if (nonMetricsOps.length > 0) {
+  } else {
     // With monitor exemptions present, treat all metrics endpoints as outside of Authservice
     // and send only non-metrics unauthenticated traffic through Authservice.
     rules.push({
       to: nonMetricsOps,
-      when: [
-        {
-          key: "request.headers[authorization]",
-          notValues: ["*"],
-        },
-      ],
+      when: unauthenticatedWhen,
     });
   }
 
@@ -195,46 +189,46 @@ function jwtAuthZAuthorizationPolicy(
 
   const rules: NonNullable<IstioAuthorizationPolicy["spec"]>["rules"] = [];
 
-  if (metricsOps.length === 0 && nonMetricsOps.length === 0) {
+  const ssoJwtSource = {
+    notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+  };
+
+  const prometheusOrSsoJwtSource = {
+    ...ssoJwtSource,
+    notPrincipals: [PROMETHEUS_PRINCIPAL],
+  };
+
+  const hasMonitorExemptions = metricsOps.length > 0;
+
+  if (!hasMonitorExemptions) {
     // No monitor-based exemptions: deny any request that does not present a UDS JWT principal.
     rules.push({
       from: [
         {
-          source: {
-            notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
-          },
+          source: ssoJwtSource,
         },
       ],
     });
   } else {
     // Deny metrics requests for callers that are not Prometheus and do not have a valid UDS JWT principal.
-    if (metricsOps.length > 0) {
-      rules.push({
-        from: [
-          {
-            source: {
-              notPrincipals: [PROMETHEUS_PRINCIPAL],
-              notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
-            },
-          },
-        ],
-        to: metricsOps,
-      });
-    }
+    rules.push({
+      from: [
+        {
+          source: prometheusOrSsoJwtSource,
+        },
+      ],
+      to: metricsOps,
+    });
 
     // Deny requests to all other endpoints that do not present a valid UDS JWT principal.
-    if (nonMetricsOps.length > 0) {
-      rules.push({
-        from: [
-          {
-            source: {
-              notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
-            },
-          },
-        ],
-        to: nonMetricsOps,
-      });
-    }
+    rules.push({
+      from: [
+        {
+          source: ssoJwtSource,
+        },
+      ],
+      to: nonMetricsOps,
+    });
   }
 
   const policy: IstioAuthorizationPolicy = {
