@@ -188,3 +188,13 @@ tasks:
         task: diagrams:d2-update
       - description: "Regenerate C4 Diagrams"
         task: diagrams:c4-update
+
+  - name: check-ca-certs
+    description: "Checks CA certificates for updates"
+    actions:
+      - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts --check
+
+  - name: update-ca-certs
+    description: "Updates CA certificates"
+    actions:
+      - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts
