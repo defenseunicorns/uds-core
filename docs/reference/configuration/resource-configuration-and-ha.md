@@ -144,6 +144,10 @@ packages:
               path: postgresql.password
 ```
 
+:::caution
+Scaling Keycloak rapidly down by modifying the replica count directly in the StatefulSet is not recommended and may result in data loss. This is a [known Keycloak limitation](https://github.com/keycloak/keycloak/issues/44620).
+:::
+
 Alternatively, you can configure the postgres `username`, `password`, and `host` using references to pre-existing secrets. This is useful if you are using shared secrets for the database credentials or external secrets from another source.
 
 ```yaml
