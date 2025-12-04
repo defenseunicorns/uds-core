@@ -25,11 +25,11 @@
 
 # Starting with version 8, the Falco engine supports exceptions.
 # However the Falco rules file does not use them by default.
-- required_engine_version: 0.50.0
+- required_engine_version: 0.57.0
 
 - required_plugin_versions:
     - name: container
-      version: 0.2.2
+      version: 0.4.0
 
 # Currently disabled as read/write are ignored syscalls. The nearly
 # similar open_write/open_read check for files being opened for
@@ -37,7 +37,7 @@
 # - macro: write
 #   condition: (syscall.type=write and fd.type in (file, directory))
 # - macro: read
-#   condition: (syscall.type=read and evt.dir=> and fd.type in (file, directory))
+#   condition: (syscall.type=read and fd.type in (file, directory))
 
 - macro: open_write
   condition: (evt.type in (open,openat,openat2) and evt.is_open_write=true and fd.typechar='f' and fd.num>=0)
@@ -87,10 +87,10 @@
   condition: (rename or remove)
 
 - macro: spawned_process
-  condition: (evt.type in (execve, execveat) and evt.dir=<)
+  condition: (evt.type in (execve, execveat))
 
 - macro: chmod
-  condition: (evt.type in (chmod, fchmod, fchmodat) and evt.dir=<)
+  condition: (evt.type in (chmod, fchmod, fchmodat))
 
 # File categories
 - macro: bin_dir
@@ -223,8 +223,8 @@
 # Network
 - macro: inbound
   condition: >
-    (((evt.type in (accept,accept4,listen) and evt.dir=<) or
-      (evt.type in (recvfrom,recvmsg) and evt.dir=< and
+    ((evt.type in (accept,accept4,listen) or
+      (evt.type in (recvfrom,recvmsg) and
        fd.l4proto != tcp and fd.connected=false and fd.name_changed=true)) and
      (fd.typechar = 4 or fd.typechar = 6) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8") and
@@ -236,8 +236,8 @@
 
 - macro: outbound
   condition: >
-    (((evt.type = connect and evt.dir=<) or
-      (evt.type in (sendto,sendmsg) and evt.dir=< and
+    ((evt.type = connect or
+      (evt.type in (sendto,sendmsg) and
        fd.l4proto != tcp and fd.connected=false and fd.name_changed=true)) and
      (fd.typechar = 4 or fd.typechar = 6) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8" and not fd.snet in (rfc_1918_addresses)) and
@@ -247,7 +247,7 @@
 # for efficiency.
 - macro: inbound_outbound
   condition: >
-    ((((evt.type in (accept,accept4,listen,connect) and evt.dir=<)) and
+    ((evt.type in (accept,accept4,listen,connect) and
      (fd.typechar = 4 or fd.typechar = 6)) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8") and
      (evt.rawres >= 0 or evt.res = EINPROGRESS))
@@ -615,7 +615,7 @@
     profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
     changes, including compliance-related cases.
   condition: >
-    open_write and evt.dir=< 
+    open_write 
     and bin_dir
     and not package_mgmt_procs
     and not exe_running_docker_save
@@ -667,7 +667,7 @@
     profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
     changes, including compliance-related cases.
   condition: >
-    open_write and evt.dir=<
+    open_write
     and monitored_dir
     and not package_mgmt_procs
     and not coreos_write_ssh_dir
@@ -866,7 +866,7 @@
 - macro: write_etc_common
   condition: >
     (open_write 
-    and etc_dir and evt.dir=< 
+    and etc_dir 
     and proc_name_exists
     and not proc.name in (passwd_binaries, shadowutils_binaries, sysdigcloud_binaries,
                           package_mgmt_binaries, ssl_mgmt_binaries, dhcp_binaries,
@@ -1059,7 +1059,7 @@
     changes, including compliance-related cases. Lastly, this rule stands out as potentially the noisiest one among rules related 
     to "write below.
   condition: >
-    open_write and evt.dir=<
+    open_write
     and root_dir
     and proc_name_exists
     and not fd.name in (known_root_files)
@@ -1465,7 +1465,7 @@
   condition: (fd.sport in (miner_ports) and fd.sip.name in (miner_domains))
 
 - macro: net_miner_pool
-  condition: (evt.type in (sendto, sendmsg, connect) and evt.dir=< and (fd.net != "127.0.0.0/8" and not fd.snet in (rfc_1918_addresses)) and ((minerpool_http) or (minerpool_https) or (minerpool_other)))
+  condition: (evt.type in (sendto, sendmsg, connect) and (fd.net != "127.0.0.0/8" and not fd.snet in (rfc_1918_addresses)) and ((minerpool_http) or (minerpool_https) or (minerpool_other)))
 
 - macro: trusted_images_query_miner_domain_dns
   condition: (container.image.repository in (falco_containers))

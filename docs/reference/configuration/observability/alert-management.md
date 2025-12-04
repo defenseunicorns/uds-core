@@ -79,6 +79,11 @@ You can find more information on configuring Alertmanager in the [official docum
 
 :::note[Alertmanager UI]
 In UDS Core we do not expose the Alertmanager UI directly because it does not have built-in authentication.  Instead, we ingest Alertmanager as a data source in Grafana which should be the central landing UI for all things observability.
+
+If you do have a need to connect to the Alertmanager UI it can be done via a port-forward connection:
+```console
+uds zarf connect alertmanager
+```
 :::
 
 By default, UDS Core configures Alertmanager as a data source in Grafana. This means you can view and manage Alertmanager alerts by navigating to the `Alerting` section in the Grafana UI.
