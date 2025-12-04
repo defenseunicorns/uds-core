@@ -15,9 +15,22 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
+  # Note: This variable is deprecated and will be removed in future releases. Please use CA_BUNDLE_CERTS instead.
   - name: CA_CERT
     description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
     default: ""
+
+  - name: CA_BUNDLE_CERTS
+    description: "Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently trust. At a minimum this must at least include your Domain CA Cert if using Private PKI for your UDS Core Deployment"
+    default: ""
+
+  - name: CA_BUNDLE_INCLUDE_DOD_CERTS
+    description: "Whether to include DoD root and intermediate certificates in the cluster CA bundle"
+    default: false
+
+  - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
+    description: "Whether to include public root and intermediate certificates in the cluster CA bundle"
+    default: false
 
   - name: UDS_LOG_LEVEL
     description: "UDS Operator log level"
@@ -73,3 +86,13 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Validate ClusterConfig
+            maxTotalSeconds: 60
+            wait:
+              cluster:
+                kind: ClusterConfig
+                name: uds-cluster-config
+                condition: "'{.status.phase}'=Ready"

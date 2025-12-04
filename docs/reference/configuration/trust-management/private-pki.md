@@ -1,5 +1,7 @@
 ---
 title: Private Certificate Authority (CA) Configuration
+sidebar:
+  order: 8.2
 ---
 
 Some UDS Core components need to connect to external services over TLS. By default, they trust the well-known public certificate authorities (CAs) that come with their container images. If your environment uses self-signed certificates or certificates issued by a private CA, these components will not trust those endpoints unless you explicitly provide the CA bundle.
@@ -24,7 +26,7 @@ Mounting additional volumes and certificates can introduce minimal security risk
 Before configuring private PKI, you'll need the following:
 
 1. The trusted CA bundle in PEM format that your certificates are signed by
-2. A ConfigMap containing the trusted CA bundle from (1), available in each namespace (a tool like [trust-manager](https://cert-manager.io/docs/trust/trust-manager/) can help automate this)
+2. A ConfigMap containing the trusted CA bundle from (1), available in each namespace (see [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management) for details on doing this with UDS Core.)
 
 :::note
 For the examples in this guide, we assume you have a ConfigMap named `private-ca` with a key `ca.pem` that contains your CA bundle.

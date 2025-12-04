@@ -1,0 +1,91 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# This configmap is used test verify that the truststore path is overridden correctly in tests by verifying that a pod has curl TLS errors when this dummy trust bundle is used (no public certs).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: empty-ca-bundle
+  namespace: trust-bundle-tests-1
+data:
+  # Dummy self signed cert to avoid curl errors when no CA bundle is present
+  cacert.pem: |
+    -----BEGIN CERTIFICATE-----
+    MIIDnTCCAoWgAwIBAgIUJJGtmRXmSMkderq0tLFnRaZbJdEwDQYJKoZIhvcNAQEL
+    BQAwXjELMAkGA1UEBhMCVVMxDTALBgNVBAgMBFRlc3QxDTALBgNVBAcMBFRlc3Qx
+    DTALBgNVBAoMBFRlc3QxDTALBgNVBAsMBFRlc3QxEzARBgNVBAMMCmR1bW15LnRl
+    c3QwHhcNMjUxMjAzMTU0OTEwWhcNMjYxMjAzMTU0OTEwWjBeMQswCQYDVQQGEwJV
+    UzENMAsGA1UECAwEVGVzdDENMAsGA1UEBwwEVGVzdDENMAsGA1UECgwEVGVzdDEN
+    MAsGA1UECwwEVGVzdDETMBEGA1UEAwwKZHVtbXkudGVzdDCCASIwDQYJKoZIhvcN
+    AQEBBQADggEPADCCAQoCggEBAO43gS3D3V7knWwieiRGxmdVOdzDUtGTQZE4Iwfj
+    3/joO2obcZKekRCMTi6I5JPbfmOTv8iK30EqbZ6SxtWoF7jLghiuI4Dzk0q2q43N
+    K5u29iXcVDO9nk5Vt7T7fcZppr+//7CTkz6jcv/SMZhJgKSelo7sAZcv4/q2K1S2
+    GjYjrtHN7afnPde8qyoEech/S+UVweeZXniiQMJETph/e1s01U0PtsCcoaTKnxUY
+    gdDx1l+OJAIYJpyBF4AudyW5c07gq+mqdghQ4AP+BZ9O30wV15Y1kaMlGEfcl9wn
+    /RXlZrkM06NHFTNhhmNOej8BGFwNyMePjCv+rd0GzZTAi4cCAwEAAaNTMFEwHQYD
+    VR0OBBYEFFGpK6SHiQbdWtvUw5wKejQ/vloOMB8GA1UdIwQYMBaAFFGpK6SHiQbd
+    WtvUw5wKejQ/vloOMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEB
+    AC1sZRv26CpANhOJQfwEbY+jPR24aBkSBQ/z3LgE9OAqI2axCh8VUhich4U69k7W
+    PACW9GHnf9VpQbVZpRueZF1fbywJJ3DshFYlftdmpCy8i68WLAWLXpqRSB569mbN
+    Th7+SGDot3tUHD2Ghf7SXURQL9I3+plI/5TwTHq0sl/ay5UsZWfVwW5JdLf3d5Sn
+    LzQ7jK31wdwncZpSyyrxGj1QXYRN+xPOc80yxhmr0Un1wixjLyhNv4T5j74AVpgb
+    rkM6qlDWjMRU8KJeauKLbUkUyEMP9SdmOMwWb9nwZXt0Wo868VIEx9C0W9Zfz+0g
+    kChktSecMVb+KvY9MpM2IHw=
+    -----END CERTIFICATE-----
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trust-bundle-tests-deployment-1
+  namespace: trust-bundle-tests-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trust-bundle-tests-1
+  template:
+    metadata:
+      labels:
+        app: trust-bundle-tests-1
+    spec:
+      containers:
+        - name: trust-bundle-test-with-public-certs
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          volumeMounts:
+            - name: uds-ca-bundle
+              mountPath: /cacert.pem  # used by curl on alpine
+              subPath: cacert.pem
+              readOnly: true
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+        - name: trust-bundle-test-with-no-public-certs
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          volumeMounts:
+            - name: empty-ca-bundle
+              mountPath: /cacert.pem  # used by curl on alpine
+              subPath: cacert.pem
+              readOnly: true
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+      volumes:
+        - name: uds-ca-bundle
+          configMap:
+            name: test-uds-trust-bundle
+        - name: empty-ca-bundle
+          configMap:
+            name: empty-ca-bundle
+---

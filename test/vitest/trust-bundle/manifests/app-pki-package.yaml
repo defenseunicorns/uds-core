@@ -1,0 +1,29 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trust-bundle-tests-1
+  labels:
+    zarf.dev/agent: "ignore"
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: pkg-1
+  namespace: trust-bundle-tests-1
+spec:
+  caBundle:
+    configMap:
+      name: test-uds-trust-bundle
+      key: cacert.pem
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Egress
+        selector:
+          app: trust-bundle-tests-1
+        description: "Allow Curl to Internet"
+        remoteGenerated: "Anywhere"

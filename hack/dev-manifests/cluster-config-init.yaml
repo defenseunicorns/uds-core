@@ -9,6 +9,10 @@ spec:
   attributes:
     clusterName: ""
     tags: []
+  caBundle:
+    certs: ""
+    includeDoDCerts: true
+    includePublicCerts: true
   expose:
     adminDomain: ""
     caCert: ""

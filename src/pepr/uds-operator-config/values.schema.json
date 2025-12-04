@@ -36,6 +36,23 @@
             }
           }
         },
+        "caBundle": {
+          "type": "object",
+          "properties": {
+            "certs": {
+              "type": "string",
+              "description": "Contents of user provided CA bundle certificates."
+            },
+            "includeDoDCerts": {
+              "type": ["boolean", "string"],
+              "description": "Include DoD CA certificates in the bundle."
+            },
+            "includePublicCerts": {
+              "type": ["boolean", "string"],
+              "description": "Include public CA certificates in the bundle."
+            }
+          }
+        },
         "expose": {
           "type": "object",
           "properties": {
@@ -44,7 +61,10 @@
               "type": "string",
               "description": "Admin domain for cluster exposure."
             },
-            "caCert": { "type": "string", "description": "CA certificate for cluster exposure." }
+            "caCert": {
+              "type": "string",
+              "description": "Deprecated: CA certificate for cluster exposure. Use cluster.caBundle.certs instead."
+            }
           }
         },
         "policy": {

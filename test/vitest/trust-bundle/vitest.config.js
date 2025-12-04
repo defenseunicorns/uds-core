@@ -9,9 +9,8 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    globalSetup: ['./vitest.setup.js'],
     include: ['**/*.spec.ts'],
-    exclude: ['trust-bundle/**'],
+    globalSetup: ['./vitest.setup.js'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

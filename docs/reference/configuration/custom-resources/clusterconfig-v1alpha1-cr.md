@@ -54,7 +54,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">attributes</td><td style="white-space: nowrap;"><a href="#Attributes">Attributes</a></td><td></td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose</a></td><td></td></tr><tr><td style="white-space: nowrap;">networking</td><td style="white-space: nowrap;"><a href="#Networking">Networking</a></td><td></td></tr><tr><td style="white-space: nowrap;">policy</td><td style="white-space: nowrap;"><a href="#Policy">Policy</a></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">attributes</td><td style="white-space: nowrap;"><a href="#Attributes">Attributes</a></td><td></td></tr><tr><td style="white-space: nowrap;">caBundle</td><td style="white-space: nowrap;"><a href="#CaBundle">CaBundle</a></td><td></td></tr><tr><td style="white-space: nowrap;">expose</td><td style="white-space: nowrap;"><a href="#Expose">Expose</a></td><td></td></tr><tr><td style="white-space: nowrap;">networking</td><td style="white-space: nowrap;"><a href="#Networking">Networking</a></td><td></td></tr><tr><td style="white-space: nowrap;">policy</td><td style="white-space: nowrap;"><a href="#Policy">Policy</a></td><td></td></tr>
   </tbody>
 </table>
 </div>
@@ -73,6 +73,24 @@ sidebar:
   </thead>
   <tbody>
     <tr><td style="white-space: nowrap;">clusterName</td><td style="white-space: nowrap;">string</td><td>Friendly name to associate with your UDS cluster</td></tr><tr><td style="white-space: nowrap;">tags</td><td style="white-space: nowrap;">string[]</td><td>Tags to apply to your UDS cluster</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="CaBundle"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### CaBundle
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">certs</td><td style="white-space: nowrap;">string</td><td>Contents of user provided CA bundle certificates</td></tr><tr><td style="white-space: nowrap;">includeDoDCerts</td><td style="white-space: nowrap;">boolean</td><td>Include DoD CA certificates in the bundle</td></tr><tr><td style="white-space: nowrap;">includePublicCerts</td><td style="white-space: nowrap;">boolean</td><td>Include public CA certificates in the bundle</td></tr>
   </tbody>
 </table>
 </div>

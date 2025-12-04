@@ -18,6 +18,12 @@ spec:
       {{- toYaml .Values.cluster.attributes.clusterTags | nindent 6 }}
     {{- end }}
   {{- end }}
+  caBundle:
+    {{- if or .Values.cluster.caBundle.certs .Values.cluster.expose.caCert }}
+    certs: {{ .Values.cluster.caBundle.certs | default .Values.cluster.expose.caCert | quote }}
+    {{- end }}
+    includeDoDCerts: {{ .Values.cluster.caBundle.includeDoDCerts | default false | toString | eq "true" }}
+    includePublicCerts: {{ .Values.cluster.caBundle.includePublicCerts | default false | toString | eq "true" }}
   {{- if or .Values.cluster.networking.kubeApiCIDR .Values.operator.KUBEAPI_CIDR .Values.cluster.networking.kubeNodeCIDRs .Values.operator.KUBENODE_CIDRS }}
   networking:
     {{- if or .Values.cluster.networking.kubeApiCIDR .Values.operator.KUBEAPI_CIDR }}
