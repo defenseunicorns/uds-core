@@ -131,6 +131,37 @@ describe("authorization-policy.ts", () => {
     expect(toList.length).toBe(0);
   });
 
+  it("computeMonitorExemptions includes matching monitors", () => {
+    const pkg = {
+      spec: {
+        monitor: [
+          {
+            selector: labelSelector,
+            portName: "http",
+            targetPort: 8081,
+            path: "/metrics",
+          },
+        ],
+      },
+    } as unknown as UDSPackage;
+
+    const ex = computeMonitorExemptions(pkg, labelSelector);
+    expect(ex).toEqual([{ port: "8081", path: "/metrics" }]);
+
+    // Sidecar policy with matching monitors should produce non-empty 'to' entries
+    const sidecarPol = authserviceAuthorizationPolicy(
+      labelSelector,
+      name,
+      namespace,
+      false,
+      undefined,
+      ex,
+    );
+    const sidecarRule = sidecarPol.spec!.rules?.[0] as IstioRule;
+    const toList = (sidecarRule.to ?? []) as IstioTo[];
+    expect(toList.length).toBeGreaterThan(0);
+  });
+
   it("ambient jwtAuthZ policy builds separate metrics and non-metrics rules from monitor exemptions", () => {
     const pol = jwtAuthZAuthorizationPolicy(labelSelector, name, namespace, true, waypointName, [
       { port: "8080", path: "/metrics" },
