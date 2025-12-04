@@ -20,11 +20,17 @@ import {
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
 } from "./egress";
-import { ambientEgressNamespace, createAmbientWorkloadEgressResources } from "./egress-ambient";
 import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
 import { generateIngressServiceEntry } from "./service-entry";
 import { PackageAction } from "./types";
 import { generateIngressVirtualService } from "./virtual-service";
+
+// Central Ambient egress identifiers:
+// - ambientEgressNamespace: namespace where shared Ambient egress resources live
+// - sharedEgressPkgId: label value used to group and purge UDS-managed Ambient
+//   egress resources by generation during reconciliation
+export const ambientEgressNamespace = "istio-egress-ambient";
+export const sharedEgressPkgId = "shared-ambient-egress-resource";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -140,16 +146,6 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
         log.error(errText);
         throw new Error(errText);
       }
-
-      // For ambient workloads
-      await createAmbientWorkloadEgressResources(
-        hostResourceMap,
-        allowList,
-        pkgName,
-        namespace,
-        generation,
-        ownerRefs,
-      );
     } else {
       // Validate existing egress gateway namespace and service
       await validateEgressGateway(hostResourceMap);

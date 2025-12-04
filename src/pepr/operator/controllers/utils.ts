@@ -49,6 +49,24 @@ export function sanitizeResourceName(name: string) {
 }
 
 /**
+ * Ensures a resource name stays within Kubernetes max length; if over, truncate and add short hash suffix
+ * @param base Base resource name
+ * @param maxLen Maximum allowed length (default: 253 for Kubernetes)
+ * @returns Safely truncated name with hash suffix if needed
+ */
+export function sanitizeWithLimit(base: string, maxLen = 253): string {
+  const sanitized = sanitizeResourceName(base);
+  if (sanitized.length <= maxLen) return sanitized;
+
+  let hash = 0;
+  for (let i = 0; i < sanitized.length; i++) {
+    hash = (hash * 31 + sanitized.charCodeAt(i)) >>> 0;
+  }
+  const suffix = `-${hash.toString(36)}`;
+  return sanitized.substring(0, maxLen - suffix.length) + suffix;
+}
+
+/**
  * Get the owner reference for a custom resource
  * @param cr the custom resource to get the owner reference for
  * @returns the owner reference for the custom resource

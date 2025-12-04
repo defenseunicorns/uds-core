@@ -23,6 +23,7 @@ import {
   updateLastReconciliationPackages,
   validatePortProtocolConflicts,
   validateProtocolConflicts,
+  remapAmbientEgressResources,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
@@ -36,6 +37,54 @@ vi.mock("./istio-resources", async () => {
       error: vi.fn(),
     },
   };
+});
+
+describe("test remapAmbientEgressResources", () => {
+  it("should union ports/protocols per host and collect contributing packages", () => {
+    const packageMap: PackageHostMap = {
+      "pkg1-ns1": {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
+          ],
+        },
+      },
+      "pkg2-ns2": {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS }, // duplicate
+            { port: 8080, protocol: RemoteProtocol.TLS },
+          ],
+        },
+        "other.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const remapped = remapAmbientEgressResources(packageMap);
+
+    expect(Object.keys(remapped).sort()).toEqual(["example.com", "other.com"]);
+    expect(remapped["example.com"].packages.sort()).toEqual(["pkg1-ns1", "pkg2-ns2"].sort());
+    expect(remapped["example.com"].portProtocols).toEqual(
+      expect.arrayContaining([
+        { port: 443, protocol: RemoteProtocol.TLS },
+        { port: 80, protocol: RemoteProtocol.HTTP },
+        { port: 8080, protocol: RemoteProtocol.TLS },
+      ]),
+    );
+    // no duplicates
+    const unique = new Set(
+      remapped["example.com"].portProtocols.map(pp => `${pp.port}-${pp.protocol}`),
+    );
+    expect(unique.size).toBe(remapped["example.com"].portProtocols.length);
+
+    expect(remapped["other.com"].packages).toEqual(["pkg2-ns2"]);
+    expect(remapped["other.com"].portProtocols).toEqual([
+      { port: 443, protocol: RemoteProtocol.TLS },
+    ]);
+  });
 });
 
 import { log } from "./istio-resources";
@@ -428,8 +477,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 4 times (for sidecar and ambient resources)
-    expect(purgeOrphans).toHaveBeenCalledTimes(4);
+    // Purges sidecar (Gateway, VirtualService, ServiceEntry) and ambient (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(6);
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {
@@ -450,8 +499,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should err on reconciliation when get namespace returns error", async () => {
@@ -472,8 +521,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should skip ambient reconciliation when namespace is not found", async () => {

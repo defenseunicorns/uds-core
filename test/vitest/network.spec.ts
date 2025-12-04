@@ -421,6 +421,35 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     );
   });
 
+  test.concurrent("Egress Ambient per-host isolation (centralized AP)", async () => {
+    // egress-ambient-2 SA is allowed to Google TLS; it should not be allowed to api.github.com TLS
+    const GITHUB_TLS = ["sh", "-c", `curl -s -w " HTTP_CODE:%{http_code}" https://api.github.com`];
+
+    const resp = await execInPod("egress-ambient-2", curlPodNameEgressAmbient2, "curl", GITHUB_TLS);
+    const msg = `Egress Ambient per-host isolation (github denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
+    expect(isResponseError(resp), msg).toBe(true);
+  });
+
+  test.concurrent(
+    "Egress Ambient HTTP to github denied for SA with Google TLS access",
+    async () => {
+      const GITHUB_HTTP = [
+        "sh",
+        "-c",
+        `curl -s -w " HTTP_CODE:%{http_code}" http://api.github.com`,
+      ];
+
+      const resp = await execInPod(
+        "egress-ambient-2",
+        curlPodNameEgressAmbient2,
+        "curl",
+        GITHUB_HTTP,
+      );
+      const msg = `Egress Ambient HTTP github denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      expect(isResponseError(resp), msg).toBe(true);
+    },
+  );
+
   (runEgressTests ? test.concurrent : test.concurrent.skip)("Egress Gateway", async () => {
     const egress_gateway_http_curl = [
       "sh",

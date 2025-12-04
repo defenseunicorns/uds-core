@@ -10,7 +10,6 @@ import { Mode } from "../../crd/generated/package-v1alpha1";
 import * as utils from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import * as egressMod from "./egress";
-import * as egressAmbientMod from "./egress-ambient";
 import { istioEgressResources } from "./istio-resources";
 
 vi.mock("../utils", async importOriginal => {
@@ -53,9 +52,6 @@ describe("test istioEgressResources", () => {
     vi.useFakeTimers();
 
     vi.spyOn(egressMod, "reconcileSharedEgressResources").mockImplementation(async () => {});
-    vi.spyOn(egressAmbientMod, "createAmbientWorkloadEgressResources").mockImplementation(
-      async () => {},
-    );
     updateEgressMocks(defaultEgressMocks);
     vi.clearAllMocks();
   });
@@ -286,7 +282,6 @@ describe("test istioEgressResources", () => {
     );
 
     expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
-    expect(egressAmbientMod.createAmbientWorkloadEgressResources).not.toHaveBeenCalled();
   });
 
   it("should create ambient workload egress resources for ambient mode", async () => {
@@ -344,20 +339,6 @@ describe("test istioEgressResources", () => {
     await istioEgressResources(mockPkg, pkgMock.metadata!.namespace!);
 
     expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
-    expect(egressAmbientMod.createAmbientWorkloadEgressResources).toHaveBeenCalledWith(
-      mockHostResourceMap,
-      mockAllowList,
-      pkgMock.metadata!.name!,
-      pkgMock.metadata!.namespace!,
-      pkgMock.metadata!.generation!.toString(),
-      [
-        {
-          apiVersion: pkgMock.apiVersion,
-          kind: pkgMock.kind,
-          name: pkgMock.metadata!.name!,
-          uid: pkgMock.metadata!.uid,
-        },
-      ],
-    );
+    expect(egressMod.reconcileSharedEgressResources).toHaveBeenCalledTimes(1);
   });
 });

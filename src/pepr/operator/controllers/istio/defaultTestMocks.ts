@@ -85,6 +85,7 @@ type EgressMocks = {
   deleteSidecarMock: MockedFunction<() => Promise<void>>;
   deleteApMock: MockedFunction<() => Promise<void>>;
   deleteWaypointMock: MockedFunction<() => Promise<void>>;
+  getPkgListMock: MockedFunction<() => Promise<{ items: UDSPackage[] }>>;
 };
 
 // Default mock implementation for K8s egress operations
@@ -126,6 +127,7 @@ export const defaultEgressMocks: EgressMocks = {
   deleteSidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteApMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteWaypointMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  getPkgListMock: vi.fn<() => Promise<{ items: UDSPackage[] }>>().mockResolvedValue({ items: [] }),
 };
 
 export function updateEgressMocks(egressMocks: EgressMocks) {
@@ -175,6 +177,10 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
       Get: egressMocks.getWaypointMock,
       Apply: egressMocks.applyWaypointMock,
       Delete: egressMocks.deleteWaypointMock,
+    },
+    [UDSPackage.name]: {
+      ...baseImplementation,
+      Get: egressMocks.getPkgListMock,
     },
     Namespace: {
       ...baseImplementation,

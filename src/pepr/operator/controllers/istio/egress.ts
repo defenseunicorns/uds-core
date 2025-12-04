@@ -16,7 +16,14 @@ import {
   sidecarEgressNamespace,
 } from "./egress-sidecar";
 import { log } from "./istio-resources";
-import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } from "./types";
+import {
+  EgressResource,
+  EgressResourceMap,
+  HostPortsProtocol,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+} from "./types";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
@@ -252,6 +259,36 @@ export function updateLastReconciliationPackages() {
     ...Object.keys(inMemoryAmbientPackageMap),
   ]);
   return lastReconciliationPackages;
+}
+
+// Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)
+export function remapAmbientEgressResources(packageMap: PackageHostMap): EgressResourceMap {
+  const egressResources: EgressResourceMap = {};
+  for (const pkgId in packageMap) {
+    const hostResourceMap = packageMap[pkgId];
+    for (const host in hostResourceMap) {
+      const portProtocols = hostResourceMap[host].portProtocol;
+
+      egressResources[host] ??= {
+        packages: [],
+        portProtocols: [],
+      } as EgressResource;
+
+      if (!egressResources[host].packages.includes(pkgId)) {
+        egressResources[host].packages.push(pkgId);
+      }
+
+      for (const pp of portProtocols) {
+        const exists = egressResources[host].portProtocols.find(
+          x => x.port === pp.port && x.protocol === pp.protocol,
+        );
+        if (!exists) {
+          egressResources[host].portProtocols.push(pp);
+        }
+      }
+    }
+  }
+  return egressResources;
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
