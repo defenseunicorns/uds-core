@@ -79,6 +79,14 @@ resource "azurerm_kubernetes_cluster" "aks" {
     upgrade_settings {
       max_surge = "10%"
     }
+
+    linux_os_config {
+      sysctl_config {
+        fs_nr_open       = 12000500
+        fs_file_max      = 12000500
+        vm_max_map_count = 262144
+      }
+    }
   }
 
   identity {
@@ -97,15 +105,16 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   network_profile {
-    dns_service_ip     = var.network_dns_service_ip
-    service_cidr       = var.network_service_cidr
-    service_cidrs      = [var.network_service_cidr]
-    network_plugin     = "azure"
-    network_policy     = "azure"
-    load_balancer_sku  = "standard"
-    outbound_type      = var.outbound_type
-    network_data_plane = "azure"
-    ip_versions        = ["IPv4"]
+    dns_service_ip      = var.network_dns_service_ip
+    service_cidr        = var.network_service_cidr
+    service_cidrs       = [var.network_service_cidr]
+    network_plugin      = "azure"
+    network_plugin_mode = "overlay"
+    network_policy      = "azure"
+    load_balancer_sku   = "standard"
+    outbound_type       = var.outbound_type
+    network_data_plane  = "azure"
+    ip_versions         = ["IPv4"]
   }
 
   storage_profile {
@@ -149,4 +158,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
   ultra_ssd_enabled      = false
   orchestrator_version   = var.kubernetes_version
   os_sku                 = "Ubuntu"
+
+  linux_os_config {
+    sysctl_config {
+      fs_nr_open       = 12000500
+      fs_file_max      = 12000500
+      vm_max_map_count = 262144
+    }
+  }
 }

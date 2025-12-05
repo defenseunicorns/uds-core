@@ -27,4 +27,8 @@ runs:
         echo "::group::kubectl describe nodes"
         uds zarf tools kubectl describe nodes | tee /tmp/debug-k-describe-node.log || true
         echo "::endgroup::"
+        echo "::group::kubectl top"
+        uds zarf tools kubectl top nodes | tee /tmp/debug-k-top-node.log || true
+        uds zarf tools kubectl top pods -A | tee /tmp/debug-k-top-pods.log || true
+        echo "::endgroup::"
       shell: bash
