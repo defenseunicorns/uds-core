@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.58.0](https://github.com/defenseunicorns/uds-core/compare/v0.57.0...v0.58.0) (2025-12-05)
+
+
+### Features
+
+* add support for metrics collection on authservice protected services ([#2166](https://github.com/defenseunicorns/uds-core/issues/2166)) ([240248e](https://github.com/defenseunicorns/uds-core/commit/240248e59d9a8b563a78259bd9e90af078d73aeb))
+* clarify keycloak scaling down issues ([#2191](https://github.com/defenseunicorns/uds-core/issues/2191)) ([3ec1401](https://github.com/defenseunicorns/uds-core/commit/3ec1401102203cce08ca0fd903a82316454fd39f))
+
+
+### Bug Fixes
+
+* **ci:** add podinfo host for iac ([#2199](https://github.com/defenseunicorns/uds-core/issues/2199)) ([bc8577d](https://github.com/defenseunicorns/uds-core/commit/bc8577dc28df48c4c9c413c0ff38e32f0086399a))
+* **ci:** switch to example curl for egress test ([#2195](https://github.com/defenseunicorns/uds-core/issues/2195)) ([7fc8404](https://github.com/defenseunicorns/uds-core/commit/7fc8404f9408680f112b07e1982fffe0721dba92))
+* renovate matching for falco rules ([#2188](https://github.com/defenseunicorns/uds-core/issues/2188)) ([d8ee391](https://github.com/defenseunicorns/uds-core/commit/d8ee391889506da38c46fafe9721f85cd84a94a5))
+
+
+### Miscellaneous
+
+* add broken link checker for docs ([#2180](https://github.com/defenseunicorns/uds-core/issues/2180)) ([03994ee](https://github.com/defenseunicorns/uds-core/commit/03994ee86166f3185f772b04d514c13a4b3b8050))
+* add zarf connect for prometheus and alertmanager ([#2186](https://github.com/defenseunicorns/uds-core/issues/2186)) ([7e6fc12](https://github.com/defenseunicorns/uds-core/commit/7e6fc12331e324e50bdb8b0ce8e3e6c4c2350037))
+* **deps:** update authservice to 1.1.2 ([#2160](https://github.com/defenseunicorns/uds-core/issues/2160)) ([7c7c973](https://github.com/defenseunicorns/uds-core/commit/7c7c973c51c9a811e06c2993ac3ceacadbe78331))
+* **deps:** update falco helm chart to 7.0.2, rules to latest ([#2171](https://github.com/defenseunicorns/uds-core/issues/2171)) ([1ce34dd](https://github.com/defenseunicorns/uds-core/commit/1ce34dd83b6fbe5ccfb0e760a7b46a6ff876efa6))
+* **deps:** update istio to v1.28.0 ([#2113](https://github.com/defenseunicorns/uds-core/issues/2113)) ([e02f03d](https://github.com/defenseunicorns/uds-core/commit/e02f03d4b030827816f413b16c2e3e05ab72789b))
+* **deps:** update pepr to v1.0.2 ([#2183](https://github.com/defenseunicorns/uds-core/issues/2183)) ([411e22b](https://github.com/defenseunicorns/uds-core/commit/411e22bb13b2b06c2fbfe3788be1dedcfc40378d))
+* mapping uds-compliance ([#2190](https://github.com/defenseunicorns/uds-core/issues/2190)) ([c9a363b](https://github.com/defenseunicorns/uds-core/commit/c9a363b31e5df932d886dbb7101b0a7f1e43f792))
+* remove commscope cas from public trust bundle ([#2187](https://github.com/defenseunicorns/uds-core/issues/2187)) ([25ab754](https://github.com/defenseunicorns/uds-core/commit/25ab7546c56bf5ab06cb8285cc08cec211bb8a1a))
+
 ## [0.57.0](https://github.com/defenseunicorns/uds-core/compare/v0.56.0...v0.57.0) (2025-12-02)
 
 
