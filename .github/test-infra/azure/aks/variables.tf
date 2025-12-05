@@ -71,18 +71,6 @@ variable "network_service_cidr" {
   type        = string
 }
 
-variable "network_plugin" {
-  description = "Specifies the network plugin of the AKS cluster"
-  default     = "azure"
-  type        = string
-}
-
-variable "network_policy" {
-  description = "Specifies the network policy to use"
-  default     = "azure"
-  type        = string
-}
-
 variable "outbound_type" {
   description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting. Defaults to loadBalancer."
   type        = string
@@ -106,12 +94,6 @@ variable "default_node_pool_max_pods" {
   default     = 50
 }
 
-variable "default_node_pool_node_labels" {
-  description = "(Optional) A list of Kubernetes taints which should be applied to nodes in the agent pool (e.g key=value:NoSchedule). Changing this forces a new resource to be created."
-  type        = map(any)
-  default     = {}
-}
-
 variable "default_node_pool_os_disk_type" {
   description = "(Optional) The type of disk which should be used for the Operating System. Possible values are Ephemeral and Managed. Defaults to Managed. Changing this forces a new resource to be created."
   type        = string
@@ -132,13 +114,8 @@ variable "tags" {
 
 variable "azure_rbac_enabled" {
   description = "Whether or not to use Azure Role Based Access Control to control access to cluster resources."
-  default     = true
-}
-
-variable "enable_key_vault_csi_driver" {
-  description = "(Optional) Whether or not to deploy the Azure Key Vault CSI driver managed add-on. Defaults to false."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "username" {
