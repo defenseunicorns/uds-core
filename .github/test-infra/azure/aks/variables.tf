@@ -41,39 +41,9 @@ variable "kubernetes_version" {
   type        = string
 }
 
-variable "enable_autoscaling" {
-  description = "(Optional) Enable cluster-autoscaler on all nodepools. Defaults to true."
-  type        = bool
-  default     = false
-}
-
-variable "autoscaling_max_node_count" {
-  description = "The maximum number of nodes to allow the default (system) node pool to scale up to."
-  type        = number
-  default     = 3
-}
-
-variable "autoscaling_max_node_count_worker" {
-  description = "The maximum number of nodes to allow the worker (user) node pool to scale up to."
-  type        = number
-  default     = 3
-}
-
-variable "autoscaling_min_node_count" {
-  description = "The minimum number of nodes that should always be present in the default (system) node pool."
-  type        = number
-  default     = 1
-}
-
-variable "autoscaling_min_node_count_worker" {
-  description = "The minimum number of nodes that should always be present in the worker (user) node pool."
-  type        = number
-  default     = 3
-}
-
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_D4s_v5"
   type        = string
 }
 
@@ -85,14 +55,8 @@ variable "worker_node_pool_count" {
 
 variable "worker_pool_vm_size" {
   description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_D8s_v5"
   type        = string
-}
-
-variable "default_node_pool_availability_zones" {
-  description = "Specifies the availability zones of the default node pool"
-  default     = ["1", "2", "3"]
-  type        = list(string)
 }
 
 variable "network_dns_service_ip" {
@@ -157,7 +121,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "tags" {

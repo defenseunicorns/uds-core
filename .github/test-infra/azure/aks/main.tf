@@ -5,8 +5,7 @@
 data "azurerm_client_config" "current" {}
 
 locals {
-  cluster_name        = "${var.cluster_name}-${random_string.name.result}"
-  cluster_resource_id = provider::azapi::build_resource_id(azurerm_resource_group.this.id, "Microsoft.ContainerService/ManagedClusters", local.cluster_name)
+  cluster_name = "${var.cluster_name}-${random_string.name.result}"
 }
 
 resource "random_string" "name" {
@@ -26,10 +25,9 @@ resource "azurerm_resource_group" "this" {
 }
 
 resource "azurerm_role_assignment" "cluster_admin" {
-  scope                = local.cluster_resource_id
+  scope                = azurerm_kubernetes_cluster.aks.id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id         = data.azurerm_client_config.current.object_id
-  depends_on           = [azapi_resource.aks_cluster]
 }
 
 resource "azurerm_role_assignment" "cluster_dns" {
@@ -51,139 +49,104 @@ resource "azurerm_user_assigned_identity" "cluster_identity" {
   resource_group_name = azurerm_resource_group.this.name
 }
 
-# Create cluster via API call because API server VNET integration will not be added to the azurerm provider until it is GA
-# Tracking GA availability: https://github.com/Azure/AKS/issues/2729
-# Tracking support in azurerm provider: https://github.com/hashicorp/terraform-provider-azurerm/issues/27640
-resource "azapi_resource" "aks_cluster" {
-  type      = "Microsoft.ContainerService/ManagedClusters@2024-09-02-preview"
-  name      = local.cluster_name
-  parent_id = azurerm_resource_group.this.id
-  location  = azurerm_resource_group.this.location
+resource "azurerm_kubernetes_cluster" "aks" {
+  name                = local.cluster_name
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  dns_prefix          = var.dns_prefix
+
+  kubernetes_version  = var.kubernetes_version
+  node_resource_group = "${local.cluster_name}-managed-rg"
+
+  default_node_pool {
+    name                        = var.default_node_pool_name
+    node_count                  = var.default_node_pool_node_count
+    auto_scaling_enabled        = false
+    vm_size                     = var.default_node_pool_vm_size
+    temporary_name_for_rotation = "systemtmp"
+    os_disk_size_gb             = 150
+    os_disk_type                = var.default_node_pool_os_disk_type
+    type                        = "VirtualMachineScaleSets"
+    max_pods                    = var.default_node_pool_max_pods
+    kubelet_disk_type           = "OS"
+    fips_enabled                = false
+    node_public_ip_enabled      = false
+    ultra_ssd_enabled           = false
+    vnet_subnet_id              = azurerm_subnet.cluster_node_subnet.id
+    os_sku                      = "Ubuntu"
+    orchestrator_version        = var.kubernetes_version
+
+    upgrade_settings {
+      max_surge = "10%"
+    }
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.cluster_identity.id]
+  }
+
+  azure_active_directory_role_based_access_control {
+    azure_rbac_enabled     = var.azure_rbac_enabled
+    admin_group_object_ids = []
+  }
+
+  api_server_access_profile {
+    virtual_network_integration_enabled = true
+    subnet_id                           = azurerm_subnet.cluster_api_subnet.id
+  }
+
+  network_profile {
+    dns_service_ip     = var.network_dns_service_ip
+    service_cidr       = var.network_service_cidr
+    service_cidrs      = [var.network_service_cidr]
+    network_plugin     = "azure"
+    network_policy     = "azure"
+    load_balancer_sku  = "standard"
+    outbound_type      = var.outbound_type
+    network_data_plane = "azure"
+    ip_versions        = ["IPv4"]
+  }
+
+  storage_profile {
+    blob_driver_enabled         = false
+    disk_driver_enabled         = true
+    file_driver_enabled         = true
+    snapshot_controller_enabled = true
+  }
+
+  oidc_issuer_enabled               = true
+  role_based_access_control_enabled = true
+  local_account_disabled            = false
+  node_os_upgrade_channel           = "NodeImage"
+  support_plan                      = "KubernetesOfficial"
+  sku_tier                          = var.sku_tier
+
   tags = {
     "Owner" = "UDS Foundations"
   }
+}
 
-  body = {
-    identity = {
-      type = "UserAssigned",
-      userAssignedIdentities = {
-        (azurerm_user_assigned_identity.cluster_identity.id) = {}
-      }
-    }
-    properties = {
-      aadProfile = {
-        adminGroupObjectIDs = null
-        enableAzureRBAC     = var.azure_rbac_enabled
-        managed             = true
-      }
-      servicePrincipalProfile = {
-        clientId = "msi"
-      }
-      nodeResourceGroup = "${local.cluster_name}-managed-rg"
-      apiServerAccessProfile = {
-        enableVnetIntegration = true,
-        subnetId              = azurerm_subnet.cluster_api_subnet.id
-      }
-      agentPoolProfiles = [
-        {
-          availabilityZones      = var.default_node_pool_availability_zones
-          count                  = var.default_node_pool_node_count
-          enableAutoScaling      = var.enable_autoscaling
-          enableEncryptionAtHost = false
-          enableFIPS             = false
-          enableNodePublicIP     = false
-          enableUltraSSD         = false
-          kubeletDiskType        = "OS"
-          maxPods                = var.default_node_pool_max_pods
-          mode                   = "System"
-          name                   = var.default_node_pool_name
-          orchestratorVersion    = var.kubernetes_version
-          osDiskSizeGB           = 128
-          osDiskType             = var.default_node_pool_os_disk_type
-          osSKU                  = "Ubuntu"
-          osType                 = "Linux"
-          scaleDownMode          = "Delete"
-          type                   = "VirtualMachineScaleSets"
-          upgradeSettings = {
-            maxSurge = "10%"
-          }
-          vmSize       = var.default_node_pool_vm_size
-          vnetSubnetID = "${azurerm_subnet.cluster_node_subnet.id}"
-        },
-        {
-          count                  = var.worker_node_pool_count
-          enableAutoScaling      = var.enable_autoscaling
-          enableEncryptionAtHost = false
-          enableFIPS             = false
-          enableNodePublicIP     = false
-          enableUltraSSD         = false
-          kubeletDiskType        = "OS"
-          maxPods                = 30
-          mode                   = "User"
-          name                   = "worker1"
-          orchestratorVersion    = var.kubernetes_version
-          osDiskSizeGB           = 128
-          osDiskType             = "Managed"
-          osSKU                  = "Ubuntu"
-          osType                 = "Linux"
-          scaleDownMode          = "Delete"
-          type                   = "VirtualMachineScaleSets"
-          vmSize                 = var.worker_pool_vm_size
-          vnetSubnetID           = "${azurerm_subnet.cluster_worker_node_subnet.id}"
-        },
-      ]
-      autoUpgradeProfile = {
-        nodeOSUpgradeChannel = "NodeImage"
-        upgradeChannel       = "none"
-      }
-      azureMonitorProfile = {
-        metrics = {
-          enabled          = false
-          kubeStateMetrics = {}
-        }
-      }
-      disableLocalAccounts = false
-      dnsPrefix            = var.dns_prefix
-      enableRBAC           = true
-      identityProfile      = {}
-      kubernetesVersion    = var.kubernetes_version
-      networkProfile = {
-        dnsServiceIP = var.network_dns_service_ip
-        ipFamilies = [
-          "IPv4",
-        ]
-        loadBalancerSku  = "standard"
-        networkDataplane = "azure"
-        networkPlugin    = "azure"
-        networkPolicy    = "azure"
-        outboundType     = var.outbound_type
-        serviceCidr      = var.network_service_cidr
-        serviceCidrs = [
-          var.network_service_cidr,
-        ]
-      }
-      storageProfile = {
-        blobCSIDriver = {
-          enabled = false
-        }
-        diskCSIDriver = {
-          enabled = true
-        }
-        fileCSIDriver = {
-          enabled = true
-        }
-        snapshotController = {
-          enabled = true
-        }
-      }
-      oidcIssuerProfile = {
-        "enabled" = true
-      }
-      supportPlan = "KubernetesOfficial"
-    }
-    sku = {
-      name = "Base"
-      tier = var.sku_tier
-    }
-  }
+resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
+  name                  = "worker1"
+  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks.id
+
+  vm_size              = var.worker_pool_vm_size
+  node_count           = var.worker_node_pool_count
+  auto_scaling_enabled = false
+
+  temporary_name_for_rotation = "worker1tmp"
+
+  mode = "User"
+
+  os_disk_size_gb        = 150
+  os_disk_type           = "Managed"
+  vnet_subnet_id         = azurerm_subnet.cluster_worker_node_subnet.id
+  max_pods               = 30
+  kubelet_disk_type      = "OS"
+  fips_enabled           = false
+  node_public_ip_enabled = false
+  ultra_ssd_enabled      = false
+  orchestrator_version   = var.kubernetes_version
+  os_sku                 = "Ubuntu"
 }
