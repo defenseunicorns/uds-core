@@ -120,10 +120,16 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Reconcile egress resources separately to avoid cycles
   await istioEgressResources(pkg, namespace!);
 
-  // Get quantity of authorization policies created - only if istioMode = ambient
+  // Get quantity of egress authorization policies created - only if istioMode = ambient
+  // Count unique hosts contributed by this package (central APs are per-host)
   let numEgressAuthPols = 0;
   if (istioMode === Mode.Ambient && pkg.spec?.network?.allow) {
-    numEgressAuthPols = egressRequestedFromNetwork(pkg.spec!.network!.allow!).length;
+    const uniqueHosts = new Set(
+      egressRequestedFromNetwork(pkg.spec.network.allow)
+        .map(a => a.remoteHost)
+        .filter((h): h is string => typeof h === "string" && h.length > 0),
+    );
+    numEgressAuthPols = uniqueHosts.size;
   }
 
   // Configure the ServiceMonitors

@@ -103,7 +103,7 @@ vi.mock("../utils", async () => {
 // Mock apply functions for sidecar
 import { applySidecarEgressResources } from "./egress-sidecar";
 const mockApplySidecarEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-sidecar.ts", async () => {
+vi.mock("./egress-sidecar", async () => {
   const originalModule = await vi.importActual("./egress-sidecar");
   return {
     ...originalModule,
@@ -115,7 +115,7 @@ vi.mock("./egress-sidecar.ts", async () => {
 import { applyAmbientEgressResources } from "./egress-ambient";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-ambient.ts", async () => {
+vi.mock("./egress-ambient", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
   return {
     ...originalModule,
