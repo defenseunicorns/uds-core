@@ -28,6 +28,7 @@ on:
       - CODEOWNERS
       - LICENSE
       - scripts/** # scripts/hacks that are used specifically for non-testing workflows
+      - .github/workflows/docs-shim.yaml
 
 jobs:
   lint-check:
