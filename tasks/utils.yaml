@@ -105,7 +105,7 @@ tasks:
       - description: Adds Cluster LoadBalancer IP Addresses to match appropriate hosts names in /etc/hosts
         mute: true
         cmd: |
-          echo "$ADMIN_GW_IP keycloak.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev" | sudo tee -a /etc/hosts
+          echo "$ADMIN_GW_IP keycloak.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev podinfo.uds.dev" | sudo tee -a /etc/hosts
 
   - name: rename-flavored-packages
     description: "Rename flavored package files by removing the flavor suffix"
