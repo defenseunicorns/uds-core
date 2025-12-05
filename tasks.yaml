@@ -181,6 +181,17 @@ tasks:
           # Actual startup takes up to a minute because of the npm install
           cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
 
+  - name: uds-docs-validate
+    description: "Validate and build uds-docs with latest uds-core docs"
+    actions:
+      - description: "Cleanup previous runs"
+        cmd: |
+          rm -rf uds-docs
+      - description: "Clone the docs repo"
+        cmd: git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
+      - description: "UDS Docs Integration Script"
+        cmd: cd uds-docs && npm i && DOCS_OVERRIDES="uds-core=$(pwd)/.." npm run build
+
   - name: update-diagrams
     description: "Regenerate C4 and D2 Diagrams"
     actions:
