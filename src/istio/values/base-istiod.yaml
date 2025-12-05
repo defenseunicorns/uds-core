@@ -4,7 +4,9 @@
 profile: ambient
 
 meshConfig:
+  # @lulaStart 98a6ad94-c638-4a31-8519-e823db7457f3
   accessLogFile: /dev/stdout
+  # @lulaEnd 98a6ad94-c638-4a31-8519-e823db7457f3
   pathNormalization:
     normalization: MERGE_SLASHES
   defaultConfig:
