@@ -3,64 +3,62 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1OwnerReference } from "@kubernetes/client-node";
 import { IstioAction, IstioAuthorizationPolicy } from "../../crd";
-import { sanitizeResourceName } from "../utils";
+import { sanitizeWithLimit } from "../utils";
+import {
+  ambientEgressNamespace,
+  sharedEgressPkgId as ambientSharedEgressPkgId,
+} from "./istio-resources";
 
-// Generate Authorization Policy for ambient egress
-export function generateAmbientEgressAuthorizationPolicy(
+// Generate centralized AuthorizationPolicy for ambient egress
+// - Namespace: istio-egress-ambient
+// - Target: ServiceEntry/ambient-se-<host>
+// - Rules:
+//   - From: SA-first principals (cluster.local only), else namespaces
+export function generateCentralAmbientEgressAuthorizationPolicy(
   host: string,
-  pkgName: string,
-  namespace: string,
-  generation: string,
-  ownerRefs: V1OwnerReference[],
-  serviceEntryName: string,
-  serviceAccount: string | undefined,
-) {
-  const source = serviceAccount
-    ? { principals: [`cluster.local/ns/${namespace}/sa/${serviceAccount}`] }
-    : { namespaces: [`${namespace}`] };
+  generation: number,
+  identities: { saPrincipals: string[]; namespaces: string[] },
+): IstioAuthorizationPolicy {
+  const name = sanitizeWithLimit(`ambient-ap-${host}`);
 
-  const authPolicy: IstioAuthorizationPolicy = {
+  // Build "from" sources
+  const principalSources = identities.saPrincipals.length
+    ? [{ source: { principals: identities.saPrincipals } }]
+    : [];
+  const namespaceSources = identities.namespaces.length
+    ? [{ source: { namespaces: identities.namespaces } }]
+    : [];
+
+  // Build rules: only sources are needed; targetRef scopes to the specific host via ServiceEntry
+  type Source = { source: { principals?: string[]; namespaces?: string[] } };
+  type Rule = { from: Source[] };
+  const rules: Rule[] = [
+    {
+      from: [...(principalSources as Source[]), ...(namespaceSources as Source[])],
+    },
+  ];
+
+  const ap: IstioAuthorizationPolicy = {
     metadata: {
-      name: generateAmbientEgressAuthorizationPolicyName(host, serviceAccount),
-      namespace,
+      name,
+      namespace: ambientEgressNamespace,
       labels: {
-        "uds/package": pkgName,
-        "uds/generation": generation,
-        "uds/for": "egress",
+        "uds/package": ambientSharedEgressPkgId,
+        "uds/generation": generation.toString(),
       },
-      // Use the CR as the owner ref for each AuthorizationPolicy
-      ownerReferences: ownerRefs,
     },
     spec: {
       action: IstioAction.Allow,
-      rules: [
-        {
-          from: [
-            {
-              source,
-            },
-          ],
-        },
-      ],
-      // ServiceEntry is target to gate egress to host
+      // Target the per-host ServiceEntry to restrict by destination host for both HTTP and TLS
       targetRef: {
         group: "networking.istio.io",
         kind: "ServiceEntry",
-        name: serviceEntryName,
+        name: sanitizeWithLimit(`ambient-se-${host}`),
       },
+      rules,
     },
   };
 
-  return authPolicy;
-}
-
-export function generateAmbientEgressAuthorizationPolicyName(
-  host: string,
-  serviceAccount: string | undefined,
-) {
-  return serviceAccount
-    ? sanitizeResourceName(`${host}-${serviceAccount}-egress`)
-    : sanitizeResourceName(`${host}-egress`);
+  return ap;
 }

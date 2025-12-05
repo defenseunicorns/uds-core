@@ -10,6 +10,7 @@ import {
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
 } from "../controllers/istio/egress";
+import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
@@ -113,13 +114,22 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     );
   }
 
-  // Create the Istio Resources per the package configuration
+  // Create the Istio ingress resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
 
-  // Get quantity of authorization policies created - only if istioMode = ambient
+  // Reconcile egress resources separately to avoid cycles
+  await istioEgressResources(pkg, namespace!);
+
+  // Get quantity of egress authorization policies created - only if istioMode = ambient
+  // Count unique hosts contributed by this package (central APs are per-host)
   let numEgressAuthPols = 0;
   if (istioMode === Mode.Ambient && pkg.spec?.network?.allow) {
-    numEgressAuthPols = egressRequestedFromNetwork(pkg.spec!.network!.allow!).length;
+    const uniqueHosts = new Set(
+      egressRequestedFromNetwork(pkg.spec.network.allow)
+        .map(a => a.remoteHost)
+        .filter((h): h is string => typeof h === "string" && h.length > 0),
+    );
+    numEgressAuthPols = uniqueHosts.size;
   }
 
   // Configure the ServiceMonitors

@@ -16,7 +16,14 @@ import {
   sidecarEgressNamespace,
 } from "./egress-sidecar";
 import { log } from "./istio-resources";
-import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } from "./types";
+import {
+  EgressResource,
+  EgressResourceMap,
+  HostPortsProtocol,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+} from "./types";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
@@ -41,6 +48,8 @@ export let lastReconciliationPackages: Set<string> = new Set();
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
 let ambientGeneration = 0;
+
+// (legacy) istioEgressResources removed in favor of orchestrator implementation in egress-orchestrator.ts
 
 // reconcileSharedEgressResources reconciles the egress resources based on the config
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
@@ -254,6 +263,36 @@ export function updateLastReconciliationPackages() {
   return lastReconciliationPackages;
 }
 
+// Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)
+export function remapAmbientEgressResources(packageMap: PackageHostMap): EgressResourceMap {
+  const egressResources: EgressResourceMap = {};
+  for (const pkgId in packageMap) {
+    const hostResourceMap = packageMap[pkgId];
+    for (const host in hostResourceMap) {
+      const portProtocols = hostResourceMap[host].portProtocol;
+
+      egressResources[host] ??= {
+        packages: [],
+        portProtocols: [],
+      } as EgressResource;
+
+      if (!egressResources[host].packages.includes(pkgId)) {
+        egressResources[host].packages.push(pkgId);
+      }
+
+      for (const pp of portProtocols) {
+        const exists = egressResources[host].portProtocols.find(
+          x => x.port === pp.port && x.protocol === pp.protocol,
+        );
+        if (!exists) {
+          egressResources[host].portProtocols.push(pp);
+        }
+      }
+    }
+  }
+  return egressResources;
+}
+
 // Validate that there are no protocol conflicts for the same host/port combination
 export function validateProtocolConflicts(
   currentPackageMap: PackageHostMap,
@@ -315,11 +354,13 @@ export function validatePortProtocolConflicts(
     }
 
     for (const [host, hostResource] of Object.entries(hostResourceMap)) {
-      const portProtocolList = hostResource.portProtocol.map(pp => `${pp.port}-${pp.protocol}`);
+      const portProtocolList = (hostResource?.portProtocol ?? []).map(
+        pp => `${pp.port}-${pp.protocol}`,
+      );
       for (const [newHost, newHostResource] of Object.entries(newHostResourceMap)) {
         if (host === newHost) {
           // If the host is defined in both maps, validate port/protocols don't conflict
-          const newPortProtocolList = newHostResource.portProtocol.map(
+          const newPortProtocolList = (newHostResource?.portProtocol ?? []).map(
             pp => `${pp.port}-${pp.protocol}`,
           );
 
@@ -333,7 +374,9 @@ export function validatePortProtocolConflicts(
           }
 
           // Copy portProtocols from hostResource -> newHostResource to ensure it's the superset
-          calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
+          if (hostResource?.portProtocol) {
+            calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
+          }
         }
       }
     }
