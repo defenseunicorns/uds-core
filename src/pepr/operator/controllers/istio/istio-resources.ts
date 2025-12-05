@@ -13,16 +13,8 @@ import {
   IstioVirtualService,
   UDSPackage,
 } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
-import {
-  createHostResourceMap,
-  egressRequestedFromNetwork,
-  reconcileSharedEgressResources,
-} from "./egress";
-import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
-import { PackageAction } from "./types";
 import { generateIngressVirtualService } from "./virtual-service";
 
 // Central Ambient egress identifiers:
@@ -96,9 +88,6 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     serviceEntryNames.set(sePayload.metadata!.name!, true);
   }
 
-  // Reconcile any egress requested
-  await istioEgressResources(pkg, namespace);
-
   // Purge any orphaned resources
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log); // for ingress and egress
@@ -118,63 +107,6 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
  * @param pkg
  * @param namespace
  */
-export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
-  // Get package data
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-  const pkgId = getPackageId(pkg);
-  const pkgName = pkg.metadata!.name!;
-  const generation = (pkg.metadata?.generation ?? 0).toString();
-  const ownerRefs = getOwnerRef(pkg);
-
-  // Get the map of host resources as egress endpoints
-  const hostResourceMap = createHostResourceMap(pkg);
-
-  // Get the list of allowed egress services
-  const allowList = egressRequestedFromNetwork(pkg.spec?.network?.allow ?? []);
-
-  // Add needed service entries and sidecars if egress is requested
-  if (hostResourceMap) {
-    if (istioMode === Mode.Ambient) {
-      // Validate existing egress waypoint namespace
-      try {
-        await validateNamespace(ambientEgressNamespace);
-      } catch (e) {
-        let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
-        if (e?.status == 404) {
-          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-ambient' component is deployed and try again.`;
-        }
-        log.error(errText);
-        throw new Error(errText);
-      }
-    } else {
-      // Validate existing egress gateway namespace and service
-      await validateEgressGateway(hostResourceMap);
-
-      // Create sidecar and service entry resources
-      await createSidecarWorkloadEgressResources(
-        hostResourceMap,
-        allowList,
-        pkgName,
-        namespace,
-        generation,
-        ownerRefs,
-      );
-    }
-  }
-
-  // Reconcile shared egress resources
-  try {
-    await reconcileSharedEgressResources(
-      hostResourceMap,
-      pkgId,
-      PackageAction.AddOrUpdate,
-      istioMode,
-    );
-  } catch (e) {
-    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
-    throw e;
-  }
-}
 
 // Get the shared annotation key for the package
 export function getSharedAnnotationKey(pkgId: string) {

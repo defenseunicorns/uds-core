@@ -10,6 +10,7 @@ import {
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
 } from "../controllers/istio/egress";
+import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
@@ -113,8 +114,11 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     );
   }
 
-  // Create the Istio Resources per the package configuration
+  // Create the Istio ingress resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
+
+  // Reconcile egress resources separately to avoid cycles
+  await istioEgressResources(pkg, namespace!);
 
   // Get quantity of authorization policies created - only if istioMode = ambient
   let numEgressAuthPols = 0;

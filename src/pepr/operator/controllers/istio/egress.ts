@@ -4,7 +4,7 @@
  */
 import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { validateNamespace } from "../utils";
+import { getOwnerRef, validateNamespace } from "../utils";
 import {
   ambientEgressNamespace,
   applyAmbientEgressResources,
@@ -14,6 +14,8 @@ import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
   sidecarEgressNamespace,
+  createSidecarWorkloadEgressResources,
+  validateEgressGateway,
 } from "./egress-sidecar";
 import { log } from "./istio-resources";
 import {
@@ -48,6 +50,55 @@ export let lastReconciliationPackages: Set<string> = new Set();
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
 let ambientGeneration = 0;
+
+// Creates ServiceEntry/Sidecar for egress and reconciles shared egress resources
+export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const pkgId = `${pkg.metadata?.name}-${pkg.metadata?.namespace}`;
+  const pkgName = pkg.metadata!.name!;
+  const generation = (pkg.metadata?.generation ?? 0).toString();
+  const ownerRefs = getOwnerRef(pkg);
+
+  const hostResourceMap = createHostResourceMap(pkg);
+  const allowList = egressRequestedFromNetwork(pkg.spec?.network?.allow ?? []);
+
+  if (hostResourceMap) {
+    if (istioMode === Mode.Ambient) {
+      try {
+        await validateNamespace(ambientEgressNamespace);
+      } catch (e) {
+        let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
+        if (e?.status == 404) {
+          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-ambient' component is deployed and try again.`;
+        }
+        log.error(errText);
+        throw new Error(errText);
+      }
+    } else {
+      await validateEgressGateway(hostResourceMap);
+      await createSidecarWorkloadEgressResources(
+        hostResourceMap,
+        allowList,
+        pkgName,
+        namespace,
+        generation,
+        ownerRefs,
+      );
+    }
+  }
+
+  try {
+    await reconcileSharedEgressResources(
+      hostResourceMap,
+      pkgId,
+      PackageAction.AddOrUpdate,
+      istioMode,
+    );
+  } catch (e) {
+    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
+    throw e;
+  }
+}
 
 // reconcileSharedEgressResources reconciles the egress resources based on the config
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
@@ -352,11 +403,13 @@ export function validatePortProtocolConflicts(
     }
 
     for (const [host, hostResource] of Object.entries(hostResourceMap)) {
-      const portProtocolList = hostResource.portProtocol.map(pp => `${pp.port}-${pp.protocol}`);
+      const portProtocolList = (hostResource?.portProtocol ?? []).map(
+        pp => `${pp.port}-${pp.protocol}`,
+      );
       for (const [newHost, newHostResource] of Object.entries(newHostResourceMap)) {
         if (host === newHost) {
           // If the host is defined in both maps, validate port/protocols don't conflict
-          const newPortProtocolList = newHostResource.portProtocol.map(
+          const newPortProtocolList = (newHostResource?.portProtocol ?? []).map(
             pp => `${pp.port}-${pp.protocol}`,
           );
 
@@ -370,7 +423,9 @@ export function validatePortProtocolConflicts(
           }
 
           // Copy portProtocols from hostResource -> newHostResource to ensure it's the superset
-          calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
+          if (hostResource?.portProtocol) {
+            calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
+          }
         }
       }
     }

@@ -10,7 +10,7 @@ import { Mode } from "../../crd/generated/package-v1alpha1";
 import * as utils from "../utils";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import * as egressMod from "./egress";
-import { istioEgressResources } from "./istio-resources";
+import { istioEgressResources } from "./egress-orchestrator";
 
 vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;
