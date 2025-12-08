@@ -25,11 +25,11 @@
 
 # Starting with version 8, the Falco engine supports exceptions.
 # However the Falco rules file does not use them by default.
-- required_engine_version: 0.50.0
+- required_engine_version: 0.57.0
 
 - required_plugin_versions:
     - name: container
-      version: 0.2.2
+      version: 0.4.0
 
 - macro: open_write
   condition: (evt.type in (open,openat,openat2) and evt.is_open_write=true and fd.typechar='f' and fd.num>=0)
@@ -79,10 +79,10 @@
   condition: (rename or remove)
 
 - macro: spawned_process
-  condition: (evt.type in (execve, execveat) and evt.dir=<)
+  condition: (evt.type in (execve, execveat))
 
 - macro: chmod
-  condition: (evt.type in (chmod, fchmod, fchmodat) and evt.dir=<)
+  condition: (evt.type in (chmod, fchmod, fchmodat))
 
 - list: shell_binaries
   items: [ash, bash, csh, ksh, sh, tcsh, zsh, dash]
@@ -211,8 +211,8 @@
 
 - macro: outbound
   condition: >
-    (((evt.type = connect and evt.dir=<) or
-      (evt.type in (sendto,sendmsg) and evt.dir=< and
+    ((evt.type = connect or
+      (evt.type in (sendto,sendmsg) and
        fd.l4proto != tcp and fd.connected=false and fd.name_changed=true)) and
      (fd.typechar = 4 or fd.typechar = 6) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8" and not fd.snet in (rfc_1918_addresses)) and
@@ -222,7 +222,7 @@
 # for efficiency.
 - macro: inbound_outbound
   condition: >
-    ((((evt.type in (accept,accept4,listen,connect) and evt.dir=<)) and
+    (((evt.type in (accept,accept4,listen,connect)) and
      (fd.typechar = 4 or fd.typechar = 6)) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8") and
      (evt.rawres >= 0 or evt.res = EINPROGRESS))
@@ -422,7 +422,7 @@
     to the host, for example, when using commands like `nsenter --target 1` and similar ones. Recommending to profile your 
     environment and refine this rule for effective operationalization.
   condition: >
-    evt.type=setns and evt.dir=<
+    evt.type=setns
     and proc_name_exists
     and not (container.id=host and proc.name in (docker_binaries, k8s_binaries, lxd_binaries, nsenter))
     and not proc.name in (sysdigcloud_binaries, sysdig, calico, oci-umount, cilium-cni, network_plugin_binaries)
@@ -448,7 +448,7 @@
     necessary privileges to conduct further attacks. It is best practice to block the unshare system call via 
     seccomp if it is not needed. Misuse of unshare can be related to misconfigured Kubernetes clusters, for example.
   condition: >
-    evt.type=unshare and evt.dir=< 
+    evt.type=unshare 
     and container 
     and not thread.cap_permitted contains CAP_SYS_ADMIN
   output: Change namespace privileges via unshare | res=%evt.res evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -782,7 +782,7 @@
     different user's context, potentially with higher privileges. One drawback is the potential for noise, 
     as many applications legitimately use this approach.
   condition: >
-    evt.type=setuid and evt.dir=>
+    evt.type=setuid
     and (known_user_in_container or not container)
     and not (user.name=root or user.uid=0)
     and not somebody_becoming_themselves
@@ -1119,6 +1119,11 @@
     ((k8s.ns.name = kube-system and container.image.repository in (mcr.microsoft.com/oss/kubernetes-csi/azuredisk-csi,mcr.microsoft.com/oss/kubernetes-csi/azurefile-csi))
     or (k8s.ns.name = system and container.image.repository = mcr.microsoft.com/oss/kubernetes-csi/secrets-store/driver))
 
+- macro: known_eks_mount_in_privileged_containers
+  condition:
+    (k8s.ns.name = kube-system
+    and container.image.repository = public.ecr.aws/ebs-csi-driver/aws-ebs-csi-driver)
+
 - macro: user_known_mount_in_privileged_containers
   condition: (never_true)
 
@@ -1135,6 +1140,7 @@
     and not mount_info
     and not known_gke_mount_in_privileged_containers
     and not known_aks_mount_in_privileged_containers
+    and not known_eks_mount_in_privileged_containers
     and not user_known_mount_in_privileged_containers
   output: Mount was executed inside a privileged container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
@@ -1292,7 +1298,7 @@
     time, so this rule only sends logs for BPF_PROG_LOAD calls (bpf cmd=5) in the enter event. If you also want to log 
     whether the syscall failed or succeeded, remove the direction filter and add the evt.arg.res_or_fd output field.
   condition: >
-    evt.type=bpf and evt.dir=> 
+    evt.type=bpf
     and (evt.arg.cmd=5 or evt.arg.cmd=BPF_PROG_LOAD)
     and not bpf_profiled_procs
   output: BPF Program Not Profiled | bpf_cmd=%evt.arg.cmd evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty

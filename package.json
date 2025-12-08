@@ -46,7 +46,7 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "1.0.1"
+    "pepr": "1.0.2"
   },
   "devDependencies": {
     "@commitlint/cli": "20.1.0",
@@ -57,7 +57,7 @@
     "@vitest/coverage-v8": "^4.0.0",
     "globals": "^16.2.0",
     "husky": "9.1.7",
-    "lint-staged": "16.2.6",
+    "lint-staged": "16.2.7",
     "vitest": "^4.0.0"
   }
 }

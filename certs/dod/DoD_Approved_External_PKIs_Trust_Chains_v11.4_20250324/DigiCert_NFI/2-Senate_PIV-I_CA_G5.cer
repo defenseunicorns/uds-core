@@ -1,0 +1,111 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            2e:ec:61:1f:22:94:4f:9d:46:2a:5a:8b:be:e0:64:85
+        Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C = US, O = "DigiCert, Inc.", CN = DigiCert Class 3 SSP Intermediate CA - G4
+        Validity
+            Not Before: Mar 25 00:00:00 2021 GMT
+            Not After : Aug 18 23:59:59 2030 GMT
+        Subject: C = US, O = U.S. Government, OU = U.S. Senate, OU = Office of the Sergeant at Arms, CN = Senate PIV-I CA G5 PROD
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                RSA Public-Key: (2048 bit)
+                Modulus:
+                    00:c1:ef:6d:18:a1:2e:6a:13:7d:ba:fb:fa:46:18:
+                    3c:5e:7d:be:77:14:87:c9:d8:2d:db:aa:72:1b:4e:
+                    15:4e:37:3f:6c:09:a3:59:38:dd:54:a3:36:d7:03:
+                    42:57:d6:6d:b3:f7:6c:c3:5d:65:2b:43:c6:65:c4:
+                    76:da:7a:05:5d:db:ba:40:e5:6e:39:f2:05:25:ff:
+                    74:d7:0e:ae:a9:df:23:7c:7d:e2:cc:34:fe:6d:96:
+                    f9:78:7d:ae:c4:aa:91:34:9a:02:d3:49:68:fe:65:
+                    48:fb:15:6f:a6:15:3f:94:9e:4e:23:f4:b2:1d:ed:
+                    1c:1c:de:7f:ae:b3:a1:53:bf:07:82:ed:58:69:7f:
+                    eb:cb:32:7b:72:f9:4a:84:30:e2:4f:d1:47:63:94:
+                    24:4d:db:b8:0a:15:26:86:e4:d7:3f:c1:15:8e:21:
+                    6f:8e:4b:62:98:8b:b6:98:48:64:b1:cc:78:e2:38:
+                    78:f1:00:95:f1:a7:b3:18:1c:99:2f:3d:b3:4d:26:
+                    f8:8e:77:d3:00:2b:55:62:1e:25:13:62:c5:24:66:
+                    46:1d:6c:c0:4f:fd:36:54:e7:80:e8:bb:4d:cc:92:
+                    64:fa:ba:23:ef:95:f4:65:3b:34:3c:be:93:66:7c:
+                    e6:8b:9d:11:65:71:41:d2:ae:5a:45:17:27:89:93:
+                    a4:09
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Key Usage: critical
+                Certificate Sign, CRL Sign
+            Authority Information Access: 
+                OCSP - URI:http://ssp-ocsp.digicert.com
+                CA Issuers - URI:http://ssp-aia.digicert.com/NFSSP/Certs_issued_to_Class3SSPCA-G4.p7c
+
+            X509v3 Basic Constraints: critical
+                CA:TRUE, pathlen:0
+            X509v3 Certificate Policies: 
+                Policy: 2.16.840.1.113733.1.7.23.3.1.6
+                Policy: 2.16.840.1.113733.1.7.23.3.1.7
+                Policy: 2.16.840.1.113733.1.7.23.3.1.13
+                Policy: 2.16.840.1.113733.1.7.23.3.1.14
+                Policy: 2.16.840.1.113733.1.7.23.3.1.15
+                Policy: 2.16.840.1.113733.1.7.23.3.1.17
+                Policy: 2.16.840.1.113733.1.7.23.3.1.18
+
+            X509v3 CRL Distribution Points: 
+
+                Full Name:
+                  URI:http://ssp-crl.digicert.com/NFSSP/Class3SSPCAG4.crl
+
+            X509v3 Subject Alternative Name: 
+                DirName:/CN=DigiCertPKI-3-306
+            X509v3 Subject Key Identifier: 
+                2E:FB:C0:8C:AB:5F:57:E0:89:F0:EA:FE:A7:64:3D:14:90:27:F0:C6
+            X509v3 Authority Key Identifier: 
+                keyid:B5:ED:2E:96:04:4B:A9:18:F4:F4:BD:12:F1:63:85:84:97:5F:3E:5A
+
+    Signature Algorithm: sha256WithRSAEncryption
+         a4:76:3f:47:3b:04:cb:bd:11:a5:fb:b2:db:9e:4d:21:f4:ed:
+         38:cc:ce:09:8e:7d:82:2f:5d:5c:e7:ca:64:f6:e8:78:50:1d:
+         3e:ea:43:f1:c0:8d:f5:9c:44:6b:d5:c6:9b:6c:31:6b:2e:a4:
+         c8:98:71:17:3b:6c:3d:7c:6a:92:68:ff:aa:4d:d5:71:13:1b:
+         91:60:27:9a:65:b1:6c:d4:5a:96:11:6c:2c:a3:27:a8:dd:18:
+         93:fa:12:69:08:57:d4:25:8e:0c:aa:4a:de:26:75:3b:2a:1d:
+         6b:d0:b0:16:ba:1e:29:1f:3b:c5:c0:87:67:c8:71:bc:f2:f0:
+         d5:33:25:7b:5c:ce:4e:5c:b2:ec:3d:af:0f:88:ed:53:9a:73:
+         cc:b2:1c:65:f8:dd:2f:dc:72:75:e6:f4:d0:49:6b:11:c1:14:
+         1b:77:6c:4b:d6:01:a1:df:21:7c:8c:fc:e2:ce:d4:7d:f6:8b:
+         e8:88:2b:fa:e0:5f:6a:51:e3:ce:18:ce:74:1b:55:8a:d9:69:
+         49:6d:a0:92:3e:77:e4:18:f0:30:ee:72:1a:d7:f3:da:3f:33:
+         6b:8f:a9:1c:f8:52:b2:9e:84:12:b5:b3:50:7f:5c:c7:8c:8f:
+         5f:a5:28:79:09:f5:ea:cf:17:d9:13:44:47:f2:59:e6:df:a8:
+         b5:84:5e:be
+-----BEGIN CERTIFICATE-----
+MIIFWDCCBECgAwIBAgIQLuxhHyKUT51GKlqLvuBkhTANBgkqhkiG9w0BAQsFADBa
+MQswCQYDVQQGEwJVUzEXMBUGA1UEChMORGlnaUNlcnQsIEluYy4xMjAwBgNVBAMT
+KURpZ2lDZXJ0IENsYXNzIDMgU1NQIEludGVybWVkaWF0ZSBDQSAtIEc0MB4XDTIx
+MDMyNTAwMDAwMFoXDTMwMDgxODIzNTk1OVowgYgxCzAJBgNVBAYTAlVTMRgwFgYD
+VQQKEw9VLlMuIEdvdmVybm1lbnQxFDASBgNVBAsTC1UuUy4gU2VuYXRlMScwJQYD
+VQQLEx5PZmZpY2Ugb2YgdGhlIFNlcmdlYW50IGF0IEFybXMxIDAeBgNVBAMTF1Nl
+bmF0ZSBQSVYtSSBDQSBHNSBQUk9EMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEAwe9tGKEuahN9uvv6Rhg8Xn2+dxSHydgt26pyG04VTjc/bAmjWTjdVKM2
+1wNCV9Zts/dsw11lK0PGZcR22noFXdu6QOVuOfIFJf901w6uqd8jfH3izDT+bZb5
+eH2uxKqRNJoC00lo/mVI+xVvphU/lJ5OI/SyHe0cHN5/rrOhU78Hgu1YaX/ryzJ7
+cvlKhDDiT9FHY5QkTdu4ChUmhuTXP8EVjiFvjktimIu2mEhkscx44jh48QCV8aez
+GByZLz2zTSb4jnfTACtVYh4lE2LFJGZGHWzAT/02VOeA6LtNzJJk+roj75X0ZTs0
+PL6TZnzmi50RZXFB0q5aRRcniZOkCQIDAQABo4IB6TCCAeUwDgYDVR0PAQH/BAQD
+AgEGMIGKBggrBgEFBQcBAQR+MHwwKAYIKwYBBQUHMAGGHGh0dHA6Ly9zc3Atb2Nz
+cC5kaWdpY2VydC5jb20wUAYIKwYBBQUHMAKGRGh0dHA6Ly9zc3AtYWlhLmRpZ2lj
+ZXJ0LmNvbS9ORlNTUC9DZXJ0c19pc3N1ZWRfdG9fQ2xhc3MzU1NQQ0EtRzQucDdj
+MBIGA1UdEwEB/wQIMAYBAf8CAQAwgYAGA1UdIAR5MHcwDwYNYIZIAYb4RQEHFwMB
+BjAPBg1ghkgBhvhFAQcXAwEHMA8GDWCGSAGG+EUBBxcDAQ0wDwYNYIZIAYb4RQEH
+FwMBDjAPBg1ghkgBhvhFAQcXAwEPMA8GDWCGSAGG+EUBBxcDAREwDwYNYIZIAYb4
+RQEHFwMBEjBEBgNVHR8EPTA7MDmgN6A1hjNodHRwOi8vc3NwLWNybC5kaWdpY2Vy
+dC5jb20vTkZTU1AvQ2xhc3MzU1NQQ0FHNC5jcmwwKQYDVR0RBCIwIKQeMBwxGjAY
+BgNVBAMTEURpZ2lDZXJ0UEtJLTMtMzA2MB0GA1UdDgQWBBQu+8CMq19X4Inw6v6n
+ZD0UkCfwxjAfBgNVHSMEGDAWgBS17S6WBEupGPT0vRLxY4WEl18+WjANBgkqhkiG
+9w0BAQsFAAOCAQEApHY/RzsEy70Rpfuy255NIfTtOMzOCY59gi9dXOfKZPboeFAd
+PupD8cCN9ZxEa9XGm2wxay6kyJhxFztsPXxqkmj/qk3VcRMbkWAnmmWxbNRalhFs
+LKMnqN0Yk/oSaQhX1CWODKpK3iZ1Oyoda9CwFroeKR87xcCHZ8hxvPLw1TMle1zO
+Tlyy7D2vD4jtU5pzzLIcZfjdL9xydeb00ElrEcEUG3dsS9YBod8hfIz84s7UffaL
+6Igr+uBfalHjzhjOdBtVitlpSW2gkj535BjwMO5yGtfz2j8za4+pHPhSsp6EErWz
+UH9cx4yPX6UoeQn16s8X2RNER/JZ5t+otYRevg==
+-----END CERTIFICATE-----

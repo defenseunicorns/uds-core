@@ -181,6 +181,17 @@ tasks:
           # Actual startup takes up to a minute because of the npm install
           cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
 
+  - name: uds-docs-validate
+    description: "Validate and build uds-docs with latest uds-core docs"
+    actions:
+      - description: "Cleanup previous runs"
+        cmd: |
+          rm -rf uds-docs
+      - description: "Clone the docs repo"
+        cmd: git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
+      - description: "UDS Docs Integration Script"
+        cmd: cd uds-docs && npm i && DOCS_OVERRIDES="uds-core=$(pwd)/.." npm run build
+
   - name: update-diagrams
     description: "Regenerate C4 and D2 Diagrams"
     actions:
@@ -188,3 +199,13 @@ tasks:
         task: diagrams:d2-update
       - description: "Regenerate C4 Diagrams"
         task: diagrams:c4-update
+
+  - name: check-ca-certs
+    description: "Checks CA certificates for updates"
+    actions:
+      - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts --check
+
+  - name: update-ca-certs
+    description: "Updates CA certificates"
+    actions:
+      - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts
