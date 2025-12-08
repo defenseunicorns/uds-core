@@ -154,10 +154,10 @@ tasks:
           OUT="$(curl -vkI --no-progress-meter --max-time 10 --url "$URL" 2>&1 || true)"
           CODE="$(printf '%s\n' "$OUT" | awk '/^< HTTP/{print $3; exit}')"
           if [ "$CODE" = "200" ] || [ "$CODE" = "302" ]; then
-            :
+            true
           else
             echo
-            printf '%s\n' "$OUT" | egrep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
+            printf '%s\n' "$OUT" | grep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
             exit 1
           fi
 
@@ -168,10 +168,10 @@ tasks:
           URL="https://${{ .inputs.address }}"
           OUT="$(curl -vkI --no-progress-meter --max-time 10 --url "$URL" 2>&1 || true)"
           if printf '%s\n' "$OUT" | grep -qi '^location:\s*https://sso\.uds\.dev'; then
-            :
+            true
           else
             echo
-            printf '%s\n' "$OUT" | egrep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
+            printf '%s\n' "$OUT" | grep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
             exit 1
           fi
 
