@@ -5,7 +5,10 @@
 data "azurerm_client_config" "current" {}
 
 locals {
-  cluster_name = "${var.cluster_name}-${random_string.name.result}"
+  cluster_name                       = "${var.cluster_name}-${random_string.name.result}"
+  sysctl_fs_nr_open                  = 13181250
+  sysctl_fs_inotify_max_user_watches = 1048576
+  sysctl_fs_file_max                 = 13181250
 }
 
 resource "random_string" "name" {
@@ -82,9 +85,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
 
     linux_os_config {
       sysctl_config {
-        fs_nr_open       = 12000500
-        fs_file_max      = 12000500
-        vm_max_map_count = 262144
+        fs_nr_open                  = local.sysctl_fs_nr_open
+        fs_inotify_max_user_watches = local.sysctl_fs_inotify_max_user_watches
+        fs_file_max                 = local.sysctl_fs_file_max
       }
     }
   }
@@ -161,9 +164,9 @@ resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
 
   linux_os_config {
     sysctl_config {
-      fs_nr_open       = 12000500
-      fs_file_max      = 12000500
-      vm_max_map_count = 262144
+      fs_nr_open                  = local.sysctl_fs_nr_open
+      fs_inotify_max_user_watches = local.sysctl_fs_inotify_max_user_watches
+      fs_file_max                 = local.sysctl_fs_file_max
     }
   }
 }
