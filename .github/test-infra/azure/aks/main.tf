@@ -6,9 +6,9 @@ data "azurerm_client_config" "current" {}
 
 locals {
   cluster_name                       = "${var.cluster_name}-${random_string.name.result}"
-  sysctl_fs_nr_open                  = 13181250
+  sysctl_fs_nr_open                  = 12000500
   sysctl_fs_inotify_max_user_watches = 1048576
-  sysctl_fs_file_max                 = 13181250
+  sysctl_fs_file_max                 = 12000500
 }
 
 resource "random_string" "name" {
