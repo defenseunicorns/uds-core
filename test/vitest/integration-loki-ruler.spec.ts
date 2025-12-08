@@ -34,16 +34,18 @@ describe("integration - Loki Ruler Tests", () => {
       () => queryPrometheusMetric(prometheusProxy.url, "loki:test_constant"),
       value => value === 1,
       "Checking for loki:test_constant metric with value 1",
-      15000,
+      10000, // 10 seconds timeout for poll
+      1000, // 1 second interval between polls
     );
-  }, 16000);
+  }, 12000); // 12 second total test timeout
 
   test("Loki ruler should send alerts to Alertmanager", async () => {
     await pollUntilSuccess(
       () => checkAlertInAlertmanager(alertmanagerProxy.url, "LokiAlwaysFiring"),
       isAlertFiring => isAlertFiring === true,
       "Checking for LokiAlwaysFiring alert in Alertmanager",
-      15000,
+      10000, // 10 seconds timeout for poll
+      1000, // 1 second interval between polls
     );
-  }, 16000);
+  }, 12000); // 12 second total test timeout
 });
