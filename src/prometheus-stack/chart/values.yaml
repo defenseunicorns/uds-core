@@ -10,5 +10,10 @@ additionalNetworkAllow: []
 #     remoteGenerated: Anywhere
 #     description: "from alertmanager to anywhere"
 #     port: 443
+
+# NOTE: Enabling cluster health rules is currently an experimental feature
+clusterHealthRules:
+  enabled: false
+
 rke2CorednsNetpol:
   enabled: false
