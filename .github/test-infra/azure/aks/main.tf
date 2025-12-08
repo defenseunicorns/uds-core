@@ -108,16 +108,15 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 
   network_profile {
-    dns_service_ip      = var.network_dns_service_ip
-    service_cidr        = var.network_service_cidr
-    service_cidrs       = [var.network_service_cidr]
-    network_plugin      = "azure"
-    network_plugin_mode = "overlay"
-    network_policy      = "azure"
-    load_balancer_sku   = "standard"
-    outbound_type       = var.outbound_type
-    network_data_plane  = "azure"
-    ip_versions         = ["IPv4"]
+    dns_service_ip     = var.network_dns_service_ip
+    service_cidr       = var.network_service_cidr
+    service_cidrs      = [var.network_service_cidr]
+    network_plugin     = "azure"
+    network_policy     = "azure"
+    load_balancer_sku  = "standard"
+    outbound_type      = var.outbound_type
+    network_data_plane = "azure"
+    ip_versions        = ["IPv4"]
   }
 
   storage_profile {
