@@ -22,6 +22,7 @@ import {
   UDSConfig,
   handleCfg,
   handleCfgSecret,
+  handleUDSCACertsConfigMapUpdate,
 } from "./config";
 import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 
@@ -790,15 +791,22 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.dodCerts).toBe("");
     });
 
-    it("handles missing ConfigMap gracefully", async () => {
+    it("throws error when ConfigMap is missing", async () => {
       mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockResolvedValue(null);
 
-      await handleCfg(mockCfg, ConfigAction.UPDATE);
+      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow(
+        "Error while fetching CA certs ConfigMap",
+      );
 
-      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
-      expect(UDSConfig.caBundle.dodCerts).toBe("");
-      expect(UDSConfig.caBundle.publicCerts).toBe("");
+      // Should patch status to Failed
+      expect(mockPatchStatus).toHaveBeenLastCalledWith({
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
+        status: {
+          phase: "Failed",
+          observedGeneration: 2,
+        },
+      });
     });
 
     it("handles ConfigMap with no data field", async () => {
@@ -812,6 +820,24 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.includePublicCerts).toBe(true);
       expect(UDSConfig.caBundle.dodCerts).toBe("");
       expect(UDSConfig.caBundle.publicCerts).toBe("");
+    });
+
+    it("throws error when ConfigMap fetch fails", async () => {
+      mockCfg.spec!.caBundle!.includeDoDCerts = true;
+      mockConfigMapGet.mockRejectedValue(new Error("K8s get failed"));
+
+      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow(
+        "Error while fetching CA certs ConfigMap",
+      );
+
+      // Should patch status to Failed
+      expect(mockPatchStatus).toHaveBeenLastCalledWith({
+        metadata: { name: ClusterConfigName.UdsClusterConfig },
+        status: {
+          phase: "Failed",
+          observedGeneration: 2,
+        },
+      });
     });
   });
 
@@ -866,7 +892,6 @@ describe("handleUDSConfig", () => {
         metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Pending",
-          observedGeneration: 2,
         },
       });
 
@@ -957,7 +982,6 @@ describe("handleUDSConfig", () => {
         metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
           phase: "Pending",
-          observedGeneration: 1,
         },
       });
 
@@ -971,6 +995,174 @@ describe("handleUDSConfig", () => {
 
       expect(UDSConfig.domain).toBe("test-domain");
       expect(UDSConfig.adminDomain).toBe("admin.test-domain");
+    });
+  });
+
+  describe("handleUDSCACertsConfigMapUpdate", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      // Reset the mock to resolve successfully by default
+      vi.mocked(updateAllCaBundleConfigMaps).mockResolvedValue();
+      // Reset UDSConfig state
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = "";
+      UDSConfig.caBundle.publicCerts = "";
+    });
+
+    it("should update UDSConfig and call updateAllCaBundleConfigMaps when DoD certs change", async () => {
+      // Set initial state - DoD certs enabled but different content
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.dodCerts = "old-dod-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          dodCACerts: "new-dod-certs",
+        },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.dodCerts).toBe("new-dod-certs");
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("should update UDSConfig and call updateAllCaBundleConfigMaps when public certs change", async () => {
+      // Set initial state - public certs enabled but different content
+      UDSConfig.caBundle.includePublicCerts = true;
+      UDSConfig.caBundle.publicCerts = "old-public-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          publicCACerts: "new-public-certs",
+        },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.publicCerts).toBe("new-public-certs");
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("should update both DoD and public certs when both change", async () => {
+      // Set initial state - both enabled but different content
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.includePublicCerts = true;
+      UDSConfig.caBundle.dodCerts = "old-dod-certs";
+      UDSConfig.caBundle.publicCerts = "old-public-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          dodCACerts: "new-dod-certs",
+          publicCACerts: "new-public-certs",
+        },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.dodCerts).toBe("new-dod-certs");
+      expect(UDSConfig.caBundle.publicCerts).toBe("new-public-certs");
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
+    });
+
+    it("should skip update when no changes are detected", async () => {
+      // Set initial state - DoD certs enabled with same content
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.dodCerts = "same-dod-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          dodCACerts: "same-dod-certs", // Same as current
+        },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.dodCerts).toBe("same-dod-certs");
+      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
+
+    it("should skip update when ConfigMap has no data field", async () => {
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.publicCerts).toBe("");
+      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
+
+    it("should skip update when ConfigMap has empty data", async () => {
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {},
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.publicCerts).toBe("");
+      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+    });
+
+    it("should throw error when updateAllCaBundleConfigMaps fails", async () => {
+      vi.mocked(updateAllCaBundleConfigMaps).mockRejectedValue(new Error("Update failed"));
+
+      // Set state that will trigger an update
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.dodCerts = "old-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          dodCACerts: "new-certs",
+        },
+      };
+
+      await expect(handleUDSCACertsConfigMapUpdate(configMap)).rejects.toThrow("Update failed");
+      expect(UDSConfig.caBundle.dodCerts).toBe("new-certs"); // Still updates UDSConfig
+    });
+
+    it("should log appropriate debug messages", async () => {
+      const debugSpy = vi.spyOn(configLog, "debug");
+
+      // Set state that will trigger an update
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.dodCerts = "old-certs";
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {
+          dodCACerts: "new-certs",
+        },
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(debugSpy).toHaveBeenCalledWith("Processing uds-ca-certs ConfigMap update");
+      expect(debugSpy).toHaveBeenCalledWith("Updated UDSConfig with new DoD CA certs");
+      expect(debugSpy).toHaveBeenCalledWith("Successfully updated all CA bundle ConfigMaps");
+    });
+
+    it("should log skip message when no updates needed", async () => {
+      const debugSpy = vi.spyOn(configLog, "debug");
+
+      const configMap: kind.ConfigMap = {
+        metadata: { name: "uds-ca-certs", namespace: "pepr-system" },
+        data: {},
+      };
+
+      await handleUDSCACertsConfigMapUpdate(configMap);
+
+      expect(debugSpy).toHaveBeenCalledWith("Processing uds-ca-certs ConfigMap update");
+      expect(debugSpy).toHaveBeenCalledWith("No CA bundle updates needed, skipping");
     });
   });
 });

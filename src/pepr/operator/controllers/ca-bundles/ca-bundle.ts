@@ -66,7 +66,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
     };
 
     // Apply the ConfigMap
-    await K8s(kind.ConfigMap).Apply(configMapManifest);
+    await K8s(kind.ConfigMap).Apply(configMapManifest, { force: true });
 
     // Purge any orphaned ConfigMaps from previous generations
     await purgeOrphans(generation, namespace, pkgName, kind.ConfigMap, log, {
@@ -167,6 +167,13 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
         continue;
       }
 
+      // Check if the content has changed to avoid unnecessary applies
+      const currentContent = configMap.data?.[caBundleKey] || "";
+      if (currentContent === updatedCaBundleContent) {
+        log.debug(`CA bundle content unchanged in ConfigMap ${configMapName}, skipping update`);
+        continue;
+      }
+
       // Update the ConfigMap data, removing managedFields to avoid conflicts
       const updatedConfigMap = {
         ...configMap,
@@ -179,11 +186,10 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
         },
       };
 
-      await K8s(kind.ConfigMap).Apply(updatedConfigMap);
+      await K8s(kind.ConfigMap).Apply(updatedConfigMap, { force: true });
     }
   } catch (err) {
-    throw new Error(
-      `Failed to update CA bundle ConfigMaps globally, cause: ${JSON.stringify(err)}`,
-    );
+    log.error("Failed to update CA bundle ConfigMaps globally", err);
+    throw new Error("Failed to update CA bundle ConfigMaps globally", { cause: err });
   }
 }

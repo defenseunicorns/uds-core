@@ -137,24 +137,27 @@ describe("CA Bundle ConfigMap", () => {
 
       await caBundleConfigMap(pkgWithoutCaBundle, "test-namespace");
 
-      expect(mockK8sApply).toHaveBeenCalledWith({
-        apiVersion: "v1",
-        kind: "ConfigMap",
-        metadata: {
-          name: "uds-trust-bundle",
-          namespace: "test-namespace",
-          labels: {
-            "uds/package": "test-package",
-            "uds/generation": "1",
-            [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        {
+          apiVersion: "v1",
+          kind: "ConfigMap",
+          metadata: {
+            name: "uds-trust-bundle",
+            namespace: "test-namespace",
+            labels: {
+              "uds/package": "test-package",
+              "uds/generation": "1",
+              [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
+            },
+            annotations: {},
+            ownerReferences: mockOwnerRefs,
           },
-          annotations: {},
-          ownerReferences: mockOwnerRefs,
+          data: {
+            "ca-bundle.pem": "",
+          },
         },
-        data: {
-          "ca-bundle.pem": "",
-        },
-      });
+        { force: true },
+      );
 
       expect(purgeOrphans).toHaveBeenCalledWith(
         "1",
@@ -171,27 +174,30 @@ describe("CA Bundle ConfigMap", () => {
 
       await caBundleConfigMap(mockPackage, "test-namespace");
 
-      expect(mockK8sApply).toHaveBeenCalledWith({
-        apiVersion: "v1",
-        kind: "ConfigMap",
-        metadata: {
-          name: "custom-ca-bundle",
-          namespace: "test-namespace",
-          labels: {
-            "uds/package": "test-package",
-            "uds/generation": "1",
-            [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
-            "custom-label": "value",
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        {
+          apiVersion: "v1",
+          kind: "ConfigMap",
+          metadata: {
+            name: "custom-ca-bundle",
+            namespace: "test-namespace",
+            labels: {
+              "uds/package": "test-package",
+              "uds/generation": "1",
+              [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
+              "custom-label": "value",
+            },
+            annotations: {
+              "custom-annotation": "value",
+            },
+            ownerReferences: mockOwnerRefs,
           },
-          annotations: {
-            "custom-annotation": "value",
+          data: {
+            "custom-ca-bundle.pem": validCert,
           },
-          ownerReferences: mockOwnerRefs,
         },
-        data: {
-          "custom-ca-bundle.pem": validCert,
-        },
-      });
+        { force: true },
+      );
     });
 
     it("creates ConfigMap with combined certificate bundle", async () => {
@@ -211,6 +217,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": expectedCombinedCerts,
           },
         }),
+        { force: true },
       );
     });
 
@@ -240,6 +247,7 @@ describe("CA Bundle ConfigMap", () => {
             }),
           }),
         }),
+        { force: true },
       );
     });
   });
@@ -254,6 +262,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": "",
           },
         }),
+        { force: true },
       );
     });
 
@@ -268,6 +277,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": validCert,
           },
         }),
+        { force: true },
       );
     });
 
@@ -283,6 +293,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": dodCerts,
           },
         }),
+        { force: true },
       );
     });
 
@@ -298,6 +309,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": publicCerts,
           },
         }),
+        { force: true },
       );
     });
 
@@ -314,6 +326,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": validCert,
           },
         }),
+        { force: true },
       );
     });
 
@@ -330,6 +343,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": validCert,
           },
         }),
+        { force: true },
       );
     });
 
@@ -346,6 +360,7 @@ describe("CA Bundle ConfigMap", () => {
             "custom-ca-bundle.pem": "",
           },
         }),
+        { force: true },
       );
     });
 
@@ -406,6 +421,7 @@ describe("CA Bundle ConfigMap", () => {
             "ca-bundle.pem": validCert,
           },
         }),
+        { force: true },
       );
 
       // Second ConfigMap update
@@ -420,6 +436,7 @@ describe("CA Bundle ConfigMap", () => {
             "trust-bundle.pem": validCert,
           },
         }),
+        { force: true },
       );
     });
 
@@ -434,6 +451,7 @@ describe("CA Bundle ConfigMap", () => {
             "ca-bundle.pem": "",
           },
         }),
+        { force: true },
       );
 
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -442,6 +460,7 @@ describe("CA Bundle ConfigMap", () => {
             "trust-bundle.pem": "",
           },
         }),
+        { force: true },
       );
     });
 
@@ -494,6 +513,7 @@ describe("CA Bundle ConfigMap", () => {
             "ca-bundle.pem": expectedCombinedCerts,
           },
         }),
+        { force: true },
       );
 
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -502,6 +522,7 @@ describe("CA Bundle ConfigMap", () => {
             "trust-bundle.pem": expectedCombinedCerts,
           },
         }),
+        { force: true },
       );
     });
 
@@ -548,6 +569,56 @@ describe("CA Bundle ConfigMap", () => {
             "ca-bundle.pem": validCert,
           },
         }),
+        { force: true },
+      );
+    });
+
+    it("skips ConfigMaps when content is unchanged", async () => {
+      UDSConfig.caBundle.certs = validCertBase64;
+
+      mockWithLabelGet.mockResolvedValue({
+        items: [
+          {
+            metadata: {
+              name: "configmap-unchanged",
+              namespace: "namespace1",
+            },
+            data: {
+              "ca-bundle.pem": validCert, // Same content as the new content
+            },
+          },
+          {
+            metadata: {
+              name: "configmap-changed",
+              namespace: "namespace2",
+            },
+            data: {
+              "ca-bundle.pem": "old-cert-content", // Different content
+            },
+          },
+        ],
+      });
+
+      await updateAllCaBundleConfigMaps();
+
+      // Should debug log about unchanged content
+      expect(mockLog.debug).toHaveBeenCalledWith(
+        "CA bundle content unchanged in ConfigMap configmap-unchanged, skipping update",
+      );
+
+      // Should only apply to the ConfigMap with changed content (1 call, not 2)
+      expect(mockK8sApply).toHaveBeenCalledTimes(1);
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            name: "configmap-changed",
+            namespace: "namespace2",
+          }),
+          data: {
+            "ca-bundle.pem": validCert,
+          },
+        }),
+        { force: true },
       );
     });
   });

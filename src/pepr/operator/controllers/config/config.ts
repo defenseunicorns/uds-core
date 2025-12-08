@@ -176,6 +176,51 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
 }
 
 /**
+ * Determines if CA bundle ConfigMaps need to be updated based on configuration changes
+ *
+ * @param caBundle The new CA bundle configuration from ClusterConfig
+ * @param caCertsConfigMap The current uds-ca-certs ConfigMap containing DoD and public certs
+ * @returns true if CA bundle ConfigMaps need updating, false otherwise
+ */
+function shouldUpdateCaBundleConfigMaps(
+  caBundle: ConfigCABundle,
+  caCertsConfigMap: kind.ConfigMap,
+): boolean {
+  // Check if user-provided certs changed
+  if (UDSConfig.caBundle.certs !== caBundle.certs) {
+    return true;
+  }
+
+  // Check if DoD cert inclusion setting changed
+  if (UDSConfig.caBundle.includeDoDCerts !== (caBundle.includeDoDCerts === true)) {
+    return true;
+  }
+
+  // Check if public cert inclusion setting changed
+  if (UDSConfig.caBundle.includePublicCerts !== (caBundle.includePublicCerts === true)) {
+    return true;
+  }
+
+  // Check if DoD cert content changed (only if DoD certs are enabled)
+  if (caBundle.includeDoDCerts) {
+    const newDodCerts = caCertsConfigMap?.data?.["dodCACerts"] || "";
+    if (UDSConfig.caBundle.dodCerts !== newDodCerts) {
+      return true;
+    }
+  }
+
+  // Check if public cert content changed (only if public certs are enabled)
+  if (caBundle.includePublicCerts) {
+    const newPublicCerts = caCertsConfigMap?.data?.["publicCACerts"] || "";
+    if (UDSConfig.caBundle.publicCerts !== newPublicCerts) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Handles updates to CA bundle configuration including DoD and public certificates
  *
  * @param caBundle The CA bundle configuration from the ClusterConfig
@@ -195,17 +240,20 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   }
 
   // Load in the DoD and Public certs from the configmap
-  const caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
+  let caCertsConfigMap: kind.ConfigMap;
+  try {
+    caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
+    // Make sure we got the ConfigMap even if K8s call succeeded
+    if (!caCertsConfigMap) {
+      throw new Error("'uds-ca-certs' not found");
+    }
+  } catch (e) {
+    configLog.error("Error while fetching CA certs ConfigMap", e);
+    throw new Error("Error while fetching CA certs ConfigMap", { cause: e });
+  }
 
   // Check if CA bundle ConfigMaps need updates based on configuration changes
-  const caBundleConfigMapsNeedUpdate =
-    UDSConfig.caBundle.certs !== caBundle.certs ||
-    UDSConfig.caBundle.includeDoDCerts !== (caBundle.includeDoDCerts === true) ||
-    UDSConfig.caBundle.includePublicCerts !== (caBundle.includePublicCerts === true) ||
-    (caBundle.includeDoDCerts &&
-      UDSConfig.caBundle.dodCerts !== (caCertsConfigMap?.data?.["dodCACerts"] || "")) ||
-    (caBundle.includePublicCerts &&
-      UDSConfig.caBundle.publicCerts !== (caCertsConfigMap?.data?.["publicCACerts"] || ""));
+  const caBundleConfigMapsNeedUpdate = shouldUpdateCaBundleConfigMaps(caBundle, caCertsConfigMap);
 
   if (UDSConfig.caBundle.certs !== caBundle.certs) {
     UDSConfig.caBundle.certs = caBundle.certs || "";
@@ -260,7 +308,6 @@ export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
       },
       status: {
         phase: Phase.Pending,
-        observedGeneration: cfg.metadata!.generation,
       },
     });
 
@@ -424,6 +471,53 @@ async function performAuthserviceUpdate(reason: string) {
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);
   await reconcileAuthservice(authserviceUpdate);
+}
+
+/**
+ * Handles updates to the uds-ca-certs ConfigMap by updating the global UDS config
+ * and propagating changes to all CA bundle ConfigMaps across the cluster
+ *
+ * @param configMap The updated uds-ca-certs ConfigMap
+ */
+export async function handleUDSCACertsConfigMapUpdate(configMap: kind.ConfigMap): Promise<void> {
+  try {
+    configLog.debug("Processing uds-ca-certs ConfigMap update");
+
+    // Create a mock caBundle config using current UDSConfig values to check for changes
+    const currentCaBundle: ConfigCABundle = {
+      certs: UDSConfig.caBundle.certs,
+      includeDoDCerts: UDSConfig.caBundle.includeDoDCerts,
+      includePublicCerts: UDSConfig.caBundle.includePublicCerts,
+    };
+
+    // Check if updates are needed before making any changes
+    const needsUpdate = shouldUpdateCaBundleConfigMaps(currentCaBundle, configMap);
+
+    if (!needsUpdate) {
+      configLog.debug("No CA bundle updates needed, skipping");
+      return;
+    }
+
+    // Update UDSConfig with the new DoD/public cert data
+    if (configMap.data) {
+      if (configMap.data["dodCACerts"]) {
+        UDSConfig.caBundle.dodCerts = configMap.data["dodCACerts"];
+        configLog.debug("Updated UDSConfig with new DoD CA certs");
+      }
+
+      if (configMap.data["publicCACerts"]) {
+        UDSConfig.caBundle.publicCerts = configMap.data["publicCACerts"];
+        configLog.debug("Updated UDSConfig with new public CA certs");
+      }
+    }
+
+    // Propagate the changes to all CA bundle ConfigMaps across the cluster
+    await updateAllCaBundleConfigMaps();
+    configLog.debug("Successfully updated all CA bundle ConfigMaps");
+  } catch (error) {
+    configLog.error(error, "Failed to process uds-ca-certs ConfigMap update");
+    throw error;
+  }
 }
 
 /**
