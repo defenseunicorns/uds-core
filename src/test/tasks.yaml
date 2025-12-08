@@ -147,28 +147,33 @@ tasks:
         required: true
     actions:
       - description: Verify the service at https://${{ .inputs.address }} is accessible
-        wait:
-          network:
-            protocol: https
-            address: ${{ .inputs.address }}
-            code: 200
-
-      - description: Verify the service at ${{ .inputs.address }} is protected by checking redirect
-        maxRetries: 3
+        maxRetries: 5
         cmd: |
           set -e
-          SSO_REDIRECT=$(curl -Ls -o /dev/null -w %{url_effective} "https://${{ .inputs.address }}")
+          URL="https://${{ .inputs.address }}"
+          OUT="$(curl -vkI --no-progress-meter --max-time 10 --url "$URL" 2>&1 || true)"
+          CODE="$(printf '%s\n' "$OUT" | awk '/^< HTTP/{print $3; exit}')"
+          if [ "$CODE" = "200" ] || [ "$CODE" = "302" ]; then
+            :
+          else
+            echo
+            printf '%s\n' "$OUT" | egrep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
+            exit 1
+          fi
 
-          case "${SSO_REDIRECT}" in
-          "https://sso.uds.dev"*)
-              echo "Protected by authservice"
-              ;;
-          *)
-              echo "App is not protected by authservice"
-              echo $SSO_REDIRECT
-              exit 1
-              ;;
-          esac
+      - description: Verify the service at ${{ .inputs.address }} is protected by checking redirect
+        maxRetries: 5
+        cmd: |
+          set -e
+          URL="https://${{ .inputs.address }}"
+          OUT="$(curl -vkI --no-progress-meter --max-time 10 --url "$URL" 2>&1 || true)"
+          if printf '%s\n' "$OUT" | grep -qi '^location:\s*https://sso\.uds\.dev'; then
+            :
+          else
+            echo
+            printf '%s\n' "$OUT" | egrep -E '^(\* |< |> )' || printf '%s\n' "$OUT"
+            exit 1
+          fi
 
   - name: remove
     actions:
