@@ -284,13 +284,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_ambient_http_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" http://api.github.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
     ];
 
     const egress_ambient_tls_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://api.github.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
     ];
 
     // Validate successful tls request when using Egress for egress-ambient-1

@@ -85,8 +85,8 @@ export interface Monitor {
    */
   path?: string;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
+   * generated correctly). Defaults to `selector` when not specified.
    */
   podSelector?: { [key: string]: string };
   /**
@@ -94,8 +94,7 @@ export interface Monitor {
    */
   portName: string;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Services that expose metrics to scrape
    */
   selector: { [key: string]: string };
   /**
@@ -313,8 +312,8 @@ export interface Expose {
    */
   port?: number;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
+   * generated correctly).
    */
   selector?: { [key: string]: string };
   /**

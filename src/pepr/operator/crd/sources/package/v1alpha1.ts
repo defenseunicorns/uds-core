@@ -197,7 +197,7 @@ const expose = {
       },
       selector: {
         description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+          "Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).",
         type: "object",
         additionalProperties: {
           type: "string",
@@ -264,8 +264,7 @@ const monitor = {
         type: "number",
       },
       selector: {
-        description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        description: "Selector for Services that expose metrics to scrape",
         type: "object",
         additionalProperties: {
           type: "string",
@@ -273,7 +272,7 @@ const monitor = {
       },
       podSelector: {
         description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+          "Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.",
         type: "object",
         additionalProperties: {
           type: "string",
