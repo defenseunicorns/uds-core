@@ -4,7 +4,6 @@
  */
 
 // Various validation actions for Kubernetes resources from Big Bang
-import { WatchEvent } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../logger";
 import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
@@ -38,14 +37,5 @@ export async function startExemptionWatch() {
     // This will run until the process is terminated or the watch is aborted
     log.debug("Starting exemption watch...");
     await watcher.start();
-
-    function giveUpHandler(err: Error) {
-      log.error(
-        err,
-        "WatchEvent GiveUp Error: The exemption watch has failed to start after several attempts. Exiting...",
-      );
-      process.exit(1);
-    }
-    watcher.events.on(WatchEvent.GIVE_UP, giveUpHandler);
   }
 }

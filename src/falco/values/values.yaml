@@ -11,11 +11,6 @@ falcoctl:
 driver:
   kind: modern-bpf
 
-podSecurityContext:
-  runAsUser: 0
-  runAsGroup: 0
-  runAsNonRoot: false
-
 # work around for: https://github.com/falcosecurity/charts/issues/888
 falco:
   config_files:

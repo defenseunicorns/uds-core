@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchEvent } from "kubernetes-fluent-client";
 import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
@@ -281,14 +280,5 @@ export async function startConfigWatch() {
     // This will run until the process is terminated or the watch is aborted
     configLog.debug("Starting cluster config watch...");
     await watcher.start();
-
-    function giveUpHandler(err: Error) {
-      configLog.error(
-        err,
-        "WatchEvent GiveUp Error: The cluster config watch has failed to start after several attempts. Exiting...",
-      );
-      process.exit(1);
-    }
-    watcher.events.on(WatchEvent.GIVE_UP, giveUpHandler);
   }
 }

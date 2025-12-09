@@ -16,7 +16,7 @@
     "name": "UDS Core",
     "uuid": "uds-core",
     "onError": "reject",
-    "logLevel": "info",
+    "logLevel": "debug",
     "alwaysIgnore": {
       "namespaces": []
     },
