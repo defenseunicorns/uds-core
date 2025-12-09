@@ -10,6 +10,10 @@ excludeNamespaces:
   - kube-system
   - zarf
 
+# Force reconcile iptables on startup to help on node reboot
+ambient:
+  reconcileIptablesOnStartup: true
+
 # SELinux enforcing environments require the spc_t SELinux type
 seLinuxOptions:
   type: spc_t
