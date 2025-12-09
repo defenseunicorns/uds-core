@@ -117,7 +117,15 @@ You will also want to connect Loki to an [external storage provider](https://gra
 
 ### Keycloak
 
-Keycloak can be configured in a HA setup if an external database (postgresql) is provided. See the below example values for configuring HA Keycloak:
+Keycloak can be configured in an HA setup provided all Keycloak instances share the same database instance (PostgreSQL). Below are key points to consider when planning and operating Keycloak in HA mode:
+
+- All Keycloak instances must connect to the same PostgreSQL database.
+- HA works with two or more Keycloak instances; start with at least 2 replicas for redundancy and scale out as needed.
+- For non-airgap installations, deploying across multiple availability zones is recommended to improve resilience and reduce the blast radius of zonal failures.
+- Multi-Region (bridging multiple clusters/regions) is not supported by UDS.
+- For additional guidance, see the Keycloak Horizontal Scaling documentation: https://www.keycloak.org/getting-started/getting-started-scaling-and-tuning#_horizontal_scaling
+
+See the below example values for configuring HA Keycloak:
 
 ```yaml
 packages:
