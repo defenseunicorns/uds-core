@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { kind } from "pepr";
-
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
@@ -19,6 +17,8 @@ import { getOwnerRef, purgeOrphans } from "../utils";
 const mockK8sApply = vi.fn();
 const mockK8sGet = vi.fn();
 const mockWithLabelGet = vi.fn();
+const mockK8sDelete = vi.fn();
+const mockUDSPackageGet = vi.fn();
 
 // Create a mock for the log functions
 const mockLog = vi.hoisted(() => ({
@@ -49,9 +49,21 @@ vi.mock("pepr", async importOriginal => {
         return {
           Apply: mockK8sApply,
           Get: mockK8sGet,
+          InNamespace: vi.fn().mockReturnValue({
+            WithLabel: vi.fn().mockReturnValue({
+              WithLabel: vi.fn().mockReturnValue({
+                Delete: mockK8sDelete,
+              }),
+            }),
+          }),
           WithLabel: vi.fn().mockReturnValue({
             Get: mockWithLabelGet,
           }),
+        };
+      } else {
+        // Handle UDSPackage and other resource types
+        return {
+          Get: mockUDSPackageGet,
         };
       }
     }),
@@ -115,6 +127,7 @@ describe("CA Bundle ConfigMap", () => {
     vi.mocked(getOwnerRef).mockReturnValue(mockOwnerRefs);
     vi.mocked(purgeOrphans).mockResolvedValue();
     mockK8sApply.mockResolvedValue({});
+    mockUDSPackageGet.mockResolvedValue({ items: [] });
     mockLog.warn.mockClear();
 
     // Reset UDSConfig
@@ -126,7 +139,7 @@ describe("CA Bundle ConfigMap", () => {
   });
 
   describe("caBundleConfigMap", () => {
-    it("creates ConfigMap with default values when no caBundle config provided", async () => {
+    it("deletes existing ConfigMaps when no caBundle config provided", async () => {
       const pkgWithoutCaBundle: UDSPackage = {
         metadata: {
           name: "test-package",
@@ -137,36 +150,9 @@ describe("CA Bundle ConfigMap", () => {
 
       await caBundleConfigMap(pkgWithoutCaBundle, "test-namespace");
 
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        {
-          apiVersion: "v1",
-          kind: "ConfigMap",
-          metadata: {
-            name: "uds-trust-bundle",
-            namespace: "test-namespace",
-            labels: {
-              "uds/package": "test-package",
-              "uds/generation": "1",
-              [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
-            },
-            annotations: {},
-            ownerReferences: mockOwnerRefs,
-          },
-          data: {
-            "ca-bundle.pem": "",
-          },
-        },
-        { force: true },
-      );
-
-      expect(purgeOrphans).toHaveBeenCalledWith(
-        "1",
-        "test-namespace",
-        "test-package",
-        kind.ConfigMap,
-        expect.any(Object),
-        { [CA_BUNDLE_CONFIGMAP_LABEL]: "true" },
-      );
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).toHaveBeenCalled();
+      expect(purgeOrphans).not.toHaveBeenCalled();
     });
 
     it("creates ConfigMap with custom configuration", async () => {
@@ -198,6 +184,15 @@ describe("CA Bundle ConfigMap", () => {
         },
         { force: true },
       );
+
+      expect(purgeOrphans).toHaveBeenCalledWith(
+        "1",
+        "test-namespace",
+        "test-package",
+        expect.anything(),
+        expect.anything(),
+        { [CA_BUNDLE_CONFIGMAP_LABEL]: "true" },
+      );
     });
 
     it("creates ConfigMap with combined certificate bundle", async () => {
@@ -219,9 +214,19 @@ describe("CA Bundle ConfigMap", () => {
         }),
         { force: true },
       );
+
+      expect(purgeOrphans).toHaveBeenCalledWith(
+        "1",
+        "test-namespace",
+        "test-package",
+        expect.anything(),
+        expect.anything(),
+        { [CA_BUNDLE_CONFIGMAP_LABEL]: "true" },
+      );
     });
 
     it("throws error when K8s apply fails", async () => {
+      UDSConfig.caBundle.certs = validCertBase64; // Ensure we have certs so Apply is called
       mockK8sApply.mockRejectedValue(new Error("K8s apply failed"));
 
       await expect(caBundleConfigMap(mockPackage, "test-namespace")).rejects.toThrow(
@@ -230,6 +235,7 @@ describe("CA Bundle ConfigMap", () => {
     });
 
     it("handles undefined package generation", async () => {
+      UDSConfig.caBundle.certs = validCertBase64; // Ensure we have certs so Apply is called
       const pkgWithoutGeneration: UDSPackage = {
         metadata: {
           name: "test-package",
@@ -249,21 +255,51 @@ describe("CA Bundle ConfigMap", () => {
         }),
         { force: true },
       );
+
+      expect(purgeOrphans).toHaveBeenCalledWith(
+        "0",
+        "test-namespace",
+        "test-package",
+        expect.anything(),
+        expect.anything(),
+        { [CA_BUNDLE_CONFIGMAP_LABEL]: "true" },
+      );
     });
   });
 
   describe("buildCABundleContent", () => {
-    it("returns empty string when no certificates are available", async () => {
+    beforeEach(() => {
+      mockK8sDelete.mockResolvedValue({});
+    });
+
+    it("deletes existing ConfigMaps when no certificates are available", async () => {
+      // Ensure no certificates are available
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+
       await caBundleConfigMap(mockPackage, "test-namespace");
 
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            "custom-ca-bundle.pem": "",
-          },
-        }),
-        { force: true },
-      );
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).toHaveBeenCalled();
+      expect(purgeOrphans).not.toHaveBeenCalled();
+    });
+
+    it("handles delete errors gracefully when no ConfigMaps exist", async () => {
+      // Ensure no certificates are available
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+
+      // Mock delete to throw an error (ConfigMap doesn't exist)
+      mockK8sDelete.mockRejectedValue(new Error("ConfigMap not found"));
+
+      await caBundleConfigMap(mockPackage, "test-namespace");
+
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).toHaveBeenCalled();
+      expect(purgeOrphans).not.toHaveBeenCalled();
+      // Should not throw an error
     });
 
     it("includes only user certs when available", async () => {
@@ -347,21 +383,15 @@ describe("CA Bundle ConfigMap", () => {
       );
     });
 
-    it("handles empty base64 decoded certificates gracefully", async () => {
+    it("deletes ConfigMaps when certificates are empty after base64 decoding", async () => {
       UDSConfig.caBundle.certs = btoa(""); // empty string base64 encoded
       UDSConfig.caBundle.includeDoDCerts = true;
       UDSConfig.caBundle.dodCerts = btoa(""); // empty string base64 encoded
 
       await caBundleConfigMap(mockPackage, "test-namespace");
 
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            "custom-ca-bundle.pem": "",
-          },
-        }),
-        { force: true },
-      );
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).toHaveBeenCalled();
     });
 
     it("handles invalid base64 data gracefully", async () => {
@@ -375,47 +405,59 @@ describe("CA Bundle ConfigMap", () => {
   });
 
   describe("updateAllCaBundleConfigMaps", () => {
+    const mockPackages: UDSPackage[] = [
+      {
+        metadata: {
+          name: "package1",
+          namespace: "namespace1",
+          generation: 1,
+        },
+        spec: {
+          caBundle: {
+            configMap: {
+              name: "custom-ca-bundle-1",
+              key: "ca-bundle.pem",
+            },
+          },
+        },
+      },
+      {
+        metadata: {
+          name: "package2",
+          namespace: "namespace2",
+          generation: 2,
+        },
+        spec: {
+          caBundle: {
+            configMap: {
+              name: "custom-ca-bundle-2",
+              key: "trust-bundle.pem",
+            },
+          },
+        },
+      },
+    ];
+
     beforeEach(() => {
-      mockWithLabelGet.mockResolvedValue({
-        items: [
-          {
-            metadata: {
-              name: "configmap1",
-              namespace: "namespace1",
-            },
-            data: {
-              "ca-bundle.pem": "old-cert-content",
-            },
-          },
-          {
-            metadata: {
-              name: "configmap2",
-              namespace: "namespace2",
-            },
-            data: {
-              "trust-bundle.pem": "old-cert-content",
-            },
-          },
-        ],
+      mockUDSPackageGet.mockResolvedValue({
+        items: mockPackages,
       });
     });
 
-    it("updates all CA bundle ConfigMaps with new content", async () => {
+    it("processes all UDS packages and calls caBundleConfigMap for each", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
 
       await updateAllCaBundleConfigMaps();
 
-      expect(mockWithLabelGet).toHaveBeenCalled();
-
+      expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).toHaveBeenCalledTimes(2);
 
-      // First ConfigMap update
+      // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
-            name: "configmap1",
+            name: "custom-ca-bundle-1",
             namespace: "namespace1",
-            managedFields: undefined,
           }),
           data: {
             "ca-bundle.pem": validCert,
@@ -424,13 +466,12 @@ describe("CA Bundle ConfigMap", () => {
         { force: true },
       );
 
-      // Second ConfigMap update
+      // Should process package2
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
-            name: "configmap2",
+            name: "custom-ca-bundle-2",
             namespace: "namespace2",
-            managedFields: undefined,
           }),
           data: {
             "trust-bundle.pem": validCert,
@@ -440,63 +481,79 @@ describe("CA Bundle ConfigMap", () => {
       );
     });
 
-    it("updates ConfigMaps with empty content when no certs available", async () => {
+    it("deletes ConfigMaps when no CA content is available", async () => {
+      // No certs configured
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+
       await updateAllCaBundleConfigMaps();
 
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).toHaveBeenCalledTimes(2); // One for each package
+    });
+
+    it("returns early when no UDS packages exist", async () => {
+      mockUDSPackageGet.mockResolvedValue({ items: [] });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).not.toHaveBeenCalled();
+    });
+
+    it("returns early when packages.items is undefined", async () => {
+      mockUDSPackageGet.mockResolvedValue({});
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sDelete).not.toHaveBeenCalled();
+    });
+
+    it("throws error when package listing fails", async () => {
+      mockUDSPackageGet.mockRejectedValue(new Error("K8s get packages failed"));
+
+      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
+        /Failed to update CA bundle ConfigMaps for all packages/,
+      );
+    });
+
+    it("continues processing other packages when one package fails", async () => {
+      UDSConfig.caBundle.certs = validCertBase64;
+
+      // Make the first package fail
+      mockK8sApply
+        .mockRejectedValueOnce(new Error("Apply failed for package1"))
+        .mockResolvedValueOnce({});
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).toHaveBeenCalledTimes(2);
 
+      // Should log error for first package but continue
+      expect(mockLog.error).toHaveBeenCalledWith(
+        "Failed to process CA bundle ConfigMap for package package1 in namespace namespace1",
+        expect.any(Error),
+      );
+
+      // Should still process second package
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: {
-            "ca-bundle.pem": "",
-          },
+          metadata: expect.objectContaining({
+            name: "custom-ca-bundle-2",
+            namespace: "namespace2",
+          }),
         }),
         { force: true },
       );
-
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            "trust-bundle.pem": "",
-          },
-        }),
-        { force: true },
-      );
     });
 
-    it("returns early when no CA bundle ConfigMaps exist", async () => {
-      mockWithLabelGet.mockResolvedValue({ items: [] });
-
-      await updateAllCaBundleConfigMaps();
-
-      expect(mockK8sApply).not.toHaveBeenCalled();
-    });
-
-    it("returns early when items is undefined", async () => {
-      mockWithLabelGet.mockResolvedValue({});
-
-      await updateAllCaBundleConfigMaps();
-
-      expect(mockK8sApply).not.toHaveBeenCalled();
-    });
-
-    it("throws error when K8s operations fail", async () => {
-      mockWithLabelGet.mockRejectedValue(new Error("K8s get failed"));
-
-      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
-        /Failed to update CA bundle ConfigMaps globally/,
-      );
-    });
-
-    it("throws error when Apply fails for a ConfigMap", async () => {
-      mockK8sApply.mockRejectedValue(new Error("K8s apply failed"));
-
-      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
-        /Failed to update CA bundle ConfigMaps globally/,
-      );
-    });
-
-    it("updates ConfigMaps with combined certificate content", async () => {
+    it("processes packages with combined certificate content", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
       UDSConfig.caBundle.includeDoDCerts = true;
       UDSConfig.caBundle.includePublicCerts = true;
@@ -520,102 +577,6 @@ describe("CA Bundle ConfigMap", () => {
         expect.objectContaining({
           data: {
             "trust-bundle.pem": expectedCombinedCerts,
-          },
-        }),
-        { force: true },
-      );
-    });
-
-    it("skips ConfigMaps with no data keys and continues processing others", async () => {
-      mockWithLabelGet.mockResolvedValue({
-        items: [
-          {
-            metadata: {
-              name: "configmap-no-data",
-              namespace: "namespace1",
-            },
-            data: {}, // ConfigMap with no data keys
-          },
-          {
-            metadata: {
-              name: "configmap-with-data",
-              namespace: "namespace2",
-            },
-            data: {
-              "ca-bundle.pem": "old-cert-content",
-            },
-          },
-        ],
-      });
-
-      UDSConfig.caBundle.certs = validCertBase64;
-
-      await updateAllCaBundleConfigMaps();
-
-      // Should warn about the ConfigMap with no data
-      expect(mockLog.warn).toHaveBeenCalledWith(
-        "No suitable key found in ConfigMap configmap-no-data, skipping update",
-      );
-
-      // Should only apply to the ConfigMap with data (1 call, not 2)
-      expect(mockK8sApply).toHaveBeenCalledTimes(1);
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          metadata: expect.objectContaining({
-            name: "configmap-with-data",
-            namespace: "namespace2",
-          }),
-          data: {
-            "ca-bundle.pem": validCert,
-          },
-        }),
-        { force: true },
-      );
-    });
-
-    it("skips ConfigMaps when content is unchanged", async () => {
-      UDSConfig.caBundle.certs = validCertBase64;
-
-      mockWithLabelGet.mockResolvedValue({
-        items: [
-          {
-            metadata: {
-              name: "configmap-unchanged",
-              namespace: "namespace1",
-            },
-            data: {
-              "ca-bundle.pem": validCert, // Same content as the new content
-            },
-          },
-          {
-            metadata: {
-              name: "configmap-changed",
-              namespace: "namespace2",
-            },
-            data: {
-              "ca-bundle.pem": "old-cert-content", // Different content
-            },
-          },
-        ],
-      });
-
-      await updateAllCaBundleConfigMaps();
-
-      // Should debug log about unchanged content
-      expect(mockLog.debug).toHaveBeenCalledWith(
-        "CA bundle content unchanged in ConfigMap configmap-unchanged, skipping update",
-      );
-
-      // Should only apply to the ConfigMap with changed content (1 call, not 2)
-      expect(mockK8sApply).toHaveBeenCalledTimes(1);
-      expect(mockK8sApply).toHaveBeenCalledWith(
-        expect.objectContaining({
-          metadata: expect.objectContaining({
-            name: "configmap-changed",
-            namespace: "namespace2",
-          }),
-          data: {
-            "ca-bundle.pem": validCert,
           },
         }),
         { force: true },

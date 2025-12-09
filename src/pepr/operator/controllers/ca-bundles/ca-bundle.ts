@@ -35,13 +35,32 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
   const configMapLabels = pkg.spec?.caBundle?.configMap?.labels || {};
   const configMapAnnotations = pkg.spec?.caBundle?.configMap?.annotations || {};
 
-  // Always create ConfigMap - if no cert sources are available, create with empty content
   try {
     log.debug(`Reconciling CA Bundle ConfigMap for ${pkgName}`);
 
     // Build the CA bundle content by combining available certs
     const caBundleContent = buildCABundleContent();
 
+    // If no CA bundle content, delete any existing ConfigMaps instead of creating empty ones
+    if (!caBundleContent || caBundleContent.trim() === "") {
+      log.debug(`No CA bundle content available, deleting any existing ConfigMaps for ${pkgName}`);
+
+      // Delete any existing ConfigMaps for this package
+      try {
+        await K8s(kind.ConfigMap)
+          .InNamespace(namespace)
+          .WithLabel("uds/package", pkgName)
+          .WithLabel(CA_BUNDLE_CONFIGMAP_LABEL, "true")
+          .Delete();
+        log.debug(`Deleted existing CA bundle ConfigMaps for ${pkgName} in namespace ${namespace}`);
+      } catch {
+        // Don't fail if deletion fails (ConfigMap might not exist)
+      }
+
+      return;
+    }
+
+    // Create ConfigMap with CA bundle content
     const configMapManifest: kind.ConfigMap = {
       apiVersion: "v1",
       kind: "ConfigMap",
@@ -122,74 +141,55 @@ function buildCABundleContent(): string {
 }
 
 /**
- * Updates all existing CA Bundle ConfigMaps across the cluster with the latest certificate data.
+ * Updates CA bundle ConfigMaps for all UDS packages in the cluster with the latest certificate data.
  * This function is typically called when the global UDS configuration changes (e.g., when
- * certificates are rotated or configuration is updated). It finds all ConfigMaps labeled as
- * CA bundles and updates their certificate content with the current UDS configuration.
+ * certificates are rotated or configuration is updated). It lists all UDS packages and calls
+ * caBundleConfigMap for each package to ensure their CA bundle ConfigMaps are up to date.
  *
- * @throws Error if the global ConfigMap update operation fails
+ * @throws Error if the package listing or ConfigMap update operations fail
  */
 export async function updateAllCaBundleConfigMaps(): Promise<void> {
   try {
-    log.debug("Starting global CA bundle ConfigMap update");
+    log.debug("Starting CA bundle ConfigMap updates for all UDS packages");
 
-    // Build the updated CA bundle content (will be empty string if no certs)
-    const updatedCaBundleContent = buildCABundleContent();
+    // Get all UDS packages across all namespaces
+    const packages = await K8s(UDSPackage).Get();
 
-    // Get all CA bundle ConfigMaps across all namespaces
-    const caBundleConfigMaps = await K8s(kind.ConfigMap)
-      .WithLabel(CA_BUNDLE_CONFIGMAP_LABEL, "true")
-      .Get();
-
-    if (!caBundleConfigMaps.items || caBundleConfigMaps.items.length === 0) {
-      log.debug("No existing CA bundle ConfigMaps found to update");
+    if (!packages.items || packages.items.length === 0) {
+      log.debug("No UDS packages found, no CA bundle ConfigMaps to update");
       return;
     }
 
-    // Update each ConfigMap with the new CA bundle content
-    for (const configMap of caBundleConfigMaps.items) {
-      if (!configMap.metadata?.name || !configMap.metadata?.namespace) {
+    log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
+
+    // Process each package and update/delete its CA bundle ConfigMap as needed
+    for (const pkg of packages.items) {
+      if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
         // This should not happen, but needed for type safety
         continue;
       }
 
-      const configMapName = configMap.metadata.name;
-      const namespace = configMap.metadata.namespace;
+      const pkgName = pkg.metadata.name;
+      const namespace = pkg.metadata.namespace;
 
-      log.debug(`Updating CA bundle ConfigMap ${configMapName} in namespace ${namespace}`);
-
-      // Find the first key for the CA bundle data
-      const dataKeys = Object.keys(configMap.data || {});
-      const caBundleKey = dataKeys[0];
-
-      if (!caBundleKey) {
-        log.warn(`No suitable key found in ConfigMap ${configMapName}, skipping update`);
-        continue;
+      try {
+        log.debug(
+          `Processing CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
+        );
+        await caBundleConfigMap(pkg, namespace);
+      } catch (err) {
+        // Log the error but continue processing other packages
+        log.error(
+          `Failed to process CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
+          err,
+        );
+        // Don't throw here - we want to continue processing other packages
       }
-
-      // Check if the content has changed to avoid unnecessary applies
-      const currentContent = configMap.data?.[caBundleKey] || "";
-      if (currentContent === updatedCaBundleContent) {
-        log.debug(`CA bundle content unchanged in ConfigMap ${configMapName}, skipping update`);
-        continue;
-      }
-
-      // Update the ConfigMap data, removing managedFields to avoid conflicts
-      const updatedConfigMap = {
-        ...configMap,
-        metadata: {
-          ...configMap.metadata,
-          managedFields: undefined,
-        },
-        data: {
-          [caBundleKey]: updatedCaBundleContent,
-        },
-      };
-
-      await K8s(kind.ConfigMap).Apply(updatedConfigMap, { force: true });
     }
+
+    log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
   } catch (err) {
-    log.error("Failed to update CA bundle ConfigMaps globally", err);
-    throw new Error("Failed to update CA bundle ConfigMaps globally", { cause: err });
+    log.error("Failed to update CA bundle ConfigMaps for all packages", err);
+    throw new Error("Failed to update CA bundle ConfigMaps for all packages", { cause: err });
   }
 }
