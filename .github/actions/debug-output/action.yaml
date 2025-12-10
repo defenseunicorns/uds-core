@@ -24,6 +24,9 @@ runs:
         echo "::group::kubectl get events"
         uds zarf tools kubectl get events -A --sort-by='.lastTimestamp' | tee /tmp/debug-k-get-events.log || true
         echo "::endgroup::"
+        echo "::group::kubectl get configmaps,secrets"
+        uds zarf tools kubectl get configmaps,secrets -A | tee /tmp/debug-k-get-configmaps-secrets.log || true
+        echo "::endgroup::"
         echo "::group::kubectl describe nodes"
         uds zarf tools kubectl describe nodes | tee /tmp/debug-k-describe-node.log || true
         echo "::endgroup::"
