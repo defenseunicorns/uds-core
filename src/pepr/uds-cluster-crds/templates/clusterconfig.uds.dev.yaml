@@ -16,7 +16,16 @@ spec:
     singular: clusterconfig
   scope: Cluster
   versions:
-    - name: v1alpha1
+    - additionalPrinterColumns:
+        - description: The status of the cluster config
+          jsonPath: .status.phase
+          name: Status
+          type: string
+        - description: The age of the cluster config
+          jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
       schema:
         openAPIV3Schema:
           properties:
@@ -39,6 +48,20 @@ spec:
                       items:
                         type: string
                       type: array
+                  type: object
+                caBundle:
+                  properties:
+                    certs:
+                      description: Contents of user provided CA bundle certificates
+                      type: string
+                    includeDoDCerts:
+                      default: false
+                      description: Include DoD CA certificates in the bundle
+                      type: boolean
+                    includePublicCerts:
+                      default: false
+                      description: Include public CA certificates in the bundle
+                      type: boolean
                   type: object
                 expose:
                   properties:
@@ -78,8 +101,21 @@ spec:
                 - expose
                 - policy
               type: object
+            status:
+              properties:
+                observedGeneration:
+                  type: integer
+                phase:
+                  enum:
+                    - Pending
+                    - Ready
+                    - Failed
+                  type: string
+              type: object
           required:
             - spec
           type: object
       served: true
       storage: true
+      subresources:
+        status: {}
