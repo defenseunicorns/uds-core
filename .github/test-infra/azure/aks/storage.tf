@@ -16,14 +16,14 @@ resource "azurerm_storage_account" "cluster_storage" {
 # Create the container for Velero
 resource "azurerm_storage_container" "velero_container" {
   name                  = "velero"
-  storage_account_name  = azurerm_storage_account.cluster_storage.name
+  storage_account_id    = azurerm_storage_account.cluster_storage.id
   container_access_type = "private"
 }
 
 # Create the container for loki
 resource "azurerm_storage_container" "loki_container" {
   name                  = "loki"
-  storage_account_name  = azurerm_storage_account.cluster_storage.name
+  storage_account_id    = azurerm_storage_account.cluster_storage.id
   container_access_type = "private"
 }
 

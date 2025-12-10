@@ -49,7 +49,7 @@ tasks:
             name: coredns-custom
             namespace: kube-system
           EOF
-            uds zarf tools kubectl -n kube-system rollout restart deployment coredns
+          uds zarf tools kubectl -n kube-system rollout restart deployment coredns
 
   - name: eks-storageclass-setup
     actions:
