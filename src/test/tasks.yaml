@@ -152,7 +152,7 @@ tasks:
           set -e
           URL="https://${{ .inputs.address }}"
           set +e
-          OUT_ALL="$(curl -sS -k -L -o /dev/null --max-time 15 -v \
+          OUT_ALL="$(curl -sS -L -o /dev/null --max-time 15 -v \
                     -w "HTTP_CODE=%{http_code}\nURL_EFFECTIVE=%{url_effective}\n" \
                     "$URL" 2>&1)"
           RC=$?
