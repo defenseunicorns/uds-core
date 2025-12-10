@@ -60,8 +60,8 @@ runs:
           | xargs -P 8 -n 2 bash -c '
             ns="$1"; pod="$2"
             base="/tmp/pod-logs/${ns}-${pod}"
-            uds zarf tools kubectl logs -n "$ns" "$pod" --tail=-1 > "${base}.log" 2>&1 || true
-            uds zarf tools kubectl logs -n "$ns" "$pod" --previous --tail=-1 > "${base}-previous.log" 2>&1 || true
+            uds zarf tools kubectl logs --all-containers=true -n "$ns" "$pod" --tail=-1 > "${base}.log" 2>&1 || true
+            uds zarf tools kubectl logs --all-containers=true -n "$ns" "$pod" --previous --tail=-1 > "${base}-previous.log" 2>&1 || true
           ' _
         echo "::endgroup::"
       shell: bash
