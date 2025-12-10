@@ -50,30 +50,18 @@ runs:
       shell: bash
 
     # Additional/specific debug for non-k3d clusters
-    - name: Pepr Debug
+    - name: Cluster Pod Logs
       if: ${{ inputs.distro != 'k3d' }}
       run: |
-        echo "::group::Pepr Pod Status and Metrics"
-        uds zarf tools kubectl top pods -n pepr-system
-        uds zarf tools kubectl get pods -n pepr-system
-        echo "::endgroup::"
-        echo "::group::Fetch pepr logs"
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core --tail -1 > /tmp/pepr-logs.log
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core --tail -1 --previous > /tmp/pepr-previous-logs.log || true
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail -1 > /tmp/pepr-watcher-logs.log
-        uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail -1 --previous > /tmp/pepr-watcher-previous-logs.log || true
-        echo "::endgroup::"
-        echo "::group::Describe Failed Packages"
-        FAILED_PACKAGES=($(uds zarf tools kubectl get package -A -o jsonpath="{range .items[?(@.status.phase!='Ready')]}{.metadata.name}{','}{.metadata.namespace}{'\n'}{end}")); for PACKAGE in "${FAILED_PACKAGES[@]}"; do PACKAGE_NAME=$(echo "$PACKAGE" | awk -F "," '{print $1}'); PACKAGE_NAMESPACE=$(echo "$PACKAGE" | awk -F "," '{print $2}'); uds zarf tools kubectl describe package "$PACKAGE_NAME" -n "$PACKAGE_NAMESPACE"; echo; done
-        echo "::endgroup::"
-      shell: bash
-
-    - name: Keycloak Debug
-      if: ${{ inputs.distro != 'k3d' }}
-      run: |
-        echo "::group::Fetch Keycloak logs"
-        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 > /tmp/keycloak-logs.log
-        uds zarf tools kubectl logs sts/keycloak -n keycloak --tail -1 --previous > /tmp/keycloak-previous-logs.log || true
+        echo "::group::Collecting logs for all pods"
+        mkdir -p /tmp/pod-logs
+        uds zarf tools kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{"\n"}{end}' \
+          | xargs -P 8 -n 2 bash -c '
+            ns="$1"; pod="$2"
+            base="/tmp/pod-logs/${ns}-${pod}"
+            uds zarf tools kubectl logs -n "$ns" "$pod" --tail=-1 > "${base}.log" 2>&1 || true
+            uds zarf tools kubectl logs -n "$ns" "$pod" --previous --tail=-1 > "${base}-previous.log" 2>&1 || true
+          ' _
         echo "::endgroup::"
       shell: bash
 
@@ -86,9 +74,8 @@ runs:
           /tmp/uds-*.log
           /tmp/maru-*.log
           /tmp/debug-*.log
+          /tmp/pod-logs
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
           /tmp/playwright/output
           /tmp/playwright/reports
-          /tmp/pepr-*.log
-          /tmp/keycloak-*.log
