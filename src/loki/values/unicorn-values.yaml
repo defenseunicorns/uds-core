@@ -17,5 +17,5 @@ memcached:
     tag: 1.6.39-jammy-fips-rfcurated-rfhardened
 sidecar:
   image:
-    repository: quay.io/rfcurated/k8s-sidecar
-    tag: 1.30.10-jammy-scratch-fips-rfcurated-rfhardened
+    repository: quay.io/rfcurated/kiwigrid/k8s-sidecar
+    tag: 2.1.4-jammy-scratch-fips-rfcurated-rfhardened
