@@ -123,7 +123,7 @@ spec:
 When a Package CR specifies the `network.allow` field with, at minimum, the `remoteHost` and `port` or `ports` parameters, the UDS Operator will create the necessary Istio resources to allow traffic to egress from the mesh. For ambient, the `serviceAccount` should be specified if your workload is not using the default service account. The resources that are created include the following:
 * A shared Istio ServiceEntry, in the `istio-egress-ambient` namespace, one per external host across all Ambient packages. This registers the external service (host and union of ports/protocols) and binds it to the egress waypoint.
 * A centralized Istio AuthorizationPolicy, in the `istio-egress-ambient` namespace, that targets the per-host ServiceEntry (not the waypoint Gateway) and ALLOWs owners and Ambient "Anywhere" participants (ServiceAccount-first principal, else namespace). Rules use only `from:` sources; the destination host is implied by the ServiceEntry target.
-* The shared Istio Waypoint (`Gateway`), in the `istio-egress-ambient` namespace, used to route the egress traffic.
+* The shared Istio Waypoint (`Gateway`), in the `istio-egress-ambient` namespace, used to route ambient egress traffic.
 
 #### Limitations
 

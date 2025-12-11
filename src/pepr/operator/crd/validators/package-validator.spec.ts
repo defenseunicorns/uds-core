@@ -93,6 +93,82 @@ describe("Test validation of Package CRs", () => {
     vi.resetAllMocks();
   });
 
+  it("approves serviceAccount in Ambient mode with remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Egress,
+          remoteHost: "example.com",
+          serviceAccount: "example-sa",
+        },
+      ],
+      [],
+      [],
+      true, // ambient
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("approves serviceAccount in Ambient mode with remoteGenerated: Anywhere (Egress)", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Egress,
+          remoteGenerated: RemoteGenerated.Anywhere,
+          serviceAccount: "example-sa",
+        },
+      ],
+      [],
+      [],
+      true, // ambient
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies serviceAccount in Sidecar mode even with remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Egress,
+          remoteHost: "example.com",
+          serviceAccount: "example-sa",
+        },
+      ],
+      [],
+      [],
+      false, // sidecar
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies serviceAccount in Ambient mode with remoteGenerated: Anywhere on Ingress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteGenerated: RemoteGenerated.Anywhere,
+          serviceAccount: "example-sa",
+        },
+      ],
+      [],
+      [],
+      true, // ambient
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   describe("Gateway name validation", () => {
     it("allows valid custom gateway names", async () => {
       const mockReq = makeMockReq(

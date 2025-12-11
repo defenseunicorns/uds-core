@@ -19,7 +19,19 @@ import { inMemoryAmbientPackageMap, remapAmbientEgressResources } from "./egress
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
 import { generateSharedAmbientServiceEntry } from "./service-entry";
 
-export { ambientEgressNamespace, sharedEgressPkgId };
+interface IdentityCache {
+  anywhere: {
+    saPrincipals: Set<string>;
+    namespaces: Set<string>;
+  };
+  byHost: Map<
+    string,
+    {
+      saPrincipals: Set<string>;
+      namespaces: Set<string>;
+    }
+  >;
+}
 
 // derive owners for a given host from the contributing package IDs
 export function deriveOwnersFromContributors(
@@ -40,12 +52,12 @@ export function deriveOwnersFromContributors(
     const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
     if (!contributing.has(id) || mode !== Mode.Ambient) continue;
     for (const allow of pkg.spec?.network?.allow ?? []) {
-      if (allow.direction !== Direction.Egress) continue;
-      if (allow.remoteHost !== host) continue;
-      if (allow.serviceAccount) {
-        ownerSaPrincipals.add(`cluster.local/ns/${ns}/sa/${allow.serviceAccount}`);
-      } else {
-        ownerNamespaces.add(ns);
+      if (allow.direction === Direction.Egress && allow.remoteHost === host) {
+        if (allow.serviceAccount) {
+          ownerSaPrincipals.add(`cluster.local/ns/${ns}/sa/${allow.serviceAccount}`);
+        } else {
+          ownerNamespaces.add(ns);
+        }
       }
     }
   }
@@ -77,22 +89,6 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
 
   // Build merged per-host resources across ambient packages
   const merged = remapAmbientEgressResources(inMemoryAmbientPackageMap);
-
-  // Pre-index identities in a single optimized pass
-  // Create a map structure to hold all identity information
-  interface IdentityCache {
-    anywhere: {
-      saPrincipals: Set<string>;
-      namespaces: Set<string>;
-    };
-    byHost: Map<
-      string,
-      {
-        saPrincipals: Set<string>;
-        namespaces: Set<string>;
-      }
-    >;
-  }
 
   // Initialize the cache
   const identityCache: IdentityCache = {

@@ -5,17 +5,13 @@
 import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace } from "../utils";
-import {
-  ambientEgressNamespace,
-  applyAmbientEgressResources,
-  purgeAmbientEgressResources,
-} from "./egress-ambient";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
   sidecarEgressNamespace,
 } from "./egress-sidecar";
-import { log } from "./istio-resources";
+import { ambientEgressNamespace, log } from "./istio-resources";
 import {
   EgressResource,
   EgressResourceMap,
@@ -48,8 +44,6 @@ export let lastReconciliationPackages: Set<string> = new Set();
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
 let ambientGeneration = 0;
-
-// (legacy) istioEgressResources removed in favor of orchestrator implementation in egress-orchestrator.ts
 
 // reconcileSharedEgressResources reconciles the egress resources based on the config
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately

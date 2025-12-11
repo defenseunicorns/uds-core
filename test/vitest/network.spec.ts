@@ -421,9 +421,26 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     );
   });
 
+  test.concurrent(
+    "Admin (Anywhere, ambient) can reach remoteHost defined in another namespace",
+    async () => {
+      const EXAMPLE_TLS = [
+        "sh",
+        "-c",
+        `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+      ];
+
+      // Source: test-admin-app (Anywhere via app-admin-package, now ambient)
+      // Target: www.example.com defined as remoteHost in egress-ambient-1
+      const resp = await execInPod("test-admin-app", testAdminApp, "curl", EXAMPLE_TLS);
+      const msg = `Admin Anywhere->remoteHost cross-ns: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      expect(isResponseError(resp), msg).toBe(false);
+    },
+  );
+
   test.concurrent("Egress Ambient per-host isolation (centralized AP)", async () => {
     // egress-ambient-2 SA is allowed to Google TLS; it should not be allowed to api.github.com TLS
-    const GITHUB_TLS = ["sh", "-c", `curl -s -w " HTTP_CODE:%{http_code}" https://api.github.com`];
+    const GITHUB_TLS = ["sh", "-c", `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`];
 
     const resp = await execInPod("egress-ambient-2", curlPodNameEgressAmbient2, "curl", GITHUB_TLS);
     const msg = `Egress Ambient per-host isolation (github denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
@@ -436,7 +453,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       const GITHUB_HTTP = [
         "sh",
         "-c",
-        `curl -s -w " HTTP_CODE:%{http_code}" http://api.github.com`,
+        `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
       ];
 
       const resp = await execInPod(

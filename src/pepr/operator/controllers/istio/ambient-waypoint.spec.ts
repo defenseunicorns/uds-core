@@ -19,7 +19,7 @@ import {
   reconcileService,
   setupAmbientWaypoint,
 } from "./ambient-waypoint";
-import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./istio-resources";
 
 // Test helpers
 const createMockPackage = (

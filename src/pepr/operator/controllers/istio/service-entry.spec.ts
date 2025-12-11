@@ -5,22 +5,22 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
+import { egressWaypointName } from "./ambient-waypoint";
 import { ownerRefsMock } from "./defaultTestMocks";
 import {
   sidecarEgressNamespace,
   sharedEgressPkgId as sidecarSharedEgressPkgId,
 } from "./egress-sidecar";
-import { ambientEgressNamespace } from "./egress-ambient";
+import { ambientEgressNamespace } from "./istio-resources";
 import {
   generateIngressServiceEntry,
   generateLocalEgressServiceEntry,
-  generateSharedServiceEntry,
   generateSharedAmbientServiceEntry,
+  generateSharedServiceEntry,
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
-import { egressWaypointName } from "./ambient-waypoint";
-import { Mode } from "../../crd/generated/package-v1alpha1";
 
 beforeEach(() => {
   UDSConfig.domain = "uds.dev";

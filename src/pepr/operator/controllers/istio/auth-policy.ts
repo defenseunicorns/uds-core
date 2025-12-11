@@ -4,7 +4,7 @@
  */
 
 import { IstioAction, IstioAuthorizationPolicy } from "../../crd";
-import { sanitizeWithLimit } from "../utils";
+import { sanitizeResourceName } from "../utils";
 import {
   ambientEgressNamespace,
   sharedEgressPkgId as ambientSharedEgressPkgId,
@@ -20,7 +20,7 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
   generation: number,
   identities: { saPrincipals: string[]; namespaces: string[] },
 ): IstioAuthorizationPolicy {
-  const name = sanitizeWithLimit(`ambient-ap-${host}`);
+  const name = sanitizeResourceName(`ambient-ap-${host}`);
 
   // Build "from" sources
   const principalSources = identities.saPrincipals.length
@@ -31,11 +31,9 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
     : [];
 
   // Build rules: only sources are needed; targetRef scopes to the specific host via ServiceEntry
-  type Source = { source: { principals?: string[]; namespaces?: string[] } };
-  type Rule = { from: Source[] };
-  const rules: Rule[] = [
+  const rules = [
     {
-      from: [...(principalSources as Source[]), ...(namespaceSources as Source[])],
+      from: [...principalSources, ...namespaceSources],
     },
   ];
 
@@ -54,7 +52,7 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
       targetRef: {
         group: "networking.istio.io",
         kind: "ServiceEntry",
-        name: sanitizeWithLimit(`ambient-se-${host}`),
+        name: sanitizeResourceName(`ambient-se-${host}`),
       },
       rules,
     },

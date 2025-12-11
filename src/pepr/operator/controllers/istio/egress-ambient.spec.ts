@@ -18,6 +18,8 @@ import {
   purgeAmbientEgressResources,
 } from "./egress-ambient";
 
+import * as seMod from "./service-entry";
+
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
 vi.mock("../utils", async () => {
@@ -479,12 +481,46 @@ describe("test applyAmbientEgressResources", () => {
 
     defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
 
+    // Spy on generators to validate merged outputs
+    const seSpy = vi.spyOn(seMod, "generateSharedAmbientServiceEntry");
+    const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
+
     await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns3"]), 1);
 
     // Waypoint applied, plus one SE and one AP for example.com
     expect(defaultEgressMocks.applyWaypointMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
     expect(defaultEgressMocks.applyApMock).toHaveBeenCalledTimes(1);
+
+    // Validate merged ServiceEntry (generator inputs)
+    expect(seSpy).toHaveBeenCalledTimes(1);
+    const [seHost, seResource, seGeneration] = seSpy.mock.calls[0] as [
+      string,
+      { portProtocols: { port: number; protocol: RemoteProtocol }[] },
+      number,
+    ];
+    expect(seHost).toBe("example.com");
+    expect(seGeneration).toBe(1);
+    expect(seResource.portProtocols).toEqual(
+      expect.arrayContaining([
+        { port: 443, protocol: RemoteProtocol.TLS },
+        { port: 80, protocol: RemoteProtocol.HTTP },
+      ]),
+    );
+
+    // Validate merged AuthorizationPolicy (generator inputs)
+    expect(apSpy).toHaveBeenCalledTimes(1);
+    const [apHost, apGeneration, identities] = apSpy.mock.calls[0] as [
+      string,
+      number,
+      { saPrincipals: string[]; namespaces: string[] },
+    ];
+    expect(apHost).toBe("example.com");
+    expect(apGeneration).toBe(1);
+    expect(identities.saPrincipals).toEqual(
+      expect.arrayContaining(["cluster.local/ns/ns1/sa/sa1", "cluster.local/ns/ns2/sa/sa2"]),
+    );
+    expect(identities.namespaces).toEqual(expect.arrayContaining(["ns3"]));
   });
 
   it("should skip SE/AP when identities are empty (owners and participants not resolved)", async () => {

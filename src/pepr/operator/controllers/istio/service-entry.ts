@@ -16,7 +16,7 @@ import {
 } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
-import { sanitizeResourceName, sanitizeWithLimit } from "../utils";
+import { sanitizeResourceName } from "../utils";
 import { egressWaypointName } from "./ambient-waypoint";
 import {
   sidecarEgressNamespace,
@@ -237,7 +237,7 @@ export function generateSharedAmbientServiceEntry(
   resource: EgressResource,
   generation: number,
 ): IstioServiceEntry {
-  const name = sanitizeWithLimit(`ambient-se-${host}`);
+  const name = sanitizeResourceName(`ambient-se-${host}`);
 
   // Add annotations from contributing packages
   const annotations: Record<string, string> = buildOwnerAnnotations(resource);

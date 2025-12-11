@@ -141,4 +141,10 @@ spec:
         remoteCidr: 0.0.0.0/0
         selector:
           app: curl-pkg-remote-cidr
+      - direction: Ingress
+        remoteNamespace: test-admin-app
+        selector:
+          app: curl-pkg-remote-cidr
+        ports:
+          - 8080
 ---
