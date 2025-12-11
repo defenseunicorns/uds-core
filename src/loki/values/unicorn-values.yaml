@@ -18,4 +18,4 @@ memcached:
 sidecar:
   image:
     repository: quay.io/rfcurated/k8s-sidecar
-    tag: 1.30.10-jammy-scratch-fips-rfcurated-rfhardened
+    tag: 1.30.9-jammy-scratch-fips-rfcurated-rfhardened
