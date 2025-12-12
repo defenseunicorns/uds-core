@@ -156,7 +156,7 @@ Keycloak needs to validate certificates when connecting to external identity pro
 By default, UDS Core will automatically mount private certificates (and DoD Certs if `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS` is `true`) provided by `UDS_CA_BUNDLE_CERTS` so that Keycloak will trust them. This uses the default UDS trust bundle created by the UDS Operator and is mounted at `/tmp/ca-certs` with the truststore path configured automatically.
 
 :::caution
-If override the Keycloak helm values for `extraVolumes`, `extraVolumeMounts`, or `truststorePaths`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Keycloak trusts the intended certificate authorities.
+If you override the Keycloak helm values for `extraVolumes`, `extraVolumeMounts`, or `truststorePaths`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Keycloak trusts the intended certificate authorities.
 :::
 
 For additional details on Keycloak truststore configuration, see the [upstream Keycloak documentation](https://www.keycloak.org/server/keycloak-truststore#_configuring_the_system_truststore).
