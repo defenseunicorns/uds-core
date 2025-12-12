@@ -762,7 +762,7 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.publicCerts).toBe("public-cert-data");
     });
 
-    it("does not load DoD certs when includeDoDCerts is false", async () => {
+    it("saves DoD certs in config even when includeDoDCerts is false", async () => {
       mockCfg.spec!.caBundle!.includeDoDCerts = false;
       mockConfigMapGet.mockResolvedValue({
         data: {
@@ -774,7 +774,7 @@ describe("handleUDSConfig", () => {
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
       expect(UDSConfig.caBundle.includeDoDCerts).toBe(false);
-      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.dodCerts).toBe("dod-cert-data");
     });
 
     it("does not load DoD certs when ConfigMap has no dodCACerts data", async () => {
@@ -791,19 +791,23 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.dodCerts).toBe("");
     });
 
-    it("throws error when ConfigMap is missing", async () => {
+    it("handles ConfigMap not found gracefully with default empty values", async () => {
       mockCfg.spec!.caBundle!.includeDoDCerts = true;
-      mockConfigMapGet.mockResolvedValue(null);
+      const notFoundError = Object.assign(new Error("ConfigMap not found"), { status: 404 });
+      mockConfigMapGet.mockRejectedValue(notFoundError);
 
-      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow(
-        "Error while fetching CA certs ConfigMap",
-      );
+      await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-      // Should patch status to Failed
+      // Should use default empty values and continue processing
+      expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
+      expect(UDSConfig.caBundle.dodCerts).toBe("");
+      expect(UDSConfig.caBundle.publicCerts).toBe("");
+
+      // Should patch status to Ready (successful processing)
       expect(mockPatchStatus).toHaveBeenLastCalledWith({
         metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
-          phase: "Failed",
+          phase: "Ready",
           observedGeneration: 2,
         },
       });
@@ -822,13 +826,11 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.publicCerts).toBe("");
     });
 
-    it("throws error when ConfigMap fetch fails", async () => {
+    it("throws error for K8s API failures when fetching ConfigMap", async () => {
       mockCfg.spec!.caBundle!.includeDoDCerts = true;
-      mockConfigMapGet.mockRejectedValue(new Error("K8s get failed"));
+      mockConfigMapGet.mockRejectedValue(new Error("K8s API timeout"));
 
-      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow(
-        "Error while fetching CA certs ConfigMap",
-      );
+      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow("K8s API timeout");
 
       // Should patch status to Failed
       expect(mockPatchStatus).toHaveBeenLastCalledWith({
@@ -1147,7 +1149,7 @@ describe("handleUDSConfig", () => {
       await handleUDSCACertsConfigMapUpdate(configMap);
 
       expect(debugSpy).toHaveBeenCalledWith("Processing uds-ca-certs ConfigMap update");
-      expect(debugSpy).toHaveBeenCalledWith("Updated UDSConfig with new DoD CA certs");
+      expect(debugSpy).toHaveBeenCalledWith("Updated UDSConfig with new DoD and public CA certs");
       expect(debugSpy).toHaveBeenCalledWith("Successfully updated all CA bundle ConfigMaps");
     });
 
