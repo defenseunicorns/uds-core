@@ -226,6 +226,35 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
     log.debug(ap, `Applying Ambient Central AuthorizationPolicy ${ap.metadata?.name}`);
     await K8s(IstioAuthorizationPolicy).Apply(ap, { force: true });
   }
+
+  // Cleanup: purge legacy local egress resources created prior to ambient changes
+  // Criteria per package (in its namespace):
+  // - ServiceEntry with labels: uds/package=<pkgName> AND istio.io/use-waypoint=egress-waypoint
+  // - AuthorizationPolicy with labels: uds/package=<pkgName> AND uds/for=egress
+  // Only for packages that are Ambient and contributed to this central reconcile
+  try {
+    const contribIds = new Set(Array.from(packageList)); // ids are `${name}-${namespace}`
+    for (const pkg of pkgItems) {
+      const ns = pkg.metadata?.namespace;
+      const name = pkg.metadata?.name;
+      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      if (!ns || !name || mode !== Mode.Ambient) continue;
+      const id = `${name}-${ns}`;
+      if (!contribIds.has(id)) continue;
+
+      await purgeOrphans(String(generation), ns, name, IstioServiceEntry, log, {
+        "istio.io/use-waypoint": "egress-waypoint",
+      });
+      await purgeOrphans(String(generation), ns, name, IstioAuthorizationPolicy, log, {
+        "uds/for": "egress",
+      });
+    }
+  } catch (e) {
+    log.warn(
+      { err: e },
+      "Failed purging legacy local egress resources for ambient packages (non-fatal)",
+    );
+  }
 }
 
 // Purge any orphaned ambient egress resources
