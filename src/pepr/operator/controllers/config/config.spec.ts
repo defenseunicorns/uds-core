@@ -792,11 +792,17 @@ describe("handleUDSConfig", () => {
     });
 
     it("handles ConfigMap not found gracefully with default empty values", async () => {
+      const warnSpy = vi.spyOn(configLog, "warn");
       mockCfg.spec!.caBundle!.includeDoDCerts = true;
       const notFoundError = Object.assign(new Error("ConfigMap not found"), { status: 404 });
       mockConfigMapGet.mockRejectedValue(notFoundError);
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
+
+      // Should log a warning about the missing ConfigMap
+      expect(warnSpy).toHaveBeenCalledWith(
+        "CA certs ConfigMap not found, using empty values for DoD and public certs",
+      );
 
       // Should use default empty values and continue processing
       expect(UDSConfig.caBundle.includeDoDCerts).toBe(true);
@@ -811,6 +817,8 @@ describe("handleUDSConfig", () => {
           observedGeneration: 2,
         },
       });
+
+      warnSpy.mockRestore();
     });
 
     it("handles ConfigMap with no data field", async () => {
