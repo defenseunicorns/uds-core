@@ -17,6 +17,14 @@ extraSecretMounts:
     mountPath: /etc/secrets/auth_generic_oauth
     readOnly: true
 
+extraConfigmapMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca.pem
+    configMap: uds-trust-bundle
+    readOnly: true
+    subPath: ca-bundle.pem
+    optional: true
+
 grafana.ini:
   server:
     root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}

@@ -15,23 +15,3 @@ variables:
     # Tenant Gateway TLS certificate and key
     TENANT_TLS_CERT: "PLACEHOLDER_TENANT_TLS_CERT"
     TENANT_TLS_KEY: "PLACEHOLDER_TENANT_TLS_KEY"
-
-    # Grafana private PKI configuration
-    GRAFANA_EXTRA_CONFIGMAP_MOUNTS:
-      - name: ca-certs
-        mountPath: /etc/ssl/certs/ca.pem
-        configMap: uds-trust-bundle
-        readOnly: true
-        subPath: ca-bundle.pem
-
-    # Keycloak private PKI configuration
-    KEYCLOAK_EXTRA_VOLUME_MOUNTS:
-      - name: ca-certs
-        mountPath: /tmp/ca-certs
-        readOnly: true
-    KEYCLOAK_EXTRA_VOLUMES:
-      - name: ca-certs
-        configMap:
-          name: uds-trust-bundle
-    KEYCLOAK_TRUSTSTORE_PATHS:
-      - "/tmp/ca-certs"
