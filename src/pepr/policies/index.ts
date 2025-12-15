@@ -8,7 +8,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../logger";
 import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
-import { watchCfg } from "../operator/controllers/utils";
+import { registerWatchEventHandlers, watchCfg } from "../operator/controllers/utils";
 import { Matcher, Policy, UDSExemption } from "../operator/crd";
 import "./istio";
 import "./networking";
@@ -36,6 +36,7 @@ export async function startExemptionWatch() {
 
     // This will run until the process is terminated or the watch is aborted
     log.debug("Starting exemption watch...");
+    registerWatchEventHandlers(watcher, log);
     await watcher.start();
   }
 }
