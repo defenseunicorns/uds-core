@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.56.0"
+    default: "0.57.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -34,13 +34,6 @@ tasks:
     actions:
       - description: "Deploy k3d cluster and init packages"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --confirm --no-progress
-
-      - description: "Create ConfigMaps for Grafana and Keycloak"
-        cmd: |
-          for ns in grafana keycloak; do
-            kubectl create namespace $ns 2>/dev/null || true
-            kubectl create configmap private-ca -n $ns --from-file=ca.pem=build/private-pki/ca.crt --dry-run=client -o yaml | kubectl apply -f -
-          done
 
       - description: "Deploy UDS Core with Private PKI configuration"
         cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress

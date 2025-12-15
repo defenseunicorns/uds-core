@@ -12,6 +12,10 @@ export class Package extends GenericKind {
 
 export interface Spec {
   /**
+   * CA bundle configuration for the package
+   */
+  caBundle?: CABundle;
+  /**
    * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
@@ -23,6 +27,38 @@ export interface Spec {
    * Create SSO client configurations
    */
   sso?: Sso[];
+}
+
+/**
+ * CA bundle configuration for the package
+ */
+export interface CABundle {
+  /**
+   * ConfigMap configuration for CA bundle
+   */
+  configMap?: ConfigMap;
+}
+
+/**
+ * ConfigMap configuration for CA bundle
+ */
+export interface ConfigMap {
+  /**
+   * Additional annotations to apply to the generated ConfigMap (default: {})
+   */
+  annotations?: { [key: string]: string };
+  /**
+   * The key name inside the ConfigMap (default: ca-bundle.pem)
+   */
+  key?: string;
+  /**
+   * Additional labels to apply to the generated ConfigMap (default: {})
+   */
+  labels?: { [key: string]: string };
+  /**
+   * The name of the ConfigMap to create (default: uds-trust-bundle)
+   */
+  name?: string;
 }
 
 export interface Monitor {
@@ -49,8 +85,8 @@ export interface Monitor {
    */
   path?: string;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
+   * generated correctly). Defaults to `selector` when not specified.
    */
   podSelector?: { [key: string]: string };
   /**
@@ -58,8 +94,7 @@ export interface Monitor {
    */
   portName: string;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Services that expose metrics to scrape
    */
   selector: { [key: string]: string };
   /**
@@ -277,8 +312,8 @@ export interface Expose {
    */
   port?: number;
   /**
-   * Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all
-   * pods in the namespace
+   * Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
+   * generated correctly).
    */
   selector?: { [key: string]: string };
   /**

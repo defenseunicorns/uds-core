@@ -12,11 +12,16 @@ cluster:
   attributes:
     clusterName: ""
     clusterTags: []
+  caBundle:
+    certs: "###ZARF_VAR_CA_BUNDLE_CERTS###"
+    includeDoDCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_DOD_CERTS###"
+    includePublicCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_PUBLIC_CERTS###"
   expose:
+    # Note caCert is deprecated, use caBundle.certs instead
+    caCert: "###ZARF_VAR_CA_CERT###"
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
     domain: "###ZARF_VAR_DOMAIN###"
     adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
-    caCert: "###ZARF_VAR_CA_CERT###"
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:

@@ -23,6 +23,7 @@ import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions
 
 const { containers } = sdk;
 
+// @lulaStart ede53ec3-fdb5-4cd5-a2b1-abcbe338b285
 /**
  * This policy ensures that Pods do not allow privilege escalation.
  *
@@ -201,6 +202,7 @@ export function isRootSecurityContext(ctx: Partial<V1PodSecurityContext>): boole
 
   return isRunAsRoot || isRunAsRootUser || hasRootSupplementalGroups;
 }
+// @lulaEnd ede53ec3-fdb5-4cd5-a2b1-abcbe338b285
 
 /**
  * Restrict Proc Mount in Pods

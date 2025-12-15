@@ -11,6 +11,9 @@
         },
         "spec": {
           "$ref": "#/definitions/Spec"
+        },
+        "status": {
+          "$ref": "#/definitions/Status"
         }
       },
       "required": [
@@ -35,6 +38,9 @@
       "properties": {
         "attributes": {
           "$ref": "#/definitions/Attributes"
+        },
+        "caBundle": {
+          "$ref": "#/definitions/CABundle"
         },
         "expose": {
           "$ref": "#/definitions/Expose"
@@ -70,6 +76,26 @@
       },
       "required": [],
       "title": "Attributes"
+    },
+    "CABundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "certs": {
+          "type": "string",
+          "description": "Contents of user provided CA bundle certificates"
+        },
+        "includeDoDCerts": {
+          "type": "boolean",
+          "description": "Include DoD CA certificates in the bundle"
+        },
+        "includePublicCerts": {
+          "type": "boolean",
+          "description": "Include public CA certificates in the bundle"
+        }
+      },
+      "required": [],
+      "title": "CABundle"
     },
     "Expose": {
       "type": "object",
@@ -126,12 +152,35 @@
       ],
       "title": "Policy"
     },
+    "Status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observedGeneration": {
+          "type": "integer"
+        },
+        "phase": {
+          "$ref": "#/definitions/Phase"
+        }
+      },
+      "required": [],
+      "title": "Status"
+    },
     "Name": {
       "type": "string",
       "enum": [
         "uds-cluster-config"
       ],
       "title": "Name"
+    },
+    "Phase": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Ready",
+        "Failed"
+      ],
+      "title": "Phase"
     }
   }
 }

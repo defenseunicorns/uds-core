@@ -44,6 +44,7 @@ export default defineConfig([
           "test/vitest/tsconfig.json",
           "test/playwright/tsconfig.json",
           "scripts/renovate/tsconfig.json",
+          "scripts/root-ca-retriever/tsconfig.json"
         ],
       },
     },

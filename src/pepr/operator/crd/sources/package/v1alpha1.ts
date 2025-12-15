@@ -197,7 +197,7 @@ const expose = {
       },
       selector: {
         description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+          "Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).",
         type: "object",
         additionalProperties: {
           type: "string",
@@ -264,8 +264,7 @@ const monitor = {
         type: "number",
       },
       selector: {
-        description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+        description: "Selector for Services that expose metrics to scrape",
         type: "object",
         additionalProperties: {
           type: "string",
@@ -273,7 +272,7 @@ const monitor = {
       },
       podSelector: {
         description:
-          "Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace",
+          "Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.",
         type: "object",
         additionalProperties: {
           type: "string",
@@ -503,6 +502,45 @@ const sso = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const caBundle = {
+  description: "CA bundle configuration for the package",
+  type: "object",
+  properties: {
+    configMap: {
+      description: "ConfigMap configuration for CA bundle",
+      type: "object",
+      properties: {
+        name: {
+          description: "The name of the ConfigMap to create (default: uds-trust-bundle)",
+          type: "string",
+          default: "uds-trust-bundle",
+        },
+        key: {
+          description: "The key name inside the ConfigMap (default: ca-bundle.pem)",
+          type: "string",
+          default: "ca-bundle.pem",
+        },
+        labels: {
+          description: "Additional labels to apply to the generated ConfigMap (default: {})",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+          default: {},
+        },
+        annotations: {
+          description: "Additional annotations to apply to the generated ConfigMap (default: {})",
+          type: "object",
+          additionalProperties: {
+            type: "string",
+          },
+          default: {},
+        },
+      },
+    },
+  },
+} as V1JSONSchemaProps;
+
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
   served: true,
@@ -671,6 +709,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             },
             monitor,
             sso,
+            caBundle,
           },
         } as V1JSONSchemaProps,
       },

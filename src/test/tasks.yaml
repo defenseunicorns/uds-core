@@ -3,7 +3,7 @@
 
 includes:
   - utils: ../../tasks/utils.yaml
-  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.3/tasks/setup.yaml
+  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.5/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -37,7 +37,7 @@ tasks:
       - description: "Run Ambient Playwright Test"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.56.1-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.57.0-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test ambient-waypoint.test.ts \
@@ -146,29 +146,28 @@ tasks:
         description: The address to check for authservice protection
         required: true
     actions:
-      - description: Verify the service at https://${{ .inputs.address }} is accessible
-        wait:
-          network:
-            protocol: https
-            address: ${{ .inputs.address }}
-            code: 200
-
-      - description: Verify the service at ${{ .inputs.address }} is protected by checking redirect
-        maxRetries: 3
+      - description: Verify https://${{ .inputs.address }} redirects to SSO and returns HTTP 200
+        maxRetries: 5
         cmd: |
           set -e
-          SSO_REDIRECT=$(curl -Ls -o /dev/null -w %{url_effective} "https://${{ .inputs.address }}")
-
-          case "${SSO_REDIRECT}" in
-          "https://sso.uds.dev"*)
-              echo "Protected by authservice"
-              ;;
-          *)
-              echo "App is not protected by authservice"
-              echo $SSO_REDIRECT
-              exit 1
-              ;;
-          esac
+          URL="https://${{ .inputs.address }}"
+          echo "=== Begin authservice check: $URL ==="
+          set +e
+          OUT_ALL="$(curl -sS -L -o /dev/null --max-time 15 -v \
+                    -w "HTTP_CODE=%{http_code}\nURL_EFFECTIVE=%{url_effective}\n" \
+                    "$URL" 2>&1)"
+          set -e
+          if printf '%s\n' "$OUT_ALL" | grep -qx 'HTTP_CODE=200' && \
+             printf '%s\n' "$OUT_ALL" | grep -qi '^URL_EFFECTIVE=https://sso\.uds\.dev'; then
+            echo "=== Authservice check passed: $URL ==="
+            echo
+            true
+          else
+            printf '%s\n' "$OUT_ALL"
+            echo "=== Authservice check FAILED: $URL ==="
+            echo
+            exit 1
+          fi
 
   - name: remove
     actions:

@@ -22,6 +22,7 @@ export enum Component {
   OPERATOR_GENERATORS = "operator.generators",
   OPERATOR_CRD = "operator.crd",
   OPERATOR_RECONCILERS = "operator.reconcilers",
+  OPERATOR_CA_BUNDLE = "operator.ca-bundle",
   POLICIES = "policies",
   POLICIES_EXEMPTIONS = "policies.exemptions",
   PROMETHEUS = "prometheus",
