@@ -589,7 +589,11 @@
                   },
                   "required": ["key", "name"]
                 }
-              }
+              },
+              "oneOf": [
+                { "required": ["inline"], "not": { "required": ["configmap"] } },
+                { "required": ["configmap"], "not": { "required": ["inline"] } }
+              ]
             }
           }
         }
