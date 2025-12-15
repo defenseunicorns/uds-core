@@ -574,6 +574,9 @@
             "text": {
               "type": "object",
               "properties": {
+                "inline": {
+                  "type": "string"
+                },
                 "configmap": {
                   "type": "object",
                   "properties": {
@@ -586,8 +589,7 @@
                   },
                   "required": ["key", "name"]
                 }
-              },
-              "required": ["configmap"]
+              }
             }
           }
         }

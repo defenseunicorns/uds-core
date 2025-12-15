@@ -173,6 +173,10 @@ packages:
             - name: KEYCLOAK_TRUSTSTORE_PATHS
               description: "Truststore paths for Keycloak"
               path: truststorePaths
+            - name: KEYCLOAK_CUSTOM_TERMS_AND_CONDITIONS
+              description: "Custom terms and conditions for the Keycloak login page"
+              path: "themeCustomizations.termsAndConditions.text.inline"
+              default: ""
           values:
             - path: detailedObservability.alerts.enabled
               value: true

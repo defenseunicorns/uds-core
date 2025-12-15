@@ -93,6 +93,8 @@ themeCustomizations:
 # Customizable Terms and Conditions
 #  termsAndConditions:
 #    text:
+#      # A convenient option to override the T&C inline (without creating a configmap)
+#      inline: ""
 #      configmap:
 #        key: text
 #        name: keycloak-theme-overrides
