@@ -33,25 +33,30 @@ export const watchCfg: WatchCfg = {
     : 600,
 };
 
-export function registerWatchEventHandlers(watcher: WatcherType<GenericClass>, log: Logger) {
+export function registerWatchEventHandlers(
+  watcher: WatcherType<GenericClass>,
+  log: Logger,
+  watchName: string,
+) {
   const eventHandlers: {
     [K in WatchEvent]?: (arg: WatchEventArgs<K, GenericClass>) => void;
   } = {
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       log.error(
-        `WatchEvent GiveUp Error: The watch has failed to start after several attempts: ${err.message}`,
+        `WatchEvent GiveUp (${watchName}): The watch has failed to start after several attempts: ${err.message}`,
       );
       process.exit(1);
     },
-    [WatchEvent.DATA_ERROR]: err => log.warn(`WatchEvent DataError Error: ${err.message}`),
+    [WatchEvent.DATA_ERROR]: err => log.warn(`WatchEvent DataError (${watchName}): ${err.message}`),
     [WatchEvent.RECONNECT]: retryCount =>
       log.debug(
-        `WatchEvent Reconnect: Reconnecting watch ${watcher} after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`,
+        `WatchEvent Reconnect (${watchName}): Reconnecting watch after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`,
       ),
-    [WatchEvent.ABORT]: err => log.warn(`WatchEvent Abort: ${err.message}`),
-    [WatchEvent.NETWORK_ERROR]: err => log.warn(`WatchEvent NetworkError: ${err.message}`),
-    [WatchEvent.LIST_ERROR]: err => log.warn(`WatchEvent ListError: ${err.message}`),
+    [WatchEvent.ABORT]: err => log.warn(`WatchEvent Abort (${watchName}): ${err.message}`),
+    [WatchEvent.NETWORK_ERROR]: err =>
+      log.warn(`WatchEvent NetworkError (${watchName}): ${err.message}`),
+    [WatchEvent.LIST_ERROR]: err => log.warn(`WatchEvent ListError (${watchName}): ${err.message}`),
   };
   Object.entries(eventHandlers).forEach(([event, handler]) => {
     watcher.events.on(event, handler);

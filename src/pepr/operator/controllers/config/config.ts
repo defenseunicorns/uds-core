@@ -552,7 +552,7 @@ export async function startConfigWatch() {
     }, watchCfg);
     // This will run until the process is terminated or the watch is aborted
     configLog.debug("Starting cluster config watch...");
-    registerWatchEventHandlers(watcher, configLog);
+    registerWatchEventHandlers(watcher, configLog, "ClusterConfig");
     await watcher.start();
   }
 }

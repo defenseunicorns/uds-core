@@ -35,7 +35,7 @@ export async function startPackageWatch() {
     }, watchCfg);
     // This will run until the process is terminated or the watch is aborted
     log.debug("Starting package watch...");
-    registerWatchEventHandlers(watcher, log);
+    registerWatchEventHandlers(watcher, log, "UDSPackage");
     await watcher.start();
   }
 }

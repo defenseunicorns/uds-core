@@ -36,7 +36,7 @@ export async function startExemptionWatch() {
 
     // This will run until the process is terminated or the watch is aborted
     log.debug("Starting exemption watch...");
-    registerWatchEventHandlers(watcher, log);
+    registerWatchEventHandlers(watcher, log, "UDSExemption");
     await watcher.start();
   }
 }
