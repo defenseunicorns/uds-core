@@ -92,6 +92,22 @@ By default, UDS Core will automatically mount private certificates (and DoD Cert
 If you override the Grafana helm values for `extraConfigmapMounts`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Grafana trusts the intended certificate authorities.
 :::
 
+If you wish to not use the automatic mounting, you can manually configure Grafana to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
+
+```yaml
+values:
+  - path: extraConfigmapMounts
+    value:
+      - name: ca-certs
+        mountPath: /etc/ssl/certs/ca.pem # Adds CA alongside system CAs (Go applications)
+        # Alternative - System CA replacement (requires bundle with both private and public CAs):
+        # mountPath: /etc/ssl/certs/ca-certificates.crt # For Debian/Ubuntu images (upstream, unicorn flavors)
+        # mountPath: /etc/pki/tls/certs/ca-bundle.crt # For RedHat-based images (registry1 flavor)
+        configMap: private-ca
+        readOnly: true
+        subPath: ca.pem
+```
+
 For additional details on Grafana private CA configuration, see the [upstream Grafana documentation](https://grafana.com/docs/grafana/latest/setup-grafana/installation/helm/#configure-a-private-ca-certificate-authority).
 
 ### Velero
@@ -158,5 +174,24 @@ By default, UDS Core will automatically mount private certificates (and DoD Cert
 :::caution
 If you override the Keycloak helm values for `extraVolumes`, `extraVolumeMounts`, or `truststorePaths`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Keycloak trusts the intended certificate authorities.
 :::
+
+If you wish to not use the automatic mounting, you can manually configure Keycloak to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
+
+```yaml
+values:
+  - path: extraVolumeMounts
+    value:
+      - name: ca-certs
+        mountPath: /tmp/ca-certs
+        readOnly: true
+  - path: extraVolumes
+    value:
+      - name: ca-certs
+        configMap:
+          name: private-ca
+  - path: truststorePaths
+    value:
+      - "/tmp/ca-certs"
+```
 
 For additional details on Keycloak truststore configuration, see the [upstream Keycloak documentation](https://www.keycloak.org/server/keycloak-truststore#_configuring_the_system_truststore).
