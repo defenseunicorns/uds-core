@@ -8,13 +8,13 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
+import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { watchCfg } from "../utils";
+import { registerWatchEventHandlers, watchCfg } from "../utils";
 import { Config } from "./types";
-import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
@@ -554,6 +554,7 @@ export async function startConfigWatch() {
     }, watchCfg);
     // This will run until the process is terminated or the watch is aborted
     configLog.debug("Starting cluster config watch...");
+    registerWatchEventHandlers(watcher, configLog, "ClusterConfig");
     await watcher.start();
   }
 }

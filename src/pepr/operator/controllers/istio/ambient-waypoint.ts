@@ -289,9 +289,15 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
     [ISTIO_WAYPOINT_LABEL]: waypointName,
   };
 
+  const podDisplayName = pod.metadata?.name || pod.metadata?.generateName || "<unknown name>";
+
   log.info(
-    { namespace, waypointName, clientId: matchingSso.clientId },
-    `Added waypoint labels to pod ${pod.metadata?.name}`,
+    {
+      namespace,
+      waypointName,
+      clientId: matchingSso.clientId,
+    },
+    `Added waypoint labels to pod ${podDisplayName}`,
   );
 }
 
