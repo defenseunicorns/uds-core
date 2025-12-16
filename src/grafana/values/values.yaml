@@ -63,6 +63,8 @@ grafana.ini:
     # @lulaEnd 58c54d48-11e4-422e-b386-ae61acfb2828
     # Automatically redirect to the SSO login page
     auto_login: true
+  database:
+    wal: true
 
 # Add environment variables for PostgresQL connection from uds-config chart
 envFromSecret: "uds-grafana-config-postgresql"
