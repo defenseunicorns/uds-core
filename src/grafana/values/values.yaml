@@ -66,8 +66,6 @@ grafana.ini:
   # Settings to optimize the internal sqlite DB
   database:
     wal: true
-  log:
-    level: "debug"
 
 # Add environment variables for PostgresQL connection from uds-config chart
 envFromSecret: "uds-grafana-config-postgresql"
