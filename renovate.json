@@ -119,6 +119,14 @@
         "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],
       "allowedVersions": "!/99.99.99/"
+    },
+    {
+      "matchPackageNames": [
+        "registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar",
+        "quay.io/rfcurated/k8s-sidecar",
+        "ghcr.io/kiwigrid/k8s-sidecar"
+      ],
+      "allowedVersions": "!/^(1\\.30\\.(1[0-9]|[2-9][0-9])|2\\.[01]\\.[0-4])/"
     }
   ]
 }
