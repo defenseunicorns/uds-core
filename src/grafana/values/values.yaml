@@ -69,6 +69,7 @@ grafana.ini:
     query_retries: 5
     transaction_retries: 5
     log_queries: true
+    skip_dashboard_uid_migration_on_startup: true
 
 # Add environment variables for PostgresQL connection from uds-config chart
 envFromSecret: "uds-grafana-config-postgresql"
