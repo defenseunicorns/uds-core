@@ -49,7 +49,7 @@ runs:
     - name: Install helm unittest plugin
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: HELM_UNITTEST_VERSION=v1.0.3 helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "$HELM_UNITTEST_VERSION"
+      run: export HELM_UNITTEST_VERSION="v1.0.3" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}
