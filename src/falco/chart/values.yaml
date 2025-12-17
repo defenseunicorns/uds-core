@@ -11,7 +11,6 @@ additionalNetworkAllow: []
 #     description: "from falcosidekick to anywhere"
 #     port: 443
 
-# @lulaStart 98dd4970-223e-458d-8b49-7432ace5331d
 # Toggle inclusion of Falco's "incubating" ruleset (provide a certain level of robustness guarantee but have been identified by experts as catering to more specific use cases, which may or may not be relevant for each adopter.)
 incubatingRulesEnabled: false
 
@@ -36,4 +35,3 @@ udsDefaultDisabledRulesIncubating:
 
 # Sandbox ruleset disabled rules
 udsDefaultDisabledRulesSandbox: []
-# @lulaEnd 98dd4970-223e-458d-8b49-7432ace5331d
