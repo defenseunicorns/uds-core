@@ -37,3 +37,42 @@ Setting `serviceAccountsEnabled: true` requires `standardFlowEnabled: false` and
 If needed, multiple clients can be added to the same application: an AuthService client, a device flow client, and as many service account clients as required.
 
 A keycloak service account JWT can be distinguished by a username prefix of `service-account-` and a new claim called `client_id`.  Note that the `aud` field is not set by default, hence the mapper in the example.
+
+In some rare cases, there's a need to use an array of audiences in the JWT token. This approach enables logical application grouping but also introduces additional risk by extending the trust boundaries. The example below illustrates how to configure the UDS Package for such a scenario:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: client-cred
+  namespace: argo
+spec:
+  sso:
+    - name: httpbin-api-client
+      clientId: httpbin-api-client
+      standardFlowEnabled: false
+      serviceAccountsEnabled: true
+      defaultClientScopes:
+        - openid
+      protocolMappers:
+        - name: audience-uds-core-app-1
+          protocol: "openid-connect"
+          protocolMapper: "oidc-audience-mapper"
+          config:
+            included.custom.audience: "uds-core-app-1"
+            access.token.claim: "true"
+            introspection.token.claim: "true"
+            id.token.claim: "true"
+            lightweight.claim: "true"
+            userinfo.token.claim: "true"
+        - name: audience-uds-core-app-2
+          protocol: "openid-connect"
+          protocolMapper: "oidc-audience-mapper"
+          config:
+            included.custom.audience: "uds-core-app-2"
+            access.token.claim: "true"
+            introspection.token.claim: "true"
+            id.token.claim: "true"
+            lightweight.claim: "true"
+            userinfo.token.claim: "true"
+```
