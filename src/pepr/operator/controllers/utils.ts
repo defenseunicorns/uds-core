@@ -4,10 +4,15 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { GenericClass, GenericKind, WatchCfg } from "kubernetes-fluent-client";
+import { GenericClass, GenericKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { K8s, kind } from "pepr";
+import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor";
 import { Logger } from "pino";
 import { UDSPackage } from "../crd";
+
+export const PROMETHEUS_PRINCIPAL =
+  "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
 
 /**
  * Watch configuration for use in KFC watches
@@ -27,6 +32,36 @@ export const watchCfg: WatchCfg = {
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
     : 600,
 };
+
+export function registerWatchEventHandlers(
+  watcher: WatcherType<GenericClass>,
+  log: Logger,
+  watchName: string,
+) {
+  const eventHandlers: {
+    [K in WatchEvent]?: (arg: WatchEventArgs<K, GenericClass>) => void;
+  } = {
+    [WatchEvent.GIVE_UP]: err => {
+      // If failure continues, log and exit
+      log.error(
+        `WatchEvent GiveUp (${watchName}): The watch has failed to start after several attempts: ${err.message}`,
+      );
+      process.exit(1);
+    },
+    [WatchEvent.DATA_ERROR]: err => log.warn(`WatchEvent DataError (${watchName}): ${err.message}`),
+    [WatchEvent.RECONNECT]: retryCount =>
+      log.debug(
+        `WatchEvent Reconnect (${watchName}): Reconnecting watch after ${retryCount} attempt${retryCount === 1 ? "" : "s"}`,
+      ),
+    [WatchEvent.ABORT]: err => log.warn(`WatchEvent Abort (${watchName}): ${err.message}`),
+    [WatchEvent.NETWORK_ERROR]: err =>
+      log.warn(`WatchEvent NetworkError (${watchName}): ${err.message}`),
+    [WatchEvent.LIST_ERROR]: err => log.warn(`WatchEvent ListError (${watchName}): ${err.message}`),
+  };
+  Object.entries(eventHandlers).forEach(([event, handler]) => {
+    watcher.events.on(event, handler);
+  });
+}
 
 /**
  * Sanitize a resource name to make it a valid Kubernetes resource name.

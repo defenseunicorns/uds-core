@@ -25,11 +25,11 @@
 
 # Starting with version 8, the Falco engine supports exceptions.
 # However the Falco rules file does not use them by default.
-- required_engine_version: 0.50.0
+- required_engine_version: 0.57.0
 
 - required_plugin_versions:
     - name: container
-      version: 0.2.2
+      version: 0.4.0
 
 # Currently disabled as read/write are ignored syscalls. The nearly
 # similar open_write/open_read check for files being opened for
@@ -37,7 +37,7 @@
 # - macro: write
 #   condition: (syscall.type=write and fd.type in (file, directory))
 # - macro: read
-#   condition: (syscall.type=read and evt.dir=> and fd.type in (file, directory))
+#   condition: (syscall.type=read and fd.type in (file, directory))
 
 - macro: open_write
   condition: (evt.type in (open,openat,openat2) and evt.is_open_write=true and fd.typechar='f' and fd.num>=0)
@@ -83,19 +83,19 @@
   condition: (not proc.name in ("<NA>","N/A"))
 
 - macro: spawned_process
-  condition: (evt.type in (execve, execveat) and evt.dir=<)
+  condition: (evt.type in (execve, execveat))
 
 - macro: create_symlink
-  condition: (evt.type in (symlink, symlinkat) and evt.dir=<)
+  condition: (evt.type in (symlink, symlinkat))
 
 - macro: create_hardlink
-  condition: (evt.type in (link, linkat) and evt.dir=<)
+  condition: (evt.type in (link, linkat))
 
 - macro: kernel_module_load
-  condition: (evt.type in (init_module, finit_module) and evt.dir=<)
+  condition: (evt.type in (init_module, finit_module))
 
 - macro: dup
-  condition: (evt.type in (dup, dup2, dup3) and evt.dir=<)
+  condition: (evt.type in (dup, dup2, dup3))
 
 # File categories
 - macro: etc_dir
@@ -680,7 +680,7 @@
 
 # Anything run interactively by root
 # - condition: evt.type != switch and user.name = root and proc.name != sshd and interactive
-#  output: "Interactive root | %user.name %proc.name %evt.dir %evt.type %evt.args %fd.name"
+#  output: "Interactive root | %user.name %proc.name %evt.type %evt.args %fd.name"
 #  priority: WARNING
 - rule: System user interactive
   desc: > 
@@ -824,7 +824,7 @@
     Kubernetes audit logs (typically drained from control nodes, and Falco offers a k8saudit plugin) as an additional data 
     source for detections within the control plane.
   condition: >
-    evt.type=connect and evt.dir=< 
+    evt.type=connect 
     and (fd.typechar=4 or fd.typechar=6) 
     and container 
     and k8s_api_server 
@@ -994,7 +994,7 @@
     and privilege escalation (CVE-2020-14386) by an attacker. Noise can be reduced by using the user_known_packet_socket_binaries
     template list.
   condition: > 
-    evt.type=socket and evt.dir=>
+    evt.type=socket
     and container 
     and evt.arg.domain contains AF_PACKET 
     and not proc.name in (user_known_packet_socket_binaries)
@@ -1091,7 +1091,7 @@
 
 - macro: ptrace_attach_or_injection
   condition: >
-    (evt.type=ptrace and evt.dir=> and
+    (evt.type=ptrace and
     (evt.arg.request contains PTRACE_POKETEXT or
     evt.arg.request contains PTRACE_POKEDATA or
     evt.arg.request contains PTRACE_ATTACH or
@@ -1118,7 +1118,7 @@
     to avoid debuggers attaching to the process. This behavior is typically indicative of malware activity.
     Read more about PTRACE in the "PTRACE attached to process" rule.
   condition: > 
-    evt.type=ptrace and evt.dir=> 
+    evt.type=ptrace 
     and evt.arg.request contains PTRACE_TRACEME 
     and proc_name_exists
   output: Detected potential PTRACE_TRACEME anti-debug attempt | proc_pcmdline=%proc.pcmdline evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1199,8 +1199,8 @@
 
 - macro: outbound
   condition: >
-    (((evt.type = connect and evt.dir=<) or
-      (evt.type in (sendto,sendmsg) and evt.dir=< and
+    ((evt.type = connect or
+      (evt.type in (sendto,sendmsg) and
        fd.l4proto != tcp and fd.connected=false and fd.name_changed=true)) and
      (fd.typechar = 4 or fd.typechar = 6) and
      (fd.ip != "0.0.0.0" and fd.net != "127.0.0.0/8" and not fd.snet in (rfc_1918_addresses)) and

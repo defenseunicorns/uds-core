@@ -23,9 +23,9 @@ spec:
           app: curl
         ports:
           - 443
-        remoteHost: api.github.com
+        remoteHost: www.example.com
         remoteProtocol: TLS
-        description: "Github API Curl"
+        description: "Example Curl"
 ---
 apiVersion: v1
 kind: Namespace

@@ -398,11 +398,19 @@ spec:
               {{- end }}
               {{- end }}
               {{- if and .Values.themeCustomizations.termsAndConditions .Values.themeCustomizations.termsAndConditions.text }}
+              {{- if .Values.themeCustomizations.termsAndConditions.text.configmap }}
               {{- with .Values.themeCustomizations.termsAndConditions.text.configmap }}
               - configMap:
                   name: {{ .name }}
                   items:
                     - key: {{ .key }}
+                      path: tc.txt
+              {{- end }}
+              {{- else if .Values.themeCustomizations.termsAndConditions.text.inline }}
+              - configMap:
+                  name: {{ include "keycloak.fullname" . }}-terms-and-conditions
+                  items:
+                    - key: tc_text
                       path: tc.txt
               {{- end }}
               {{- end }}

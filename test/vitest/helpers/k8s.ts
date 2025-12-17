@@ -4,7 +4,7 @@
  */
 
 import * as k8s from "@kubernetes/client-node";
-import { PassThrough } from "stream";
+import { PassThrough, Writable } from "stream";
 
 // Initialize Kubernetes client
 const kc = new k8s.KubeConfig();
@@ -94,6 +94,76 @@ export async function execAndWait(
         });
       })
       .catch(reject);
+  });
+}
+
+// Execute commands inside a pod with exit code support
+export async function execInPod(
+  namespace: string,
+  podName: string,
+  containerName: string,
+  command: string[],
+): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  const kc = new k8s.KubeConfig();
+  kc.loadFromDefault();
+  const exec = new k8s.Exec(kc);
+
+  let stdoutBuffer = "";
+  let stderrBuffer = "";
+
+  return new Promise(resolve => {
+    void exec.exec(
+      namespace,
+      podName,
+      containerName,
+      command,
+      new Writable({
+        write(chunk, _encoding, callback) {
+          stdoutBuffer += chunk.toString();
+          callback();
+        },
+      }),
+      new Writable({
+        write(chunk, _encoding, callback) {
+          stderrBuffer += chunk.toString();
+          callback();
+        },
+      }),
+      null,
+      false,
+      (
+        exitResponse:
+          | number
+          | {
+              status?: string;
+              details?: { causes?: { reason?: string; message?: string }[] };
+            }
+          | undefined,
+      ) => {
+        let exitCode = 0; // Default to success
+
+        if (exitResponse && typeof exitResponse === "object") {
+          if (exitResponse.status === "Failure") {
+            // Extract exit code from `details.causes` array if available
+            exitCode = parseInt(
+              exitResponse.details?.causes?.find(cause => cause?.reason === "ExitCode")?.message ||
+                "1",
+              10,
+            );
+          }
+        } else if (typeof exitResponse === "number") {
+          exitCode = exitResponse;
+        } else {
+          exitCode = 1; // Default to failure
+        }
+
+        resolve({
+          stdout: stdoutBuffer.trim(),
+          stderr: stderrBuffer.trim(),
+          exitCode,
+        });
+      },
+    );
   });
 }
 

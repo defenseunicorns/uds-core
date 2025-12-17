@@ -303,32 +303,6 @@ include:
     geographicFocus: "USA, Global"
     companyWebsite: "https://www.ssl.com/"
 
-    # -- The following entries were not found in the provided in the CSV:
-    # -- https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootCertificateReportCSVFormat
-    # -- The CSV file may lag. Leaving the entries unknown with comments for clarity
-    # -- Data was found from other sources such as: https://groups.google.com/a/ccadb.org/g/public/c/HVwBXDw6GnU/m/1LsNC19RAQAJ
-  - commonName: "CommScope Public Trust ECC Root-01"
-    owner: "unknown - not found in CSV" # CommScope
-    certificateIssuerOrganization: "unknown - not found in CSV"
-    geographicFocus: "unknown - not found in CSV" # Global/US, the C=US is in the cert
-    companyWebsite: "unknown - not found in CSV" # https://www.pki-center.com/
-  - commonName: "CommScope Public Trust ECC Root-02"
-    owner: "unknown - not found in CSV"
-    certificateIssuerOrganization: "unknown - not found in CSV"
-    geographicFocus: "unknown - not found in CSV" # Global/US, the C=US is in the cert
-    companyWebsite: "unknown - not found in CSV" # https://www.pki-center.com/
-  - commonName: "CommScope Public Trust RSA Root-01"
-    owner: "unknown - not found in CSV" # CommScope
-    certificateIssuerOrganization: "unknown - not found in CSV"
-    geographicFocus: "unknown - not found in CSV" # Global/US, the C=US is in the cert
-    companyWebsite: "unknown - not found in CSV" # https://www.pki-center.com/
-  - commonName: "CommScope Public Trust RSA Root-02"
-    owner: "unknown - not found in CSV" # CommScope
-    certificateIssuerOrganization: "unknown - not found in CSV"
-    geographicFocus: "unknown - not found in CSV" # Global/US, the C=US is in the cert
-    companyWebsite: "unknown - not found in CSV" # https://www.pki-center.com/
-    # -- End of entries not found in CSV
-
 exclude:
   - commonName: "SwissSign Gold CA - G2"
     owner: "SwissSign AG"

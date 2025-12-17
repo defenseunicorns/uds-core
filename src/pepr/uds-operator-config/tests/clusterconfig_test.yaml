@@ -1,0 +1,89 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: UDS Operator Config - ClusterConfig
+templates:
+  - clusterconfig.yaml
+
+tests:
+  - it: should render with new caBundle.certs value
+    set:
+      cluster:
+        caBundle:
+          certs: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
+        expose:
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.caBundle.certs
+          value: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
+
+  - it: should render with legacy expose.caCert value when caBundle.certs is empty
+    set:
+      cluster:
+        caBundle:
+          certs: ""
+        expose:
+          caCert: "LS0tLS1CRUdJTi...legacy-ca-cert"
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.caBundle.certs
+          value: "LS0tLS1CRUdJTi...legacy-ca-cert"
+
+  - it: should prefer caBundle.certs over expose.caCert when both are set
+    set:
+      cluster:
+        caBundle:
+          certs: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
+        expose:
+          caCert: "LS0tLS1CRUdJTi...legacy-ca-cert"
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.caBundle.certs
+          value: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
+
+  - it: should not render certs field when both values are empty strings
+    set:
+      cluster:
+        caBundle:
+          certs: ""
+        expose:
+          caCert: ""
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - notExists:
+          path: spec.caBundle.certs
+
+  - it: should render caBundle section with other fields when certs not set
+    set:
+      cluster:
+        caBundle:
+          certs: ""
+          includeDoDCerts: true
+          includePublicCerts: false
+        expose:
+          caCert: ""
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - notExists:
+          path: spec.caBundle.certs
+      - equal:
+          path: spec.caBundle.includeDoDCerts
+          value: true
+      - equal:
+          path: spec.caBundle.includePublicCerts
+          value: false

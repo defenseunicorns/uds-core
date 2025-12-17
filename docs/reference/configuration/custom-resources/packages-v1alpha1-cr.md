@@ -36,7 +36,43 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">monitor</td><td style="white-space: nowrap;"><a href="#Monitor">Monitor[]</a></td><td>Create Service or Pod Monitor configurations</td></tr><tr><td style="white-space: nowrap;">network</td><td style="white-space: nowrap;"><a href="#Network">Network</a></td><td>Network configuration for the package</td></tr><tr><td style="white-space: nowrap;">sso</td><td style="white-space: nowrap;"><a href="#Sso">Sso[]</a></td><td>Create SSO client configurations</td></tr>
+    <tr><td style="white-space: nowrap;">caBundle</td><td style="white-space: nowrap;"><a href="#CaBundle">CaBundle</a></td><td>CA bundle configuration for the package</td></tr><tr><td style="white-space: nowrap;">monitor</td><td style="white-space: nowrap;"><a href="#Monitor">Monitor[]</a></td><td>Create Service or Pod Monitor configurations</td></tr><tr><td style="white-space: nowrap;">network</td><td style="white-space: nowrap;"><a href="#Network">Network</a></td><td>Network configuration for the package</td></tr><tr><td style="white-space: nowrap;">sso</td><td style="white-space: nowrap;"><a href="#Sso">Sso[]</a></td><td>Create SSO client configurations</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="CaBundle"></a>
+<div style="margin-left: 60px; padding-top: 30px;">
+
+### CaBundle
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">configMap</td><td style="white-space: nowrap;"><a href="#ConfigMap">ConfigMap</a></td><td>ConfigMap configuration for CA bundle</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="ConfigMap"></a>
+<div style="margin-left: 80px; padding-top: 30px;">
+
+#### ConfigMap
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">annotations</td><td style="white-space: nowrap;"></td><td>Additional annotations to apply to the generated ConfigMap (default: {})</td></tr><tr><td style="white-space: nowrap;">key</td><td style="white-space: nowrap;">string</td><td>The key name inside the ConfigMap (default: ca-bundle.pem)</td></tr><tr><td style="white-space: nowrap;">labels</td><td style="white-space: nowrap;"></td><td>Additional labels to apply to the generated ConfigMap (default: {})</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name of the ConfigMap to create (default: uds-trust-bundle)</td></tr>
   </tbody>
 </table>
 </div>
@@ -54,7 +90,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">authorization</td><td style="white-space: nowrap;"><a href="#Authorization">Authorization</a></td><td>Authorization settings.</td></tr><tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this monitor entry, this will become part of the ServiceMonitor name</td></tr><tr><td style="white-space: nowrap;">fallbackScrapeProtocol</td><td style="white-space: nowrap;">string (enum):<ul><li><code>OpenMetricsText0.0.1</code></li><li><code>OpenMetricsText1.0.0</code></li><li><code>PrometheusProto</code></li><li><code>PrometheusText0.0.4</code></li><li><code>PrometheusText1.0.0</code></li></ul></td><td>The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type</td></tr><tr><td style="white-space: nowrap;">kind</td><td style="white-space: nowrap;">string (enum):<ul><li><code>PodMonitor</code></li><li><code>ServiceMonitor</code></li></ul></td><td>The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default.</td></tr><tr><td style="white-space: nowrap;">path</td><td style="white-space: nowrap;">string</td><td>HTTP path from which to scrape for metrics, defaults to `/metrics`</td></tr><tr><td style="white-space: nowrap;">podSelector</td><td style="white-space: nowrap;"></td><td>Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace</td></tr><tr><td style="white-space: nowrap;">portName</td><td style="white-space: nowrap;">string</td><td>The port name for the serviceMonitor</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This is required so the NetworkPolicy can be generated correctly.</td></tr>
+    <tr><td style="white-space: nowrap;">authorization</td><td style="white-space: nowrap;"><a href="#Authorization">Authorization</a></td><td>Authorization settings.</td></tr><tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this monitor entry, this will become part of the ServiceMonitor name</td></tr><tr><td style="white-space: nowrap;">fallbackScrapeProtocol</td><td style="white-space: nowrap;">string (enum):<ul><li><code>OpenMetricsText0.0.1</code></li><li><code>OpenMetricsText1.0.0</code></li><li><code>PrometheusProto</code></li><li><code>PrometheusText0.0.4</code></li><li><code>PrometheusText1.0.0</code></li></ul></td><td>The protocol for Prometheus to use if a scrape returns a blank, unparsable, or otherwise invalid Content-Type</td></tr><tr><td style="white-space: nowrap;">kind</td><td style="white-space: nowrap;">string (enum):<ul><li><code>PodMonitor</code></li><li><code>ServiceMonitor</code></li></ul></td><td>The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the default.</td></tr><tr><td style="white-space: nowrap;">path</td><td style="white-space: nowrap;">string</td><td>HTTP path from which to scrape for metrics, defaults to `/metrics`</td></tr><tr><td style="white-space: nowrap;">podSelector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.</td></tr><tr><td style="white-space: nowrap;">portName</td><td style="white-space: nowrap;">string</td><td>The port name for the serviceMonitor</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Services that expose metrics to scrape</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This is required so the NetworkPolicy can be generated correctly.</td></tr>
   </tbody>
 </table>
 </div>
@@ -144,7 +180,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Labels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr>
+    <tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr>
   </tbody>
 </table>
 </div>

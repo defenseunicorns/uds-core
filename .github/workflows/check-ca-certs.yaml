@@ -7,6 +7,14 @@ on:
   schedule:
     # Runs every morning at 2:00 AM UTC
     - cron: "0 2 * * *"
+  pull_request:
+    branches: [main]
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    types: [milestoned, opened, reopened, edited, synchronize]
+    paths:
+      - "certs/**"
+      - "src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"
+      - ".github/workflows/check-ca-certs.yaml"
 
 permissions:
   contents: read
@@ -23,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Environment setup
         uses: ./.github/actions/setup
