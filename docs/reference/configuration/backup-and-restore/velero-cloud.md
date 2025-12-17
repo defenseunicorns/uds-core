@@ -51,14 +51,15 @@ data "aws_iam_policy_document" "velero_policy" {
     resources = ["*"]
   }
 
+  # Replace <YOUR_CLUSTER_NAME> in statements below with your EKS cluster name
   statement {
     effect = "Allow"
     actions = ["ec2:CreateVolume"]
     resources = ["*"]
     condition {
       test = "StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
   }
 
@@ -68,8 +69,8 @@ data "aws_iam_policy_document" "velero_policy" {
     resources = ["*"]
     condition {
       test = "StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
   }
 
@@ -79,8 +80,8 @@ data "aws_iam_policy_document" "velero_policy" {
     resources = ["*"]
     condition {
       test = "StringEquals"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
   }
 
@@ -90,8 +91,8 @@ data "aws_iam_policy_document" "velero_policy" {
     resources = ["*"]
     condition {
       test = "StringEquals"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
   }
 
@@ -101,13 +102,13 @@ data "aws_iam_policy_document" "velero_policy" {
     resources = ["*"]
     condition {
       test = "ForAllValues:StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
     condition {
       test = "ForAllValues:StringEqualsIfExists"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
     }
   }
 }
