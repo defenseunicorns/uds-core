@@ -92,5 +92,13 @@ components:
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
+          # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
+          - description: Keycloak to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app.kubernetes.io/name=keycloak
+                namespace: keycloak
+                condition: Ready
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar
