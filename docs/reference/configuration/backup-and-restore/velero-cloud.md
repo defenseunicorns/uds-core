@@ -101,8 +101,13 @@ data "aws_iam_policy_document" "velero_policy" {
     actions = ["ec2:CreateTags"]
     resources = ["*"]
     condition {
-      test     = "ForAnyValue:StringEquals"
+      test     = "StringEquals"
       variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values = ["owned"]
+    }
+    condition {
+      test = "StringEqualsIfExists"
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
       values = ["owned"]
     }
   }
