@@ -1,0 +1,56 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: test-routing
+description: Compute whether full tests should run based on event/base/head branch
+
+inputs:
+  event_name:
+    description: GitHub event name (e.g. pull_request, workflow_call)
+    required: true
+  base_ref:
+    description: PR base branch (e.g. main or release/0.55)
+    required: false
+  head_ref:
+    description: PR head branch (e.g. feature/foo, backport/bar-to-0.55, release-please--branches--release-0.55)
+    required: false
+
+outputs:
+  run_full_tests:
+    description: Whether full tests should run
+    value: ${{ steps.compute.outputs.run_full_tests }}
+
+runs:
+  using: composite
+  steps:
+    - name: Compute test routing
+      id: compute
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        # Context
+        EVENT='${{ inputs.event_name }}'
+        BASE='${{ inputs.base_ref }}'
+        HEAD='${{ inputs.head_ref }}'
+
+        # Default to skipping heavy tests
+        RUN_FULL=false
+
+        # Non-PR invocations (e.g. workflow_call) should run full tests
+        if [[ "$EVENT" != "pull_request" ]]; then
+          RUN_FULL=true
+        else
+          # PRs to main always run full tests
+          if [[ "$BASE" == "main" ]]; then
+            RUN_FULL=true
+          elif [[ "$BASE" == release/* ]]; then
+            # PRs to release/* only run full tests for release-please PRs
+            if [[ "$HEAD" == release-please* ]]; then
+              RUN_FULL=true
+            fi
+          fi
+        fi
+
+        # Expose decision to caller
+        echo "run_full_tests=$RUN_FULL" >> "$GITHUB_OUTPUT"
