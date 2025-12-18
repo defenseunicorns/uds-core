@@ -58,8 +58,6 @@ jobs:
           head_ref: ${{ github.head_ref }}
 
   lint-check:
-    needs: routing
-    if: ${{ needs.routing.outputs.run_full_tests == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

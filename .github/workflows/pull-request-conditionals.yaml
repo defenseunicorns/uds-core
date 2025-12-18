@@ -136,7 +136,7 @@ jobs:
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' && needs.check-paths.outputs.combined != '[]' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' && needs.check-paths.outputs.combined != '' && needs.check-paths.outputs.combined != '[]' }}
     name: Schedule
     strategy:
       matrix:
@@ -165,7 +165,7 @@ jobs:
   # Shim required checks for backport PRs to release branches (i.e., non-release-please PRs)
   run-package-test-shim:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.run_full_tests != 'true' && startsWith(github.base_ref, 'release/') && needs.check-paths.outputs.combined != '[]' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests != 'true' && startsWith(github.base_ref, 'release/') }}
     name: Schedule
     strategy:
       matrix:
