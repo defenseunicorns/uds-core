@@ -13,6 +13,8 @@ metadata:
   namespace: test-admin-app
 spec:
   network:
+    serviceMesh:
+      mode: ambient
     expose:
       - service: httpbin
         selector:

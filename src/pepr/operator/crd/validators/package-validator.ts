@@ -5,7 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, Protocol, UDSPackage } from "..";
+import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
@@ -174,9 +174,21 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny("remoteHost does not support wildcard domains");
     }
 
-    // The 'serviceAccount' cannot be used if `remoteHost` is not specified.
-    if (policy.serviceAccount && !(policy.remoteHost && istioMode === Mode.Ambient)) {
-      return req.Deny("serviceAccount is only valid for Ambient mode when using remoteHost");
+    // The 'serviceAccount' is allowed in Ambient mode when:
+    //  - remoteHost is specified, or
+    //  - remoteGenerated: Anywhere on Egress rules
+    if (policy.serviceAccount) {
+      const isAmbient = istioMode === Mode.Ambient;
+      const hostAllowed = isAmbient && !!policy.remoteHost;
+      const anywhereAllowed =
+        isAmbient &&
+        policy.remoteGenerated === RemoteGenerated.Anywhere &&
+        policy.direction === "Egress";
+      if (!hostAllowed && !anywhereAllowed) {
+        return req.Deny(
+          "serviceAccount is only valid for Ambient mode when using remoteHost or remoteGenerated: Anywhere on Egress rules",
+        );
+      }
     }
 
     // Ensure the policy name is unique

@@ -17,11 +17,11 @@ import {
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
+  remapAmbientEgressResources,
   removeMapResources,
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
   updateLastReconciliationPackages,
-  validatePortProtocolConflicts,
   validateProtocolConflicts,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
@@ -36,6 +36,54 @@ vi.mock("./istio-resources", async () => {
       error: vi.fn(),
     },
   };
+});
+
+describe("test remapAmbientEgressResources", () => {
+  it("should union ports/protocols per host and collect contributing packages", () => {
+    const packageMap: PackageHostMap = {
+      "pkg1-ns1": {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS },
+            { port: 80, protocol: RemoteProtocol.HTTP },
+          ],
+        },
+      },
+      "pkg2-ns2": {
+        "example.com": {
+          portProtocol: [
+            { port: 443, protocol: RemoteProtocol.TLS }, // duplicate
+            { port: 8080, protocol: RemoteProtocol.TLS },
+          ],
+        },
+        "other.com": {
+          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+        },
+      },
+    };
+
+    const remapped = remapAmbientEgressResources(packageMap);
+
+    expect(Object.keys(remapped).sort()).toEqual(["example.com", "other.com"]);
+    expect(remapped["example.com"].packages.sort()).toEqual(["pkg1-ns1", "pkg2-ns2"].sort());
+    expect(remapped["example.com"].portProtocols).toEqual(
+      expect.arrayContaining([
+        { port: 443, protocol: RemoteProtocol.TLS },
+        { port: 80, protocol: RemoteProtocol.HTTP },
+        { port: 8080, protocol: RemoteProtocol.TLS },
+      ]),
+    );
+    // no duplicates
+    const unique = new Set(
+      remapped["example.com"].portProtocols.map(pp => `${pp.port}-${pp.protocol}`),
+    );
+    expect(unique.size).toBe(remapped["example.com"].portProtocols.length);
+
+    expect(remapped["other.com"].packages).toEqual(["pkg2-ns2"]);
+    expect(remapped["other.com"].portProtocols).toEqual([
+      { port: 443, protocol: RemoteProtocol.TLS },
+    ]);
+  });
 });
 
 import { log } from "./istio-resources";
@@ -54,7 +102,7 @@ vi.mock("../utils", async () => {
 // Mock apply functions for sidecar
 import { applySidecarEgressResources } from "./egress-sidecar";
 const mockApplySidecarEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-sidecar.ts", async () => {
+vi.mock("./egress-sidecar", async () => {
   const originalModule = await vi.importActual("./egress-sidecar");
   return {
     ...originalModule,
@@ -63,14 +111,15 @@ vi.mock("./egress-sidecar.ts", async () => {
 });
 
 // Mock apply functions for ambient
-import { applyAmbientEgressResources } from "./egress-ambient";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-ambient.ts", async () => {
+vi.mock("./egress-ambient", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
   return {
     ...originalModule,
     applyAmbientEgressResources: vi.fn(),
+    purgeAmbientEgressResources: vi.fn(),
   };
 });
 
@@ -417,6 +466,36 @@ describe("test performEgressReconciliation", () => {
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
     (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
     (applyAmbientEgressResources as Mock).mockImplementation(mockApplyAmbientEgressResources);
+    (purgeAmbientEgressResources as Mock).mockImplementation(async () => {
+      const log = {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      } as unknown as Parameters<typeof purgeOrphans>[4];
+
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+    });
   });
 
   it("should successfully reconcile egress resources", async () => {
@@ -428,8 +507,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 4 times (for sidecar and ambient resources)
-    expect(purgeOrphans).toHaveBeenCalledTimes(4);
+    // Purges sidecar (Gateway, VirtualService, ServiceEntry) and ambient (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(6);
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {
@@ -450,8 +529,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should err on reconciliation when get namespace returns error", async () => {
@@ -472,8 +551,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should skip ambient reconciliation when namespace is not found", async () => {
@@ -679,11 +758,6 @@ describe("test updateInMemoryAmbientPackageMap", () => {
       portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
     },
   };
-  const hostResourceMapMockHttp: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-    },
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -775,15 +849,17 @@ describe("test updateInMemoryAmbientPackageMap", () => {
       PackageAction.AddOrUpdate,
     );
 
-    // Try and add example.com:80
+    const conflictMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.HTTP }],
+      },
+    };
+
+    // Try and add example.com:443 with different protocol
     await expect(
-      updateInMemoryAmbientPackageMap(
-        hostResourceMapMockHttp,
-        "package2",
-        PackageAction.AddOrUpdate,
-      ),
+      updateInMemoryAmbientPackageMap(conflictMap, "package2", PackageAction.AddOrUpdate),
     ).rejects.toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+      'Protocol conflict detected for example.com:443. Package "package2" wants to use HTTP but package "package1" is already using TLS for the same host and port combination.',
     );
 
     // Verify the first package is still in the map and the conflicting one was not added
@@ -1070,6 +1146,22 @@ describe("test getHostPortsProtocol", () => {
     });
   });
 
+  it("should default to port 80 for HTTP when unspecified port", () => {
+    const allow = {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.HTTP,
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [80],
+      protocol: RemoteProtocol.HTTP,
+    });
+  });
+
   it("should return defaults for unspecified protocol", () => {
     const allow = {
       direction: Direction.Egress,
@@ -1283,7 +1375,7 @@ describe("test validateProtocolConflicts", () => {
   });
 });
 
-describe("test validatePortConflicts", () => {
+describe("test validateProtocolConflicts (ambient)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -1303,13 +1395,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return correct results when updating the same package", () => {
@@ -1327,16 +1415,12 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package1",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package1");
+    }).not.toThrow();
   });
 
-  it("should throw error when port conflict exists", () => {
+  it("should allow union of different ports/protocols for the same host", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1352,13 +1436,11 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
-    }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
-    );
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
-  it("should throw an error when a protocol conflict exists", () => {
+  it("should throw an error when a protocol conflict exists for the same host+port", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1374,13 +1456,13 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
     }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+      'Protocol conflict detected for example.com:443. Package "package2" wants to use HTTP but package "package1" is already using TLS for the same host and port combination.',
     );
   });
 
-  it("should return superset of port/protocols", () => {
+  it("should allow subset updates (union happens at remap time)", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1398,20 +1480,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual({
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return expected output when multiple packages/multiple hosts", () => {
@@ -1448,26 +1519,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package4",
-    );
-
-    expect(newPackageMap).toEqual({
-      "httpbin.org": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package4");
+    }).not.toThrow();
   });
 });
 

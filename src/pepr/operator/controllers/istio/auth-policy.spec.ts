@@ -4,130 +4,86 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { RemoteProtocol } from "../../crd";
-import {
-  generateAmbientEgressAuthorizationPolicy,
-  generateAmbientEgressAuthorizationPolicyName,
-} from "./auth-policy";
-import { generateLocalEgressSEName } from "./service-entry";
+import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 
 describe("test generate authorization policy", () => {
-  it("should generate auth policy with service account", () => {
-    const pkgName = "test-pkg";
-    const host = "example.com";
-    const serviceEntryName = generateLocalEgressSEName(
-      pkgName,
-      [{ port: 443, protocol: RemoteProtocol.TLS }],
-      host,
-    );
-    const serviceAccount = "test-service-account";
+  describe("test generate central ambient authorization policy", () => {
+    it("should generate central AP targeting ServiceEntry with from-only rules", () => {
+      const host = "example.com";
+      const generation = 1;
+      const saPrincipals = ["cluster.local/ns/ns1/sa/sa1", "cluster.local/ns/ns2/sa/sa2"];
+      const namespaces = ["ns3"]; // participant namespace
 
-    const authPolicy = generateAmbientEgressAuthorizationPolicy(
-      host,
-      pkgName,
-      "test-ns",
-      "1",
-      [],
-      serviceEntryName,
-      serviceAccount,
-    );
+      const ap = generateCentralAmbientEgressAuthorizationPolicy(host, generation, {
+        saPrincipals,
+        namespaces,
+      });
 
-    expect(authPolicy.metadata?.name).toBe("example-com-test-service-account-egress");
-    expect(authPolicy.spec?.action).toBe("ALLOW");
-    expect(authPolicy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [
-            {
-              source: {
-                principals: [`cluster.local/ns/test-ns/sa/${serviceAccount}`],
-              },
-            },
-          ],
-        },
-      ]),
-    );
-    expect(authPolicy.spec?.targetRef).toEqual({
-      group: "networking.istio.io",
-      kind: "ServiceEntry",
-      name: serviceEntryName,
+      expect(ap.metadata?.namespace).toBe("istio-egress-ambient");
+      expect(ap.metadata?.name).toBe("ambient-ap-example-com");
+      expect(ap.spec?.action).toBe("ALLOW");
+      expect(ap.spec?.targetRef).toEqual({
+        group: "networking.istio.io",
+        kind: "ServiceEntry",
+        name: "ambient-se-example-com",
+      });
+
+      // from-only rules: contains principals and namespaces, no 'to'
+      const rules = ap.spec?.rules || [];
+      expect(rules.length).toBeGreaterThan(0);
+      for (const r of rules) {
+        expect(r).toHaveProperty("from");
+        expect(r).not.toHaveProperty("to");
+      }
+      // ensure sources captured
+      const flattenedSources = rules.flatMap(r => r.from || []);
+      const principalsEntry = flattenedSources.find(s => s.source?.principals);
+      const namespacesEntry = flattenedSources.find(s => s.source?.namespaces);
+      expect(principalsEntry?.source?.principals).toEqual(expect.arrayContaining(saPrincipals));
+      expect(namespacesEntry?.source?.namespaces).toEqual(expect.arrayContaining(namespaces));
     });
-  });
 
-  it("should generate auth policy without service account", () => {
-    const pkgName = "test-pkg";
-    const host = "example.com";
-    const serviceEntryName = generateLocalEgressSEName(
-      pkgName,
-      [{ port: 443, protocol: RemoteProtocol.TLS }],
-      host,
-    );
+    it("should generate per-port rules with to.operation.ports when identitiesByPort is provided", () => {
+      const host = "example.com";
+      const generation = 1;
 
-    const authPolicy = generateAmbientEgressAuthorizationPolicy(
-      host,
-      pkgName,
-      "test-ns",
-      "1",
-      [],
-      serviceEntryName,
-      undefined,
-    );
-
-    expect(authPolicy.metadata?.name).toBe("example-com-egress");
-    expect(authPolicy.spec?.action).toBe("ALLOW");
-    expect(authPolicy.spec?.rules).toEqual(
-      expect.arrayContaining([
-        {
-          from: [
-            {
-              source: {
-                namespaces: ["test-ns"],
-              },
-            },
-          ],
+      const identitiesByPort = {
+        "80": {
+          saPrincipals: ["cluster.local/ns/ns1/sa/http"],
+          namespaces: ["ns-http"],
         },
-      ]),
-    );
-    expect(authPolicy.spec?.targetRef).toEqual({
-      group: "networking.istio.io",
-      kind: "ServiceEntry",
-      name: serviceEntryName,
+        "443": {
+          saPrincipals: ["cluster.local/ns/ns1/sa/https"],
+          namespaces: ["ns-https"],
+        },
+      };
+
+      const ap = generateCentralAmbientEgressAuthorizationPolicy(
+        host,
+        generation,
+        { saPrincipals: [], namespaces: [] },
+        undefined,
+        identitiesByPort,
+      );
+
+      const rules = ap.spec?.rules ?? [];
+      expect(rules).toHaveLength(2);
+
+      expect(rules[0].to?.[0]?.operation?.ports).toEqual(["80"]);
+      const r0Sources = (rules[0].from ?? []).map(f => f.source);
+      expect(r0Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/http"))).toBe(
+        true,
+      );
+      expect(r0Sources.some(s => s?.namespaces?.includes("ns-http"))).toBe(true);
+
+      expect(rules[1].to?.[0]?.operation?.ports).toEqual(["443"]);
+      const r1Sources = (rules[1].from ?? []).map(f => f.source);
+      expect(r1Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/https"))).toBe(
+        true,
+      );
+      expect(r1Sources.some(s => s?.namespaces?.includes("ns-https"))).toBe(true);
     });
   });
 });
 
-describe("test generate authorization policy name", () => {
-  it("should generate policy name with service account", () => {
-    const host = "example.com";
-    const serviceAccount = "test-service-account";
-
-    const name = generateAmbientEgressAuthorizationPolicyName(host, serviceAccount);
-
-    expect(name).toBe("example-com-test-service-account-egress");
-  });
-
-  it("should generate policy name without service account", () => {
-    const host = "example.com";
-
-    const name = generateAmbientEgressAuthorizationPolicyName(host, undefined);
-
-    expect(name).toBe("example-com-egress");
-  });
-
-  it("should sanitize host with special characters", () => {
-    const host = "api.example-service.com";
-    const serviceAccount = "my_service_account";
-
-    const name = generateAmbientEgressAuthorizationPolicyName(host, serviceAccount);
-
-    expect(name).toBe("api-example-service-com-my-service-account-egress");
-  });
-
-  it("should handle host with underscores and dots", () => {
-    const host = "db_host.internal.com";
-
-    const name = generateAmbientEgressAuthorizationPolicyName(host, undefined);
-
-    expect(name).toBe("db-host-internal-com-egress");
-  });
-});
+// Legacy per-namespace ambient authorization policy name tests removed.

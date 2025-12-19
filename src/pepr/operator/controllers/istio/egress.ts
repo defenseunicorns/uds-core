@@ -5,18 +5,22 @@
 import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace } from "../utils";
-import {
-  ambientEgressNamespace,
-  applyAmbientEgressResources,
-  purgeAmbientEgressResources,
-} from "./egress-ambient";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
+import { getPortsForHostAllow } from "./egress-ports";
 import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
   sidecarEgressNamespace,
 } from "./egress-sidecar";
-import { log } from "./istio-resources";
-import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } from "./types";
+import { ambientEgressNamespace, log } from "./istio-resources";
+import {
+  EgressResource,
+  EgressResourceMap,
+  HostPortsProtocol,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+} from "./types";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
@@ -216,15 +220,11 @@ export async function updateInMemoryAmbientPackageMap(
 
     if (action == PackageAction.AddOrUpdate) {
       if (hostResourceMap) {
-        // Validate for port conflicts before updating
-        const newPackageMap = validatePortProtocolConflicts(
-          inMemoryAmbientPackageMap,
-          hostResourceMap,
-          pkgId,
-        );
+        // Validate for protocol conflicts before updating
+        validateProtocolConflicts(inMemoryAmbientPackageMap, hostResourceMap, pkgId);
 
-        // Set newly calculated package map if no port conflicts
-        inMemoryAmbientPackageMap[pkgId] = newPackageMap;
+        // Set the package map if no conflicts
+        inMemoryAmbientPackageMap[pkgId] = hostResourceMap;
       } else {
         removeMapResources(inMemoryAmbientPackageMap, pkgId);
       }
@@ -252,6 +252,36 @@ export function updateLastReconciliationPackages() {
     ...Object.keys(inMemoryAmbientPackageMap),
   ]);
   return lastReconciliationPackages;
+}
+
+// Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)
+export function remapAmbientEgressResources(packageMap: PackageHostMap): EgressResourceMap {
+  const egressResources: EgressResourceMap = {};
+  for (const pkgId in packageMap) {
+    const hostResourceMap = packageMap[pkgId];
+    for (const host in hostResourceMap) {
+      const portProtocols = hostResourceMap[host].portProtocol;
+
+      egressResources[host] ??= {
+        packages: [],
+        portProtocols: [],
+      } as EgressResource;
+
+      if (!egressResources[host].packages.includes(pkgId)) {
+        egressResources[host].packages.push(pkgId);
+      }
+
+      for (const pp of portProtocols) {
+        const exists = egressResources[host].portProtocols.find(
+          x => x.port === pp.port && x.protocol === pp.protocol,
+        );
+        if (!exists) {
+          egressResources[host].portProtocols.push(pp);
+        }
+      }
+    }
+  }
+  return egressResources;
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
@@ -297,49 +327,6 @@ export function validateProtocolConflicts(
       }
     }
   }
-}
-
-// Validate that there are no port/protocol conflicts across packages for the same host
-export function validatePortProtocolConflicts(
-  currentPackageMap: PackageHostMap,
-  newHostResourceMap: HostResourceMap,
-  newPkgId: string,
-): HostResourceMap {
-  // Default to returning the new host resource map
-  const calculatedPackageMap = newHostResourceMap;
-
-  for (const [pkgId, hostResourceMap] of Object.entries(currentPackageMap)) {
-    // Skip the package being updated since it will be replaced
-    if (pkgId === newPkgId) {
-      continue;
-    }
-
-    for (const [host, hostResource] of Object.entries(hostResourceMap)) {
-      const portProtocolList = hostResource.portProtocol.map(pp => `${pp.port}-${pp.protocol}`);
-      for (const [newHost, newHostResource] of Object.entries(newHostResourceMap)) {
-        if (host === newHost) {
-          // If the host is defined in both maps, validate port/protocols don't conflict
-          const newPortProtocolList = newHostResource.portProtocol.map(
-            pp => `${pp.port}-${pp.protocol}`,
-          );
-
-          // Ensure all newPortProtocolList items are in portProtocolList
-          if (!newPortProtocolList.every(pp => portProtocolList.includes(pp))) {
-            const errorMsg =
-              `Port/Protocol conflict detected for ${host}. ` +
-              `Package "${pkgId}" is using different port/protocol combination for the same host.`;
-            log.error(errorMsg);
-            throw new Error(errorMsg);
-          }
-
-          // Copy portProtocols from hostResource -> newHostResource to ensure it's the superset
-          calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
-        }
-      }
-    }
-  }
-
-  return calculatedPackageMap;
 }
 
 // Create a host resource map from a UDSPackage
@@ -388,15 +375,11 @@ export function getHostPortsProtocol(allow: Allow) {
   const host = allow.remoteHost;
   const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
 
-  // reconcile ports
-  let ports = [];
-  if (allow.ports) {
-    ports = allow.ports;
-  } else if (allow.port) {
-    ports = [allow.port];
-  } else {
-    ports = [443];
-  }
+  const ports = getPortsForHostAllow({
+    ports: allow.ports,
+    port: allow.port,
+    remoteProtocol: protocol,
+  });
 
   if (host) {
     hostPortsProtocol = {
