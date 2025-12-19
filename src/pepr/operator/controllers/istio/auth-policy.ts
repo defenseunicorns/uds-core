@@ -8,6 +8,7 @@ import { sanitizeResourceName } from "../utils";
 import {
   ambientEgressNamespace,
   sharedEgressPkgId as ambientSharedEgressPkgId,
+  getSharedAnnotationKey,
 } from "./istio-resources";
 
 // Generate centralized AuthorizationPolicy for ambient egress
@@ -19,6 +20,8 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
   host: string,
   generation: number,
   identities: { saPrincipals: string[]; namespaces: string[] },
+  contributingPkgIds?: string[],
+  identitiesByPort?: Record<string, { saPrincipals: string[]; namespaces: string[] }>,
 ): IstioAuthorizationPolicy {
   const name = sanitizeResourceName(`ambient-ap-${host}`);
 
@@ -30,17 +33,54 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
     ? [{ source: { namespaces: identities.namespaces } }]
     : [];
 
-  // Build rules: only sources are needed; targetRef scopes to the specific host via ServiceEntry
-  const rules = [
-    {
-      from: [...principalSources, ...namespaceSources],
-    },
-  ];
+  // If `identitiesByPort` is provided, generate one rule per destination port to enable
+  // strict port-scoped enforcement via `to.operation.ports`.
+  // Otherwise fall back to the legacy single from-only rule.
+  const rules = identitiesByPort
+    ? Object.entries(identitiesByPort)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([port, portIdentities]) => {
+          const parsedPort = Number(port);
+          if (!Number.isFinite(parsedPort) || parsedPort <= 0) {
+            return undefined;
+          }
+
+          const pSources = portIdentities.saPrincipals.length
+            ? [{ source: { principals: portIdentities.saPrincipals } }]
+            : [];
+          const nSources = portIdentities.namespaces.length
+            ? [{ source: { namespaces: portIdentities.namespaces } }]
+            : [];
+
+          const from = [...pSources, ...nSources];
+          if (from.length === 0) {
+            // Avoid emitting rules that match nothing; this can be produced transiently while
+            // identities converge during reconciliation.
+            return undefined;
+          }
+
+          return {
+            from,
+            to: [{ operation: { ports: [String(parsedPort)] } }],
+          };
+        })
+        .filter((r): r is NonNullable<typeof r> => r != null)
+    : [
+        {
+          from: [...principalSources, ...namespaceSources],
+        },
+      ];
+
+  const annotations: Record<string, string> = {};
+  for (const pkgId of contributingPkgIds ?? []) {
+    annotations[getSharedAnnotationKey(pkgId)] = "user";
+  }
 
   const ap: IstioAuthorizationPolicy = {
     metadata: {
       name,
       namespace: ambientEgressNamespace,
+      ...(Object.keys(annotations).length > 0 ? { annotations } : {}),
       labels: {
         "uds/package": ambientSharedEgressPkgId,
         "uds/generation": generation.toString(),

@@ -372,7 +372,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       egress_ambient_tls_curl,
     );
 
-    const tlsDebugMessage = `TLS github curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
+    const tlsDebugMessage = `TLS example.com curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
 
     expect(isResponseError(success_response_tls), tlsDebugMessage).toBe(false);
 
@@ -440,17 +440,26 @@ describe("Network Policy Validation", { retry: 2 }, () => {
 
   test.concurrent("Egress Ambient per-host isolation (centralized AP)", async () => {
     // egress-ambient-2 SA is allowed to Google TLS; it should not be allowed to api.github.com TLS
-    const GITHUB_TLS = ["sh", "-c", `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`];
+    const EXAMPLE_TLS_DENIED = [
+      "sh",
+      "-c",
+      `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+    ];
 
-    const resp = await execInPod("egress-ambient-2", curlPodNameEgressAmbient2, "curl", GITHUB_TLS);
-    const msg = `Egress Ambient per-host isolation (github denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
+    const resp = await execInPod(
+      "egress-ambient-2",
+      curlPodNameEgressAmbient2,
+      "curl",
+      EXAMPLE_TLS_DENIED,
+    );
+    const msg = `Egress Ambient per-host isolation (example.com denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
     expect(isResponseError(resp), msg).toBe(true);
   });
 
   test.concurrent(
     "Egress Ambient HTTP to github denied for SA with Google TLS access",
     async () => {
-      const GITHUB_HTTP = [
+      const EXAMPLE_HTTP_DENIED = [
         "sh",
         "-c",
         `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
@@ -460,9 +469,9 @@ describe("Network Policy Validation", { retry: 2 }, () => {
         "egress-ambient-2",
         curlPodNameEgressAmbient2,
         "curl",
-        GITHUB_HTTP,
+        EXAMPLE_HTTP_DENIED,
       );
-      const msg = `Egress Ambient HTTP github denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      const msg = `Egress Ambient HTTP example.com denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
       expect(isResponseError(resp), msg).toBe(true);
     },
   );

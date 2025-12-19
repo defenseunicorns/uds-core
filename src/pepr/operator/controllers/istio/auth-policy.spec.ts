@@ -42,6 +42,47 @@ describe("test generate authorization policy", () => {
       expect(principalsEntry?.source?.principals).toEqual(expect.arrayContaining(saPrincipals));
       expect(namespacesEntry?.source?.namespaces).toEqual(expect.arrayContaining(namespaces));
     });
+
+    it("should generate per-port rules with to.operation.ports when identitiesByPort is provided", () => {
+      const host = "example.com";
+      const generation = 1;
+
+      const identitiesByPort = {
+        "80": {
+          saPrincipals: ["cluster.local/ns/ns1/sa/http"],
+          namespaces: ["ns-http"],
+        },
+        "443": {
+          saPrincipals: ["cluster.local/ns/ns1/sa/https"],
+          namespaces: ["ns-https"],
+        },
+      };
+
+      const ap = generateCentralAmbientEgressAuthorizationPolicy(
+        host,
+        generation,
+        { saPrincipals: [], namespaces: [] },
+        undefined,
+        identitiesByPort,
+      );
+
+      const rules = ap.spec?.rules ?? [];
+      expect(rules).toHaveLength(2);
+
+      expect(rules[0].to?.[0]?.operation?.ports).toEqual(["80"]);
+      const r0Sources = (rules[0].from ?? []).map(f => f.source);
+      expect(r0Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/http"))).toBe(
+        true,
+      );
+      expect(r0Sources.some(s => s?.namespaces?.includes("ns-http"))).toBe(true);
+
+      expect(rules[1].to?.[0]?.operation?.ports).toEqual(["443"]);
+      const r1Sources = (rules[1].from ?? []).map(f => f.source);
+      expect(r1Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/https"))).toBe(
+        true,
+      );
+      expect(r1Sources.some(s => s?.namespaces?.includes("ns-https"))).toBe(true);
+    });
   });
 });
 

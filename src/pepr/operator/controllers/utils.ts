@@ -91,6 +91,9 @@ export async function purgeOrphans<T extends GenericClass>(
 ) {
   let query = K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName);
 
+  const currentGen = Number(generation);
+  const currentGenIsNumber = Number.isFinite(currentGen);
+
   if (additionalLabels) {
     for (const [key, value] of Object.entries(additionalLabels)) {
       query = query.WithLabel(key, value);
@@ -100,7 +103,16 @@ export async function purgeOrphans<T extends GenericClass>(
   const resources = await query.Get();
 
   for (const resource of resources.items) {
-    if (resource.metadata?.labels?.["uds/generation"] !== generation) {
+    const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
+    const resourceGen = Number(resourceGenLabel);
+
+    const shouldDelete =
+      resourceGenLabel == null ||
+      (currentGenIsNumber && Number.isFinite(resourceGen)
+        ? resourceGen < currentGen
+        : resourceGenLabel !== generation);
+
+    if (shouldDelete) {
       log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
       await K8s(kind).Delete(resource);
     }

@@ -17,13 +17,12 @@ import {
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
+  remapAmbientEgressResources,
   removeMapResources,
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
   updateLastReconciliationPackages,
-  validatePortProtocolConflicts,
   validateProtocolConflicts,
-  remapAmbientEgressResources,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
@@ -112,8 +111,8 @@ vi.mock("./egress-sidecar", async () => {
 });
 
 // Mock apply functions for ambient
-import { applyAmbientEgressResources } from "./egress-ambient";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { applyAmbientEgressResources } from "./egress-ambient";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 vi.mock("./egress-ambient", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
@@ -728,11 +727,6 @@ describe("test updateInMemoryAmbientPackageMap", () => {
       portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
     },
   };
-  const hostResourceMapMockHttp: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-    },
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -824,15 +818,17 @@ describe("test updateInMemoryAmbientPackageMap", () => {
       PackageAction.AddOrUpdate,
     );
 
-    // Try and add example.com:80
+    const conflictMap: HostResourceMap = {
+      "example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.HTTP }],
+      },
+    };
+
+    // Try and add example.com:443 with different protocol
     await expect(
-      updateInMemoryAmbientPackageMap(
-        hostResourceMapMockHttp,
-        "package2",
-        PackageAction.AddOrUpdate,
-      ),
+      updateInMemoryAmbientPackageMap(conflictMap, "package2", PackageAction.AddOrUpdate),
     ).rejects.toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+      'Protocol conflict detected for example.com:443. Package "package2" wants to use HTTP but package "package1" is already using TLS for the same host and port combination.',
     );
 
     // Verify the first package is still in the map and the conflicting one was not added
@@ -1119,6 +1115,22 @@ describe("test getHostPortsProtocol", () => {
     });
   });
 
+  it("should default to port 80 for HTTP when unspecified port", () => {
+    const allow = {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.HTTP,
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [80],
+      protocol: RemoteProtocol.HTTP,
+    });
+  });
+
   it("should return defaults for unspecified protocol", () => {
     const allow = {
       direction: Direction.Egress,
@@ -1332,7 +1344,7 @@ describe("test validateProtocolConflicts", () => {
   });
 });
 
-describe("test validatePortConflicts", () => {
+describe("test validateProtocolConflicts (ambient)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -1352,13 +1364,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return correct results when updating the same package", () => {
@@ -1376,16 +1384,12 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package1",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package1");
+    }).not.toThrow();
   });
 
-  it("should throw error when port conflict exists", () => {
+  it("should allow union of different ports/protocols for the same host", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1401,13 +1405,11 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
-    }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
-    );
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
-  it("should throw an error when a protocol conflict exists", () => {
+  it("should throw an error when a protocol conflict exists for the same host+port", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1423,13 +1425,13 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
     }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+      'Protocol conflict detected for example.com:443. Package "package2" wants to use HTTP but package "package1" is already using TLS for the same host and port combination.',
     );
   });
 
-  it("should return superset of port/protocols", () => {
+  it("should allow subset updates (union happens at remap time)", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1447,20 +1449,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual({
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return expected output when multiple packages/multiple hosts", () => {
@@ -1497,26 +1488,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package4",
-    );
-
-    expect(newPackageMap).toEqual({
-      "httpbin.org": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package4");
+    }).not.toThrow();
   });
 });
 
