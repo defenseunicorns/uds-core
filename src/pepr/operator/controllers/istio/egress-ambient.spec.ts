@@ -1004,8 +1004,8 @@ describe("test applyAmbientEgressResources", () => {
     expect(identities).toBeDefined();
 
     // Should only include the identity from the live Package (pkg1) not the missing one (pkg2)
-    expect(identities.saPrincipals).toEqual(["cluster.local/ns/ns1/sa/partial-sa"]);
-    expect(identities.namespaces).toEqual([]);
+    expect(identities!.saPrincipals).toEqual(["cluster.local/ns/ns1/sa/partial-sa"]);
+    expect(identities!.namespaces).toEqual([]);
 
     // Waypoint and ServiceEntry should be created
     expect(defaultEgressMocks.applyWaypointMock).toHaveBeenCalledTimes(1);

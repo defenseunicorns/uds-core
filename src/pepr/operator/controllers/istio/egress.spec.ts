@@ -467,9 +467,34 @@ describe("test performEgressReconciliation", () => {
     (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
     (applyAmbientEgressResources as Mock).mockImplementation(mockApplyAmbientEgressResources);
     (purgeAmbientEgressResources as Mock).mockImplementation(async () => {
-      await purgeOrphans();
-      await purgeOrphans();
-      await purgeOrphans();
+      const log = {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      } as unknown as Parameters<typeof purgeOrphans>[4];
+
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
     });
   });
 
