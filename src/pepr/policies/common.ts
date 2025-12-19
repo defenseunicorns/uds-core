@@ -14,6 +14,7 @@ export type Ctx = {
   ctx: V1SecurityContext;
 };
 
+// @lulaStart 4d457410-a627-4f03-9d26-0556336df90d
 export const policies = new Capability({
   name: "uds-core-policies",
   description:
@@ -21,6 +22,7 @@ export const policies = new Capability({
 });
 
 export const { When } = policies;
+// @lulaEnd 4d457410-a627-4f03-9d26-0556336df90d
 
 const log = setupLogger(Component.POLICIES);
 
