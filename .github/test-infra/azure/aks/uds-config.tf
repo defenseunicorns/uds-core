@@ -36,13 +36,7 @@ resource "local_sensitive_file" "uds_config" {
   })
 }
 
-data "azurerm_kubernetes_cluster" "aks_cluster" {
-  name                = local.cluster_name
-  resource_group_name = azurerm_resource_group.this.name
-  depends_on          = [azapi_resource.aks_cluster]
-}
-
 resource "local_sensitive_file" "kubeconfig" {
   filename = "/home/runner/.kube/config"
-  content  = data.azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
+  content  = azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
 }
