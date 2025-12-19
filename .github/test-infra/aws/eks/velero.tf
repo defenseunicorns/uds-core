@@ -20,55 +20,55 @@ resource "aws_iam_policy" "velero_policy" {
           Resource = ["*"]
         },
         {
-          Effect = "Allow",
-          Action = ["ec2:CreateVolume"],
+          Effect   = "Allow",
+          Action   = ["ec2:CreateVolume"],
           Resource = ["*"],
           Condition = {
             StringEquals = {
-              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+              "aws:RequestTag/kubernetes.io/cluster/${var.name}" = "owned"
             }
           }
         },
         {
-          Effect = "Allow",
-          Action = ["ec2:CreateSnapshot"],
+          Effect   = "Allow",
+          Action   = ["ec2:CreateSnapshot"],
           Resource = ["*"],
           Condition = {
             StringEquals = {
-              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+              "aws:RequestTag/kubernetes.io/cluster/${var.name}" = "owned"
             }
           }
         },
         {
-          Effect = "Allow",
-          Action = ["ec2:CreateSnapshot"],
+          Effect   = "Allow",
+          Action   = ["ec2:CreateSnapshot"],
           Resource = ["*"],
           Condition = {
             StringEquals = {
-              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+              "ec2:ResourceTag/kubernetes.io/cluster/${var.name}" = "owned"
             }
           }
         },
         {
-          Effect = "Allow",
-          Action = ["ec2:DeleteSnapshot"],
+          Effect   = "Allow",
+          Action   = ["ec2:DeleteSnapshot"],
           Resource = ["*"],
           Condition = {
             StringEquals = {
-              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+              "ec2:ResourceTag/kubernetes.io/cluster/${var.name}" = "owned"
             }
           }
         },
         {
-          Effect = "Allow",
-          Action = ["ec2:CreateTags"],
+          Effect   = "Allow",
+          Action   = ["ec2:CreateTags"],
           Resource = ["*"],
           Condition = {
-            "ForAllValues:StringEquals" = {
-              "aws:RequestTag/ebs.csi.aws.com/cluster" = "true"
+            "StringEquals" = {
+              "aws:RequestTag/kubernetes.io/cluster/${var.name}" = "owned"
             },
-            "ForAllValues:StringEqualsIfExists" = {
-              "ec2:ResourceTag/ebs.csi.aws.com/cluster" = "true"
+            "StringEqualsIfExists" = {
+              "ec2:ResourceTag/kubernetes.io/cluster/${var.name}" = "owned"
             }
           }
         },
