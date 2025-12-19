@@ -10,13 +10,13 @@ import {
   IstioServiceEntry,
   K8sGateway,
   RemoteGenerated,
+  RemoteProtocol,
   UDSPackage,
 } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
-import { inMemoryAmbientPackageMap, remapAmbientEgressResources } from "./egress";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
 import { generateSharedAmbientServiceEntry } from "./service-entry";
@@ -108,30 +108,10 @@ export function deriveOwnersFromContributors(
 }
 
 // Apply the ambient egress resources
-export async function applyAmbientEgressResources(packageList: Set<string>, generation: number) {
-  // If no packages using ambient egress, don't create the waypoint
-  if (packageList.size === 0) {
-    return;
-  }
-
-  // Generate the waypoint payload
-  const waypoint = createEgressWaypointGateway(packageList, generation);
-  const waypointName = waypoint.metadata?.name ?? "undefined";
-
-  // Apply waypoint
-  log.debug(waypoint, `Applying Waypoint ${waypointName}`);
-
-  // Apply the Waypoint and force overwrite any existing resource
-  await K8s(K8sGateway).Apply(waypoint, { force: true });
-
-  await waitForWaypointPodHealthy(ambientEgressNamespace, waypointName);
-
+export async function applyAmbientEgressResources(_packageList: Set<string>, generation: number) {
   // Fetch UDSPackages once to derive identities and avoid PackageStore timing issues
   const pkgList = await K8s(UDSPackage).Get();
   const pkgItems = (pkgList as { items?: UDSPackage[] } | undefined)?.items ?? [];
-
-  // Build merged per-host resources across ambient packages
-  const merged = remapAmbientEgressResources(inMemoryAmbientPackageMap);
 
   // Initialize the cache
   const identityCache: IdentityCache = {
@@ -150,6 +130,87 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
       !pkg.metadata?.deletionTimestamp &&
       (pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar) === Mode.Ambient,
   );
+
+  // Build merged per-host resources from live packages (not the in-memory map) so that
+  // shared ambient egress reconciliation remains correct across watcher restarts/OOM.
+  const merged: Record<
+    string,
+    { packages: string[]; portProtocols: Array<{ port: number; protocol: RemoteProtocol }> }
+  > = {};
+  const contributingPkgIds = new Set<string>();
+  const conflictedHosts = new Set<string>();
+  const hostPortProtocols: Record<string, RemoteProtocol> = {};
+
+  for (const pkg of ambientPkgs) {
+    const ns = pkg.metadata?.namespace;
+    const name = pkg.metadata?.name;
+    if (!ns || !name) {
+      continue;
+    }
+    const pkgId = `${name}-${ns}`;
+
+    for (const allow of pkg.spec?.network?.allow ?? []) {
+      if (allow.direction !== Direction.Egress || !allow.remoteHost) {
+        continue;
+      }
+
+      const host = allow.remoteHost;
+      const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
+      const ports = getPortsForHostAllow({
+        ports: allow.ports,
+        port: allow.port,
+        remoteProtocol: protocol,
+      });
+
+      for (const port of ports) {
+        const key = `${host}:${port}`;
+        const existing = hostPortProtocols[key];
+        if (existing && existing !== protocol) {
+          log.error(
+            {
+              host,
+              port,
+              existingProtocol: existing,
+              newProtocol: protocol,
+              pkgId,
+            },
+            "Protocol conflict detected for host/port while deriving ambient egress resources from live packages",
+          );
+          conflictedHosts.add(host);
+          continue;
+        }
+        hostPortProtocols[key] = protocol;
+      }
+
+      merged[host] ??= { packages: [], portProtocols: [] };
+      if (!merged[host].packages.includes(pkgId)) {
+        merged[host].packages.push(pkgId);
+      }
+      for (const port of ports) {
+        const exists = merged[host].portProtocols.find(
+          pp => pp.port === port && pp.protocol === protocol,
+        );
+        if (!exists) {
+          merged[host].portProtocols.push({ port, protocol });
+        }
+      }
+
+      contributingPkgIds.add(pkgId);
+    }
+  }
+
+  // If there are no remoteHost-based ambient egress entries, skip creating shared ambient egress resources.
+  // purgeAmbientEgressResources() will handle eventual cleanup.
+  if (contributingPkgIds.size === 0) {
+    return;
+  }
+
+  // Generate and apply the shared waypoint.
+  const waypoint = createEgressWaypointGateway(contributingPkgIds, generation);
+  const waypointName = waypoint.metadata?.name ?? "undefined";
+  log.debug(waypoint, `Applying Waypoint ${waypointName}`);
+  await K8s(K8sGateway).Apply(waypoint, { force: true });
+  await waitForWaypointPodHealthy(ambientEgressNamespace, waypointName);
 
   // Process each ambient package
   for (const pkg of ambientPkgs) {
@@ -213,6 +274,13 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
 
   // Apply per-host shared SE and centralized AP
   for (const host of Object.keys(merged)) {
+    if (conflictedHosts.has(host)) {
+      log.warn(
+        { host },
+        "Skipping ambient egress resources for host due to protocol conflicts across packages",
+      );
+      continue;
+    }
     const resource = merged[host];
     const hostPorts = Array.from(new Set((resource.portProtocols ?? []).map(pp => pp.port))).sort(
       (a, b) => a - b,
@@ -310,7 +378,7 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
   // - AuthorizationPolicy with labels: uds/package=<pkgName> AND uds/for=egress
   // Only for packages that are Ambient and contributed to this central reconcile
   try {
-    const contribIds = new Set(Array.from(packageList)); // ids are `${name}-${namespace}`
+    const contribIds = new Set(Array.from(contributingPkgIds)); // ids are `${name}-${namespace}`
     for (const pkg of pkgItems) {
       const ns = pkg.metadata?.namespace;
       const name = pkg.metadata?.name;
@@ -337,6 +405,52 @@ export async function applyAmbientEgressResources(packageList: Set<string>, gene
 // Purge any orphaned ambient egress resources
 export async function purgeAmbientEgressResources(generation: string) {
   try {
+    // Determine whether there are any desired shared ambient egress resources.
+    // If there are no ambient remoteHost contributors, we should allow purge to
+    // clean up any leftover shared resources.
+    const pkgList = await K8s(UDSPackage).Get();
+    const pkgItems = (pkgList as { items?: UDSPackage[] } | undefined)?.items ?? [];
+    const hasRemoteHostContributors = pkgItems.some(pkg => {
+      if (pkg.metadata?.deletionTimestamp) return false;
+      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      if (mode !== Mode.Ambient) return false;
+      return (pkg.spec?.network?.allow ?? []).some(
+        allow => allow.direction === Direction.Egress && Boolean(allow.remoteHost),
+      );
+    });
+
+    const currentGenGateways = await K8s(K8sGateway)
+      .InNamespace(ambientEgressNamespace)
+      .WithLabel("uds/package", sharedEgressPkgId)
+      .WithLabel("uds/generation", generation)
+      .Get();
+
+    const currentGenGatewayCount =
+      (currentGenGateways as { items?: unknown[] } | undefined)?.items?.length ?? 0;
+    if (currentGenGatewayCount === 0 && hasRemoteHostContributors) {
+      log.warn(
+        { generation },
+        "Skipping purge of ambient egress resources because no current-generation waypoint exists",
+      );
+      return;
+    }
+
+    const currentGenServiceEntries = await K8s(IstioServiceEntry)
+      .InNamespace(ambientEgressNamespace)
+      .WithLabel("uds/package", sharedEgressPkgId)
+      .WithLabel("uds/generation", generation)
+      .Get();
+
+    const currentGenServiceEntryCount =
+      (currentGenServiceEntries as { items?: unknown[] } | undefined)?.items?.length ?? 0;
+    if (currentGenServiceEntryCount === 0 && hasRemoteHostContributors) {
+      log.warn(
+        { generation },
+        "Skipping purge of ambient egress resources because no current-generation shared ServiceEntries exist",
+      );
+      return;
+    }
+
     await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
     await purgeOrphans(
       generation,

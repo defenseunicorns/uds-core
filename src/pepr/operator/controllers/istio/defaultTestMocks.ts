@@ -138,7 +138,7 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
     Logs: vi.fn(),
     Delete: vi.fn(),
     Watch: vi.fn(),
-    WithLabel: vi.fn(),
+    WithLabel: vi.fn<() => K8sMockImpl>().mockReturnThis(),
   };
 
   const mockK8s = vi.mocked(K8s);

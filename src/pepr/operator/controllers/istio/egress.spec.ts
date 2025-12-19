@@ -112,13 +112,14 @@ vi.mock("./egress-sidecar", async () => {
 
 // Mock apply functions for ambient
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { applyAmbientEgressResources } from "./egress-ambient";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 vi.mock("./egress-ambient", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
   return {
     ...originalModule,
     applyAmbientEgressResources: vi.fn(),
+    purgeAmbientEgressResources: vi.fn(),
   };
 });
 
@@ -465,6 +466,11 @@ describe("test performEgressReconciliation", () => {
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
     (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
     (applyAmbientEgressResources as Mock).mockImplementation(mockApplyAmbientEgressResources);
+    (purgeAmbientEgressResources as Mock).mockImplementation(async () => {
+      await purgeOrphans();
+      await purgeOrphans();
+      await purgeOrphans();
+    });
   });
 
   it("should successfully reconcile egress resources", async () => {
