@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/alertmanager
-      tag: v0.29.0
+      tag: v0.30.0
 kube-state-metrics:
   image:
     registry: registry1.dso.mil
@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.8.0
+      tag: v3.8.1
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
