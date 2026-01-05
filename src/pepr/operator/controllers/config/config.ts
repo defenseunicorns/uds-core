@@ -451,7 +451,8 @@ function redactConfig() {
   const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : "";
   const dodCerts = UDSConfig.caBundle.dodCerts ? "****" : "";
   const publicCerts = UDSConfig.caBundle.publicCerts ? "****" : "";
-  const caBundle = { ...UDSConfig.caBundle, dodCerts, publicCerts };
+  const certs = UDSConfig.caBundle.certs ? "****" : "";
+  const caBundle = { ...UDSConfig.caBundle, dodCerts, publicCerts, certs };
   return { ...UDSConfig, authserviceRedisUri, caBundle };
 }
 
