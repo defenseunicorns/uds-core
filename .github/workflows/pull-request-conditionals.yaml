@@ -126,30 +126,17 @@ jobs:
 
       - name: Compute test routing
         id: test-routing
-        run: |
-          BASE="${{ github.base_ref }}"
-          HEAD="${{ github.head_ref }}"
-          COMBINED='${{ steps.combine-path-filters.outputs.combined }}'
-
-          RUN_FULL=false
-
-          if [[ -n "$COMBINED" && "$COMBINED" != "[]" ]]; then
-            if [[ "$BASE" == "main" ]]; then
-              RUN_FULL=true
-            elif [[ "$BASE" == release/* ]]; then
-              if [[ "$HEAD" == release-please* ]]; then
-                RUN_FULL=true
-              fi
-            fi
-          fi
-
-          echo "run_full_tests=$RUN_FULL" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/test-routing
+        with:
+          event_name: ${{ github.event_name }}
+          base_ref: ${{ github.base_ref }}
+          head_ref: ${{ github.head_ref }}
 
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
   run-package-test:
     needs: check-paths
-    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' }}
+    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' && needs.check-paths.outputs.combined != '' && needs.check-paths.outputs.combined != '[]' }}
     name: Schedule
     strategy:
       matrix:

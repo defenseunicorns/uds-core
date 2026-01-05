@@ -85,7 +85,7 @@ It’s generally beneficial if your storage class supports volume expansion (set
 :::caution
 If you are deploying stateful applications, including but not limited to critical UDS Core services such as [Velero](#velero) or [Loki](#loki), ensure you understand where their data is stored and that the underlying volumes are properly backed up and stored safely. 
 
-Cluster or deployment issues may result in data loss, particularly when these services rely on in-cluster storage such as the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator).
+Cluster or deployment issues may result in data loss, particularly when these services rely on in-cluster storage such as the [Minio Operator UDS Package](https://github.com/uds-packages/minio-operator).
 :::
 
 #### Network Policy Support
@@ -224,7 +224,7 @@ The Loki deployment is (by default) backed by an object storage provider for log
             value: "<s3-region>"
 ```
 
-You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Loki with the following overrides:
+You can also use the [Minio Operator UDS Package](https://github.com/uds-packages/minio-operator) to back Loki with the following overrides:
 
 ```yaml
 - name: minio-operator
@@ -340,7 +340,7 @@ The Velero deployment is (by default) backed by an object storage provider for b
                   key: "cloud"
 ```
 
-You can also use the [Minio Operator UDS Package](https://github.com/defenseunicorns/uds-package-minio-operator) to back Velero with the following overrides:
+You can also use the [Minio Operator UDS Package](https://github.com/uds-packages/minio-operator) to back Velero with the following overrides:
 
 ```yaml
 - name: minio-operator

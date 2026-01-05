@@ -9,7 +9,7 @@ permissions:
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'release/**']
     # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
     types: [milestoned, opened, reopened, edited, synchronize]
 
