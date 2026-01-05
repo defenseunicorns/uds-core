@@ -13,7 +13,6 @@ import {
   getHostPortsProtocol,
   inMemoryAmbientPackageMap,
   inMemoryPackageMap,
-  lastReconciliationPackages,
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
@@ -21,7 +20,6 @@ import {
   removeMapResources,
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
-  updateLastReconciliationPackages,
   validateProtocolConflicts,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
@@ -400,6 +398,44 @@ describe("test performEgressReconciliationWithMutex", () => {
 
     // The namespace check will be called at least once
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
+  });
+
+  it("should perform another reconciliation pass when requested during a running reconcile", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    let resolveFirst: (() => void) | undefined;
+    const firstCall = new Promise<void>(resolve => {
+      resolveFirst = resolve;
+    });
+    let callCount = 0;
+
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return firstCall.then(() => ({}) as kind.Namespace);
+      }
+      return Promise.resolve({} as kind.Namespace);
+    });
+
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock,
+    });
+
+    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
+
+    // Ensure the first reconciliation has started and is blocked on the first namespace lookup.
+    await vi.runOnlyPendingTimersAsync();
+
+    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
+
+    // Unblock the first reconciliation.
+    resolveFirst?.();
+
+    await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
+
+    // Two passes => validateNamespace invoked twice per pass (sidecar + ambient).
+    expect(getNsMock).toHaveBeenCalledTimes(4);
   });
 
   it("should handle previous reconciliation failure and start new one", async () => {
@@ -919,68 +955,6 @@ describe("test updateInMemoryAmbientPackageMap", () => {
     expect(inMemoryAmbientPackageMap).toEqual({
       "package-2": hostResourceMapMockTls,
     });
-  });
-});
-
-describe("test updateLastReconciliationPackages", () => {
-  const hostResourceMapMock: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-    },
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // Reset the vars before each test
-    for (const key in inMemoryPackageMap) {
-      delete inMemoryPackageMap[key];
-    }
-    for (const key in inMemoryAmbientPackageMap) {
-      delete inMemoryAmbientPackageMap[key];
-    }
-    lastReconciliationPackages.clear();
-  });
-
-  it("should update lastReconciliationPackages correctly", async () => {
-    // Update in-memory vars
-    await updateInMemoryPackageMap(
-      hostResourceMapMock,
-      "test-package-1",
-      PackageAction.AddOrUpdate,
-    );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-2",
-      PackageAction.AddOrUpdate,
-    );
-
-    // Validate lastReconciliationPackages
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
-  });
-
-  it("should update lastReconciliationPackages correctly for empty set", async () => {
-    // Update in-memory vars
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-1",
-      PackageAction.AddOrUpdate,
-    );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-2",
-      PackageAction.AddOrUpdate,
-    );
-
-    // Validate lastReconciliationPackages
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
-  });
-
-  it("should update lastReconciliationPackages correctly for empty list", () => {
-    // if empty set or empty array, capture correctly
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages.size).toEqual(0);
   });
 });
 

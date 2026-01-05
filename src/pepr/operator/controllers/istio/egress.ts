@@ -39,8 +39,9 @@ let ambientLockQueue: (() => void)[] = [];
 // Mutexes to prevent concurrent reconciliation operations for each mode
 let reconciliationMutex: Promise<void> | null = null;
 
-// Track which packages were included in the last reconciliation
-export let lastReconciliationPackages: Set<string> = new Set();
+// Flag to ensure we never skip a reconciliation request that arrives
+// while a reconciliation is in progress.
+let reconciliationRequestedDuringRun = false;
 
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
@@ -75,24 +76,25 @@ export async function reconcileSharedEgressResources(
 }
 
 // Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(pkgId: string): Promise<void> {
-  // If there's already a reconciliation in progress, wait for it to complete
+export async function performEgressReconciliationWithMutex(_pkgId: string): Promise<void> {
+  void _pkgId;
+
+  // If a reconciliation is already running, mark that another run is needed and wait.
+  // The running reconciliation will do an additional pass before releasing the mutex.
   if (reconciliationMutex) {
-    try {
-      await reconciliationMutex;
-      // Check if this package was included in the last reconciliation
-      if (lastReconciliationPackages.has(pkgId)) {
-        return;
-      }
-    } catch {
-      // If the previous reconciliation failed, we still need to try our own reconciliation
-      // Clear the failed mutex so we can start a new one
-      reconciliationMutex = null;
-    }
+    reconciliationRequestedDuringRun = true;
+    await reconciliationMutex;
+    return;
   }
 
-  // Start a new reconciliation
-  reconciliationMutex = performEgressReconciliation();
+  // Start a new reconciliation loop.
+  reconciliationRequestedDuringRun = true;
+  reconciliationMutex = (async () => {
+    while (reconciliationRequestedDuringRun) {
+      reconciliationRequestedDuringRun = false;
+      await performEgressReconciliation();
+    }
+  })();
 
   try {
     await reconciliationMutex;
@@ -108,9 +110,6 @@ export async function performEgressReconciliationWithMutex(pkgId: string): Promi
 
 // Perform sidecar egress resources reconciliation
 export async function performEgressReconciliation() {
-  // Capture which packages were included in this reconciliation
-  updateLastReconciliationPackages();
-
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
 
@@ -120,7 +119,7 @@ export async function performEgressReconciliation() {
     if (egressSidecarNamespace) {
       sidecarGeneration++;
 
-      // Apply any sidecar egress resources
+      // Apply any sidecar egress resources. Only purge if apply succeeds.
       await applySidecarEgressResources(inMemoryPackageMap, sidecarGeneration);
 
       // Purge any orphaned sidecar shared resources
@@ -138,7 +137,7 @@ export async function performEgressReconciliation() {
     if (egressAmbientNamespace) {
       ambientGeneration++;
 
-      // Apply ambient egress resources (waypoint)
+      // Apply ambient egress resources (waypoint). Only purge if apply succeeds.
       const packageSet = new Set(Object.keys(inMemoryAmbientPackageMap));
       await applyAmbientEgressResources(packageSet, ambientGeneration);
 
@@ -243,15 +242,6 @@ export async function updateInMemoryAmbientPackageMap(
       nextResolve();
     }
   }
-}
-
-// Update lastReconciliationPackages
-export function updateLastReconciliationPackages() {
-  lastReconciliationPackages = new Set([
-    ...Object.keys(inMemoryPackageMap),
-    ...Object.keys(inMemoryAmbientPackageMap),
-  ]);
-  return lastReconciliationPackages;
 }
 
 // Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)
