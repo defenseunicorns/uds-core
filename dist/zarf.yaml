@@ -9,7 +9,7 @@ components:
     required: true
     images:
       - cmwylie19/pepr-controller:0.0.0 
-      - cmwylie19/shared-informer:0.0.0.0
+      - cmwylie19/shared-informer:0.0.0
     charts:
       - name: module
         namespace: pepr-system
