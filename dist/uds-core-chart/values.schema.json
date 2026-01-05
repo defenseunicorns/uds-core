@@ -1,0 +1,451 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Values",
+  "definitions": {
+    "Values": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {}
+        },
+        "additionalIgnoredNamespaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "rbac": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Rbac"
+          }
+        },
+        "secrets": {
+          "$ref": "#/definitions/Secrets"
+        },
+        "hash": {
+          "type": "string"
+        },
+        "namespace": {
+          "$ref": "#/definitions/Namespace"
+        },
+        "uuid": {
+          "type": "string"
+        },
+        "admission": {
+          "$ref": "#/definitions/Admission"
+        },
+        "watcher": {
+          "$ref": "#/definitions/Admission"
+        }
+      },
+      "required": [
+        "additionalIgnoredNamespaces",
+        "admission",
+        "hash",
+        "imagePullSecrets",
+        "namespace",
+        "rbac",
+        "secrets",
+        "uuid",
+        "watcher"
+      ],
+      "title": "Values"
+    },
+    "Admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "antiAffinity": {
+          "type": "boolean"
+        },
+        "terminationGracePeriodSeconds": {
+          "type": "integer"
+        },
+        "failurePolicy": {
+          "type": "string"
+        },
+        "env": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Env"
+          }
+        },
+        "envFrom": {
+          "type": "array",
+          "items": {}
+        },
+        "image": {
+          "type": "string"
+        },
+        "annotations": {
+          "$ref": "#/definitions/Annotations"
+        },
+        "labels": {
+          "$ref": "#/definitions/AdmissionLabels"
+        },
+        "securityContext": {
+          "$ref": "#/definitions/SecurityContext"
+        },
+        "readinessProbe": {
+          "$ref": "#/definitions/NessProbe"
+        },
+        "livenessProbe": {
+          "$ref": "#/definitions/NessProbe"
+        },
+        "resources": {
+          "$ref": "#/definitions/Resources"
+        },
+        "containerSecurityContext": {
+          "$ref": "#/definitions/ContainerSecurityContext"
+        },
+        "podAnnotations": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "podLabels": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "nodeSelector": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {}
+        },
+        "extraVolumeMounts": {
+          "type": "array",
+          "items": {}
+        },
+        "extraVolumes": {
+          "type": "array",
+          "items": {}
+        },
+        "affinity": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "serviceMonitor": {
+          "$ref": "#/definitions/ServiceMonitor"
+        }
+      },
+      "required": [
+        "affinity",
+        "annotations",
+        "containerSecurityContext",
+        "enabled",
+        "env",
+        "envFrom",
+        "extraVolumeMounts",
+        "extraVolumes",
+        "image",
+        "labels",
+        "livenessProbe",
+        "nodeSelector",
+        "podAnnotations",
+        "podLabels",
+        "readinessProbe",
+        "resources",
+        "securityContext",
+        "serviceMonitor",
+        "terminationGracePeriodSeconds",
+        "tolerations"
+      ],
+      "title": "Admission"
+    },
+    "Affinity": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "Annotations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pepr.dev/description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pepr.dev/description"
+      ],
+      "title": "Annotations"
+    },
+    "ContainerSecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsUser": {
+          "type": "integer"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "$ref": "#/definitions/Capabilities"
+        }
+      },
+      "required": [
+        "allowPrivilegeEscalation",
+        "capabilities",
+        "runAsGroup",
+        "runAsNonRoot",
+        "runAsUser"
+      ],
+      "title": "ContainerSecurityContext"
+    },
+    "Capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "drop": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "drop"
+      ],
+      "title": "Capabilities"
+    },
+    "Env": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ],
+      "title": "Env"
+    },
+    "AdmissionLabels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "app": {
+          "type": "string"
+        },
+        "pepr.dev/controller": {
+          "type": "string"
+        },
+        "pepr.dev/uuid": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "app",
+        "pepr.dev/controller",
+        "pepr.dev/uuid"
+      ],
+      "title": "AdmissionLabels"
+    },
+    "NessProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "httpGet": {
+          "$ref": "#/definitions/HTTPGet"
+        },
+        "initialDelaySeconds": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "httpGet",
+        "initialDelaySeconds"
+      ],
+      "title": "NessProbe"
+    },
+    "HTTPGet": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "scheme": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "port",
+        "scheme"
+      ],
+      "title": "HTTPGet"
+    },
+    "Resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requests": {
+          "$ref": "#/definitions/Limits"
+        },
+        "limits": {
+          "$ref": "#/definitions/Limits"
+        }
+      },
+      "required": [
+        "limits",
+        "requests"
+      ],
+      "title": "Resources"
+    },
+    "Limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "memory": {
+          "type": "string"
+        },
+        "cpu": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "cpu",
+        "memory"
+      ],
+      "title": "Limits"
+    },
+    "SecurityContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsUser": {
+          "type": "integer"
+        },
+        "runAsGroup": {
+          "type": "integer"
+        },
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "fsGroup": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "fsGroup",
+        "runAsGroup",
+        "runAsNonRoot",
+        "runAsUser"
+      ],
+      "title": "SecurityContext"
+    },
+    "ServiceMonitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "labels": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "annotations": {
+          "$ref": "#/definitions/Affinity"
+        }
+      },
+      "required": [
+        "annotations",
+        "enabled",
+        "labels"
+      ],
+      "title": "ServiceMonitor"
+    },
+    "Namespace": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "annotations": {
+          "$ref": "#/definitions/Affinity"
+        },
+        "labels": {
+          "$ref": "#/definitions/NamespaceLabels"
+        }
+      },
+      "required": [
+        "annotations",
+        "labels"
+      ],
+      "title": "Namespace"
+    },
+    "NamespaceLabels": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pepr.dev": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "pepr.dev"
+      ],
+      "title": "NamespaceLabels"
+    },
+    "Rbac": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "apiGroups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "resources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "verbs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "apiGroups",
+        "resources",
+        "verbs"
+      ],
+      "title": "Rbac"
+    },
+    "Secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "apiPath": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "apiPath"
+      ],
+      "title": "Secrets"
+    }
+  }
+}

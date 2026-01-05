@@ -1,0 +1,97 @@
+{{- if .Values.watcher.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.uuid }}-watcher
+  namespace: pepr-system
+  annotations:
+    {{- toYaml .Values.watcher.annotations | nindent 4 }}
+  labels:
+    {{- toYaml .Values.watcher.labels | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ .Values.uuid }}-watcher
+      pepr.dev/controller: watcher
+  template:
+    metadata:
+      annotations: 
+        buildTimestamp: "1767650647544"
+        {{- if .Values.watcher.podAnnotations }}
+        {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        app: {{ .Values.uuid }}-watcher
+        pepr.dev/controller: watcher
+        {{- if .Values.watcher.podLabels }}
+        {{- toYaml .Values.watcher.podLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
+      serviceAccountName: {{ .Values.uuid }}
+      securityContext:
+        {{- toYaml .Values.watcher.securityContext | nindent 8 }}
+      nodeSelector:
+        {{- toYaml .Values.watcher.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.watcher.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.watcher.affinity | nindent 8 }}
+      containers:
+        - name: watcher
+          image: {{ .Values.watcher.image }}
+          imagePullPolicy: IfNotPresent
+          {{- if gt (len .Values.imagePullSecrets) 0 }}
+          imagePullSecrets:
+            {{- range .Values.imagePullSecrets }}
+            - name: {{ . }}
+            {{- end }}
+          {{- end }}
+          args:
+            - /app/node_modules/pepr/dist/controller.js
+            - {{ .Values.hash }}
+          readinessProbe:
+            {{- toYaml .Values.watcher.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.watcher.livenessProbe | nindent 12 }}
+          ports:
+            - containerPort: 3000
+          resources:
+            {{- toYaml .Values.watcher.resources | nindent 12 }}
+          env:
+            {{- toYaml .Values.watcher.env | nindent 12 }}
+            - name: PEPR_WATCH_MODE
+              value: "true"
+            {{- if .Values.additionalIgnoredNamespaces }}
+            - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
+              value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
+            {{- end }}
+          envFrom:
+            {{- toYaml .Values.watcher.envFrom | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.watcher.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/certs
+              readOnly: true
+            - name: module
+              mountPath: /app/load
+              readOnly: true
+            {{- if .Values.watcher.extraVolumeMounts }}
+            {{- toYaml .Values.watcher.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: {{ .Values.uuid }}-tls
+        - name: module
+          secret:
+            secretName: {{ .Values.uuid }}-module
+        {{- if .Values.watcher.extraVolumes }}
+        {{- toYaml .Values.watcher.extraVolumes | nindent 8 }}
+        {{- end }}
+{{- end }}
+    

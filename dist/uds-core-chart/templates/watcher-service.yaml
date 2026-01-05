@@ -1,0 +1,17 @@
+{{- if .Values.watcher.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: pepr-uds-core-watcher
+  namespace: pepr-system
+  labels:
+    pepr.dev/controller: watcher
+spec:
+  selector:
+    app: pepr-uds-core-watcher
+    pepr.dev/controller: watcher
+  ports:
+  - port: 443
+    targetPort: 3000
+{{- end }}
+    

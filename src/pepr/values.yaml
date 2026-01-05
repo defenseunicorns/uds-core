@@ -15,7 +15,9 @@ watcher:
     - name: "PEPR_PRETTY_LOG"
       value: "false"
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
+    - name: PEPR_GRPC_SERVER_ADDRESS
+      value: shared-informer:50051
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
@@ -30,4 +32,6 @@ admission:
     - name: "PEPR_PRETTY_LOG"
       value: "false"
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
+    - name: PEPR_GRPC_SERVER_ADDRESS
+      value: shared-informer:50051

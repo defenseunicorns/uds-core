@@ -1,0 +1,17 @@
+kind: ZarfPackageConfig
+metadata:
+  name: pepr-uds-core
+  description: 'Pepr Module: A collection of capabilities for UDS Core'
+  url: https://github.com/defenseunicorns/pepr
+  version: 0.6.0
+components:
+  - name: module
+    required: true
+    images:
+      - cmwylie19/pepr-controller:0.0.0 
+      - cmwylie19/shared-informer:0.0.0.0
+    charts:
+      - name: module
+        namespace: pepr-system
+        version: 0.6.0
+        localPath: uds-core-chart

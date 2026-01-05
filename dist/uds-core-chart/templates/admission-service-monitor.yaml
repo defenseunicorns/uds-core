@@ -1,0 +1,24 @@
+{{- if .Values.admission.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: admission
+  namespace: pepr-system
+  annotations:
+    {{- toYaml .Values.admission.serviceMonitor.annotations | nindent 4 }}
+  labels:
+    {{- toYaml .Values.admission.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      pepr.dev/controller: admission
+  namespaceSelector:
+    matchNames:
+      - pepr-system
+  endpoints:
+    - targetPort: 3000
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+{{- end }}
+    

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: shared-informer
+    zarf.dev/agent: ignore
+  name: shared-informer
+  namespace: pepr-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shared-informer
+      zarf.dev/agent: ignore
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: shared-informer
+        zarf.dev/agent: ignore
+    spec:
+      serviceAccountName: pepr-uds-core
+      containers:
+      - image: cmwylie19/shared-informer:0.0.0
+        name: watch-informer
+        resources: {}
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: shared-informer
+  name: shared-informer
+  namespace: pepr-system
+spec:
+  ports:
+  - port: 50051
+    protocol: TCP
+    targetPort: 50051
+  selector:
+    app: shared-informer
+status:
+  loadBalancer: {}

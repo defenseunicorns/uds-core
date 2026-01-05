@@ -1,0 +1,117 @@
+{{- if .Values.admission.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.uuid }}
+  namespace: pepr-system
+  annotations:
+    {{- toYaml .Values.admission.annotations | nindent 4 }}
+  labels:
+    {{- toYaml .Values.admission.labels | nindent 4 }}
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: {{ .Values.uuid }}
+      pepr.dev/controller: admission
+  template:
+    metadata:
+      annotations:
+        buildTimestamp: "1767650647544"
+        {{- if .Values.admission.podAnnotations }}
+        {{- toYaml .Values.admission.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        app: {{ .Values.uuid }}
+        pepr.dev/controller: admission
+        {{- if .Values.admission.podLabels }}
+        {{- toYaml .Values.admission.podLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
+      affinity:
+      {{- if .Values.admission.antiAffinity }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: pepr.dev/controller
+                    operator: In
+                    values:
+                      - admission
+              topologyKey: "kubernetes.io/hostname"
+      {{- end }}
+      {{- if .Values.admission.affinity }}
+        {{- toYaml .Values.admission.affinity | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      nodeSelector:
+        {{- toYaml .Values.admission.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.admission.tolerations | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.admission.terminationGracePeriodSeconds }}
+      priorityClassName: system-node-critical
+      serviceAccountName: {{ .Values.uuid }}
+      securityContext:
+        {{- toYaml .Values.admission.securityContext | nindent 8 }}
+      containers:
+        - name: server
+          image: {{ .Values.admission.image }}
+          imagePullPolicy: IfNotPresent
+          {{- if gt (len .Values.imagePullSecrets) 0 }}
+          imagePullSecrets:
+            {{- range .Values.imagePullSecrets }}
+            - name: {{ . }}
+            {{- end }}
+          {{- end }}
+          args:
+            - /app/node_modules/pepr/dist/controller.js
+            - {{ .Values.hash }}
+          readinessProbe:
+            {{- toYaml .Values.admission.readinessProbe | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.admission.livenessProbe | nindent 12 }}
+          ports:
+            - containerPort: 3000
+          resources:
+            {{- toYaml .Values.admission.resources | nindent 12 }}
+          env:
+            {{- toYaml .Values.admission.env | nindent 12 }}
+            - name: PEPR_WATCH_MODE
+              value: "false"
+            {{- if .Values.additionalIgnoredNamespaces }}
+            - name: PEPR_ADDITIONAL_IGNORED_NAMESPACES
+              value: "{{ join ", " .Values.additionalIgnoredNamespaces }}"
+            {{- end }}
+          envFrom:
+            {{- toYaml .Values.admission.envFrom | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.admission.containerSecurityContext | nindent 12 }}
+          volumeMounts:
+            - name: tls-certs
+              mountPath: /etc/certs
+              readOnly: true
+            - name: api-path
+              mountPath: /app/api-path
+              readOnly: true
+            - name: module
+              mountPath: /app/load
+              readOnly: true
+            {{- if .Values.admission.extraVolumeMounts }}
+            {{- toYaml .Values.admission.extraVolumeMounts | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tls-certs
+          secret:
+            secretName: {{ .Values.uuid }}-tls
+        - name: api-path
+          secret:
+            secretName: {{ .Values.uuid }}-api-path
+        - name: module
+          secret:
+            secretName: {{ .Values.uuid }}-module  
+        {{- if .Values.admission.extraVolumes }}
+        {{- toYaml .Values.admission.extraVolumes | nindent 8 }}
+        {{- end }}
+{{- end }}
+    
