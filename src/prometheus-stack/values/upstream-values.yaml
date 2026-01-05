@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: v0.29.0
+      tag: v0.30.0
 kube-state-metrics:
   image:
     registry: registry.k8s.io
@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v3.8.0
+      tag: v3.8.1
 prometheus-node-exporter:
   image:
     registry: quay.io
