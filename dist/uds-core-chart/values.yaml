@@ -20,6 +20,7 @@ hash: '5eb4cf4cc716529c463278260aa710927d8e6d17a3821b87ac4ab2feb32218ff'
 namespace:
   annotations: {}
   labels:
+    zarf.dev/agent: ignore
     pepr.dev: ''
 uuid: 'pepr-uds-core'
 admission:
@@ -42,6 +43,7 @@ admission:
     app: 'pepr-uds-core'
     pepr.dev/controller: 'admission'
     pepr.dev/uuid: 'uds-core'
+    zarf.dev/agent: ignore
   securityContext:
     runAsUser: 65532
     runAsGroup: 65532
@@ -103,6 +105,7 @@ watcher:
     app: 'pepr-uds-core-watcher'
     pepr.dev/controller: 'watcher'
     pepr.dev/uuid: 'uds-core'
+    zarf.dev/agent: ignore
   securityContext:
     runAsUser: 65532
     runAsGroup: 65532

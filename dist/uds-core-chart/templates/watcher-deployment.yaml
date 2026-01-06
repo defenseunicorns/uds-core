@@ -29,6 +29,7 @@ spec:
         {{- if .Values.watcher.podLabels }}
         {{- toYaml .Values.watcher.podLabels | nindent 8 }}
         {{- end }}
+        zarf.dev/agent: ignore
     spec:
       terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
       serviceAccountName: {{ .Values.uuid }}

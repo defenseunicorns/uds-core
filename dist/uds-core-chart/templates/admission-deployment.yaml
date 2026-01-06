@@ -27,6 +27,7 @@ spec:
         {{- if .Values.admission.podLabels }}
         {{- toYaml .Values.admission.podLabels | nindent 8 }}
         {{- end }}
+        zarf.dev/agent: ignore
     spec:
       {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
       affinity:
