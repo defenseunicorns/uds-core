@@ -2,11 +2,11 @@
  * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
+import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
-import { getPortsForHostAllow } from "./egress-ports";
+import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
@@ -14,6 +14,9 @@ import {
 } from "./egress-sidecar";
 import { ambientEgressNamespace, log } from "./istio-resources";
 import {
+  AmbientEgressRule,
+  AmbientPackageEntry,
+  AmbientPackageMap,
   EgressResource,
   EgressResourceMap,
   HostPortsProtocol,
@@ -25,23 +28,19 @@ import {
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
 
-// Lock to prevent concurrent updates to the inMemoryPackageMap
-let sidecarLock = false;
-// eslint-disable-next-line prefer-const
-let sidecarLockQueue: (() => void)[] = [];
+let sidecarMapUpdateQueue: Promise<void> = Promise.resolve();
 
 // Cache for in-memory ambient egress resources from package CRs
-export const inMemoryAmbientPackageMap: PackageHostMap = {};
-let ambientLock = false;
-// eslint-disable-next-line prefer-const
-let ambientLockQueue: (() => void)[] = [];
+export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
+
+let ambientMapUpdateQueue: Promise<void> = Promise.resolve();
 
 // Mutexes to prevent concurrent reconciliation operations for each mode
-let reconciliationMutex: Promise<void> | null = null;
+let reconcileInFlight: Promise<void> | null = null;
 
 // Flag to ensure we never skip a reconciliation request that arrives
 // while a reconciliation is in progress.
-let reconciliationRequestedDuringRun = false;
+let reconcileDirty = false;
 
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
@@ -50,29 +49,80 @@ let ambientGeneration = 0;
 // reconcileSharedEgressResources reconciles the egress resources based on the config
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
 export async function reconcileSharedEgressResources(
+  pkg: UDSPackage,
   hostResourceMap: HostResourceMap | undefined,
-  pkgId: string,
   action: PackageAction,
   istioMode: Mode,
 ) {
+  const pkgName = pkg.metadata?.name;
+  const pkgNamespace = pkg.metadata?.namespace;
+  if (!pkgName || !pkgNamespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+  const pkgId = `${pkgName}-${pkgNamespace}`;
+
   // Update in-memory maps based on the target mode
   if (istioMode === Mode.Ambient) {
     // Remove from sidecar map (handles sidecar -> ambient transition)
     await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 
     // Update ambient package list
-    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, action);
+    await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
   } else {
     // Update sidecar map
     await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
     // Remove from ambient list (handles ambient -> sidecar transition)
-    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+    await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
   }
 
   // Reconcile both modes to ensure proper cleanup and application
   // This handles mode transitions and prevents resource conflicts
   return await performEgressReconciliationWithMutex(pkgId);
+}
+
+function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
+  const name = pkg.metadata?.name;
+  const namespace = pkg.metadata?.namespace;
+  if (!name || !namespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+
+  const rules: AmbientEgressRule[] = [];
+  for (const allow of pkg.spec?.network?.allow ?? []) {
+    if (allow.direction !== Direction.Egress) {
+      continue;
+    }
+
+    // Anywhere participants (no host) used for AP sources.
+    if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
+      rules.push({
+        kind: "anywhere",
+        ports: getAllowedPorts(allow),
+        serviceAccount: allow.serviceAccount,
+      });
+      continue;
+    }
+
+    // Host-scoped egress rules
+    if (allow.remoteHost) {
+      const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
+      const ports = getPortsForHostAllow({
+        ports: allow.ports,
+        port: allow.port,
+        remoteProtocol: protocol,
+      });
+      rules.push({
+        kind: "host",
+        host: allow.remoteHost,
+        ports,
+        protocol,
+        serviceAccount: allow.serviceAccount,
+      });
+    }
+  }
+
+  return { name, namespace, rules };
 }
 
 // Mutex-based reconciliation to prevent overwhelming the operator
@@ -81,30 +131,43 @@ export async function performEgressReconciliationWithMutex(_pkgId: string): Prom
 
   // If a reconciliation is already running, mark that another run is needed and wait.
   // The running reconciliation will do an additional pass before releasing the mutex.
-  if (reconciliationMutex) {
-    reconciliationRequestedDuringRun = true;
-    await reconciliationMutex;
+  if (reconcileInFlight) {
+    reconcileDirty = true;
+    await reconcileInFlight;
     return;
   }
 
   // Start a new reconciliation loop.
-  reconciliationRequestedDuringRun = true;
-  reconciliationMutex = (async () => {
-    while (reconciliationRequestedDuringRun) {
-      reconciliationRequestedDuringRun = false;
+  reconcileDirty = true;
+  reconcileInFlight = (async () => {
+    const startMs = Date.now();
+    let passCount = 0;
+
+    while (reconcileDirty) {
+      reconcileDirty = false;
+      passCount++;
       await performEgressReconciliation();
     }
+
+    log.debug(
+      {
+        passCount,
+        durationMs: Date.now() - startMs,
+        additionalPasses: passCount > 1,
+      },
+      "Egress reconciliation completed",
+    );
   })();
 
   try {
-    await reconciliationMutex;
+    await reconcileInFlight;
   } catch (e) {
     // Log the error and re-throw to maintain error propagation
     log.error("Egress reconciliation failed", e);
     throw e;
   } finally {
     // Clear the mutex when done
-    reconciliationMutex = null;
+    reconcileInFlight = null;
   }
 }
 
@@ -138,11 +201,10 @@ export async function performEgressReconciliation() {
       ambientGeneration++;
 
       // Apply ambient egress resources (waypoint). Only purge if apply succeeds.
-      const packageSet = new Set(Object.keys(inMemoryAmbientPackageMap));
-      await applyAmbientEgressResources(packageSet, ambientGeneration);
+      await applyAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration);
 
       // Purge any orphaned ambient resources (waypoint)
-      await purgeAmbientEgressResources(ambientGeneration.toString());
+      await purgeAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration.toString());
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
@@ -163,85 +225,53 @@ export async function updateInMemoryPackageMap(
   pkgId: string,
   action: PackageAction,
 ) {
-  // Wait for lock to be available using a promise-based queue
-  if (sidecarLock) {
-    await new Promise<void>(resolve => {
-      sidecarLockQueue.push(resolve);
-    });
-  }
-
-  try {
-    log.debug("Locking egress package map for update");
-    sidecarLock = true;
-
-    if (action == PackageAction.AddOrUpdate) {
-      if (hostResourceMap) {
-        // Validate for protocol conflicts before updating
-        validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
-        // update inMemoryPackageMap
-        inMemoryPackageMap[pkgId] = hostResourceMap;
-      } else {
+  const task = sidecarMapUpdateQueue
+    .catch(() => undefined)
+    .then(() => {
+      if (action == PackageAction.AddOrUpdate) {
+        if (hostResourceMap) {
+          // Validate for protocol conflicts before updating
+          validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+          // update inMemoryPackageMap
+          inMemoryPackageMap[pkgId] = hostResourceMap;
+        } else {
+          removeMapResources(inMemoryPackageMap, pkgId);
+        }
+      } else if (action == PackageAction.Remove) {
         removeMapResources(inMemoryPackageMap, pkgId);
       }
-    } else if (action == PackageAction.Remove) {
-      removeMapResources(inMemoryPackageMap, pkgId);
-    }
-  } catch (e) {
-    log.error({ action, e }, "Failed to update in memory egress package map for event");
-    throw e;
-  } finally {
-    // unlock inMemoryPackageMap and notify next waiter
-    log.debug("Unlocking egress package map for update");
-    sidecarLock = false;
-    const nextResolve = sidecarLockQueue.shift();
-    if (nextResolve) {
-      nextResolve();
-    }
-  }
+    });
+
+  // Keep the queue healthy even if this update fails.
+  sidecarMapUpdateQueue = task.catch(() => undefined);
+  return task;
 }
 
 // Update the inMemoryAmbientPackages list with the latest package
 export async function updateInMemoryAmbientPackageMap(
-  hostResourceMap: HostResourceMap | undefined,
+  pkg: UDSPackage | undefined,
   pkgId: string,
   action: PackageAction,
 ) {
-  // Wait for lock to be available using a promise-based queue
-  if (ambientLock) {
-    await new Promise<void>(resolve => {
-      ambientLockQueue.push(resolve);
-    });
-  }
-
-  try {
-    log.debug("Locking ambient package map for update");
-    ambientLock = true;
-
-    if (action == PackageAction.AddOrUpdate) {
-      if (hostResourceMap) {
-        // Validate for protocol conflicts before updating
-        validateProtocolConflicts(inMemoryAmbientPackageMap, hostResourceMap, pkgId);
-
-        // Set the package map if no conflicts
-        inMemoryAmbientPackageMap[pkgId] = hostResourceMap;
-      } else {
-        removeMapResources(inMemoryAmbientPackageMap, pkgId);
+  const task = ambientMapUpdateQueue
+    .catch(() => undefined)
+    .then(() => {
+      if (action == PackageAction.AddOrUpdate) {
+        if (!pkg) {
+          throw new Error("Package is required for AddOrUpdate");
+        }
+        const entry = createAmbientPackageEntry(pkg);
+        inMemoryAmbientPackageMap[pkgId] = entry;
+      } else if (action == PackageAction.Remove) {
+        if (inMemoryAmbientPackageMap[pkgId]) {
+          delete inMemoryAmbientPackageMap[pkgId];
+        }
       }
-    } else if (action == PackageAction.Remove) {
-      removeMapResources(inMemoryAmbientPackageMap, pkgId);
-    }
-  } catch (e) {
-    log.error({ action, e }, "Failed to update in memory ambient package map for event");
-    throw e;
-  } finally {
-    // unlock inMemoryAmbientPackages and notify next waiter
-    log.debug("Unlocking ambient package map for update");
-    ambientLock = false;
-    const nextResolve = ambientLockQueue.shift();
-    if (nextResolve) {
-      nextResolve();
-    }
-  }
+    });
+
+  // Keep the queue healthy even if this update fails.
+  ambientMapUpdateQueue = task.catch(() => undefined);
+  return task;
 }
 
 // Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)

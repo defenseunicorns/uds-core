@@ -4,22 +4,13 @@
  */
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
-import {
-  Direction,
-  IstioAuthorizationPolicy,
-  IstioServiceEntry,
-  K8sGateway,
-  RemoteGenerated,
-  RemoteProtocol,
-  UDSPackage,
-} from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
 import { purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
-import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
 import { generateSharedAmbientServiceEntry } from "./service-entry";
+import { AmbientPackageMap } from "./types";
 
 function addPortsToMap(map: Map<string, Set<number>>, key: string, ports: number[]) {
   const portSet = map.get(key) ?? new Set<number>();
@@ -71,36 +62,22 @@ export function deriveOwnersFromContributors(
   host: string,
   port: number,
   contributingPkgIds: string[],
-  pkgItems: UDSPackage[],
+  ambientMap: AmbientPackageMap,
 ) {
   const ownerSaPrincipals = new Set<string>();
   const ownerNamespaces = new Set<string>();
-  const contributing = new Set(contributingPkgIds ?? []);
-  for (const pkg of pkgItems) {
-    // During deletion, the Package can remain visible while its finalizer runs.
-    // Exclude these to avoid temporarily granting identities from a removing package.
-    if (pkg.metadata?.deletionTimestamp) {
-      continue;
-    }
-    const ns = pkg.metadata?.namespace;
-    const name = pkg.metadata?.name;
-    if (!ns || !name) {
-      continue;
-    }
-    const id = `${name}-${ns}`;
-    const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-    if (!contributing.has(id) || mode !== Mode.Ambient) continue;
-    for (const allow of pkg.spec?.network?.allow ?? []) {
-      if (allow.direction === Direction.Egress && allow.remoteHost === host) {
-        const ports = getPortsForHostAllow(allow);
-        if (!ports.includes(port)) {
-          continue;
-        }
-        if (allow.serviceAccount) {
-          ownerSaPrincipals.add(`cluster.local/ns/${ns}/sa/${allow.serviceAccount}`);
-        } else {
-          ownerNamespaces.add(ns);
-        }
+
+  for (const pkgId of contributingPkgIds ?? []) {
+    const entry = ambientMap[pkgId];
+    if (!entry) continue;
+    for (const rule of entry.rules) {
+      if (rule.kind !== "host") continue;
+      if (rule.host !== host) continue;
+      if (!rule.ports.includes(port)) continue;
+      if (rule.serviceAccount) {
+        ownerSaPrincipals.add(`cluster.local/ns/${entry.namespace}/sa/${rule.serviceAccount}`);
+      } else {
+        ownerNamespaces.add(entry.namespace);
       }
     }
   }
@@ -108,11 +85,10 @@ export function deriveOwnersFromContributors(
 }
 
 // Apply the ambient egress resources
-export async function applyAmbientEgressResources(_packageList: Set<string>, generation: number) {
-  // Fetch UDSPackages once to derive identities and avoid PackageStore timing issues
-  const pkgList = await K8s(UDSPackage).Get();
-  const pkgItems = (pkgList as { items?: UDSPackage[] } | undefined)?.items ?? [];
-
+export async function applyAmbientEgressResources(
+  ambientMap: AmbientPackageMap,
+  generation: number,
+) {
   // Initialize the cache
   const identityCache: IdentityCache = {
     anywhere: {
@@ -124,13 +100,6 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
     byHostPort: new Map(),
   };
 
-  // Filter only ambient packages for faster processing
-  const ambientPkgs = pkgItems.filter(
-    pkg =>
-      !pkg.metadata?.deletionTimestamp &&
-      (pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar) === Mode.Ambient,
-  );
-
   // Build merged per-host resources from live packages (not the in-memory map) so that
   // shared ambient egress reconciliation remains correct across watcher restarts/OOM.
   const merged: Record<
@@ -141,26 +110,35 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
   const conflictedHosts = new Set<string>();
   const hostPortProtocols: Record<string, RemoteProtocol> = {};
 
-  for (const pkg of ambientPkgs) {
-    const ns = pkg.metadata?.namespace;
-    const name = pkg.metadata?.name;
-    if (!ns || !name) {
-      continue;
-    }
-    const pkgId = `${name}-${ns}`;
-
-    for (const allow of pkg.spec?.network?.allow ?? []) {
-      if (allow.direction !== Direction.Egress || !allow.remoteHost) {
-        continue;
+  for (const [pkgId, entry] of Object.entries(ambientMap)) {
+    // Anywhere participants
+    for (const rule of entry.rules) {
+      if (rule.kind === "anywhere") {
+        const allowedPorts = rule.ports;
+        if (rule.serviceAccount) {
+          const principal = `cluster.local/ns/${entry.namespace}/sa/${rule.serviceAccount}`;
+          if (!allowedPorts) {
+            identityCache.anywhere.saPrincipals.add(principal);
+          } else {
+            addPortsToMap(identityCache.anywhere.saPrincipalsByPorts, principal, allowedPorts);
+          }
+        } else {
+          if (!allowedPorts) {
+            identityCache.anywhere.namespaces.add(entry.namespace);
+          } else {
+            addPortsToMap(identityCache.anywhere.namespacesByPorts, entry.namespace, allowedPorts);
+          }
+        }
       }
+    }
 
-      const host = allow.remoteHost;
-      const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
-      const ports = getPortsForHostAllow({
-        ports: allow.ports,
-        port: allow.port,
-        remoteProtocol: protocol,
-      });
+    // Host owners + merged host resources
+    for (const rule of entry.rules) {
+      if (rule.kind !== "host") continue;
+
+      const host = rule.host;
+      const protocol = rule.protocol ?? RemoteProtocol.TLS;
+      const ports = rule.ports;
 
       for (const port of ports) {
         const key = `${host}:${port}`;
@@ -174,7 +152,7 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
               newProtocol: protocol,
               pkgId,
             },
-            "Protocol conflict detected for host/port while deriving ambient egress resources from live packages",
+            "Protocol conflict detected for host/port while deriving ambient egress resources from in-memory packages",
           );
           conflictedHosts.add(host);
           continue;
@@ -193,6 +171,21 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
         if (!exists) {
           merged[host].portProtocols.push({ port, protocol });
         }
+
+        const hostPortMap = identityCache.byHostPort.get(host) ?? new Map();
+        const portCache = hostPortMap.get(port) ?? {
+          saPrincipals: new Set<string>(),
+          namespaces: new Set<string>(),
+        };
+        if (rule.serviceAccount) {
+          portCache.saPrincipals.add(
+            `cluster.local/ns/${entry.namespace}/sa/${rule.serviceAccount}`,
+          );
+        } else {
+          portCache.namespaces.add(entry.namespace);
+        }
+        hostPortMap.set(port, portCache);
+        identityCache.byHostPort.set(host, hostPortMap);
       }
 
       contributingPkgIds.add(pkgId);
@@ -211,62 +204,6 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
   log.debug(waypoint, `Applying Waypoint ${waypointName}`);
   await K8s(K8sGateway).Apply(waypoint, { force: true });
   await waitForWaypointPodHealthy(ambientEgressNamespace, waypointName);
-
-  // Process each ambient package
-  for (const pkg of ambientPkgs) {
-    const ns = pkg.metadata?.namespace;
-    if (!ns) {
-      continue;
-    }
-
-    // Filter only egress rules for faster processing
-    const egressRules = (pkg.spec?.network?.allow ?? []).filter(
-      allow => allow.direction === Direction.Egress,
-    );
-
-    for (const allow of egressRules) {
-      // Process Anywhere participants
-      if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
-        const allowedPorts = getAllowedPorts(allow);
-
-        if (allow.serviceAccount) {
-          const principal = `cluster.local/ns/${ns}/sa/${allow.serviceAccount}`;
-          if (!allowedPorts) {
-            identityCache.anywhere.saPrincipals.add(principal);
-          } else {
-            addPortsToMap(identityCache.anywhere.saPrincipalsByPorts, principal, allowedPorts);
-          }
-        } else {
-          if (!allowedPorts) {
-            identityCache.anywhere.namespaces.add(ns);
-          } else {
-            addPortsToMap(identityCache.anywhere.namespacesByPorts, ns, allowedPorts);
-          }
-        }
-        continue;
-      }
-
-      // Process host owners
-      if (allow.remoteHost) {
-        const ports = getPortsForHostAllow(allow);
-        const host = allow.remoteHost;
-        const hostPortMap = identityCache.byHostPort.get(host) ?? new Map();
-        for (const port of ports) {
-          const portCache = hostPortMap.get(port) ?? {
-            saPrincipals: new Set<string>(),
-            namespaces: new Set<string>(),
-          };
-          if (allow.serviceAccount) {
-            portCache.saPrincipals.add(`cluster.local/ns/${ns}/sa/${allow.serviceAccount}`);
-          } else {
-            portCache.namespaces.add(ns);
-          }
-          hostPortMap.set(port, portCache);
-        }
-        identityCache.byHostPort.set(host, hostPortMap);
-      }
-    }
-  }
 
   // Extract the sets for use in the rest of the function
   const participantAnyPortSaPrincipals = identityCache.anywhere.saPrincipals;
@@ -312,7 +249,12 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
       const ownerNamespaces = new Set<string>(portOwners?.namespaces ?? []);
 
       if (ownerSaPrincipals.size === 0 && ownerNamespaces.size === 0) {
-        const derived = deriveOwnersFromContributors(host, port, resource.packages ?? [], pkgItems);
+        const derived = deriveOwnersFromContributors(
+          host,
+          port,
+          resource.packages ?? [],
+          ambientMap,
+        );
         for (const p of derived.ownerSaPrincipals) ownerSaPrincipals.add(p);
         for (const n of derived.ownerNamespaces) ownerNamespaces.add(n);
       }
@@ -379,18 +321,12 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
   // Only for packages that are Ambient and contributed to this central reconcile
   try {
     const contribIds = new Set(Array.from(contributingPkgIds)); // ids are `${name}-${namespace}`
-    for (const pkg of pkgItems) {
-      const ns = pkg.metadata?.namespace;
-      const name = pkg.metadata?.name;
-      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-      if (!ns || !name || mode !== Mode.Ambient) continue;
-      const id = `${name}-${ns}`;
-      if (!contribIds.has(id)) continue;
-
-      await deleteBySelector(ns, name, IstioServiceEntry, {
+    for (const [pkgId, entry] of Object.entries(ambientMap)) {
+      if (!contribIds.has(pkgId)) continue;
+      await deleteBySelector(entry.namespace, entry.name, IstioServiceEntry, {
         "istio.io/use-waypoint": "egress-waypoint",
       });
-      await deleteBySelector(ns, name, IstioAuthorizationPolicy, {
+      await deleteBySelector(entry.namespace, entry.name, IstioAuthorizationPolicy, {
         "uds/for": "egress",
       });
     }
@@ -403,21 +339,17 @@ export async function applyAmbientEgressResources(_packageList: Set<string>, gen
 }
 
 // Purge any orphaned ambient egress resources
-export async function purgeAmbientEgressResources(generation: string) {
+export async function purgeAmbientEgressResources(
+  ambientMap: AmbientPackageMap,
+  generation: string,
+) {
   try {
     // Determine whether there are any desired shared ambient egress resources.
     // If there are no ambient remoteHost contributors, we should allow purge to
     // clean up any leftover shared resources.
-    const pkgList = await K8s(UDSPackage).Get();
-    const pkgItems = (pkgList as { items?: UDSPackage[] } | undefined)?.items ?? [];
-    const hasRemoteHostContributors = pkgItems.some(pkg => {
-      if (pkg.metadata?.deletionTimestamp) return false;
-      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-      if (mode !== Mode.Ambient) return false;
-      return (pkg.spec?.network?.allow ?? []).some(
-        allow => allow.direction === Direction.Egress && Boolean(allow.remoteHost),
-      );
-    });
+    const hasRemoteHostContributors = Object.values(ambientMap).some(entry =>
+      entry.rules.some(rule => rule.kind === "host"),
+    );
 
     const currentGenGateways = await K8s(K8sGateway)
       .InNamespace(ambientEgressNamespace)

@@ -8,6 +8,7 @@ import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from ".
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks";
+import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 
 import { waitForWaypointPodHealthy } from "./ambient-waypoint";
 import * as apMod from "./auth-policy";
@@ -17,6 +18,8 @@ import {
   deriveOwnersFromContributors,
   purgeAmbientEgressResources,
 } from "./egress-ambient";
+
+import { AmbientPackageMap } from "./types";
 
 import * as seMod from "./service-entry";
 
@@ -63,9 +66,62 @@ vi.mock("pepr", () => ({
 }));
 
 describe("test applyAmbientEgressResources", () => {
+  function buildAmbientMap(pkgs: UDSPackage[]): AmbientPackageMap {
+    const map: AmbientPackageMap = {};
+    for (const pkg of pkgs) {
+      if (pkg.metadata?.deletionTimestamp) continue;
+      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      if (mode !== Mode.Ambient) continue;
+
+      const name = pkg.metadata?.name;
+      const namespace = pkg.metadata?.namespace;
+      if (!name || !namespace) continue;
+
+      const id = `${name}-${namespace}`;
+      const rules = [] as AmbientPackageMap[string]["rules"];
+      for (const allow of pkg.spec?.network?.allow ?? []) {
+        if (allow.direction !== Direction.Egress) continue;
+
+        if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
+          rules.push({
+            kind: "anywhere",
+            ports: getAllowedPorts(allow),
+            serviceAccount: allow.serviceAccount,
+          });
+          continue;
+        }
+
+        if (allow.remoteHost) {
+          const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
+          const ports = getPortsForHostAllow({
+            ports: allow.ports,
+            port: allow.port,
+            remoteProtocol: protocol,
+          });
+          rules.push({
+            kind: "host",
+            host: allow.remoteHost,
+            ports,
+            protocol,
+            serviceAccount: allow.serviceAccount,
+          });
+        }
+      }
+      map[id] = { name, namespace, rules };
+    }
+    return map;
+  }
+
   beforeEach(async () => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   it("should derive owners from contributing package IDs (fallback)", () => {
@@ -113,25 +169,18 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    const derived = deriveOwnersFromContributors(host, 443, contributors, pkgItems);
+    const derived = deriveOwnersFromContributors(
+      host,
+      443,
+      contributors,
+      buildAmbientMap(pkgItems),
+    );
     expect(Array.from(derived.ownerSaPrincipals).sort()).toEqual(["cluster.local/ns/ns1/sa/sa1"]);
     expect(Array.from(derived.ownerNamespaces).sort()).toEqual(["ns2"]);
   });
 
   it("should include Anywhere-only participant across all hosts", async () => {
     updateEgressMocks(defaultEgressMocks);
-
-    // Two hosts in merged resources
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-      "api.github.com": {
-        packages: ["pkg2-ns2"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
 
     const pkgItems: UDSPackage[] = [
       // Owner of example.com
@@ -192,11 +241,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns3"]), 3);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 3);
 
     // Called twice (once per host)
     expect(apSpy).toHaveBeenCalledTimes(2);
@@ -273,11 +320,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2"]), 13);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 13);
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
@@ -349,11 +394,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2"]), 14);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 14);
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
@@ -430,11 +473,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns3"]), 15);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 15);
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
@@ -498,11 +539,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2"]), 11);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 11);
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const identities = apSpy.mock.calls[0][2];
@@ -592,11 +631,9 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns3"]), 12);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 12);
 
     expect(apSpy).toHaveBeenCalledTimes(2);
     const calls = apSpy.mock.calls;
@@ -624,57 +661,48 @@ describe("test applyAmbientEgressResources", () => {
   it("should remove Anywhere participant from central AP identities after deletion", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    // Single host in merged resources
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
-
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
     // First reconcile: owner + Anywhere participant
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({
-      items: [
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "pkg1", namespace: "ns1" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "example.com",
-                  port: 443,
-                  remoteProtocol: RemoteProtocol.TLS,
-                } as Allow,
-              ],
-            },
+    const pkgItems: UDSPackage[] = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "pkg1", namespace: "ns1" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                port: 443,
+                remoteProtocol: RemoteProtocol.TLS,
+              } as Allow,
+            ],
           },
         },
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "pkg2", namespace: "ns2" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteGenerated: RemoteGenerated.Anywhere,
-                  serviceAccount: "caller",
-                } as Allow,
-              ],
-            },
+      },
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "pkg2", namespace: "ns2" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteGenerated: RemoteGenerated.Anywhere,
+                serviceAccount: "caller",
+              } as Allow,
+            ],
           },
         },
-      ],
-    });
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2"]), 7);
+      },
+    ];
+
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 7);
     // Ensure participant included
     const firstIdentities = apSpy.mock.calls[0][2];
     expect(firstIdentities.saPrincipals).toEqual(
@@ -684,29 +712,28 @@ describe("test applyAmbientEgressResources", () => {
     apSpy.mockClear();
 
     // Second reconcile: participant removed
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({
-      items: [
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "pkg1", namespace: "ns1" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "example.com",
-                  port: 443,
-                  remoteProtocol: RemoteProtocol.TLS,
-                } as Allow,
-              ],
-            },
+    const pkgItems2: UDSPackage[] = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "pkg1", namespace: "ns1" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                port: 443,
+                remoteProtocol: RemoteProtocol.TLS,
+              } as Allow,
+            ],
           },
         },
-      ],
-    });
-    await applyAmbientEgressResources(new Set(["pkg1-ns1"]), 8);
+      },
+    ];
+
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems2), 8);
 
     // Ensure participant no longer included
     const secondIdentities = apSpy.mock.calls[0][2];
@@ -732,7 +759,7 @@ describe("test applyAmbientEgressResources", () => {
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
     const pkgItems: UDSPackage[] = [
-      // Owner 1 - duplicates same SA principal via both forms
+      // Owner of example.com
       {
         apiVersion: "uds.dev/v1alpha1",
         kind: "Package",
@@ -796,9 +823,7 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns1"]), 5);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 5);
 
     // Verify AP generation called once and identities sorted/deduped
     expect(apSpy).toHaveBeenCalledTimes(1);
@@ -893,13 +918,10 @@ describe("test applyAmbientEgressResources", () => {
       },
     ];
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: pkgItems });
-
-    // Spy on generators to validate merged outputs
     const seSpy = vi.spyOn(seMod, "generateSharedAmbientServiceEntry");
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2", "pkg3-ns3"]), 1);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 1);
 
     // Waypoint applied, plus one SE and one AP for example.com
     expect(defaultEgressMocks.applyWaypointMock).toHaveBeenCalledTimes(1);
@@ -940,9 +962,9 @@ describe("test applyAmbientEgressResources", () => {
   it("should skip SE/AP when identities are empty (owners and participants not resolved)", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({ items: [] });
+    const pkgItems: UDSPackage[] = [];
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1"]), 1);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 1);
 
     expect(defaultEgressMocks.applyWaypointMock).not.toHaveBeenCalled();
     expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
@@ -955,49 +977,47 @@ describe("test applyAmbientEgressResources", () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Only pkg1-ns1 is active in the cluster (pkg2-ns2 was deleted/changed)
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({
-      items: [
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "pkg1", namespace: "ns1" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "example.com",
-                  serviceAccount: "partial-sa",
-                } as Allow,
-              ],
-            },
+    const pkgItems: UDSPackage[] = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "pkg1", namespace: "ns1" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                serviceAccount: "partial-sa",
+              } as Allow,
+            ],
           },
         },
-        // Other package that doesn't match example.com
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "pkg3", namespace: "ns3" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "different-host.com",
-                } as Allow,
-              ],
-            },
+      },
+      // Other package that doesn't match example.com
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "pkg3", namespace: "ns3" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "different-host.com",
+              } as Allow,
+            ],
           },
         },
-      ],
-    });
+      },
+    ];
 
     // Spy on the auth policy generator to check identity resolution
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
-    await applyAmbientEgressResources(new Set(["pkg1-ns1", "pkg2-ns2"]), 1);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 1);
 
     expect(apSpy).toHaveBeenCalledTimes(2);
     const identities = apSpy.mock.calls.find(call => call[0] === "example.com")?.[2];
@@ -1015,39 +1035,49 @@ describe("test applyAmbientEgressResources", () => {
     apSpy.mockRestore();
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-    vi.clearAllMocks();
-  });
-
   it("should apply ambient egress resources", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({
-      items: [
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "test-package-1", namespace: "test-namespace" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "example.com",
-                  remoteProtocol: RemoteProtocol.TLS,
-                  port: 443,
-                } as Allow,
-              ],
-            },
+    const pkgItems: UDSPackage[] = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "test-package-1", namespace: "test-ns" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                remoteProtocol: RemoteProtocol.TLS,
+                port: 443,
+              } as Allow,
+            ],
           },
-        } as UDSPackage,
-      ],
-    });
+        },
+      },
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "test-package-2", namespace: "test-ns" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                remoteProtocol: RemoteProtocol.TLS,
+                port: 443,
+              } as Allow,
+            ],
+          },
+        },
+      },
+    ];
 
-    await applyAmbientEgressResources(new Set(["test-package-1", "test-package-2"]), 1);
+    await applyAmbientEgressResources(buildAmbientMap(pkgItems), 1);
 
     expect(defaultEgressMocks.applyWaypointMock).toHaveBeenCalledTimes(1);
   });
@@ -1055,45 +1085,43 @@ describe("test applyAmbientEgressResources", () => {
   it("should handle empty package set", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(applyAmbientEgressResources(new Set(), 1)).resolves.not.toThrow();
+    await expect(applyAmbientEgressResources(buildAmbientMap([]), 1)).resolves.not.toThrow();
 
     // No resources should be applied for empty set
     expect(defaultEgressMocks.applyWaypointMock).not.toHaveBeenCalled();
   });
 
-  it("should propagate waitForWaypointPodHealthy failure", async () => {
+  it("should throw if waypoint pod is not healthy", async () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Ensure there is at least one ambient remoteHost contributor so the waypoint is applied.
-    defaultEgressMocks.getPkgListMock.mockResolvedValueOnce({
-      items: [
-        {
-          apiVersion: "uds.dev/v1alpha1",
-          kind: "Package",
-          metadata: { name: "test-package-1", namespace: "test-namespace" },
-          spec: {
-            network: {
-              serviceMesh: { mode: Mode.Ambient },
-              allow: [
-                {
-                  direction: Direction.Egress,
-                  remoteHost: "example.com",
-                  remoteProtocol: RemoteProtocol.TLS,
-                  port: 443,
-                } as Allow,
-              ],
-            },
+    const pkgItems: UDSPackage[] = [
+      {
+        apiVersion: "uds.dev/v1alpha1",
+        kind: "Package",
+        metadata: { name: "test-package-1", namespace: "test-ns" },
+        spec: {
+          network: {
+            serviceMesh: { mode: Mode.Ambient },
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                remoteProtocol: RemoteProtocol.TLS,
+                port: 443,
+              } as Allow,
+            ],
           },
-        } as UDSPackage,
-      ],
-    });
+        },
+      },
+    ];
 
     // Mock waitForWaypointPodHealthy to reject
     const mockWaitForWaypointPodHealthy = vi.mocked(waitForWaypointPodHealthy);
     mockWaitForWaypointPodHealthy.mockRejectedValueOnce(new Error("Pod health check failed"));
 
     // Should throw the error from waitForWaypointPodHealthy
-    await expect(applyAmbientEgressResources(new Set(["test-package-1"]), 1)).rejects.toThrow(
+    await expect(applyAmbientEgressResources(buildAmbientMap(pkgItems), 1)).rejects.toThrow(
       "Pod health check failed",
     );
 
@@ -1121,7 +1149,7 @@ describe("test purgeAmbientEgressResources", () => {
   it("should purge sidecar egress resources", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await purgeAmbientEgressResources("1");
+    await purgeAmbientEgressResources({}, "1");
 
     // Purges Gateway, ServiceEntry, and AuthorizationPolicy in ambient namespace
     expect(mockPurgeOrphans).toHaveBeenCalledTimes(3);
@@ -1132,7 +1160,7 @@ describe("test purgeAmbientEgressResources", () => {
 
     mockPurgeOrphans.mockRejectedValueOnce(new Error(errorMessage));
 
-    await expect(purgeAmbientEgressResources("1")).rejects.toThrow(
+    await expect(purgeAmbientEgressResources({}, "1")).rejects.toThrow(
       "Failed to purge orphaned ambient egress resources",
     );
   });

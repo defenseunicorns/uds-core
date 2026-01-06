@@ -6,13 +6,13 @@
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, validateNamespace } from "../utils";
-import { ambientEgressNamespace, log } from "./istio-resources";
-import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
 } from "./egress";
+import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
+import { ambientEgressNamespace, log } from "./istio-resources";
 import { PackageAction } from "./types";
 
 // Creates ServiceEntry/Sidecar for egress and reconciles shared egress resources
@@ -63,8 +63,8 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
   // Reconcile shared egress resources
   try {
     await reconcileSharedEgressResources(
+      pkg,
       hostResourceMap,
-      pkgId,
       PackageAction.AddOrUpdate,
       istioMode,
     );

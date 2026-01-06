@@ -6,9 +6,9 @@
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { Component, setupLogger } from "../../logger";
 import { UDSConfig } from "../controllers/config/config";
-import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
-import { getPackageId, istioResources } from "../controllers/istio/istio-resources";
+import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
 import { PackageAction } from "../controllers/istio/types";
 import {
@@ -250,8 +250,8 @@ export async function packageFinalizer(pkg: UDSPackage) {
     // Clean annotations and/or remove any shared egress resources
     await retryWithDelay(async function cleanupSharedEgressResources() {
       await reconcileSharedEgressResources(
-        undefined,
-        getPackageId(pkg),
+        pkg,
+        createHostResourceMap(pkg),
         PackageAction.Remove,
         pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar,
       );
