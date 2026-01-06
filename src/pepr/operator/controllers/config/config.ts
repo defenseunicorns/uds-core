@@ -443,13 +443,17 @@ export async function loadUDSConfig() {
 }
 
 /**
- * Creates a redacted copy of UDS config for logging (hides sensitive values)
+ * Creates a redacted copy of UDS config for logging (hides sensitive or large values)
  *
- * @returns UDS config with sensitive fields replaced with masked values
+ * @returns UDS config with sensitive or large fields replaced with masked values
  */
 function redactConfig() {
   const authserviceRedisUri = UDSConfig.authserviceRedisUri ? "****" : "";
-  return { ...UDSConfig, authserviceRedisUri };
+  const dodCerts = UDSConfig.caBundle.dodCerts ? "****" : "";
+  const publicCerts = UDSConfig.caBundle.publicCerts ? "****" : "";
+  const certs = UDSConfig.caBundle.certs ? "****" : "";
+  const caBundle = { ...UDSConfig.caBundle, dodCerts, publicCerts, certs };
+  return { ...UDSConfig, authserviceRedisUri, caBundle };
 }
 
 // Helper function to detect if 2 lists of CIDRs are equal, irrespective of order
