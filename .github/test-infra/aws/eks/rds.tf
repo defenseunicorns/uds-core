@@ -56,7 +56,8 @@ module "dbs" {
   create_db_subnet_group      = true
   create_db_parameter_group   = false
   manage_master_user_password = false
-  password                    = random_password.db_passwords[each.key].result
+  password_wo                 = random_password.db_passwords[each.key].result
+  password_wo_version         = 1
 
   vpc_security_group_ids = [aws_security_group.rds_sg.id]
 
