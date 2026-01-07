@@ -8,18 +8,18 @@ import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi }
 import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
-    createHostResourceMap,
-    egressRequestedFromNetwork,
-    getHostPortsProtocol,
-    inMemoryAmbientPackageMap,
-    inMemoryPackageMap,
-    performEgressReconciliation,
-    performEgressReconciliationWithMutex,
-    reconcileSharedEgressResources,
-    removeMapResources,
-    updateInMemoryAmbientPackageMap,
-    updateInMemoryPackageMap,
-    validateProtocolConflicts,
+  createHostResourceMap,
+  egressRequestedFromNetwork,
+  getHostPortsProtocol,
+  inMemoryAmbientPackageMap,
+  inMemoryPackageMap,
+  performEgressReconciliation,
+  performEgressReconciliationWithMutex,
+  reconcileSharedEgressResources,
+  removeMapResources,
+  updateInMemoryAmbientPackageMap,
+  updateInMemoryPackageMap,
+  validateProtocolConflicts,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 

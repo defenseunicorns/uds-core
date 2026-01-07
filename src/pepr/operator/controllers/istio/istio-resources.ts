@@ -6,12 +6,7 @@
 import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import {
-  IstioServiceEntry,
-  IstioSidecar,
-  IstioVirtualService,
-  UDSPackage,
-} from "../../crd";
+import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
