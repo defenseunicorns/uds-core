@@ -16,7 +16,6 @@ import {
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
-  remapAmbientEgressResources,
   removeMapResources,
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
@@ -34,54 +33,6 @@ vi.mock("./istio-resources", async () => {
       error: vi.fn(),
     },
   };
-});
-
-describe("test remapAmbientEgressResources", () => {
-  it("should union ports/protocols per host and collect contributing packages", () => {
-    const packageMap: PackageHostMap = {
-      "pkg1-ns1": {
-        "example.com": {
-          portProtocol: [
-            { port: 443, protocol: RemoteProtocol.TLS },
-            { port: 80, protocol: RemoteProtocol.HTTP },
-          ],
-        },
-      },
-      "pkg2-ns2": {
-        "example.com": {
-          portProtocol: [
-            { port: 443, protocol: RemoteProtocol.TLS }, // duplicate
-            { port: 8080, protocol: RemoteProtocol.TLS },
-          ],
-        },
-        "other.com": {
-          portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-        },
-      },
-    };
-
-    const remapped = remapAmbientEgressResources(packageMap);
-
-    expect(Object.keys(remapped).sort()).toEqual(["example.com", "other.com"]);
-    expect(remapped["example.com"].packages.sort()).toEqual(["pkg1-ns1", "pkg2-ns2"].sort());
-    expect(remapped["example.com"].portProtocols).toEqual(
-      expect.arrayContaining([
-        { port: 443, protocol: RemoteProtocol.TLS },
-        { port: 80, protocol: RemoteProtocol.HTTP },
-        { port: 8080, protocol: RemoteProtocol.TLS },
-      ]),
-    );
-    // no duplicates
-    const unique = new Set(
-      remapped["example.com"].portProtocols.map(pp => `${pp.port}-${pp.protocol}`),
-    );
-    expect(unique.size).toBe(remapped["example.com"].portProtocols.length);
-
-    expect(remapped["other.com"].packages).toEqual(["pkg2-ns2"]);
-    expect(remapped["other.com"].portProtocols).toEqual([
-      { port: 443, protocol: RemoteProtocol.TLS },
-    ]);
-  });
 });
 
 import { log } from "./istio-resources";
@@ -1033,6 +984,61 @@ describe("test updateInMemoryAmbientPackageMap", () => {
 
     await updateInMemoryAmbientPackageMap(pkg1, "package-1-ns1", PackageAction.Remove);
     expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["package-2-ns2"]);
+  });
+
+  it("should throw on ambient host/port protocol conflicts and keep existing map unchanged", async () => {
+    const pkgHttp: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg-06", namespace: "uds-egress-06" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "host-c.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              ports: [443],
+            },
+          ],
+        },
+      },
+    };
+
+    const pkgTls: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg-07", namespace: "uds-egress-07" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "host-c.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              ports: [443],
+            },
+          ],
+        },
+      },
+    };
+
+    await updateInMemoryAmbientPackageMap(
+      pkgHttp,
+      "pkg-06-uds-egress-06",
+      PackageAction.AddOrUpdate,
+    );
+    expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["pkg-06-uds-egress-06"]);
+
+    await expect(
+      updateInMemoryAmbientPackageMap(pkgTls, "pkg-07-uds-egress-07", PackageAction.AddOrUpdate),
+    ).rejects.toThrow(/Protocol conflict detected/);
+
+    // Ensure we did not add or mutate the existing entry
+    expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["pkg-06-uds-egress-06"]);
+    expect(inMemoryAmbientPackageMap["pkg-06-uds-egress-06"].namespace).toBe("uds-egress-06");
   });
 });
 

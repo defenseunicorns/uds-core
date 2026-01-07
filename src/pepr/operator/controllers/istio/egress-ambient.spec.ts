@@ -12,12 +12,7 @@ import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 
 import { waitForWaypointPodHealthy } from "./ambient-waypoint";
 import * as apMod from "./auth-policy";
-import * as egressMod from "./egress";
-import {
-  applyAmbientEgressResources,
-  deriveOwnersFromContributors,
-  purgeAmbientEgressResources,
-} from "./egress-ambient";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 
 import { AmbientPackageMap } from "./types";
 
@@ -124,61 +119,6 @@ describe("test applyAmbientEgressResources", () => {
     vi.clearAllMocks();
   });
 
-  it("should derive owners from contributing package IDs (fallback)", () => {
-    const host = "example.com";
-    const contributors = ["pkg1-ns1", "pkg2-ns2"]; // both contributed
-
-    const pkgItems: UDSPackage[] = [
-      {
-        apiVersion: "uds.dev/v1alpha1",
-        kind: "Package",
-        metadata: { name: "pkg1", namespace: "ns1" },
-        spec: {
-          network: {
-            serviceMesh: { mode: Mode.Ambient },
-            allow: [
-              {
-                direction: Direction.Egress,
-                remoteHost: host,
-                remoteProtocol: RemoteProtocol.TLS,
-                port: 443,
-                serviceAccount: "sa1",
-              } as Allow,
-            ],
-          },
-        },
-      },
-      {
-        apiVersion: "uds.dev/v1alpha1",
-        kind: "Package",
-        metadata: { name: "pkg2", namespace: "ns2" },
-        spec: {
-          network: {
-            serviceMesh: { mode: Mode.Ambient },
-            allow: [
-              {
-                direction: Direction.Egress,
-                remoteHost: host,
-                remoteProtocol: RemoteProtocol.TLS,
-                port: 443,
-                // no serviceAccount → namespace identity
-              } as Allow,
-            ],
-          },
-        },
-      },
-    ];
-
-    const derived = deriveOwnersFromContributors(
-      host,
-      443,
-      contributors,
-      buildAmbientMap(pkgItems),
-    );
-    expect(Array.from(derived.ownerSaPrincipals).sort()).toEqual(["cluster.local/ns/ns1/sa/sa1"]);
-    expect(Array.from(derived.ownerNamespaces).sort()).toEqual(["ns2"]);
-  });
-
   it("should include Anywhere-only participant across all hosts", async () => {
     updateEgressMocks(defaultEgressMocks);
 
@@ -271,16 +211,6 @@ describe("test applyAmbientEgressResources", () => {
   it("should include port-scoped Anywhere participant only for the allowed port", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [
-          { port: 80, protocol: RemoteProtocol.HTTP },
-          { port: 443, protocol: RemoteProtocol.TLS },
-        ],
-      },
-    });
-
     const pkgItems: UDSPackage[] = [
       {
         apiVersion: "uds.dev/v1alpha1",
@@ -293,7 +223,13 @@ describe("test applyAmbientEgressResources", () => {
               {
                 direction: Direction.Egress,
                 remoteHost: "example.com",
-                ports: [80, 443],
+                port: 80,
+                remoteProtocol: RemoteProtocol.HTTP,
+              } as Allow,
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                port: 443,
                 remoteProtocol: RemoteProtocol.TLS,
               } as Allow,
             ],
@@ -343,13 +279,6 @@ describe("test applyAmbientEgressResources", () => {
 
   it("should ignore deleting packages when resolving Anywhere participants", async () => {
     updateEgressMocks(defaultEgressMocks);
-
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
 
     const pkgItems: UDSPackage[] = [
       {
@@ -493,13 +422,6 @@ describe("test applyAmbientEgressResources", () => {
   it("should not include port-scoped Anywhere participant when ports do not cover host ports", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "api.github.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
-
     const pkgItems: UDSPackage[] = [
       {
         apiVersion: "uds.dev/v1alpha1",
@@ -563,17 +485,6 @@ describe("test applyAmbientEgressResources", () => {
 
   it("should include unscoped Anywhere participant for all hosts regardless of ports", async () => {
     updateEgressMocks(defaultEgressMocks);
-
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1"],
-        portProtocols: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-      },
-      "api.github.com": {
-        packages: ["pkg2-ns2"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
 
     const pkgItems: UDSPackage[] = [
       {
@@ -747,14 +658,6 @@ describe("test applyAmbientEgressResources", () => {
   it("should deduplicate and sort identities before generating AP", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    // Remap includes one host
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1", "pkg2-ns2"],
-        portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    });
-
     // Spy on AP generator to capture identities passed in
     const apSpy = vi.spyOn(apMod, "generateCentralAmbientEgressAuthorizationPolicy");
 
@@ -845,17 +748,6 @@ describe("test applyAmbientEgressResources", () => {
   it("should merge owners and Anywhere participants and apply SE/AP", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    // Remap ambient resources to a single host with union ports
-    vi.spyOn(egressMod, "remapAmbientEgressResources").mockReturnValue({
-      "example.com": {
-        packages: ["pkg1-ns1", "pkg2-ns2"],
-        portProtocols: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
-
     // Live packages: one owner with SA, and two Anywhere participants (one SA, one namespace)
     const pkgItems: UDSPackage[] = [
       {
@@ -877,6 +769,7 @@ describe("test applyAmbientEgressResources", () => {
               {
                 direction: Direction.Egress,
                 remoteHost: "example.com",
+                port: 80,
                 remoteProtocol: RemoteProtocol.HTTP,
               } as Allow,
             ],

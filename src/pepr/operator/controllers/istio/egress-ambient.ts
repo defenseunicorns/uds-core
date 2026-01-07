@@ -57,33 +57,6 @@ interface IdentityCache {
   byHostPort: Map<string, Map<number, { saPrincipals: Set<string>; namespaces: Set<string> }>>;
 }
 
-// derive owners for a given host from the contributing package IDs
-export function deriveOwnersFromContributors(
-  host: string,
-  port: number,
-  contributingPkgIds: string[],
-  ambientMap: AmbientPackageMap,
-) {
-  const ownerSaPrincipals = new Set<string>();
-  const ownerNamespaces = new Set<string>();
-
-  for (const pkgId of contributingPkgIds ?? []) {
-    const entry = ambientMap[pkgId];
-    if (!entry) continue;
-    for (const rule of entry.rules) {
-      if (rule.kind !== "host") continue;
-      if (rule.host !== host) continue;
-      if (!rule.ports.includes(port)) continue;
-      if (rule.serviceAccount) {
-        ownerSaPrincipals.add(`cluster.local/ns/${entry.namespace}/sa/${rule.serviceAccount}`);
-      } else {
-        ownerNamespaces.add(entry.namespace);
-      }
-    }
-  }
-  return { ownerSaPrincipals, ownerNamespaces };
-}
-
 // Apply the ambient egress resources
 export async function applyAmbientEgressResources(
   ambientMap: AmbientPackageMap,
@@ -107,7 +80,6 @@ export async function applyAmbientEgressResources(
     { packages: string[]; portProtocols: Array<{ port: number; protocol: RemoteProtocol }> }
   > = {};
   const contributingPkgIds = new Set<string>();
-  const conflictedHosts = new Set<string>();
   const hostPortProtocols: Record<string, RemoteProtocol> = {};
 
   for (const [pkgId, entry] of Object.entries(ambientMap)) {
@@ -144,6 +116,10 @@ export async function applyAmbientEgressResources(
         const key = `${host}:${port}`;
         const existing = hostPortProtocols[key];
         if (existing && existing !== protocol) {
+          const errorMsg =
+            `Protocol conflict detected for ${host}:${port}. ` +
+            `Package "${pkgId}" wants to use ${protocol} but an existing package ` +
+            `is already using ${existing} for the same host and port combination.`;
           log.error(
             {
               host,
@@ -152,10 +128,9 @@ export async function applyAmbientEgressResources(
               newProtocol: protocol,
               pkgId,
             },
-            "Protocol conflict detected for host/port while deriving ambient egress resources from in-memory packages",
+            errorMsg,
           );
-          conflictedHosts.add(host);
-          continue;
+          throw new Error(errorMsg);
         }
         hostPortProtocols[key] = protocol;
       }
@@ -211,13 +186,6 @@ export async function applyAmbientEgressResources(
 
   // Apply per-host shared SE and centralized AP
   for (const host of Object.keys(merged)) {
-    if (conflictedHosts.has(host)) {
-      log.warn(
-        { host },
-        "Skipping ambient egress resources for host due to protocol conflicts across packages",
-      );
-      continue;
-    }
     const resource = merged[host];
     const hostPorts = Array.from(new Set((resource.portProtocols ?? []).map(pp => pp.port))).sort(
       (a, b) => a - b,
@@ -247,17 +215,6 @@ export async function applyAmbientEgressResources(
       const portOwners = hostPortMap?.get(port);
       const ownerSaPrincipals = new Set<string>(portOwners?.saPrincipals ?? []);
       const ownerNamespaces = new Set<string>(portOwners?.namespaces ?? []);
-
-      if (ownerSaPrincipals.size === 0 && ownerNamespaces.size === 0) {
-        const derived = deriveOwnersFromContributors(
-          host,
-          port,
-          resource.packages ?? [],
-          ambientMap,
-        );
-        for (const p of derived.ownerSaPrincipals) ownerSaPrincipals.add(p);
-        for (const n of derived.ownerNamespaces) ownerNamespaces.add(n);
-      }
 
       const saPrincipals = Array.from(
         new Set<string>([...ownerSaPrincipals, ...participantSaPrincipals]),

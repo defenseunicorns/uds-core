@@ -17,8 +17,6 @@ import {
   AmbientEgressRule,
   AmbientPackageEntry,
   AmbientPackageMap,
-  EgressResource,
-  EgressResourceMap,
   HostPortsProtocol,
   HostResourceMap,
   PackageAction,
@@ -34,6 +32,50 @@ let sidecarMapUpdateQueue: Promise<void> = Promise.resolve();
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
 
 let ambientMapUpdateQueue: Promise<void> = Promise.resolve();
+
+function validateAmbientProtocolConflicts(
+  currentAmbientMap: AmbientPackageMap,
+  newEntry: AmbientPackageEntry,
+  newPkgId: string,
+): void {
+  const existingHostPortProtocols: Record<string, { protocol: RemoteProtocol; packageId: string }> =
+    {};
+
+  for (const [pkgId, entry] of Object.entries(currentAmbientMap)) {
+    // Skip the package being updated since it will be replaced
+    if (pkgId === newPkgId) {
+      continue;
+    }
+
+    for (const rule of entry.rules) {
+      if (rule.kind !== "host") continue;
+      for (const port of rule.ports) {
+        const key = `${rule.host}:${port}`;
+        existingHostPortProtocols[key] = {
+          protocol: rule.protocol ?? RemoteProtocol.TLS,
+          packageId: pkgId,
+        };
+      }
+    }
+  }
+
+  for (const rule of newEntry.rules) {
+    if (rule.kind !== "host") continue;
+    for (const port of rule.ports) {
+      const key = `${rule.host}:${port}`;
+      const existing = existingHostPortProtocols[key];
+      const desiredProtocol = rule.protocol ?? RemoteProtocol.TLS;
+      if (existing && existing.protocol !== desiredProtocol) {
+        const errorMsg =
+          `Protocol conflict detected for ${rule.host}:${port}. ` +
+          `Package "${newPkgId}" wants to use ${desiredProtocol} but package "${existing.packageId}" ` +
+          `is already using ${existing.protocol} for the same host and port combination.`;
+        log.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+    }
+  }
+}
 
 // Mutexes to prevent concurrent reconciliation operations for each mode
 let reconcileInFlight: Promise<void> | null = null;
@@ -261,6 +303,7 @@ export async function updateInMemoryAmbientPackageMap(
           throw new Error("Package is required for AddOrUpdate");
         }
         const entry = createAmbientPackageEntry(pkg);
+        validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
         inMemoryAmbientPackageMap[pkgId] = entry;
       } else if (action == PackageAction.Remove) {
         if (inMemoryAmbientPackageMap[pkgId]) {
@@ -272,36 +315,6 @@ export async function updateInMemoryAmbientPackageMap(
   // Keep the queue healthy even if this update fails.
   ambientMapUpdateQueue = task.catch(() => undefined);
   return task;
-}
-
-// Remap the ambient package map into a per-host EgressResource map (union of ports/protocols and packages)
-export function remapAmbientEgressResources(packageMap: PackageHostMap): EgressResourceMap {
-  const egressResources: EgressResourceMap = {};
-  for (const pkgId in packageMap) {
-    const hostResourceMap = packageMap[pkgId];
-    for (const host in hostResourceMap) {
-      const portProtocols = hostResourceMap[host].portProtocol;
-
-      egressResources[host] ??= {
-        packages: [],
-        portProtocols: [],
-      } as EgressResource;
-
-      if (!egressResources[host].packages.includes(pkgId)) {
-        egressResources[host].packages.push(pkgId);
-      }
-
-      for (const pp of portProtocols) {
-        const exists = egressResources[host].portProtocols.find(
-          x => x.port === pp.port && x.protocol === pp.protocol,
-        );
-        if (!exists) {
-          egressResources[host].portProtocols.push(pp);
-        }
-      }
-    }
-  }
-  return egressResources;
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
