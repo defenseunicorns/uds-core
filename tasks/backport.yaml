@@ -33,6 +33,7 @@ tasks:
           AUTO_PR='${{ .inputs.auto_pr }}'
           NAME="$(echo "$COMMIT" | xargs)"
 
+          git fetch --force origin tag snapshot-latest
           git fetch origin --tags
 
           MINOR_LIST=()

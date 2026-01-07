@@ -105,7 +105,7 @@ export function buildInitialSecret(): AuthserviceConfig {
         preamble: "Bearer",
         header: "Authorization",
       },
-      trusted_certificate_authority: `${atob(UDSConfig.caCert)}`,
+      trusted_certificate_authority: `${atob(UDSConfig.caBundle.certs)}`,
       logout: {
         path: "/globallogout",
         redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,

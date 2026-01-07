@@ -11,6 +11,8 @@ watcher:
       value: "kindNsName"
     - name: ZARF_REGISTRY_ADDRESS
       value: "###ZARF_REGISTRY###"
+    - name: "PINO_TIME_STAMP"
+      value: "iso"
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
@@ -26,6 +28,8 @@ admission:
       value: "kindNsName"
     - name: ZARF_REGISTRY_ADDRESS
       value: "###ZARF_REGISTRY###"
+    - name: "PINO_TIME_STAMP"
+      value: "iso"
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"

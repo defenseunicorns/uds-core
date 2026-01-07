@@ -2,10 +2,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Exec, KubeConfig } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
-import { Writable } from "stream";
 import { beforeAll, describe, expect, test, vi } from "vitest";
+import { execInPod } from "./helpers/k8s";
 
 // Set timeout for all tests
 vi.setConfig({ testTimeout: 30000 });
@@ -38,76 +37,6 @@ async function getPodName(namespace: string, labelSelector: string): Promise<str
       `Failed to retrieve pod name: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-}
-
-// Execute commands inside a pod
-async function execInPod(
-  namespace: string,
-  podName: string,
-  containerName: string,
-  command: string[],
-): Promise<{ stdout: string; stderr: string; exitCode: number }> {
-  const kc = new KubeConfig();
-  kc.loadFromDefault();
-  const exec = new Exec(kc);
-
-  let stdoutBuffer = "";
-  let stderrBuffer = "";
-
-  return new Promise(resolve => {
-    void exec.exec(
-      namespace,
-      podName,
-      containerName,
-      command,
-      new Writable({
-        write(chunk, _encoding, callback) {
-          stdoutBuffer += chunk.toString();
-          callback();
-        },
-      }),
-      new Writable({
-        write(chunk, _encoding, callback) {
-          stderrBuffer += chunk.toString();
-          callback();
-        },
-      }),
-      null,
-      false,
-      (
-        exitResponse:
-          | number
-          | {
-              status?: string;
-              details?: { causes?: { reason?: string; message?: string }[] };
-            }
-          | undefined,
-      ) => {
-        let exitCode = 0; // Default to success
-
-        if (exitResponse && typeof exitResponse === "object") {
-          if (exitResponse.status === "Failure") {
-            // Extract exit code from `details.causes` array if available
-            exitCode = parseInt(
-              exitResponse.details?.causes?.find(cause => cause?.reason === "ExitCode")?.message ||
-                "1",
-              10,
-            );
-          }
-        } else if (typeof exitResponse === "number") {
-          exitCode = exitResponse;
-        } else {
-          exitCode = 1; // Default to failure
-        }
-
-        resolve({
-          stdout: exitCode !== 0 ? "000" : stdoutBuffer.trim(),
-          stderr: stderrBuffer.trim(),
-          exitCode,
-        });
-      },
-    );
-  });
 }
 
 // Check for HTTP error codes in test responses

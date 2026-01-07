@@ -33,7 +33,13 @@ import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
 import { Component, setupLogger } from "../logger";
-import { ConfigAction, handleCfg, handleCfgSecret, UDSConfig } from "./controllers/config/config";
+import {
+  ConfigAction,
+  handleCfg,
+  handleCfgSecret,
+  handleUDSCACertsConfigMapUpdate,
+  UDSConfig,
+} from "./controllers/config/config";
 import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
 import {
   performEgressReconciliationWithMutex,
@@ -162,6 +168,13 @@ When(ClusterConfig)
   .IsCreatedOrUpdated()
   .Validate(validateCfgUpdate)
   .Reconcile(cfg => handleCfg(cfg, ConfigAction.UPDATE));
+
+// Watch the uds-ca-certs Configmap and update CA bundle configmaps
+When(a.ConfigMap)
+  .IsCreatedOrUpdated()
+  .InNamespace("pepr-system")
+  .WithName("uds-ca-certs")
+  .Reconcile(handleUDSCACertsConfigMapUpdate);
 
 // Watch the Kubernetes Clients Secret
 When(a.Secret)

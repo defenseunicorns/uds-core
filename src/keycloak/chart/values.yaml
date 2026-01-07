@@ -10,7 +10,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.21.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.22.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -93,6 +93,8 @@ themeCustomizations:
 # Customizable Terms and Conditions
 #  termsAndConditions:
 #    text:
+#      # A convenient option to override the T&C inline (without creating a configmap)
+#      inline: ""
 #      configmap:
 #        key: text
 #        name: keycloak-theme-overrides
@@ -338,8 +340,8 @@ autoscaling:
   # Additional HorizontalPodAutoscaler labels
   labels: {}
   # The minimum and maximum number of replicas for the Keycloak StatefulSet
-  minReplicas: 3
-  maxReplicas: 10
+  minReplicas: 2
+  maxReplicas: 5
   # The metrics to use for scaling
   metrics:
     - type: Resource
@@ -416,14 +418,25 @@ thirdPartyIntegration:
     tlsCertificateFormat: PEM
 
 # Extra volumes to mount in the StatefulSet
-extraVolumes: []
+extraVolumes:
+  # Mount the default UDS trust bundle created by the UDS Operator
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
 
 # Extra volume mounts to mount in the Keycloak container
-extraVolumeMounts: []
+extraVolumeMounts:
+  # Mount the default UDS trust bundle for CA certificate access
+  - name: ca-certs
+    mountPath: /tmp/ca-certs
+    readOnly: true
 
 # Additional truststore paths for Keycloak to scan for certificates
 # These paths will be added to the --truststore-paths startup argument
-truststorePaths: []
+truststorePaths:
+  # Default path for UDS trust bundle certificates
+  - "/tmp/ca-certs"
 
 # Detailed observability settings (Dashboards, Alerts, etc)
 # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12

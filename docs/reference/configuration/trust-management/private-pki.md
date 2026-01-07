@@ -1,5 +1,7 @@
 ---
 title: Private Certificate Authority (CA) Configuration
+sidebar:
+  order: 8.2
 ---
 
 Some UDS Core components need to connect to external services over TLS. By default, they trust the well-known public certificate authorities (CAs) that come with their container images. If your environment uses self-signed certificates or certificates issued by a private CA, these components will not trust those endpoints unless you explicitly provide the CA bundle.
@@ -24,7 +26,7 @@ Mounting additional volumes and certificates can introduce minimal security risk
 Before configuring private PKI, you'll need the following:
 
 1. The trusted CA bundle in PEM format that your certificates are signed by
-2. A ConfigMap containing the trusted CA bundle from (1), available in each namespace (a tool like [trust-manager](https://cert-manager.io/docs/trust/trust-manager/) can help automate this)
+2. A ConfigMap containing the trusted CA bundle from (1), available in each namespace (see [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management) for details on doing this with UDS Core.)
 
 :::note
 For the examples in this guide, we assume you have a ConfigMap named `private-ca` with a key `ca.pem` that contains your CA bundle.
@@ -76,7 +78,7 @@ Many Go-based applications automatically check `/etc/ssl/certs/ca.pem` for addit
 
 Authservice can be configured with an additional trusted CA bundle when UDS Core ingress gateways are deployed with private PKI.
 
-To configure, set `UDS_CA_CERT` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
+To configure, set `UDS_CA_BUNDLE_CERTS` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
 
 See [trusted CA SSO doc](/reference/configuration/single-sign-on/trusted-ca) for complete Authservice configuration details.
 
@@ -84,7 +86,13 @@ See [trusted CA SSO doc](/reference/configuration/single-sign-on/trusted-ca) for
 
 Grafana may need to access external https services.  If these services use certificates signed by a private CA, Grafana needs to be configured to trust these certificates.
 
-Configure Grafana to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
+By default, UDS Core will automatically mount private certificates (and DoD Certs if `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS` is `true`) provided by `UDS_CA_BUNDLE_CERTS` so that Grafana will trust them. This uses the default UDS trust bundle created by the UDS Operator and is mounted at `/etc/ssl/certs/ca.pem`.
+
+:::caution
+If you override the Grafana helm values for `extraConfigmapMounts`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Grafana trusts the intended certificate authorities.
+:::
+
+If you wish to not use the automatic mounting, you can manually configure Grafana to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
 
 ```yaml
 values:
@@ -99,10 +107,6 @@ values:
         readOnly: true
         subPath: ca.pem
 ```
-
-:::caution
-Mounting to system CA paths (`/etc/ssl/certs/ca-certificates.crt` or `/etc/pki/tls/certs/ca-bundle.crt`) replaces the system CA bundle. Ensure your CA bundle includes both your private CA certificates and any public CAs that Grafana needs to trust.
-:::
 
 For additional details on Grafana private CA configuration, see the [upstream Grafana documentation](https://grafana.com/docs/grafana/latest/setup-grafana/installation/helm/#configure-a-private-ca-certificate-authority).
 
@@ -163,7 +167,15 @@ Mounting to system CA paths replaces the system CA bundle for all Loki component
 
 ### Keycloak
 
-Keycloak needs to validate certificates when connecting to external identity providers or LDAP servers. Configure Keycloak to trust private certificates using additional truststore paths:
+Keycloak needs to validate certificates when connecting to external identity providers or LDAP servers.
+
+By default, UDS Core will automatically mount private certificates (and DoD Certs if `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS` is `true`) provided by `UDS_CA_BUNDLE_CERTS` so that Keycloak will trust them. This uses the default UDS trust bundle created by the UDS Operator and is mounted at `/tmp/ca-certs` with the truststore path configured automatically.
+
+:::caution
+If you override the Keycloak helm values for `extraVolumes`, `extraVolumeMounts`, or `truststorePaths`, these will override the default values and the automatic trust bundle mounting will **not** occur. In this case, you must either merge your custom mounts with the new defaults or rely solely on the automatic mounting. Be sure to review your configuration to ensure Keycloak trusts the intended certificate authorities.
+:::
+
+If you wish to not use the automatic mounting, you can manually configure Keycloak to trust private certificates by mounting the CA bundle via UDS Bundle overrides:
 
 ```yaml
 values:
@@ -181,10 +193,5 @@ values:
     value:
       - "/tmp/ca-certs"
 ```
-
-This configuration:
-- Mounts your private CA ConfigMap to `/tmp/ca-certs`
-- Configures Keycloak to scan this directory using the `--truststore-paths` startup argument
-- Preserves Keycloak's default truststore while adding your private certificates
 
 For additional details on Keycloak truststore configuration, see the [upstream Keycloak documentation](https://www.keycloak.org/server/keycloak-truststore#_configuring_the_system_truststore).

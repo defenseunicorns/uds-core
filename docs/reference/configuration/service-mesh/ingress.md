@@ -105,7 +105,7 @@ variables:
 ```
 
 :::note
-If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_CERT` with additional [trusted certificate authorities](/reference/configuration/single-sign-on/trusted-ca/). You may also need to configure individual UDS Core components to trust your private CA - see the [Private PKI Configuration](/reference/configuration/private-pki/) guide for details.
+If you are using Private PKI or self-signed certificates for your tenant certificates it is necessary to additionally configure `UDS_CA_BUNDLE_CERTS` with additional [trusted certificate authorities](/reference/configuration/single-sign-on/trusted-ca/). You may also need to configure individual UDS Core components to trust your private CA - see the [Private PKI Configuration](/reference/configuration/trust-management/private-pki/) guide for details.
 :::
 
 #### Configuring TLS from a Secret

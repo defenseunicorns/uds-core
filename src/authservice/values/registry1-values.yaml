@@ -3,4 +3,4 @@
 
 image:
   repository: registry1.dso.mil/ironbank/istio-ecosystem/authservice
-  tag: "1.1.4-fips"
+  tag: "1.1.5-fips"

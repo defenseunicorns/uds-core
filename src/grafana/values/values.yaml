@@ -17,6 +17,14 @@ extraSecretMounts:
     mountPath: /etc/secrets/auth_generic_oauth
     readOnly: true
 
+extraConfigmapMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca.pem
+    configMap: uds-trust-bundle
+    readOnly: true
+    subPath: ca-bundle.pem
+    optional: true
+
 grafana.ini:
   server:
     root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
@@ -55,6 +63,9 @@ grafana.ini:
     # @lulaEnd 58c54d48-11e4-422e-b386-ae61acfb2828
     # Automatically redirect to the SSO login page
     auto_login: true
+  # Settings to optimize the internal sqlite DB
+  database:
+    wal: true
 
 # Add environment variables for PostgresQL connection from uds-config chart
 envFromSecret: "uds-grafana-config-postgresql"

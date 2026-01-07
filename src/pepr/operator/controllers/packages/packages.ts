@@ -7,7 +7,7 @@ import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
-import { watchCfg } from "../utils";
+import { registerWatchEventHandlers, watchCfg } from "../utils";
 import { PackageStore } from "./package-store";
 /**
  * Processes exemptions based on the watch phase.
@@ -35,6 +35,7 @@ export async function startPackageWatch() {
     }, watchCfg);
     // This will run until the process is terminated or the watch is aborted
     log.debug("Starting package watch...");
+    registerWatchEventHandlers(watcher, log, "UDSPackage");
     await watcher.start();
   }
 }
