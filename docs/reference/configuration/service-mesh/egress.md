@@ -88,7 +88,7 @@ Wildcards in host names are NOT currently supported.
 :::
 
 :::caution
-Adding any `remoteHost` in Ambient creates/uses a shared L7 waypoint and a centralized, per‑host `ServiceEntry` + `AuthorizationPolicy` in `istio-egress-ambient`. Egress to that host is evaluated at L7. Namespaces without an AP for that host remain denied. This can change behavior for workloads that previously relied on L4‑only allowances (e.g., `remoteGenerated: Anywhere`) and may surface TLS/HTTP differences.
+Adding any `remoteHost` in Ambient creates/uses a shared L7 waypoint and a centralized, per‑host `ServiceEntry` + `AuthorizationPolicy` in `istio-egress-ambient` (operator-managed). Egress to that host is evaluated at L7. Namespaces not included by the operator-generated AP sources for that host remain denied. This can change behavior for workloads that previously relied on L4‑only allowances (e.g., `remoteGenerated: Anywhere`) and may surface TLS/HTTP differences.
 
 Recommendations:
 - Prefer explicit `remoteHost` entries and scope with `serviceAccount` (SA‑first).

@@ -140,7 +140,7 @@ describe("istio-resources (ingress)", () => {
       IstioServiceEntry,
       expect.anything(),
     );
-    expect(utils.purgeOrphans).toHaveBeenCalledTimes(4);
+    expect(utils.purgeOrphans).toHaveBeenCalledTimes(3);
   });
 });
 

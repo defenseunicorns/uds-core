@@ -8,18 +8,18 @@ import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi }
 import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
-  createHostResourceMap,
-  egressRequestedFromNetwork,
-  getHostPortsProtocol,
-  inMemoryAmbientPackageMap,
-  inMemoryPackageMap,
-  performEgressReconciliation,
-  performEgressReconciliationWithMutex,
-  reconcileSharedEgressResources,
-  removeMapResources,
-  updateInMemoryAmbientPackageMap,
-  updateInMemoryPackageMap,
-  validateProtocolConflicts,
+    createHostResourceMap,
+    egressRequestedFromNetwork,
+    getHostPortsProtocol,
+    inMemoryAmbientPackageMap,
+    inMemoryPackageMap,
+    performEgressReconciliation,
+    performEgressReconciliationWithMutex,
+    reconcileSharedEgressResources,
+    removeMapResources,
+    updateInMemoryAmbientPackageMap,
+    updateInMemoryPackageMap,
+    validateProtocolConflicts,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
 
@@ -379,7 +379,7 @@ describe("test performEgressReconciliationWithMutex", () => {
   it("should successfully perform reconciliation when no mutex is held", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     // Should have called the namespace check
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
@@ -396,7 +396,7 @@ describe("test performEgressReconciliationWithMutex", () => {
       getNsMock,
     });
 
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
       /Egress reconciliation failed: .*/,
     );
   });
@@ -405,10 +405,10 @@ describe("test performEgressReconciliationWithMutex", () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Start first reconciliation (this will hold the mutex)
-    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
+    const firstReconciliation = performEgressReconciliationWithMutex();
 
     // Start second reconciliation while first is in progress
-    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
+    const secondReconciliation = performEgressReconciliationWithMutex();
 
     // Check both can reconcile without error
     await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
@@ -439,12 +439,12 @@ describe("test performEgressReconciliationWithMutex", () => {
       getNsMock,
     });
 
-    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
+    const firstReconciliation = performEgressReconciliationWithMutex();
 
     // Ensure the first reconciliation has started and is blocked on the first namespace lookup.
     await vi.runOnlyPendingTimersAsync();
 
-    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
+    const secondReconciliation = performEgressReconciliationWithMutex();
 
     // Unblock the first reconciliation.
     resolveFirst?.();
@@ -475,12 +475,12 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // First reconciliation should fail
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
       /Egress reconciliation failed: .*/,
     );
 
     // Second reconciliation should succeed despite the previous failure
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     // Should have been called 4 times, once for each ambient and sidecar
     expect(getNsMock).toHaveBeenCalledTimes(4);
@@ -498,7 +498,7 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // Should not throw for 404 (early return)
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     expect(getNsMock).toHaveBeenCalled();
   });

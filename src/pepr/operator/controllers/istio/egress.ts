@@ -120,7 +120,7 @@ export async function reconcileSharedEgressResources(
 
   // Reconcile both modes to ensure proper cleanup and application
   // This handles mode transitions and prevents resource conflicts
-  return await performEgressReconciliationWithMutex(pkgId);
+  await performEgressReconciliationWithMutex();
 }
 
 function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
@@ -168,9 +168,7 @@ function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
 }
 
 // Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(_pkgId: string): Promise<void> {
-  void _pkgId;
-
+export async function performEgressReconciliationWithMutex(): Promise<void> {
   // If a reconciliation is already running, mark that another run is needed and wait.
   // The running reconciliation will do an additional pass before releasing the mutex.
   if (reconcileInFlight) {

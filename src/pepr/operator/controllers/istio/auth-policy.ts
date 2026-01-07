@@ -84,6 +84,7 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
       labels: {
         "uds/package": ambientSharedEgressPkgId,
         "uds/generation": generation.toString(),
+        "uds/for": "egress",
       },
     },
     spec: {

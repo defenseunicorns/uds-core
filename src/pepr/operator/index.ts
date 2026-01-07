@@ -109,7 +109,7 @@ When(UDSPackage)
       await updateInMemoryPackageMap(undefined, pkgId, PackageAction.Remove);
       await updateInMemoryAmbientPackageMap(undefined, pkgId, PackageAction.Remove);
 
-      await performEgressReconciliationWithMutex("__uds_package_deleted__");
+      await performEgressReconciliationWithMutex();
     } catch (e) {
       log.error(
         { err: e, pkgId },
