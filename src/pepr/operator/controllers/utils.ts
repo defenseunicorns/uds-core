@@ -132,7 +132,11 @@ export async function purgeOrphans<T extends GenericClass>(
   const resources = await query.Get();
 
   for (const resource of resources.items) {
-    if (resource.metadata?.labels?.["uds/generation"] !== generation) {
+    const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
+
+    const shouldDelete = resourceGenLabel == null || resourceGenLabel !== generation;
+
+    if (shouldDelete) {
       log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
       await K8s(kind).Delete(resource);
     }
