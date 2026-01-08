@@ -289,7 +289,7 @@ export async function updateInMemoryPackageMap(
 
 // Update the inMemoryAmbientPackages list with the latest package
 export async function updateInMemoryAmbientPackageMap(
-  pkg: UDSPackage | undefined,
+  pkg: UDSPackage,
   pkgId: string,
   action: PackageAction,
 ) {
@@ -297,9 +297,6 @@ export async function updateInMemoryAmbientPackageMap(
     .catch(() => undefined)
     .then(() => {
       if (action == PackageAction.AddOrUpdate) {
-        if (!pkg) {
-          throw new Error("Package is required for AddOrUpdate");
-        }
         const entry = createAmbientPackageEntry(pkg);
         validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
         inMemoryAmbientPackageMap[pkgId] = entry;

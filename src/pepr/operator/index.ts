@@ -41,13 +41,7 @@ import {
   UDSConfig,
 } from "./controllers/config/config";
 import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
-import {
-  performEgressReconciliationWithMutex,
-  updateInMemoryAmbientPackageMap,
-  updateInMemoryPackageMap,
-} from "./controllers/istio/egress";
 import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
-import { PackageAction } from "./controllers/istio/types";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
@@ -98,31 +92,6 @@ When(UDSPackage)
   .Reconcile(packageReconciler)
   // Handle finalizer (deletions) for the package
   .Finalize(packageFinalizer);
-
-// Ensure shared egress resources are reconciled (and orphaned shared resources purged)
-// when packages are deleted, including cases where finalizers may not run (e.g. namespace deletion).
-When(UDSPackage)
-  .IsDeleted()
-  .Reconcile(async pkg => {
-    const pkgName = pkg.metadata?.name;
-    const pkgNamespace = pkg.metadata?.namespace;
-    const pkgId =
-      pkgName && pkgNamespace ? `${pkgName}-${pkgNamespace}` : "__uds_package_deleted__";
-
-    try {
-      // Remove from in-memory maps first to avoid stale conflict detection
-      // (e.g. protocol conflicts referencing long-deleted packages).
-      await updateInMemoryPackageMap(undefined, pkgId, PackageAction.Remove);
-      await updateInMemoryAmbientPackageMap(undefined, pkgId, PackageAction.Remove);
-
-      await performEgressReconciliationWithMutex();
-    } catch (e) {
-      log.error(
-        { err: e, pkgId },
-        "Failed reconciling shared egress resources after UDSPackage deletion",
-      );
-    }
-  });
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
