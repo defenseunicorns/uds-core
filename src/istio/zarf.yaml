@@ -3,9 +3,11 @@
 
 kind: ZarfPackageConfig
 metadata:
+  # @lulaStart 5e1176a3-b894-4e67-9ad0-96ec84c3fff8
   name: uds-core-istio
   description: "UDS Core Istio package deploys Istio with admin, tenant and passthrough gateways."
   url: https://istio.io/latest/
+  # @lulaEnd 5e1176a3-b894-4e67-9ad0-96ec84c3fff8
 
 variables:
   - name: DOMAIN

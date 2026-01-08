@@ -8,8 +8,12 @@ import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
 import { getAuthserviceClients, getOwnerRef } from "../utils";
-import { ambientEgressNamespace, sharedEgressPkgId } from "./egress-ambient";
-import { getSharedAnnotationKey, log } from "./istio-resources";
+import {
+  ambientEgressNamespace,
+  getSharedAnnotationKey,
+  log,
+  sharedEgressPkgId,
+} from "./istio-resources";
 import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
 
 export const egressWaypointName = "egress-waypoint";
