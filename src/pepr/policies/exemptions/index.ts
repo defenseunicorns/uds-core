@@ -12,6 +12,7 @@ import { Policy } from "../../operator/crd";
 // configure subproject logger
 const log = setupLogger(Component.POLICIES_EXEMPTIONS);
 
+// @lulaStart 9b6bf9f7-2f0a-4f72-87e3-5d42c6a7724c
 /**
  * Check a resource against an exemption list for use by the validation action.
  *
@@ -68,3 +69,4 @@ export function markExemption<T extends KubernetesObject>(policy: Policy) {
     }
   };
 }
+// @lulaEnd 9b6bf9f7-2f0a-4f72-87e3-5d42c6a7724c
