@@ -30,10 +30,10 @@ runs:
         node-version: 24
 
     - name: Install uv
-      uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+      uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.9.18
+        version: 0.9.22
 
     - name: Install k3d
       shell: bash
@@ -44,7 +44,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.27.20
+        version: v0.27.21
 
     - name: Install helm unittest plugin
       shell: bash
