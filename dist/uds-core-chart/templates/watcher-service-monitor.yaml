@@ -1,0 +1,24 @@
+{{- if .Values.watcher.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: watcher
+  namespace: pepr-system
+  annotations:
+    {{- toYaml .Values.watcher.serviceMonitor.annotations | nindent 4 }}
+  labels:
+    {{- toYaml .Values.watcher.serviceMonitor.labels | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      pepr.dev/controller: watcher
+  namespaceSelector:
+    matchNames:
+      - pepr-system
+  endpoints:
+    - targetPort: 3000
+      scheme: https
+      tlsConfig:
+        insecureSkipVerify: true
+{{- end }}
+    

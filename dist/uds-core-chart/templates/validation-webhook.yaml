@@ -1,0 +1,149 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ .Values.uuid }}
+webhooks:
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      caBundle: >-
+        LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDdERDQ0FaeWdBd0lCQWdJQkFUQU5CZ2txaGtpRzl3MEJBUXNGQURBY01Sb3dHQVlEVlFRREV4RlFaWEJ5DQpJRVZ3YUdWdFpYSmhiQ0JEUVRBZUZ3MHlOakF4TURVeU1qQTBNRGRhRncweU56QXhNRFV5TWpBME1EZGFNQUF3DQpnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFEZUZ4TTh4b2FvTlZWZVdRZUp4UFd5DQo4aktkNHI5cHlxN244dWhJWFY2dGhpM2RsYVNGc29ZSnZ4Y3ZoWS9veFAzMkJqUTVuZkVFS0N6dWYzcUU1dmQxDQpPOUJsTjdDWFJ4d0ZmM2FNbldYTllDTXd6bEdDODBabXFBRFRaNXZmR09uREgvUlVLb0VMbytzRXdleTQ1RG1tDQpobFhaVCtFOGo1NzZJenZRcVFxdFh5SUlGRkRuTjJwL0hDbEx4d1FHL0pTbFhUMGNZd3F4ZDhjN1ZzVFlkRFhXDQptNVVjYmQ2MTBzNzBxbmxKY2pJQ0wzb3MzR291eStMTGRDa2dmbkRpMHErNEtmakRFNnRqUk9VcEJGUjNsa1RqDQp0WC8yOFlWVWpmdE9Pc3dDNFFXYXJRQ0JHV0VvNGk5bHhxMkl0MFlWTkFTTzk1R0R0UEI4cVg0bVdhMXZaTjI3DQpBZ01CQUFHakhUQWJNQXdHQTFVZEV3UUZNQU1CQWY4d0N3WURWUjBQQkFRREFnTDBNQTBHQ1NxR1NJYjNEUUVCDQpDd1VBQTRJQkFRQ241dHUxcmJFd3VRS2cxVzFkbmtYSzNkMityOFlIclpGMlRuTC95eUxPMlUrVHlEWFI0REV1DQpncXU0NmgxYjBxNkpFQk1HbHlFVmtFdjh5cUxtanlFVWFOYW9uZDFjOVlLWnR5YXdXSGhMKzJ0dElRQ3pqTG9sDQpIR2FFYnljNjM4Mm53TVBzdXB4cTJGYUlpS3huVk1qTEd0QnpJTDFVNWczaXRZM1l0V3BHSkM2d1JVRXhFdTB0DQprRnk1QmRKbUdFN0FIeGJxQXcwMXROZThZOEpacTh4czFCVG1FZkwySjhlZ09lRWQ3T1lKUkR0endaNWRRaWNXDQp1L2RDZW5uekhEOWR2WFJoNk16VUVXd3duL3B0alJvSC84WU5IdEVqRnVZaHZTK05kdG8vRkp5a0cvRi9YTEp5DQpXa1AvN0xoUE45SXhrOStRVnAzcnJXQ0x0Ry9TN0VyVQ0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ0K
+      service:
+        name: {{ .Values.uuid }}
+        namespace: pepr-system
+        path: >-
+          /validate/002815368477f697ab8fde72db969636b517d49a34dc780d843463d716d15088
+    failurePolicy: {{ .Values.admission.failurePolicy }}
+    matchPolicy: Equivalent
+    name: {{ .Values.uuid }}.pepr.dev
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - pepr-system
+            {{- range .Values.additionalIgnoredNamespaces }}
+            - {{ . }}
+            {{- end }}
+            - zarf
+            - istio-system
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - packages
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - exemptions
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - clusterconfig
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - services
+    sideEffects: None
+    timeoutSeconds: 10
+  - admissionReviewVersions:
+      - v1
+      - v1beta1
+    clientConfig:
+      caBundle: >-
+        LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tDQpNSUlDdERDQ0FaeWdBd0lCQWdJQkFUQU5CZ2txaGtpRzl3MEJBUXNGQURBY01Sb3dHQVlEVlFRREV4RlFaWEJ5DQpJRVZ3YUdWdFpYSmhiQ0JEUVRBZUZ3MHlOakF4TURVeU1qQTBNRGRhRncweU56QXhNRFV5TWpBME1EZGFNQUF3DQpnZ0VpTUEwR0NTcUdTSWIzRFFFQkFRVUFBNElCRHdBd2dnRUtBb0lCQVFEZUZ4TTh4b2FvTlZWZVdRZUp4UFd5DQo4aktkNHI5cHlxN244dWhJWFY2dGhpM2RsYVNGc29ZSnZ4Y3ZoWS9veFAzMkJqUTVuZkVFS0N6dWYzcUU1dmQxDQpPOUJsTjdDWFJ4d0ZmM2FNbldYTllDTXd6bEdDODBabXFBRFRaNXZmR09uREgvUlVLb0VMbytzRXdleTQ1RG1tDQpobFhaVCtFOGo1NzZJenZRcVFxdFh5SUlGRkRuTjJwL0hDbEx4d1FHL0pTbFhUMGNZd3F4ZDhjN1ZzVFlkRFhXDQptNVVjYmQ2MTBzNzBxbmxKY2pJQ0wzb3MzR291eStMTGRDa2dmbkRpMHErNEtmakRFNnRqUk9VcEJGUjNsa1RqDQp0WC8yOFlWVWpmdE9Pc3dDNFFXYXJRQ0JHV0VvNGk5bHhxMkl0MFlWTkFTTzk1R0R0UEI4cVg0bVdhMXZaTjI3DQpBZ01CQUFHakhUQWJNQXdHQTFVZEV3UUZNQU1CQWY4d0N3WURWUjBQQkFRREFnTDBNQTBHQ1NxR1NJYjNEUUVCDQpDd1VBQTRJQkFRQ241dHUxcmJFd3VRS2cxVzFkbmtYSzNkMityOFlIclpGMlRuTC95eUxPMlUrVHlEWFI0REV1DQpncXU0NmgxYjBxNkpFQk1HbHlFVmtFdjh5cUxtanlFVWFOYW9uZDFjOVlLWnR5YXdXSGhMKzJ0dElRQ3pqTG9sDQpIR2FFYnljNjM4Mm53TVBzdXB4cTJGYUlpS3huVk1qTEd0QnpJTDFVNWczaXRZM1l0V3BHSkM2d1JVRXhFdTB0DQprRnk1QmRKbUdFN0FIeGJxQXcwMXROZThZOEpacTh4czFCVG1FZkwySjhlZ09lRWQ3T1lKUkR0endaNWRRaWNXDQp1L2RDZW5uekhEOWR2WFJoNk16VUVXd3duL3B0alJvSC84WU5IdEVqRnVZaHZTK05kdG8vRkp5a0cvRi9YTEp5DQpXa1AvN0xoUE45SXhrOStRVnAzcnJXQ0x0Ry9TN0VyVQ0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ0K
+      service:
+        name: {{ .Values.uuid }}
+        namespace: pepr-system
+        path: >-
+          /validate/002815368477f697ab8fde72db969636b517d49a34dc780d843463d716d15088
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
+    name: {{ .Values.uuid }}-istio-system.pepr.dev
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - istio-system
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - packages
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - exemptions
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - clusterconfig
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+          - pods/ephemeralcontainers
+      - apiGroups:
+          - ''
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - services
+    sideEffects: None
+    timeoutSeconds: 10

@@ -1,0 +1,17 @@
+{{- if .Values.admission.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: pepr-uds-core
+  namespace: pepr-system
+  labels:
+    pepr.dev/controller: admission
+spec:
+  selector:
+    app: pepr-uds-core
+    pepr.dev/controller: admission
+  ports:
+  - port: 443
+    targetPort: 3000
+{{- end }}
+    

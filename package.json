@@ -46,7 +46,8 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "1.0.4"
+    "@grpc/grpc-js": "^1.14.3",
+    "pepr": "^1.0.3-nightly.3"
   },
   "devDependencies": {
     "@commitlint/cli": "20.3.0",
