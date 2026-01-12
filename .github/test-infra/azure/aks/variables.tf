@@ -94,17 +94,6 @@ variable "outbound_type" {
   }
 }
 
-variable "load_balancer_idle_timeout_in_minutes" {
-  description = "(Optional) Idle timeout in minutes for the AKS-managed Standard Load Balancer rules. Standard LB supports 4-100 minutes. Defaults to 4."
-  type        = number
-  default     = 90
-
-  validation {
-    condition     = var.load_balancer_idle_timeout_in_minutes >= 4 && var.load_balancer_idle_timeout_in_minutes <= 100
-    error_message = "The load balancer idle timeout must be between 4 and 100 minutes (Standard LB)."
-  }
-}
-
 variable "default_node_pool_name" {
   description = "Specifies the name of the default node pool"
   default     = "system"

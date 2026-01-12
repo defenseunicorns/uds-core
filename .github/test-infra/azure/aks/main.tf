@@ -89,10 +89,6 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     network_plugin     = "azure"
     network_policy     = "azure"
     outbound_type      = var.outbound_type
-
-    load_balancer_profile {
-      idle_timeout_in_minutes = var.load_balancer_idle_timeout_in_minutes
-    }
   }
 
   storage_profile {
