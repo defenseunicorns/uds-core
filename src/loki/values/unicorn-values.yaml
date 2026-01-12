@@ -5,7 +5,7 @@ loki:
   image:
     registry: quay.io
     repository: rfcurated/grafana/loki
-    tag: 3.6.2-jammy-fips-rfcurated-rfhardened
+    tag: 3.6.3-jammy-fips-rfcurated-rfhardened
 gateway:
   image:
     registry: quay.io
@@ -14,8 +14,8 @@ gateway:
 memcached:
   image:
     repository: quay.io/rfcurated/memcached
-    tag: 1.6.39-jammy-fips-rfcurated-rfhardened
+    tag: 1.6.40-jammy-fips-rfcurated-rfhardened
 sidecar:
   image:
-    repository: quay.io/rfcurated/k8s-sidecar
-    tag: 1.30.10-jammy-scratch-fips-rfcurated-rfhardened
+    repository: quay.io/rfcurated/kiwigrid/k8s-sidecar
+    tag: 2.2.3-jammy-scratch-fips-rfcurated-rfhardened

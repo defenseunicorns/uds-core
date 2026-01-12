@@ -5,7 +5,7 @@ loki:
   image:
     registry: docker.io
     repository: grafana/loki
-    tag: 3.6.2
+    tag: 3.6.3
 
 gateway:
   image:
@@ -17,9 +17,9 @@ memcached:
   image:
     registry: docker.io
     repository: memcached
-    tag: 1.6.39-alpine
+    tag: 1.6.40-alpine
 
 sidecar:
   image:
     repository: ghcr.io/kiwigrid/k8s-sidecar
-    tag: 1.30.10
+    tag: 2.2.3
