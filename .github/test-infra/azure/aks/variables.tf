@@ -49,7 +49,7 @@ variable "enable_autoscaling" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_A4_v2"
+  default     = "Standard_A8_v2"
   type        = string
 }
 
@@ -115,7 +115,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "tags" {
