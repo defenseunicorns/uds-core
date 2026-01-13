@@ -71,11 +71,6 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
   node_resource_group = "${local.cluster_name}-managed-rg"
 
-  api_server_access_profile {
-    virtual_network_integration_enabled = true
-    subnet_id                           = azurerm_subnet.cluster_api_subnet.id
-  }
-
   local_account_disabled            = false
   dns_prefix                        = var.dns_prefix
   kubernetes_version                = var.kubernetes_version
@@ -128,29 +123,4 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
       max_surge = "10%"
     }
   }
-}
-
-resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
-  name                  = "worker1"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
-  mode                  = "User"
-
-  vm_size        = var.worker_pool_vm_size
-  vnet_subnet_id = azurerm_subnet.cluster_worker_node_subnet.id
-
-  os_sku          = "Ubuntu"
-  os_disk_size_gb = 128
-  os_disk_type    = "Managed"
-
-  max_pods = 30
-
-  node_public_ip_enabled  = false
-  host_encryption_enabled = false
-  fips_enabled            = false
-  ultra_ssd_enabled       = false
-  kubelet_disk_type       = "OS"
-  scale_down_mode         = "Delete"
-
-  auto_scaling_enabled = var.enable_autoscaling
-  node_count           = var.worker_node_pool_count
 }
