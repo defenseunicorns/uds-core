@@ -45,6 +45,53 @@ While UDS Core has not yet reached version 1.0, it is considered production-read
 
 UDS Core provides patch support for the latest three minor versions (the current minor and the two previous minors), where applicable. Minor and major releases are cut from `main`, while patch releases are published from dedicated `release/X.Y` branches for each supported minor stream. Patch releases follow the [patch policy](#patch-policy) and are not present in the main repository changelog (but are documented in GitHub releases).
 
+## Deprecation Policy
+
+UDS Core uses a time-based deprecation process to evolve the platform safely while providing clear, predictable upgrade paths for users. Deprecations signal upcoming breaking changes and allow sufficient time for migration before removal.
+
+### Scope
+
+This policy applies to all elements of the UDS Core public API, as defined in the [Versioning](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) document, including:
+
+- Custom Resource Definitions (CRDs), CRD versions, fields, and behaviors
+- UDS Core configuration values and defaults
+- Exposed Zarf variables
+- Default-enabled components or integrations
+- Default behaviors that are planned to change or be removed
+
+Internal implementation details are not subject to this policy.
+
+### How Deprecations Are Announced
+
+All deprecations are documented in the [CHANGELOG.md](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) under a `⚠ DEPRECATIONS` header and included in the GitHub release notes. Each deprecation announcement includes:
+
+- What is being deprecated
+- Why it is being deprecated
+- The recommended replacement or migration path
+- When the feature is eligible for removal (minimum three minor releases after deprecation)
+
+Migration or replacement guidance is provided where applicable to ensure smooth transitions.
+
+### Support Period
+
+Deprecated features remain supported for **at least three minor releases** following their deprecation announcement. They continue to function without behavioral changes during this period and may receive bug fixes and security fixes when feasible.
+
+After the three-minor-release window has elapsed, deprecated features may be removed in:
+- The next minor release, **or**
+- Any new major release
+
+For example, if a feature is deprecated in version `0.30.0`, it must remain supported through versions `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `0.34.0` or any subsequent release (including a hypothetical `1.0.0`).
+
+Removal of deprecated functionality is considered a breaking change and is clearly documented in the changelog and release notes. Patch releases never introduce deprecations or remove deprecated functionality.
+
+### CRD-Specific Guarantees
+
+Because CRDs represent a primary API boundary for UDS Core, they receive the same deprecation guarantees:
+
+- Deprecated CRD fields and versions remain accepted for at least three minor releases after deprecation
+- New CRD versions may be introduced without removing older versions
+- CRD version or field removal follows the standard deprecation lifecycle
+
 ## Release Process
 
 ### Official Releases
