@@ -71,6 +71,11 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
   node_resource_group = "${local.cluster_name}-managed-rg"
 
+  api_server_access_profile {
+    virtual_network_integration_enabled = true
+    subnet_id                           = azurerm_subnet.cluster_api_subnet.id
+  }
+
   local_account_disabled            = false
   dns_prefix                        = var.dns_prefix
   kubernetes_version                = var.kubernetes_version
