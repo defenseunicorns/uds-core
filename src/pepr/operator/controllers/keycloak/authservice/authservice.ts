@@ -238,7 +238,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
       };
     }
     if (!event.trustedCA) {
-      // Remove the trusted certificate authority if a CA is not provided
+      // Remove both trust configurations if a CA is not provided
       delete config.default_oidc_config.trusted_certificate_authority;
     } else {
       // Update the trusted certificate authority if a CA is provided

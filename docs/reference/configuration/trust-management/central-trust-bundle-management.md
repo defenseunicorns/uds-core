@@ -14,7 +14,10 @@ The central trust bundle management feature addresses the challenge of maintaini
 - **Automatically distribute trust stores**: Generate and distribute trust bundles to all namespaces
 - **Support multiple CA sources**: Include private/custom, DoD, and public CA certificates as needed
 
-When you configure a trust bundle, UDS Core automatically creates ConfigMaps in each namespace, containing the combined CA certificates in PEM format that applications can mount and use.
+When you configure a trust bundle, UDS Core automatically:
+- Creates ConfigMaps in each namespace: Containing the combined CA certificates in PEM format that applications can mount and use.
+- Updates Istio Trust: Syncs the combined bundle to the `sso-ca-cert` secret in the `istio-system` namespace for JWKS fetching.
+- Configures Authservice Trust: Injects the combined bundle directly into the Authservice configuration for OIDC TLS verification.
 
 ## Configuration
 
@@ -45,7 +48,7 @@ variables:
     CA_BUNDLE_INCLUDE_PUBLIC_CERTS: "true" # default false
 ```
 
-The above example will build a trust bundle that includes your custom CA certificates, DoD CAs, and public CAs concatted together in PEM format. Both the DoD and Public CAs are packaged with UDS Core.
+The above example will build a trust bundle that includes your custom CA certificates, DoD CAs, and public CAs concatted together in PEM format. Both the DoD and Public CAs are packaged with UDS Core. This combined bundle is automatically used by platform components like Istio and Authservice.
 
 ### UDS Package Configuration
 

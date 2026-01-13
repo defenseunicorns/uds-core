@@ -8,7 +8,7 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
-import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
+import { buildCABundleContent, updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -276,6 +276,9 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
     if (updateClusterResources) {
       await performAuthserviceUpdate("change to CA Cert");
     }
+  } else if (caBundleConfigMapsNeedUpdate && updateClusterResources) {
+    // Even if user certs didn't change, DoD/Public flags or content might have, so update Authservice
+    await performAuthserviceUpdate("change to DoD/Public CA configuration");
   }
 
   UDSConfig.caBundle.includeDoDCerts = caBundle.includeDoDCerts === true;
@@ -475,8 +478,8 @@ async function performAuthserviceUpdate(reason: string) {
   const authserviceUpdate: AuthServiceEvent = {
     name: "global-config-update",
     action: Action.UpdateGlobalConfig,
-    // Base64 decode the CA cert before passing to the update function
-    trustedCA: atob(UDSConfig.caBundle.certs),
+    // Note: Use the combined CA bundle (User + DoD + Public) for Authservice trust
+    trustedCA: buildCABundleContent(),
     redisUri: UDSConfig.authserviceRedisUri,
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);

@@ -6,12 +6,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import {
+  buildCABundleContent,
+  CA_BUNDLE_CONFIGMAP_LABEL,
   caBundleConfigMap,
   updateAllCaBundleConfigMaps,
-  CA_BUNDLE_CONFIGMAP_LABEL,
 } from "./ca-bundle";
-import { getOwnerRef, purgeOrphans } from "../utils";
 
 // Mock dependencies
 const mockK8sApply = vi.fn();
@@ -58,6 +59,17 @@ vi.mock("pepr", async importOriginal => {
           }),
           WithLabel: vi.fn().mockReturnValue({
             Get: mockWithLabelGet,
+          }),
+        };
+      } else if (resourceKind === actual.kind.Secret) {
+        // Handle Secret operations for updateIstioCASecret
+        return {
+          Apply: mockK8sApply,
+          InNamespace: vi.fn().mockReturnValue({
+            Get: vi.fn().mockResolvedValue({
+              metadata: { name: "sso-ca-cert", namespace: "istio-system" },
+              data: {},
+            }),
           }),
         };
       } else {
@@ -446,11 +458,12 @@ describe("CA Bundle ConfigMap", () => {
 
     it("processes all UDS packages and calls caBundleConfigMap for each", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.isIdentityDeployed = true;
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio secret
 
       // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -486,12 +499,13 @@ describe("CA Bundle ConfigMap", () => {
       UDSConfig.caBundle.certs = "";
       UDSConfig.caBundle.includeDoDCerts = false;
       UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.isIdentityDeployed = true;
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).not.toHaveBeenCalled();
-      expect(mockK8sDelete).toHaveBeenCalledTimes(2); // One for each package
+      expect(mockK8sDelete).toHaveBeenCalledTimes(2); // 2 packages only (Istio secret update skipped when no certs)
     });
 
     it("returns early when no UDS packages exist", async () => {
@@ -524,16 +538,19 @@ describe("CA Bundle ConfigMap", () => {
 
     it("continues processing other packages when one package fails", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.isIdentityDeployed = true;
 
       // Make the first package fail
       mockK8sApply
         .mockRejectedValueOnce(new Error("Apply failed for package1"))
-        .mockResolvedValueOnce({});
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({}) // Istio
+        .mockResolvedValueOnce({}); // Authservice
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio secret
 
       // Should log error for first package but continue
       expect(mockLog.error).toHaveBeenCalledWith(
@@ -581,6 +598,42 @@ describe("CA Bundle ConfigMap", () => {
         }),
         { force: true },
       );
+    });
+  });
+
+  describe("buildCABundleContent", () => {
+    it("merges all certificate sources correctly", () => {
+      UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.includePublicCerts = true;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      const expected = [validCert, dodCerts, publicCerts].join("\n\n");
+      expect(result).toBe(expected);
+    });
+
+    it("handles missing sources correctly", () => {
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      expect(result).toBe(dodCerts);
+    });
+
+    it("returns empty string when no sources are configured", () => {
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      expect(result).toBe("");
     });
   });
 });

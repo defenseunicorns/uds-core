@@ -6,31 +6,33 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig, ConfigPhase as Phase, ClusterConfigName } from "../../crd";
+import { ClusterConfig, ClusterConfigName, ConfigPhase as Phase } from "../../crd";
+import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
+import { Action } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import {
   ConfigAction,
   ConfigStep,
+  UDSConfig,
   configLog,
   decodeSecret,
   getConfigLogMessage,
-  loadUDSConfig,
-  shouldUpdateClusterResources,
-  shouldSkip,
-  UDSConfig,
   handleCfg,
   handleCfgSecret,
   handleUDSCACertsConfigMapUpdate,
+  loadUDSConfig,
+  shouldSkip,
+  shouldUpdateClusterResources,
 } from "./config";
-import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
 
 // Mock dependencies
 const mockClusterConfGet = vi.fn();
 const mockSecretGet = vi.fn();
 const mockConfigMapGet = vi.fn();
 const mockPatchStatus = vi.fn();
+const mockBuildCABundleContent = vi.fn();
 
 vi.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: vi.fn(),
@@ -50,7 +52,11 @@ vi.mock("../../crd/validators/clusterconfig-validator", () => ({
 
 vi.mock("../ca-bundles/ca-bundle", () => ({
   updateAllCaBundleConfigMaps: vi.fn(),
+  buildCABundleContent: vi.fn(),
 }));
+
+import * as caBundleModule from "../ca-bundles/ca-bundle";
+vi.spyOn(caBundleModule, "buildCABundleContent").mockImplementation(mockBuildCABundleContent);
 
 vi.mock("../../../logger", () => {
   const mockLogger = {
@@ -157,6 +163,7 @@ describe("initial config load", () => {
     process.env.PEPR_WATCH_MODE = "true";
     process.env.PEPR_MODE = "dev";
     vi.clearAllMocks();
+    mockBuildCABundleContent.mockReturnValue("");
     mockCfg = defaultConfig;
     mockSecret = defaultSecret;
     mockClusterConfGet.mockResolvedValue(mockCfg);
@@ -433,12 +440,13 @@ describe("handleUDSConfig", () => {
   describe("reconcileAuthservice", () => {
     it("calls if CA Cert changes", async () => {
       UDSConfig.caBundle.certs = "old-ca-cert";
+      mockBuildCABundleContent.mockReturnValue(exampleCACert);
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "",
         trustedCA: exampleCACert,
       });
@@ -446,6 +454,7 @@ describe("handleUDSConfig", () => {
 
     it("calls if CA Cert changes to empty string (dev mode)", async () => {
       UDSConfig.caBundle.certs = "old-ca-cert";
+      mockBuildCABundleContent.mockReturnValue("");
       const cfg = {
         ...mockCfg,
         spec: {
@@ -461,7 +470,7 @@ describe("handleUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "",
         trustedCA: "",
       });
@@ -469,6 +478,7 @@ describe("handleUDSConfig", () => {
 
     it("does not call if CA Cert key is undefined", async () => {
       UDSConfig.caBundle.certs = "old-ca-cert";
+      mockBuildCABundleContent.mockReturnValue("");
       const cfg = {
         ...mockCfg,
         spec: {
@@ -484,7 +494,7 @@ describe("handleUDSConfig", () => {
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "",
         trustedCA: "",
       });
@@ -511,12 +521,13 @@ describe("handleUDSConfig", () => {
     it("calls if Redis URI changes", async () => {
       UDSConfig.caBundle.certs = btoa("old-ca-cert");
       UDSConfig.authserviceRedisUri = "old-redis-uri";
+      mockBuildCABundleContent.mockReturnValue("old-ca-cert");
 
       await handleCfgSecret(mockSecret, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "mock-redis-uri",
         trustedCA: "old-ca-cert",
       });
@@ -525,12 +536,13 @@ describe("handleUDSConfig", () => {
     it("calls if setting Redis URI to empty string", async () => {
       UDSConfig.authserviceRedisUri = "old-redis-uri";
       const emptyRedisURI = { ...mockSecret, data: { AUTHSERVICE_REDIS_URI: btoa("") } };
+      mockBuildCABundleContent.mockReturnValue("");
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "",
         trustedCA: "",
       });
@@ -542,12 +554,13 @@ describe("handleUDSConfig", () => {
         ...mockSecret,
         data: { AUTHSERVICE_REDIS_URI: btoa("###ZARF_VAR_AUTHSERVICE_REDIS_URI###") },
       };
+      mockBuildCABundleContent.mockReturnValue("");
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).toHaveBeenCalledWith({
         name: "global-config-update",
-        action: "UpdateGlobalConfig",
+        action: Action.UpdateGlobalConfig,
         redisUri: "",
         trustedCA: "",
       });
@@ -556,6 +569,7 @@ describe("handleUDSConfig", () => {
     it("calls if AUTHSERVICE_REDIS_URI key is missing and sets to empty string", async () => {
       UDSConfig.authserviceRedisUri = "original";
       const emptyRedisURI = { ...mockSecret, data: {} };
+      mockBuildCABundleContent.mockReturnValue("");
 
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
@@ -609,11 +623,22 @@ describe("handleUDSConfig", () => {
   it("does not call unnecessary updates if no values change", async () => {
     // Set UDSConfig to match mockCfg
     UDSConfig.caBundle.certs = exampleCACertBase64;
+    UDSConfig.caBundle.includeDoDCerts = false;
+    UDSConfig.caBundle.includePublicCerts = false;
+    UDSConfig.caBundle.dodCerts = "";
+    UDSConfig.caBundle.publicCerts = "";
+
     UDSConfig.kubeApiCIDR = "mock-cidr";
     UDSConfig.kubeNodeCIDRs = ["mock-node-cidrs"];
     UDSConfig.domain = "mock-domain";
     UDSConfig.adminDomain = "mock-admin-domain";
     UDSConfig.allowAllNSExemptions = true;
+
+    // Mock buildCABundleContent to return exactly what UDSConfig.caBundle.certs decodes to
+    mockBuildCABundleContent.mockReturnValue(exampleCACert);
+
+    // Reset the mock to ensure it wasn't called by handleCABundleUpdate setup
+    vi.mocked(reconcileAuthservice).mockClear();
 
     await handleCfg(mockCfg, ConfigAction.UPDATE);
 

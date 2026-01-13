@@ -26,8 +26,9 @@ pilot:
     PILOT_JWT_ENABLE_REMOTE_JWKS: istiod
     ENABLE_NATIVE_SIDECARS: true
 
-# Volume and mounts to add the SSO CA cert for JWKS fetching
-# This volume/path mirrors the upstream behavior of `jwksResolverExtraRootCA` - while allowing us to reuse the existing base64 encoded CA cert from the ClusterConfig
+# Volume and mounts to add the UDS CA bundle for JWKS fetching
+# This volume/path mirrors the upstream behavior of `jwksResolverExtraRootCA`
+# The sso-ca-cert secret is managed by the operator and contains the combined trust bundle (user + DoD + public certs)
 # Upstream References:
 # https://github.com/istio/istio/blob/2d5fc65b386ac3c3eff28aee4040dce37923b9b7/manifests/charts/istio-control/istio-discovery/templates/deployment.yaml#L250-L253
 # https://github.com/istio/istio/blob/2d5fc65b386ac3c3eff28aee4040dce37923b9b7/manifests/charts/istio-control/istio-discovery/templates/deployment.yaml#L304-L308

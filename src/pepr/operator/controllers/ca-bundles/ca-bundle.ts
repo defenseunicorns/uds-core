@@ -4,10 +4,10 @@
  */
 
 import { K8s, kind } from "pepr";
+import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { Component, setupLogger } from "../../../logger";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";
@@ -99,6 +99,50 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
+ * Updates the Istio sso-ca-cert secret with the combined CA bundle.
+ * This secret is used by Istio's JWKS fetcher for TLS verification.
+ */
+export async function updateIstioCASecret(): Promise<void> {
+  const namespace = "istio-system";
+  const secretName = "sso-ca-cert";
+
+  try {
+    // Build the combined CA bundle content
+    const caBundleContent = buildCABundleContent();
+
+    // If no CA bundle content, delete the secret data
+    if (!caBundleContent || caBundleContent.trim() === "") {
+      log.debug("No CA bundle content available, skipping sso-ca-cert secret update");
+      return;
+    }
+
+    // Get existing secret
+    const secret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
+
+    // Update secret data with combined bundle
+    const updatedSecret = {
+      ...secret,
+      data: {
+        "extra.pem": btoa(caBundleContent),
+      },
+    };
+
+    // Apply the updated secret
+    await K8s(kind.Secret).Apply(updatedSecret, { force: true });
+    log.debug(`Updated ${secretName} secret in ${namespace} namespace with combined CA bundle`);
+  } catch (err) {
+    // If secret doesn't exist, that's okay - it will be created by the chart
+    if (err?.status === 404) {
+      log.debug(`Secret ${secretName} not found in ${namespace}, will be created by chart`);
+      return;
+    }
+    throw new Error(
+      `Failed to update ${secretName} secret in ${namespace}: ${JSON.stringify(err)}`,
+    );
+  }
+}
+
+/**
  * Builds the combined CA bundle content from all configured certificate sources.
  * Combines user-provided certificates, DoD certificates, and public certificates
  * based on the current UDS configuration settings.
@@ -106,7 +150,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
  * @returns The combined PEM-formatted certificate bundle as a string.
  *          Returns empty string if no certificate sources are configured.
  */
-function buildCABundleContent(): string {
+export function buildCABundleContent(): string {
   const certs: string[] = [];
 
   // Add user-provided certs (base64 encoded)
@@ -185,6 +229,15 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
         );
         // Don't throw here - we want to continue processing other packages
       }
+    }
+
+    // Also update the Istio sso-ca-cert secret with combined bundle
+    try {
+      log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
+      await updateIstioCASecret();
+      log.debug("Successfully updated Istio sso-ca-cert secret");
+    } catch (err) {
+      log.error("Failed to update Istio sso-ca-cert secret", err);
     }
 
     log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
