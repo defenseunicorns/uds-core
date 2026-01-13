@@ -100,7 +100,6 @@ spec:
             # This will only import the realm if it does not exist
             - "--import-realm"
             # FIPS Mode
-            # @lulaStart e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             {{- if .Values.fips }}
             # Full configuration might be found at https://www.keycloak.org/server/fips
             - "--features=preview,fips"
@@ -115,7 +114,6 @@ spec:
             {{- else }}
             - "--features=preview"
             {{- end }}
-            # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             {{- if .Values.truststorePaths }}
             - "--truststore-paths={{ join "," .Values.truststorePaths }}"
             {{- end }}
