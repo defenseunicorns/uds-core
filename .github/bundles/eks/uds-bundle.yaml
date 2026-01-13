@@ -6,18 +6,18 @@ metadata:
   name: uds-core-eks-nightly
   description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
-  version: "0.58.0"
+  version: "0.59.0"
   # x-release-please-end
 
 packages:
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.68.1
+    ref: v0.69.0
 
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.58.0
+    ref: 0.59.0
     # x-release-please-end
     optionalComponents:
       - metrics-server # note: metrics-server is not available as an EKS addon in govcloud
