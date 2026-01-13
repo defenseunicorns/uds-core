@@ -252,9 +252,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       }
     }
     // Don't allow illegal k8s resource names for the secret name
-    if (client.secretName && client.secretName !== sanitizeResourceName(client.secretName)) {
+    if (
+      client.secretConfig?.name &&
+      client.secretConfig.name !== sanitizeResourceName(client.secretConfig.name)
+    ) {
       return req.Deny(
-        `The client ID "${client.clientId}" uses an invalid secret name ${client.secretName}`,
+        `The client ID "${client.clientId}" uses an invalid secret name ${client.secretConfig.name}`,
       );
     }
     // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
@@ -275,8 +278,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       (client.standardFlowEnabled !== false /* default true */ ||
         client.serviceAccountsEnabled /* default false */ ||
         client.secret !== undefined ||
-        client.secretName !== undefined ||
-        client.secretTemplate !== undefined ||
+        client.secretConfig?.name !== undefined ||
+        client.secretConfig?.template !== undefined ||
         client.enableAuthserviceSelector !== undefined ||
         client.protocol === Protocol.Saml ||
         client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")

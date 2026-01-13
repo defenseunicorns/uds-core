@@ -40,6 +40,45 @@ export function migrate(pkg: UDSPackage) {
     }
   }
 
+  const ssoList = pkg.spec?.sso ?? [];
+
+  for (const sso of ssoList) {
+    // Migrate deprecated secret fields to secretConfig
+    // Precedence: New fields (secretConfig.*) take precedence over deprecated fields
+    // This allows safe migration without overwriting explicitly set new values
+    if (sso.secretName || sso.secretLabels || sso.secretAnnotations || sso.secretTemplate) {
+      sso.secretConfig = sso.secretConfig ?? {};
+
+      if (sso.secretName && !sso.secretConfig.name) {
+        sso.secretConfig.name = sso.secretName;
+        delete sso.secretName;
+      } else if (sso.secretName) {
+        delete sso.secretName;
+      }
+
+      if (sso.secretLabels && !sso.secretConfig.labels) {
+        sso.secretConfig.labels = sso.secretLabels;
+        delete sso.secretLabels;
+      } else if (sso.secretLabels) {
+        delete sso.secretLabels;
+      }
+
+      if (sso.secretAnnotations && !sso.secretConfig.annotations) {
+        sso.secretConfig.annotations = sso.secretAnnotations;
+        delete sso.secretAnnotations;
+      } else if (sso.secretAnnotations) {
+        delete sso.secretAnnotations;
+      }
+
+      if (sso.secretTemplate && !sso.secretConfig.template) {
+        sso.secretConfig.template = sso.secretTemplate;
+        delete sso.secretTemplate;
+      } else if (sso.secretTemplate) {
+        delete sso.secretTemplate;
+      }
+    }
+  }
+
   // Migrate status fields (aggregates all status migrations)
   migrateStatus(pkg);
 

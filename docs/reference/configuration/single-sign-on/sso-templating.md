@@ -2,7 +2,11 @@
 title: Secret Templating
 ---
 
-By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretTemplate` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).
+By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretConfig.template` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).
+
+:::caution Deprecated Fields
+The `secretName`, `secretLabels`, `secretAnnotations`, and `secretTemplate` fields are deprecated and will be removed in a future major release. Use `secretConfig.name`, `secretConfig.labels`, `secretConfig.annotations`, and `secretConfig.template` instead. The deprecated fields will be automatically migrated to the new structure.
+:::
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -16,37 +20,38 @@ spec:
       clientId: demo-client
       redirectUris:
         - "https://demo.uds.dev/login"
-      # Customize the name of the generated secret
-      secretName: my-cool-auth-client
-      secretTemplate:
-        # Raw text examples
-        rawTextClientId: "clientField(clientId)"
-        rawTextClientSecret: "clientField(secret)"
+      secretConfig:
+        # Customize the name of the generated secret
+        name: my-cool-auth-client
+        template:
+          # Raw text examples
+          rawTextClientId: "clientField(clientId)"
+          rawTextClientSecret: "clientField(secret)"
 
-        # JSON example
-        auth.json: |
-          {
-            "client_id": "clientField(clientId)",
-            "client_secret": "clientField(secret)",
-            "defaultScopes": clientField(defaultClientScopes).json(),
-            "redirect_uri": "clientField(redirectUris)[0]",
-            "bearerOnly": clientField(bearerOnly),
-          }
+          # JSON example
+          auth.json: |
+            {
+              "client_id": "clientField(clientId)",
+              "client_secret": "clientField(secret)",
+              "defaultScopes": clientField(defaultClientScopes).json(),
+              "redirect_uri": "clientField(redirectUris)[0]",
+              "bearerOnly": clientField(bearerOnly),
+            }
 
-        # Properties example
-        auth.properties: |
-          client-id=clientField(clientId)
-          client-secret=clientField(secret)
-          default-scopes=clientField(defaultClientScopes)
-          redirect-uri=clientField(redirectUris)[0]
+          # Properties example
+          auth.properties: |
+            client-id=clientField(clientId)
+            client-secret=clientField(secret)
+            default-scopes=clientField(defaultClientScopes)
+            redirect-uri=clientField(redirectUris)[0]
 
-        # YAML example (uses JSON for the defaultScopes array)
-        auth.yaml: |
-          client_id: clientField(clientId)
-          client_secret: clientField(secret)
-          default_scopes: clientField(defaultClientScopes).json()
-          redirect_uri: clientField(redirectUris)[0]
-          bearer_only: clientField(bearerOnly)
+          # YAML example (uses JSON for the defaultScopes array)
+          auth.yaml: |
+            client_id: clientField(clientId)
+            client_secret: clientField(secret)
+            default_scopes: clientField(defaultClientScopes).json()
+            redirect_uri: clientField(redirectUris)[0]
+            bearer_only: clientField(bearerOnly)
   ```
 
 ## Secret Pod Reload
@@ -69,18 +74,19 @@ spec:
       clientId: my-app-client
       redirectUris:
         - "https://my-app.example.com/callback"
-      secretName: my-app-secret
-      # To enable pod reload for this secret, add these labels and annotations
-      secretLabels:
-        uds.dev/pod-reload: "true"
-      secretAnnotations:
-        uds.dev/pod-reload-selector: 'app=my-app' # Target a specific pod(s) to reload
-      secretTemplate:
-        config.json: |
-          {
-            "client_id": "clientField(clientId)",
-            "client_secret": "clientField(secret)"
-          }
+      secretConfig:
+        name: my-app-secret
+        # To enable pod reload for this secret, add these labels and annotations
+        labels:
+          uds.dev/pod-reload: "true"
+        annotations:
+          uds.dev/pod-reload-selector: 'app=my-app' # Target a specific pod(s) to reload
+        template:
+          config.json: |
+            {
+              "client_id": "clientField(clientId)",
+              "client_secret": "clientField(secret)"
+            }
 ```
 
 When this secret is updated (for example, when rotating the client secret), all pods with the label `app=my-app` will be automatically restarted to pick up the new secret value.
