@@ -74,15 +74,19 @@ Migration or replacement guidance is provided where applicable to ensure smooth 
 
 ### Support Period
 
-Deprecated features remain supported for **at least three minor releases** following their deprecation announcement. They continue to function without behavioral changes during this period and may receive bug fixes and security fixes when feasible.
+Deprecated features remain supported for **at least three subsequent minor releases** following their deprecation announcement. They continue to function without behavioral changes during this period and may receive bug fixes and security fixes when feasible.
 
 After the three-minor-release window has elapsed, deprecated features may be removed in:
 - The next minor release, **or**
 - Any new major release
 
-For example, if a feature is deprecated in version `0.30.0`, it must remain supported through versions `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `0.34.0` or any subsequent release (including a hypothetical `1.0.0`).
+For example, if a feature is deprecated in version `0.30.0`, it must remain supported through the three subsequent minor releases: `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `0.34.0` or any subsequent release (including a hypothetical `1.0.0`).
 
 Removal of deprecated functionality is considered a breaking change and is clearly documented in the changelog and release notes. Patch releases never introduce deprecations or remove deprecated functionality.
+
+:::caution
+Users are expected to resolve all deprecation warnings before upgrading beyond the guaranteed support window to avoid encountering breaking changes.
+:::
 
 ### CRD-Specific Guarantees
 
