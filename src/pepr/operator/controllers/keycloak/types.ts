@@ -5,6 +5,8 @@
 
 import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
 
+// An internal interface for sending Client Representation to Keycloak from the UDS Operator
+// Should be as close as possible to the https://www.keycloak.org/docs-api/latest/rest-api/index.html#ClientRepresentation
 export interface Client {
   alwaysDisplayInConsole: boolean;
   attributes: Record<string, string>;
@@ -37,7 +39,8 @@ export interface Client {
   samlIdpCertificate?: string;
 }
 
-// Define a constant array of keys
+// Define a constant array of keys that will be used to convert
+// Package CRD spec.sso part into the Keycloak Client representation
 export const clientKeys = [
   "adminUrl",
   "alwaysDisplayInConsole",
