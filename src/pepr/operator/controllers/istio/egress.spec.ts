@@ -5,7 +5,7 @@
 
 import { kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
+import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
   createHostResourceMap,
@@ -13,15 +13,12 @@ import {
   getHostPortsProtocol,
   inMemoryAmbientPackageMap,
   inMemoryPackageMap,
-  lastReconciliationPackages,
   performEgressReconciliation,
   performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
   removeMapResources,
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
-  updateLastReconciliationPackages,
-  validatePortProtocolConflicts,
   validateProtocolConflicts,
 } from "./egress";
 import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
@@ -54,7 +51,7 @@ vi.mock("../utils", async () => {
 // Mock apply functions for sidecar
 import { applySidecarEgressResources } from "./egress-sidecar";
 const mockApplySidecarEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-sidecar.ts", async () => {
+vi.mock("./egress-sidecar", async () => {
   const originalModule = await vi.importActual("./egress-sidecar");
   return {
     ...originalModule,
@@ -63,14 +60,15 @@ vi.mock("./egress-sidecar.ts", async () => {
 });
 
 // Mock apply functions for ambient
-import { applyAmbientEgressResources } from "./egress-ambient";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-ambient.ts", async () => {
+vi.mock("./egress-ambient", async () => {
   const originalModule = await vi.importActual("./egress-ambient");
   return {
     ...originalModule,
     applyAmbientEgressResources: vi.fn(),
+    purgeAmbientEgressResources: vi.fn(),
   };
 });
 
@@ -103,7 +101,29 @@ describe("test reconcileSharedEgressResources", () => {
       portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
     },
   };
-  const packageIdMock = "test-package-test-namespace";
+
+  const pkgWithAllow: UDSPackage = {
+    ...pkgMock,
+    metadata: {
+      ...pkgMock.metadata,
+      name: "test-package",
+      namespace: "test-namespace",
+    },
+    spec: {
+      ...pkgMock.spec,
+      network: {
+        ...pkgMock.spec?.network,
+        allow: [
+          {
+            direction: Direction.Egress,
+            remoteHost: "example.com",
+            remoteProtocol: RemoteProtocol.TLS,
+            port: 443,
+          },
+        ],
+      },
+    },
+  };
 
   beforeEach(async () => {
     process.env.PEPR_WATCH_MODE = "true";
@@ -130,8 +150,8 @@ describe("test reconcileSharedEgressResources", () => {
     updateEgressMocks(defaultEgressMocks);
 
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
@@ -147,8 +167,8 @@ describe("test reconcileSharedEgressResources", () => {
     updateEgressMocks(defaultEgressMocks);
 
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Ambient,
     );
@@ -158,7 +178,18 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Validate inMemoryAmbientPackageMap
     expect(inMemoryAmbientPackageMap).toEqual({
-      "test-package-test-namespace": hostResourceMapMock,
+      "test-package-test-namespace": {
+        name: "test-package",
+        namespace: "test-namespace",
+        rules: [
+          {
+            kind: "host",
+            host: "example.com",
+            ports: [443],
+            protocol: RemoteProtocol.TLS,
+          },
+        ],
+      },
     });
   });
 
@@ -166,8 +197,8 @@ describe("test reconcileSharedEgressResources", () => {
     updateEgressMocks(defaultEgressMocks);
 
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
@@ -180,8 +211,8 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Update to ambient
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Ambient,
     );
@@ -191,7 +222,18 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Validate inMemoryAmbientPackageMap is populated
     expect(inMemoryAmbientPackageMap).toEqual({
-      "test-package-test-namespace": hostResourceMapMock,
+      "test-package-test-namespace": {
+        name: "test-package",
+        namespace: "test-namespace",
+        rules: [
+          {
+            kind: "host",
+            host: "example.com",
+            ports: [443],
+            protocol: "TLS",
+          },
+        ],
+      },
     });
   });
 
@@ -199,8 +241,8 @@ describe("test reconcileSharedEgressResources", () => {
     updateEgressMocks(defaultEgressMocks);
 
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Ambient,
     );
@@ -210,12 +252,23 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Validate inMemoryAmbientPackageMap is populated
     expect(inMemoryAmbientPackageMap).toEqual({
-      "test-package-test-namespace": hostResourceMapMock,
+      "test-package-test-namespace": {
+        name: "test-package",
+        namespace: "test-namespace",
+        rules: [
+          {
+            kind: "host",
+            host: "example.com",
+            ports: [443],
+            protocol: RemoteProtocol.TLS,
+          },
+        ],
+      },
     });
 
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
@@ -232,8 +285,8 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Populate inMemoryPackageMap first
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
@@ -246,8 +299,8 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Remove packageIdMock
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.Remove,
       Mode.Sidecar,
     );
@@ -264,8 +317,8 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Populate inMemoryAmbientPackages first
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.AddOrUpdate,
       Mode.Ambient,
     );
@@ -275,13 +328,24 @@ describe("test reconcileSharedEgressResources", () => {
 
     // Validate inMemoryAmbientPackageMap is populated
     expect(inMemoryAmbientPackageMap).toEqual({
-      "test-package-test-namespace": hostResourceMapMock,
+      "test-package-test-namespace": {
+        name: "test-package",
+        namespace: "test-namespace",
+        rules: [
+          {
+            kind: "host",
+            host: "example.com",
+            ports: [443],
+            protocol: RemoteProtocol.TLS,
+          },
+        ],
+      },
     });
 
     // Remove packageIdMock
     await reconcileSharedEgressResources(
+      pkgWithAllow,
       hostResourceMapMock,
-      packageIdMock,
       PackageAction.Remove,
       Mode.Ambient,
     );
@@ -315,7 +379,7 @@ describe("test performEgressReconciliationWithMutex", () => {
   it("should successfully perform reconciliation when no mutex is held", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     // Should have called the namespace check
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
@@ -332,7 +396,7 @@ describe("test performEgressReconciliationWithMutex", () => {
       getNsMock,
     });
 
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
       /Egress reconciliation failed: .*/,
     );
   });
@@ -341,16 +405,54 @@ describe("test performEgressReconciliationWithMutex", () => {
     updateEgressMocks(defaultEgressMocks);
 
     // Start first reconciliation (this will hold the mutex)
-    const firstReconciliation = performEgressReconciliationWithMutex("test-package-1");
+    const firstReconciliation = performEgressReconciliationWithMutex();
 
     // Start second reconciliation while first is in progress
-    const secondReconciliation = performEgressReconciliationWithMutex("test-package-2");
+    const secondReconciliation = performEgressReconciliationWithMutex();
 
     // Check both can reconcile without error
     await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
 
     // The namespace check will be called at least once
     expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
+  });
+
+  it("should perform another reconciliation pass when requested during a running reconcile", async () => {
+    updateEgressMocks(defaultEgressMocks);
+
+    let resolveFirst: (() => void) | undefined;
+    const firstCall = new Promise<void>(resolve => {
+      resolveFirst = resolve;
+    });
+    let callCount = 0;
+
+    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return firstCall.then(() => ({}) as kind.Namespace);
+      }
+      return Promise.resolve({} as kind.Namespace);
+    });
+
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getNsMock,
+    });
+
+    const firstReconciliation = performEgressReconciliationWithMutex();
+
+    // Ensure the first reconciliation has started and is blocked on the first namespace lookup.
+    await vi.runOnlyPendingTimersAsync();
+
+    const secondReconciliation = performEgressReconciliationWithMutex();
+
+    // Unblock the first reconciliation.
+    resolveFirst?.();
+
+    await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
+
+    // Two passes => validateNamespace invoked twice per pass (sidecar + ambient).
+    expect(getNsMock).toHaveBeenCalledTimes(4);
   });
 
   it("should handle previous reconciliation failure and start new one", async () => {
@@ -373,12 +475,12 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // First reconciliation should fail
-    await expect(performEgressReconciliationWithMutex("test-package")).rejects.toThrow(
+    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
       /Egress reconciliation failed: .*/,
     );
 
     // Second reconciliation should succeed despite the previous failure
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     // Should have been called 4 times, once for each ambient and sidecar
     expect(getNsMock).toHaveBeenCalledTimes(4);
@@ -396,7 +498,7 @@ describe("test performEgressReconciliationWithMutex", () => {
     });
 
     // Should not throw for 404 (early return)
-    await expect(performEgressReconciliationWithMutex("test-package")).resolves.not.toThrow();
+    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
 
     expect(getNsMock).toHaveBeenCalled();
   });
@@ -417,6 +519,36 @@ describe("test performEgressReconciliation", () => {
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
     (applySidecarEgressResources as Mock).mockImplementation(mockApplySidecarEgressResources);
     (applyAmbientEgressResources as Mock).mockImplementation(mockApplyAmbientEgressResources);
+    (purgeAmbientEgressResources as Mock).mockImplementation(async () => {
+      const log = {
+        info: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      } as unknown as Parameters<typeof purgeOrphans>[4];
+
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+      await purgeOrphans(
+        "1",
+        "istio-egress-ambient",
+        "shared-ambient-egress-resource",
+        {} as never,
+        log,
+      );
+    });
   });
 
   it("should successfully reconcile egress resources", async () => {
@@ -428,8 +560,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 4 times (for sidecar and ambient resources)
-    expect(purgeOrphans).toHaveBeenCalledTimes(4);
+    // Purges sidecar (Gateway, VirtualService, ServiceEntry) and ambient (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(6);
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {
@@ -450,8 +582,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should err on reconciliation when get namespace returns error", async () => {
@@ -472,8 +604,8 @@ describe("test performEgressReconciliation", () => {
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
     expect(applyAmbientEgressResources).toHaveBeenCalled();
 
-    // Check that purge was called 1 times (for ambient only)
-    expect(purgeOrphans).toHaveBeenCalledTimes(1);
+    // Ambient-only purge (Gateway, ServiceEntry, AuthorizationPolicy)
+    expect(purgeOrphans).toHaveBeenCalledTimes(3);
   });
 
   it("should skip ambient reconciliation when namespace is not found", async () => {
@@ -593,14 +725,6 @@ describe("test updateInMemoryPackageMap", () => {
       "test-package-test-namespace3": hostResourceMapMockTls,
       "test-package-test-namespace4": hostResourceMapMockHttp,
     });
-
-    // Check that the lock was set and released
-    expect(log.debug).toHaveBeenCalledWith(
-      expect.stringContaining("Locking egress package map for update"),
-    );
-    expect(log.debug).toHaveBeenCalledWith(
-      expect.stringContaining("Unlocking egress package map for update"),
-    );
     expect(log.error).not.toHaveBeenCalled();
   });
 
@@ -669,22 +793,6 @@ describe("test updateInMemoryPackageMap", () => {
 });
 
 describe("test updateInMemoryAmbientPackageMap", () => {
-  const hostResourceMapMockTls: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-    },
-  };
-  const hostResourceMapMockTls2: HostResourceMap = {
-    "httpbin.org": {
-      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-    },
-  };
-  const hostResourceMapMockHttp: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 80, protocol: RemoteProtocol.HTTP }],
-    },
-  };
-
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset the map before each test
@@ -694,50 +802,133 @@ describe("test updateInMemoryAmbientPackageMap", () => {
   });
 
   it("should handle normal update scenario", async () => {
-    // This test verifies the normal update mechanism works correctly
+    const pkg: UDSPackage = {
+      ...pkgMock,
+      metadata: {
+        ...pkgMock.metadata,
+        name: "package1",
+        namespace: "ns1",
+      },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              port: 443,
+            },
+          ],
+        },
+      },
+    };
+
     await expect(
-      updateInMemoryAmbientPackageMap(
-        hostResourceMapMockTls,
-        "package1",
-        PackageAction.AddOrUpdate,
-      ),
+      updateInMemoryAmbientPackageMap(pkg, "package1-ns1", PackageAction.AddOrUpdate),
     ).resolves.not.toThrow();
 
-    expect(inMemoryAmbientPackageMap["package1"]).toEqual(hostResourceMapMockTls);
+    expect(inMemoryAmbientPackageMap["package1-ns1"]).toEqual({
+      name: "package1",
+      namespace: "ns1",
+      rules: [
+        {
+          kind: "host",
+          host: "example.com",
+          ports: [443],
+          protocol: RemoteProtocol.TLS,
+        },
+      ],
+    });
   });
 
   it("should resolve concurrent updates correctly", async () => {
-    // Mock packages
+    const pkgA: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg1", namespace: "ns1" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+            },
+          ],
+        },
+      },
+    };
+    const pkgB: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg2", namespace: "ns2" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "httpbin.org",
+              remoteProtocol: RemoteProtocol.TLS,
+            },
+          ],
+        },
+      },
+    };
+    const pkgC: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg3", namespace: "ns3" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              ports: [443, 8443],
+            },
+          ],
+        },
+      },
+    };
+    const pkgD: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg4", namespace: "ns4" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "httpbin.org",
+              remoteProtocol: RemoteProtocol.TLS,
+              port: 443,
+            },
+          ],
+        },
+      },
+    };
+
     const mockUpdates = [
-      {
-        pkgId: "test-package-test-namespace1",
-        hostResourceMap: hostResourceMapMockTls,
-        action: PackageAction.AddOrUpdate,
-      },
-      {
-        pkgId: "test-package-test-namespace2",
-        hostResourceMap: hostResourceMapMockTls2,
-        action: PackageAction.AddOrUpdate,
-      },
-      {
-        pkgId: "test-package-test-namespace3",
-        hostResourceMap: hostResourceMapMockTls,
-        action: PackageAction.AddOrUpdate,
-      },
-      {
-        pkgId: "test-package-test-namespace4",
-        hostResourceMap: hostResourceMapMockTls2,
-        action: PackageAction.AddOrUpdate,
-      },
+      { pkg: pkgA, pkgId: "pkg1-ns1", action: PackageAction.AddOrUpdate },
+      { pkg: pkgB, pkgId: "pkg2-ns2", action: PackageAction.AddOrUpdate },
+      { pkg: pkgC, pkgId: "pkg3-ns3", action: PackageAction.AddOrUpdate },
+      { pkg: pkgD, pkgId: "pkg4-ns4", action: PackageAction.AddOrUpdate },
     ];
 
     // Create an array of promises for each update
     const promises = mockUpdates.map(
-      ({ pkgId, hostResourceMap, action }) =>
+      ({ pkg, pkgId, action }) =>
         new Promise<void>((resolve, reject) => {
           setTimeout(async () => {
             try {
-              await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, action);
+              await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
               resolve();
             } catch (error) {
               reject(error);
@@ -750,161 +941,104 @@ describe("test updateInMemoryAmbientPackageMap", () => {
     await Promise.all(promises);
 
     // Validate inMemoryAmbientPackageMap
-    expect(inMemoryAmbientPackageMap).toEqual({
-      "test-package-test-namespace1": hostResourceMapMockTls,
-      "test-package-test-namespace2": hostResourceMapMockTls2,
-      "test-package-test-namespace3": hostResourceMapMockTls,
-      "test-package-test-namespace4": hostResourceMapMockTls2,
-    });
-
-    // Check that the lock was set and released
-    expect(log.debug).toHaveBeenCalledWith(
-      expect.stringContaining("Locking ambient package map for update"),
+    expect(Object.keys(inMemoryAmbientPackageMap).sort()).toEqual(
+      ["pkg1-ns1", "pkg2-ns2", "pkg3-ns3", "pkg4-ns4"].sort(),
     );
-    expect(log.debug).toHaveBeenCalledWith(
-      expect.stringContaining("Unlocking ambient package map for update"),
-    );
+    expect(inMemoryAmbientPackageMap["pkg1-ns1"].name).toBe("pkg1");
+    expect(inMemoryAmbientPackageMap["pkg2-ns2"].name).toBe("pkg2");
+    expect(inMemoryAmbientPackageMap["pkg3-ns3"].name).toBe("pkg3");
+    expect(inMemoryAmbientPackageMap["pkg4-ns4"].name).toBe("pkg4");
     expect(log.error).not.toHaveBeenCalled();
   });
 
-  it("should return error if port/protocol conflict exists", async () => {
-    // Populate with example.com:443
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package1",
-      PackageAction.AddOrUpdate,
-    );
-
-    // Try and add example.com:80
-    await expect(
-      updateInMemoryAmbientPackageMap(
-        hostResourceMapMockHttp,
-        "package2",
-        PackageAction.AddOrUpdate,
-      ),
-    ).rejects.toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
-    );
-
-    // Verify the first package is still in the map and the conflicting one was not added
-    expect(inMemoryAmbientPackageMap).toEqual({
-      package1: hostResourceMapMockTls,
-    });
-  });
-
-  it("should handle undefined hostResourceMap correctly", async () => {
-    await updateInMemoryPackageMap(undefined, "package1", PackageAction.AddOrUpdate);
-    expect(inMemoryPackageMap).toEqual({});
-  });
-
   it("should remove package correctly on action on AddOrUpdate", async () => {
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package-1",
-      PackageAction.AddOrUpdate,
-    );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package-2",
-      PackageAction.AddOrUpdate,
-    );
-    expect(inMemoryAmbientPackageMap).toEqual({
-      "package-1": hostResourceMapMockTls,
-      "package-2": hostResourceMapMockTls,
-    });
+    const pkg1: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "package-1", namespace: "ns1" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [{ direction: Direction.Egress, remoteHost: "example.com" }],
+        },
+      },
+    };
+    const pkg2: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "package-2", namespace: "ns2" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [{ direction: Direction.Egress, remoteHost: "example.com" }],
+        },
+      },
+    };
 
-    await updateInMemoryAmbientPackageMap(undefined, "package-1", PackageAction.AddOrUpdate);
-    expect(inMemoryAmbientPackageMap).toEqual({
-      "package-2": hostResourceMapMockTls,
-    });
+    await updateInMemoryAmbientPackageMap(pkg1, "package-1-ns1", PackageAction.AddOrUpdate);
+    await updateInMemoryAmbientPackageMap(pkg2, "package-2-ns2", PackageAction.AddOrUpdate);
+    expect(Object.keys(inMemoryAmbientPackageMap).sort()).toEqual([
+      "package-1-ns1",
+      "package-2-ns2",
+    ]);
+
+    await updateInMemoryAmbientPackageMap(pkg1, "package-1-ns1", PackageAction.Remove);
+    expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["package-2-ns2"]);
   });
 
-  it("should remove package correctly on action on Remove", async () => {
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package-1",
-      PackageAction.AddOrUpdate,
-    );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package-2",
-      PackageAction.AddOrUpdate,
-    );
-    expect(inMemoryAmbientPackageMap).toEqual({
-      "package-1": hostResourceMapMockTls,
-      "package-2": hostResourceMapMockTls,
-    });
+  it("should throw on ambient host/port protocol conflicts and keep existing map unchanged", async () => {
+    const pkgHttp: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg-06", namespace: "uds-egress-06" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "host-c.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              ports: [443],
+            },
+          ],
+        },
+      },
+    };
+
+    const pkgTls: UDSPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "pkg-07", namespace: "uds-egress-07" },
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "host-c.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              ports: [443],
+            },
+          ],
+        },
+      },
+    };
 
     await updateInMemoryAmbientPackageMap(
-      hostResourceMapMockTls,
-      "package-1",
-      PackageAction.Remove,
-    );
-    expect(inMemoryAmbientPackageMap).toEqual({
-      "package-2": hostResourceMapMockTls,
-    });
-  });
-});
-
-describe("test updateLastReconciliationPackages", () => {
-  const hostResourceMapMock: HostResourceMap = {
-    "example.com": {
-      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-    },
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // Reset the vars before each test
-    for (const key in inMemoryPackageMap) {
-      delete inMemoryPackageMap[key];
-    }
-    for (const key in inMemoryAmbientPackageMap) {
-      delete inMemoryAmbientPackageMap[key];
-    }
-    lastReconciliationPackages.clear();
-  });
-
-  it("should update lastReconciliationPackages correctly", async () => {
-    // Update in-memory vars
-    await updateInMemoryPackageMap(
-      hostResourceMapMock,
-      "test-package-1",
+      pkgHttp,
+      "pkg-06-uds-egress-06",
       PackageAction.AddOrUpdate,
     );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-2",
-      PackageAction.AddOrUpdate,
-    );
+    expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["pkg-06-uds-egress-06"]);
 
-    // Validate lastReconciliationPackages
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
-  });
+    await expect(
+      updateInMemoryAmbientPackageMap(pkgTls, "pkg-07-uds-egress-07", PackageAction.AddOrUpdate),
+    ).rejects.toThrow(/Protocol conflict detected/);
 
-  it("should update lastReconciliationPackages correctly for empty set", async () => {
-    // Update in-memory vars
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-1",
-      PackageAction.AddOrUpdate,
-    );
-    await updateInMemoryAmbientPackageMap(
-      hostResourceMapMock,
-      "test-package-2",
-      PackageAction.AddOrUpdate,
-    );
-
-    // Validate lastReconciliationPackages
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages).toEqual(new Set(["test-package-1", "test-package-2"]));
-  });
-
-  it("should update lastReconciliationPackages correctly for empty list", () => {
-    // if empty set or empty array, capture correctly
-    updateLastReconciliationPackages();
-    expect(lastReconciliationPackages.size).toEqual(0);
+    // Ensure we did not add or mutate the existing entry
+    expect(Object.keys(inMemoryAmbientPackageMap)).toEqual(["pkg-06-uds-egress-06"]);
+    expect(inMemoryAmbientPackageMap["pkg-06-uds-egress-06"].namespace).toBe("uds-egress-06");
   });
 });
 
@@ -998,7 +1132,7 @@ describe("test createHostResourceMap", () => {
           app: "my-app",
         },
         port: 80,
-        RemoteGenerated: RemoteGenerated.Anywhere,
+        remoteGenerated: RemoteGenerated.Anywhere,
       },
     ];
 
@@ -1067,6 +1201,22 @@ describe("test getHostPortsProtocol", () => {
       host: "example.com",
       ports: [443],
       protocol: RemoteProtocol.TLS,
+    });
+  });
+
+  it("should default to port 80 for HTTP when unspecified port", () => {
+    const allow = {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      remoteProtocol: RemoteProtocol.HTTP,
+    };
+
+    const result = getHostPortsProtocol(allow);
+
+    expect(result).toEqual({
+      host: "example.com",
+      ports: [80],
+      protocol: RemoteProtocol.HTTP,
     });
   });
 
@@ -1283,7 +1433,7 @@ describe("test validateProtocolConflicts", () => {
   });
 });
 
-describe("test validatePortConflicts", () => {
+describe("test validateProtocolConflicts (ambient)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -1303,13 +1453,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return correct results when updating the same package", () => {
@@ -1327,16 +1473,12 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package1",
-    );
-
-    expect(newPackageMap).toEqual(newHostResourceMap);
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package1");
+    }).not.toThrow();
   });
 
-  it("should throw error when port conflict exists", () => {
+  it("should allow union of different ports/protocols for the same host", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1352,13 +1494,11 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
-    }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
-    );
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
-  it("should throw an error when a protocol conflict exists", () => {
+  it("should throw an error when a protocol conflict exists for the same host+port", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1374,13 +1514,13 @@ describe("test validatePortConflicts", () => {
     };
 
     expect(() => {
-      validatePortProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
     }).toThrow(
-      'Port/Protocol conflict detected for example.com. Package "package1" is using different port/protocol combination for the same host.',
+      'Protocol conflict detected for example.com:443. Package "package2" wants to use HTTP but package "package1" is already using TLS for the same host and port combination.',
     );
   });
 
-  it("should return superset of port/protocols", () => {
+  it("should allow subset updates (union happens at remap time)", () => {
     const currentPackageMap: PackageHostMap = {
       package1: {
         "example.com": {
@@ -1398,20 +1538,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package2",
-    );
-
-    expect(newPackageMap).toEqual({
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package2");
+    }).not.toThrow();
   });
 
   it("should return expected output when multiple packages/multiple hosts", () => {
@@ -1448,26 +1577,9 @@ describe("test validatePortConflicts", () => {
       },
     };
 
-    const newPackageMap = validatePortProtocolConflicts(
-      currentPackageMap,
-      newHostResourceMap,
-      "package4",
-    );
-
-    expect(newPackageMap).toEqual({
-      "httpbin.org": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    });
+    expect(() => {
+      validateProtocolConflicts(currentPackageMap, newHostResourceMap, "package4");
+    }).not.toThrow();
   });
 });
 

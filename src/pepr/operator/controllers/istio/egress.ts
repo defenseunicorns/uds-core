@@ -2,41 +2,87 @@
  * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { Allow, RemoteProtocol, UDSPackage } from "../../crd";
+import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace } from "../utils";
-import {
-  ambientEgressNamespace,
-  applyAmbientEgressResources,
-  purgeAmbientEgressResources,
-} from "./egress-ambient";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
+import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
   sidecarEgressNamespace,
 } from "./egress-sidecar";
-import { log } from "./istio-resources";
-import { HostPortsProtocol, HostResourceMap, PackageAction, PackageHostMap } from "./types";
+import { ambientEgressNamespace, log } from "./istio-resources";
+import {
+  AmbientEgressRule,
+  AmbientPackageEntry,
+  AmbientPackageMap,
+  HostPortsProtocol,
+  HostResourceMap,
+  PackageAction,
+  PackageHostMap,
+} from "./types";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
 
-// Lock to prevent concurrent updates to the inMemoryPackageMap
-let sidecarLock = false;
-// eslint-disable-next-line prefer-const
-let sidecarLockQueue: (() => void)[] = [];
+let sidecarMapUpdateQueue: Promise<void> = Promise.resolve();
 
 // Cache for in-memory ambient egress resources from package CRs
-export const inMemoryAmbientPackageMap: PackageHostMap = {};
-let ambientLock = false;
-// eslint-disable-next-line prefer-const
-let ambientLockQueue: (() => void)[] = [];
+export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
+
+let ambientMapUpdateQueue: Promise<void> = Promise.resolve();
+
+function validateAmbientProtocolConflicts(
+  currentAmbientMap: AmbientPackageMap,
+  newEntry: AmbientPackageEntry,
+  newPkgId: string,
+): void {
+  const existingHostPortProtocols: Record<string, { protocol: RemoteProtocol; packageId: string }> =
+    {};
+
+  for (const [pkgId, entry] of Object.entries(currentAmbientMap)) {
+    // Skip the package being updated since it will be replaced
+    if (pkgId === newPkgId) {
+      continue;
+    }
+
+    for (const rule of entry.rules) {
+      if (rule.kind !== "host") continue;
+      for (const port of rule.ports) {
+        const key = `${rule.host}:${port}`;
+        existingHostPortProtocols[key] = {
+          protocol: rule.protocol ?? RemoteProtocol.TLS,
+          packageId: pkgId,
+        };
+      }
+    }
+  }
+
+  for (const rule of newEntry.rules) {
+    if (rule.kind !== "host") continue;
+    for (const port of rule.ports) {
+      const key = `${rule.host}:${port}`;
+      const existing = existingHostPortProtocols[key];
+      const desiredProtocol = rule.protocol ?? RemoteProtocol.TLS;
+      if (existing && existing.protocol !== desiredProtocol) {
+        const errorMsg =
+          `Protocol conflict detected for ${rule.host}:${port}. ` +
+          `Package "${newPkgId}" wants to use ${desiredProtocol} but package "${existing.packageId}" ` +
+          `is already using ${existing.protocol} for the same host and port combination.`;
+        log.error(errorMsg);
+        throw new Error(errorMsg);
+      }
+    }
+  }
+}
 
 // Mutexes to prevent concurrent reconciliation operations for each mode
-let reconciliationMutex: Promise<void> | null = null;
+let reconcileInFlight: Promise<void> | null = null;
 
-// Track which packages were included in the last reconciliation
-export let lastReconciliationPackages: Set<string> = new Set();
+// Flag to ensure we never skip a reconciliation request that arrives
+// while a reconciliation is in progress.
+let reconcileDirty = false;
 
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
@@ -45,68 +91,128 @@ let ambientGeneration = 0;
 // reconcileSharedEgressResources reconciles the egress resources based on the config
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
 export async function reconcileSharedEgressResources(
+  pkg: UDSPackage,
   hostResourceMap: HostResourceMap | undefined,
-  pkgId: string,
   action: PackageAction,
   istioMode: Mode,
 ) {
+  const pkgName = pkg.metadata?.name;
+  const pkgNamespace = pkg.metadata?.namespace;
+  if (!pkgName || !pkgNamespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+  const pkgId = `${pkgName}-${pkgNamespace}`;
+
   // Update in-memory maps based on the target mode
   if (istioMode === Mode.Ambient) {
     // Remove from sidecar map (handles sidecar -> ambient transition)
     await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 
     // Update ambient package list
-    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, action);
+    await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
   } else {
     // Update sidecar map
     await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
 
     // Remove from ambient list (handles ambient -> sidecar transition)
-    await updateInMemoryAmbientPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+    await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
   }
 
   // Reconcile both modes to ensure proper cleanup and application
   // This handles mode transitions and prevents resource conflicts
-  return await performEgressReconciliationWithMutex(pkgId);
+  await performEgressReconciliationWithMutex();
 }
 
-// Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(pkgId: string): Promise<void> {
-  // If there's already a reconciliation in progress, wait for it to complete
-  if (reconciliationMutex) {
-    try {
-      await reconciliationMutex;
-      // Check if this package was included in the last reconciliation
-      if (lastReconciliationPackages.has(pkgId)) {
-        return;
-      }
-    } catch {
-      // If the previous reconciliation failed, we still need to try our own reconciliation
-      // Clear the failed mutex so we can start a new one
-      reconciliationMutex = null;
+function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
+  const name = pkg.metadata?.name;
+  const namespace = pkg.metadata?.namespace;
+  if (!name || !namespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+
+  const rules: AmbientEgressRule[] = [];
+  for (const allow of pkg.spec?.network?.allow ?? []) {
+    if (allow.direction !== Direction.Egress) {
+      continue;
+    }
+
+    // Anywhere participants (no host) used for AP sources.
+    if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
+      rules.push({
+        kind: "anywhere",
+        ports: getAllowedPorts(allow),
+        serviceAccount: allow.serviceAccount,
+      });
+      continue;
+    }
+
+    // Host-scoped egress rules
+    if (allow.remoteHost) {
+      const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
+      const ports = getPortsForHostAllow({
+        ports: allow.ports,
+        port: allow.port,
+        remoteProtocol: protocol,
+      });
+      rules.push({
+        kind: "host",
+        host: allow.remoteHost,
+        ports,
+        protocol,
+        serviceAccount: allow.serviceAccount,
+      });
     }
   }
 
-  // Start a new reconciliation
-  reconciliationMutex = performEgressReconciliation();
+  return { name, namespace, rules };
+}
+
+// Mutex-based reconciliation to prevent overwhelming the operator
+export async function performEgressReconciliationWithMutex(): Promise<void> {
+  // If a reconciliation is already running, mark that another run is needed and wait.
+  // The running reconciliation will do an additional pass before releasing the mutex.
+  if (reconcileInFlight) {
+    reconcileDirty = true;
+    await reconcileInFlight;
+    return;
+  }
+
+  // Start a new reconciliation loop.
+  reconcileDirty = true;
+  reconcileInFlight = (async () => {
+    const startMs = Date.now();
+    let passCount = 0;
+
+    while (reconcileDirty) {
+      reconcileDirty = false;
+      passCount++;
+      await performEgressReconciliation();
+    }
+
+    log.debug(
+      {
+        passCount,
+        durationMs: Date.now() - startMs,
+        additionalPasses: passCount > 1,
+      },
+      "Egress reconciliation completed",
+    );
+  })();
 
   try {
-    await reconciliationMutex;
+    await reconcileInFlight;
   } catch (e) {
     // Log the error and re-throw to maintain error propagation
     log.error("Egress reconciliation failed", e);
     throw e;
   } finally {
     // Clear the mutex when done
-    reconciliationMutex = null;
+    reconcileInFlight = null;
   }
 }
 
 // Perform sidecar egress resources reconciliation
 export async function performEgressReconciliation() {
-  // Capture which packages were included in this reconciliation
-  updateLastReconciliationPackages();
-
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
 
@@ -116,7 +222,7 @@ export async function performEgressReconciliation() {
     if (egressSidecarNamespace) {
       sidecarGeneration++;
 
-      // Apply any sidecar egress resources
+      // Apply any sidecar egress resources. Only purge if apply succeeds.
       await applySidecarEgressResources(inMemoryPackageMap, sidecarGeneration);
 
       // Purge any orphaned sidecar shared resources
@@ -134,12 +240,11 @@ export async function performEgressReconciliation() {
     if (egressAmbientNamespace) {
       ambientGeneration++;
 
-      // Apply ambient egress resources (waypoint)
-      const packageSet = new Set(Object.keys(inMemoryAmbientPackageMap));
-      await applyAmbientEgressResources(packageSet, ambientGeneration);
+      // Apply ambient egress resources (waypoint). Only purge if apply succeeds.
+      await applyAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration);
 
       // Purge any orphaned ambient resources (waypoint)
-      await purgeAmbientEgressResources(ambientGeneration.toString());
+      await purgeAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration.toString());
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
@@ -160,98 +265,51 @@ export async function updateInMemoryPackageMap(
   pkgId: string,
   action: PackageAction,
 ) {
-  // Wait for lock to be available using a promise-based queue
-  if (sidecarLock) {
-    await new Promise<void>(resolve => {
-      sidecarLockQueue.push(resolve);
-    });
-  }
-
-  try {
-    log.debug("Locking egress package map for update");
-    sidecarLock = true;
-
-    if (action == PackageAction.AddOrUpdate) {
-      if (hostResourceMap) {
-        // Validate for protocol conflicts before updating
-        validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
-        // update inMemoryPackageMap
-        inMemoryPackageMap[pkgId] = hostResourceMap;
-      } else {
+  const task = sidecarMapUpdateQueue
+    .catch(() => undefined)
+    .then(() => {
+      if (action == PackageAction.AddOrUpdate) {
+        if (hostResourceMap) {
+          // Validate for protocol conflicts before updating
+          validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+          // update inMemoryPackageMap
+          inMemoryPackageMap[pkgId] = hostResourceMap;
+        } else {
+          removeMapResources(inMemoryPackageMap, pkgId);
+        }
+      } else if (action == PackageAction.Remove) {
         removeMapResources(inMemoryPackageMap, pkgId);
       }
-    } else if (action == PackageAction.Remove) {
-      removeMapResources(inMemoryPackageMap, pkgId);
-    }
-  } catch (e) {
-    log.error({ action, e }, "Failed to update in memory egress package map for event");
-    throw e;
-  } finally {
-    // unlock inMemoryPackageMap and notify next waiter
-    log.debug("Unlocking egress package map for update");
-    sidecarLock = false;
-    const nextResolve = sidecarLockQueue.shift();
-    if (nextResolve) {
-      nextResolve();
-    }
-  }
+    });
+
+  // Keep the queue healthy even if this update fails.
+  sidecarMapUpdateQueue = task.catch(() => undefined);
+  return task;
 }
 
 // Update the inMemoryAmbientPackages list with the latest package
 export async function updateInMemoryAmbientPackageMap(
-  hostResourceMap: HostResourceMap | undefined,
+  pkg: UDSPackage,
   pkgId: string,
   action: PackageAction,
 ) {
-  // Wait for lock to be available using a promise-based queue
-  if (ambientLock) {
-    await new Promise<void>(resolve => {
-      ambientLockQueue.push(resolve);
-    });
-  }
-
-  try {
-    log.debug("Locking ambient package map for update");
-    ambientLock = true;
-
-    if (action == PackageAction.AddOrUpdate) {
-      if (hostResourceMap) {
-        // Validate for port conflicts before updating
-        const newPackageMap = validatePortProtocolConflicts(
-          inMemoryAmbientPackageMap,
-          hostResourceMap,
-          pkgId,
-        );
-
-        // Set newly calculated package map if no port conflicts
-        inMemoryAmbientPackageMap[pkgId] = newPackageMap;
-      } else {
-        removeMapResources(inMemoryAmbientPackageMap, pkgId);
+  const task = ambientMapUpdateQueue
+    .catch(() => undefined)
+    .then(() => {
+      if (action == PackageAction.AddOrUpdate) {
+        const entry = createAmbientPackageEntry(pkg);
+        validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
+        inMemoryAmbientPackageMap[pkgId] = entry;
+      } else if (action == PackageAction.Remove) {
+        if (inMemoryAmbientPackageMap[pkgId]) {
+          delete inMemoryAmbientPackageMap[pkgId];
+        }
       }
-    } else if (action == PackageAction.Remove) {
-      removeMapResources(inMemoryAmbientPackageMap, pkgId);
-    }
-  } catch (e) {
-    log.error({ action, e }, "Failed to update in memory ambient package map for event");
-    throw e;
-  } finally {
-    // unlock inMemoryAmbientPackages and notify next waiter
-    log.debug("Unlocking ambient package map for update");
-    ambientLock = false;
-    const nextResolve = ambientLockQueue.shift();
-    if (nextResolve) {
-      nextResolve();
-    }
-  }
-}
+    });
 
-// Update lastReconciliationPackages
-export function updateLastReconciliationPackages() {
-  lastReconciliationPackages = new Set([
-    ...Object.keys(inMemoryPackageMap),
-    ...Object.keys(inMemoryAmbientPackageMap),
-  ]);
-  return lastReconciliationPackages;
+  // Keep the queue healthy even if this update fails.
+  ambientMapUpdateQueue = task.catch(() => undefined);
+  return task;
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
@@ -297,49 +355,6 @@ export function validateProtocolConflicts(
       }
     }
   }
-}
-
-// Validate that there are no port/protocol conflicts across packages for the same host
-export function validatePortProtocolConflicts(
-  currentPackageMap: PackageHostMap,
-  newHostResourceMap: HostResourceMap,
-  newPkgId: string,
-): HostResourceMap {
-  // Default to returning the new host resource map
-  const calculatedPackageMap = newHostResourceMap;
-
-  for (const [pkgId, hostResourceMap] of Object.entries(currentPackageMap)) {
-    // Skip the package being updated since it will be replaced
-    if (pkgId === newPkgId) {
-      continue;
-    }
-
-    for (const [host, hostResource] of Object.entries(hostResourceMap)) {
-      const portProtocolList = hostResource.portProtocol.map(pp => `${pp.port}-${pp.protocol}`);
-      for (const [newHost, newHostResource] of Object.entries(newHostResourceMap)) {
-        if (host === newHost) {
-          // If the host is defined in both maps, validate port/protocols don't conflict
-          const newPortProtocolList = newHostResource.portProtocol.map(
-            pp => `${pp.port}-${pp.protocol}`,
-          );
-
-          // Ensure all newPortProtocolList items are in portProtocolList
-          if (!newPortProtocolList.every(pp => portProtocolList.includes(pp))) {
-            const errorMsg =
-              `Port/Protocol conflict detected for ${host}. ` +
-              `Package "${pkgId}" is using different port/protocol combination for the same host.`;
-            log.error(errorMsg);
-            throw new Error(errorMsg);
-          }
-
-          // Copy portProtocols from hostResource -> newHostResource to ensure it's the superset
-          calculatedPackageMap[newHost].portProtocol = hostResource.portProtocol;
-        }
-      }
-    }
-  }
-
-  return calculatedPackageMap;
 }
 
 // Create a host resource map from a UDSPackage
@@ -388,15 +403,11 @@ export function getHostPortsProtocol(allow: Allow) {
   const host = allow.remoteHost;
   const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
 
-  // reconcile ports
-  let ports = [];
-  if (allow.ports) {
-    ports = allow.ports;
-  } else if (allow.port) {
-    ports = [allow.port];
-  } else {
-    ports = [443];
-  }
+  const ports = getPortsForHostAllow({
+    ports: allow.ports,
+    port: allow.port,
+    remoteProtocol: protocol,
+  });
 
   if (host) {
     hostPortsProtocol = {

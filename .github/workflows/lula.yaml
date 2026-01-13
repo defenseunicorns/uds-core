@@ -29,7 +29,7 @@ jobs:
       - name: Run Lula Scan
         run: |
           # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver
-          npx --yes lula2@0.8.9 crawl
+          npx --yes lula2@0.9.1 crawl
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

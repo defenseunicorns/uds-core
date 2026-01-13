@@ -5,25 +5,80 @@
 
 import { beforeEach, describe, expect, it } from "vitest";
 import { Expose, Gateway, IstioLocation, IstioResolution, RemoteProtocol } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
+import { egressWaypointName } from "./ambient-waypoint";
 import { ownerRefsMock } from "./defaultTestMocks";
 import {
   sidecarEgressNamespace,
   sharedEgressPkgId as sidecarSharedEgressPkgId,
 } from "./egress-sidecar";
-import { ambientEgressNamespace } from "./egress-ambient";
+import { ambientEgressNamespace } from "./istio-resources";
 import {
   generateIngressServiceEntry,
   generateLocalEgressServiceEntry,
+  generateSharedAmbientServiceEntry,
   generateSharedServiceEntry,
 } from "./service-entry";
 import { EgressResource, HostResource } from "./types";
-import { egressWaypointName } from "./ambient-waypoint";
-import { Mode } from "../../crd/generated/package-v1alpha1";
 
 beforeEach(() => {
   UDSConfig.domain = "uds.dev";
   UDSConfig.adminDomain = "admin.uds.dev";
+});
+
+describe("test generate shared ambient service entry", () => {
+  it("should create a shared ambient ServiceEntry object with waypoint binding and annotations", () => {
+    const host = "example.com";
+    const resource: EgressResource = {
+      packages: ["pkg1-ns1", "pkg2-ns2"],
+      portProtocols: [
+        { port: 443, protocol: RemoteProtocol.TLS },
+        { port: 80, protocol: RemoteProtocol.HTTP },
+      ],
+    };
+    const generation = 2;
+
+    const serviceEntry = generateSharedAmbientServiceEntry(host, resource, generation);
+
+    expect(serviceEntry).toBeDefined();
+    expect(serviceEntry.metadata?.name).toEqual("ambient-se-example-com");
+    expect(serviceEntry.metadata?.namespace).toEqual(ambientEgressNamespace);
+    expect(serviceEntry.metadata?.labels).toEqual({
+      "istio.io/use-waypoint": egressWaypointName,
+      "istio.io/use-waypoint-namespace": ambientEgressNamespace,
+      "uds/package": "shared-ambient-egress-resource",
+      "uds/generation": generation.toString(),
+    });
+    // annotations include an entry per contributing package
+    expect(serviceEntry.metadata?.annotations).toMatchObject({
+      "uds.dev/user-pkg1-ns1": "user",
+      "uds.dev/user-pkg2-ns2": "user",
+    });
+
+    expect(serviceEntry.spec?.hosts?.[0]).toEqual(host);
+    expect(serviceEntry.spec?.ports?.length).toEqual(2);
+    expect(serviceEntry.spec?.ports?.map(p => p.number).sort((a, b) => a - b)).toEqual([80, 443]);
+    expect(serviceEntry.spec?.location).toEqual(IstioLocation.MeshExternal);
+    expect(serviceEntry.spec?.resolution).toEqual(IstioResolution.DNS);
+    expect(serviceEntry.spec?.exportTo?.[0]).toEqual(".");
+  });
+
+  it("should cap long hostnames for ambient SE name within K8s limits", () => {
+    const longLabel = "a".repeat(200);
+    const host = `${longLabel}.${longLabel}.${longLabel}.example.com`;
+    const resource: EgressResource = {
+      packages: ["pkg1-ns1"],
+      portProtocols: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    };
+    const generation = 1;
+
+    const se = generateSharedAmbientServiceEntry(host, resource, generation);
+
+    expect(se.metadata?.name).toBeDefined();
+    expect(se.metadata!.name!.length).toBeLessThanOrEqual(253);
+    expect(se.metadata!.name!).toMatch(/^ambient-se-/);
+  });
 });
 
 describe("test generate service entry", () => {

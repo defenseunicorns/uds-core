@@ -14,12 +14,12 @@ tasks:
           - "PEPR_MODE=dev"
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd packages.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.12 crd packages.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd packages.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.12 crd packages.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -29,12 +29,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd exemptions.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.12 crd exemptions.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd exemptions.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.12 crd exemptions.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -44,12 +44,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd clusterconfig.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.12 crd clusterconfig.uds.dev src/pepr/operator/crd/generated
         description: "Generate TS types for clusterconfig.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.10 crd clusterconfig.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.12 crd clusterconfig.uds.dev -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
           # Make the schema strict on additionalProperties

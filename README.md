@@ -32,7 +32,7 @@ UDS Core establishes a secure baseline for cloud-native systems and ships with c
 - A running container environment for K3D to interact with for dev & test environments
 - [K3D](https://k3d.io/) v5.7.1 or later for dev & test environments or any [CNCF Certified Kubernetes Cluster](https://www.cncf.io/training/certification/software-conformance/#logos) for production environments.
 <!-- renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver -->
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.27.20 or later
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install): v0.27.21 or later
 
 ---
 

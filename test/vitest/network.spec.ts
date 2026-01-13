@@ -301,7 +301,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       egress_ambient_tls_curl,
     );
 
-    const tlsDebugMessage = `TLS github curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
+    const tlsDebugMessage = `TLS example.com curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
 
     expect(isResponseError(success_response_tls), tlsDebugMessage).toBe(false);
 
@@ -349,6 +349,61 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       true,
     );
   });
+
+  test.concurrent(
+    "Admin (Anywhere, ambient) can reach remoteHost defined in another namespace",
+    async () => {
+      const EXAMPLE_TLS = [
+        "sh",
+        "-c",
+        `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+      ];
+
+      // Source: test-admin-app (Anywhere via app-admin-package, now ambient)
+      // Target: www.example.com defined as remoteHost in egress-ambient-1
+      const resp = await execInPod("test-admin-app", testAdminApp, "curl", EXAMPLE_TLS);
+      const msg = `Admin Anywhere->remoteHost cross-ns: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      expect(isResponseError(resp), msg).toBe(false);
+    },
+  );
+
+  test.concurrent("Egress Ambient per-host isolation (centralized AP)", async () => {
+    // egress-ambient-2 SA is allowed to Google TLS; it should not be allowed to api.github.com TLS
+    const EXAMPLE_TLS_DENIED = [
+      "sh",
+      "-c",
+      `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+    ];
+
+    const resp = await execInPod(
+      "egress-ambient-2",
+      curlPodNameEgressAmbient2,
+      "curl",
+      EXAMPLE_TLS_DENIED,
+    );
+    const msg = `Egress Ambient per-host isolation (example.com denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
+    expect(isResponseError(resp), msg).toBe(true);
+  });
+
+  test.concurrent(
+    "Egress Ambient HTTP to github denied for SA with Google TLS access",
+    async () => {
+      const EXAMPLE_HTTP_DENIED = [
+        "sh",
+        "-c",
+        `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
+      ];
+
+      const resp = await execInPod(
+        "egress-ambient-2",
+        curlPodNameEgressAmbient2,
+        "curl",
+        EXAMPLE_HTTP_DENIED,
+      );
+      const msg = `Egress Ambient HTTP example.com denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      expect(isResponseError(resp), msg).toBe(true);
+    },
+  );
 
   (runEgressTests ? test.concurrent : test.concurrent.skip)("Egress Gateway", async () => {
     const egress_gateway_http_curl = [

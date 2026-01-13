@@ -14,7 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.21.5/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.22.1/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 

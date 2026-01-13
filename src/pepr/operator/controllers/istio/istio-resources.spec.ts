@@ -3,361 +3,156 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { kind } from "pepr";
+import { K8s } from "pepr";
+import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
+import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import * as utils from "../utils";
-import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
-import * as egressMod from "./egress";
-import * as egressAmbientMod from "./egress-ambient";
-import { istioEgressResources } from "./istio-resources";
+import { getPackageId, getSharedAnnotationKey, istioResources } from "./istio-resources";
+import * as seMod from "./service-entry";
+import * as vsMod from "./virtual-service";
 
-vi.mock("../utils", async importOriginal => {
-  const original = (await importOriginal()) as typeof utils;
+vi.mock("pepr", () => {
   return {
-    ...original,
-    purgeOrphans: vi.fn(async <T>(fn?: () => Promise<T>) => {
-      if (typeof fn === "function") {
-        return await fn();
-      }
-      return;
-    }),
+    K8s: vi.fn(() => ({
+      Apply: vi.fn(async () => undefined),
+    })),
+    Log: {
+      child: vi.fn(() => ({
+        info: vi.fn(),
+        debug: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        level: "info",
+      })),
+    },
+    kind: {
+      VirtualService: "VirtualService",
+      ServiceEntry: "ServiceEntry",
+      IstioSidecar: "Sidecar",
+      IstioAuthorizationPolicy: "AuthorizationPolicy",
+    },
   };
 });
 
-vi.mock("pepr", () => ({
-  K8s: vi.fn(),
-  Log: {
-    child: vi.fn(() => ({
-      info: vi.fn(),
-      debug: vi.fn(),
-      error: vi.fn(),
-      warn: vi.fn(),
-      level: "info",
-    })),
-  },
-  kind: {
-    Gateway: "Gateway",
-    VirtualService: "VirtualService",
-    ServiceEntry: "ServiceEntry",
-    Sidecar: "Sidecar",
-    Namespace: "Namespace",
-    Service: "Service",
-  },
-}));
+describe("istio-resources (ingress)", () => {
+  const pkgBase: UDSPackage = {
+    apiVersion: "uds.dev/v1alpha1",
+    kind: "Package",
+    metadata: { name: "pkg", namespace: "ns", generation: 7 },
+    spec: {
+      network: {
+        expose: [{ host: "a" }, { host: "b" }],
+        allow: [],
+        serviceMesh: { mode: Mode.Sidecar },
+      },
+      sso: [],
+      monitor: [],
+    },
+  } as unknown as UDSPackage;
 
-describe("test istioEgressResources", () => {
+  let applyVS: ReturnType<typeof vi.fn>;
+  let applySE: ReturnType<typeof vi.fn>;
+
   beforeEach(() => {
-    process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
+    // Create stable spies once per test
+    applyVS = vi.fn(async () => undefined);
+    applySE = vi.fn(async () => undefined);
 
-    vi.spyOn(egressMod, "reconcileSharedEgressResources").mockImplementation(async () => {});
-    vi.spyOn(egressAmbientMod, "createAmbientWorkloadEgressResources").mockImplementation(
-      async () => {},
+    // Reset K8s mock Apply per kind
+    const k8sMock = K8s as unknown as Mock;
+    type K8sApply = { Apply: (obj: unknown) => Promise<void> };
+    k8sMock.mockImplementation((k: unknown): K8sApply => {
+      if (k === IstioVirtualService) {
+        return { Apply: applyVS } as K8sApply;
+      }
+      if (k === IstioServiceEntry) {
+        return { Apply: applySE } as K8sApply;
+      }
+      return { Apply: vi.fn(async () => undefined) } as K8sApply;
+    });
+
+    // Stub purgeOrphans
+    vi.spyOn(utils, "purgeOrphans").mockResolvedValue();
+
+    // Stub generators with predictable payloads
+    let vsIdx = 0;
+    vi.spyOn(vsMod, "generateIngressVirtualService").mockImplementation(
+      (_expose, ns, pkgName, gen): IstioVirtualService => {
+        const name = `vs-${++vsIdx}`;
+        return {
+          apiVersion: "networking.istio.io/v1beta1",
+          kind: "VirtualService",
+          metadata: {
+            name,
+            namespace: ns,
+            labels: { "uds/package": pkgName, "uds/generation": gen },
+          },
+          spec: { hosts: [vsIdx === 1 ? "a.uds.dev" : "b.uds.dev"] },
+        } as unknown as IstioVirtualService;
+      },
     );
-    updateEgressMocks(defaultEgressMocks);
-    vi.clearAllMocks();
+
+    let seIdx = 0;
+    vi.spyOn(seMod, "generateIngressServiceEntry").mockImplementation(
+      (_expose, ns, pkgName, gen): IstioServiceEntry => {
+        const name = `se-${++seIdx}`;
+        return {
+          apiVersion: "networking.istio.io/v1beta1",
+          kind: "ServiceEntry",
+          metadata: {
+            name,
+            namespace: ns,
+            labels: { "uds/package": pkgName, "uds/generation": gen },
+          },
+          spec: {},
+        } as unknown as IstioServiceEntry;
+      },
+    );
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it("should err if no egress gateway namespace with defined hostResourceMap for sidecar mode", async () => {
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
+  // Verifies VS/SE are applied per expose and unique hosts are returned; also checks purge calls
+  it("applies a VirtualService and ServiceEntry per expose and returns unique hosts", async () => {
+    const hosts = await istioResources(pkgBase, pkgBase.metadata!.namespace!);
 
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          allow: [
-            {
-              direction: Direction.Egress,
-              remoteHost: "example.com",
-              port: 443,
-              remoteProtocol: RemoteProtocol.TLS,
-              selector: { app: "test" },
-            },
-          ],
-        },
-      },
-    };
+    expect(applyVS).toHaveBeenCalledTimes(2);
+    expect(applySE).toHaveBeenCalledTimes(2);
+    expect(hosts.sort()).toEqual(["a.uds.dev", "b.uds.dev"]);
 
-    const errorMessage = "Unable to get the egress gateway namespace istio-egress-gateway.";
-
-    const getNsMock = vi
-      .fn<() => Promise<kind.Namespace>>()
-      .mockRejectedValue(new Error(errorMessage));
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(mockHostResourceMap);
-
-    await expect(istioEgressResources(mockPkg, pkgMock.metadata!.namespace!)).rejects.toThrow(
-      errorMessage,
+    // purgeOrphans should be invoked for VS, SE, Sidecar, and AuthorizationPolicy
+    const gen = String(pkgBase.metadata!.generation!);
+    expect(utils.purgeOrphans).toHaveBeenCalledWith(
+      gen,
+      "ns",
+      "pkg",
+      IstioVirtualService,
+      expect.anything(),
     );
-  });
-
-  it("should err if no egress gateway port with defined hostResourceMap for sidecar mode", async () => {
-    const mockError = new Error(
-      "Egress gateway does not expose port 1234 for host example.com. Please update the egress gateway service to expose this port.",
+    expect(utils.purgeOrphans).toHaveBeenCalledWith(
+      gen,
+      "ns",
+      "pkg",
+      IstioServiceEntry,
+      expect.anything(),
     );
+    expect(utils.purgeOrphans).toHaveBeenCalledTimes(3);
+  });
+});
 
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 1234, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          allow: [
-            {
-              direction: Direction.Egress,
-              remoteHost: "example.com",
-              port: 1234,
-              remoteProtocol: RemoteProtocol.TLS,
-              selector: { app: "test" },
-            },
-          ],
-        },
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(mockHostResourceMap);
-
-    await expect(istioEgressResources(mockPkg, pkgMock.metadata!.namespace!)).rejects.toThrowError(
-      mockError,
-    );
+describe("helpers", () => {
+  // Verifies helper composes name-namespace string
+  it("getPackageId composes name-namespace", () => {
+    const pkg = { metadata: { name: "n", namespace: "s" } } as UDSPackage;
+    expect(getPackageId(pkg)).toBe("n-s");
   });
 
-  it("should pass for undefined hostResourceMap", async () => {
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(undefined);
-
-    await istioEgressResources(pkgMock, pkgMock.metadata!.namespace!);
-
-    expect(egressMod.reconcileSharedEgressResources).toHaveBeenCalledTimes(1);
-  });
-
-  it("should create egress resources for sidecar mode", async () => {
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    };
-
-    const mockAllowList = [
-      {
-        remoteHost: "example.com",
-        port: 443,
-        remoteProtocol: RemoteProtocol.TLS,
-        direction: Direction.Egress,
-        selector: {
-          app: "example-app1",
-        },
-      },
-      {
-        remoteHost: "example.com",
-        port: 80,
-        remoteProtocol: RemoteProtocol.TLS,
-        direction: Direction.Egress,
-        selector: {
-          app: "example-app2",
-        },
-      },
-    ];
-
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          allow: mockAllowList,
-        },
-      },
-    };
-
-    updateEgressMocks(defaultEgressMocks);
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(mockHostResourceMap);
-    vi.spyOn(egressMod, "egressRequestedFromNetwork").mockReturnValue(mockAllowList);
-
-    await istioEgressResources(mockPkg, pkgMock.metadata!.namespace!);
-
-    expect(defaultEgressMocks.applySeMock).toHaveBeenCalledTimes(1);
-    expect(defaultEgressMocks.applySidecarMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("should not create egress resources for sidecar mode", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    const mockAllowList = [
-      {
-        direction: Direction.Ingress,
-        selector: {
-          app: "my-app",
-        },
-        port: 80,
-        remoteGenerated: RemoteGenerated.Anywhere,
-      },
-    ];
-
-    // Create a mock package with the network configuration
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          allow: mockAllowList,
-        },
-      },
-    };
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(undefined);
-    vi.spyOn(egressMod, "egressRequestedFromNetwork").mockReturnValue(mockAllowList);
-
-    await istioEgressResources(mockPkg, pkgMock.metadata!.namespace!);
-
-    expect(defaultEgressMocks.applySeMock).not.toHaveBeenCalled();
-    expect(defaultEgressMocks.applySidecarMock).not.toHaveBeenCalled();
-  });
-
-  it("should err if no egress waypoint namespace for ambient mode", async () => {
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
-      },
-    };
-
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          serviceMesh: {
-            mode: Mode.Ambient,
-          },
-          allow: [
-            {
-              direction: Direction.Egress,
-              remoteHost: "example.com",
-              port: 443,
-              remoteProtocol: RemoteProtocol.TLS,
-              selector: { app: "test" },
-            },
-          ],
-        },
-      },
-    };
-
-    const errorMessage = "Unable to get the egress waypoint namespace istio-egress-ambient.";
-
-    const validateNamespaceMock = vi
-      .spyOn(utils, "validateNamespace")
-      .mockRejectedValue(new Error(errorMessage));
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(mockHostResourceMap);
-
-    await expect(istioEgressResources(mockPkg, pkgMock.metadata!.namespace!)).rejects.toThrow(
-      errorMessage,
-    );
-
-    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
-    expect(egressAmbientMod.createAmbientWorkloadEgressResources).not.toHaveBeenCalled();
-  });
-
-  it("should create ambient workload egress resources for ambient mode", async () => {
-    const mockHostResourceMap = {
-      "example.com": {
-        portProtocol: [
-          { port: 443, protocol: RemoteProtocol.TLS },
-          { port: 80, protocol: RemoteProtocol.HTTP },
-        ],
-      },
-    };
-
-    const mockAllowList = [
-      {
-        remoteHost: "example.com",
-        port: 443,
-        remoteProtocol: RemoteProtocol.TLS,
-        direction: Direction.Egress,
-        selector: {
-          app: "example-app1",
-        },
-      },
-    ];
-
-    const validateNamespaceMock = vi
-      .spyOn(utils, "validateNamespace")
-      .mockResolvedValue({} as kind.Namespace);
-
-    // Create a mock package with the network configuration and ambient mode
-    const mockPkg = {
-      ...pkgMock,
-      spec: {
-        ...pkgMock.spec,
-        network: {
-          ...pkgMock.spec?.network,
-          serviceMesh: {
-            mode: Mode.Ambient,
-          },
-          allow: [
-            {
-              direction: Direction.Egress,
-              remoteHost: "example.com",
-              port: 443,
-              remoteProtocol: RemoteProtocol.TLS,
-              selector: { app: "example-app1" },
-            },
-          ],
-        },
-      },
-    };
-
-    vi.spyOn(egressMod, "createHostResourceMap").mockReturnValue(mockHostResourceMap);
-    vi.spyOn(egressMod, "egressRequestedFromNetwork").mockReturnValue(mockAllowList);
-
-    await istioEgressResources(mockPkg, pkgMock.metadata!.namespace!);
-
-    expect(validateNamespaceMock).toHaveBeenCalledWith("istio-egress-ambient");
-    expect(egressAmbientMod.createAmbientWorkloadEgressResources).toHaveBeenCalledWith(
-      mockHostResourceMap,
-      mockAllowList,
-      pkgMock.metadata!.name!,
-      pkgMock.metadata!.namespace!,
-      pkgMock.metadata!.generation!.toString(),
-      [
-        {
-          apiVersion: pkgMock.apiVersion,
-          kind: pkgMock.kind,
-          name: pkgMock.metadata!.name!,
-          uid: pkgMock.metadata!.uid,
-        },
-      ],
-    );
+  // Verifies helper prefixes uds.dev/user- for shared annotation keys
+  it("getSharedAnnotationKey prefixes uds.dev/user-", () => {
+    expect(getSharedAnnotationKey("abc")).toBe("uds.dev/user-abc");
   });
 });

@@ -52,12 +52,9 @@ export const pkgHostMapMock: PackageHostMap = {
 // Type for the common mocked methods
 export type K8sMockImpl = {
   InNamespace: MockedFunction<() => K8sMockImpl>; // InNamespace doesn't actually type out to a K8sMockImpl, but good enough for testing
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Apply: MockedFunction<() => Promise<any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Get: MockedFunction<() => Promise<any>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Delete: MockedFunction<() => Promise<any>>;
+  Apply: MockedFunction<() => Promise<unknown>>;
+  Get: MockedFunction<() => Promise<unknown>>;
+  Delete: MockedFunction<() => Promise<unknown>>;
   Logs: Mock;
   Watch: Mock;
   WithLabel: Mock;
@@ -85,6 +82,7 @@ type EgressMocks = {
   deleteSidecarMock: MockedFunction<() => Promise<void>>;
   deleteApMock: MockedFunction<() => Promise<void>>;
   deleteWaypointMock: MockedFunction<() => Promise<void>>;
+  getPkgListMock: MockedFunction<() => Promise<{ items: UDSPackage[] }>>;
 };
 
 // Default mock implementation for K8s egress operations
@@ -126,6 +124,7 @@ export const defaultEgressMocks: EgressMocks = {
   deleteSidecarMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteApMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
   deleteWaypointMock: vi.fn<() => Promise<void>>().mockResolvedValue(),
+  getPkgListMock: vi.fn<() => Promise<{ items: UDSPackage[] }>>().mockResolvedValue({ items: [] }),
 };
 
 export function updateEgressMocks(egressMocks: EgressMocks) {
@@ -136,10 +135,12 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
     Logs: vi.fn(),
     Delete: vi.fn(),
     Watch: vi.fn(),
-    WithLabel: vi.fn(),
+    WithLabel: vi.fn<() => K8sMockImpl>().mockReturnThis(),
   };
 
   const mockK8s = vi.mocked(K8s);
+
+  type K8sModel = { name?: string } | ((...args: unknown[]) => unknown) | string | null | undefined;
 
   // Create a mapping keyed by model name string
   const k8sImplementations: Record<string, Partial<K8sMockImpl>> = {
@@ -176,6 +177,10 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
       Apply: egressMocks.applyWaypointMock,
       Delete: egressMocks.deleteWaypointMock,
     },
+    [UDSPackage.name]: {
+      ...baseImplementation,
+      Get: egressMocks.getPkgListMock,
+    },
     Namespace: {
       ...baseImplementation,
       Get: egressMocks.getNsMock,
@@ -193,28 +198,26 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
   };
 
   // Define a function to get the appropriate implementation based on model type
-  mockK8s.mockImplementation(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ((model: any) => {
-      // First ensure model exists to prevent 'Cannot read properties of undefined' errors
-      if (!model) {
-        return baseImplementation;
-      }
-
-      // For Istio resources that have a name property
-      // Using optional chaining to safely access model.name
-      if (model?.name && k8sImplementations[model.name]) {
-        return k8sImplementations[model.name];
-      }
-
-      // For core K8s resources, determine by string match
-      if (typeof model == "string") {
-        return k8sImplementations[model] ?? baseImplementation;
-      }
-
-      // If we can't determine the type, return the base implementation
+  mockK8s.mockImplementation(((model: K8sModel) => {
+    // First ensure model exists to prevent 'Cannot read properties of undefined' errors
+    if (!model) {
       return baseImplementation;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any,
-  );
+    }
+
+    // For Istio resources that have a name property
+    // Using optional chaining to safely access model.name
+    const modelName =
+      typeof model === "function" ? model.name : typeof model === "object" ? model.name : undefined;
+    if (modelName && k8sImplementations[modelName]) {
+      return k8sImplementations[modelName];
+    }
+
+    // For core K8s resources, determine by string match
+    if (typeof model == "string") {
+      return k8sImplementations[model] ?? baseImplementation;
+    }
+
+    // If we can't determine the type, return the base implementation
+    return baseImplementation;
+  }) as unknown as Parameters<typeof mockK8s.mockImplementation>[0]);
 }

@@ -8,6 +8,8 @@ export type PackageHostMap = Record<string, HostResourceMap>;
 export type HostResourceMap = Record<string, HostResource>;
 export type EgressResourceMap = Record<string, EgressResource>;
 
+export type AmbientPackageMap = Record<string, AmbientPackageEntry>;
+
 export interface HostResource {
   portProtocol: PortProtocol[];
 }
@@ -26,6 +28,28 @@ export interface EgressResource {
 export interface PortProtocol {
   port: number;
   protocol: RemoteProtocol;
+}
+
+export type AmbientEgressRule = AmbientRemoteHostRule | AmbientAnywhereRule;
+
+export interface AmbientPackageEntry {
+  name: string;
+  namespace: string;
+  rules: AmbientEgressRule[];
+}
+
+export interface AmbientRemoteHostRule {
+  kind: "host";
+  host: string;
+  ports: number[];
+  protocol: RemoteProtocol;
+  serviceAccount?: string;
+}
+
+export interface AmbientAnywhereRule {
+  kind: "anywhere";
+  ports?: number[];
+  serviceAccount?: string;
 }
 
 export enum PackageAction {

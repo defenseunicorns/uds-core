@@ -70,9 +70,10 @@ jobs:
           rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@000eeb8522f0572907c393e8151076c205fdba1b # v1.0.6
+        uses: opentofu/setup-opentofu@e95ccdd20623115bfd7d47df14a3250d6066a9d0 # v1.0.7
         with:
-          tofu_version: 1.8.2
+          # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
+          tofu_version: 1.11.2
           tofu_wrapper: false
 
       - name: Create UDS Core Package

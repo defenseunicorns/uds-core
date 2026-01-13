@@ -46,68 +46,69 @@ data "aws_iam_policy_document" "velero_policy" {
   }
 
   statement {
-    effect = "Allow"
-    actions = ["ec2:DescribeVolumes", "ec2:DescribeSnapshots"]
+    effect    = "Allow"
+    actions   = ["ec2:DescribeVolumes", "ec2:DescribeSnapshots"]
     resources = ["*"]
   }
 
+  # Replace <YOUR_CLUSTER_NAME> in statements below with your EKS cluster name
   statement {
-    effect = "Allow"
-    actions = ["ec2:CreateVolume"]
+    effect    = "Allow"
+    actions   = ["ec2:CreateVolume"]
     resources = ["*"]
     condition {
-      test = "StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
   }
 
   statement {
-    effect = "Allow"
-    actions = ["ec2:CreateSnapshot"]
+    effect    = "Allow"
+    actions   = ["ec2:CreateSnapshot"]
     resources = ["*"]
     condition {
-      test = "StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
   }
 
   statement {
-    effect = "Allow"
-    actions = ["ec2:CreateSnapshot"]
+    effect    = "Allow"
+    actions   = ["ec2:CreateSnapshot"]
     resources = ["*"]
     condition {
-      test = "StringEquals"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
   }
 
   statement {
-    effect = "Allow"
-    actions = ["ec2:DeleteSnapshot"]
+    effect    = "Allow"
+    actions   = ["ec2:DeleteSnapshot"]
     resources = ["*"]
     condition {
-      test = "StringEquals"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
   }
 
   statement {
-    effect = "Allow"
-    actions = ["ec2:CreateTags"]
+    effect    = "Allow"
+    actions   = ["ec2:CreateTags"]
     resources = ["*"]
     condition {
-      test = "ForAllValues:StringEquals"
-      variable = "aws:RequestTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEquals"
+      variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
     condition {
-      test = "ForAllValues:StringEqualsIfExists"
-      variable = "ec2:ResourceTag/ebs.csi.aws.com/cluster"
-      values = ["true"]
+      test     = "StringEqualsIfExists"
+      variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+      values   = ["owned"]
     }
   }
 }

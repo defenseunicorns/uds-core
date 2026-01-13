@@ -6,25 +6,17 @@
 import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
-import {
-  IstioAuthorizationPolicy,
-  IstioServiceEntry,
-  IstioSidecar,
-  IstioVirtualService,
-  UDSPackage,
-} from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef, purgeOrphans, validateNamespace } from "../utils";
-import {
-  createHostResourceMap,
-  egressRequestedFromNetwork,
-  reconcileSharedEgressResources,
-} from "./egress";
-import { ambientEgressNamespace, createAmbientWorkloadEgressResources } from "./egress-ambient";
-import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
+import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
-import { PackageAction } from "./types";
 import { generateIngressVirtualService } from "./virtual-service";
+
+// Central Ambient egress identifiers:
+// - ambientEgressNamespace: namespace where shared Ambient egress resources live
+// - sharedEgressPkgId: label value used to group and purge UDS-managed Ambient
+//   egress resources by generation during reconciliation
+export const ambientEgressNamespace = "istio-egress-ambient";
+export const sharedEgressPkgId = "shared-ambient-egress-resource";
 
 // configure subproject logger
 export const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -90,16 +82,10 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     serviceEntryNames.set(sePayload.metadata!.name!, true);
   }
 
-  // Reconcile any egress requested
-  await istioEgressResources(pkg, namespace);
-
   // Purge any orphaned resources
   await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
   await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log); // for ingress and egress
   await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log); // for egress only
-  await purgeOrphans(generation, namespace, pkgName, IstioAuthorizationPolicy, log, {
-    "uds/for": "egress",
-  }); // for egress only
 
   // Return the list of unique hostnames
   return [...hosts];
@@ -112,73 +98,6 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
  * @param pkg
  * @param namespace
  */
-export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
-  // Get package data
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-  const pkgId = getPackageId(pkg);
-  const pkgName = pkg.metadata!.name!;
-  const generation = (pkg.metadata?.generation ?? 0).toString();
-  const ownerRefs = getOwnerRef(pkg);
-
-  // Get the map of host resources as egress endpoints
-  const hostResourceMap = createHostResourceMap(pkg);
-
-  // Get the list of allowed egress services
-  const allowList = egressRequestedFromNetwork(pkg.spec?.network?.allow ?? []);
-
-  // Add needed service entries and sidecars if egress is requested
-  if (hostResourceMap) {
-    if (istioMode === Mode.Ambient) {
-      // Validate existing egress waypoint namespace
-      try {
-        await validateNamespace(ambientEgressNamespace);
-      } catch (e) {
-        let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
-        if (e?.status == 404) {
-          errText = `The '${ambientEgressNamespace}' namespace was not found. Ensure the 'istio-egress-ambient' component is deployed and try again.`;
-        }
-        log.error(errText);
-        throw new Error(errText);
-      }
-
-      // For ambient workloads
-      await createAmbientWorkloadEgressResources(
-        hostResourceMap,
-        allowList,
-        pkgName,
-        namespace,
-        generation,
-        ownerRefs,
-      );
-    } else {
-      // Validate existing egress gateway namespace and service
-      await validateEgressGateway(hostResourceMap);
-
-      // Create sidecar and service entry resources
-      await createSidecarWorkloadEgressResources(
-        hostResourceMap,
-        allowList,
-        pkgName,
-        namespace,
-        generation,
-        ownerRefs,
-      );
-    }
-  }
-
-  // Reconcile shared egress resources
-  try {
-    await reconcileSharedEgressResources(
-      hostResourceMap,
-      pkgId,
-      PackageAction.AddOrUpdate,
-      istioMode,
-    );
-  } catch (e) {
-    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
-    throw e;
-  }
-}
 
 // Get the shared annotation key for the package
 export function getSharedAnnotationKey(pkgId: string) {
