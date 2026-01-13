@@ -9,7 +9,7 @@ metadata:
   # @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "0.58.0"
+  version: "0.59.0"
   # x-release-please-end
   annotations:
     dev.uds.title: UDS Core
