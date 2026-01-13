@@ -61,13 +61,36 @@ variable "default_node_pool_availability_zones" {
 
 variable "network_dns_service_ip" {
   description = "Specifies the DNS service IP"
-  default     = "10.2.0.10"
+  default     = "172.20.0.10"
   type        = string
 }
 
 variable "network_service_cidr" {
   description = "Specifies the service CIDR"
-  default     = "10.2.0.0/24"
+  default     = "172.20.0.0/16"
+  type        = string
+}
+
+variable "network_plugin" {
+  description = "Specifies the network plugin of the AKS cluster"
+  default     = "azure"
+  type        = string
+}
+
+variable "network_plugin_mode" {
+  default = "overlay"
+  type    = string
+}
+
+variable "network_pod_cidr" {
+  description = "Specifies the CIDR for pod IPs when using overlay mode"
+  default     = "10.244.0.0/16"
+  type        = string
+}
+
+variable "network_policy" {
+  description = "Specifies the network policy to use"
+  default     = "azure"
   type        = string
 }
 
@@ -91,7 +114,7 @@ variable "default_node_pool_name" {
 variable "default_node_pool_max_pods" {
   description = "(Optional) The maximum number of pods that can run on each agent. Changing this forces a new resource to be created."
   type        = number
-  default     = 50
+  default     = 110
 }
 
 variable "default_node_pool_os_disk_type" {

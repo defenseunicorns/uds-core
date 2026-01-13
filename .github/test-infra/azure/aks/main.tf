@@ -77,13 +77,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   role_based_access_control_enabled = true
 
   network_profile {
-    dns_service_ip     = var.network_dns_service_ip
-    service_cidr       = var.network_service_cidr
-    load_balancer_sku  = "standard"
-    network_data_plane = "azure"
-    network_plugin     = "azure"
-    network_policy     = "azure"
-    outbound_type      = var.outbound_type
+    network_plugin      = var.network_plugin
+    network_plugin_mode = var.network_plugin_mode
+    network_policy      = var.network_policy
+    load_balancer_sku   = "standard"
+    outbound_type       = var.outbound_type
+    pod_cidr            = var.network_pod_cidr
+    service_cidr        = var.network_service_cidr
+    dns_service_ip      = var.network_dns_service_ip
   }
 
   storage_profile {
