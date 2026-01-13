@@ -19,7 +19,7 @@ spec:
   template:
     metadata:
       annotations: 
-        buildTimestamp: "1767650647544"
+        buildTimestamp: "1768335099034"
         {{- if .Values.watcher.podAnnotations }}
         {{- toYaml .Values.watcher.podAnnotations | nindent 8 }}
         {{- end }}
@@ -29,7 +29,6 @@ spec:
         {{- if .Values.watcher.podLabels }}
         {{- toYaml .Values.watcher.podLabels | nindent 8 }}
         {{- end }}
-        zarf.dev/agent: ignore
     spec:
       terminationGracePeriodSeconds: {{ .Values.watcher.terminationGracePeriodSeconds }}
       serviceAccountName: {{ .Values.uuid }}

@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
-    "pepr": "^1.0.3-nightly.3"
+    "pepr": "^1.0.4-nightly.6"
   },
   "devDependencies": {
     "@commitlint/cli": "20.2.0",

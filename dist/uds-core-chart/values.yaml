@@ -15,12 +15,11 @@ rbac:
       - 'update'
       - 'watch'
 secrets:
-  apiPath: 'MDAyODE1MzY4NDc3ZjY5N2FiOGZkZTcyZGI5Njk2MzZiNTE3ZDQ5YTM0ZGM3ODBkODQzNDYzZDcxNmQxNTA4OA=='
-hash: '5eb4cf4cc716529c463278260aa710927d8e6d17a3821b87ac4ab2feb32218ff'
+  apiPath: 'YmY4Y2Y3NzU2M2QyMTQ4ZGMzNmIyY2MyMmVmNjk5YjBiY2FiNTczYTMyOGU5Nzg2Njk4OWUwMDE1Mzc1NGU4Mg=='
+hash: '965004ad8386b5a9dc54a61bb82b61544bb70cf2f44832f8ff30f702788d5f2f'
 namespace:
   annotations: {}
   labels:
-    zarf.dev/agent: ignore
     pepr.dev: ''
 uuid: 'pepr-uds-core'
 admission:
@@ -32,18 +31,15 @@ admission:
     - name: 'PEPR_PRETTY_LOG'
       value: 'false'
     - name: 'LOG_LEVEL'
-      value: 'debug'
-    - name: PEPR_GRPC_SERVER_ADDRESS
-      value: shared-informer:50051
+      value: 'info'
   envFrom: []
-  image: 'cmwylie19/pepr-controller:0.0.0'
+  image: 'ghcr.io/defenseunicorns/pepr/controller:v1.0.4-nightly.6'
   annotations:
     pepr.dev/description: 'A collection of capabilities for UDS Core'
   labels:
     app: 'pepr-uds-core'
     pepr.dev/controller: 'admission'
     pepr.dev/uuid: 'uds-core'
-    zarf.dev/agent: ignore
   securityContext:
     runAsUser: 65532
     runAsGroup: 65532
@@ -94,18 +90,15 @@ watcher:
     - name: 'PEPR_PRETTY_LOG'
       value: 'false'
     - name: 'LOG_LEVEL'
-      value: 'debug'
-    - name: PEPR_GRPC_SERVER_ADDRESS
-      value: shared-informer:50051
+      value: 'info'
   envFrom: []
-  image: 'cmwylie19/pepr-controller:0.0.0'
+  image: 'ghcr.io/defenseunicorns/pepr/controller:v1.0.4-nightly.6'
   annotations:
     pepr.dev/description: 'A collection of capabilities for UDS Core'
   labels:
     app: 'pepr-uds-core-watcher'
     pepr.dev/controller: 'watcher'
     pepr.dev/uuid: 'uds-core'
-    zarf.dev/agent: ignore
   securityContext:
     runAsUser: 65532
     runAsGroup: 65532

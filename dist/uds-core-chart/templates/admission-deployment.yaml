@@ -17,7 +17,7 @@ spec:
   template:
     metadata:
       annotations:
-        buildTimestamp: "1767650647544"
+        buildTimestamp: "1768335099034"
         {{- if .Values.admission.podAnnotations }}
         {{- toYaml .Values.admission.podAnnotations | nindent 8 }}
         {{- end }}
@@ -27,7 +27,6 @@ spec:
         {{- if .Values.admission.podLabels }}
         {{- toYaml .Values.admission.podLabels | nindent 8 }}
         {{- end }}
-        zarf.dev/agent: ignore
     spec:
       {{- if or .Values.admission.antiAffinity .Values.admission.affinity }}
       affinity:

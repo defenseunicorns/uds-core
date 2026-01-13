@@ -8,10 +8,9 @@ components:
   - name: module
     required: true
     images:
-      - cmwylie19/pepr-controller:0.0.0 
-      - cmwylie19/shared-informer:0.0.0
-    charts:
+      - ghcr.io/defenseunicorns/pepr/controller:v1.0.4-nightly.6
+    manifests:
       - name: module
         namespace: pepr-system
-        version: 0.6.0
-        localPath: uds-core-chart
+        files:
+          - pepr-module-uds-core.yaml
