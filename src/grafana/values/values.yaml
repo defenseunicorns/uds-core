@@ -6,9 +6,13 @@ sidecar:
     enabled: true
     label: grafana_dashboard
     searchNamespace: ALL
+    initDashboards: true
+    restartPolicy: Always
   datasources:
     enabled: true
     label: grafana_datasource
+    initDatasources: true
+    restartPolicy: Always
 
 extraSecretMounts:
   - name: auth-generic-oauth-secret-mount
