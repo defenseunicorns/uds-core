@@ -62,4 +62,4 @@ components:
       - quay.io/rfcurated/grafana/loki:3.6.3-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/nginx:1.29.4-slim-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/memcached:1.6.40-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.2.3-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.2.3-jammy-scratch-fips-rfcurated
