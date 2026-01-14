@@ -12,6 +12,7 @@ data:
   datasources.yaml: |
     apiVersion: 1
     datasources:
+    # @lulaStart b1b5190d-6af6-4ff7-8a38-ccb4207a7140
     - access: proxy
       editable: true
       name: Prometheus
@@ -30,6 +31,7 @@ data:
         implementation: prometheus
         handleGrafanaManagedAlerts: true
       url: http://kube-prometheus-stack-alertmanager.monitoring.svc.cluster.local:9093
+    # @lulaEnd b1b5190d-6af6-4ff7-8a38-ccb4207a7140
     {{- if .Values.extraDatasources }}
     {{- toYaml .Values.extraDatasources | nindent 4 }}
     {{- end }}
