@@ -8,13 +8,25 @@ sidecar:
     searchNamespace: ALL
     initDashboards: true
     restartPolicy: Always
-    logLevel: DEBUG
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 60 # 5 minutes
   datasources:
     enabled: true
     label: grafana_datasource
     initDatasources: true
     restartPolicy: Always
-    logLevel: DEBUG
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 60 # 5 minutes
 
 extraSecretMounts:
   - name: auth-generic-oauth-secret-mount
@@ -32,8 +44,6 @@ extraConfigmapMounts:
     optional: true
 
 grafana.ini:
-  log:
-    level: "debug"
   server:
     root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
   # Disable telemetry that doesn't function in the airgap

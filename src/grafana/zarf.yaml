@@ -65,4 +65,4 @@ components:
       - quay.io/rfcurated/grafana:12.3.1-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/busybox:1.37.0-musl-rf.1-fips-rfcurated
       - quay.io/rfcurated/curl:8.17.0-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.2.3-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.2.3-jammy-scratch-fips-rfcurated
