@@ -1,4 +1,4 @@
-# ADR 0006: YAML-First CRD Management Workflow
+# ADR 0006: Cluster-less CRD Generation Workflow
 
 Date: 2026-01-13
 
@@ -15,13 +15,13 @@ This workflow and the changes described in this ADR apply uniformly to all UDS C
 This workflow presents several challenges:
 
 1. **Cluster Dependency**: Generating TypeScript types requires a live Kubernetes cluster, preventing this task from running in standard CI/CD pipelines or for local development in cluster-less environments.
-2. **Missing Static Manifests**: Authoritative YAML manifests for `Package` and `Exemption` CRDs are not checked into the repository. This hinders manual inspection, pre-application in GitOps workflows, and local validation.
+2. **Missing Static Manifests**: Authoritative YAML manifests for UDS Core CRDs are not checked into the repository. This hinders manual inspection, local validation, and the usage of Custom Resources (CRs) for resources that must exist before UDS Core is fully initialized (e.g., pre-core exemptions for MetalLB or other infrastructure components).
 3. **Redundant Conversion Pipeline**: The current workflow effectively converts schemas from TypeScript to Kubernetes YAML (via the cluster) and then back into TypeScript types, adding complexity and increasing opportunities for drift.
-4. **Synchronization Overhead**: Keeping TS sources, the cluster's state, and the generated types in sync is a manual process that is prone to drift.
+4. **Synchronization Friction**: Keeping TS sources, the cluster's state, and the generated types in sync requires unnecessary runtime overhead and developer friction (requiring a running cluster for simple schema changes).
 
 ## Decision
 
-We will transition to a YAML-first CRD management workflow that preserves the benefits of TypeScript-based schema composition while enabling cluster-less type generation and static manifest tracking. While TypeScript remains the authoring source of truth, the generated YAML manifests will be the primary checked-in artifact used for registration, inspection, and type generation.
+We will transition to a cluster-less CRD generation workflow that preserves the benefits of TypeScript-based schema composition while enabling static manifest tracking and cluster-independent type generation. While TypeScript remains the authoring source of truth, the generated YAML manifests will be the primary checked-in artifact used for inspection, type generation, and registration.
 
 ### Workflow Architecture
 
