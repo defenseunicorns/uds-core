@@ -1,4 +1,4 @@
-# ADR 0006: Cluster-less CRD Generation Workflow
+# 6: Cluster-less CRD Generation Workflow
 
 Date: 2026-01-13
 
