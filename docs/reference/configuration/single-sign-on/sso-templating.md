@@ -5,7 +5,7 @@ title: Secret Templating
 By default, UDS generates a secret for the Single Sign-On (SSO) client that encapsulates all client contents as an opaque secret. In this setup, each key within the secret corresponds to its own environment variable or file, based on the method used to mount the secret. If customization of the secret rendering is required, basic templating can be achieved using the `secretConfig.template` property. Below are examples showing this functionality. To see how templating works, please see the [Regex website](https://regex101.com/r/e41Dsk/3).
 
 :::caution Deprecated Fields
-The `secretName`, `secretLabels`, `secretAnnotations`, and `secretTemplate` fields are deprecated and will be removed in a future major release. Use `secretConfig.name`, `secretConfig.labels`, `secretConfig.annotations`, and `secretConfig.template` instead. The deprecated fields will be automatically migrated to the new structure.
+The `secretName`, `secretLabels`, `secretAnnotations`, and `secretTemplate` fields are deprecated and will be removed in a future release. Use `secretConfig.name`, `secretConfig.labels`, `secretConfig.annotations`, and `secretConfig.template` instead. The deprecated fields will be automatically migrated to the new structure.
 :::
 
 ```yaml
