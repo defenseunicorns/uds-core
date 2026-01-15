@@ -29,7 +29,7 @@ resource "aws_secretsmanager_secret_version" "db_secret_values" {
 
 module "dbs" {
   source  = "terraform-aws-modules/rds/aws"
-  version = "7.0.1"
+  version = "7.1.0"
 
   for_each = var.databases
 
