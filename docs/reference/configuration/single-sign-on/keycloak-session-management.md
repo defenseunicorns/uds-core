@@ -35,7 +35,7 @@ Keycloak has two session idle timeouts: the realm session idle timeout and the c
 ### Setting Session Timeouts from UI
 Realm Session Timeouts can be configured from the Realm Settings -> Sessions tab.
 
-Client Session Timeouts can be configured universally from the Realm Settings -> Sessions tab. Or individual clients can be configured from Clients -> client-name -> Advanced -> Advanced Settings.
+Client Session Timeouts can be configured universally from the Realm Settings -> Sessions tab. Or individual clients can be configured from Clients -> client-name -> Advanced -> Advanced Settings. Client Session Timeout should always be set the same or lower than the Realm Session Timeout. Depending on your Keycloak version, a higher Client Session Timeout will either be explicitly rejected or silently ignored.
 
 ---
 
@@ -64,7 +64,7 @@ Client Session Timeouts can be configured universally from the Realm Settings ->
 ## Scenario 2: Realm Session Idle Timeout is Shorter than Client Session Idle Timeout
 
 ::::caution
-This is not a recommended configuration. The Client Session Idle timeout should be shorter than the SSO Session Idle (the realm setting). See Official Docs: https://www.keycloak.org/docs/latest/server_admin/index.html#:~:text=This%20value%20should%20specify%20a%20shorter%20idle%20timeout%20than%20the%20SSO%20Session%20Idle.
+Keycloak 26.5.0+ (UDS Core 0.59.0+) will now prevent configuring an SSO client with a longer idle timeout than the realm idle timeout. The below scenario covers the behavior in versions before 26.5.0 (where the configuration was accepted but may behave contrary to the user's expectations).
 ::::
 
 - Realm Session Idle Timeout = 10 minutes
