@@ -56,11 +56,13 @@ components:
       - name: ztunnel
         valuesFiles:
           - "values/registry1/ztunnel.yaml"
+    # @lulaStart b4367e52-bef0-4463-a906-e5af6b4aa015
     images:
       - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.28.1-fips
       - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.28.1-fips
       - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.28.1-fips
       - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.28.1-fips
+    # @lulaEnd b4367e52-bef0-4463-a906-e5af6b4aa015
 
   - name: istio-controlplane
     required: true
@@ -78,11 +80,13 @@ components:
       - name: ztunnel
         valuesFiles:
           - "values/unicorn/ztunnel.yaml"
+    # @lulaStart b4367e52-bef0-4463-a906-e5af6b4aa015
     images:
       - quay.io/rfcurated/istio/pilot:1.28.1-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/proxyv2:1.28.1-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/install-cni:1.28.1-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/istio/ztunnel:1.28.1-jammy-scratch-fips-rfcurated
+    # @lulaEnd b4367e52-bef0-4463-a906-e5af6b4aa015
 
   - name: gateway-api-crds
     required: true
@@ -137,7 +141,7 @@ components:
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-ambient
     required: true
-  # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
+    # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
     charts:
       - name: uds-istio-egress-config
         version: 0.1.0
@@ -147,7 +151,7 @@ components:
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-gateway
     required: false
-  # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
+    # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts

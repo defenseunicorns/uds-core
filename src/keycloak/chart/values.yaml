@@ -152,10 +152,12 @@ smtp:
   enabled: false
   port: 587
 
+# @lulaStart e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
 # DEPRECATED: all UDS Core deployments should use FIPS mode by default.
 fips: true
 # By default, Keycloak requires 14+ character passwords in FIPS mode. This switch disables this requirement.
 fipsAllowWeakPasswords: false
+# @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
 
 #  Pod priority class name
 priorityClassName: ""
