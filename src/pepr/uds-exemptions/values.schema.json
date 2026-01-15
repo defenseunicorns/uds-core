@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "exemptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "istioGatewayNodeport": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Enable nodeport service exemptions for istio gateways."
+            },
+            "gateways": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["admin", "tenant", "passthrough"]
+              },
+              "description": "List of gateways to add exemptions for."
+            }
+          }
+        }
+      }
+    },
+    "custom": {
+      "type": "array",
+      "description": "Custom UDS policy exemptions",
+      "items": {
+        "type": "object",
+        "required": ["name", "exemptions"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the Exemption CR"
+          },
+          "exemptions": {
+            "type": "array",
+            "description": "List of exemption rules",
+            "items": {
+              "type": "object",
+              "required": ["policies", "matcher"],
+              "properties": {
+                "policies": {
+                  "type": "array",
+                  "description": "List of policy names to exempt",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "matcher": {
+                  "type": "object",
+                  "required": ["namespace", "name"],
+                  "properties": {
+                    "namespace": {
+                      "type": "string",
+                      "description": "Namespace to match"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Resource name to match (supports regex)"
+                    },
+                    "kind": {
+                      "type": "string",
+                      "enum": ["pod", "service"],
+                      "description": "Resource kind to match"
+                    }
+                  }
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Optional title for the exemption"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Optional description for the exemption"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

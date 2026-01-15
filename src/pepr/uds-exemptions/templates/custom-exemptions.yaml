@@ -1,0 +1,31 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- range .Values.custom }}
+---
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: {{ .name }}
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+  {{- range .exemptions }}
+    - policies:
+      {{- range .policies }}
+        - {{ . }}
+      {{- end }}
+      matcher:
+        namespace: {{ .matcher.namespace }}
+        name: {{ .matcher.name | quote }}
+        {{- if .matcher.kind }}
+        kind: {{ .matcher.kind }}
+        {{- end }}
+      {{- if .title }}
+      title: {{ .title | quote }}
+      {{- end }}
+      {{- if .description }}
+      description: {{ .description | quote }}
+      {{- end }}
+  {{- end }}
+{{- end }}

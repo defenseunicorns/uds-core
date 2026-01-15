@@ -1,0 +1,68 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: UDS Exemptions - Custom Exemptions
+templates:
+  - custom-exemptions.yaml
+
+tests:
+  - it: should render multiple custom exemptions with multiple rules
+    set:
+      custom:
+        - name: my-app-exemptions
+          exemptions:
+            - policies:
+                - DisallowHostNamespaces
+                - DisallowPrivileged
+              matcher:
+                namespace: my-namespace
+                name: "^my-privileged-pod.*"
+                kind: pod
+              title: "My privileged pod exemption"
+              description: "Exemption for pods that require privileged access"
+            - policies:
+                - DisallowNodePortServices
+              matcher:
+                namespace: my-namespace
+                name: "my-service"
+                kind: service
+              title: "NodePort service exemption"
+        - name: another-exemption
+          exemptions:
+            - policies:
+                - RequireNonRootUser
+              matcher:
+                namespace: another-namespace
+                name: "root-pod"
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: my-app-exemptions
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].policies[0]
+          value: DisallowHostNamespaces
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].matcher.namespace
+          value: my-namespace
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[1].policies[0]
+          value: DisallowNodePortServices
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: another-exemption
+        documentIndex: 1
+
+  - it: should not render when custom list is empty
+    set:
+      custom: []
+    asserts:
+      - hasDocuments:
+          count: 0

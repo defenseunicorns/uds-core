@@ -11,6 +11,7 @@ ignore:
   - "**/node_modules/**"
   - "dist/**"
   - "src/pepr/uds-operator-config/templates/**"
+  - "src/pepr/uds-exemptions/templates/**"
   - ".codespellrc"
   - ".lintstagedrc.json"
   - "**/package-lock.json"

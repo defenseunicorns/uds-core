@@ -1,0 +1,38 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Enable/configure default ready-to-use UDS exemptions
+exemptions:
+  # Allows nodeport services for istio gateways
+  istioGatewayNodeport:
+    enabled: false
+    # Gateways to add exemption for
+    gateways:
+      - admin
+      - tenant
+      # - passthrough
+
+# Custom exemptions - allows you to define arbitrary UDS policy exemptions
+# Each entry creates a separate Exemption CR in the uds-policy-exemptions namespace
+custom: []
+  # Example:
+  # - name: my-app-exemptions
+  #   exemptions:
+  #     - policies:
+  #         - DisallowHostNamespaces
+  #         - DisallowPrivileged
+  #         - RequireNonRootUser
+  #       matcher:
+  #         namespace: my-namespace
+  #         name: "^my-privileged-pod.*"
+  #         kind: pod  # optional: pod, service
+  #       title: "My privileged pod exemption"  # optional
+  #       description: "Exemption for pods that require privileged access"  # optional
+  #     - policies:
+  #         - DisallowNodePortServices
+  #       matcher:
+  #         namespace: my-namespace
+  #         name: "my-service"
+  #         kind: service
+  #       title: "NodePort service exemption"
+  #       description: "Required for external load balancer integration"
