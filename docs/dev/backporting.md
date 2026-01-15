@@ -18,6 +18,7 @@ The easiest way to backport is using the helper task in `tasks/backport.yaml`. T
 - `gh` CLI installed and authenticated (for automatic PR creation).
 - A clean working tree.
 - The commit SHA from `main` that you want to backport. You can find it on [GitHub Commits](https://github.com/defenseunicorns/uds-core/commits/main/).
+  - The fix to backport must have already been PR-ed to `main` and merged
   - *Note: Both full and short SHAs are supported.*
 
 ### 2. Run the Task
