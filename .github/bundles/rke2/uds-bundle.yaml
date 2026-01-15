@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "0.59.0"
+  version: "0.59.1"
   # x-release-please-end
 
 packages:
@@ -38,7 +38,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.59.0
+    ref: 0.59.1
     # x-release-please-end
     optionalComponents:
       - metrics-server
