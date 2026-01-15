@@ -4,7 +4,7 @@
 apiVersion: v2
 name: keycloak
 # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
-version: 26.5.0
+version: 26.5.1
 description: Open Source Identity and Access Management For Modern Applications and Services
 keywords:
   - sso
