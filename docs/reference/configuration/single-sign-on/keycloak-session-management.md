@@ -35,7 +35,7 @@ Keycloak has two session idle timeouts: the realm session idle timeout and the c
 ### Setting Session Timeouts from UI
 Realm Session Timeouts can be configured from the Realm Settings -> Sessions tab.
 
-Client Session Timeouts can be configured universally from the Realm Settings -> Sessions tab. Or individual clients can be configured from Clients -> client-name -> Advanced -> Advanced Settings.
+Client Session Timeouts can be configured universally from the Realm Settings -> Sessions tab. Or individual clients can be configured from Clients -> client-name -> Advanced -> Advanced Settings. Client Session Timeout should always be set the same or lower than the Realm Session Timeout. Depending on your Keycloak version, a higher Client Session Timeout will either be explicitly rejected or silently ignored.
 
 ---
 
