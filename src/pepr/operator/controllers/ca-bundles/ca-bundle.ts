@@ -23,14 +23,9 @@ const log = setupLogger(Component.OPERATOR_CA_BUNDLE);
  *
  * @param pkg The UDS Package CR that defines the ConfigMap configuration
  * @param namespace The target namespace where the ConfigMap will be created
- * @param skipReload Whether to skip reloading pods (used during batch updates)
  * @throws Error if ConfigMap creation or orphan cleanup fails
  */
-export async function caBundleConfigMap(
-  pkg: UDSPackage,
-  namespace: string,
-  skipReload = false,
-): Promise<void> {
+export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Promise<void> {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
@@ -92,19 +87,6 @@ export async function caBundleConfigMap(
 
     // Apply the ConfigMap
     await K8s(kind.ConfigMap).Apply(configMapManifest, { force: true });
-
-    // Reload pods in the package namespace to ensure they pick up the CA bundle change
-    if (!skipReload) {
-      try {
-        const pkgPods = await K8s(kind.Pod)
-          .InNamespace(namespace)
-          .WithLabel("uds/package", pkgName)
-          .Get();
-        await reloadPods(namespace, pkgPods.items, "CA bundle update", log, "CA_BUNDLE");
-      } catch (err) {
-        log.error(`Failed to reload pods for package ${pkgName} in namespace ${namespace}`, err);
-      }
-    }
 
     // Purge any orphaned ConfigMaps from previous generations
     await purgeOrphans(generation, namespace, pkgName, kind.ConfigMap, log, {
@@ -229,13 +211,12 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
 
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    const packageRestarts = packages.items.map(async pkg => {
+    const packageUpdates = packages.items.map(async pkg => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
         return;
       }
       try {
-        // Skip individual reloads during batch update; we'll reload all affected pods at once
-        await caBundleConfigMap(pkg, pkg.metadata.namespace, true);
+        await caBundleConfigMap(pkg, pkg.metadata.namespace);
       } catch (err) {
         log.error(
           `Failed to process CA bundle ConfigMap for package ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}`,
@@ -246,7 +227,7 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     });
 
     const results = await Promise.allSettled([
-      ...packageRestarts,
+      ...packageUpdates,
       (async () => {
         try {
           log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
@@ -258,29 +239,6 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
         }
       })(),
     ]);
-
-    // Perform a single batch reload for all affected package pods
-    try {
-      log.debug("Performing batch reload for all UDS package pods");
-      const allPackagePods = await K8s(kind.Pod).WithLabel("uds/package").Get();
-      // Group pods by namespace for reloadPods
-      const podsByNamespace: Record<string, kind.Pod[]> = {};
-      for (const pod of allPackagePods.items) {
-        const ns = pod.metadata?.namespace;
-        if (ns) {
-          podsByNamespace[ns] = podsByNamespace[ns] || [];
-          podsByNamespace[ns].push(pod);
-        }
-      }
-
-      await Promise.all(
-        Object.entries(podsByNamespace).map(([ns, pods]) =>
-          reloadPods(ns, pods, "Global CA bundle update", log, "CA_BUNDLE"),
-        ),
-      );
-    } catch (err) {
-      log.error("Failed to perform batch reload for UDS package pods", err);
-    }
 
     // Check for any failures
     const failures = results.filter(r => r.status === "rejected");
