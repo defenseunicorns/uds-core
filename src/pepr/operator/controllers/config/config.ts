@@ -478,7 +478,8 @@ async function performAuthserviceUpdate(reason: string) {
   const authserviceUpdate: AuthServiceEvent = {
     name: "global-config-update",
     action: Action.UpdateGlobalConfig,
-    // Note: Use the combined CA bundle (User + DoD + Public) for Authservice trust
+    // Note: Use the combined CA bundle (User + DoD + Public) for Authservice trust.
+    // Authservice needs the raw PEM content, not base64. buildCABundleContent() gives us the combined, decoded string it expects.
     trustedCA: buildCABundleContent(),
     redisUri: UDSConfig.authserviceRedisUri,
   };

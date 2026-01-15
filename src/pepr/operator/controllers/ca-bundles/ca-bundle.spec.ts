@@ -504,8 +504,21 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
-      expect(mockK8sDelete).toHaveBeenCalledTimes(2); // 2 packages only (Istio secret update skipped when no certs)
+      // Should be called 1 time for the Istio secret update (clearing it)
+      expect(mockK8sApply).toHaveBeenCalledTimes(1);
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            name: "sso-ca-cert",
+            namespace: "istio-system",
+          }),
+          data: {
+            "extra.pem": "",
+          },
+        }),
+        { force: true },
+      );
+      expect(mockK8sDelete).toHaveBeenCalledTimes(2);
     });
 
     it("returns early when no UDS packages exist", async () => {

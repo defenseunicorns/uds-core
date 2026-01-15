@@ -7,6 +7,7 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
+import { reloadPods } from "../reload/reload-utils";
 import { getOwnerRef, purgeOrphans } from "../utils";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
@@ -22,9 +23,14 @@ const log = setupLogger(Component.OPERATOR_CA_BUNDLE);
  *
  * @param pkg The UDS Package CR that defines the ConfigMap configuration
  * @param namespace The target namespace where the ConfigMap will be created
+ * @param skipReload Whether to skip reloading pods (used during batch updates)
  * @throws Error if ConfigMap creation or orphan cleanup fails
  */
-export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Promise<void> {
+export async function caBundleConfigMap(
+  pkg: UDSPackage,
+  namespace: string,
+  skipReload = false,
+): Promise<void> {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
@@ -87,6 +93,19 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
     // Apply the ConfigMap
     await K8s(kind.ConfigMap).Apply(configMapManifest, { force: true });
 
+    // Reload pods in the package namespace to ensure they pick up the CA bundle change
+    if (!skipReload) {
+      try {
+        const pkgPods = await K8s(kind.Pod)
+          .InNamespace(namespace)
+          .WithLabel("uds/package", pkgName)
+          .Get();
+        await reloadPods(namespace, pkgPods.items, "CA bundle update", log, "CA_BUNDLE");
+      } catch (err) {
+        log.error(`Failed to reload pods for package ${pkgName} in namespace ${namespace}`, err);
+      }
+    }
+
     // Purge any orphaned ConfigMaps from previous generations
     await purgeOrphans(generation, namespace, pkgName, kind.ConfigMap, log, {
       [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
@@ -100,7 +119,8 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 
 /**
  * Updates the Istio sso-ca-cert secret with the combined CA bundle.
- * This secret is used by Istio's JWKS fetcher for TLS verification.
+ * Istio expects its root CA in the `extra.pem` key of this secret.
+ * We only update it if the secret already exists; otherwise, we let the Istio Helm chart handle the initial creation.
  */
 export async function updateIstioCASecret(): Promise<void> {
   const namespace = "istio-system";
@@ -110,26 +130,28 @@ export async function updateIstioCASecret(): Promise<void> {
     // Build the combined CA bundle content
     const caBundleContent = buildCABundleContent();
 
-    // If no CA bundle content, delete the secret data
-    if (!caBundleContent || caBundleContent.trim() === "") {
-      log.debug("No CA bundle content available, skipping sso-ca-cert secret update");
-      return;
-    }
-
     // Get existing secret
     const secret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
 
-    // Update secret data with combined bundle
+    // Update secret data with combined bundle, or clear it if empty
     const updatedSecret = {
       ...secret,
       data: {
-        "extra.pem": btoa(caBundleContent),
+        "extra.pem": caBundleContent ? btoa(caBundleContent) : "",
       },
     };
 
     // Apply the updated secret
     await K8s(kind.Secret).Apply(updatedSecret, { force: true });
     log.debug(`Updated ${secretName} secret in ${namespace} namespace with combined CA bundle`);
+
+    // Reload Istiod to ensure it picks up the trust bundle change
+    try {
+      const istioPods = await K8s(kind.Pod).InNamespace(namespace).WithLabel("app", "istiod").Get();
+      await reloadPods(namespace, istioPods.items, "CA bundle update", log, "CA_BUNDLE");
+    } catch (err) {
+      log.error(`Failed to reload Istiod pods in namespace ${namespace}`, err);
+    }
   } catch (err) {
     // If secret doesn't exist, that's okay - it will be created by the chart
     if (err?.status === 404) {
@@ -207,40 +229,66 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
 
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    for (const pkg of packages.items) {
+    const packageRestarts = packages.items.map(async pkg => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
-        // This should not happen, but needed for type safety
-        continue;
+        return;
       }
-
-      const pkgName = pkg.metadata.name;
-      const namespace = pkg.metadata.namespace;
-
       try {
-        log.debug(
-          `Processing CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
-        );
-        await caBundleConfigMap(pkg, namespace);
+        // Skip individual reloads during batch update; we'll reload all affected pods at once
+        await caBundleConfigMap(pkg, pkg.metadata.namespace, true);
       } catch (err) {
-        // Log the error but continue processing other packages
         log.error(
-          `Failed to process CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
+          `Failed to process CA bundle ConfigMap for package ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}`,
           err,
         );
-        // Don't throw here - we want to continue processing other packages
+        throw err;
       }
-    }
+    });
 
-    // Also update the Istio sso-ca-cert secret with combined bundle
+    const results = await Promise.allSettled([
+      ...packageRestarts,
+      (async () => {
+        try {
+          log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
+          await updateIstioCASecret();
+          log.debug("Successfully updated Istio sso-ca-cert secret");
+        } catch (err) {
+          log.error("Failed to update Istio sso-ca-cert secret", err);
+          throw err;
+        }
+      })(),
+    ]);
+
+    // Perform a single batch reload for all affected package pods
     try {
-      log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
-      await updateIstioCASecret();
-      log.debug("Successfully updated Istio sso-ca-cert secret");
+      log.debug("Performing batch reload for all UDS package pods");
+      const allPackagePods = await K8s(kind.Pod).WithLabel("uds/package").Get();
+      // Group pods by namespace for reloadPods
+      const podsByNamespace: Record<string, kind.Pod[]> = {};
+      for (const pod of allPackagePods.items) {
+        const ns = pod.metadata?.namespace;
+        if (ns) {
+          podsByNamespace[ns] = podsByNamespace[ns] || [];
+          podsByNamespace[ns].push(pod);
+        }
+      }
+
+      await Promise.all(
+        Object.entries(podsByNamespace).map(([ns, pods]) =>
+          reloadPods(ns, pods, "Global CA bundle update", log, "CA_BUNDLE"),
+        ),
+      );
     } catch (err) {
-      log.error("Failed to update Istio sso-ca-cert secret", err);
+      log.error("Failed to perform batch reload for UDS package pods", err);
     }
 
-    log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    // Check for any failures
+    const failures = results.filter(r => r.status === "rejected");
+    if (failures.length > 0) {
+      log.warn(`Completed CA bundle updates with ${failures.length} failures`);
+    } else {
+      log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    }
   } catch (err) {
     log.error("Failed to update CA bundle ConfigMaps for all packages", err);
     throw new Error("Failed to update CA bundle ConfigMaps for all packages", { cause: err });
