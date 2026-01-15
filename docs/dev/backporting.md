@@ -44,7 +44,7 @@ Once the backport script finishes successfully, it creates a Pull Request for ea
 1. **Review & Approve**: Go to GitHub and find the new `backport/...` PRs. Ensure CI passes and get approvals.
 2. **Merge**: Merge the backport PR into the `release/X.Y` branch.
 3. **Release PR**: Once merged, `release-please` will automatically create a new Release PR (e.g., `vX.Y.Z`).
-4. **Trigger Release**: Approve the Release PR and add the `milestone` (if required) to trigger the full CI and release pipeline.
+4. **Trigger Release**: Approve the Release PR and add the `milestone` to trigger the full CI and release pipeline.
 5. **Monitor**: Watch the progress on the [GitHub Actions page](https://github.com/defenseunicorns/uds-core/actions).
 6. **Announce**: Once the release is published:
    - Update the Slack channel.
