@@ -1,0 +1,40 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: UDS Rules
+templates:
+  - templates/uds-rules.yaml
+
+tests:
+  - it: should include PrometheusRule when clusterHealthRules.enabled is true
+    set:
+      clusterHealthRules.enabled: true
+    release:
+      name: monitoring
+    asserts:
+      - containsDocument:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          name: monitoring-uds-cluster-health
+  - it: should NOT include PrometheusRule when clusterHealthRules.enabled is false
+    set:
+      clusterHealthRules.enabled: false
+    release:
+      name: monitoring
+    asserts:
+      - containsDocument:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          name: monitoring-uds-cluster-health
+        not: true
+  - it: should NOT include PrometheusRule given default clusterHealthRules.enabled value of false
+    release:
+      name: monitoring
+    asserts:
+      - containsDocument:
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          name: monitoring-uds-cluster-health
+        not: true
