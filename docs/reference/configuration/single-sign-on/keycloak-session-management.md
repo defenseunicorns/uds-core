@@ -64,7 +64,7 @@ Client Session Timeouts can be configured universally from the Realm Settings ->
 ## Scenario 2: Realm Session Idle Timeout is Shorter than Client Session Idle Timeout
 
 ::::caution
-Keycloak 26.5.0+ will now prevent configuring an SSO client with a longer idle timeout than the realm idle timeout. The below scenario covers the behavior in versions before 26.5.0 (where the configuration was accepted but may behave contrary to the user's expectations).
+Keycloak 26.5.0+ (UDS Core 0.59.0+) will now prevent configuring an SSO client with a longer idle timeout than the realm idle timeout. The below scenario covers the behavior in versions before 26.5.0 (where the configuration was accepted but may behave contrary to the user's expectations).
 ::::
 
 - Realm Session Idle Timeout = 10 minutes
