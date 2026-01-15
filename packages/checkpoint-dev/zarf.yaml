@@ -11,6 +11,10 @@ metadata:
   # x-release-please-end
 
 variables:
+  - name: IMPORT_IMAGE
+    description: "Custom image to preload into the k3d cluster"
+    default: ""
+
   - name: CLUSTER_NAME
     description: "Name of the cluster"
     default: "uds"
@@ -91,6 +95,11 @@ components:
                 -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
                 --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
+
+                if [[ -n "${ZARF_VAR_IMPORT_IMAGE:-}" ]]; then
+                  k3d image import "${ZARF_VAR_IMPORT_IMAGE}" -c "${ZARF_VAR_CLUSTER_NAME}"
+                fi
+
             description: "Create the cluster"
           # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
           - description: Keycloak to be Healthy
