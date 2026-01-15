@@ -87,7 +87,7 @@ variables:
 
 ### Deploying Exemptions in UDS Core Installation
 
-In some cases, you may want to deploy exemption CRs as part of your UDS Core installation. This can be done by override the `uds-exemptions` helm chart which gets applied after pepr is installed.
+In some cases, you may want to deploy exemption CRs as part of your UDS Core installation. This can be done by overriding the `uds-exemptions` helm chart which gets applied after pepr is installed.
 
 UDS Core does provide some ready to use exemptions to turn on out of the box. Currently we support exemptions for:
 - Enabling Node Port Services on Istio Gateways
