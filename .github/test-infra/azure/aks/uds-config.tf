@@ -13,11 +13,11 @@ resource "local_sensitive_file" "uds_config" {
         "azure_loki_storage_account_access_key" : azurerm_storage_account.cluster_storage.primary_access_key,
         "azure_loki_storage_account_container" : azurerm_storage_container.loki_container.name,
         "azure_velero_storage_account" : azurerm_storage_account.cluster_storage.name,
-        "azure_velero_storage_account_access_key" : azurerm_storage_account.cluster_storage.primary_access_key
+        "azure_velero_storage_account_access_key" : azurerm_storage_account.cluster_storage.primary_access_key,
         "azure_velero_storage_account_container" : azurerm_storage_container.velero_container.name,
         "azure_subscription_id" : data.azurerm_client_config.current.subscription_id,
         "azure_resource_group" : azurerm_resource_group.this.name,
-        "node_resource_group_name" : "${local.cluster_name}-managed-rg"
+        "node_resource_group_name" : "${local.cluster_name}-managed-rg",
         "grafana_pg_host" : azurerm_postgresql_flexible_server.psql_server.fqdn,
         "grafana_pg_port" : var.db_port,
         "grafana_pg_database" : azurerm_postgresql_flexible_server_database.grafana_psql_db.name,

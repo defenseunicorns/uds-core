@@ -82,13 +82,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   role_based_access_control_enabled = true
 
   network_profile {
-    dns_service_ip     = var.network_dns_service_ip
-    service_cidr       = var.network_service_cidr
-    load_balancer_sku  = "standard"
-    network_data_plane = "azure"
-    network_plugin     = "azure"
-    network_policy     = "azure"
-    outbound_type      = var.outbound_type
+    network_plugin      = var.network_plugin
+    network_plugin_mode = var.network_plugin_mode
+    network_policy      = var.network_policy
+    load_balancer_sku   = "standard"
+    outbound_type       = var.outbound_type
+    pod_cidr            = var.network_pod_cidr
+    service_cidr        = var.network_service_cidr
+    dns_service_ip      = var.network_dns_service_ip
   }
 
   storage_profile {
@@ -128,29 +129,4 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
       max_surge = "10%"
     }
   }
-}
-
-resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
-  name                  = "worker1"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
-  mode                  = "User"
-
-  vm_size        = var.worker_pool_vm_size
-  vnet_subnet_id = azurerm_subnet.cluster_worker_node_subnet.id
-
-  os_sku          = "Ubuntu"
-  os_disk_size_gb = 128
-  os_disk_type    = "Managed"
-
-  max_pods = 30
-
-  node_public_ip_enabled  = false
-  host_encryption_enabled = false
-  fips_enabled            = false
-  ultra_ssd_enabled       = false
-  kubelet_disk_type       = "OS"
-  scale_down_mode         = "Delete"
-
-  auto_scaling_enabled = var.enable_autoscaling
-  node_count           = var.worker_node_pool_count
 }

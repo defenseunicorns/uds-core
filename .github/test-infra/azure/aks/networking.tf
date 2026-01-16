@@ -10,18 +10,12 @@ resource "azurerm_virtual_network" "cluster-vnet" {
 }
 
 resource "azurerm_subnet" "cluster_node_subnet" {
-  name                 = "${local.cluster_name}-system-node-subnet"
+  name                 = "${local.cluster_name}-node-subnet"
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.cluster-vnet.name
   address_prefixes     = ["10.0.0.0/20"]
 }
 
-resource "azurerm_subnet" "cluster_worker_node_subnet" {
-  name                 = "${local.cluster_name}-worker-node-subnet"
-  resource_group_name  = azurerm_resource_group.this.name
-  virtual_network_name = azurerm_virtual_network.cluster-vnet.name
-  address_prefixes     = ["10.0.16.0/20"]
-}
 
 # https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private
 resource "azurerm_subnet" "postgres_subnet" {

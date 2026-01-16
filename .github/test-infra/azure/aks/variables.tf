@@ -37,7 +37,7 @@ variable "sku_tier" {
 
 variable "kubernetes_version" {
   description = "Specifies the AKS Kubernetes version"
-  default     = "1.33"
+  default     = "1.34"
   type        = string
 }
 
@@ -49,37 +49,48 @@ variable "enable_autoscaling" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_A8_v2"
-  type        = string
-}
-
-variable "worker_node_pool_count" {
-  description = "Number of nodes to add to the worker nodepool"
-  default     = 3
-  type        = number
-}
-
-variable "worker_pool_vm_size" {
-  description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_D8s_v5"
   type        = string
 }
 
 variable "default_node_pool_availability_zones" {
   description = "Specifies the availability zones of the default node pool"
-  default     = ["1", "2", "3"]
+  default     = ["1"]
   type        = list(string)
 }
 
 variable "network_dns_service_ip" {
   description = "Specifies the DNS service IP"
-  default     = "10.2.0.10"
+  default     = "172.20.0.10"
   type        = string
 }
 
 variable "network_service_cidr" {
   description = "Specifies the service CIDR"
-  default     = "10.2.0.0/24"
+  default     = "172.20.0.0/16"
+  type        = string
+}
+
+variable "network_plugin" {
+  description = "Specifies the network plugin of the AKS cluster"
+  default     = "azure"
+  type        = string
+}
+
+variable "network_plugin_mode" {
+  default = "overlay"
+  type    = string
+}
+
+variable "network_pod_cidr" {
+  description = "Specifies the CIDR for pod IPs when using overlay mode"
+  default     = "10.244.0.0/16"
+  type        = string
+}
+
+variable "network_policy" {
+  description = "Specifies the network policy to use"
+  default     = "azure"
   type        = string
 }
 
@@ -103,7 +114,7 @@ variable "default_node_pool_name" {
 variable "default_node_pool_max_pods" {
   description = "(Optional) The maximum number of pods that can run on each agent. Changing this forces a new resource to be created."
   type        = number
-  default     = 50
+  default     = 110
 }
 
 variable "default_node_pool_os_disk_type" {
@@ -115,7 +126,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 1
+  default     = 3
 }
 
 variable "tags" {
