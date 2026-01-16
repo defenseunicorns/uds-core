@@ -4,10 +4,11 @@
  */
 
 import { K8s, kind } from "pepr";
+import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
+import { reloadPods } from "../reload/reload-utils";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { Component, setupLogger } from "../../../logger";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";
@@ -99,6 +100,53 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
+ * Updates the Istio sso-ca-cert secret with the combined CA bundle.
+ * Istio expects its root CA in the `extra.pem` key of this secret.
+ * We only update it if the secret already exists, otherwise, we let the Istio Helm chart handle the initial creation.
+ */
+export async function updateIstioCASecret(): Promise<void> {
+  const namespace = "istio-system";
+  const secretName = "sso-ca-cert";
+
+  try {
+    // Build the combined CA bundle content
+    const caBundleContent = buildCABundleContent();
+
+    // Get existing secret
+    const secret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
+
+    // Update secret data with combined bundle, or clear it if empty
+    const updatedSecret = {
+      ...secret,
+      data: {
+        "extra.pem": caBundleContent ? btoa(caBundleContent) : "",
+      },
+    };
+
+    // Apply the updated secret
+    await K8s(kind.Secret).Apply(updatedSecret, { force: true });
+    log.debug(`Updated ${secretName} secret in ${namespace} namespace with combined CA bundle`);
+
+    // Reload Istiod to ensure it picks up the trust bundle change
+    try {
+      const istioPods = await K8s(kind.Pod).InNamespace(namespace).WithLabel("app", "istiod").Get();
+      await reloadPods(namespace, istioPods.items, "CA bundle update", log, "CA_BUNDLE");
+    } catch (err) {
+      log.error(`Failed to reload Istiod pods in namespace ${namespace}`, err);
+    }
+  } catch (err) {
+    // If secret doesn't exist, it should be created by the chart
+    if (err?.status === 404) {
+      log.debug(`Secret ${secretName} not found in ${namespace}, will be created by chart`);
+      return;
+    }
+    throw new Error(
+      `Failed to update ${secretName} secret in ${namespace}: ${JSON.stringify(err)}`,
+    );
+  }
+}
+
+/**
  * Builds the combined CA bundle content from all configured certificate sources.
  * Combines user-provided certificates, DoD certificates, and public certificates
  * based on the current UDS configuration settings.
@@ -106,7 +154,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
  * @returns The combined PEM-formatted certificate bundle as a string.
  *          Returns empty string if no certificate sources are configured.
  */
-function buildCABundleContent(): string {
+export function buildCABundleContent(): string {
   const certs: string[] = [];
 
   // Add user-provided certs (base64 encoded)
@@ -163,31 +211,42 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
 
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    for (const pkg of packages.items) {
+    const packageUpdates = packages.items.map(async pkg => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
-        // This should not happen, but needed for type safety
-        continue;
+        return;
       }
-
-      const pkgName = pkg.metadata.name;
-      const namespace = pkg.metadata.namespace;
-
       try {
-        log.debug(
-          `Processing CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
-        );
-        await caBundleConfigMap(pkg, namespace);
+        await caBundleConfigMap(pkg, pkg.metadata.namespace);
       } catch (err) {
-        // Log the error but continue processing other packages
         log.error(
-          `Failed to process CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
+          `Failed to process CA bundle ConfigMap for package ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}`,
           err,
         );
-        // Don't throw here - we want to continue processing other packages
+        throw err;
       }
-    }
+    });
 
-    log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    const results = await Promise.allSettled([
+      ...packageUpdates,
+      (async () => {
+        try {
+          log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
+          await updateIstioCASecret();
+          log.debug("Successfully updated Istio sso-ca-cert secret");
+        } catch (err) {
+          log.error("Failed to update Istio sso-ca-cert secret", err);
+          throw err;
+        }
+      })(),
+    ]);
+
+    // Check for any failures
+    const failures = results.filter(r => r.status === "rejected");
+    if (failures.length > 0) {
+      log.warn(`Completed CA bundle updates with ${failures.length} failures`);
+    } else {
+      log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    }
   } catch (err) {
     log.error("Failed to update CA bundle ConfigMaps for all packages", err);
     throw new Error("Failed to update CA bundle ConfigMaps for all packages", { cause: err });
