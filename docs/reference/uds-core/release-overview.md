@@ -37,19 +37,23 @@ For a more detailed review of how UDS Core applies Semantic Versioning, see the 
 
 Breaking changes are clearly documented in the [CHANGELOG.md](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) with the `⚠ BREAKING CHANGES` header (and in the [GitHub release notes](https://github.com/defenseunicorns/uds-core/releases)). Each breaking change includes specific upgrade steps required when applicable.
 
+#### Security Exception
+
+As a security-first platform, UDS Core reserves the right to release security-related breaking changes in minor versions when the security benefit to users outweighs the disruption of waiting for a major release. These changes will still be clearly advertised as breaking changes. We will always strive to minimize the impact on users and will only exercise this exception when the security improvement is necessary and urgent.
+
 ### Current Stability Status
 
 While UDS Core has not yet reached version 1.0, it is considered production-ready and stable. The pre-1.0 versioning reflects our commitment to maintaining flexibility as we continue to enhance our security posture.
 
-## Version Support
+### Version Support
 
 UDS Core provides patch support for the latest three minor versions (the current minor and the two previous minors), where applicable. Minor and major releases are cut from `main`, while patch releases are published from dedicated `release/X.Y` branches for each supported minor stream. Patch releases follow the [patch policy](#patch-policy) and are not present in the main repository changelog (but are documented in GitHub releases).
 
-## Deprecation Policy
+### Deprecation Policy
 
-UDS Core uses a time-based deprecation process to evolve the platform safely while providing clear, predictable upgrade paths for users. Deprecations signal upcoming breaking changes and allow sufficient time for migration before removal.
+UDS Core uses a deprecation process to evolve the platform safely while providing clear, predictable upgrade paths for users. Deprecations signal upcoming breaking changes and allow sufficient time for migration before removal in a major release.
 
-### Scope
+#### Scope
 
 This policy applies to all elements of the UDS Core public API, as defined in the [Versioning](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) document, including:
 
@@ -61,40 +65,36 @@ This policy applies to all elements of the UDS Core public API, as defined in th
 
 Internal implementation details are not subject to this policy.
 
-### How Deprecations Are Announced
+#### How Deprecations Are Announced
 
-All deprecations are documented in the [CHANGELOG.md](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) under a `⚠ DEPRECATIONS` header and included in the GitHub release notes. Each deprecation announcement includes:
+Deprecations are introduced via commits using the `feat(deprecation)` conventional commit format and are included in GitHub release notes. Each deprecation includes:
 
 - What is being deprecated
 - Why it is being deprecated
 - The recommended replacement or migration path
-- When the feature is eligible for removal (minimum three minor releases after deprecation)
+- The projected major version in which it will be removed
 
-Migration or replacement guidance is provided where applicable to ensure smooth transitions.
+All active deprecations are tracked in the [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md) file, which serves as a single source of truth for deprecated features, their deprecation version, and projected removal version.
 
-### Support Period
+#### Support Period
 
-Deprecated features remain supported for **at least three subsequent minor releases** following their deprecation announcement. They continue to function without behavioral changes during this period and may receive bug fixes and security fixes when feasible.
+Deprecated features remain supported for **at least three subsequent minor releases** following their deprecation announcement and **may only be removed in a major release**. They continue to function without behavioral changes during this period and may receive bug fixes and security fixes when feasible.
 
-After the three-minor-release window has elapsed, deprecated features may be removed in:
-- The next minor release, **or**
-- Any new major release
+For example, if a feature is deprecated in version `0.30.0`, it must remain supported through at least the three subsequent minor releases: `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `1.0.0` (assuming `1.0.0` is released after `0.33.0`). If a major release were planned before the three-minor window elapsed, the deprecated feature would remain and could not be removed until the following major release.
 
-For example, if a feature is deprecated in version `0.30.0`, it must remain supported through the three subsequent minor releases: `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `0.34.0` or any subsequent release (including a hypothetical `1.0.0`).
-
-Removal of deprecated functionality is considered a breaking change and is clearly documented in the changelog and release notes. Patch releases never introduce deprecations or remove deprecated functionality.
+Removal of deprecated functionality is considered a breaking change and will only occur in major releases. Patch releases never introduce deprecations or remove deprecated functionality.
 
 :::caution
-Users are expected to resolve all deprecation warnings before upgrading beyond the guaranteed support window to avoid encountering breaking changes.
+Users are expected to resolve all deprecation warnings before upgrading to the next major version to avoid encountering breaking changes.
 :::
 
-### CRD-Specific Guarantees
+#### CRD-Specific Guarantees
 
 Because CRDs represent a primary API boundary for UDS Core, they receive the same deprecation guarantees:
 
 - Deprecated CRD fields and versions remain accepted for at least three minor releases after deprecation
 - New CRD versions may be introduced without removing older versions
-- CRD version or field removal follows the standard deprecation lifecycle
+- CRD version or field removal follows the standard deprecation lifecycle and only occurs in major releases
 
 ## Release Process
 
