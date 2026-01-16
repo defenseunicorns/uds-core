@@ -113,7 +113,7 @@ Keycloak 26.5.0+ (UDS Core 0.59.0+) will now prevent configuring an SSO client w
 
 ## Logout Confirmation
 
-By default, UDS Core will display a logout confirmation page when a user logs out from an application. This behavor can be configured on a per-client basis by setting the `logout.confirmation.enabled` attribute in the `sso` section of the Package CR, for example:
+By default, UDS Core will display a logout confirmation page when a user logs out from an application. This behavior can be configured on a per-client basis by setting the `logout.confirmation.enabled` attribute in the `sso` section of the Package CR, for example:
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
