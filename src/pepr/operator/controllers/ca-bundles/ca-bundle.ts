@@ -102,7 +102,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 /**
  * Updates the Istio sso-ca-cert secret with the combined CA bundle.
  * Istio expects its root CA in the `extra.pem` key of this secret.
- * We only update it if the secret already exists; otherwise, we let the Istio Helm chart handle the initial creation.
+ * We only update it if the secret already exists, otherwise, we let the Istio Helm chart handle the initial creation.
  */
 export async function updateIstioCASecret(): Promise<void> {
   const namespace = "istio-system";
@@ -135,7 +135,7 @@ export async function updateIstioCASecret(): Promise<void> {
       log.error(`Failed to reload Istiod pods in namespace ${namespace}`, err);
     }
   } catch (err) {
-    // If secret doesn't exist, that's okay - it will be created by the chart
+    // If secret doesn't exist, it should be created by the chart
     if (err?.status === 404) {
       log.debug(`Secret ${secretName} not found in ${namespace}, will be created by chart`);
       return;
