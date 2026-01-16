@@ -87,22 +87,21 @@ variables:
 
 ### Deploying Exemptions in UDS Core Installation
 
-In some cases, you may want to deploy exemption CRs as part of your UDS Core installation. This can be done by overriding the `uds-exemptions` helm chart which gets applied after pepr is installed.
+In some cases, you may want to deploy custom `Exemption` CRs as part of your UDS Core installation. This can be done by overriding the `uds-exemptions` helm chart which gets applied after pepr is installed.
 
 UDS Core does provide some ready to use exemptions to turn on out of the box. Currently we support exemptions for:
 - Enabling Node Port Services on Istio Gateways
-
-```yaml
-  - name: core
-    repository: ghcr.io/defenseunicorns/packages/uds/core
-    ref: x.x.x
-    overrides:
-      pepr:
-        uds-exemptions:
-          values:
-            - path: exemptions.istioGatewayNodeport.enabled
-              value: true
-```
+    ```yaml
+      - name: core
+        repository: ghcr.io/defenseunicorns/packages/uds/core
+        ref: x.x.x
+        overrides:
+          pepr:
+            uds-exemptions:
+              values:
+                - path: exemptions.istioGatewayNodeport.enabled
+                  value: true
+    ```
 
 However if you want to create an arbitrary exemption for your workloads, you can do so.
 Here is an example of how to do this with bundle helm overrides:
@@ -115,7 +114,7 @@ Here is an example of how to do this with bundle helm overrides:
       pepr:
         uds-exemptions:
           values:
-            - path: custom
+            - path: exemptions.custom
               value:
                 - name: my-app-exemptions
                   exemptions:
