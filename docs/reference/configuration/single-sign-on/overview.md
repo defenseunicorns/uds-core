@@ -39,9 +39,9 @@ The UDS Operator uses a dedicated Client in Keycloak. In some cases, the Client 
 
 When SSO client secrets are updated or rotated, applications using these secrets may need to be restarted to pick up the new values. UDS Core provides a Secret Pod Reload mechanism that detects changes to secrets and restarts the relevant pods or deployments.
 
-To enable this functionality for SSO client secrets, you can add the `uds.dev/pod-reload: "true"` label to the secret via the `secretLabels` field in your Package CR. When a secret with this label is updated, UDS Core will either:
+To enable this functionality for SSO client secrets, you can add the `uds.dev/pod-reload: "true"` label to the secret via the `secretConfig.labels` field in your Package CR. When a secret with this label is updated, UDS Core will either:
 
-1. Restart pods matching the selector specified in the `uds.dev/pod-reload-selector` annotation (which can be added via the `secretAnnotations` field), or
+1. Restart pods matching the selector specified in the `uds.dev/pod-reload-selector` annotation (which can be added via the `secretConfig.annotations` field), or
 2. Automatically discover and restart pods that are consuming the secret through volume mounts, environment variables, or projected volumes
 
 For more details on configuring Secret Pod Reload, see the [Secret Pod Reload documentation](/reference/deployment/pod-reload) or the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
