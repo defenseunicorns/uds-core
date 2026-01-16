@@ -10,7 +10,7 @@ templates:
 tests:
   - it: should render multiple custom exemptions with multiple rules
     set:
-      custom:
+      exemptions.custom:
         - name: my-app-exemptions
           exemptions:
             - policies:
@@ -62,7 +62,7 @@ tests:
 
   - it: should not render when custom list is empty
     set:
-      custom: []
+      exemptions.custom: []
     asserts:
       - hasDocuments:
           count: 0
