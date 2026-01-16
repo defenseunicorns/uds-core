@@ -110,3 +110,23 @@ Keycloak 26.5.0+ (UDS Core 0.59.0+) will now prevent configuring an SSO client w
   - If a refresh token is valid, it can still obtain a new access token.
   - If the refresh token is also expired, the user must reauthenticate.
 - Realm-wide session settings take precedence over client settings, meaning once the realm session expires, the user is logged out from all clients.
+
+## Logout Confirmation
+
+By default, UDS Core will display a logout confirmation page when a user logs out from an application. This behavior can be configured on a per-client basis by setting the `logout.confirmation.enabled` attribute in the `sso` section of the Package CR, for example:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: my-package
+  namespace: my-namespace
+spec:
+  sso:
+    - name: My SSO Client
+      clientId: my-client-id
+      redirectUris:
+        - "https://my-app.uds.dev/login"
+      attributes:
+        logout.confirmation.enabled: "false"
+```

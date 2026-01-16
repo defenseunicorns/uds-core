@@ -118,6 +118,14 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     client.attributes["uds.core.groups"] = "";
   }
 
+  if (client.attributes["logout.confirmation.enabled"]) {
+    log.debug(
+      `User supplied logout.confirmation.enabled=${client.attributes["logout.confirmation.enabled"]} for client ${client.clientId}, skipping override`,
+    );
+  } else {
+    client.attributes["logout.confirmation.enabled"] = "true";
+  }
+
   // Assert that the result conforms to Client type
   return client as Client;
 }

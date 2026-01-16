@@ -210,26 +210,27 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const clientIDs = new Set<string>();
 
   const allowedClientAttributes = new Set([
-    "oidc.ciba.grant.enabled",
-    "backchannel.logout.session.required",
+    "access.token.lifespan",
     "backchannel.logout.revoke.offline.tokens",
-    "post.logout.redirect.uris",
-    "oauth2.device.authorization.grant.enabled",
-    "pkce.code.challenge.method",
+    "backchannel.logout.session.required",
     "client.session.idle.timeout",
     "client.session.max.lifespan",
-    "access.token.lifespan",
+    "logout.confirmation.enabled",
+    "oauth2.device.authorization.grant.enabled",
+    "oidc.ciba.grant.enabled",
+    "pkce.code.challenge.method",
+    "post.logout.redirect.uris",
     "saml.assertion.signature",
     "saml.client.signature",
+    "saml.encrypt",
+    "saml.signing.certificate",
     "saml_assertion_consumer_url_post",
     "saml_assertion_consumer_url_redirect",
+    "saml_idp_initiated_sso_url_name",
+    "saml_name_id_format",
     "saml_single_logout_service_url_post",
     "saml_single_logout_service_url_redirect",
-    "saml_idp_initiated_sso_url_name",
     "use.refresh.tokens",
-    "saml.encrypt",
-    "saml_name_id_format",
-    "saml.signing.certificate",
   ]);
 
   for (const client of ssoClients) {
