@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.60.0](https://github.com/defenseunicorns/uds-core/compare/v0.59.0...v0.60.0) (2026-01-16)
+
+
+### Features
+
+* add helm chart to deploy uds exemptions; add istio gateway nodeport default exemption ([#2277](https://github.com/defenseunicorns/uds-core/issues/2277)) ([1c7d4e1](https://github.com/defenseunicorns/uds-core/commit/1c7d4e14d3e8301a007bd6fa66b103e1b4efb2ef))
+* add new package sso secret fields ([#2264](https://github.com/defenseunicorns/uds-core/issues/2264)) ([2ba486d](https://github.com/defenseunicorns/uds-core/commit/2ba486df4b9ba180cd5ee37e6d65d3e616cb2a99))
+
+
+### Bug Fixes
+
+* switch grafana sidecars to native k8s sidecars ([#2266](https://github.com/defenseunicorns/uds-core/issues/2266)) ([fcb2eed](https://github.com/defenseunicorns/uds-core/commit/fcb2eed46bca8ae4e0bde62a962424ff6c0ffb16))
+
+
+### Miscellaneous
+
+* add lula mapping ([#2255](https://github.com/defenseunicorns/uds-core/issues/2255)) ([988b540](https://github.com/defenseunicorns/uds-core/commit/988b540ef54f5778bbb9b49131d390a186b80861))
+* mappings for compliance 853 ([#2258](https://github.com/defenseunicorns/uds-core/issues/2258)) ([e1faad7](https://github.com/defenseunicorns/uds-core/commit/e1faad7c16d632106ba08f44043ad46a102c8287))
+
+
+### Documentation
+
+* update backporting doc ([#2275](https://github.com/defenseunicorns/uds-core/issues/2275)) ([8b36d2a](https://github.com/defenseunicorns/uds-core/commit/8b36d2ac47f230cc21469ec7a434ef91ff60e00d))
+* update session management doc ([#2276](https://github.com/defenseunicorns/uds-core/issues/2276)) ([5bd4092](https://github.com/defenseunicorns/uds-core/commit/5bd409208963f1e040449a1d882e7b92c325b39d))
+
 ## [0.59.0](https://github.com/defenseunicorns/uds-core/compare/v0.58.0...v0.59.0) (2026-01-13)
 
 
