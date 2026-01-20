@@ -35,7 +35,7 @@ These benefits are particularly important as UDS expands its **edge capabilities
 | Component                | Transition Path                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------- |
 | **UDS Core Services**    | All deployments will use Istio Ambient Mode by default starting **0.43.0**.      |
-| **Mission Applications** | Both sidecar and ambient modes supported. Ambient is **opt-in** and recommended. |
+| **Mission Applications** | Both sidecar and ambient modes supported. Ambient is **default** and recommended. |
 
 :::note
 Mission Application = Any application outside of UDS Core

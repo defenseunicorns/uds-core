@@ -1,54 +1,28 @@
 ---
-title: Istio Sidecar vs. Ambient Mode in UDS Core
+title: Istio Ambient vs. Ambient Sidecar in UDS Core
 ---
 
-This document outlines the key differences between Istio's Sidecar and Ambient modes as they relate to UDS Core. Understanding these differences is crucial for choosing the right mode for your application deployments.
+This document outlines the key differences between Istio's Ambient and Sidecar modes as they relate to UDS Core. Understanding these differences is crucial for choosing the right mode for your application deployments.
 
 UDS Core leverages Istio for service mesh capabilities. Istio offers two primary modes of operation:
 
-*   **Sidecar Proxy:** The traditional Istio model where each application pod has its own dedicated Envoy proxy running as a sidecar container.
 *   **Ambient Mesh:** A newer, simpler model that uses node-level (ztunnel) proxies and optional waypoint proxies to provide service mesh functionality.
+*   **Sidecar Proxy:** The traditional Istio model where each application pod has its own dedicated Envoy proxy running as a sidecar container.
 
 ## Key Differences
 
-| Feature           | Sidecar Proxy                                      | Ambient Mesh                                                                 |
-| ----------------- | -------------------------------------------------- | ---------------------------------------------------------------------------- |
-| Proxy Location    | Pod-level (Envoy sidecar)                          | Node-level (ztunnel) + optional Waypoint proxies                             |
-| Resource Usage    | Higher - Each pod has its own proxy.               | Lower - Proxies are shared across pods on a node.                            |
-| Complexity        | Higher - Requires sidecar injection.              | Lower - No sidecar injection required by default.                             |
-| Isolation         | Strong - Pod-level isolation.                      | Network-level (ztunnel), Pod-level (with Waypoint proxies)                  |
-| Upgrade           | Disruptive - Pod restarts required for sidecar updates. | Less Disruptive - ztunnel upgrades don't require pod restarts.             |
-| Security          | All traffic inspected at the pod level.   | ztunnel handles base security; Waypoint proxies add pod-level policy when configured. |
-| mTLS              | Sidecars handle mTLS.                              | ztunnel handles mTLS.                                                        |
-| HTTP L7 policies  | Enforced by sidecars.                              | Enforced by Waypoint Proxies when needed.                                   |
+| Feature           | Ambient Mesh                                                                          | Sidecar Proxy                                           | 
+| ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Proxy Location    | Node-level (ztunnel) + optional Waypoint proxies                                      | Pod-level (Envoy sidecar)                               |
+| Resource Usage    | Lower - Proxies are shared across pods on a node.                                     | Higher - Each pod has its own proxy.                    |
+| Complexity        | Lower - No sidecar injection required by default.                                     | Higher - Requires sidecar injection.                    | 
+| Isolation         | Network-level (ztunnel), Pod-level (with Waypoint proxies)                            | Strong - Pod-level isolation.                           | 
+| Upgrade           | Less Disruptive - ztunnel upgrades don't require pod restarts.                        | Disruptive - Pod restarts required for sidecar updates. |
+| Security          | ztunnel handles base security; Waypoint proxies add pod-level policy when configured. | All traffic inspected at the pod level.                 |
+| mTLS              | ztunnel handles mTLS.                                                                 | Sidecars handle mTLS.                                   | 
+| HTTP L7 policies  | Enforced by Waypoint Proxies when needed.                                             | Enforced by sidecars.                                   |
 
-## Sidecar Proxy Mode (Default)
-
-In Sidecar mode, an Envoy proxy runs as a sidecar container within each application pod. All traffic to and from the application is intercepted and managed by this sidecar proxy.
-
-**Pros:**
-
-*   **Strong Isolation:** Provides strong isolation between the application and the proxy.
-*   **Mature Feature Set:** Has a more mature feature set compared to Ambient Mesh.
-*   **Granular Control:** Allows very fine-grained control over traffic management and security policies at the pod level.
-
-**Cons:**
-
-*   **Higher Resource Overhead:** Sidecar proxies consume resources (CPU, memory) on each pod, even if the pod doesn't require advanced mesh features.
-*   **Increased Complexity:** Increases the complexity of pod deployments due to sidecar injection.
-*   **Disruptive Upgrades:** Upgrading sidecars typically involves restarting pods.
-
-**When to Use Sidecar Mode:**
-
-*   When you need very strong isolation between your application and the Istio proxy.
-*   When you require features not yet available in Ambient Mesh.
-*   When you have applications already designed to work with sidecar injection.
-
-**Configuration:**
-
-To explicitly use sidecar injection, set `spec.network.serviceMesh.mode: sidecar` in your [UDS Package](/reference/configuration/uds-operator/package/) resource definition. If you do not configure `spec.network.serviceMesh.mode` in your UDS Package, the UDS Operator will default to Sidecar mode.
-
-## Ambient Mesh Mode
+## Ambient Mesh Mode (Default)
 
 In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypoint proxies to provide service mesh functionality. Ztunnel runs on each node and intercepts traffic at the node level. [Waypoint proxies](https://istio.io/latest/docs/ambient/usage/waypoint/) are deployed alongside applications that require more fine-grained control or advanced features.
 
@@ -73,7 +47,33 @@ In Ambient Mesh mode, Istio uses node-level proxies (ztunnel) and optional waypo
 
 **Configuration:**
 
-You can use ambient mode by setting `spec.network.serviceMesh.mode: ambient` in your [UDS Package](/reference/configuration/uds-operator/package/). When `spec.network.serviceMesh.mode` is not configured, the UDS Operator will default your Package to Sidecar mode.
+You can use ambient mode by setting `spec.network.serviceMesh.mode: ambient` in your [UDS Package](/reference/configuration/uds-operator/package/). When `spec.network.serviceMesh.mode` is not configured, the UDS Operator will default your Package to Ambient mode.
+
+## Sidecar Proxy Mode
+
+In Sidecar mode, an Envoy proxy runs as a sidecar container within each application pod. All traffic to and from the application is intercepted and managed by this sidecar proxy.
+
+**Pros:**
+
+*   **Strong Isolation:** Provides strong isolation between the application and the proxy.
+*   **Mature Feature Set:** Has a more mature feature set compared to Ambient Mesh.
+*   **Granular Control:** Allows very fine-grained control over traffic management and security policies at the pod level.
+
+**Cons:**
+
+*   **Higher Resource Overhead:** Sidecar proxies consume resources (CPU, memory) on each pod, even if the pod doesn't require advanced mesh features.
+*   **Increased Complexity:** Increases the complexity of pod deployments due to sidecar injection.
+*   **Disruptive Upgrades:** Upgrading sidecars typically involves restarting pods.
+
+**When to Use Sidecar Mode:**
+
+*   When you need very strong isolation between your application and the Istio proxy.
+*   When you require features not yet available in Ambient Mesh.
+*   When you have applications already designed to work with sidecar injection.
+
+**Configuration:**
+
+To explicitly use sidecar injection, set `spec.network.serviceMesh.mode: sidecar` in your [UDS Package](/reference/configuration/uds-operator/package/) resource definition. If you do not configure `spec.network.serviceMesh.mode` in your UDS Package, the UDS Operator will default to Ambient mode.
 
 ## Choosing the Right Mode
 While Ambient Mesh has clear benefits and growing adoption, consider the following when choosing between Sidecar and Ambient Mesh:
