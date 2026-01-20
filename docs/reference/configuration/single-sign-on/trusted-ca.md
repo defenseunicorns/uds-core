@@ -6,7 +6,7 @@ Authservice and Istio automatically consume the combined trust bundle (Private P
 
 To configure, set `CA_BUNDLE_CERTS` in your `uds-config.yaml`. If you also enable `CA_BUNDLE_INCLUDE_DOD_CERTS` or `CA_BUNDLE_INCLUDE_PUBLIC_CERTS`, these will be automatically merged into the trust chain used by Authservice and Istio. For details on configuring this variable, see the [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management) documentation.
 
-Alternatively you can specify the `CA_BUNDLE_CERTS` variable in your `uds-config.yaml`:
+For example, you can specify the `CA_BUNDLE_CERTS` variable in your `uds-config.yaml`:
 
 ```yaml
 variables:

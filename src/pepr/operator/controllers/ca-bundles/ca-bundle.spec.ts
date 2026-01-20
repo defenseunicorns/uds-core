@@ -72,6 +72,22 @@ vi.mock("pepr", async importOriginal => {
             }),
           }),
         };
+      } else if (resourceKind === actual.kind.Pod) {
+        // Handle Pod operations for reloadPods discovery
+        return {
+          InNamespace: vi.fn().mockReturnValue({
+            WithLabel: vi.fn().mockReturnValue({
+              Get: vi.fn().mockResolvedValue({
+                items: [], // Return empty list to skip reload logic in tests
+              }),
+            }),
+          }),
+          WithLabel: vi.fn().mockReturnValue({
+            Get: vi.fn().mockResolvedValue({
+              items: [],
+            }),
+          }),
+        };
       } else {
         // Handle UDSPackage and other resource types
         return {
