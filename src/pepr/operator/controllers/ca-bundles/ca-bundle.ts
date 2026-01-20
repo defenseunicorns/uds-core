@@ -100,32 +100,41 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
- * Updates the Istio sso-ca-cert secret with the combined CA bundle.
- * Istio expects its root CA in the `extra.pem` key of this secret.
- * We only update it if the secret already exists, otherwise, we let the Istio Helm chart handle the initial creation.
+ * Updates the Istio uds-trust-bundle ConfigMap with the combined CA bundle.
+ * Istio expects its root CA in the `extra.pem` key of this ConfigMap.
+ * This ConfigMap is managed entirely by the operator.
  */
-export async function updateIstioCASecret(): Promise<void> {
+export async function updateIstioCASecret(skipReload = false): Promise<void> {
   const namespace = "istio-system";
-  const secretName = "sso-ca-cert";
+  const configMapName = "uds-trust-bundle";
 
   try {
     // Build the combined CA bundle content
     const caBundleContent = buildCABundleContent();
 
-    // Get existing secret
-    const secret = await K8s(kind.Secret).InNamespace(namespace).Get(secretName);
-
-    // Update secret data with combined bundle, or clear it if empty
-    const updatedSecret = {
-      ...secret,
+    // Directly apply the ConfigMap (handles create and update)
+    const configMap: kind.ConfigMap = {
+      apiVersion: "v1",
+      kind: "ConfigMap",
+      metadata: {
+        name: configMapName,
+        namespace,
+      },
       data: {
-        "extra.pem": caBundleContent ? btoa(caBundleContent) : "",
+        "extra.pem": caBundleContent || "",
       },
     };
 
-    // Apply the updated secret
-    await K8s(kind.Secret).Apply(updatedSecret, { force: true });
-    log.debug(`Updated ${secretName} secret in ${namespace} namespace with combined CA bundle`);
+    await K8s(kind.ConfigMap).Apply(configMap, { force: true });
+    log.debug(
+      `Updated ${configMapName} ConfigMap in ${namespace} namespace with combined CA bundle`,
+    );
+
+    // Skip reload if requested (e.g., during initial load or batch updates)
+    if (skipReload) {
+      log.debug(`Skipping Istiod reload for ${configMapName} update`);
+      return;
+    }
 
     // Reload Istiod to ensure it picks up the trust bundle change
     try {
@@ -135,13 +144,8 @@ export async function updateIstioCASecret(): Promise<void> {
       log.error(`Failed to reload Istiod pods in namespace ${namespace}`, err);
     }
   } catch (err) {
-    // If secret doesn't exist, it should be created by the chart
-    if (err?.status === 404) {
-      log.debug(`Secret ${secretName} not found in ${namespace}, will be created by chart`);
-      return;
-    }
     throw new Error(
-      `Failed to update ${secretName} secret in ${namespace}: ${JSON.stringify(err)}`,
+      `Failed to update ${configMapName} ConfigMap in ${namespace}: ${JSON.stringify(err)}`,
     );
   }
 }
@@ -196,22 +200,15 @@ export function buildCABundleContent(): string {
  *
  * @throws Error if the package listing or ConfigMap update operations fail
  */
-export async function updateAllCaBundleConfigMaps(): Promise<void> {
+export async function updateAllCaBundleConfigMaps(skipReload = false): Promise<void> {
   try {
     log.debug("Starting CA bundle ConfigMap updates for all UDS packages");
 
     // Get all UDS packages across all namespaces
     const packages = await K8s(UDSPackage).Get();
 
-    if (!packages.items || packages.items.length === 0) {
-      log.debug("No UDS packages found, no CA bundle ConfigMaps to update");
-      return;
-    }
-
-    log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
-
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    const packageUpdates = packages.items.map(async pkg => {
+    const packageUpdates = (packages.items || []).map(async pkg => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
         return;
       }
@@ -226,19 +223,7 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
       }
     });
 
-    const results = await Promise.allSettled([
-      ...packageUpdates,
-      (async () => {
-        try {
-          log.debug("Updating Istio sso-ca-cert secret with combined CA bundle");
-          await updateIstioCASecret();
-          log.debug("Successfully updated Istio sso-ca-cert secret");
-        } catch (err) {
-          log.error("Failed to update Istio sso-ca-cert secret", err);
-          throw err;
-        }
-      })(),
-    ]);
+    const results = await Promise.allSettled([...packageUpdates, updateIstioCASecret(skipReload)]);
 
     // Check for any failures
     const failures = results.filter(r => r.status === "rejected");

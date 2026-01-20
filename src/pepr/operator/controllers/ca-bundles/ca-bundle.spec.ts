@@ -62,12 +62,12 @@ vi.mock("pepr", async importOriginal => {
           }),
         };
       } else if (resourceKind === actual.kind.Secret) {
-        // Handle Secret operations for updateIstioCASecret
+        // Handle Secret operations
         return {
           Apply: mockK8sApply,
           InNamespace: vi.fn().mockReturnValue({
             Get: vi.fn().mockResolvedValue({
-              metadata: { name: "sso-ca-cert", namespace: "istio-system" },
+              metadata: { name: "test-secret", namespace: "test-ns" },
               data: {},
             }),
           }),
@@ -479,7 +479,7 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio secret
+      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio ConfigMap
 
       // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -520,12 +520,12 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      // Should be called 1 time for the Istio secret update (clearing it)
+      // Should be called 1 time for the Istio ConfigMap update (clearing it)
       expect(mockK8sApply).toHaveBeenCalledTimes(1);
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
-            name: "sso-ca-cert",
+            name: "uds-trust-bundle",
             namespace: "istio-system",
           }),
           data: {
@@ -537,23 +537,41 @@ describe("CA Bundle ConfigMap", () => {
       expect(mockK8sDelete).toHaveBeenCalledTimes(2);
     });
 
-    it("returns early when no UDS packages exist", async () => {
+    it("synchronizes Istio trust bundle even when no UDS packages exist", async () => {
       mockUDSPackageGet.mockResolvedValue({ items: [] });
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "ConfigMap",
+          metadata: expect.objectContaining({
+            name: "uds-trust-bundle",
+            namespace: "istio-system",
+          }),
+        }),
+        { force: true },
+      );
       expect(mockK8sDelete).not.toHaveBeenCalled();
     });
 
-    it("returns early when packages.items is undefined", async () => {
+    it("synchronizes Istio trust bundle even when packages.items is undefined", async () => {
       mockUDSPackageGet.mockResolvedValue({});
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "ConfigMap",
+          metadata: expect.objectContaining({
+            name: "uds-trust-bundle",
+            namespace: "istio-system",
+          }),
+        }),
+        { force: true },
+      );
       expect(mockK8sDelete).not.toHaveBeenCalled();
     });
 

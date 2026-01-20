@@ -269,26 +269,19 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
     publicCerts,
   );
 
-  if (UDSConfig.caBundle.certs !== caBundle.certs) {
-    UDSConfig.caBundle.certs = caBundle.certs || "";
-
-    // Handle changes to the Authservice configuration for CA Certs
-    if (updateClusterResources) {
-      await performAuthserviceUpdate("change to CA Cert");
-    }
-  } else if (caBundleConfigMapsNeedUpdate && updateClusterResources) {
-    // Even if user certs didn't change, DoD/Public flags or content might have, so update Authservice
-    await performAuthserviceUpdate("change to DoD/Public CA configuration");
-  }
-
+  // Update global state for all types of certs
+  UDSConfig.caBundle.certs = caBundle.certs || "";
   UDSConfig.caBundle.includeDoDCerts = caBundle.includeDoDCerts === true;
   UDSConfig.caBundle.includePublicCerts = caBundle.includePublicCerts === true;
   UDSConfig.caBundle.dodCerts = dodCerts;
   UDSConfig.caBundle.publicCerts = publicCerts;
 
-  // Handle global updates to Trust Bundle Configmaps
-  if (caBundleConfigMapsNeedUpdate && updateClusterResources) {
-    await updateAllCaBundleConfigMaps();
+  // Handle global updates to Trust Bundle Configmaps and Authservice
+  if (updateClusterResources) {
+    await performAuthserviceUpdate(
+      caBundleConfigMapsNeedUpdate ? "Global CA bundle change" : "Idempotent sync",
+    );
+    await updateAllCaBundleConfigMaps(!caBundleConfigMapsNeedUpdate);
   }
 }
 

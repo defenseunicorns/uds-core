@@ -78,7 +78,7 @@ Many Go-based applications automatically check `/etc/ssl/certs/ca.pem` for addit
 
 Authservice automatically trusts the combined UDS CA bundle (Private PKI + DoD + Public CAs) when configured via the UDS Operator. This ensures it can verify the certificates of the tenant gateway without manual certificate injection.
 
-To configure, define the `caBundle` variables in your `uds-config.yaml`. For example:
+To configure, define the `caBundle` variables in your `uds-config.yaml` (or via Zarf variables like `UDS_CA_BUNDLE_CERTS` at deploy time). For example:
 
 ```yaml
 variables:

@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
-kind: Secret
+kind: ConfigMap
 metadata:
-  name: sso-ca-cert
+  name: uds-trust-bundle
   namespace: istio-system
-type: Opaque
 data:
-  extra.pem: ""
+  extra.pem: {{ default .Values.cluster.expose.caCert .Values.cluster.caBundle.certs | default "" | quote }}

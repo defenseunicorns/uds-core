@@ -500,22 +500,19 @@ describe("handleUDSConfig", () => {
       });
     });
 
-    it("does not call if CA Cert is still empty string (dev mode)", async () => {
-      UDSConfig.caBundle.certs = "";
+    it("always calls reconcileAuthservice even if CA Cert is still empty string (dev mode)", async () => {
       const cfg = {
-        ...mockCfg,
+        ...defaultConfig,
         spec: {
-          ...mockCfg.spec,
+          ...defaultConfig.spec,
           caBundle: {
-            ...mockCfg.spec!.caBundle,
             certs: "###ZARF_VAR_CA_BUNDLE_CERTS###",
           },
         },
       } as ClusterConfig;
-
       await handleCfg(cfg, ConfigAction.UPDATE);
 
-      expect(reconcileAuthservice).not.toHaveBeenCalled();
+      expect(reconcileAuthservice).toHaveBeenCalled();
     });
 
     it("calls if Redis URI changes", async () => {
@@ -642,7 +639,7 @@ describe("handleUDSConfig", () => {
 
     await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-    expect(reconcileAuthservice).not.toHaveBeenCalled();
+    expect(reconcileAuthservice).toHaveBeenCalled();
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
   });
@@ -720,7 +717,7 @@ describe("handleUDSConfig", () => {
       expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
     });
 
-    it("does not call updateAllCaBundleConfigMaps when nothing changes", async () => {
+    it("always calls updateAllCaBundleConfigMaps for idempotent sync even when nothing changes", async () => {
       // Set UDSConfig to exactly match the mockCfg state
       UDSConfig.caBundle.certs = exampleCACertBase64;
       UDSConfig.caBundle.includeDoDCerts = false;
@@ -735,7 +732,8 @@ describe("handleUDSConfig", () => {
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-      expect(updateAllCaBundleConfigMaps).not.toHaveBeenCalled();
+      // It should still be called with skipReload=true (first arg true)
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalledWith(true);
     });
   });
 
