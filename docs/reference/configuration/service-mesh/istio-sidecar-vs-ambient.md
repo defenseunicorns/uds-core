@@ -1,5 +1,5 @@
 ---
-title: Istio Ambient vs. Ambient Sidecar in UDS Core
+title: Istio Ambient vs. Sidecar in UDS Core
 ---
 
 This document outlines the key differences between Istio's Ambient and Sidecar modes as they relate to UDS Core. Understanding these differences is crucial for choosing the right mode for your application deployments.

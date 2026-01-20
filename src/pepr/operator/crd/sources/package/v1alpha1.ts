@@ -234,7 +234,7 @@ const serviceMesh = {
     mode: {
       type: "string",
       enum: ["sidecar", "ambient"],
-      default: "sidecar",
+      default: "ambient",
       description: "Set the service mesh mode for this package (namespace), defaults to ambient",
     },
   },

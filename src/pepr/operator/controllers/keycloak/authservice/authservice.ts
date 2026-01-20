@@ -38,7 +38,7 @@ export async function authservice(
     throw new Error("Package metadata is missing required fields");
   }
 
-  // Get the requested service mesh mode, default to sidecar if not specified
+  // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
   const previousMeshMode = pkg.status?.meshMode || Mode.Ambient;
   const isAmbient = istioMode === Mode.Ambient;
