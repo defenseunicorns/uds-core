@@ -1,4 +1,4 @@
-# 6: Cluster-less CRD Generation Workflow
+# 7: Cluster-less CRD Generation Workflow
 
 Date: 2026-01-13
 
@@ -21,14 +21,18 @@ This workflow presents several challenges:
 
 ## Decision
 
-We will transition to a cluster-less CRD generation workflow that preserves the benefits of TypeScript-based schema composition while enabling static manifest tracking and cluster-independent type generation. While TypeScript remains the authoring source of truth, the generated YAML manifests will be the primary checked-in artifact used for inspection, type generation, and registration.
+We will transition to a cluster-less CRD generation workflow that preserves the benefits of TypeScript-based schema composition while enabling static manifest tracking and cluster-independent type generation. While TypeScript remains the authoring source of truth, the generated YAML manifests will be the primary checked-in artifact used for inspection and type generation.
+
+Crucially, we will also move away from programmatic CRD registration within the Pepr operator. CRDs will be applied exclusively via **Helm charts** (e.g., during the UDS Core deployment process). This reduces the operator's runtime RBAC requirements and aligns with GitOps best practices.
+
+We also intend to donate the manifest generation logic upstream to **kubernetes-fluent-client (KFC)** once established.
 
 ### Workflow Architecture
 
 1. **Maintain TS Sources**: We will continue using `src/pepr/operator/crd/sources/*.ts` as the authoring source of truth for schema definitions, allowing us to leverage code reuse (e.g., shared Istio schema objects) and strong typing during design.
 2. **Static Manifest Generation**: A new generation step will "compile" these TS sources into static YAML manifests located in `src/pepr/operator/crd/manifests/*.yaml`. These files will be tracked in Git.
 3. **Local Type Generation**: The `gen-crds` task will be updated to point `kubernetes-fluent-client` at these local YAML files instead of a cluster.
-4. **Declarative Registration**: `src/pepr/operator/crd/register.ts` will be refactored to load these manifests and apply them via Pepr, ensuring the operator always uses the exact schema version it was compiled with.
+4. **Helm-based Registration**: CRD registration will be removed from the Pepr operator's `register.ts` and moved into a Helm chart. This ensures that CRDs are managed as part of the standard deployment lifecycle.
 
 ## Consequences
 
@@ -55,10 +59,13 @@ The implementation will focus on enhancing existing `uds-core` development patte
    * **Linting**: The new manifests in `src/pepr/operator/crd/manifests/` will be automatically covered by the existing `yamllint` pre-commit hook (configured in `.husky/pre-commit` and `.yamllint`).
    * **Licensing**: The generated YAML files will be processed by the existing `addlicense` logic in `tasks.yaml` to ensure compliance with project standards.
    * **Formatting**: `prettier` (via `lint-staged`) will continue to handle formatting for both the TS sources and the generated TS types.
-4. **`register.ts` Refactor**: Update the registration logic to use standard Node.js `fs` and `yaml` libraries to fetch the CRD definitions from the `manifests/` directory.
-5. **CI Synchronization**: An enhancement to the existing validation suite will be added to ensure `manifests/` stay in sync with `sources/`.
+4. **RBAC Reduction**: The Pepr operator's `register.ts` will be updated to remove CRD application logic. The operator's `ClusterRole` will be updated to remove `create`, `patch`, and `update` permissions for `customresourcedefinitions`, following the Principle of Least Privilege.
+5. **KFC Upstreaming**: Once the internal `gen-manifests` script is stabilized, it will be proposed for inclusion in `kubernetes-fluent-client` to standardize this cluster-less workflow for the broader Pepr ecosystem.
+6. **CI Synchronization**: An enhancement to the existing validation suite will be added to ensure `manifests/` stay in sync with `sources/`.
 
 ## Alternatives Considered
 
 1. **Pure YAML Definitions**: Rejected because it loses the benefits of programmatic schema composition, reuse of shared objects and constants, and type-safe authoring available in TypeScript, which are central to how UDS Core evolves CRDs.
 2. **JSON Schema Only**: Rejected because YAML manifests are the standard artifact for Kubernetes users and GitOps tools.
+3. **Cluster Simulation (Kwok)**: Using a lightweight cluster simulation tool like **Kwok** was considered to speed up the existing cluster-dependent generation process. While this significantly reduces generation time (sub-2 seconds) compared to full clusters, it was rejected because it still requires an external binary dependency and does not fundamentally solve the "Missing Manifests" problem or the need for a runtime API during build steps. The chosen approach provides the same speed benefits without any external runtime requirements.
+
