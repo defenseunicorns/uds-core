@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 pilot:
-  image: "docker.io/istio/pilot:1.28.3-distroless"
+  image: "docker.io/istio/pilot:1.28.2-distroless"
 global:
   proxy_init:
     # renovate: image=docker.io/istio/proxyv2
-    image: "###ZARF_REGISTRY###/istio/proxyv2:1.28.3-distroless"
+    image: "###ZARF_REGISTRY###/istio/proxyv2:1.28.2-distroless"
   proxy:
     # renovate: image=docker.io/istio/proxyv2
-    image: "###ZARF_REGISTRY###/istio/proxyv2:1.28.3-distroless"
+    image: "###ZARF_REGISTRY###/istio/proxyv2:1.28.2-distroless"

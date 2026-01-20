@@ -35,10 +35,10 @@ components:
         valuesFiles:
           - "values/upstream/ztunnel.yaml"
     images:
-      - "docker.io/istio/pilot:1.28.3-distroless"
-      - "docker.io/istio/proxyv2:1.28.3-distroless"
-      - "docker.io/istio/install-cni:1.28.3-distroless"
-      - "docker.io/istio/ztunnel:1.28.3-distroless"
+      - "docker.io/istio/pilot:1.28.2-distroless"
+      - "docker.io/istio/proxyv2:1.28.2-distroless"
+      - "docker.io/istio/install-cni:1.28.2-distroless"
+      - "docker.io/istio/ztunnel:1.28.2-distroless"
 
   - name: istio-controlplane
     required: true
@@ -98,7 +98,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.28.3
+        version: 1.28.2
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
       - name: uds-istio-config
@@ -113,7 +113,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.28.3
+        version: 1.28.2
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
       - name: uds-istio-config
@@ -128,7 +128,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.28.3
+        version: 1.28.2
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
       - name: uds-istio-config
@@ -155,7 +155,7 @@ components:
     charts:
       - name: gateway
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.28.3
+        version: 1.28.2
         releaseName: egressgateway
         namespace: istio-egress-gateway
         valuesFiles:
