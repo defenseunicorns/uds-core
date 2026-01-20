@@ -20,15 +20,17 @@ UDS Core will adopt a **deprecation model that requires major releases for all d
 
 The policy is defined as follows:
 
+- Removal of deprecated functionality is considered a **breaking change** and will only occur in major releases.
 - Deprecated features will remain supported for **at least three subsequent minor releases** following their deprecation announcement.
 - Deprecated features **may only be removed** in major releases, and only after the three-minor-release window has elapsed.
-- Removal of deprecated functionality is considered a **breaking change** and will only occur in major releases.
 - Patch releases will never introduce deprecations or remove deprecated functionality.
 - **Users are expected to resolve all deprecation warnings before upgrading to the next major version** to avoid encountering breaking changes.
 
 **Example:** If a feature is deprecated in version `0.30.0`, it must remain supported through at least the three subsequent minor releases: `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `1.0.0` (assuming `1.0.0` is released after `0.33.0`). If a major release were planned before the three-minor window elapsed, the deprecated feature would remain and could not be removed until the following major release.
 
 This approach provides users with clear, predictable upgrade paths, ensures adequate migration time, and aligns with strict Semantic Versioning expectations.
+
+Additionally, UDS Core adopts a **security exception** that permits security-related breaking changes in minor releases when the security benefit outweighs the disruption. This exception is documented in [VERSIONING.md](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md#security-exception).
 
 ## Implementation
 
