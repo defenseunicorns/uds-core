@@ -1,4 +1,4 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 cni:
- image: docker.io/istio/install-cni:1.28.1-distroless
+  image: docker.io/istio/install-cni:1.28.2-distroless
