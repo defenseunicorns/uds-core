@@ -235,7 +235,7 @@ const serviceMesh = {
       type: "string",
       enum: ["sidecar", "ambient"],
       default: "sidecar",
-      description: "Set the service mesh mode for this package (namespace), defaults to sidecar",
+      description: "Set the service mesh mode for this package (namespace), defaults to ambient",
     },
   },
 } as V1JSONSchemaProps;

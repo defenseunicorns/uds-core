@@ -131,10 +131,10 @@ export async function purgeAuthserviceClients(
   const updatedWaypointClients = meshModeChanged
     ? prevClients // All clients need update if mesh mode changed
     : prevClients.filter(oldClient => {
-      const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
-      if (!newClient) return false; // Already handled by removedClients
-      return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
-    });
+        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
+        if (!newClient) return false; // Already handled by removedClients
+        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
+      });
 
   // Process updated clients (selector changes or mesh mode)
   for (const client of updatedWaypointClients) {
