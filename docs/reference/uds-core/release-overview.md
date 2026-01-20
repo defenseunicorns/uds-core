@@ -1,7 +1,7 @@
 ---
 title: Release Overview
 tableOfContents:
-  maxHeadingLevel: 3
+  maxHeadingLevel: 4
 ---
 
 This document outlines how UDS Core is versioned, released, tested, and maintained.
