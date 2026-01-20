@@ -39,8 +39,8 @@ export async function authservice(
   }
 
   // Get the requested service mesh mode, default to sidecar if not specified
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-  const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  const previousMeshMode = pkg.status?.meshMode || Mode.Ambient;
   const isAmbient = istioMode === Mode.Ambient;
 
   // Get the list of authservice-enabled clients from the package
@@ -131,10 +131,10 @@ export async function purgeAuthserviceClients(
   const updatedWaypointClients = meshModeChanged
     ? prevClients // All clients need update if mesh mode changed
     : prevClients.filter(oldClient => {
-        const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
-        if (!newClient) return false; // Already handled by removedClients
-        return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
-      });
+      const newClient = newAuthserviceClients.find(c => c.clientId === oldClient.clientId);
+      if (!newClient) return false; // Already handled by removedClients
+      return JSON.stringify(oldClient.selector) !== JSON.stringify(newClient.selector);
+    });
 
   // Process updated clients (selector changes or mesh mode)
   for (const client of updatedWaypointClients) {

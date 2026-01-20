@@ -89,7 +89,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   const { namespace } = metadata;
 
   // Get the requested service mesh mode, default to sidecar if not specified
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
   // 1. First, ensure network policies are in place
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
