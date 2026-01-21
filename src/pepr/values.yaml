@@ -17,7 +17,7 @@ watcher:
     - name: "PEPR_PRETTY_LOG"
       value: "false"
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
@@ -34,4 +34,4 @@ admission:
     - name: "PEPR_PRETTY_LOG"
       value: "false"
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
