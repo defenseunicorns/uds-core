@@ -40,6 +40,7 @@ spec:
           - 3100
         description: "Prometheus Metrics"
 
+      # @lulaStart 7a4d4c43-8eca-45d7-9e6c-8a3b54a0dcd4
       - direction: Ingress
         selector:
           app.kubernetes.io/name: loki
@@ -61,6 +62,7 @@ spec:
         ports:
           - 8080
         description: "Falco Sidekick Events"
+      # @lulaEnd 7a4d4c43-8eca-45d7-9e6c-8a3b54a0dcd4
 
       - direction: Egress
         selector:
