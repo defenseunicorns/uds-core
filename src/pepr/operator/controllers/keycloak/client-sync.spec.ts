@@ -191,7 +191,7 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
-      attributes: { "uds.core.groups": "" },
+      attributes: { "uds.core.groups": "", "logout.confirmation.enabled": "true" },
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
@@ -214,8 +214,10 @@ describe("convertSsoToClient function", () => {
       redirectUris: ["https://example.com/callback"],
       rootUrl: "https://example.com",
       secret: "secret",
-      secretName: "secretName",
-      secretTemplate: { templateKey: "templateValue" },
+      secretConfig: {
+        name: "secretName",
+        template: { templateKey: "templateValue" },
+      },
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
     };
@@ -226,6 +228,7 @@ describe("convertSsoToClient function", () => {
       attributes: {
         "backchannel.logout.revoke.offline.tokens": "true",
         "uds.core.groups": '{"anyOf":["group1"]}',
+        "logout.confirmation.enabled": "true",
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
@@ -252,7 +255,7 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
-      attributes: { "uds.core.groups": '{"anyOf":[]}' },
+      attributes: { "uds.core.groups": '{"anyOf":[]}', "logout.confirmation.enabled": "true" },
       registrationAccessToken: undefined,
       samlIdpCertificate: undefined,
     };
@@ -270,7 +273,7 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
-      attributes: { "uds.core.groups": "" },
+      attributes: { "uds.core.groups": "", "logout.confirmation.enabled": "true" },
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
@@ -293,8 +296,10 @@ describe("convertSsoToClient function", () => {
       redirectUris: ["https://example.com/callback"],
       rootUrl: "https://example.com",
       secret: "secret",
-      secretName: "secretName",
-      secretTemplate: { templateKey: "templateValue" },
+      secretConfig: {
+        name: "secretName",
+        template: { templateKey: "templateValue" },
+      },
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
     };
@@ -305,6 +310,7 @@ describe("convertSsoToClient function", () => {
       attributes: {
         "backchannel.logout.revoke.offline.tokens": "true",
         "uds.core.groups": '{"anyOf":["group1","group2"]}',
+        "logout.confirmation.enabled": "true",
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
@@ -320,20 +326,22 @@ describe("convertSsoToClient function", () => {
   });
 });
 
-// Test for the secretName preservation during retries
-describe("syncClient secretName preservation", () => {
+// Test for the secretConfig preservation during retries
+describe("syncClient secretConfig preservation", () => {
   // We'll use the mocks set up at the top of the file
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should preserve secretName when creating K8s secret", async () => {
+  it("should preserve secretConfig.name when creating K8s secret", async () => {
     // Set up our test data
     const mockSso: Sso = {
       clientId: "test-client",
       name: "Test Client",
-      secretName: "custom-secret-name",
+      secretConfig: {
+        name: "custom-secret-name",
+      },
       redirectUris: ["https://example.com"],
     };
 
@@ -373,12 +381,14 @@ describe("syncClient secretName preservation", () => {
     expect(appliedResource.metadata.name).toBe("custom-secret-name");
   });
 
-  it("should preserve secretName during retry", async () => {
+  it("should preserve secretConfig.name during retry", async () => {
     // Set up our test data
     const mockSso: Sso = {
       clientId: "test-client",
       name: "Test Client",
-      secretName: "custom-secret-name",
+      secretConfig: {
+        name: "custom-secret-name",
+      },
       redirectUris: ["https://example.com"],
     };
 

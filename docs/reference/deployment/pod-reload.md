@@ -101,7 +101,7 @@ When this ConfigMap is updated (for example, when adding new security rules), al
 
 ## Integration with SSO
 
-The Pod Reload functionality can be used with SSO client secrets. You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `secretLabels` field in your Package CR.
+The Pod Reload functionality can be used with SSO client secrets. You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `secretConfig.labels` field in your Package CR.
 
 For more details on configuring Pod Reload for SSO clients, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
 

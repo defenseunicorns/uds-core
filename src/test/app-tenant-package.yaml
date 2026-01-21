@@ -26,3 +26,16 @@ spec:
         gateway: tenant
         host: demo-8081
         port: 8081
+  sso:
+    - name: Test Tenant App
+      clientId: uds-test-tenant-app
+      # Note: the below fields are used to ensure deprecated sso fields are still supported
+      secretName: uds-test-tenant-app-client-secret
+      secretLabels:
+        app: uds-test-tenant-app
+      secretAnnotations:
+        uds.dev/test: test
+      secretTemplate:
+        test: "test"
+      redirectUris:
+        - "https://demo-8080.uds.dev/"

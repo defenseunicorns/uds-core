@@ -539,7 +539,9 @@ describe("Test validation of Package CRs", () => {
       [],
       [
         {
-          secretName: "HELLO_KITTEH",
+          secretConfig: {
+            name: "HELLO_KITTEH",
+          },
         },
       ],
       [],
@@ -652,7 +654,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies public device flow clients using a secretName", async () => {
+  it("denies public device flow clients using a secretConfig.name", async () => {
     const mockReq = makeMockReq(
       {},
       [],
@@ -662,7 +664,9 @@ describe("Test validation of Package CRs", () => {
           publicClient: true,
           attributes: { "oauth2.device.authorization.grant.enabled": "true" },
           standardFlowEnabled: false,
-          secretName: "app-k8s-secret",
+          secretConfig: {
+            name: "app-k8s-secret",
+          },
         },
       ],
       [],
@@ -671,7 +675,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies public device flow clients using a secretTemplate", async () => {
+  it("denies public device flow clients using a secretConfig.template", async () => {
     const mockReq = makeMockReq(
       {},
       [],
@@ -681,7 +685,9 @@ describe("Test validation of Package CRs", () => {
           publicClient: true,
           attributes: { "oauth2.device.authorization.grant.enabled": "true" },
           standardFlowEnabled: false,
-          secretTemplate: {},
+          secretConfig: {
+            template: {},
+          },
         },
       ],
       [],
