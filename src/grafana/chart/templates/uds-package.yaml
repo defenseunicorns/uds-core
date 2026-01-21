@@ -1,6 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -37,6 +38,7 @@ spec:
   network:
     serviceMesh:
       mode: ambient
+    # @lulaStart 506992d2-64cf-4fb3-95de-40a8ad127626
     expose:
       - service: grafana
         selector:
@@ -45,6 +47,7 @@ spec:
         gateway: admin
         port: 80
         targetPort: 3000
+    # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626
 
     allow:
       # Egress allowed to Loki
@@ -124,3 +127,4 @@ spec:
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
       {{- end }}
+
