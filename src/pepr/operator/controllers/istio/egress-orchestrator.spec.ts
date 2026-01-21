@@ -75,6 +75,9 @@ describe("test istioEgressResources", () => {
         ...pkgMock.spec,
         network: {
           ...pkgMock.spec?.network,
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
           allow: [
             {
               direction: Direction.Egress,
@@ -124,6 +127,9 @@ describe("test istioEgressResources", () => {
         ...pkgMock.spec,
         network: {
           ...pkgMock.spec?.network,
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
           allow: [
             {
               direction: Direction.Egress,
@@ -193,6 +199,9 @@ describe("test istioEgressResources", () => {
         ...pkgMock.spec,
         network: {
           ...pkgMock.spec?.network,
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
           allow: mockAllowList,
         },
       },
@@ -231,6 +240,9 @@ describe("test istioEgressResources", () => {
         ...pkgMock.spec,
         network: {
           ...pkgMock.spec?.network,
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
           allow: mockAllowList,
         },
       },

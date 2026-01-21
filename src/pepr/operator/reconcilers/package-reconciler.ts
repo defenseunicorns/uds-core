@@ -205,7 +205,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Remove any Authservice configuration - retry on failure
     await retryWithDelay(async function cleanupAuthserviceConfig() {
-      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
       return purgeAuthserviceClients(pkg, [], currentMeshMode, currentMeshMode);
     }, log);
   } catch (e) {
@@ -258,7 +258,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
         pkg,
         createHostResourceMap(pkg),
         PackageAction.Remove,
-        pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar,
+        pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient,
       );
     }, log);
   } catch (e) {

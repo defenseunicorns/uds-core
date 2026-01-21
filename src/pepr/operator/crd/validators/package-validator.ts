@@ -22,7 +22,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
@@ -84,8 +84,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (virtualServiceNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this expose entry would create a duplicate VirtualService. ` +
-          `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
 
@@ -196,8 +196,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (networkPolicyNames.has(name)) {
       return req.Deny(
         `The combination of characteristics of this network allow rule would create a duplicate NetworkPolicy. ` +
-          `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
-          `The duplicate rule would be named "${name}".`,
+        `Verify you do not have duplicate allow rules, or add a unique "description" field for this rule. ` +
+        `The duplicate rule would be named "${name}".`,
       );
     }
     // Add the name to the set to track it
@@ -319,8 +319,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       if (podMonitorNames.has(monitorName)) {
         return req.Deny(
           `The combination of characteristics of this monitor entry would create a duplicate PodMonitor. ` +
-            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
-            `The duplicate rule would be named "${monitorName}".`,
+          `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+          `The duplicate rule would be named "${monitorName}".`,
         );
       }
       podMonitorNames.add(monitorName);
@@ -328,8 +328,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       if (svcMonitorNames.has(monitorName)) {
         return req.Deny(
           `The combination of characteristics of this monitor entry would create a duplicate ServiceMonitor. ` +
-            `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
-            `The duplicate rule would be named "${monitorName}".`,
+          `Verify you do not have duplicate values, or add a unique "description" field for this monitor. ` +
+          `The duplicate rule would be named "${monitorName}".`,
         );
       }
       svcMonitorNames.add(monitorName);
