@@ -1,7 +1,6 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# @lulaStart 506992d2-64cf-4fb3-95de-40a8ad127626
 apiVersion: uds.dev/v1alpha1
 kind: Package
 metadata:
@@ -117,6 +116,7 @@ spec:
       {{ toYaml . | nindent 6 }}
       {{- end }}
 
+    # @lulaStart 506992d2-64cf-4fb3-95de-40a8ad127626
     expose:
       - description: "remove private paths from public gateway"
         host: sso
@@ -181,4 +181,4 @@ spec:
               add:
                 istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
         {{- end }}
-# @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626
+    # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626
