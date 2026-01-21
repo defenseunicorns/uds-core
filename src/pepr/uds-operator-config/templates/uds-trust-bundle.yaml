@@ -7,4 +7,4 @@ metadata:
   name: uds-trust-bundle
   namespace: istio-system
 data:
-  extra.pem: {{ default .Values.cluster.expose.caCert .Values.cluster.caBundle.certs | default "" | quote }}
+  extra.pem: {{ default .Values.cluster.expose.caCert .Values.cluster.caBundle.certs | default "" | b64dec | quote }}

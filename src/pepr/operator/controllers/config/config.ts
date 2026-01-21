@@ -221,6 +221,30 @@ function shouldUpdateCaBundleConfigMaps(
 }
 
 /**
+ * Fetches DoD and Public CA certificates from the uds-ca-certs ConfigMap
+ *
+ * @returns Object containing dodCACerts and publicCACerts strings, or empty strings if not found
+ */
+async function fetchCACerts(): Promise<{ dodCerts: string; publicCerts: string }> {
+  try {
+    const caCertsConfigMap = await K8s(kind.ConfigMap)
+      .InNamespace("pepr-system")
+      .Get("uds-ca-certs");
+    return {
+      dodCerts: caCertsConfigMap.data?.["dodCACerts"] || "",
+      publicCerts: caCertsConfigMap.data?.["publicCACerts"] || "",
+    };
+  } catch (e) {
+    if (e?.status === 404) {
+      configLog.debug("uds-ca-certs ConfigMap not found, proceeding with defaults");
+    } else {
+      configLog.warn("Failed to fetch uds-ca-certs", e);
+    }
+    return { dodCerts: "", publicCerts: "" };
+  }
+}
+
+/**
  * Handles updates to CA bundle configuration including DoD and public certificates
  *
  * @param caBundle The CA bundle configuration from the ClusterConfig
@@ -240,27 +264,7 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   }
 
   // Load in the DoD and Public certs from the configmap
-  let caCertsConfigMap: kind.ConfigMap;
-  let dodCerts = "";
-  let publicCerts = "";
-
-  try {
-    caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
-    // Extract cert data if ConfigMap exists
-    if (caCertsConfigMap.data) {
-      dodCerts = caCertsConfigMap.data["dodCACerts"] || "";
-      publicCerts = caCertsConfigMap.data["publicCACerts"] || "";
-    }
-  } catch (e) {
-    // Check if it's a 404 (ConfigMap not found) vs other K8s API failures
-    if (e?.status === 404) {
-      configLog.warn("CA certs ConfigMap not found, using empty values for DoD and public certs");
-      // Continue with default empty values
-    } else {
-      configLog.error("Failed to fetch CA certs ConfigMap due to K8s API error", e);
-      throw e; // Re-throw K8s API errors
-    }
-  }
+  const { dodCerts, publicCerts } = await fetchCACerts();
 
   // Check if CA bundle ConfigMaps need updates based on configuration changes
   const caBundleConfigMapsNeedUpdate = shouldUpdateCaBundleConfigMaps(
@@ -428,6 +432,15 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfg);
+
+      // Pre-fetch DoD/Public certs from the ConfigMap to populate UDSConfig before the initial sync
+      const { dodCerts, publicCerts } = await fetchCACerts();
+      UDSConfig.caBundle.dodCerts = dodCerts;
+      UDSConfig.caBundle.publicCerts = publicCerts;
+      if (dodCerts || publicCerts) {
+        configLog.debug("Pre-fetched DoD/Public certs during loadUDSConfig");
+      }
+
       await handleCfg(cfg, ConfigAction.LOAD);
       await handleCfgSecret(cfgSecret, ConfigAction.LOAD);
       configLog.info(redactConfig(), "Loaded UDS Config");

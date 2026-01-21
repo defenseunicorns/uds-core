@@ -100,11 +100,15 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
- * Updates the Istio uds-trust-bundle ConfigMap with the combined CA bundle.
- * Istio expects its root CA in the `extra.pem` key of this ConfigMap.
- * This ConfigMap is managed entirely by the operator.
+ * Updates the Istio trust bundle ConfigMap in the `istio-system` namespace.
+ * This ConfigMap (`uds-trust-bundle`) contains the combined CA bundle (user-provided, DoD, and public certs).
+ * Istio is configured to use this ConfigMap for its mesh-wide trust anchor via the `extra.pem` key.
+ *
+ * @param skipIstioReload - If true, skips restarting Istiod pods after updating the ConfigMap.
+ *
+ * @throws Error if the ConfigMap cannot be applied to the cluster.
  */
-export async function updateIstioCASecret(skipReload = false): Promise<void> {
+export async function updateIstioCAConfigMap(skipIstioReload = false): Promise<void> {
   const namespace = "istio-system";
   const configMapName = "uds-trust-bundle";
 
@@ -131,7 +135,7 @@ export async function updateIstioCASecret(skipReload = false): Promise<void> {
     );
 
     // Skip reload if requested (e.g., during initial load or batch updates)
-    if (skipReload) {
+    if (skipIstioReload) {
       log.debug(`Skipping Istiod reload for ${configMapName} update`);
       return;
     }
@@ -193,14 +197,15 @@ export function buildCABundleContent(): string {
 }
 
 /**
- * Updates CA bundle ConfigMaps for all UDS packages in the cluster with the latest certificate data.
- * This function is typically called when the global UDS configuration changes (e.g., when
- * certificates are rotated or configuration is updated). It lists all UDS packages and calls
- * caBundleConfigMap for each package to ensure their CA bundle ConfigMaps are up to date.
+ * Updates the CA bundle ConfigMap for all UDS packages and the Istio trust bundle.
+ * This is a global synchronization operation that ensures all managed namespaces and the
+ * Istio control plane are up-to-date with the latest certificate configuration from `UDSConfig`.
  *
- * @throws Error if the package listing or ConfigMap update operations fail
+ * @param skipIstioReload - If true, skips restarting Istiod pods after updating the Istio trust bundle.
+ *
+ * @throws Error if the package listing or any update operation fails.
  */
-export async function updateAllCaBundleConfigMaps(skipReload = false): Promise<void> {
+export async function updateAllCaBundleConfigMaps(skipIstioReload = false): Promise<void> {
   try {
     log.debug("Starting CA bundle ConfigMap updates for all UDS packages");
 
@@ -223,7 +228,10 @@ export async function updateAllCaBundleConfigMaps(skipReload = false): Promise<v
       }
     });
 
-    const results = await Promise.allSettled([...packageUpdates, updateIstioCASecret(skipReload)]);
+    const results = await Promise.allSettled([
+      ...packageUpdates,
+      updateIstioCAConfigMap(skipIstioReload),
+    ]);
 
     // Check for any failures
     const failures = results.filter(r => r.status === "rejected");
