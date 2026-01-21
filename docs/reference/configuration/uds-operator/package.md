@@ -40,7 +40,7 @@ metadata:
   namespace: grafana
 spec:
     # Ambient mode is default; omit or set explicitly
-    serviceMesh: {}
+    serviceMesh:
     # To use Sidecar mode, set:
     # serviceMesh:
     #   mode: sidecar
