@@ -241,10 +241,11 @@ async function fetchCACerts(): Promise<{ dodCerts: string; publicCerts: string }
   } catch (e) {
     if (e?.status === 404) {
       configLog.debug("uds-ca-certs ConfigMap not found, proceeding with defaults");
+      return { dodCerts: "", publicCerts: "" };
     } else {
-      configLog.warn("Failed to fetch uds-ca-certs", e);
+      configLog.error(e, "Failed to fetch uds-ca-certs");
+      throw e;
     }
-    return { dodCerts: "", publicCerts: "" };
   }
 }
 
@@ -289,7 +290,7 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
     await performAuthserviceUpdate(
       caBundleConfigMapsNeedUpdate ? "Global CA bundle change" : "Idempotent sync",
     );
-    await updateAllCaBundleConfigMaps(!caBundleConfigMapsNeedUpdate);
+    await updateAllCaBundleConfigMaps();
   }
 }
 
@@ -450,7 +451,7 @@ export async function loadUDSConfig() {
 
       // Ensure Istio CA ConfigMap is created during initial load
       // istiod now depends on the 'uds-trust-bundle' ConfigMap
-      await updateIstioCAConfigMap(true);
+      await updateIstioCAConfigMap();
 
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {

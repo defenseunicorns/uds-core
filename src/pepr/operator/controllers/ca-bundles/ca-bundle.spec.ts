@@ -485,6 +485,11 @@ describe("CA Bundle ConfigMap", () => {
       expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio ConfigMap
 
+      // Should process Namespace
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+
       // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -534,6 +539,9 @@ describe("CA Bundle ConfigMap", () => {
           metadata: expect.objectContaining({
             name: "uds-trust-bundle",
             namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
           }),
           data: {
             "extra.pem": "",
@@ -550,12 +558,18 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: "ConfigMap",
           metadata: expect.objectContaining({
             name: "uds-trust-bundle",
             namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
           }),
         }),
         { force: true },
@@ -569,12 +583,18 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           kind: "ConfigMap",
           metadata: expect.objectContaining({
             name: "uds-trust-bundle",
             namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
           }),
         }),
         { force: true },

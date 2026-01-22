@@ -232,7 +232,7 @@ describe("initial config load", () => {
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
     expect(reconcileAuthservice).not.toHaveBeenCalled();
-    expect(updateIstioCAConfigMap).toHaveBeenCalledWith(true);
+    expect(updateIstioCAConfigMap).toHaveBeenCalled();
   });
 });
 
@@ -736,8 +736,8 @@ describe("handleUDSConfig", () => {
 
       await handleCfg(mockCfg, ConfigAction.UPDATE);
 
-      // It should still be called with skipReload=true (first arg true)
-      expect(updateAllCaBundleConfigMaps).toHaveBeenCalledWith(true);
+      // It should still be called
+      expect(updateAllCaBundleConfigMaps).toHaveBeenCalled();
     });
   });
 
@@ -861,25 +861,25 @@ describe("handleUDSConfig", () => {
       expect(UDSConfig.caBundle.publicCerts).toBe("");
     });
 
-    it("gracefully handles K8s API failures when fetching ConfigMap by using defaults", async () => {
-      const warnSpy = vi.spyOn(configLog, "warn");
+    it("throws error when K8s API failures occur while fetching ConfigMap", async () => {
+      const errorSpy = vi.spyOn(configLog, "error");
       mockCfg.spec!.caBundle!.includeDoDCerts = true;
       mockConfigMapGet.mockRejectedValue(new Error("K8s API timeout"));
 
-      await handleCfg(mockCfg, ConfigAction.UPDATE);
+      await expect(handleCfg(mockCfg, ConfigAction.UPDATE)).rejects.toThrow("K8s API timeout");
 
-      // Should log a warning
-      expect(warnSpy).toHaveBeenCalledWith("Failed to fetch uds-ca-certs", expect.any(Error));
+      // Should log an error
+      expect(errorSpy).toHaveBeenCalledWith(expect.any(Error), "Failed to fetch uds-ca-certs");
 
-      // Should still succeed and patch status to Ready using default empty certs
+      // Should patch status to Failed
       expect(mockPatchStatus).toHaveBeenLastCalledWith({
         metadata: { name: ClusterConfigName.UdsClusterConfig },
         status: {
-          phase: "Ready",
+          phase: "Failed",
           observedGeneration: 2,
         },
       });
-      warnSpy.mockRestore();
+      errorSpy.mockRestore();
     });
   });
 
@@ -1004,10 +1004,19 @@ describe("handleUDSConfig", () => {
       mockSecretGet.mockResolvedValue(mockSecret);
       mockConfigMapGet.mockRejectedValue({ status: 404 });
 
-      await loadUDSConfig();
+      const result = await loadUDSConfig();
 
       expect(UDSConfig.caBundle.dodCerts).toBe("");
       expect(UDSConfig.caBundle.publicCerts).toBe("");
+      expect(result).toBeUndefined();
+    });
+
+    it("throws error if fetchCACerts fails with non-404 error", async () => {
+      mockClusterConfGet.mockResolvedValue(defaultConfig);
+      mockSecretGet.mockResolvedValue(mockSecret);
+      mockConfigMapGet.mockRejectedValue(new Error("K8s API error"));
+
+      await expect(loadUDSConfig()).rejects.toThrow("K8s API error");
     });
   });
 

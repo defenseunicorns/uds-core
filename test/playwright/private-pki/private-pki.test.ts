@@ -45,5 +45,9 @@ test.describe("Private PKI tests", () => {
     await expect(page).toHaveURL(new RegExp(`^https://ambient-protected\\.uds\\.dev`), {
       timeout: 10000,
     });
+
+    // Step 6: Verify non-error response (indicates successful JWT validation)
+    const response = await page.reload();
+    expect(response?.status()).toBeLessThan(400);
   });
 });

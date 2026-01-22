@@ -7,7 +7,6 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { reloadPods } from "../reload/reload-utils";
 import { getOwnerRef, purgeOrphans } from "../utils";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
@@ -108,7 +107,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
  *
  * @throws Error if the ConfigMap cannot be applied to the cluster.
  */
-export async function updateIstioCAConfigMap(skipIstioReload = false): Promise<void> {
+export async function updateIstioCAConfigMap(): Promise<void> {
   const namespace = "istio-system";
   const configMapName = "uds-trust-bundle";
 
@@ -128,6 +127,9 @@ export async function updateIstioCAConfigMap(skipIstioReload = false): Promise<v
       metadata: {
         name: configMapName,
         namespace,
+        labels: {
+          "uds.dev/pod-reload": "true",
+        },
       },
       data: {
         "extra.pem": caBundleContent || "",
@@ -138,20 +140,6 @@ export async function updateIstioCAConfigMap(skipIstioReload = false): Promise<v
     log.debug(
       `Updated ${configMapName} ConfigMap in ${namespace} namespace with combined CA bundle`,
     );
-
-    // Skip reload if requested (e.g., during initial load or batch updates)
-    if (skipIstioReload) {
-      log.debug(`Skipping Istiod reload for ${configMapName} update`);
-      return;
-    }
-
-    // Reload Istiod to ensure it picks up the trust bundle change
-    try {
-      const istioPods = await K8s(kind.Pod).InNamespace(namespace).WithLabel("app", "istiod").Get();
-      await reloadPods(namespace, istioPods.items, "CA bundle update", log, "CA_BUNDLE");
-    } catch (err) {
-      log.error(`Failed to reload Istiod pods in namespace ${namespace}`, err);
-    }
   } catch (err) {
     throw new Error(
       `Failed to update ${configMapName} ConfigMap in ${namespace}: ${JSON.stringify(err)}`,
@@ -206,11 +194,9 @@ export function buildCABundleContent(): string {
  * This is a global synchronization operation that ensures all managed namespaces and the
  * Istio control plane are up-to-date with the latest certificate configuration from `UDSConfig`.
  *
- * @param skipIstioReload - If true, skips restarting Istiod pods after updating the Istio trust bundle.
- *
  * @throws Error if the package listing or any update operation fails.
  */
-export async function updateAllCaBundleConfigMaps(skipIstioReload = false): Promise<void> {
+export async function updateAllCaBundleConfigMaps(): Promise<void> {
   try {
     log.debug("Starting CA bundle ConfigMap updates for all UDS packages");
 
@@ -233,10 +219,7 @@ export async function updateAllCaBundleConfigMaps(skipIstioReload = false): Prom
       }
     });
 
-    const results = await Promise.allSettled([
-      ...packageUpdates,
-      updateIstioCAConfigMap(skipIstioReload),
-    ]);
+    const results = await Promise.allSettled([...packageUpdates, updateIstioCAConfigMap()]);
 
     // Check for any failures
     const failures = results.filter(r => r.status === "rejected");
