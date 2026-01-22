@@ -18,10 +18,10 @@ watcher:
       value: "false"
     - name: "LOG_LEVEL"
       value: "debug"
-    - name: "PEPR_RESYNC_FAILURE_MAX"
-      value: "20"
-    - name: "PEPR_RETRY_DELAY_SECONDS"
-      value: "30"
+    # - name: "PEPR_RESYNC_FAILURE_MAX"
+    #   value: "20"
+    # - name: "PEPR_RETRY_DELAY_SECONDS"
+    #   value: "30"
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
