@@ -20,6 +20,10 @@
     "alwaysIgnore": {
       "namespaces": []
     },
+    "env": {
+      "PEPR_RESYNC_FAILURE_MAX": "20",
+      "PEPR_RETRY_DELAY_SECONDS": "30"
+    },
     "admission": {
       "alwaysIgnore": {
         "namespaces": [
@@ -46,7 +50,7 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "1.0.6-nightly.1"
+    "pepr": "1.0.7"
   },
   "devDependencies": {
     "@commitlint/cli": "20.3.1",
