@@ -52,6 +52,18 @@ The following changes would be considered breaking changes and would require a m
 3. Removing a field from the Package CRD (i.e. removing `monitor[].path`)
 4. Removing/replacing a component (i.e. the tooling used for monitoring) from the published UDS Core package
 
+### Security Exception
+
+As a security-first platform, UDS Core reserves the right to release security-related breaking changes in minor versions when the security benefit to users outweighs the disruption of waiting for a major release. These changes will still be clearly advertised as breaking changes in the changelog and release notes.
+
+We will always strive to minimize the impact on users and will only exercise this exception when we believe the security improvement is necessary and urgent. Examples of when this exception may be applied include:
+
+- Removing or changing default behaviors that pose a security risk
+- Enforcing stricter security policies to address discovered vulnerabilities
+- Updating security integrations that require configuration changes
+
+Users should review release notes carefully for any security-related breaking changes, even in minor releases.
+
 ### Non-Breaking Changes (Compatible with Minor or Patch Version Bumps)
 
 The following changes are compatible with a minor version bump (new features) or patch version bump (bug fixes):
