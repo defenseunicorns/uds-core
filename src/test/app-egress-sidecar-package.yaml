@@ -15,6 +15,8 @@ metadata:
   namespace: egress-gw-1
 spec:
   network:
+    serviceMesh:
+      mode: sidecar
     allow:
       - direction: Egress
         selector:
@@ -39,6 +41,8 @@ metadata:
   namespace: egress-gw-2
 spec:
   network:
+    serviceMesh:
+      mode: sidecar
     allow:
       - direction: Egress
         selector:

@@ -861,7 +861,7 @@
       "properties": {
         "mode": {
           "$ref": "#/definitions/Mode",
-          "description": "Set the service mesh mode for this package (namespace), defaults to sidecar"
+          "description": "Set the service mesh mode for this package (namespace), defaults to ambient"
         }
       },
       "required": [],
@@ -1279,7 +1279,7 @@
         "ambient"
       ],
       "title": "Mode",
-      "description": "Set the service mesh mode for this package (namespace), defaults to sidecar\nThe current service mesh mode for this package"
+      "description": "Set the service mesh mode for this package (namespace), defaults to ambient\nThe current service mesh mode for this package"
     },
     "ClientAuthenticatorType": {
       "type": "string",

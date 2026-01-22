@@ -48,13 +48,13 @@ export async function enableIstio(pkg: UDSPackage) {
   let targetIstioState = IstioState.None;
   annotations[pkgKey] = "true";
 
-  // Handle labels based on ambient opt-in or sidecar default
-  if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
-    // Ambient mode requested
-    targetIstioState = IstioState.Ambient;
-  } else {
-    // Sidecar mode requested/by default
+  // Handle labels based on sidecar opt-in or ambient default
+  if (pkg.spec?.network?.serviceMesh?.mode === Mode.Sidecar) {
+    // Sidecar mode requested
     targetIstioState = IstioState.Sidecar;
+  } else {
+    // Ambient mode requested/by default
+    targetIstioState = IstioState.Ambient;
   }
 
   const result = getIstioLabels(labels, targetIstioState, currentIstioState);

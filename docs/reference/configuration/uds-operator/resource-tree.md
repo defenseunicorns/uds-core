@@ -12,7 +12,7 @@ This diagram illustrates the relationship between the Package CR spec fields and
 
 - **Default-Deny Policy**: Created for every Package to establish a baseline zero-trust posture
 - **DNS Egress Policy**: Allows DNS resolution for all workloads in the namespace
-- **Service Mesh Configuration**: Based on the `serviceMesh.mode` setting (defaults to `sidecar` if not specified):
+- **Service Mesh Configuration**: Based on the `serviceMesh.mode` setting (defaults to `ambient` if not specified):
   - **Sidecar Mode**: Adds namespace labels for sidecar injection and NetworkPolicies for Istiod communication and sidecar monitoring
   - **Ambient Mode**: Adds namespace labels for ambient mode and NetworkPolicies for ambient node healthprobes
 

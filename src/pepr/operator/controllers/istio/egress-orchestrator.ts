@@ -17,7 +17,7 @@ import { PackageAction } from "./types";
 
 // Creates ServiceEntry/Sidecar for egress and reconciles shared egress resources
 export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
   const pkgId = `${pkg.metadata?.name}-${pkg.metadata?.namespace}`;
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();

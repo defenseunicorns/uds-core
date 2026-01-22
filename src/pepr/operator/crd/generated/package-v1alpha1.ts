@@ -641,13 +641,13 @@ export interface FluffyURI {
  */
 export interface ServiceMesh {
   /**
-   * Set the service mesh mode for this package (namespace), defaults to sidecar
+   * Set the service mesh mode for this package (namespace), defaults to ambient
    */
   mode?: Mode;
 }
 
 /**
- * Set the service mesh mode for this package (namespace), defaults to sidecar
+ * Set the service mesh mode for this package (namespace), defaults to ambient
  *
  * The current service mesh mode for this package
  */
