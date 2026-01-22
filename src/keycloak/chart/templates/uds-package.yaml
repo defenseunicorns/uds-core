@@ -116,6 +116,7 @@ spec:
       {{ toYaml . | nindent 6 }}
       {{- end }}
 
+    # @lulaStart 506992d2-64cf-4fb3-95de-40a8ad127626
     expose:
       - description: "remove private paths from public gateway"
         host: sso
@@ -180,3 +181,4 @@ spec:
               add:
                 istio-mtls-client-certificate: "{{ .Values.mtlsClientCert }}"
         {{- end }}
+    # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626
