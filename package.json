@@ -50,7 +50,7 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "^1.0.7-nightly.1"
+    "pepr": "1.0.7-nightly.3"
   },
   "devDependencies": {
     "@commitlint/cli": "20.3.1",
