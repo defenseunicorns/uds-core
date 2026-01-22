@@ -41,6 +41,8 @@ export function registerWatchEventHandlers(
   const eventHandlers: {
     [K in WatchEvent]?: (arg: WatchEventArgs<K, GenericClass>) => void;
   } = {
+    [WatchEvent.WATCH_ERROR]: err =>
+      log.debug(`WatchEvent WatchError (${watchName}): ${err.message}`),
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       log.error(
