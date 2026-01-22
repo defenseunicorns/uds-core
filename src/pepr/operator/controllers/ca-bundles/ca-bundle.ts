@@ -113,6 +113,11 @@ export async function updateIstioCAConfigMap(skipIstioReload = false): Promise<v
   const configMapName = "uds-trust-bundle";
 
   try {
+    // Ensure the namespace exists
+    await K8s(kind.Namespace).Apply({
+      metadata: { name: namespace },
+    });
+
     // Build the combined CA bundle content
     const caBundleContent = buildCABundleContent();
 

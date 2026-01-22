@@ -8,7 +8,11 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
-import { buildCABundleContent, updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
+import {
+  buildCABundleContent,
+  updateAllCaBundleConfigMaps,
+  updateIstioCAConfigMap,
+} from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -443,6 +447,11 @@ export async function loadUDSConfig() {
 
       await handleCfg(cfg, ConfigAction.LOAD);
       await handleCfgSecret(cfgSecret, ConfigAction.LOAD);
+
+      // Ensure Istio CA ConfigMap is created during initial load
+      // istiod now depends on the 'uds-trust-bundle' ConfigMap
+      await updateIstioCAConfigMap(true);
+
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
