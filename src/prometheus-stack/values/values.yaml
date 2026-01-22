@@ -52,7 +52,6 @@ prometheus:
           resources:
             requests:
               storage: 50Gi
-          storageClassName: null
     enableRemoteWriteReceiver: true # enable Prometheus remote write receiver (needed by loki ruler for recording rules)
 prometheus-node-exporter:
   containerSecurityContext:
