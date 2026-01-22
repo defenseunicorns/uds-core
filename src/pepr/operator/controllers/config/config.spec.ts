@@ -7,7 +7,7 @@ import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClusterConfig, ClusterConfigName, ConfigPhase as Phase } from "../../crd";
-import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
+import { updateAllCaBundleConfigMaps, updateIstioCAConfigMap } from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -52,6 +52,7 @@ vi.mock("../../crd/validators/clusterconfig-validator", () => ({
 
 vi.mock("../ca-bundles/ca-bundle", () => ({
   updateAllCaBundleConfigMaps: vi.fn(),
+  updateIstioCAConfigMap: vi.fn(),
   buildCABundleContent: vi.fn(),
 }));
 
@@ -231,6 +232,7 @@ describe("initial config load", () => {
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
     expect(reconcileAuthservice).not.toHaveBeenCalled();
+    expect(updateIstioCAConfigMap).toHaveBeenCalledWith(true);
   });
 });
 
@@ -664,6 +666,8 @@ describe("handleUDSConfig", () => {
     expect(initAPIServerCIDR).not.toHaveBeenCalled();
     expect(initAllNodesTarget).not.toHaveBeenCalled();
     expect(reconcileAuthservice).not.toHaveBeenCalled();
+    // updateIstioCAConfigMap is called in loadUDSConfig, not handleCfg
+    expect(updateIstioCAConfigMap).not.toHaveBeenCalled();
   });
 
   describe("CA Bundle ConfigMaps update logic", () => {

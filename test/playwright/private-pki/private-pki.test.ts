@@ -5,6 +5,7 @@
 
 import { expect, test } from "@playwright/test";
 
+// Private PKI tests to verify SSO flows
 test.describe("Private PKI tests", () => {
   test("Grafana SSO authentication flow", async ({ page }) => {
     // Step 1: Navigate to Grafana which should redirect to Keycloak

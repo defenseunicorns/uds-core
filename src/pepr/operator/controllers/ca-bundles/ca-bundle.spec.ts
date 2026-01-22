@@ -61,6 +61,10 @@ vi.mock("pepr", async importOriginal => {
             Get: mockWithLabelGet,
           }),
         };
+      } else if (resourceKind === actual.kind.Namespace) {
+        return {
+          Apply: mockK8sApply,
+        };
       } else if (resourceKind === actual.kind.Secret) {
         // Handle Secret operations
         return {
@@ -479,7 +483,7 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio ConfigMap
+      expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio ConfigMap
 
       // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -520,8 +524,11 @@ describe("CA Bundle ConfigMap", () => {
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      // Should be called 1 time for the Istio ConfigMap update (clearing it)
-      expect(mockK8sApply).toHaveBeenCalledTimes(1);
+      // Should be called 2 times: 1 for Namespace, 1 for the Istio ConfigMap update (clearing it)
+      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
       expect(mockK8sApply).toHaveBeenCalledWith(
         expect.objectContaining({
           metadata: expect.objectContaining({
@@ -587,17 +594,22 @@ describe("CA Bundle ConfigMap", () => {
       UDSConfig.caBundle.certs = validCertBase64;
       UDSConfig.isIdentityDeployed = true;
 
-      // Make the first package fail
-      mockK8sApply
-        .mockRejectedValueOnce(new Error("Apply failed for package1"))
-        .mockResolvedValueOnce({})
-        .mockResolvedValueOnce({}) // Istio
-        .mockResolvedValueOnce({}); // Authservice
+      // Mock specific Apply behavior based on the resource metadata to avoid race conditions in mock ordering
+      mockK8sApply.mockReset();
+      mockK8sApply.mockImplementation(manifest => {
+        if (manifest.kind === "Namespace") {
+          return Promise.resolve({});
+        }
+        if (manifest.metadata.name === "custom-ca-bundle-1") {
+          return Promise.reject(new Error("Apply failed for package1"));
+        }
+        return Promise.resolve({});
+      });
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(3); // 2 packages + Istio secret
+      expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio CM
 
       // Should log error for first package but continue
       expect(mockLog.error).toHaveBeenCalledWith(
