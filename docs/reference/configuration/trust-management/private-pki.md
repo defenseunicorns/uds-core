@@ -76,9 +76,16 @@ Many Go-based applications automatically check `/etc/ssl/certs/ca.pem` for addit
 
 ### Authservice
 
-Authservice can be configured with an additional trusted CA bundle when UDS Core ingress gateways are deployed with private PKI.
+Authservice automatically trusts the combined UDS CA bundle (Private PKI + DoD + Public CAs) when configured via the UDS Operator. This ensures it can verify the certificates of the tenant gateway without manual certificate injection.
 
-To configure, set `UDS_CA_BUNDLE_CERTS` as an environment variable with a Base64 encoded PEM formatted CA bundle that can be used to verify the certificates of the tenant gateway.
+To configure, define the `caBundle` variables in your `uds-config.yaml` (or via environment variables with the `UDS_` prefix like `UDS_CA_BUNDLE_CERTS` at deploy time). For example:
+
+```yaml
+variables:
+  core:
+    CA_BUNDLE_CERTS: "LS0tLS1CRUdJTi..." # Base64 encoded PEM bundle
+    CA_BUNDLE_INCLUDE_DOD_CERTS: "true"
+```
 
 See [trusted CA SSO doc](/reference/configuration/single-sign-on/trusted-ca) for complete Authservice configuration details.
 

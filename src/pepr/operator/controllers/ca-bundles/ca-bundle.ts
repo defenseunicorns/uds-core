@@ -4,10 +4,10 @@
  */
 
 import { K8s, kind } from "pepr";
+import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
 import { getOwnerRef, purgeOrphans } from "../utils";
-import { Component, setupLogger } from "../../../logger";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";
@@ -99,6 +99,58 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
 }
 
 /**
+ * Updates the Istio trust bundle ConfigMap in the `istio-system` namespace.
+ * This ConfigMap (`uds-trust-bundle`) contains the combined CA bundle (user-provided, DoD, and public certs).
+ * Istio is configured to use this ConfigMap for its mesh-wide trust anchor via the `extra.pem` key.
+ *
+ * @param skipIstioReload - If true, skips restarting Istiod pods after updating the ConfigMap.
+ *
+ * @throws Error if the ConfigMap cannot be applied to the cluster.
+ */
+export async function updateIstioCAConfigMap(): Promise<void> {
+  const namespace = "istio-system";
+  const configMapName = "uds-trust-bundle";
+
+  // Only manage infrastructure in watcher or dev mode
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    try {
+      // Ensure the namespace exists
+      await K8s(kind.Namespace).Apply({
+        metadata: { name: namespace },
+      });
+
+      // Build the combined CA bundle content
+      const caBundleContent = buildCABundleContent();
+
+      // Directly apply the ConfigMap (handles create and update)
+      const configMap: kind.ConfigMap = {
+        apiVersion: "v1",
+        kind: "ConfigMap",
+        metadata: {
+          name: configMapName,
+          namespace,
+          labels: {
+            "uds.dev/pod-reload": "true",
+          },
+        },
+        data: {
+          "extra.pem": caBundleContent || "",
+        },
+      };
+
+      await K8s(kind.ConfigMap).Apply(configMap, { force: true });
+      log.debug(
+        `Updated ${configMapName} ConfigMap in ${namespace} namespace with combined CA bundle`,
+      );
+    } catch (err) {
+      throw new Error(
+        `Failed to update ${configMapName} ConfigMap in ${namespace}: ${JSON.stringify(err)}`,
+      );
+    }
+  }
+}
+
+/**
  * Builds the combined CA bundle content from all configured certificate sources.
  * Combines user-provided certificates, DoD certificates, and public certificates
  * based on the current UDS configuration settings.
@@ -106,7 +158,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
  * @returns The combined PEM-formatted certificate bundle as a string.
  *          Returns empty string if no certificate sources are configured.
  */
-function buildCABundleContent(): string {
+export function buildCABundleContent(): string {
   const certs: string[] = [];
 
   // Add user-provided certs (base64 encoded)
@@ -141,12 +193,11 @@ function buildCABundleContent(): string {
 }
 
 /**
- * Updates CA bundle ConfigMaps for all UDS packages in the cluster with the latest certificate data.
- * This function is typically called when the global UDS configuration changes (e.g., when
- * certificates are rotated or configuration is updated). It lists all UDS packages and calls
- * caBundleConfigMap for each package to ensure their CA bundle ConfigMaps are up to date.
+ * Updates the CA bundle ConfigMap for all UDS packages and the Istio trust bundle.
+ * This is a global synchronization operation that ensures all managed namespaces and the
+ * Istio control plane are up-to-date with the latest certificate configuration from `UDSConfig`.
  *
- * @throws Error if the package listing or ConfigMap update operations fail
+ * @throws Error if the package listing or any update operation fails.
  */
 export async function updateAllCaBundleConfigMaps(): Promise<void> {
   try {
@@ -155,39 +206,31 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     // Get all UDS packages across all namespaces
     const packages = await K8s(UDSPackage).Get();
 
-    if (!packages.items || packages.items.length === 0) {
-      log.debug("No UDS packages found, no CA bundle ConfigMaps to update");
-      return;
-    }
-
-    log.debug(`Found ${packages.items.length} UDS packages, processing CA bundle ConfigMaps`);
-
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    for (const pkg of packages.items) {
+    const packageUpdates = (packages.items || []).map(async pkg => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
-        // This should not happen, but needed for type safety
-        continue;
+        return;
       }
-
-      const pkgName = pkg.metadata.name;
-      const namespace = pkg.metadata.namespace;
-
       try {
-        log.debug(
-          `Processing CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
-        );
-        await caBundleConfigMap(pkg, namespace);
+        await caBundleConfigMap(pkg, pkg.metadata.namespace);
       } catch (err) {
-        // Log the error but continue processing other packages
         log.error(
-          `Failed to process CA bundle ConfigMap for package ${pkgName} in namespace ${namespace}`,
+          `Failed to process CA bundle ConfigMap for package ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}`,
           err,
         );
-        // Don't throw here - we want to continue processing other packages
+        throw err;
       }
-    }
+    });
 
-    log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    const results = await Promise.allSettled([...packageUpdates, updateIstioCAConfigMap()]);
+
+    // Check for any failures
+    const failures = results.filter(r => r.status === "rejected");
+    if (failures.length > 0) {
+      log.warn(`Completed CA bundle updates with ${failures.length} failures`);
+    } else {
+      log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
+    }
   } catch (err) {
     log.error("Failed to update CA bundle ConfigMaps for all packages", err);
     throw new Error("Failed to update CA bundle ConfigMaps for all packages", { cause: err });

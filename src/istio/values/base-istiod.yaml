@@ -34,8 +34,8 @@ pilot:
 # https://github.com/istio/istio/blob/2d5fc65b386ac3c3eff28aee4040dce37923b9b7/manifests/charts/istio-control/istio-discovery/templates/configmap-jwks.yaml
 volumes:
   - name: sso-ca
-    secret:
-      secretName: sso-ca-cert
+    configMap:
+      name: uds-trust-bundle
 volumeMounts:
   - name: sso-ca
     mountPath: /cacerts
