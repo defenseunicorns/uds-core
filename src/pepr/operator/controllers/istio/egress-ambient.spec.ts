@@ -65,7 +65,7 @@ describe("test applyAmbientEgressResources", () => {
     const map: AmbientPackageMap = {};
     for (const pkg of pkgs) {
       if (pkg.metadata?.deletionTimestamp) continue;
-      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      const mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
       if (mode !== Mode.Ambient) continue;
 
       const name = pkg.metadata?.name;

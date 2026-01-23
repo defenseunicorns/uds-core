@@ -32,9 +32,6 @@ spec:
     metadata:
       labels:
         app: curl
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl
@@ -88,9 +85,6 @@ spec:
     metadata:
       labels:
         app: curl
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       serviceAccountName: curl
       containers:
@@ -138,9 +132,6 @@ spec:
     metadata:
       labels:
         app: another-curl
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl

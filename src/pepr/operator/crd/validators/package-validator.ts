@@ -22,7 +22,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const pkgName = pkg.metadata?.name ?? "_unknown_";
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
