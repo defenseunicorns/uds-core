@@ -32,7 +32,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.5.1
-      - ghcr.io/defenseunicorns/uds/identity-config:0.22.1
+      - ghcr.io/defenseunicorns/uds/identity-config:0.23.0
 
   - name: keycloak
     required: true
@@ -46,7 +46,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.5.1
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.22.1
+      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.23.0
 
   - name: keycloak
     required: true
@@ -60,4 +60,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - quay.io/rfcurated/keycloak:26.5.1-jammy-fips-rfcurated
-      - ghcr.io/defenseunicorns/uds/identity-config:0.22.1
+      - ghcr.io/defenseunicorns/uds/identity-config:0.23.0
