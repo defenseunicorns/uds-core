@@ -111,39 +111,42 @@ export async function updateIstioCAConfigMap(): Promise<void> {
   const namespace = "istio-system";
   const configMapName = "uds-trust-bundle";
 
-  try {
-    // Ensure the namespace exists
-    await K8s(kind.Namespace).Apply({
-      metadata: { name: namespace },
-    });
+  // Only manage infrastructure in watcher or dev mode
+  if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
+    try {
+      // Ensure the namespace exists
+      await K8s(kind.Namespace).Apply({
+        metadata: { name: namespace },
+      });
 
-    // Build the combined CA bundle content
-    const caBundleContent = buildCABundleContent();
+      // Build the combined CA bundle content
+      const caBundleContent = buildCABundleContent();
 
-    // Directly apply the ConfigMap (handles create and update)
-    const configMap: kind.ConfigMap = {
-      apiVersion: "v1",
-      kind: "ConfigMap",
-      metadata: {
-        name: configMapName,
-        namespace,
-        labels: {
-          "uds.dev/pod-reload": "true",
+      // Directly apply the ConfigMap (handles create and update)
+      const configMap: kind.ConfigMap = {
+        apiVersion: "v1",
+        kind: "ConfigMap",
+        metadata: {
+          name: configMapName,
+          namespace,
+          labels: {
+            "uds.dev/pod-reload": "true",
+          },
         },
-      },
-      data: {
-        "extra.pem": caBundleContent || "",
-      },
-    };
+        data: {
+          "extra.pem": caBundleContent || "",
+        },
+      };
 
-    await K8s(kind.ConfigMap).Apply(configMap, { force: true });
-    log.debug(
-      `Updated ${configMapName} ConfigMap in ${namespace} namespace with combined CA bundle`,
-    );
-  } catch (err) {
-    throw new Error(
-      `Failed to update ${configMapName} ConfigMap in ${namespace}: ${JSON.stringify(err)}`,
-    );
+      await K8s(kind.ConfigMap).Apply(configMap, { force: true });
+      log.debug(
+        `Updated ${configMapName} ConfigMap in ${namespace} namespace with combined CA bundle`,
+      );
+    } catch (err) {
+      throw new Error(
+        `Failed to update ${configMapName} ConfigMap in ${namespace}: ${JSON.stringify(err)}`,
+      );
+    }
   }
 }
 

@@ -168,6 +168,9 @@ describe("CA Bundle ConfigMap", () => {
     UDSConfig.caBundle.includePublicCerts = false;
     UDSConfig.caBundle.dodCerts = "";
     UDSConfig.caBundle.publicCerts = "";
+
+    // Set PEPR_WATCH_MODE to 'true' by default
+    process.env.PEPR_WATCH_MODE = "true";
   });
 
   describe("caBundleConfigMap", () => {
@@ -600,6 +603,32 @@ describe("CA Bundle ConfigMap", () => {
         { force: true },
       );
       expect(mockK8sDelete).not.toHaveBeenCalled();
+    });
+
+    it("skips Istio CA ConfigMap management when not in watcher or dev mode", async () => {
+      process.env.PEPR_WATCH_MODE = "false";
+      process.env.PEPR_MODE = "prod";
+      mockUDSPackageGet.mockResolvedValue({ items: [] });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      // Should not call Apply for Namespace or ConfigMap in istio-system
+      expect(mockK8sApply).not.toHaveBeenCalled();
+    });
+
+    it("manages Istio CA ConfigMap when in dev mode even if not in watcher mode", async () => {
+      process.env.PEPR_WATCH_MODE = "false";
+      process.env.PEPR_MODE = "dev";
+      mockUDSPackageGet.mockResolvedValue({ items: [] });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      // Should call Apply for Namespace and ConfigMap
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
     });
 
     it("throws error when package listing fails", async () => {
