@@ -180,18 +180,14 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
 }
 
 /**
- * Determines if CA bundle ConfigMaps need to be updated based on configuration changes
+ * Determines if CA bundle configuration has changed compared to current global state
  *
  * @param caBundle The new CA bundle configuration from ClusterConfig
  * @param dodCerts The DoD certificate string from the ConfigMap
  * @param publicCerts The public certificate string from the ConfigMap
- * @returns true if CA bundle ConfigMaps need updating, false otherwise
+ * @returns true if CA bundle configuration has changed, false otherwise
  */
-function shouldUpdateCaBundleConfigMaps(
-  caBundle: ConfigCABundle,
-  dodCerts: string,
-  publicCerts: string,
-): boolean {
+function caConfigChanged(caBundle: ConfigCABundle, dodCerts: string, publicCerts: string): boolean {
   // Check if user-provided certs changed
   if (UDSConfig.caBundle.certs !== caBundle.certs) {
     return true;
@@ -271,12 +267,8 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   // Load in the DoD and Public certs from the configmap
   const { dodCerts, publicCerts } = await fetchCACerts();
 
-  // Check if CA bundle ConfigMaps need updates based on configuration changes
-  const caBundleConfigMapsNeedUpdate = shouldUpdateCaBundleConfigMaps(
-    caBundle,
-    dodCerts,
-    publicCerts,
-  );
+  // Check if CA bundle configuration has changed to determine if reloads/side-effects are needed
+  const hasCaConfigChanged = caConfigChanged(caBundle, dodCerts, publicCerts);
 
   // Update global state for all types of certs
   UDSConfig.caBundle.certs = caBundle.certs || "";
@@ -288,7 +280,7 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   // Handle global updates to Trust Bundle Configmaps and Authservice
   if (updateClusterResources) {
     await performAuthserviceUpdate(
-      caBundleConfigMapsNeedUpdate ? "Global CA bundle change" : "Idempotent sync",
+      hasCaConfigChanged ? "Global CA bundle change" : "Idempotent sync",
     );
     await updateAllCaBundleConfigMaps();
   }
@@ -524,8 +516,8 @@ export async function handleUDSCACertsConfigMapUpdate(configMap: kind.ConfigMap)
       includePublicCerts: UDSConfig.caBundle.includePublicCerts,
     };
 
-    // Check if updates are needed before making any changes
-    const needsUpdate = shouldUpdateCaBundleConfigMaps(currentCaBundle, dodCerts, publicCerts);
+    // Check if configuration has changed to determine if reloads/side-effects are needed
+    const needsUpdate = caConfigChanged(currentCaBundle, dodCerts, publicCerts);
 
     if (!needsUpdate) {
       configLog.debug("No CA bundle updates needed, skipping");
