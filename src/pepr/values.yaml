@@ -41,5 +41,5 @@ admission:
       value: "debug"
     - name: "PEPR_RESYNC_FAILURE_MAX"
       value: "20"
-    - name: "PEPR_RETRY_DELAY_SECONDS"
-      value: "30"
+    # - name: "PEPR_RETRY_DELAY_SECONDS"
+    #   value: "30"

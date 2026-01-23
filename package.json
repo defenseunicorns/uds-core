@@ -20,10 +20,6 @@
     "alwaysIgnore": {
       "namespaces": []
     },
-    "env": {
-      "PEPR_RESYNC_FAILURE_MAX": "20",
-      "PEPR_RETRY_DELAY_SECONDS": "30"
-    },
     "admission": {
       "alwaysIgnore": {
         "namespaces": [
