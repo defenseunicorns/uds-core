@@ -21,9 +21,9 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - velero/velero:v1.17.1
-      - velero/velero-plugin-for-aws:v1.13.1
-      - velero/velero-plugin-for-microsoft-azure:v1.13.1
+      - velero/velero:v1.17.2
+      - velero/velero-plugin-for-aws:v1.13.2
+      - velero/velero-plugin-for-microsoft-azure:v1.13.2
 
   - name: velero
     required: true
@@ -36,9 +36,9 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.17.1
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.13.1
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.13.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.17.2
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.13.2
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.13.2
 
   - name: velero
     required: true
@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/velero/velero:1.17.1-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/velero/velero-plugin-for-aws:1.13.1-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.13.1-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero:1.17.2-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-aws:1.13.2-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.13.2-jammy-scratch-fips-rfcurated
