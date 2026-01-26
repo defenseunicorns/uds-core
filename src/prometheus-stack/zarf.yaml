@@ -15,7 +15,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 25.0.1
+        version: 26.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -33,11 +33,11 @@ components:
           - "values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.10.2"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.87.1"
-      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.17.0"
-      - "quay.io/prometheus/alertmanager:v0.30.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.87.1"
-      - "quay.io/prometheus/prometheus:v3.8.1"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.88.0"
+      - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0"
+      - "quay.io/prometheus/alertmanager:v0.30.1"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.88.0"
+      - "quay.io/prometheus/prometheus:v3.9.1"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.5"
 
   - name: kube-prometheus-stack
@@ -53,11 +53,11 @@ components:
           - "values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.10.2"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.87.1"
-      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.17.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.30.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.87.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.8.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.88.0"
+      - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.18.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.30.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.88.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.9.1"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.5"
 
   - name: kube-prometheus-stack
@@ -73,9 +73,9 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - "quay.io/rfcurated/prometheus/node-exporter:1.10.2-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus-operator:0.87.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/kube-state-metrics:2.17.0-jammy-scratch-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus/alertmanager:0.30.0-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.87.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus:3.8.1-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus-operator:0.88.0-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus/alertmanager:0.30.1-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.88.0-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/prometheus:3.9.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.5-jammy-fips-rfcurated-rfhardened"
