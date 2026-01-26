@@ -1,0 +1,32 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: "Check multi-arch images"
+description: "Installs crane and runs scripts/check-multiarch.sh against a target directory"
+
+inputs:
+  srcDir:
+    description: "Directory to scan for zarf.yaml files"
+    required: false
+    default: "./src"
+  craneVersion:
+    description: "Version of crane (go-containerregistry) to install"
+    required: false
+    default: "v0.20.6"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install crane
+      shell: bash
+      run: |
+        CRANE_VERSION="${{ inputs.craneVersion }}"
+        OS="linux"
+        ARCH="amd64"
+        curl -fsSL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" | tar -xz crane
+        sudo mv crane /usr/local/bin/crane
+        crane version
+
+    - name: Run multi-arch scan
+      shell: bash
+      run: bash scripts/check-multiarch.sh "${{ inputs.srcDir }}"

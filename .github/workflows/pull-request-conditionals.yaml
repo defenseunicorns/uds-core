@@ -27,7 +27,8 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
-      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
+      - scripts/renovate/**
+      - scripts/root-ca-retriever/**
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -78,6 +79,7 @@ jobs:
     name: Select Jobs
     outputs:
       combined: ${{ steps.combine-path-filters.outputs.combined }}
+      multiarch: ${{ steps.path-filter-multiarch.outputs.multiarch }}
       distros: ${{ steps.path-filter-iac.outputs.changes }}
       run_full_tests: ${{ steps.test-routing.outputs.run_full_tests }}
 
@@ -115,6 +117,15 @@ jobs:
         with:
           filters: .github/filters.yaml
 
+      - name: Check paths - multiarch scan inputs
+        id: path-filter-multiarch
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3
+        with:
+          filters: |
+            multiarch:
+              - 'src/**/zarf.yaml'
+              - 'scripts/check-multiarch.sh'
+
       - name: Merge Path Filter Outputs for Packages
         id: combine-path-filters
         run: |
@@ -131,6 +142,18 @@ jobs:
           event_name: ${{ github.event_name }}
           base_ref: ${{ github.base_ref }}
           head_ref: ${{ github.head_ref }}
+
+  check-multiarch:
+    needs: check-paths
+    if: ${{ needs.check-paths.outputs.run_full_tests == 'true' && needs.check-paths.outputs.multiarch == 'true' }}
+    runs-on: ubuntu-latest
+    name: Check multi-arch images
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Check multi-arch images
+        uses: ./.github/actions/check-multiarch
 
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
