@@ -21,8 +21,8 @@ runs:
       shell: bash
       run: |
         CRANE_VERSION="${{ inputs.craneVersion }}"
-        OS="linux"
-        ARCH="amd64"
+        OS="Linux"
+        ARCH="x86_64"
         curl -fsSL "https://github.com/google/go-containerregistry/releases/download/${CRANE_VERSION}/go-containerregistry_${OS}_${ARCH}.tar.gz" | tar -xz crane
         sudo mv crane /usr/local/bin/crane
         crane version
