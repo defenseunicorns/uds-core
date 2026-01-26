@@ -1,5 +1,201 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Setup RBAC for Pepr
+rbac:
+  # Core API resources
+  - apiGroups:
+      - ''
+    resources:
+      - configmaps
+      - endpoints
+      - events
+      - namespaces
+      - secrets
+      - services
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Pods
+  - apiGroups:
+      - ''
+    resources:
+      - pods
+    verbs:
+      - delete
+      - get
+      - list
+      - patch
+      - watch
+
+  # Pod eviction subresource
+  - apiGroups:
+      - ''
+    resources:
+      - pods/eviction
+    verbs:
+      - create
+
+  # Nodes - read only
+  - apiGroups:
+      - ''
+    resources:
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Discovery API resources
+  - apiGroups:
+      - discovery.k8s.io
+    resources:
+      - endpointslices
+    verbs:
+      - get
+      - list
+      - watch
+
+  # Pepr store resources
+  - apiGroups:
+      - pepr.dev
+    resources:
+      - peprstores
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Apps API resources
+  - apiGroups:
+      - apps
+    resources:
+      - daemonsets
+      - deployments
+      - replicasets
+      - statefulsets
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Networking API resources
+  - apiGroups:
+      - networking.k8s.io
+    resources:
+      - networkpolicies
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Gateway API resources
+  - apiGroups:
+      - gateway.networking.k8s.io
+    resources:
+      - gateways
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Istio security resources
+  - apiGroups:
+      - security.istio.io
+    resources:
+      - authorizationpolicies
+      - requestauthentications
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Istio networking resources
+  - apiGroups:
+      - networking.istio.io
+    resources:
+      - destinationrules
+      - gateways
+      - serviceentries
+      - sidecars
+      - virtualservices
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # Prometheus monitoring resources
+  - apiGroups:
+      - monitoring.coreos.com
+    resources:
+      - podmonitors
+      - servicemonitors
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # UDS custom resources
+  - apiGroups:
+      - uds.dev
+    resources:
+      - exemptions
+      - packages
+      - packages/status
+      - clusterconfig
+      - clusterconfig/status
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+
+  # CRD management
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+      - update
+      - watch
 
 watcher:
   serviceMonitor:
