@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -38,12 +38,13 @@ export class ServiceMonitor extends GenericKind {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   declare metadata?: { [key: string]: any };
   /**
-   * Specification of desired Service selection for target discovery by
+   * spec defines the specification of desired Service selection for target discovery by
    * Prometheus.
    */
   spec?: Spec;
   /**
-   * This Status subresource is under active development and is updated only when the
+   * status defines the status subresource. It is under active development and is updated only
+   * when the
    * "StatusForConfigurationResources" feature gate is enabled.
    *
    * Most recent observed status of the ServiceMonitor. Read-only.
@@ -55,32 +56,32 @@ export class ServiceMonitor extends GenericKind {
 }
 
 /**
- * Specification of desired Service selection for target discovery by
+ * spec defines the specification of desired Service selection for target discovery by
  * Prometheus.
  */
 export interface Spec {
   /**
-   * `attachMetadata` defines additional metadata which is added to the
+   * attachMetadata defines additional metadata which is added to the
    * discovered targets.
    *
    * It requires Prometheus >= v2.37.0.
    */
   attachMetadata?: AttachMetadata;
   /**
-   * When defined, bodySizeLimit specifies a job level limit on the size
+   * bodySizeLimit when defined, bodySizeLimit specifies a job level limit on the size
    * of uncompressed response body that will be accepted by Prometheus.
    *
    * It requires Prometheus >= v2.28.0.
    */
   bodySizeLimit?: string;
   /**
-   * Whether to convert all scraped classic histograms into a native histogram with custom
-   * buckets.
+   * convertClassicHistogramsToNHCB defines whether to convert all scraped classic histograms
+   * into a native histogram with custom buckets.
    * It requires Prometheus >= v3.0.0.
    */
   convertClassicHistogramsToNHCB?: boolean;
   /**
-   * List of endpoints part of this ServiceMonitor.
+   * endpoints defines the list of endpoints part of this ServiceMonitor.
    * Defines how to scrape metrics from Kubernetes
    * [Endpoints](https://kubernetes.io/docs/concepts/services-networking/service/#endpoints)
    * objects.
@@ -90,14 +91,14 @@ export interface Spec {
    */
   endpoints: Endpoint[];
   /**
-   * The protocol to use if a scrape returns blank, unparseable, or otherwise invalid
-   * Content-Type.
+   * fallbackScrapeProtocol defines the protocol to use if a scrape returns blank,
+   * unparseable, or otherwise invalid Content-Type.
    *
    * It requires Prometheus >= v3.0.0.
    */
   fallbackScrapeProtocol?: FallbackScrapeProtocol;
   /**
-   * `jobLabel` selects the label from the associated Kubernetes `Service`
+   * jobLabel selects the label from the associated Kubernetes `Service`
    * object which will be used as the `job` label for all metrics.
    *
    * For example if `jobLabel` is set to `foo` and the Kubernetes `Service`
@@ -110,65 +111,71 @@ export interface Spec {
    */
   jobLabel?: string;
   /**
-   * Per-scrape limit on the number of targets dropped by relabeling
+   * keepDroppedTargets defines the per-scrape limit on the number of targets dropped by
+   * relabeling
    * that will be kept in memory. 0 means no limit.
    *
    * It requires Prometheus >= v2.47.0.
    */
   keepDroppedTargets?: number;
   /**
-   * Per-scrape limit on number of labels that will be accepted for a sample.
+   * labelLimit defines the per-scrape limit on number of labels that will be accepted for a
+   * sample.
    *
    * It requires Prometheus >= v2.27.0.
    */
   labelLimit?: number;
   /**
-   * Per-scrape limit on length of labels name that will be accepted for a sample.
+   * labelNameLengthLimit defines the per-scrape limit on length of labels name that will be
+   * accepted for a sample.
    *
    * It requires Prometheus >= v2.27.0.
    */
   labelNameLengthLimit?: number;
   /**
-   * Per-scrape limit on length of labels value that will be accepted for a sample.
+   * labelValueLengthLimit defines the per-scrape limit on length of labels value that will be
+   * accepted for a sample.
    *
    * It requires Prometheus >= v2.27.0.
    */
   labelValueLengthLimit?: number;
   /**
-   * `namespaceSelector` defines in which namespace(s) Prometheus should discover the
-   * services.
+   * namespaceSelector defines in which namespace(s) Prometheus should discover the services.
    * By default, the services are discovered in the same namespace as the `ServiceMonitor`
    * object but it is possible to select pods across different/all namespaces.
    */
   namespaceSelector?: NamespaceSelector;
   /**
-   * If there are more than this many buckets in a native histogram,
+   * nativeHistogramBucketLimit defines ff there are more than this many buckets in a native
+   * histogram,
    * buckets will be merged to stay within the limit.
    * It requires Prometheus >= v2.45.0.
    */
   nativeHistogramBucketLimit?: number;
   /**
-   * If the growth factor of one bucket to the next is smaller than this,
+   * nativeHistogramMinBucketFactor defines if the growth factor of one bucket to the next is
+   * smaller than this,
    * buckets will be merged to increase the factor sufficiently.
    * It requires Prometheus >= v2.50.0.
    */
   nativeHistogramMinBucketFactor?: number | string;
   /**
-   * `podTargetLabels` defines the labels which are transferred from the
+   * podTargetLabels defines the labels which are transferred from the
    * associated Kubernetes `Pod` object onto the ingested metrics.
    */
   podTargetLabels?: string[];
   /**
-   * `sampleLimit` defines a per-scrape limit on the number of scraped samples
+   * sampleLimit defines a per-scrape limit on the number of scraped samples
    * that will be accepted.
    */
   sampleLimit?: number;
   /**
-   * The scrape class to apply.
+   * scrapeClass defines the scrape class to apply.
    */
   scrapeClass?: string;
   /**
-   * Whether to scrape a classic histogram that is also exposed as a native histogram.
+   * scrapeClassicHistograms defines whether to scrape a classic histogram that is also
+   * exposed as a native histogram.
    * It requires Prometheus >= v2.45.0.
    *
    * Notice: `scrapeClassicHistograms` corresponds to the `always_scrape_classic_histograms`
@@ -176,8 +183,12 @@ export interface Spec {
    */
   scrapeClassicHistograms?: boolean;
   /**
-   * `scrapeProtocols` defines the protocols to negotiate during a scrape. It tells clients
-   * the
+   * scrapeNativeHistograms defines whether to enable scraping of native histograms.
+   * It requires Prometheus >= v3.8.0.
+   */
+  scrapeNativeHistograms?: boolean;
+  /**
+   * scrapeProtocols defines the protocols to negotiate during a scrape. It tells clients the
    * protocols supported by Prometheus in order of preference (from most to least preferred).
    *
    * If unset, Prometheus uses its default value.
@@ -186,11 +197,12 @@ export interface Spec {
    */
   scrapeProtocols?: FallbackScrapeProtocol[];
   /**
-   * Label selector to select the Kubernetes `Endpoints` objects to scrape metrics from.
+   * selector defines the label selector to select the Kubernetes `Endpoints` objects to
+   * scrape metrics from.
    */
   selector: Selector;
   /**
-   * Mechanism used to select the endpoints to scrape.
+   * selectorMechanism defines the mechanism used to select the endpoints to scrape.
    * By default, the selection process relies on relabel configurations to filter the
    * discovered targets.
    * Alternatively, you can opt in for role selectors, which may offer better efficiency in
@@ -201,26 +213,34 @@ export interface Spec {
    */
   selectorMechanism?: SelectorMechanism;
   /**
-   * `targetLabels` defines the labels which are transferred from the
+   * serviceDiscoveryRole defines the service discovery role used to discover targets.
+   *
+   * If set, the value should be either "Endpoints" or "EndpointSlice".
+   * Otherwise it defaults to the value defined in the
+   * Prometheus/PrometheusAgent resource.
+   */
+  serviceDiscoveryRole?: ServiceDiscoveryRole;
+  /**
+   * targetLabels defines the labels which are transferred from the
    * associated Kubernetes `Service` object onto the ingested metrics.
    */
   targetLabels?: string[];
   /**
-   * `targetLimit` defines a limit on the number of scraped targets that will
+   * targetLimit defines a limit on the number of scraped targets that will
    * be accepted.
    */
   targetLimit?: number;
 }
 
 /**
- * `attachMetadata` defines additional metadata which is added to the
+ * attachMetadata defines additional metadata which is added to the
  * discovered targets.
  *
  * It requires Prometheus >= v2.37.0.
  */
 export interface AttachMetadata {
   /**
-   * When set to true, Prometheus attaches node metadata to the discovered
+   * node when set to true, Prometheus attaches node metadata to the discovered
    * targets.
    *
    * The Prometheus service account must have the `list` and `watch`
@@ -235,39 +255,42 @@ export interface AttachMetadata {
  */
 export interface Endpoint {
   /**
-   * `authorization` configures the Authorization header credentials to use when
-   * scraping the target.
+   * authorization configures the Authorization header credentials used by
+   * the client.
    *
-   * Cannot be set at the same time as `basicAuth`, or `oauth2`.
+   * Cannot be set at the same time as `basicAuth`, `bearerTokenSecret` or `oauth2`.
    */
   authorization?: Authorization;
   /**
-   * `basicAuth` configures the Basic Authentication credentials to use when
-   * scraping the target.
+   * basicAuth defines the Basic Authentication credentials used by the
+   * client.
    *
-   * Cannot be set at the same time as `authorization`, or `oauth2`.
+   * Cannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.
    */
   basicAuth?: BasicAuth;
   /**
-   * File to read bearer token for scraping the target.
+   * bearerTokenFile defines the file to read bearer token for scraping the target.
    *
    * Deprecated: use `authorization` instead.
    */
   bearerTokenFile?: string;
   /**
-   * `bearerTokenSecret` specifies a key of a Secret containing the bearer
-   * token for scraping targets. The secret needs to be in the same namespace
-   * as the ServiceMonitor object and readable by the Prometheus Operator.
+   * bearerTokenSecret defines a key of a Secret containing the bearer token
+   * used by the client for authentication. The secret needs to be in the
+   * same namespace as the custom resource and readable by the Prometheus
+   * Operator.
+   *
+   * Cannot be set at the same time as `authorization`, `basicAuth` or `oauth2`.
    *
    * Deprecated: use `authorization` instead.
    */
   bearerTokenSecret?: BearerTokenSecret;
   /**
-   * `enableHttp2` can be used to disable HTTP2 when scraping the target.
+   * enableHttp2 can be used to disable HTTP2.
    */
   enableHttp2?: boolean;
   /**
-   * When true, the pods which are not running (e.g. either in Failed or
+   * filterRunning when true, the pods which are not running (e.g. either in Failed or
    * Succeeded state) are dropped during the target discovery.
    *
    * If unset, the filtering is enabled.
@@ -276,33 +299,34 @@ export interface Endpoint {
    */
   filterRunning?: boolean;
   /**
-   * `followRedirects` defines whether the scrape requests should follow HTTP
-   * 3xx redirects.
+   * followRedirects defines whether the client should follow HTTP 3xx
+   * redirects.
    */
   followRedirects?: boolean;
   /**
-   * When true, `honorLabels` preserves the metric's labels when they collide
+   * honorLabels defines when true the metric's labels when they collide
    * with the target's labels.
    */
   honorLabels?: boolean;
   /**
-   * `honorTimestamps` controls whether Prometheus preserves the timestamps
+   * honorTimestamps defines whether Prometheus preserves the timestamps
    * when exposed by the target.
    */
   honorTimestamps?: boolean;
   /**
-   * Interval at which Prometheus scrapes the metrics from the target.
+   * interval at which Prometheus scrapes the metrics from the target.
    *
    * If empty, Prometheus uses the global scrape interval.
    */
   interval?: string;
   /**
-   * `metricRelabelings` configures the relabeling rules to apply to the
+   * metricRelabelings defines the relabeling rules to apply to the
    * samples before ingestion.
    */
   metricRelabelings?: MetricRelabeling[];
   /**
-   * `noProxy` is a comma-separated string that can contain IPs, CIDR notation, domain names
+   * noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain
+   * names
    * that should be excluded from proxying. IP and domain names can
    * contain port numbers.
    *
@@ -310,11 +334,11 @@ export interface Endpoint {
    */
   noProxy?: string;
   /**
-   * `oauth2` configures the OAuth2 settings to use when scraping the target.
+   * oauth2 defines the OAuth2 settings used by the client.
    *
    * It requires Prometheus >= 2.27.0.
    *
-   * Cannot be set at the same time as `authorization`, or `basicAuth`.
+   * Cannot be set at the same time as `authorization`, `basicAuth` or `bearerTokenSecret`.
    */
   oauth2?: Oauth2;
   /**
@@ -322,37 +346,37 @@ export interface Endpoint {
    */
   params?: { [key: string]: string[] };
   /**
-   * HTTP path from which to scrape for metrics.
+   * path defines the HTTP path from which to scrape for metrics.
    *
    * If empty, Prometheus uses the default value (e.g. `/metrics`).
    */
   path?: string;
   /**
-   * Name of the Service port which this endpoint refers to.
+   * port defines the name of the Service port which this endpoint refers to.
    *
    * It takes precedence over `targetPort`.
    */
   port?: string;
   /**
-   * ProxyConnectHeader optionally specifies headers to send to
+   * proxyConnectHeader optionally specifies headers to send to
    * proxies during CONNECT requests.
    *
    * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyConnectHeader?: { [key: string]: EndpointProxyConnectHeader[] };
   /**
-   * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
-   * HTTPS_PROXY, and NO_PROXY).
+   * proxyFromEnvironment defines whether to use the proxy configuration defined by
+   * environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).
    *
    * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyFromEnvironment?: boolean;
   /**
-   * `proxyURL` defines the HTTP proxy server to use.
+   * proxyUrl defines the HTTP proxy server to use.
    */
   proxyUrl?: string;
   /**
-   * `relabelings` configures the relabeling rules to apply the target's
+   * relabelings defines the relabeling rules to apply the target's
    * metadata labels.
    *
    * The Operator automatically adds relabelings for a few standard Kubernetes fields.
@@ -364,16 +388,12 @@ export interface Endpoint {
    */
   relabelings?: Relabeling[];
   /**
-   * HTTP scheme to use for scraping.
-   *
-   * `http` and `https` are the expected values unless you rewrite the
-   * `__scheme__` label via relabeling.
-   *
-   * If empty, Prometheus uses the default value `http`.
+   * scheme defines the HTTP scheme to use when scraping the metrics.
    */
   scheme?: Scheme;
   /**
-   * Timeout after which Prometheus considers the scrape to be failed.
+   * scrapeTimeout defines the timeout after which Prometheus considers the scrape to be
+   * failed.
    *
    * If empty, Prometheus uses the global scrape timeout unless it is less
    * than the target's scrape interval value in which the latter is used.
@@ -382,16 +402,16 @@ export interface Endpoint {
    */
   scrapeTimeout?: string;
   /**
-   * Name or number of the target port of the `Pod` object behind the
+   * targetPort defines the name or number of the target port of the `Pod` object behind the
    * Service. The port must be specified with the container's port property.
    */
   targetPort?: number | string;
   /**
-   * TLS configuration to use when scraping the target.
+   * tlsConfig defines TLS configuration used by the client.
    */
   tlsConfig?: EndpointTLSConfig;
   /**
-   * `trackTimestampsStaleness` defines whether Prometheus tracks staleness of
+   * trackTimestampsStaleness defines whether Prometheus tracks staleness of
    * the metrics that have an explicit timestamp present in scraped data.
    * Has no effect if `honorTimestamps` is false.
    *
@@ -401,19 +421,19 @@ export interface Endpoint {
 }
 
 /**
- * `authorization` configures the Authorization header credentials to use when
- * scraping the target.
+ * authorization configures the Authorization header credentials used by
+ * the client.
  *
- * Cannot be set at the same time as `basicAuth`, or `oauth2`.
+ * Cannot be set at the same time as `basicAuth`, `bearerTokenSecret` or `oauth2`.
  */
 export interface Authorization {
   /**
-   * Selects a key of a Secret in the namespace that contains the credentials for
+   * credentials defines a key of a Secret in the namespace that contains the credentials for
    * authentication.
    */
   credentials?: Credentials;
   /**
-   * Defines the authentication type. The value is case-insensitive.
+   * type defines the authentication type. The value is case-insensitive.
    *
    * "Basic" is not a supported value.
    *
@@ -423,7 +443,7 @@ export interface Authorization {
 }
 
 /**
- * Selects a key of a Secret in the namespace that contains the credentials for
+ * credentials defines a key of a Secret in the namespace that contains the credentials for
  * authentication.
  */
 export interface Credentials {
@@ -446,26 +466,26 @@ export interface Credentials {
 }
 
 /**
- * `basicAuth` configures the Basic Authentication credentials to use when
- * scraping the target.
+ * basicAuth defines the Basic Authentication credentials used by the
+ * client.
  *
- * Cannot be set at the same time as `authorization`, or `oauth2`.
+ * Cannot be set at the same time as `authorization`, `bearerTokenSecret` or `oauth2`.
  */
 export interface BasicAuth {
   /**
-   * `password` specifies a key of a Secret containing the password for
+   * password defines a key of a Secret containing the password for
    * authentication.
    */
   password?: Password;
   /**
-   * `username` specifies a key of a Secret containing the username for
+   * username defines a key of a Secret containing the username for
    * authentication.
    */
   username?: Username;
 }
 
 /**
- * `password` specifies a key of a Secret containing the password for
+ * password defines a key of a Secret containing the password for
  * authentication.
  */
 export interface Password {
@@ -488,7 +508,7 @@ export interface Password {
 }
 
 /**
- * `username` specifies a key of a Secret containing the username for
+ * username defines a key of a Secret containing the username for
  * authentication.
  */
 export interface Username {
@@ -511,9 +531,12 @@ export interface Username {
 }
 
 /**
- * `bearerTokenSecret` specifies a key of a Secret containing the bearer
- * token for scraping targets. The secret needs to be in the same namespace
- * as the ServiceMonitor object and readable by the Prometheus Operator.
+ * bearerTokenSecret defines a key of a Secret containing the bearer token
+ * used by the client for authentication. The secret needs to be in the
+ * same namespace as the custom resource and readable by the Prometheus
+ * Operator.
+ *
+ * Cannot be set at the same time as `authorization`, `basicAuth` or `oauth2`.
  *
  * Deprecated: use `authorization` instead.
  */
@@ -545,7 +568,7 @@ export interface BearerTokenSecret {
  */
 export interface MetricRelabeling {
   /**
-   * Action to perform based on the regex matching.
+   * action to perform based on the regex matching.
    *
    * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
    * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
@@ -554,34 +577,35 @@ export interface MetricRelabeling {
    */
   action?: Action;
   /**
-   * Modulus to take of the hash of the source label values.
+   * modulus to take of the hash of the source label values.
    *
    * Only applicable when the action is `HashMod`.
    */
   modulus?: number;
   /**
-   * Regular expression against which the extracted value is matched.
+   * regex defines the regular expression against which the extracted value is matched.
    */
   regex?: string;
   /**
-   * Replacement value against which a Replace action is performed if the
+   * replacement value against which a Replace action is performed if the
    * regular expression matches.
    *
    * Regex capture groups are available.
    */
   replacement?: string;
   /**
-   * Separator is the string between concatenated SourceLabels.
+   * separator defines the string between concatenated SourceLabels.
    */
   separator?: string;
   /**
-   * The source labels select values from existing labels. Their content is
+   * sourceLabels defines the source labels select values from existing labels. Their content
+   * is
    * concatenated using the configured Separator and matched against the
    * configured regular expression.
    */
   sourceLabels?: string[];
   /**
-   * Label to which the resulting string is written in a replacement.
+   * targetLabel defines the label to which the resulting string is written in a replacement.
    *
    * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,
    * `KeepEqual` and `DropEqual` actions.
@@ -592,7 +616,7 @@ export interface MetricRelabeling {
 }
 
 /**
- * Action to perform based on the regex matching.
+ * action to perform based on the regex matching.
  *
  * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
  * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
@@ -625,30 +649,31 @@ export enum Action {
 }
 
 /**
- * `oauth2` configures the OAuth2 settings to use when scraping the target.
+ * oauth2 defines the OAuth2 settings used by the client.
  *
  * It requires Prometheus >= 2.27.0.
  *
- * Cannot be set at the same time as `authorization`, or `basicAuth`.
+ * Cannot be set at the same time as `authorization`, `basicAuth` or `bearerTokenSecret`.
  */
 export interface Oauth2 {
   /**
-   * `clientId` specifies a key of a Secret or ConfigMap containing the
+   * clientId defines a key of a Secret or ConfigMap containing the
    * OAuth2 client's ID.
    */
   clientId: ClientID;
   /**
-   * `clientSecret` specifies a key of a Secret containing the OAuth2
+   * clientSecret defines a key of a Secret containing the OAuth2
    * client's secret.
    */
   clientSecret: ClientSecret;
   /**
-   * `endpointParams` configures the HTTP parameters to append to the token
+   * endpointParams configures the HTTP parameters to append to the token
    * URL.
    */
   endpointParams?: { [key: string]: string };
   /**
-   * `noProxy` is a comma-separated string that can contain IPs, CIDR notation, domain names
+   * noProxy defines a comma-separated string that can contain IPs, CIDR notation, domain
+   * names
    * that should be excluded from proxying. IP and domain names can
    * contain port numbers.
    *
@@ -656,55 +681,55 @@ export interface Oauth2 {
    */
   noProxy?: string;
   /**
-   * ProxyConnectHeader optionally specifies headers to send to
+   * proxyConnectHeader optionally specifies headers to send to
    * proxies during CONNECT requests.
    *
    * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyConnectHeader?: { [key: string]: Oauth2ProxyConnectHeader[] };
   /**
-   * Whether to use the proxy configuration defined by environment variables (HTTP_PROXY,
-   * HTTPS_PROXY, and NO_PROXY).
+   * proxyFromEnvironment defines whether to use the proxy configuration defined by
+   * environment variables (HTTP_PROXY, HTTPS_PROXY, and NO_PROXY).
    *
    * It requires Prometheus >= v2.43.0, Alertmanager >= v0.25.0 or Thanos >= v0.32.0.
    */
   proxyFromEnvironment?: boolean;
   /**
-   * `proxyURL` defines the HTTP proxy server to use.
+   * proxyUrl defines the HTTP proxy server to use.
    */
   proxyUrl?: string;
   /**
-   * `scopes` defines the OAuth2 scopes used for the token request.
+   * scopes defines the OAuth2 scopes used for the token request.
    */
   scopes?: string[];
   /**
-   * TLS configuration to use when connecting to the OAuth2 server.
+   * tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.
    * It requires Prometheus >= v2.43.0.
    */
   tlsConfig?: Oauth2TLSConfig;
   /**
-   * `tokenURL` configures the URL to fetch the token from.
+   * tokenUrl defines the URL to fetch the token from.
    */
   tokenUrl: string;
 }
 
 /**
- * `clientId` specifies a key of a Secret or ConfigMap containing the
+ * clientId defines a key of a Secret or ConfigMap containing the
  * OAuth2 client's ID.
  */
 export interface ClientID {
   /**
-   * ConfigMap containing data to use for the targets.
+   * configMap defines the ConfigMap containing data to use for the targets.
    */
   configMap?: ClientIDConfigMap;
   /**
-   * Secret containing data to use for the targets.
+   * secret defines the Secret containing data to use for the targets.
    */
   secret?: ClientIDSecret;
 }
 
 /**
- * ConfigMap containing data to use for the targets.
+ * configMap defines the ConfigMap containing data to use for the targets.
  */
 export interface ClientIDConfigMap {
   /**
@@ -726,7 +751,7 @@ export interface ClientIDConfigMap {
 }
 
 /**
- * Secret containing data to use for the targets.
+ * secret defines the Secret containing data to use for the targets.
  */
 export interface ClientIDSecret {
   /**
@@ -748,7 +773,7 @@ export interface ClientIDSecret {
 }
 
 /**
- * `clientSecret` specifies a key of a Secret containing the OAuth2
+ * clientSecret defines a key of a Secret containing the OAuth2
  * client's secret.
  */
 export interface ClientSecret {
@@ -793,60 +818,60 @@ export interface Oauth2ProxyConnectHeader {
 }
 
 /**
- * TLS configuration to use when connecting to the OAuth2 server.
+ * tlsConfig defines the TLS configuration to use when connecting to the OAuth2 server.
  * It requires Prometheus >= v2.43.0.
  */
 export interface Oauth2TLSConfig {
   /**
-   * Certificate authority used when verifying server certificates.
+   * ca defines the Certificate authority used when verifying server certificates.
    */
   ca?: PurpleCA;
   /**
-   * Client certificate to present when doing client-authentication.
+   * cert defines the Client certificate to present when doing client-authentication.
    */
   cert?: PurpleCERT;
   /**
-   * Disable target certificate validation.
+   * insecureSkipVerify defines how to disable target certificate validation.
    */
   insecureSkipVerify?: boolean;
   /**
-   * Secret containing the client key file for the targets.
+   * keySecret defines the Secret containing the client key file for the targets.
    */
   keySecret?: PurpleKeySecret;
   /**
-   * Maximum acceptable TLS version.
+   * maxVersion defines the maximum acceptable TLS version.
    *
    * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
-   * Minimum acceptable TLS version.
+   * minVersion defines the minimum acceptable TLS version.
    *
    * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
-   * Used to verify the hostname for the targets.
+   * serverName is used to verify the hostname for the targets.
    */
   serverName?: string;
 }
 
 /**
- * Certificate authority used when verifying server certificates.
+ * ca defines the Certificate authority used when verifying server certificates.
  */
 export interface PurpleCA {
   /**
-   * ConfigMap containing data to use for the targets.
+   * configMap defines the ConfigMap containing data to use for the targets.
    */
   configMap?: PurpleConfigMap;
   /**
-   * Secret containing data to use for the targets.
+   * secret defines the Secret containing data to use for the targets.
    */
   secret?: PurpleSecret;
 }
 
 /**
- * ConfigMap containing data to use for the targets.
+ * configMap defines the ConfigMap containing data to use for the targets.
  */
 export interface PurpleConfigMap {
   /**
@@ -868,7 +893,7 @@ export interface PurpleConfigMap {
 }
 
 /**
- * Secret containing data to use for the targets.
+ * secret defines the Secret containing data to use for the targets.
  */
 export interface PurpleSecret {
   /**
@@ -890,21 +915,21 @@ export interface PurpleSecret {
 }
 
 /**
- * Client certificate to present when doing client-authentication.
+ * cert defines the Client certificate to present when doing client-authentication.
  */
 export interface PurpleCERT {
   /**
-   * ConfigMap containing data to use for the targets.
+   * configMap defines the ConfigMap containing data to use for the targets.
    */
   configMap?: FluffyConfigMap;
   /**
-   * Secret containing data to use for the targets.
+   * secret defines the Secret containing data to use for the targets.
    */
   secret?: FluffySecret;
 }
 
 /**
- * ConfigMap containing data to use for the targets.
+ * configMap defines the ConfigMap containing data to use for the targets.
  */
 export interface FluffyConfigMap {
   /**
@@ -926,7 +951,7 @@ export interface FluffyConfigMap {
 }
 
 /**
- * Secret containing data to use for the targets.
+ * secret defines the Secret containing data to use for the targets.
  */
 export interface FluffySecret {
   /**
@@ -948,7 +973,7 @@ export interface FluffySecret {
 }
 
 /**
- * Secret containing the client key file for the targets.
+ * keySecret defines the Secret containing the client key file for the targets.
  */
 export interface PurpleKeySecret {
   /**
@@ -970,11 +995,11 @@ export interface PurpleKeySecret {
 }
 
 /**
- * Maximum acceptable TLS version.
+ * maxVersion defines the maximum acceptable TLS version.
  *
  * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
  *
- * Minimum acceptable TLS version.
+ * minVersion defines the minimum acceptable TLS version.
  *
  * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
  */
@@ -1016,7 +1041,7 @@ export interface EndpointProxyConnectHeader {
  */
 export interface Relabeling {
   /**
-   * Action to perform based on the regex matching.
+   * action to perform based on the regex matching.
    *
    * `Uppercase` and `Lowercase` actions require Prometheus >= v2.36.0.
    * `DropEqual` and `KeepEqual` actions require Prometheus >= v2.41.0.
@@ -1025,34 +1050,35 @@ export interface Relabeling {
    */
   action?: Action;
   /**
-   * Modulus to take of the hash of the source label values.
+   * modulus to take of the hash of the source label values.
    *
    * Only applicable when the action is `HashMod`.
    */
   modulus?: number;
   /**
-   * Regular expression against which the extracted value is matched.
+   * regex defines the regular expression against which the extracted value is matched.
    */
   regex?: string;
   /**
-   * Replacement value against which a Replace action is performed if the
+   * replacement value against which a Replace action is performed if the
    * regular expression matches.
    *
    * Regex capture groups are available.
    */
   replacement?: string;
   /**
-   * Separator is the string between concatenated SourceLabels.
+   * separator defines the string between concatenated SourceLabels.
    */
   separator?: string;
   /**
-   * The source labels select values from existing labels. Their content is
+   * sourceLabels defines the source labels select values from existing labels. Their content
+   * is
    * concatenated using the configured Separator and matched against the
    * configured regular expression.
    */
   sourceLabels?: string[];
   /**
-   * Label to which the resulting string is written in a replacement.
+   * targetLabel defines the label to which the resulting string is written in a replacement.
    *
    * It is mandatory for `Replace`, `HashMod`, `Lowercase`, `Uppercase`,
    * `KeepEqual` and `DropEqual` actions.
@@ -1063,84 +1089,83 @@ export interface Relabeling {
 }
 
 /**
- * HTTP scheme to use for scraping.
- *
- * `http` and `https` are the expected values unless you rewrite the
- * `__scheme__` label via relabeling.
- *
- * If empty, Prometheus uses the default value `http`.
+ * scheme defines the HTTP scheme to use when scraping the metrics.
  */
 export enum Scheme {
   HTTP = "http",
   HTTPS = "https",
+  SchemeHTTP = "HTTP",
+  SchemeHTTPS = "HTTPS",
 }
 
 /**
- * TLS configuration to use when scraping the target.
+ * tlsConfig defines TLS configuration used by the client.
  */
 export interface EndpointTLSConfig {
   /**
-   * Certificate authority used when verifying server certificates.
+   * ca defines the Certificate authority used when verifying server certificates.
    */
   ca?: FluffyCA;
   /**
-   * Path to the CA cert in the Prometheus container to use for the targets.
+   * caFile defines the path to the CA cert in the Prometheus container to use for the targets.
    */
   caFile?: string;
   /**
-   * Client certificate to present when doing client-authentication.
+   * cert defines the Client certificate to present when doing client-authentication.
    */
   cert?: FluffyCERT;
   /**
-   * Path to the client cert file in the Prometheus container for the targets.
+   * certFile defines the path to the client cert file in the Prometheus container for the
+   * targets.
    */
   certFile?: string;
   /**
-   * Disable target certificate validation.
+   * insecureSkipVerify defines how to disable target certificate validation.
    */
   insecureSkipVerify?: boolean;
   /**
-   * Path to the client key file in the Prometheus container for the targets.
+   * keyFile defines the path to the client key file in the Prometheus container for the
+   * targets.
    */
   keyFile?: string;
   /**
-   * Secret containing the client key file for the targets.
+   * keySecret defines the Secret containing the client key file for the targets.
    */
   keySecret?: FluffyKeySecret;
   /**
-   * Maximum acceptable TLS version.
+   * maxVersion defines the maximum acceptable TLS version.
    *
    * It requires Prometheus >= v2.41.0 or Thanos >= v0.31.0.
    */
   maxVersion?: Version;
   /**
-   * Minimum acceptable TLS version.
+   * minVersion defines the minimum acceptable TLS version.
    *
    * It requires Prometheus >= v2.35.0 or Thanos >= v0.28.0.
    */
   minVersion?: Version;
   /**
-   * Used to verify the hostname for the targets.
+   * serverName is used to verify the hostname for the targets.
    */
   serverName?: string;
 }
 
 /**
- * Certificate authority used when verifying server certificates.
+ * ca defines the Certificate authority used when verifying server certificates.
  */
 export interface FluffyCA {
   /**
-   * ConfigMap containing data to use for the targets.
+   * configMap defines the ConfigMap containing data to use for the targets.
    */
   configMap?: TentacledConfigMap;
   /**
-   * Secret containing data to use for the targets.
+   * secret defines the Secret containing data to use for the targets.
    */
   secret?: TentacledSecret;
 }
 
 /**
- * ConfigMap containing data to use for the targets.
+ * configMap defines the ConfigMap containing data to use for the targets.
  */
 export interface TentacledConfigMap {
   /**
@@ -1162,7 +1187,7 @@ export interface TentacledConfigMap {
 }
 
 /**
- * Secret containing data to use for the targets.
+ * secret defines the Secret containing data to use for the targets.
  */
 export interface TentacledSecret {
   /**
@@ -1184,21 +1209,21 @@ export interface TentacledSecret {
 }
 
 /**
- * Client certificate to present when doing client-authentication.
+ * cert defines the Client certificate to present when doing client-authentication.
  */
 export interface FluffyCERT {
   /**
-   * ConfigMap containing data to use for the targets.
+   * configMap defines the ConfigMap containing data to use for the targets.
    */
   configMap?: StickyConfigMap;
   /**
-   * Secret containing data to use for the targets.
+   * secret defines the Secret containing data to use for the targets.
    */
   secret?: StickySecret;
 }
 
 /**
- * ConfigMap containing data to use for the targets.
+ * configMap defines the ConfigMap containing data to use for the targets.
  */
 export interface StickyConfigMap {
   /**
@@ -1220,7 +1245,7 @@ export interface StickyConfigMap {
 }
 
 /**
- * Secret containing data to use for the targets.
+ * secret defines the Secret containing data to use for the targets.
  */
 export interface StickySecret {
   /**
@@ -1242,7 +1267,7 @@ export interface StickySecret {
 }
 
 /**
- * Secret containing the client key file for the targets.
+ * keySecret defines the Secret containing the client key file for the targets.
  */
 export interface FluffyKeySecret {
   /**
@@ -1264,8 +1289,8 @@ export interface FluffyKeySecret {
 }
 
 /**
- * The protocol to use if a scrape returns blank, unparseable, or otherwise invalid
- * Content-Type.
+ * fallbackScrapeProtocol defines the protocol to use if a scrape returns blank,
+ * unparseable, or otherwise invalid Content-Type.
  *
  * It requires Prometheus >= v3.0.0.
  *
@@ -1286,25 +1311,25 @@ export enum FallbackScrapeProtocol {
 }
 
 /**
- * `namespaceSelector` defines in which namespace(s) Prometheus should discover the
- * services.
+ * namespaceSelector defines in which namespace(s) Prometheus should discover the services.
  * By default, the services are discovered in the same namespace as the `ServiceMonitor`
  * object but it is possible to select pods across different/all namespaces.
  */
 export interface NamespaceSelector {
   /**
-   * Boolean describing whether all namespaces are selected in contrast to a
+   * any defines the boolean describing whether all namespaces are selected in contrast to a
    * list restricting them.
    */
   any?: boolean;
   /**
-   * List of namespace names to select from.
+   * matchNames defines the list of namespace names to select from.
    */
   matchNames?: string[];
 }
 
 /**
- * Label selector to select the Kubernetes `Endpoints` objects to scrape metrics from.
+ * selector defines the label selector to select the Kubernetes `Endpoints` objects to
+ * scrape metrics from.
  */
 export interface Selector {
   /**
@@ -1344,7 +1369,7 @@ export interface MatchExpression {
 }
 
 /**
- * Mechanism used to select the endpoints to scrape.
+ * selectorMechanism defines the mechanism used to select the endpoints to scrape.
  * By default, the selection process relies on relabel configurations to filter the
  * discovered targets.
  * Alternatively, you can opt in for role selectors, which may offer better efficiency in
@@ -1359,7 +1384,20 @@ export enum SelectorMechanism {
 }
 
 /**
- * This Status subresource is under active development and is updated only when the
+ * serviceDiscoveryRole defines the service discovery role used to discover targets.
+ *
+ * If set, the value should be either "Endpoints" or "EndpointSlice".
+ * Otherwise it defaults to the value defined in the
+ * Prometheus/PrometheusAgent resource.
+ */
+export enum ServiceDiscoveryRole {
+  EndpointSlice = "EndpointSlice",
+  Endpoints = "Endpoints",
+}
+
+/**
+ * status defines the status subresource. It is under active development and is updated only
+ * when the
  * "StatusForConfigurationResources" feature gate is enabled.
  *
  * Most recent observed status of the ServiceMonitor. Read-only.
@@ -1369,8 +1407,8 @@ export enum SelectorMechanism {
  */
 export interface Status {
   /**
-   * The list of workload resources (Prometheus or PrometheusAgent) which select the
-   * configuration resource.
+   * bindings defines the list of workload resources (Prometheus, PrometheusAgent, ThanosRuler
+   * or Alertmanager) which select the configuration resource.
    */
   bindings?: Binding[];
 }
@@ -1380,65 +1418,67 @@ export interface Status {
  */
 export interface Binding {
   /**
-   * The current state of the configuration resource when bound to the referenced Prometheus
-   * object.
+   * conditions defines the current state of the configuration resource when bound to the
+   * referenced Workload object.
    */
   conditions?: Condition[];
   /**
-   * The group of the referenced resource.
+   * group defines the group of the referenced resource.
    */
   group: Group;
   /**
-   * The name of the referenced object.
+   * name defines the name of the referenced object.
    */
   name: string;
   /**
-   * The namespace of the referenced object.
+   * namespace defines the namespace of the referenced object.
    */
   namespace: string;
   /**
-   * The type of resource being referenced (e.g. Prometheus or PrometheusAgent).
+   * resource defines the type of resource being referenced (e.g. Prometheus, PrometheusAgent,
+   * ThanosRuler or Alertmanager).
    */
   resource: Resource;
 }
 
 /**
  * ConfigResourceCondition describes the status of configuration resources linked to
- * Prometheus, PrometheusAgent, Alertmanager, or ThanosRuler.
+ * Prometheus, PrometheusAgent, Alertmanager or ThanosRuler.
  */
 export interface Condition {
   /**
-   * LastTransitionTime is the time of the last update to the current status property.
+   * lastTransitionTime defines the time of the last update to the current status property.
    */
   lastTransitionTime: Date;
   /**
-   * Human-readable message indicating details for the condition's last transition.
+   * message defines the human-readable message indicating details for the condition's last
+   * transition.
    */
   message?: string;
   /**
-   * ObservedGeneration represents the .metadata.generation that the
+   * observedGeneration defines the .metadata.generation that the
    * condition was set based upon. For instance, if `.metadata.generation` is
    * currently 12, but the `.status.conditions[].observedGeneration` is 9, the
    * condition is out of date with respect to the current state of the object.
    */
   observedGeneration?: number;
   /**
-   * Reason for the condition's last transition.
+   * reason for the condition's last transition.
    */
   reason?: string;
   /**
-   * Status of the condition.
+   * status of the condition.
    */
   status: string;
   /**
-   * Type of the condition being reported.
+   * type of the condition being reported.
    * Currently, only "Accepted" is supported.
    */
   type: Type;
 }
 
 /**
- * Type of the condition being reported.
+ * type of the condition being reported.
  * Currently, only "Accepted" is supported.
  */
 export enum Type {
@@ -1446,18 +1486,21 @@ export enum Type {
 }
 
 /**
- * The group of the referenced resource.
+ * group defines the group of the referenced resource.
  */
 export enum Group {
   MonitoringCoreosCOM = "monitoring.coreos.com",
 }
 
 /**
- * The type of resource being referenced (e.g. Prometheus or PrometheusAgent).
+ * resource defines the type of resource being referenced (e.g. Prometheus, PrometheusAgent,
+ * ThanosRuler or Alertmanager).
  */
 export enum Resource {
+  Alertmanagers = "alertmanagers",
   Prometheusagents = "prometheusagents",
   Prometheuses = "prometheuses",
+  Thanosrulers = "thanosrulers",
 }
 
 RegisterKind(ServiceMonitor, {
