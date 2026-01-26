@@ -21,7 +21,7 @@ import { generateGatewayName } from "./gateway";
 import { getSharedAnnotationKey, log } from "./istio-resources";
 import { EgressResource } from "./types";
 
-// @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
+// @lulaStart 8bdce490-04f6-45db-9353-d429ba24e1ff
 /**
  * Creates a VirtualService for each exposed service in the package
  *
@@ -106,7 +106,7 @@ export function generateIngressVirtualService(
   }
   return payload;
 }
-// @lulaEnd cd540e07-153b-424c-90e0-c0daec56b18f
+// @lulaEnd 8bdce490-04f6-45db-9353-d429ba24e1ff
 
 export function generateVSName(pkgName: string, expose: Expose) {
   const { gateway = Gateway.Tenant, host, port, service, description, advancedHTTP } = expose;

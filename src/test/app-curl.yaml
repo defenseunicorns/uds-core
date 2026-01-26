@@ -31,9 +31,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-deny-all-1
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-deny-all-1
@@ -80,9 +77,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-deny-all-2
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-deny-all-2
@@ -132,9 +126,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-allow-all
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-allow-all
@@ -186,9 +177,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-remote-ns-egress
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-remote-ns-egress
@@ -235,9 +223,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-remote-ns-ingress
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-remote-ns-ingress
@@ -280,9 +265,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-kube-api
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-kube-api
@@ -329,9 +311,6 @@ spec:
     metadata:
       labels:
         app: curl-pkg-remote-cidr
-      annotations:
-        sidecar.istio.io/proxyCPU: "10m"
-        sidecar.istio.io/proxyMemory: "16Mi"
     spec:
       containers:
         - name: curl-pkg-remote-cidr
