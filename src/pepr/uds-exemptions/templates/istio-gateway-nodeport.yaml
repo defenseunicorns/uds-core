@@ -1,0 +1,23 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.exemptions.istioGatewayNodeport.enabled }}
+{{- range .Values.exemptions.istioGatewayNodeport.gateways }}
+---
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: {{ . }}-ingressgateway-nodeport
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowNodePortServices
+      matcher:
+        namespace: "istio-{{ . }}-gateway"
+        name: "{{ . }}-ingressgateway"
+        kind: service
+      title: "{{ . }} nodeport exemption"
+      description: "The {{ . }} ingressgateway uses a nodeport service due to external loadbalancing"
+{{- end }}
+{{- end }}

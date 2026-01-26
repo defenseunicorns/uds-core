@@ -118,12 +118,20 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     client.attributes["uds.core.groups"] = "";
   }
 
+  if (client.attributes["logout.confirmation.enabled"]) {
+    log.debug(
+      `User supplied logout.confirmation.enabled=${client.attributes["logout.confirmation.enabled"]} for client ${client.clientId}, skipping override`,
+    );
+  } else {
+    client.attributes["logout.confirmation.enabled"] = "true";
+  }
+
   // Assert that the result conforms to Client type
   return client as Client;
 }
 
 export async function syncClient(
-  { secretName, secretTemplate, ...clientReq }: Sso,
+  { secretConfig, ...clientReq }: Sso,
   pkg: UDSPackage,
   isRetry = false,
 ) {
@@ -150,8 +158,8 @@ export async function syncClient(
       log.error(`${msg}, retrying...`);
 
       try {
-        // Ensure we pass the same inputs bass to this function, including the secret name/template
-        return await syncClient({ secretName, secretTemplate, ...clientReq }, pkg, true);
+        // Ensure we pass the same inputs to this function, including the secretConfig
+        return await syncClient({ secretConfig, ...clientReq }, pkg, true);
       } catch (retryErr) {
         // If the retry fails, log the retry error and throw the original error
         const retryMsg =
@@ -174,7 +182,7 @@ export async function syncClient(
   // Create or update the client secret
   if (!client.publicClient) {
     const generation = (pkg.metadata?.generation ?? 0).toString();
-    const sanitizedSecretName = sanitizeResourceName(secretName || name);
+    const sanitizedSecretName = sanitizeResourceName(secretConfig?.name || name);
 
     // Prepare default labels
     const secretLabels: Record<string, string> = {
@@ -183,16 +191,16 @@ export async function syncClient(
     };
 
     // Apply any additional user-defined labels from the CRD
-    if (clientReq.secretLabels) {
-      Object.assign(secretLabels, clientReq.secretLabels);
+    if (secretConfig?.labels) {
+      Object.assign(secretLabels, secretConfig.labels);
     }
 
     // Prepare annotations if defined in the CRD
     const secretAnnotations: Record<string, string> = {};
 
     // Apply any user-defined annotations from the CRD
-    if (clientReq.secretAnnotations) {
-      Object.assign(secretAnnotations, clientReq.secretAnnotations);
+    if (secretConfig?.annotations) {
+      Object.assign(secretAnnotations, secretConfig.annotations);
     }
 
     await K8s(kind.Secret).Apply({
@@ -206,7 +214,7 @@ export async function syncClient(
         // Use the CR as the owner ref for each VirtualService
         ownerReferences: getOwnerRef(pkg),
       },
-      data: generateSecretData(client, secretTemplate),
+      data: generateSecretData(client, secretConfig?.template),
     });
   }
 

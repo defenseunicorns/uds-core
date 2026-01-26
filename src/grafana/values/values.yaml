@@ -6,9 +6,27 @@ sidecar:
     enabled: true
     label: grafana_dashboard
     searchNamespace: ALL
+    initDashboards: true
+    restartPolicy: Always
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 60 # 5 minutes
   datasources:
     enabled: true
     label: grafana_datasource
+    initDatasources: true
+    restartPolicy: Always
+    startupProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      failureThreshold: 60 # 5 minutes
 
 extraSecretMounts:
   - name: auth-generic-oauth-secret-mount

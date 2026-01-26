@@ -96,3 +96,13 @@ components:
                 kind: ClusterConfig
                 name: uds-cluster-config
                 condition: "'{.status.phase}'=Ready"
+
+  - name: uds-exemptions
+    required: true
+    charts:
+      - name: uds-exemptions
+        namespace: uds-policy-exemptions
+        version: 0.1.0
+        localPath: uds-exemptions
+        valuesFiles:
+          - uds-exemptions/values.yaml

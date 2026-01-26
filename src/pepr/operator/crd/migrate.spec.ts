@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { buildMigratedAuthserviceStatus, migrateStatus } from "./migrate";
+import { buildMigratedAuthserviceStatus, migrate, migrateStatus } from "./migrate";
 import { PkgStatus, Sso, UDSPackage } from ".";
 import { AuthserviceClient } from "./generated/package-v1alpha1";
 
@@ -81,5 +81,126 @@ describe("migrateStatus", () => {
     migrateStatus(pkg);
 
     expect(pkg.status?.authserviceClients).toBe(existing);
+  });
+});
+
+describe("migrate SSO secretConfig fields", () => {
+  it("migrates all secret-related fields to secretConfig", () => {
+    const pkg = makePkg({
+      spec: {
+        sso: [
+          {
+            name: "test-client",
+            clientId: "test",
+            secretName: "my-secret",
+            secretLabels: { app: "test" },
+            secretAnnotations: { reload: "true" },
+            secretTemplate: { "config.json": "{{secret}}" },
+          } as Sso,
+        ],
+      },
+    });
+
+    migrate(pkg);
+
+    const secretConfig = pkg.spec?.sso?.[0].secretConfig;
+    expect(secretConfig?.name).toBe("my-secret");
+    expect(secretConfig?.labels).toEqual({ app: "test" });
+    expect(secretConfig?.annotations).toEqual({ reload: "true" });
+    expect(secretConfig?.template).toEqual({ "config.json": "{{secret}}" });
+
+    // Verify old fields are deleted
+    expect(pkg.spec?.sso?.[0].secretName).toBeUndefined();
+    expect(pkg.spec?.sso?.[0].secretLabels).toBeUndefined();
+    expect(pkg.spec?.sso?.[0].secretAnnotations).toBeUndefined();
+    expect(pkg.spec?.sso?.[0].secretTemplate).toBeUndefined();
+  });
+
+  it("preserves existing secretConfig when present", () => {
+    const pkg = makePkg({
+      spec: {
+        sso: [
+          {
+            name: "test-client",
+            clientId: "test",
+            secretConfig: {
+              name: "existing-secret",
+              labels: { existing: "label" },
+            },
+          } as Sso,
+        ],
+      },
+    });
+
+    migrate(pkg);
+
+    expect(pkg.spec?.sso?.[0].secretConfig).toEqual({
+      name: "existing-secret",
+      labels: { existing: "label" },
+    });
+  });
+
+  it("gives precedence to new secretConfig fields over deprecated fields", () => {
+    const pkg = makePkg({
+      spec: {
+        sso: [
+          {
+            name: "test-client",
+            clientId: "test",
+            secretName: "old-secret-name",
+            secretLabels: { old: "label" },
+            secretConfig: {
+              name: "new-secret-name",
+              labels: { new: "label" },
+              annotations: { new: "annotation" },
+            },
+          } as Sso,
+        ],
+      },
+    });
+
+    migrate(pkg);
+
+    // New fields should be preserved
+    expect(pkg.spec?.sso?.[0].secretConfig?.name).toBe("new-secret-name");
+    expect(pkg.spec?.sso?.[0].secretConfig?.labels).toEqual({ new: "label" });
+    expect(pkg.spec?.sso?.[0].secretConfig?.annotations).toEqual({ new: "annotation" });
+
+    // Deprecated fields should be deleted
+    expect(pkg.spec?.sso?.[0].secretName).toBeUndefined();
+    expect(pkg.spec?.sso?.[0].secretLabels).toBeUndefined();
+  });
+
+  it("migrates multiple SSO clients independently", () => {
+    const pkg = makePkg({
+      spec: {
+        sso: [
+          {
+            name: "client-a",
+            clientId: "a",
+            secretName: "secret-a",
+          } as Sso,
+          {
+            name: "client-b",
+            clientId: "b",
+            secretLabels: { app: "b" },
+          } as Sso,
+          {
+            name: "client-c",
+            clientId: "c",
+          } as Sso,
+        ],
+      },
+    });
+
+    migrate(pkg);
+
+    expect(pkg.spec?.sso?.[0].secretConfig?.name).toBe("secret-a");
+    expect(pkg.spec?.sso?.[0].secretName).toBeUndefined();
+
+    expect(pkg.spec?.sso?.[1].secretConfig?.labels).toEqual({ app: "b" });
+    expect(pkg.spec?.sso?.[1].secretLabels).toBeUndefined();
+
+    expect(pkg.spec?.sso?.[2].secretConfig).toBeUndefined();
   });
 });

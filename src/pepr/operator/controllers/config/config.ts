@@ -8,7 +8,11 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
 import { validateCfg } from "../../crd/validators/clusterconfig-validator";
-import { updateAllCaBundleConfigMaps } from "../ca-bundles/ca-bundle";
+import {
+  buildCABundleContent,
+  updateAllCaBundleConfigMaps,
+  updateIstioCAConfigMap,
+} from "../ca-bundles/ca-bundle";
 import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
@@ -176,18 +180,14 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
 }
 
 /**
- * Determines if CA bundle ConfigMaps need to be updated based on configuration changes
+ * Determines if CA bundle configuration has changed compared to current global state
  *
  * @param caBundle The new CA bundle configuration from ClusterConfig
  * @param dodCerts The DoD certificate string from the ConfigMap
  * @param publicCerts The public certificate string from the ConfigMap
- * @returns true if CA bundle ConfigMaps need updating, false otherwise
+ * @returns true if CA bundle configuration has changed, false otherwise
  */
-function shouldUpdateCaBundleConfigMaps(
-  caBundle: ConfigCABundle,
-  dodCerts: string,
-  publicCerts: string,
-): boolean {
+function caConfigChanged(caBundle: ConfigCABundle, dodCerts: string, publicCerts: string): boolean {
   // Check if user-provided certs changed
   if (UDSConfig.caBundle.certs !== caBundle.certs) {
     return true;
@@ -221,6 +221,31 @@ function shouldUpdateCaBundleConfigMaps(
 }
 
 /**
+ * Fetches DoD and Public CA certificates from the uds-ca-certs ConfigMap
+ *
+ * @returns Object containing dodCACerts and publicCACerts strings, or empty strings if not found
+ */
+async function fetchCACerts(): Promise<{ dodCerts: string; publicCerts: string }> {
+  try {
+    const caCertsConfigMap = await K8s(kind.ConfigMap)
+      .InNamespace("pepr-system")
+      .Get("uds-ca-certs");
+    return {
+      dodCerts: caCertsConfigMap.data?.["dodCACerts"] || "",
+      publicCerts: caCertsConfigMap.data?.["publicCACerts"] || "",
+    };
+  } catch (e) {
+    if (e?.status === 404) {
+      configLog.debug("uds-ca-certs ConfigMap not found, proceeding with defaults");
+      return { dodCerts: "", publicCerts: "" };
+    } else {
+      configLog.error(e, "Failed to fetch uds-ca-certs");
+      throw e;
+    }
+  }
+}
+
+/**
  * Handles updates to CA bundle configuration including DoD and public certificates
  *
  * @param caBundle The CA bundle configuration from the ClusterConfig
@@ -240,51 +265,23 @@ async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResou
   }
 
   // Load in the DoD and Public certs from the configmap
-  let caCertsConfigMap: kind.ConfigMap;
-  let dodCerts = "";
-  let publicCerts = "";
+  const { dodCerts, publicCerts } = await fetchCACerts();
 
-  try {
-    caCertsConfigMap = await K8s(kind.ConfigMap).InNamespace("pepr-system").Get("uds-ca-certs");
-    // Extract cert data if ConfigMap exists
-    if (caCertsConfigMap.data) {
-      dodCerts = caCertsConfigMap.data["dodCACerts"] || "";
-      publicCerts = caCertsConfigMap.data["publicCACerts"] || "";
-    }
-  } catch (e) {
-    // Check if it's a 404 (ConfigMap not found) vs other K8s API failures
-    if (e?.status === 404) {
-      configLog.warn("CA certs ConfigMap not found, using empty values for DoD and public certs");
-      // Continue with default empty values
-    } else {
-      configLog.error("Failed to fetch CA certs ConfigMap due to K8s API error", e);
-      throw e; // Re-throw K8s API errors
-    }
-  }
+  // Check if CA bundle configuration has changed to determine if reloads/side-effects are needed
+  const hasCaConfigChanged = caConfigChanged(caBundle, dodCerts, publicCerts);
 
-  // Check if CA bundle ConfigMaps need updates based on configuration changes
-  const caBundleConfigMapsNeedUpdate = shouldUpdateCaBundleConfigMaps(
-    caBundle,
-    dodCerts,
-    publicCerts,
-  );
-
-  if (UDSConfig.caBundle.certs !== caBundle.certs) {
-    UDSConfig.caBundle.certs = caBundle.certs || "";
-
-    // Handle changes to the Authservice configuration for CA Certs
-    if (updateClusterResources) {
-      await performAuthserviceUpdate("change to CA Cert");
-    }
-  }
-
+  // Update global state for all types of certs
+  UDSConfig.caBundle.certs = caBundle.certs || "";
   UDSConfig.caBundle.includeDoDCerts = caBundle.includeDoDCerts === true;
   UDSConfig.caBundle.includePublicCerts = caBundle.includePublicCerts === true;
   UDSConfig.caBundle.dodCerts = dodCerts;
   UDSConfig.caBundle.publicCerts = publicCerts;
 
-  // Handle global updates to Trust Bundle Configmaps
-  if (caBundleConfigMapsNeedUpdate && updateClusterResources) {
+  // Handle global updates to Trust Bundle Configmaps and Authservice
+  if (updateClusterResources) {
+    await performAuthserviceUpdate(
+      hasCaConfigChanged ? "Global CA bundle change" : "Idempotent sync",
+    );
     await updateAllCaBundleConfigMaps();
   }
 }
@@ -432,8 +429,22 @@ export async function loadUDSConfig() {
 
     try {
       validateCfg(cfg);
+
+      // Pre-fetch DoD/Public certs from the ConfigMap to populate UDSConfig before the initial sync
+      const { dodCerts, publicCerts } = await fetchCACerts();
+      UDSConfig.caBundle.dodCerts = dodCerts;
+      UDSConfig.caBundle.publicCerts = publicCerts;
+      if (dodCerts || publicCerts) {
+        configLog.debug("Pre-fetched DoD/Public certs during loadUDSConfig");
+      }
+
       await handleCfg(cfg, ConfigAction.LOAD);
       await handleCfgSecret(cfgSecret, ConfigAction.LOAD);
+
+      // Ensure Istio CA ConfigMap is created during initial load
+      // istiod now depends on the 'uds-trust-bundle' ConfigMap
+      await updateIstioCAConfigMap();
+
       configLog.info(redactConfig(), "Loaded UDS Config");
     } catch (e) {
       configLog.error(e);
@@ -475,8 +486,9 @@ async function performAuthserviceUpdate(reason: string) {
   const authserviceUpdate: AuthServiceEvent = {
     name: "global-config-update",
     action: Action.UpdateGlobalConfig,
-    // Base64 decode the CA cert before passing to the update function
-    trustedCA: atob(UDSConfig.caBundle.certs),
+    // Note: Use the combined CA bundle (User + DoD + Public) for Authservice trust.
+    // Authservice needs the raw PEM content, not base64. buildCABundleContent() gives us the combined, decoded string it expects.
+    trustedCA: buildCABundleContent(),
     redisUri: UDSConfig.authserviceRedisUri,
   };
   configLog.debug(`Updating Authservice secret based on: ${reason}`);
@@ -504,8 +516,8 @@ export async function handleUDSCACertsConfigMapUpdate(configMap: kind.ConfigMap)
       includePublicCerts: UDSConfig.caBundle.includePublicCerts,
     };
 
-    // Check if updates are needed before making any changes
-    const needsUpdate = shouldUpdateCaBundleConfigMaps(currentCaBundle, dodCerts, publicCerts);
+    // Check if configuration has changed to determine if reloads/side-effects are needed
+    const needsUpdate = caConfigChanged(currentCaBundle, dodCerts, publicCerts);
 
     if (!needsUpdate) {
       configLog.debug("No CA bundle updates needed, skipping");

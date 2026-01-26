@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 cni:
-  image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.28.1-fips
+  image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.28.3-fips

@@ -38,9 +38,9 @@ export async function authservice(
     throw new Error("Package metadata is missing required fields");
   }
 
-  // Get the requested service mesh mode, default to sidecar if not specified
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
-  const previousMeshMode = pkg.status?.meshMode || Mode.Sidecar;
+  // Get the requested service mesh mode, default to ambient if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  const previousMeshMode = pkg.status?.meshMode || Mode.Ambient;
   const isAmbient = istioMode === Mode.Ambient;
 
   // Get the list of authservice-enabled clients from the package
@@ -238,7 +238,7 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
       };
     }
     if (!event.trustedCA) {
-      // Remove the trusted certificate authority if a CA is not provided
+      // Remove the trust configuration if a CA bundle is not provided
       delete config.default_oidc_config.trusted_certificate_authority;
     } else {
       // Update the trusted certificate authority if a CA is provided

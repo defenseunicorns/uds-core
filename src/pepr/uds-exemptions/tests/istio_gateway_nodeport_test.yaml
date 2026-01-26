@@ -1,0 +1,65 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: UDS Exemptions - Istio Gateway Nodeport
+templates:
+  - istio-gateway-nodeport.yaml
+
+tests:
+  - it: should render exemptions when enabled with multiple gateways
+    set:
+      exemptions:
+        istioGatewayNodeport:
+          enabled: true
+          gateways:
+            - admin
+            - tenant
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.name
+          value: admin-ingressgateway-nodeport
+        documentIndex: 0
+      - equal:
+          path: metadata.namespace
+          value: uds-policy-exemptions
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].policies[0]
+          value: DisallowNodePortServices
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].matcher.namespace
+          value: istio-admin-gateway
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].matcher.name
+          value: admin-ingressgateway
+        documentIndex: 0
+      - equal:
+          path: spec.exemptions[0].matcher.kind
+          value: service
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: tenant-ingressgateway-nodeport
+        documentIndex: 1
+      - equal:
+          path: spec.exemptions[0].matcher.namespace
+          value: istio-tenant-gateway
+        documentIndex: 1
+
+  - it: should not render exemptions when disabled
+    set:
+      exemptions:
+        istioGatewayNodeport:
+          enabled: false
+          gateways:
+            - admin
+            - tenant
+    asserts:
+      - hasDocuments:
+          count: 0

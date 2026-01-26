@@ -6,12 +6,13 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
+import { getOwnerRef, purgeOrphans } from "../utils";
 import {
+  buildCABundleContent,
+  CA_BUNDLE_CONFIGMAP_LABEL,
   caBundleConfigMap,
   updateAllCaBundleConfigMaps,
-  CA_BUNDLE_CONFIGMAP_LABEL,
 } from "./ca-bundle";
-import { getOwnerRef, purgeOrphans } from "../utils";
 
 // Mock dependencies
 const mockK8sApply = vi.fn();
@@ -58,6 +59,37 @@ vi.mock("pepr", async importOriginal => {
           }),
           WithLabel: vi.fn().mockReturnValue({
             Get: mockWithLabelGet,
+          }),
+        };
+      } else if (resourceKind === actual.kind.Namespace) {
+        return {
+          Apply: mockK8sApply,
+        };
+      } else if (resourceKind === actual.kind.Secret) {
+        // Handle Secret operations
+        return {
+          Apply: mockK8sApply,
+          InNamespace: vi.fn().mockReturnValue({
+            Get: vi.fn().mockResolvedValue({
+              metadata: { name: "test-secret", namespace: "test-ns" },
+              data: {},
+            }),
+          }),
+        };
+      } else if (resourceKind === actual.kind.Pod) {
+        // Handle Pod operations for reloadPods discovery
+        return {
+          InNamespace: vi.fn().mockReturnValue({
+            WithLabel: vi.fn().mockReturnValue({
+              Get: vi.fn().mockResolvedValue({
+                items: [], // Return empty list to skip reload logic in tests
+              }),
+            }),
+          }),
+          WithLabel: vi.fn().mockReturnValue({
+            Get: vi.fn().mockResolvedValue({
+              items: [],
+            }),
           }),
         };
       } else {
@@ -136,6 +168,9 @@ describe("CA Bundle ConfigMap", () => {
     UDSConfig.caBundle.includePublicCerts = false;
     UDSConfig.caBundle.dodCerts = "";
     UDSConfig.caBundle.publicCerts = "";
+
+    // Set PEPR_WATCH_MODE to 'true' by default
+    process.env.PEPR_WATCH_MODE = "true";
   });
 
   describe("caBundleConfigMap", () => {
@@ -446,11 +481,17 @@ describe("CA Bundle ConfigMap", () => {
 
     it("processes all UDS packages and calls caBundleConfigMap for each", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.isIdentityDeployed = true;
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio ConfigMap
+
+      // Should process Namespace
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
 
       // Should process package1
       expect(mockK8sApply).toHaveBeenCalledWith(
@@ -486,32 +527,108 @@ describe("CA Bundle ConfigMap", () => {
       UDSConfig.caBundle.certs = "";
       UDSConfig.caBundle.includeDoDCerts = false;
       UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.isIdentityDeployed = true;
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
-      expect(mockK8sDelete).toHaveBeenCalledTimes(2); // One for each package
+      // Should be called 2 times: 1 for Namespace, 1 for the Istio ConfigMap update (clearing it)
+      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            name: "uds-trust-bundle",
+            namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
+          }),
+          data: {
+            "extra.pem": "",
+          },
+        }),
+        { force: true },
+      );
+      expect(mockK8sDelete).toHaveBeenCalledTimes(2);
     });
 
-    it("returns early when no UDS packages exist", async () => {
+    it("synchronizes Istio trust bundle even when no UDS packages exist", async () => {
       mockUDSPackageGet.mockResolvedValue({ items: [] });
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "ConfigMap",
+          metadata: expect.objectContaining({
+            name: "uds-trust-bundle",
+            namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
+          }),
+        }),
+        { force: true },
+      );
       expect(mockK8sDelete).not.toHaveBeenCalled();
     });
 
-    it("returns early when packages.items is undefined", async () => {
+    it("synchronizes Istio trust bundle even when packages.items is undefined", async () => {
       mockUDSPackageGet.mockResolvedValue({});
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).not.toHaveBeenCalled();
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+      expect(mockK8sApply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kind: "ConfigMap",
+          metadata: expect.objectContaining({
+            name: "uds-trust-bundle",
+            namespace: "istio-system",
+            labels: {
+              "uds.dev/pod-reload": "true",
+            },
+          }),
+        }),
+        { force: true },
+      );
       expect(mockK8sDelete).not.toHaveBeenCalled();
+    });
+
+    it("skips Istio CA ConfigMap management when not in watcher or dev mode", async () => {
+      process.env.PEPR_WATCH_MODE = "false";
+      process.env.PEPR_MODE = "prod";
+      mockUDSPackageGet.mockResolvedValue({ items: [] });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      // Should not call Apply for Namespace or ConfigMap in istio-system
+      expect(mockK8sApply).not.toHaveBeenCalled();
+    });
+
+    it("manages Istio CA ConfigMap when in dev mode even if not in watcher mode", async () => {
+      process.env.PEPR_WATCH_MODE = "false";
+      process.env.PEPR_MODE = "dev";
+      mockUDSPackageGet.mockResolvedValue({ items: [] });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockUDSPackageGet).toHaveBeenCalled();
+      // Should call Apply for Namespace and ConfigMap
+      expect(mockK8sApply).toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
     });
 
     it("throws error when package listing fails", async () => {
@@ -524,16 +641,24 @@ describe("CA Bundle ConfigMap", () => {
 
     it("continues processing other packages when one package fails", async () => {
       UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.isIdentityDeployed = true;
 
-      // Make the first package fail
-      mockK8sApply
-        .mockRejectedValueOnce(new Error("Apply failed for package1"))
-        .mockResolvedValueOnce({});
+      // Mock specific Apply behavior based on the resource metadata to avoid race conditions in mock ordering
+      mockK8sApply.mockReset();
+      mockK8sApply.mockImplementation(manifest => {
+        if (manifest.kind === "Namespace") {
+          return Promise.resolve({});
+        }
+        if (manifest.metadata.name === "custom-ca-bundle-1") {
+          return Promise.reject(new Error("Apply failed for package1"));
+        }
+        return Promise.resolve({});
+      });
 
       await updateAllCaBundleConfigMaps();
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
-      expect(mockK8sApply).toHaveBeenCalledTimes(2);
+      expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio CM
 
       // Should log error for first package but continue
       expect(mockLog.error).toHaveBeenCalledWith(
@@ -581,6 +706,42 @@ describe("CA Bundle ConfigMap", () => {
         }),
         { force: true },
       );
+    });
+  });
+
+  describe("buildCABundleContent", () => {
+    it("merges all certificate sources correctly", () => {
+      UDSConfig.caBundle.certs = validCertBase64;
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.includePublicCerts = true;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      const expected = [validCert, dodCerts, publicCerts].join("\n\n");
+      expect(result).toBe(expected);
+    });
+
+    it("handles missing sources correctly", () => {
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = true;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      expect(result).toBe(dodCerts);
+    });
+
+    it("returns empty string when no sources are configured", () => {
+      UDSConfig.caBundle.certs = "";
+      UDSConfig.caBundle.includeDoDCerts = false;
+      UDSConfig.caBundle.includePublicCerts = false;
+      UDSConfig.caBundle.dodCerts = btoa(dodCerts);
+      UDSConfig.caBundle.publicCerts = btoa(publicCerts);
+
+      const result = buildCABundleContent();
+      expect(result).toBe("");
     });
   });
 });
