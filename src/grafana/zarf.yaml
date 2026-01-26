@@ -34,7 +34,7 @@ components:
       - docker.io/grafana/grafana:12.3.1
       - docker.io/curlimages/curl:8.17.0
       - docker.io/library/busybox:1.37.0
-      - ghcr.io/kiwigrid/k8s-sidecar:2.2.3
+      - ghcr.io/kiwigrid/k8s-sidecar:2.4.0
 
   - name: grafana
     required: true
@@ -49,7 +49,7 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/grafana/grafana:12.3.1
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.7
-      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.2.3
+      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.4.0
 
   - name: grafana
     required: true
@@ -65,4 +65,4 @@ components:
       - quay.io/rfcurated/grafana:12.3.1-jammy-scratch-fips-rfcurated
       - quay.io/rfcurated/busybox:1.37.0-musl-rf.1-fips-rfcurated
       - quay.io/rfcurated/curl:8.17.0-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.2.3-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.4.0-jammy-scratch-fips-rfcurated-rfhardened
