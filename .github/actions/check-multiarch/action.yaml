@@ -12,6 +12,7 @@ inputs:
   craneVersion:
     description: "Version of crane (go-containerregistry) to install"
     required: false
+    # renovate: datasource=github-tags depName=google/go-containerregistry versioning=semver
     default: "v0.20.6"
 
 runs:
