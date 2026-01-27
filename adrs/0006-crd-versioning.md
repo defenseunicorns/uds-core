@@ -41,7 +41,7 @@ The YouTube talk "[The Missing Talk About API Versioning & Evolution in Your Dev
 
 These approaches have been designed to enable rapid iteration and provide minimal backwards compatibility guarantees. Therefore, they are not suitable for UDS Core.
 
-The last approach considered is using `x-kubernetes-preserve-unknown-fields` annotation. This approach is strongly discouraged by the Kubernetes community and is not recommended for production use.
+The last approach considered is using the `x-kubernetes-preserve-unknown-fields` schema extension field. This approach is strongly discouraged by the Kubernetes community and is not recommended for production use.
 
 ## Kubernetes-native CRD versioning principles
 
