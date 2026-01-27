@@ -36,10 +36,10 @@ components:
     manifests:
       - name: egress-pkg
         files:
-          - "app-egress-package.yaml"
+          - "app-egress-sidecar-package.yaml"
       - name: egress-app
         files:
-          - "app-egress.yaml"
+          - "app-egress-sidecar.yaml"
     images:
       - curlimages/curl:latest
 

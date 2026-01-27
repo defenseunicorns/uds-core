@@ -41,6 +41,12 @@ components:
     import:
       path: ../base
 
+  # UDS Exemptions
+  - name: uds-exemptions
+    required: true
+    import:
+      path: ../base
+
   # Istio
   - name: istio-controlplane
     required: true

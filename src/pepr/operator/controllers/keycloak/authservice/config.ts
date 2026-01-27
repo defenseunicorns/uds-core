@@ -6,6 +6,7 @@
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 
+import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { UDSConfig } from "../../config/config";
 import { Client } from "../types";
 import { buildChain, log } from "./authservice";
@@ -105,7 +106,7 @@ export function buildInitialSecret(): AuthserviceConfig {
         preamble: "Bearer",
         header: "Authorization",
       },
-      trusted_certificate_authority: `${atob(UDSConfig.caBundle.certs)}`,
+      trusted_certificate_authority: buildCABundleContent(),
       logout: {
         path: "/globallogout",
         redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,

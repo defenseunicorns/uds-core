@@ -2,4 +2,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 cni:
-  image: quay.io/rfcurated/istio/install-cni:1.28.1-jammy-fips-rfcurated-rfhardened
+  image: quay.io/rfcurated/istio/install-cni:1.28.3-jammy-fips-rfcurated-rfhardened

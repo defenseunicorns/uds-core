@@ -40,6 +40,12 @@ components:
     import:
       path: ../../src/pepr
 
+  # UDS Exemptions
+  - name: uds-exemptions
+    required: true
+    import:
+      path: ../../src/pepr
+
   # Istio
   - name: istio-controlplane
     required: true

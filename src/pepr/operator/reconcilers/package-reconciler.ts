@@ -88,8 +88,8 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   const metadata = pkg.metadata!;
   const { namespace } = metadata;
 
-  // Get the requested service mesh mode, default to sidecar if not specified
-  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+  // Get the requested service mesh mode, default to ambient if not specified
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
   // 1. First, ensure network policies are in place
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
@@ -205,7 +205,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     });
     // Remove any Authservice configuration - retry on failure
     await retryWithDelay(async function cleanupAuthserviceConfig() {
-      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar;
+      const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
       return purgeAuthserviceClients(pkg, [], currentMeshMode, currentMeshMode);
     }, log);
   } catch (e) {
@@ -258,7 +258,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
         pkg,
         createHostResourceMap(pkg),
         PackageAction.Remove,
-        pkg.spec?.network?.serviceMesh?.mode || Mode.Sidecar,
+        pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient,
       );
     }, log);
   } catch (e) {

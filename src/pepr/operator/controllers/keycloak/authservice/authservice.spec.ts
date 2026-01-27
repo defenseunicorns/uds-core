@@ -4,8 +4,15 @@
  */
 
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
+
+// Mock buildCABundleContent first
+vi.mock("../../ca-bundles/ca-bundle", () => ({
+  buildCABundleContent: vi.fn(),
+}));
+
 import { Sso, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
+import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
@@ -14,6 +21,7 @@ import { authservice, buildChain, buildConfig } from "./authservice";
 import * as configModule from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
 import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
+const mockBuildCABundleContent = vi.mocked(buildCABundleContent);
 
 // Mock the waypoint utilities
 vi.mock("../../istio/waypoint-utils", () => ({
@@ -423,14 +431,11 @@ describe("authservice", () => {
   });
 
   test("should update trusted certificate authority to add value", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.AddClient,
-    });
+    // Mock buildCABundleContent to return empty string so inline trust is used
+    mockBuildCABundleContent.mockReturnValue("");
 
     const trustedCA = "some-trusted-ca";
-    config1 = buildConfig(config1, {
+    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
       name: "trusted-ca-update",
       action: Action.UpdateGlobalConfig,
       trustedCA: trustedCA,

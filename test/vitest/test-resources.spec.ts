@@ -46,5 +46,24 @@ describe("Test Resources Configuration", () => {
     });
   });
 
+  describe("Deprecated SSO Fields Migration", () => {
+    test("test-tenant-app SSO secret should be created with correct configuration", async () => {
+      // Get the secret created by the SSO controller
+      const secret = await K8s(kind.Secret)
+        .InNamespace("test-tenant-app")
+        .Get("uds-test-tenant-app-client-secret");
+
+      // Verify the secret exists
+      expect(secret).toBeDefined();
+      expect(secret.metadata?.name).toBe("uds-test-tenant-app-client-secret");
+
+      // Verify labels from deprecated secretLabels are applied
+      expect(secret.metadata?.labels?.app).toBe("uds-test-tenant-app");
+
+      // Verify annotations from deprecated secretAnnotations are applied
+      expect(secret.metadata?.annotations?.["uds.dev/test"]).toBe("test");
+    });
+  });
+
   // Additional test resource tests can be added in their own describe blocks
 });

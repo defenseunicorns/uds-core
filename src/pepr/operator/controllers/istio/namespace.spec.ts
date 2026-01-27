@@ -57,7 +57,7 @@ describe("enableIstio", () => {
         labels: {
           "b-label": "value-b",
           "a-label": "value-a",
-          "istio-injection": "enabled",
+          "istio.io/dataplane-mode": "ambient",
         },
         annotations: {
           "uds.dev/pkg-test-pkg": "true",
@@ -106,7 +106,7 @@ describe("enableIstio", () => {
     expect(mockApply).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({
-          labels: expect.objectContaining({ "istio-injection": "enabled" }),
+          labels: expect.objectContaining({ "istio.io/dataplane-mode": "ambient" }),
         }),
       }),
       { force: true },
@@ -117,7 +117,7 @@ describe("enableIstio", () => {
     // Mock existing namespace with annotations in one specific order
     mockGet.mockResolvedValue({
       metadata: {
-        labels: { "istio-injection": "enabled" },
+        labels: { "istio.io/dataplane-mode": "ambient" },
         annotations: {
           "z-annotation": "value-z",
           "a-annotation": "value-a",
@@ -155,7 +155,7 @@ describe("enableIstio", () => {
   test("package already exists, second reconciliation", async () => {
     mockGet.mockResolvedValue({
       metadata: {
-        labels: { "istio-injection": "enabled" },
+        labels: { "istio.io/dataplane-mode": "ambient" },
         annotations: {
           "uds.dev/pkg-test-pkg": "true",
           "uds.dev/original-istio-state": IstioState.None,
@@ -175,7 +175,10 @@ describe("enableIstio", () => {
   // Test that istio injection is applied for new packages without ambient mode
   test("sidecar package in plain namespace", async () => {
     mockGet.mockResolvedValue({ metadata: { labels: {}, annotations: {} } });
-    const pkg: UDSPackage = { metadata: { namespace: "test-ns", name: "test-pkg" }, spec: {} };
+    const pkg: UDSPackage = {
+      metadata: { namespace: "test-ns", name: "test-pkg" },
+      spec: { network: { serviceMesh: { mode: Mode.Sidecar } } },
+    };
 
     await enableIstio(pkg);
 
@@ -199,10 +202,7 @@ describe("enableIstio", () => {
   // Test that ambient mode is applied for new packages with ambient mode
   test("ambient package in plain namespace", async () => {
     mockGet.mockResolvedValue({ metadata: { labels: {}, annotations: {} } });
-    const pkg: UDSPackage = {
-      metadata: { namespace: "test-ns", name: "test-pkg" },
-      spec: { network: { serviceMesh: { mode: Mode.Ambient } } },
-    };
+    const pkg: UDSPackage = { metadata: { namespace: "test-ns", name: "test-pkg" }, spec: {} };
 
     await enableIstio(pkg);
 

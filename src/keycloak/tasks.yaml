@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.22.0/tasks.yaml
+  - config: https://raw.githubusercontent.com/defenseunicorns/uds-identity-config/v0.23.0/tasks.yaml
 
 tasks:
   - name: validate
@@ -29,7 +29,7 @@ tasks:
     actions:
       - cmd: |
           # renovate: datasource=docker depName=ghcr.io/defenseunicorns/uds/identity-config versioning=semver
-          IMAGE_TAG="0.22.0"
+          IMAGE_TAG="0.23.0"
           # Pre-pull image to simplify output
           docker pull ghcr.io/defenseunicorns/uds/identity-config:${IMAGE_TAG} -q
           # This is written to a file because it is larger than the max env size in the shell
