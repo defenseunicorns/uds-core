@@ -47,10 +47,6 @@ tasks:
           uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
           uds zarf tools kubectl apply -f hack/dev-manifests/
 
-      - description: "Create uds-trust-bundle ConfigMap for Istio"
-        cmd: |
-          uds zarf tools kubectl create configmap uds-trust-bundle -n istio-system --from-literal=extra.pem="" --dry-run=client -o yaml | uds zarf tools kubectl apply -f -
-
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
         cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress --components=${{ .inputs.istio_components }}"
