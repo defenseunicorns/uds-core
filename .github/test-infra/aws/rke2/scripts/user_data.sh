@@ -54,6 +54,8 @@ info "Setting up RKE2 config file"
 ./yq -i '.kube-apiserver-arg += "api-audiences=kubernetes.svc.default"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "service-account-issuer=https://${BUCKET_REGIONAL_DOMAIN_NAME}"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-apiserver-arg += "audit-log-path=/var/log/kubernetes/audit/audit.log"' /etc/rancher/rke2/config.yaml
+# Temporary, enable watch cache initiliazation feature gate
+./yq -i '.kube-apiserver-arg += "feature-gates=WatchCacheInitializationPostStartHook=true"' /etc/rancher/rke2/config.yaml
 #Fix for metrics server scraping of kubernetes api server components
 ./yq -i '.kube-controller-manager-arg[2] = "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
 ./yq -i '.kube-scheduler-arg += "bind-address=0.0.0.0"' /etc/rancher/rke2/config.yaml
