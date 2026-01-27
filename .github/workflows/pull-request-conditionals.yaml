@@ -27,7 +27,8 @@ on:
       - release-please-config.json
       - CODEOWNERS
       - LICENSE
-      - scripts/** # scripts/hacks that are used specifically for non-testing workflows
+      - scripts/renovate/**
+      - scripts/root-ca-retriever/**
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
@@ -131,6 +132,25 @@ jobs:
           event_name: ${{ github.event_name }}
           base_ref: ${{ github.base_ref }}
           head_ref: ${{ github.head_ref }}
+
+  check-multiarch:
+    runs-on: ubuntu-latest
+    name: Check multi-arch images
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      - name: Check multi-arch images
+        uses: ./.github/actions/check-multiarch
 
   # @lulaStart 11948466-9230-4498-be44-dbac784d86d1
   # This job triggers a separate workflow for each changed source package, if any.
