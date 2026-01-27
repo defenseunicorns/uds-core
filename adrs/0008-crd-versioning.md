@@ -14,7 +14,7 @@ UDS Core defines several Custom Resource Definitions (CRDs) that are currently a
 
 UDS Core will follow the **Kubernetes-native CRD versioning strategy** as defined in the [Kubernetes API deprecation policy](https://kubernetes.io/docs/reference/using-api/deprecation-policy/) and [CRD versioning documentation](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/). This approach provides the strongest backwards compatibility guarantees.
 
-The Kubernetes-native CRD versioning principles are outlined in the [Versioning Levels and Guarantees](#Kubernetes-native-CRD-versioning-principles) section below.
+The Kubernetes-native CRD versioning principles are outlined in the [Kubernetes-native CRD versioning principles](#Kubernetes-native-CRD-versioning-principles) section below.
 
 UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provides guaranteed backwards compatibility for production workloads and ensures that users can confidently build on UDS Core APIs knowing the stability contract.
 
