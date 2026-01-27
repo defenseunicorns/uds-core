@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6
@@ -110,6 +110,12 @@ components:
   # Prometheus
   - name: kube-prometheus-stack
     required: true
+    import:
+      path: ../monitoring
+
+  # Blackbox Exporter
+  - name: blackbox-exporter
+    required: false
     import:
       path: ../monitoring
 

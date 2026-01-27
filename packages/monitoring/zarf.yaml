@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -23,6 +23,13 @@ components:
     required: true
     import:
       path: ../../src/prometheus-stack
+
+  # Blackbox Exporter (Optional)
+  - name: blackbox-exporter
+    required: false
+    import:
+      path: ../../src/prometheus-stack
+
   # Grafana
   - name: grafana
     required: true

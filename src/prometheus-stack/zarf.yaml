@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -79,3 +79,48 @@ components:
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.88.0-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus:3.9.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.5-jammy-fips-rfcurated-rfhardened"
+
+  - name: blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: upstream
+    charts:
+      - name: blackbox-exporter
+        namespace: monitoring
+        version: 0.1.0
+        localPath: blackbox-exporter/chart
+        valuesFiles:
+          - "blackbox-exporter/values/upstream-values.yaml"
+    images:
+      - "quay.io/prometheus/blackbox-exporter:v0.28.0"
+
+  - name: blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: registry1
+    charts:
+      - name: blackbox-exporter
+        namespace: monitoring
+        version: 0.1.0
+        localPath: blackbox-exporter/chart
+        valuesFiles:
+          - "blackbox-exporter/values/registry1-values.yaml"
+    images:
+      - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
+
+  - name: blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: unicorn
+    charts:
+      - name: blackbox-exporter
+        namespace: monitoring
+        version: 0.1.0
+        localPath: blackbox-exporter/chart
+        valuesFiles:
+          - "blackbox-exporter/values/unicorn-values.yaml"
+    images:
+      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated"

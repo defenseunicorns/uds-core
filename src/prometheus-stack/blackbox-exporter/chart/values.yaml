@@ -1,0 +1,86 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Override namespace to monitoring
+namespaceOverride: monitoring
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 9115
+
+# Image configuration
+imagePullPolicy: IfNotPresent
+
+# Default blackbox configuration
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        valid_http_versions:
+          - "HTTP/1.1"
+          - "HTTP/2.0"
+        method: GET
+        follow_redirects: true
+
+# Security contexts
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Replica count
+replicaCount: 1
+
+# Health probes
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Scheduling
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Additional pod annotations
+podAnnotations: {}
+
+# Common labels applied to all resources
+commonLabels:
+  defenseunicorns_com_app: uds-core
+  defenseunicorns_com_component: blackbox-exporter
