@@ -22,14 +22,14 @@ jobs:
     steps:
       - uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98
       - name: Use Node.js 22
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: 24
           cache: "npm"
       - name: Run Lula Scan
         run: |
           # renovate: datasource=github-tags depName=defenseunicorns/lula versioning=semver
-          npx --yes lula2@0.9.1 crawl
+          npx --yes lula2@0.9.2 crawl
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
