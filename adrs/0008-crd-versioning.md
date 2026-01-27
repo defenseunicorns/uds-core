@@ -1,4 +1,4 @@
-# ADR: CRD Versioning
+# 8. CRD versioning strategy
 
 Date: 2026-01-27
 
