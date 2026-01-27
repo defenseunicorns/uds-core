@@ -69,8 +69,7 @@ This paragraph contains information related to the UDS Core based on [Kubernetes
 **Beta (v1beta1, v1beta2, etc.)**
 - Schema is well-tested and considered stable
 - Fields may only be removed or have breaking changes with proper deprecation
-- Must be deprecated for a minimum of 9 months or 3 UDS Core minor releases (whichever is longer)
-- After deprecation, must remain supported for a minimum of 9 months or 3 UDS Core minor releases (whichever is longer) before removal
+- Once marked as deprecated, beta versions must remain supported for a minimum of 9 months or 3 UDS Core minor releases (whichever is longer) before removal, aligning with the Kubernetes API deprecation policy
 - Breaking changes require incrementing the beta version (v1beta1 → v1beta2)
 - Beta versions must support conversion to/from other served versions
 
