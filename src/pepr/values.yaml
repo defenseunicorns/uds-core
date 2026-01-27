@@ -3,23 +3,53 @@
 
 # Setup RBAC for Pepr
 rbac:
-  # Core API resources
+  # Configmaps and Secrets
   - apiGroups:
       - ''
     resources:
       - configmaps
-      - endpoints
-      - events
-      - namespaces
       - secrets
-      - services
     verbs:
       - create
       - delete
       - get
       - list
       - patch
-      - update
+      - watch
+
+  # Endpoints and events
+  - apiGroups:
+      - ''
+    resources:
+      - endpoints
+      - events
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+
+  # Namespaces
+  - apiGroups:
+      - ''
+    resources:
+      - namespaces
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+
+  # Services
+  - apiGroups:
+      - ''
+    resources:
+      - services
+    verbs:
+      - get
+      - list
+      - patch
       - watch
 
   # Pods
@@ -32,7 +62,6 @@ rbac:
       - get
       - list
       - patch
-      - watch
 
   # Pod eviction subresource
   - apiGroups:
@@ -42,7 +71,7 @@ rbac:
     verbs:
       - create
 
-  # Nodes - read only
+  # Nodes
   - apiGroups:
       - ''
     resources:
@@ -72,7 +101,6 @@ rbac:
       - get
       - list
       - patch
-      - update
       - watch
 
   # Apps API resources
@@ -87,8 +115,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # Networking API resources
   - apiGroups:
@@ -101,8 +127,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # Gateway API resources
   - apiGroups:
@@ -115,8 +139,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # Istio security resources
   - apiGroups:
@@ -130,8 +152,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # Istio networking resources
   - apiGroups:
@@ -148,8 +168,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # Prometheus monitoring resources
   - apiGroups:
@@ -163,8 +181,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
   # UDS custom resources
   - apiGroups:
@@ -176,12 +192,9 @@ rbac:
       - clusterconfig
       - clusterconfig/status
     verbs:
-      - create
-      - delete
       - get
       - list
       - patch
-      - update
       - watch
 
   # CRD management
@@ -194,8 +207,6 @@ rbac:
       - get
       - list
       - patch
-      - update
-      - watch
 
 watcher:
   serviceMonitor:
