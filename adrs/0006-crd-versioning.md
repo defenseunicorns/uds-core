@@ -29,7 +29,7 @@ UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provid
 
 ### Negative
 
-- CRD schema evolution will require implementing a [Conersion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks)
+- CRD schema evolution will require implementing a [Conversion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks)
 - Long deprecation periods and increased maintenance burden to keep removed/renamed fields in the CRD schema
 
 ## Alternatives Considered
