@@ -19,6 +19,19 @@ components:
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
+    actions:
+      onDeploy:
+        after:
+          - wait:
+              cluster:
+                kind: crd
+                name: podmonitors.monitoring.coreos.com
+                condition: established
+          - wait:
+              cluster:
+                kind: crd
+                name: servicemonitors.monitoring.coreos.com
+                condition: established
 
   - name: kube-prometheus-stack
     required: true
