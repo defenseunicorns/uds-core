@@ -39,6 +39,7 @@ metadata:
   name: grafana
   namespace: grafana
 spec:
+  network:
     # Ambient mode is default; omit or set explicitly
     serviceMesh:
     # To use Sidecar mode, set:
