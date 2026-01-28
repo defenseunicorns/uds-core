@@ -33,9 +33,12 @@ tasks:
             namespace: monitoring
             condition: Ready
       - description: Validate blackbox exporter
-        cmd: |
-          echo "Validating blackbox exporter deployment..."
-          kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=prometheus-blackbox-exporter -n monitoring --timeout=300s
+        wait:
+          cluster:
+            kind: Pod
+            name: app.kubernetes.io/name=prometheus-blackbox-exporter
+            namespace: monitoring
+            condition: Ready
 
   - name: gen-crds
     actions:
