@@ -114,9 +114,3 @@ spec:
         selector:
           app.kubernetes.io/name: prometheus-blackbox-exporter
         remoteGenerated: Anywhere
-
-      - direction: Ingress
-        selector:
-          app.kubernetes.io/name: prometheus-blackbox-exporter
-        remoteGenerated: Anywhere
-        port: 9115

@@ -34,13 +34,8 @@ tasks:
             condition: Ready
       - description: Validate blackbox exporter
         cmd: |
-          # Only validate prometheus-blackbox-exporter if the helm release exists
-          if helm list -n monitoring -f prometheus-blackbox-exporter | grep -q prometheus-blackbox-exporter; then
-            echo "Blackbox exporter deployed, validating..."
-            kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=prometheus-blackbox-exporter -n monitoring --timeout=300s
-          else
-            echo "Blackbox exporter not deployed, skipping validation"
-          fi
+          echo "Validating blackbox exporter deployment..."
+          kubectl wait --for=condition=Ready pod -l app.kubernetes.io/name=prometheus-blackbox-exporter -n monitoring --timeout=300s
 
   - name: gen-crds
     actions:
@@ -80,11 +75,6 @@ tasks:
         dir: test/vitest
       - description: "Run Blackbox Exporter integration tests"
         cmd: |
-          # Only run prometheus-blackbox-exporter tests if the helm release exists
-          if helm list -n monitoring -f prometheus-blackbox-exporter | grep -q prometheus-blackbox-exporter; then
-            echo "Running Blackbox Exporter integration tests..."
-            npm ci && npx vitest run "blackbox-exporter"
-          else
-            echo "Blackbox exporter not deployed, skipping integration tests"
-          fi
+          echo "Running Blackbox Exporter integration tests..."
+          npm ci && npx vitest run "blackbox-exporter"
         dir: test/vitest

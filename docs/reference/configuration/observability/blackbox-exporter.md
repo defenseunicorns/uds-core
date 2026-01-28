@@ -22,7 +22,7 @@ Blackbox Exporter is deployed as an optional component within the core package. 
 packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.59.0-upstream
+    ref: x.x.x-upstream
     optionalComponents:
       - prometheus-blackbox-exporter
 ```
@@ -68,35 +68,3 @@ http_2xx:
     method: GET
     follow_redirects: true
 ```
-
-### Custom Configuration
-
-You can configure Blackbox Exporter by providing bundle overrides. The configuration structure follows the Prometheus Blackbox Exporter Helm chart values:
-
-```yaml
-packages:
-  - name: core
-    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
-    ref: 0.59.0-upstream
-    optionalComponents:
-      - prometheus-blackbox-exporter
-    overrides:
-      prometheus-blackbox-exporter:
-        config:
-          modules:
-            http_2xx:
-              prober: http
-              timeout: 10s
-              http:
-                valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
-                method: GET
-                follow_redirects: true
-                valid_status_codes: [200, 201, 202]
-            tcp_connect:
-              prober: tcp
-              timeout: 5s
-```
-
-:::note[Configuration Reference]
-Refer to the [Prometheus Blackbox Exporter documentation](https://github.com/prometheus/blackbox_exporter) for the complete configuration specification and supported module types.
-:::

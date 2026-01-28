@@ -85,11 +85,10 @@ components:
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: upstream
+    import:
+      path: common
     charts:
       - name: prometheus-blackbox-exporter
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/upstream-values.yaml"
     images:
@@ -100,11 +99,10 @@ components:
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: registry1
+    import:
+      path: common
     charts:
       - name: prometheus-blackbox-exporter
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/registry1-values.yaml"
     images:
@@ -115,11 +113,10 @@ components:
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: unicorn
+    import:
+      path: common
     charts:
       - name: prometheus-blackbox-exporter
-        namespace: monitoring
-        url: https://prometheus-community.github.io/helm-charts
-        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/unicorn-values.yaml"
     images:
