@@ -56,6 +56,15 @@ components:
         namespace: pepr-system
         version: 0.1.0
         localPath: uds-cluster-crds
+    actions:
+      onDeploy:
+        after:
+          - description: Validate ClusterConfig CRD
+            maxTotalSeconds: 60
+            wait:
+              cluster:
+                kind: CustomResourceDefinition
+                name: clusterconfig.uds.dev
 
   - name: uds-operator-config
     required: true
