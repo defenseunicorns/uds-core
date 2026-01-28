@@ -56,8 +56,6 @@ tasks:
           uds zarf tools yq -i '.definitions.ClusterConfig.additionalProperties = {}' schemas/clusterconfig-v1alpha1.schema.json
         description: "Generate JSON schema for clusterconfig.uds.dev"
 
-      - task: gen-manifests
-
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
@@ -77,17 +75,6 @@ tasks:
       - task: gen-docs
 
       - cmd: "npx pepr format"
-
-  - name: gen-manifests
-    description: "Generate CRD manifests"
-    actions:
-      - cmd: |
-          CRD_LIST="clusterconfig.uds.dev"
-          for CRD in $CRD_LIST; do
-             FILE="src/pepr/uds-cluster-crds/templates/$CRD.yaml"
-             uds zarf tools kubectl get crd $CRD -o yaml > $FILE
-             uds zarf tools yq -i 'del(.metadata.creationTimestamp,.metadata.generation,.metadata.resourceVersion,.metadata.uid,.status,.metadata.labels,.metadata.annotations)' $FILE
-          done
 
   - name: gen-docs
     description: "Generate Docs for generated CRDs"
