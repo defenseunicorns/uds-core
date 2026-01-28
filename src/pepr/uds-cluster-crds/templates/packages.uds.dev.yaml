@@ -7,6 +7,13 @@ metadata:
   name: packages.uds.dev
 spec:
   group: uds.dev
+  scope: Namespaced
+  names:
+    plural: packages
+    singular: package
+    kind: Package
+    shortNames:
+      - pkg
   versions:
     - name: v1alpha1
       served: true
@@ -1153,10 +1160,3 @@ spec:
                           additionalProperties:
                             type: string
                           default: {}
-  scope: Namespaced
-  names:
-    plural: packages
-    singular: package
-    kind: Package
-    shortNames:
-      - pkg

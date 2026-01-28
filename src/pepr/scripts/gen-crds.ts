@@ -27,13 +27,13 @@ const clusterConfigManifest = {
   metadata: { name: "clusterconfig.uds.dev" },
   spec: {
     group: "uds.dev",
-    versions: [clusterConfig],
     scope: "Cluster",
     names: {
       plural: "clusterconfig",
       singular: "clusterconfig",
       kind: "ClusterConfig",
     },
+    versions: [clusterConfig],
   },
 };
 
@@ -44,7 +44,6 @@ const packageManifest = {
   metadata: { name: "packages.uds.dev" },
   spec: {
     group: "uds.dev",
-    versions: [pkg],
     scope: "Namespaced",
     names: {
       plural: "packages",
@@ -52,6 +51,7 @@ const packageManifest = {
       kind: "Package",
       shortNames: ["pkg"],
     },
+    versions: [pkg],
   },
 };
 
@@ -62,7 +62,6 @@ const exemptionManifest = {
   metadata: { name: "exemptions.uds.dev" },
   spec: {
     group: "uds.dev",
-    versions: [exemption],
     scope: "Namespaced",
     names: {
       plural: "exemptions",
@@ -70,6 +69,7 @@ const exemptionManifest = {
       kind: "Exemption",
       shortNames: ["exempt"],
     },
+    versions: [exemption],
   },
 };
 
