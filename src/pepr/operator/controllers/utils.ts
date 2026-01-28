@@ -41,6 +41,8 @@ export function registerWatchEventHandlers(
   const eventHandlers: {
     [K in WatchEvent]?: (arg: WatchEventArgs<K, GenericClass>) => void;
   } = {
+    [WatchEvent.WATCH_ERROR]: err =>
+      log.debug(`WatchEvent WatchError (${watchName}): ${err.message}`),
     [WatchEvent.GIVE_UP]: err => {
       // If failure continues, log and exit
       log.error(
@@ -130,6 +132,8 @@ export async function purgeOrphans<T extends GenericClass>(
   }
 
   const resources = await query.Get();
+  log.debug("RESOURCES FROM query.Get(): " + JSON.stringify(resources, null, 2));
+  log.debug("Resource length: " + resources.items.length);
 
   for (const resource of resources.items) {
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
