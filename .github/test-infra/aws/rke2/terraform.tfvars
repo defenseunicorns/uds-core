@@ -4,4 +4,4 @@ os_distro    = "rhel"
 # Need to allow in from internet for github runner to connect to node
 allowed_in_cidrs = ["0.0.0.0/0"]
 
-rke2_version = "1.34"
+rke2_version = "1.33"
