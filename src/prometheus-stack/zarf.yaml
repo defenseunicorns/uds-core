@@ -80,46 +80,46 @@ components:
       - "quay.io/rfcurated/prometheus:3.9.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.5-jammy-fips-rfcurated-rfhardened"
 
-  - name: blackbox-exporter
+  - name: prometheus-blackbox-exporter
     required: false
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: upstream
     charts:
-      - name: blackbox-exporter
+      - name: prometheus-blackbox-exporter
         namespace: monitoring
-        version: 0.1.0
-        localPath: blackbox-exporter/chart
+        url: https://prometheus-community.github.io/helm-charts
+        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
 
-  - name: blackbox-exporter
+  - name: prometheus-blackbox-exporter
     required: false
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: registry1
     charts:
-      - name: blackbox-exporter
+      - name: prometheus-blackbox-exporter
         namespace: monitoring
-        version: 0.1.0
-        localPath: blackbox-exporter/chart
+        url: https://prometheus-community.github.io/helm-charts
+        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
 
-  - name: blackbox-exporter
+  - name: prometheus-blackbox-exporter
     required: false
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: unicorn
     charts:
-      - name: blackbox-exporter
+      - name: prometheus-blackbox-exporter
         namespace: monitoring
-        version: 0.1.0
-        localPath: blackbox-exporter/chart
+        url: https://prometheus-community.github.io/helm-charts
+        version: 11.7.0
         valuesFiles:
           - "blackbox-exporter/values/unicorn-values.yaml"
     images:

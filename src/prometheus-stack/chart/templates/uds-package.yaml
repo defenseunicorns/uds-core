@@ -112,11 +112,11 @@ spec:
       # Blackbox Exporter networking
       - direction: Egress
         selector:
-          app.kubernetes.io/name: blackbox-exporter
+          app.kubernetes.io/name: prometheus-blackbox-exporter
         remoteGenerated: Anywhere
 
       - direction: Ingress
         selector:
-          app.kubernetes.io/name: blackbox-exporter
+          app.kubernetes.io/name: prometheus-blackbox-exporter
         remoteGenerated: Anywhere
         port: 9115

@@ -43,7 +43,7 @@ packages:
       - istio-passthrough-gateway
       - istio-egress-gateway
       - metrics-server
-      - blackbox-exporter
+      - prometheus-blackbox-exporter
     overrides:
       pepr-uds-core:
         module:

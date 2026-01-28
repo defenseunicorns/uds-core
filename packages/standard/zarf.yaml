@@ -114,7 +114,7 @@ components:
       path: ../monitoring
 
   # Blackbox Exporter
-  - name: blackbox-exporter
+  - name: prometheus-blackbox-exporter
     required: false
     import:
       path: ../monitoring

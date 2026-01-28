@@ -12,8 +12,8 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
 
   beforeAll(async () => {
-    // Get blackbox-exporter service proxy
-    blackboxExporterProxy = await getForward("blackbox-exporter", "monitoring", 9115);
+    // Get prometheus-blackbox-exporter service proxy
+    blackboxExporterProxy = await getForward("prometheus-blackbox-exporter", "monitoring", 9115);
     // Get Prometheus proxy for metrics verification
     prometheusProxy = await getForward("kube-prometheus-stack-prometheus", "monitoring", 9090);
   });
@@ -59,7 +59,7 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
 
     // Verify basic metrics are available
     expect(blackboxMetrics.metric).toBeDefined();
-    expect(blackboxMetrics.metric.job).toBe("blackbox-exporter");
+    expect(blackboxMetrics.metric.job).toBe("prometheus-blackbox-exporter");
   });
 
   test("blackbox exporter should have build info with correct version", async () => {
@@ -102,9 +102,9 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
     expect(body.data).toBeDefined();
     expect(body.data.activeTargets.length).toBeGreaterThan(0);
 
-    // Find blackbox-exporter target
+    // Find prometheus-blackbox-exporter target
     const blackboxTarget = body.data.activeTargets.find(
-      target => target.labels.job === "blackbox-exporter",
+      target => target.labels.job === "prometheus-blackbox-exporter",
     );
 
     expect(blackboxTarget).toBeDefined();
@@ -126,9 +126,9 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
   });
 
   test("blackbox exporter should perform actual HTTP probe", async () => {
-    // Test that blackbox-exporter can actually probe an external endpoint
+    // Test that blackbox-exporter can actually probe an internal endpoint
     const probeResponse = await fetch(
-      `${blackboxExporterProxy.url}/probe?target=https://httpbin.org/status/200&module=http_2xx`,
+      `${blackboxExporterProxy.url}/probe?target=http://prometheus-operated.monitoring.svc.cluster.local:9090/metrics&module=http_2xx`,
     );
     expect(probeResponse.status).toBe(200);
 
@@ -151,7 +151,7 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
 
   test("blackbox exporter should have proper security contexts", async () => {
     const response = await fetch(
-      `${prometheusProxy.url}/api/v1/query?query=up{job="blackbox-exporter"}`,
+      `${prometheusProxy.url}/api/v1/query?query=up{job="prometheus-blackbox-exporter"}`,
     );
     expect(response.status).toBe(200);
 
@@ -169,6 +169,6 @@ describe("Blackbox Exporter", { retry: 1 }, () => {
 
     const upMetric = body.data.result[0];
     expect(upMetric.value[1]).toBe("1"); // Should be up
-    expect(upMetric.metric.job).toBe("blackbox-exporter");
+    expect(upMetric.metric.job).toBe("prometheus-blackbox-exporter");
   });
 });

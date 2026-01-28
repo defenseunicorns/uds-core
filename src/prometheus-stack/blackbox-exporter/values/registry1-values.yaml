@@ -6,3 +6,61 @@ image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/prometheus/blackbox_exporter
   tag: v0.28.0
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 9115
+
+# Default blackbox configuration
+config:
+  modules:
+    http_2xx:
+      prober: http
+      timeout: 5s
+      http:
+        valid_http_versions:
+          - "HTTP/1.1"
+          - "HTTP/2.0"
+        method: GET
+        follow_redirects: true
+
+# Security contexts (UDS Core requirements)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  capabilities:
+    drop:
+      - ALL
+
+# Resource limits (UDS Core requirements)
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# Replica count (configurable for HA)
+replicaCount: 1
+
+# PodDisruptionBudget for HA
+podDisruptionBudget:
+  minAvailable: 0
+
+# ServiceMonitor configuration
+serviceMonitor:
+  selfMonitor:
+    enabled: true
+    namespace: monitoring
+    interval: 30s
+    honorLabels: true
