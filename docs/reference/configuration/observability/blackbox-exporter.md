@@ -12,70 +12,20 @@ The Blackbox Exporter enables HTTP/HTTPS probing of external endpoints and servi
 
 ## Bundle Configuration
 
-Blackbox Exporter is included by default in the standard UDS Core bundle. To use it, include the monitoring package in your bundle:
-
-```yaml
-kind: UDSBundle
-metadata:
-  name: example-bundle-with-blackbox
-  description: An example bundle including blackbox-exporter
-  version: "0.1.0"
-
-packages:
-  - name: core-base
-    repository: ghcr.io/defenseunicorns/packages/uds/core-base
-    ref: 0.59.0-upstream
-  - name: core-monitoring
-    repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.59.0-upstream
-```
+Blackbox Exporter is included as an optional component of the UDS Core package.
 
 :::note
-Blackbox Exporter is deployed as an optional component within the monitoring package. It will be automatically included when using the standard UDS Core bundles.
+Blackbox Exporter is deployed as an optional component within the core package. You must explicitly enable it in the `optionalComponents` section of your bundle configuration.
 :::
 
-## Deployment
-
-### Standard Bundle
-
-Deploy the standard UDS Core bundle which includes Blackbox Exporter:
-
-```bash
-uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-amd64-0.59.0.tar.zst --confirm
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.59.0-upstream
+    optionalComponents:
+      - prometheus-blackbox-exporter
 ```
-
-### Custom Bundle
-
-For custom deployments, ensure the monitoring package is included in your bundle configuration.
-
-## What to Expect
-
-### After Deployment
-
-Once deployed, you'll see:
-
-- **Pod**: `blackbox-exporter-*` pod running in the `monitoring` namespace
-- **Service**: `blackbox-exporter` service on port 9115
-- **ServiceMonitor**: Automatic Prometheus metrics collection
-- **Network Policies**: Configured egress for external probing
-
-### Default Configuration
-
-The Blackbox Exporter comes pre-configured with an `http_2xx` module:
-
-- **Protocol**: HTTP
-- **Timeout**: 5 seconds
-- **Valid HTTP versions**: HTTP/1.1, HTTP/2.0
-- **Method**: GET
-- **Redirects**: Follow redirects automatically
-
-### Prometheus Integration
-
-Blackbox Exporter automatically integrates with Prometheus:
-
-- **Metrics endpoint**: `http://blackbox-exporter:9115/metrics`
-- **Discovery**: Prometheus automatically discovers and scrapes metrics
-- **Targets**: Available in the Prometheus UI under targets
 
 ## Usage
 
@@ -121,11 +71,32 @@ http_2xx:
 
 ### Custom Configuration
 
-For advanced use cases, you can customize the probing configuration through UDS Core bundle overrides or future Pepr-based configuration management.
+You can configure Blackbox Exporter by providing bundle overrides. The configuration structure follows the Prometheus Blackbox Exporter Helm chart values:
 
-## Security Considerations
+```yaml
+packages:
+  - name: core
+    repository: oci://ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.59.0-upstream
+    optionalComponents:
+      - prometheus-blackbox-exporter
+    overrides:
+      prometheus-blackbox-exporter:
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              timeout: 10s
+              http:
+                valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+                method: GET
+                follow_redirects: true
+                valid_status_codes: [200, 201, 202]
+            tcp_connect:
+              prober: tcp
+              timeout: 5s
+```
 
-- **Network Policies**: Configured to allow external probing while maintaining security
-- **Security Contexts**: Runs with minimal privileges and non-root user
-- **Resource Limits**: Configured to prevent resource exhaustion
-- **TLS Verification**: Probes verify SSL certificates by default
+:::note[Configuration Reference]
+Refer to the [Prometheus Blackbox Exporter documentation](https://github.com/prometheus/blackbox_exporter) for the complete configuration specification and supported module types.
+:::

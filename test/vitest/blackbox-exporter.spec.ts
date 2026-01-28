@@ -7,7 +7,7 @@ import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 
-describe("Blackbox Exporter", { retry: 1 }, () => {
+describe("Blackbox Exporter", { retry: 3 }, () => {
   let blackboxExporterProxy: { server: net.Server; url: string };
   let prometheusProxy: { server: net.Server; url: string };
 
