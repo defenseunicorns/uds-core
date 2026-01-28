@@ -132,6 +132,8 @@ export async function purgeOrphans<T extends GenericClass>(
   }
 
   const resources = await query.Get();
+  log.debug("RESOURCES FROM query.Get(): " + JSON.stringify(resources, null, 2));
+  log.debug("Resource length: " + resources.items.length);
 
   for (const resource of resources.items) {
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
