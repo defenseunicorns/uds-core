@@ -7,6 +7,13 @@ metadata:
   name: exemptions.uds.dev
 spec:
   group: uds.dev
+  scope: Namespaced
+  names:
+    plural: exemptions
+    singular: exemption
+    kind: Exemption
+    shortNames:
+      - exempt
   versions:
     - name: v1alpha1
       served: true
@@ -77,10 +84,3 @@ spec:
                               - pod
                               - service
                             default: pod
-  scope: Namespaced
-  names:
-    plural: exemptions
-    singular: exemption
-    kind: Exemption
-    shortNames:
-      - exempt
