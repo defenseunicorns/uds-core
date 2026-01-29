@@ -30,7 +30,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/upstream-values.yaml"
+          - "values/upstream/kube-prometheus-stack.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.10.2"
       - "quay.io/prometheus-operator/prometheus-operator:v0.88.0"
@@ -50,7 +50,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/registry1-values.yaml"
+          - "values/registry1/kube-prometheus-stack.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.10.2"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.88.0"
@@ -70,7 +70,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/unicorn-values.yaml"
+          - "values/unicorn/kube-prometheus-stack.yaml"
     images:
       - "quay.io/rfcurated/prometheus/node-exporter:1.10.2-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus-operator:0.88.0-jammy-scratch-fips-rfcurated"
@@ -90,7 +90,7 @@ components:
     charts:
       - name: prometheus-blackbox-exporter
         valuesFiles:
-          - "blackbox-exporter/values/upstream-values.yaml"
+          - "values/upstream/blackbox-exporter.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
 
@@ -104,7 +104,7 @@ components:
     charts:
       - name: prometheus-blackbox-exporter
         valuesFiles:
-          - "blackbox-exporter/values/registry1-values.yaml"
+          - "values/registry1/blackbox-exporter.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
 
@@ -118,6 +118,6 @@ components:
     charts:
       - name: prometheus-blackbox-exporter
         valuesFiles:
-          - "blackbox-exporter/values/unicorn-values.yaml"
+          - "values/unicorn/blackbox-exporter.yaml"
     images:
       - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated"

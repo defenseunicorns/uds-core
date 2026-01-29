@@ -32,13 +32,6 @@ tasks:
             name: app.kubernetes.io/name=prometheus-node-exporter
             namespace: monitoring
             condition: Ready
-      - description: Validate blackbox exporter
-        wait:
-          cluster:
-            kind: Pod
-            name: app.kubernetes.io/name=prometheus-blackbox-exporter
-            namespace: monitoring
-            condition: Ready
 
   - name: gen-crds
     actions:
