@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -15,7 +15,6 @@ import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycl
 import { initAPIServerCIDR } from "./src/pepr/operator/controllers/network/generators/kubeAPI";
 import { initAllNodesTarget } from "./src/pepr/operator/controllers/network/generators/kubeNodes";
 import { startPackageWatch } from "./src/pepr/operator/controllers/packages/packages";
-import { registerCRDs } from "./src/pepr/operator/crd/register";
 import { patches } from "./src/pepr/patches";
 import { policies, startExemptionWatch } from "./src/pepr/policies";
 import { prometheus } from "./src/pepr/prometheus";
@@ -23,9 +22,8 @@ import { prometheus } from "./src/pepr/prometheus";
 const log = setupLogger(Component.STARTUP);
 
 (async () => {
-  // Load the UDS Config and register CRDs
+  // Load the UDS Config
   await loadUDSConfig();
-  await registerCRDs();
   // KFC watch for cluster config, exemptions, and packages
   await startConfigWatch();
   await startExemptionWatch();
