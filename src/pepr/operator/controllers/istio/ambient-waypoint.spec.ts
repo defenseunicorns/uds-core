@@ -25,7 +25,7 @@ import { ambientEgressNamespace, sharedEgressPkgId } from "./istio-resources";
 const createMockPackage = (
   name: string,
   selector: Record<string, string> = {},
-  mode: "ambient" | "sidecar" = "ambient",
+  mode: "ambient" | "sidecar" | "unset" = "ambient",
   sso: Sso[] = [
     {
       clientId: "test-client",
@@ -40,11 +40,14 @@ const createMockPackage = (
     uid: "test-uid",
   },
   spec: {
-    network: {
-      serviceMesh: {
-        mode: mode === "ambient" ? Mode.Ambient : Mode.Sidecar,
-      },
-    },
+    network:
+      mode === "unset"
+        ? {}
+        : {
+            serviceMesh: {
+              mode: mode === "ambient" ? Mode.Ambient : Mode.Sidecar,
+            },
+          },
     sso,
   },
 });
@@ -317,6 +320,37 @@ describe("reconcileService and reconcilePod", () => {
       if (name === "service") {
         expect(resource.metadata?.labels?.["istio.io/ingress-use-waypoint"]).toBeUndefined();
       }
+    },
+  );
+
+  it.each(testCases)(
+    "$name - defaults to ambient mode when serviceMesh.mode is undefined",
+    async ({ createResource, expectedLabels, name }) => {
+      const resource = createResource();
+
+      const pkg = createMockPackage("test-pkg", { "app.kubernetes.io/name": "test-app" }, "unset", [
+        {
+          clientId: "test-client",
+          name: "test-sso",
+          enableAuthserviceSelector: { "app.kubernetes.io/name": "test-app" },
+        },
+      ]);
+
+      (
+        PackageStore.getPackageByNamespace as MockedFunction<
+          typeof PackageStore.getPackageByNamespace
+        >
+      ).mockImplementation(namespace => {
+        return namespace === testNamespace ? pkg : undefined;
+      });
+
+      if (name === "service") {
+        await reconcileService(resource as a.Service);
+      } else {
+        await reconcilePod(resource as a.Pod);
+      }
+
+      expect(resource.metadata?.labels).toMatchObject(expectedLabels);
     },
   );
 });

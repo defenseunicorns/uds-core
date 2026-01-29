@@ -8,8 +8,9 @@ metadata:
   namespace: podinfo
 spec:
   network:
-    serviceMesh:
-      mode: ambient
+    # Relying on default mesh mode
+    # serviceMesh:
+    #   mode: ambient
     expose:
       - service: podinfo
         selector:
