@@ -140,6 +140,16 @@ rbac:
       - list
       - patch
 
+  - apiGroups:
+      - apiextensions.k8s.io
+    resources:
+      - customresourcedefinitions
+    verbs:
+      - create
+      - get
+      - list
+      - patch
+
   # Istio security resources
   - apiGroups:
       - security.istio.io
