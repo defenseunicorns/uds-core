@@ -224,16 +224,16 @@ describe("Package Store", () => {
       const ambientPkg2 = makeMockReq({
         metadata: { namespace: "ns2", name: "ambient2" },
         spec: {
-          network: {
-            serviceMesh: { mode: Mode.Ambient },
-          },
+          network: {},
         },
       }).Raw;
 
       const nonAmbientPkg = makeMockReq({
         metadata: { namespace: "ns3", name: "non-ambient" },
         spec: {
-          network: {},
+          network: {
+            serviceMesh: { mode: Mode.Sidecar },
+          },
         },
       }).Raw;
 
