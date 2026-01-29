@@ -1,0 +1,123 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: clusterconfig.uds.dev
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  conversion:
+    strategy: None
+  group: uds.dev
+  names:
+    kind: ClusterConfig
+    listKind: ClusterConfigList
+    plural: clusterconfig
+    singular: clusterconfig
+  scope: Cluster
+  versions:
+    - additionalPrinterColumns:
+        - description: The status of the cluster config
+          jsonPath: .status.phase
+          name: Status
+          type: string
+        - description: The age of the cluster config
+          jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          properties:
+            metadata:
+              properties:
+                name:
+                  enum:
+                    - uds-cluster-config
+                  type: string
+              type: object
+            spec:
+              properties:
+                attributes:
+                  properties:
+                    clusterName:
+                      description: Friendly name to associate with your UDS cluster
+                      type: string
+                    tags:
+                      description: Tags to apply to your UDS cluster
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                caBundle:
+                  properties:
+                    certs:
+                      description: Contents of user provided CA bundle certificates
+                      type: string
+                    includeDoDCerts:
+                      default: false
+                      description: Include DoD CA certificates in the bundle
+                      type: boolean
+                    includePublicCerts:
+                      default: false
+                      description: Include public CA certificates in the bundle
+                      type: boolean
+                  type: object
+                expose:
+                  properties:
+                    adminDomain:
+                      description: Domain all cluster services on the admin gateway will be exposed on
+                      type: string
+                    caCert:
+                      description: The trusted CA that signed your domain certificates if using Private PKI
+                      type: string
+                    domain:
+                      description: Domain all cluster services will be exposed on
+                      type: string
+                  required:
+                    - domain
+                  type: object
+                networking:
+                  properties:
+                    kubeApiCIDR:
+                      description: CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
+                      type: string
+                    kubeNodeCIDRs:
+                      description: CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
+                      items:
+                        type: string
+                      type: array
+                  type: object
+                policy:
+                  properties:
+                    allowAllNsExemptions:
+                      default: false
+                      description: Allow UDS Exemption custom resources to live in any namespace (default false)
+                      type: boolean
+                  required:
+                    - allowAllNsExemptions
+                  type: object
+              required:
+                - expose
+                - policy
+              type: object
+            status:
+              properties:
+                observedGeneration:
+                  type: integer
+                phase:
+                  enum:
+                    - Pending
+                    - Ready
+                    - Failed
+                  type: string
+              type: object
+          required:
+            - spec
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}
