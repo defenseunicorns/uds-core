@@ -213,11 +213,8 @@ export async function reconcileService(svc: a.Service): Promise<void> {
   }
 
   const pkg = PackageStore.getPackageByNamespace(namespace);
-  if (
-    !pkg ||
-    pkg.metadata?.deletionTimestamp ||
-    pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient
-  ) {
+  const istioMode = pkg?.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  if (!pkg || pkg.metadata?.deletionTimestamp || istioMode !== Mode.Ambient) {
     return;
   }
 
@@ -270,11 +267,8 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
   }
 
   const pkg = PackageStore.getPackageByNamespace(namespace);
-  if (
-    !pkg ||
-    pkg.metadata?.deletionTimestamp ||
-    pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient
-  ) {
+  const istioMode = pkg?.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  if (!pkg || pkg.metadata?.deletionTimestamp || istioMode !== Mode.Ambient) {
     return;
   }
 

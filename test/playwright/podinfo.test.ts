@@ -45,6 +45,10 @@ test.describe("Podinfo Authservice protection and metrics behavior", () => {
 
       // Basic sanity check that podinfo content is rendered
       await expect(page).toHaveURL(podinfoUrl, { timeout: 10000 });
+
+      // Verify non-error response (indicates successful JWT validation)
+      const response = await page.reload();
+      expect(response?.status()).toBeLessThan(400);
     } finally {
       await context.close();
     }

@@ -182,7 +182,8 @@ function getAmbientPackages(): UDSPackage[] {
   const result: UDSPackage[] = [];
   for (const namespaceMap of packageNamespaceMap.values()) {
     for (const pkg of namespaceMap.values()) {
-      if (pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient) {
+      const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+      if (istioMode === Mode.Ambient) {
         result.push(pkg);
       }
     }
