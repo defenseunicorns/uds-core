@@ -1145,6 +1145,19 @@ describe("findMatchingSsoClient", () => {
     expect(findMatchingSsoClient(pkg, { app: "a" })).toBeUndefined();
   });
 
+  test("defaults to ambient when serviceMesh.mode is undefined", () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "app", namespace: "ns" },
+      spec: {
+        // No serviceMesh block -> defaults to Ambient
+        sso: [{ clientId: "c1", name: "", enableAuthserviceSelector: { app: "a" } }],
+        network: {},
+      },
+    };
+
+    expect(findMatchingSsoClient(pkg, { app: "a" })).toMatchObject({ clientId: "c1" });
+  });
+
   test("prefilters to enabled clients only (missing/null/undefined selector are ignored)", () => {
     const pkg: UDSPackage = {
       metadata: { name: "app", namespace: "ns" },
