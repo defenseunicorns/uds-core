@@ -273,6 +273,9 @@ describe("authorization policy generation", () => {
           },
         ],
         network: {
+          serviceMesh: {
+            mode: Mode.Sidecar,
+          },
           expose: [
             {
               service: "httpbin",
