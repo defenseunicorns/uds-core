@@ -44,7 +44,7 @@ tasks:
 
       - description: "Deploy the UDS Cluster Config CRD and apply all hack dev manifests"
         cmd: |
-          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
+          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds-v2/crds/clusterconfig.uds.dev.yaml
           uds zarf tools kubectl apply -f hack/dev-manifests/
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
