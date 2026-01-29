@@ -1,6 +1,22 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+locals {
+  # renovate: datasource=github-releases depName=bottlerocket-os/bottlerocket
+  bottlerocket_ami_version = "v1.53.0"
+}
+
+data "aws_ami" "eks_bottlerocket_ami" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name = "name"
+    values = [
+      "bottlerocket-aws-k8s-${var.kubernetes_version}-fips-x86_64-${local.bottlerocket_ami_version}-*"
+    ]
+  }
+}
 
 # Create EKS Cluster
 module "eks" {
@@ -80,6 +96,7 @@ module "eks" {
       name           = var.name
       instance_types = [var.instance_type]
       ami_type       = "BOTTLEROCKET_x86_64_FIPS"
+      ami_id         = data.aws_ami.eks_bottlerocket_ami.id
 
       min_size     = var.node_group_min_size
       max_size     = var.node_group_max_size
