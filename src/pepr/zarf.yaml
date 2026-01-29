@@ -56,6 +56,14 @@ components:
         namespace: pepr-system
         version: 0.1.0
         localPath: uds-cluster-crds
+
+  - name: uds-crds-v2
+    required: true
+    charts:
+      - name: uds-cluster-crds-v2
+        namespace: pepr-system
+        version: 0.1.0
+        localPath: uds-cluster-crds-v2
     actions:
       onDeploy:
         after:

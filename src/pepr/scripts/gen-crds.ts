@@ -11,7 +11,7 @@ import { v1alpha1 as clusterConfig } from "../operator/crd/sources/cluster-confi
 import { v1alpha1 as exemption } from "../operator/crd/sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "../operator/crd/sources/package/v1alpha1";
 
-const HELM_CRD_DIR = path.resolve(__dirname, "../uds-cluster-crds/crds");
+const HELM_CRD_DIR = path.resolve(__dirname, "../uds-cluster-crds-v2/crds");
 if (!fs.existsSync(HELM_CRD_DIR)) fs.mkdirSync(HELM_CRD_DIR, { recursive: true });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
