@@ -7,7 +7,7 @@
 
 ## [UDS Core Overview](https://uds.defenseunicorns.com/reference/uds-core/overview/)
 
-UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. UDS Core provides advanced automation with the [UDS Operator](./src/pepr/operator/README.md) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
+UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. UDS Core provides advanced automation with the [UDS Operator](https://uds.defenseunicorns.com/reference/configuration/uds-operator/overview/) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
 #### tl;dr - [try it now](#quickstart)
 
@@ -46,7 +46,7 @@ While the UDS Bundles published by this repo can be used for dev and test enviro
 
 UDS Core publishes bundles you can use for trying out UDS Core or for UDS Package development where you only need part of UDS Core. These bundles leverage [UDS K3d](https://github.com/defenseunicorns/uds-k3d) to create a local k3d cluster with tools installed to emulate a cloud environment.
 
-> [!NOTE]
+> [!IMPORTANT]
 > These UDS Bundles are intended for dev and test environments and should not be used for production. They also serve as examples to create custom bundles.
 
 #### Quickstart
@@ -80,10 +80,10 @@ uds deploy k3d-core-slim-dev:0.60.0
 
 > [!TIP]
 > While the k3d-core-slim-dev bundle will work without internet, DNS will likely not resolve. If you are in an airgapped environment you may need to configure your /etc/hosts file such as:
+>
 > ```
 > 127.0.0.1 localhost yourAppNameHere.uds.dev sso.uds.dev keycloak.admin.uds.dev
 > ```
-
 
 #### Developing UDS Core
 
@@ -120,7 +120,11 @@ uds run test-single-layer --set LAYER=identity-authorization
 Note you can specify the `--set FLAVOR=registry1` flag to test using Iron Bank images instead of the upstream images.
 
 ## UDS Core Architecture Overview
+
 <!-- @lulaStart 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
+
 ![UDS Core Architecture Diagram](https://github.com/defenseunicorns/uds-core/blob/main/docs/.images/diagrams/uds-core-arch-overview.svg?raw=true)
+
 <!-- @lulaEnd 7d855a1f-5735-498a-95ad-f0d2fa572cb1 -->
+
 Diagrams are located in `/docs/.images`. See the [diagram README](./docs/.images/diagrams/README.md) for an explanation and help customizing.
