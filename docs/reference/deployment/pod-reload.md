@@ -113,6 +113,12 @@ The Pod Reload functionality can be used with SSO client secrets. You can enable
 
 For more details on configuring Pod Reload for SSO clients, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
 
+## Integration with CA Certificates
+
+The Pod Reload functionality can also be used with CA certificate ConfigMaps ([Central Trust Management feature](/reference/configuration/trust-management/central-trust-bundle-management/)). You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `caBundle.configMap.labels` field in your Package CR.
+
+For more details on configuring Pod Reload for CA certificates, see the [ConfigMap Templating documentation](/reference/configuration/trust-management/central-trust-bundle-management/#uds-package-configuration).
+
 ## Monitoring and Troubleshooting
 
 When a resource is updated and triggers a restart, the controller generates Kubernetes events with the reason `SecretChanged` or `ConfigMapChanged`. You can view these events using:
