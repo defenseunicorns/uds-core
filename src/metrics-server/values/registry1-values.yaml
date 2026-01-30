@@ -3,4 +3,4 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server
-  tag: "v0.8.0"
+  tag: "v0.8.1"
