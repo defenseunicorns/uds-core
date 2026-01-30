@@ -31,20 +31,15 @@ tasks:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
-      - description: "Register CRDs in cluster"
-        cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
-        env:
-          - "PEPR_MODE=dev"
-
       - description: "Create required namespaces"
         cmd: |
           uds zarf tools kubectl create ns uds-policy-exemptions
           uds zarf tools kubectl create ns istio-system
           uds zarf tools kubectl create ns pepr-system
 
-      - description: "Deploy the UDS Cluster Config CRD and apply all hack dev manifests"
+      - description: "Deploy the UDS CRDs and apply all hack dev manifests"
         cmd: |
-          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
+          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/
           uds zarf tools kubectl apply -f hack/dev-manifests/
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+

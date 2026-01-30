@@ -110,7 +110,7 @@ export const advancedHTTP: V1JSONSchemaProps = {
           properties: {
             bytes: {
               description: "response body as base64 encoded bytes.",
-              format: "binary",
+              format: "byte",
               type: "string",
             },
             string: {

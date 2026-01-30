@@ -57,7 +57,8 @@ tasks:
           failed=0
           for chart in $(find . -name Chart.yaml -type f -exec dirname {} \;); do
             if [ -d "$chart/tests" ]; then
-              if ! helm unittest --color=true "$chart"; then
+              echo "Testing $chart"
+              if ! helm unittest "$chart" --color; then
                 failed=1
               fi
             else
