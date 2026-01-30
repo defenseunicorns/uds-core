@@ -54,7 +54,7 @@ components:
     charts:
       - name: uds-cluster-crds
         namespace: pepr-system
-        version: 0.1.0
+        version: 0.2.0
         localPath: uds-cluster-crds
     actions:
       onDeploy:
