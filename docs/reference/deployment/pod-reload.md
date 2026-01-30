@@ -28,7 +28,7 @@ metadata:
 ```
 
 :::note
-Enabling this feature requires labelling on the resource that is changing (the Secret or ConfigMap), *not* the resource being reloaded (pod).
+Enabling this feature requires labeling the resource that is changing (the Secret or ConfigMap), *not* the resource being reloaded (pod).
 :::
 
 ### Targeting Pods for Restart
