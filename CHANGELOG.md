@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.61.0](https://github.com/defenseunicorns/uds-core/compare/v0.60.0...v0.61.0) (2026-01-30)
+
+
+### Bug Fixes
+
+* ensure ambient mode is the default in all operator code ([#2326](https://github.com/defenseunicorns/uds-core/issues/2326)) ([bda5384](https://github.com/defenseunicorns/uds-core/commit/bda5384adce387707b43a0af3bc294e9f0b87894))
+
+
+### Miscellaneous
+
+* **deps:** bump lodash from 4.17.21 to 4.17.23 ([#2319](https://github.com/defenseunicorns/uds-core/issues/2319)) ([ad29405](https://github.com/defenseunicorns/uds-core/commit/ad294051338ddff1109c82dd40ec3ef1660a9c9d))
+* **deps:** update keycloak to v26.5.2 ([#2297](https://github.com/defenseunicorns/uds-core/issues/2297)) ([e393a3d](https://github.com/defenseunicorns/uds-core/commit/e393a3d08968a673c8c28c9e5a63dcc324aa1ae7))
+
+
+### Documentation
+
+* add clarity on label placement for reload ([#2330](https://github.com/defenseunicorns/uds-core/issues/2330)) ([1a2515f](https://github.com/defenseunicorns/uds-core/commit/1a2515f0d201e13dc70180af503183048d84af31))
+* fix broken link and adjust markdown annotation ([#2331](https://github.com/defenseunicorns/uds-core/issues/2331)) ([5d542a3](https://github.com/defenseunicorns/uds-core/commit/5d542a309dcb1abc3f74c91c57eb6d5dd5016ed9))
+
 ## [0.60.0](https://github.com/defenseunicorns/uds-core/compare/v0.59.0...v0.60.0) (2026-01-29)
 
 
