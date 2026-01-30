@@ -8,7 +8,7 @@ UDS Core provides a Pod Reload mechanism that automatically reloads pods when Se
 
 ## How It Works
 
-The pod reload controller watches for changes to Kubernetes Secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When such a resource is updated, the controller will:
+The pod reload controller watches for changes to Kubernetes Secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When they are updated, the controller will:
 
 1. Identify which pods or deployments should be restarted
 2. For pods managed by standard controllers (Deployments, ReplicaSets, StatefulSets, DaemonSets), restart by patching the controller's pod template annotations
@@ -19,13 +19,17 @@ The pod reload controller watches for changes to Kubernetes Secrets and ConfigMa
 
 ### Enabling Pod Reload
 
-To enable automatic pod reload when a secret or ConfigMap changes, add the following label to your resource:
+To enable automatic pod reload when a Secret or ConfigMap changes, add the following label to your Secret/ConfigMap:
 
 ```yaml
 metadata:
   labels:
     uds.dev/pod-reload: "true"
 ```
+
+:::note
+Enabling this feature requires labeling the resource that is changing (the Secret or ConfigMap), *not* the resource being reloaded (pod).
+:::
 
 ### Targeting Pods for Restart
 
@@ -42,6 +46,10 @@ metadata:
 ```
 
 This will restart all pods matching the specified label selector when the resource changes.
+
+:::note
+This annotation must be on the resource that is changing (the Secret or ConfigMap), *not* the resource being reloaded (pod).
+:::
 
 #### 2. Auto-Discovery (Default)
 
@@ -97,13 +105,19 @@ data:
       priority: WARNING
 ```
 
-When this ConfigMap is updated (for example, when adding new security rules), all pods that mount this ConfigMap will be automatically reloaded to pick up the new configuration.
+When this ConfigMap is updated (for example, when adding new security rules), all pods that mount/use this ConfigMap will be automatically reloaded to pick up the new configuration.
 
 ## Integration with SSO
 
 The Pod Reload functionality can be used with SSO client secrets. You can enable this by adding the `uds.dev/pod-reload: "true"` label to your SSO client secrets through the `secretConfig.labels` field in your Package CR.
 
 For more details on configuring Pod Reload for SSO clients, see the [Secret Templating documentation](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
+
+## Integration with CA Certificates
+
+The Pod Reload functionality can also be used with CA certificate ConfigMaps ([Central Trust Management feature](/reference/configuration/trust-management/central-trust-bundle-management/)). You can enable this by adding the `uds.dev/pod-reload: "true"` label to your CA Bundle ConfigMaps through the `caBundle.configMap.labels` field in your Package CR.
+
+For more details on configuring Pod Reload for CA certificates, see the [ConfigMap Templating documentation](/reference/configuration/trust-management/central-trust-bundle-management/#uds-package-configuration).
 
 ## Monitoring and Troubleshooting
 
