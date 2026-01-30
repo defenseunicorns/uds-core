@@ -23,11 +23,6 @@ components:
     import:
       path: ../../src/pepr
 
-  - name: uds-crds-v2
-    required: true
-    import:
-      path: ../../src/pepr
-
   - name: uds-operator-config
     required: true
     import:

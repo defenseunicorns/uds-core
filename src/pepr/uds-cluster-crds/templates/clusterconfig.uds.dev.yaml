@@ -12,6 +12,7 @@ spec:
     plural: clusterconfig
     singular: clusterconfig
     kind: ClusterConfig
+    listKind: ClusterConfigList
   versions:
     - name: v1alpha1
       served: true

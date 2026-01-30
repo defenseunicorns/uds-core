@@ -56,23 +56,25 @@ components:
         namespace: pepr-system
         version: 0.1.0
         localPath: uds-cluster-crds
-
-  - name: uds-crds-v2
-    required: true
-    charts:
-      - name: uds-cluster-crds-v2
-        namespace: pepr-system
-        version: 0.1.0
-        localPath: uds-cluster-crds-v2
     actions:
       onDeploy:
-        after:
-          - description: Validate ClusterConfig CRD
-            maxTotalSeconds: 60
-            wait:
-              cluster:
-                kind: CustomResourceDefinition
-                name: clusterconfig.uds.dev
+        before:
+          - description: Handle Helm ownership metadata change on upgrade
+            cmd: |
+              # Update Helm ownership metadata for existing Packages and Exemptions CRDs
+              CRDS="packages.uds.dev exemptions.uds.dev"
+
+              for crd in $CRDS; do
+                if ./zarf tools kubectl get crd "$crd" >/dev/null 2>&1; then
+                  ./zarf tools kubectl label crd "$crd" \
+                    app.kubernetes.io/managed-by=Helm --overwrite
+
+                  ./zarf tools kubectl annotate crd "$crd" \
+                    meta.helm.sh/release-name="uds-cluster-crds" \
+                    meta.helm.sh/release-namespace="pepr-system" \
+                    --overwrite
+                fi
+              done
 
   - name: uds-operator-config
     required: true

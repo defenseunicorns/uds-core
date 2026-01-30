@@ -12,6 +12,7 @@ spec:
     plural: exemptions
     singular: exemption
     kind: Exemption
+    listKind: ExemptionList
     shortNames:
       - exempt
   versions:

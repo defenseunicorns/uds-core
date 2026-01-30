@@ -11,13 +11,13 @@ import { v1alpha1 as clusterConfig } from "../operator/crd/sources/cluster-confi
 import { v1alpha1 as exemption } from "../operator/crd/sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "../operator/crd/sources/package/v1alpha1";
 
-const HELM_CRD_DIR = path.resolve(__dirname, "../uds-cluster-crds-v2/crds");
-if (!fs.existsSync(HELM_CRD_DIR)) fs.mkdirSync(HELM_CRD_DIR, { recursive: true });
+const HELM_TEMPLATE_DIR = path.resolve(__dirname, "../uds-cluster-crds/templates");
+if (!fs.existsSync(HELM_TEMPLATE_DIR)) fs.mkdirSync(HELM_TEMPLATE_DIR, { recursive: true });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function writeYamlToDir(filename: string, manifest: any) {
   const yamlStr = yaml.dump(manifest, { noRefs: true });
-  fs.writeFileSync(path.join(HELM_CRD_DIR, filename), yamlStr);
+  fs.writeFileSync(path.join(HELM_TEMPLATE_DIR, filename), yamlStr);
 }
 
 // ClusterConfig CRD
@@ -32,6 +32,7 @@ const clusterConfigManifest = {
       plural: "clusterconfig",
       singular: "clusterconfig",
       kind: "ClusterConfig",
+      listKind: "ClusterConfigList",
     },
     versions: [clusterConfig],
   },
@@ -49,6 +50,7 @@ const packageManifest = {
       plural: "packages",
       singular: "package",
       kind: "Package",
+      listKind: "PackageList",
       shortNames: ["pkg"],
     },
     versions: [pkg],
@@ -67,6 +69,7 @@ const exemptionManifest = {
       plural: "exemptions",
       singular: "exemption",
       kind: "Exemption",
+      listKind: "ExemptionList",
       shortNames: ["exempt"],
     },
     versions: [exemption],

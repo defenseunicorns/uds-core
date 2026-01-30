@@ -24,11 +24,6 @@ components:
     import:
       path: ../base
 
-  - name: uds-crds-v2
-    required: true
-    import:
-      path: ../base
-
   - name: uds-operator-config
     required: true
     import:
