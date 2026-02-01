@@ -25,10 +25,10 @@ components:
         valuesFiles:
           - ./values/upstream-values.yaml
     images:
-      - docker.io/grafana/loki:3.6.3
+      - docker.io/grafana/loki:3.6.4
       - docker.io/nginxinc/nginx-unprivileged:1.29-alpine
       - docker.io/memcached:1.6.40-alpine
-      - ghcr.io/kiwigrid/k8s-sidecar:2.4.0
+      - ghcr.io/kiwigrid/k8s-sidecar:2.5.0
 
   - name: loki
     required: true
@@ -42,10 +42,10 @@ components:
         valuesFiles:
           - ./values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/grafana/loki:3.6.3
+      - registry1.dso.mil/ironbank/opensource/grafana/loki:3.6.4
       - registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.29.4
       - registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.40
-      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.4.0
+      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.5.0
 
   - name: loki
     required: true
@@ -59,7 +59,7 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/grafana/loki:3.6.3-jammy-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/grafana/loki:3.6.4-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/nginx:1.29.4-slim-jammy-fips-rfcurated-rfhardened
       - quay.io/rfcurated/memcached:1.6.40-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.4.0-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.5.0-jammy-scratch-fips-rfcurated-rfhardened
