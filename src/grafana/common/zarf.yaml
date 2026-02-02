@@ -19,7 +19,7 @@ components:
           - ../chart/values.yaml
       - name: grafana
         url: https://grafana.github.io/helm-charts/
-        version: 10.5.5
+        version: 10.5.15
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
