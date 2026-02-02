@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
+import { V1CustomResourceDefinition, V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
 export const v1alpha1: V1CustomResourceDefinitionVersion = {
   name: "v1alpha1",
@@ -85,5 +85,23 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
         } as V1JSONSchemaProps,
       },
     },
+  },
+};
+
+export const exemptionCRD: V1CustomResourceDefinition =  {
+  apiVersion: "apiextensions.k8s.io/v1",
+  kind: "CustomResourceDefinition",
+  metadata: { name: "exemptions.uds.dev" },
+  spec: {
+    group: "uds.dev",
+    scope: "Namespaced",
+    names: {
+      plural: "exemptions",
+      singular: "exemption",
+      kind: "Exemption",
+      listKind: "ExemptionList",
+      shortNames: ["exempt"],
+    },
+    versions: [v1alpha1],
   },
 };
