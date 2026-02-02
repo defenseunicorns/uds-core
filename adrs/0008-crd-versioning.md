@@ -29,7 +29,7 @@ UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provid
 
 ### Negative
 
-- CRD schema evolution will require implementing a [Conversion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks)
+- CRD schema evolution will require implementing migration logic (either with a [Conversion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks) or with a dedicated [migration code block in the UDS Operator](https://github.com/defenseunicorns/uds-core/blob/1d1a826ef54b68d6ee7697eb153f7a3707a44a93/src/pepr/operator/crd/migrate.ts#L15))
 - Long deprecation periods and increased maintenance burden to keep removed/renamed fields in the CRD schema
 
 ## Alternatives Considered
@@ -69,12 +69,12 @@ This paragraph contains information related to the UDS Core based on [Kubernetes
 **Beta (v1beta1, v1beta2, etc.)**
 - Schema is well-tested and considered stable
 - Fields may only be removed or have breaking changes with proper deprecation
-- Once marked as deprecated, beta versions must remain supported for a minimum of 9 months or 3 UDS Core minor releases (whichever is longer) before removal, aligning with the Kubernetes API deprecation policy
+- Once marked as deprecated, beta versions must remain supported for a minimum of 3 months or 3 UDS Core minor releases (whichever is longer) before removal, aligning with the Kubernetes API deprecation policy
 - Breaking changes require incrementing the beta version (v1beta1 → v1beta2)
 - Beta versions must support conversion to/from other served versions
 
 **GA/Stable (v1, v2, etc.)**
-- Considered production-ready with strong stability guarantees
+- Considered fully-matured with strong stability guarantees
 - May be marked as deprecated but must not be removed within a major version of UDS Core
 - Breaking changes require incrementing to a new major API version (v1 → v2)
 - All v1 APIs must support bidirectional conversion to newer versions
