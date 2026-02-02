@@ -14,7 +14,8 @@ const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names
  * Determines if a package should use ambient waypoint networking
  */
 export const shouldUseAmbientWaypoint = (pkg: UDSPackage): boolean => {
-  return pkg.spec?.network?.serviceMesh?.mode === Mode.Ambient && hasAuthserviceSSO(pkg);
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  return istioMode === Mode.Ambient && hasAuthserviceSSO(pkg);
 };
 
 /**

@@ -93,7 +93,7 @@ describe("shouldUseAmbientWaypoint", () => {
       expected: false,
     },
     {
-      name: "should return false when no serviceMesh config exists",
+      name: "should return true when no serviceMesh config exists (ambient default)",
       pkg: {
         metadata: { name: "test", namespace: "test" },
         spec: {
@@ -106,7 +106,7 @@ describe("shouldUseAmbientWaypoint", () => {
           ],
         },
       } as UDSPackage,
-      expected: false,
+      expected: true,
     },
   ];
 

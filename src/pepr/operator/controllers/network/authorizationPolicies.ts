@@ -424,7 +424,8 @@ export function findMatchingSsoClient(
   pkg: UDSPackage,
   selector: Record<string, string> | undefined,
 ) {
-  if (!selector || pkg.spec?.network?.serviceMesh?.mode !== Mode.Ambient) {
+  const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  if (!selector || istioMode !== Mode.Ambient) {
     return undefined;
   }
 

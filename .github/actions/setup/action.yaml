@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
       with:
         node-version: 24
 
@@ -33,7 +33,7 @@ runs:
       uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.9.24
+        version: 0.9.27
 
     - name: Install k3d
       shell: bash
