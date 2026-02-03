@@ -53,6 +53,16 @@ prometheus:
             requests:
               storage: 50Gi
     enableRemoteWriteReceiver: true # enable Prometheus remote write receiver (needed by loki ruler for recording rules)
+    volumes:
+      - name: ca-certs
+        configMap:
+          name: uds-trust-bundle
+          optional: true
+    volumeMounts:
+      - name: ca-certs
+        mountPath: /etc/ssl/certs/ca-bundle.pem
+        subPath: ca-bundle.pem
+        readOnly: true
 prometheus-node-exporter:
   containerSecurityContext:
     readOnlyRootFilesystem: true
@@ -93,6 +103,16 @@ prometheusOperator:
 alertmanager:
   alertmanagerSpec:
     scheme: "http"
+    volumes:
+      - name: ca-certs
+        configMap:
+          name: uds-trust-bundle
+          optional: true
+    volumeMounts:
+      - name: ca-certs
+        mountPath: /etc/ssl/certs/ca-bundle.pem
+        subPath: ca-bundle.pem
+        readOnly: true
   # Enables "zarf connect alertmanager"
   service:
     labels:

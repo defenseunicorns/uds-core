@@ -1,6 +1,19 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# Add trust bundle configuration using velero's supported pattern
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
+
+extraVolumeMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca-bundle.pem
+    subPath: ca-bundle.pem
+    readOnly: true
+
 credentials:
   useSecret: true
   name: "velero-bucket-credentials"

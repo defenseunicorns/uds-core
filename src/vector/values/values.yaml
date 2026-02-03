@@ -4,6 +4,19 @@
 # Run as an agent daemonset
 role: "Agent"
 
+# Add trust bundle configuration using vector's supported pattern
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
+
+extraVolumeMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca-bundle.pem
+    subPath: ca-bundle.pem
+    readOnly: true
+
 customConfig:
   api:
     enabled: false
