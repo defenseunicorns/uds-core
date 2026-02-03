@@ -1,0 +1,50 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Session Stickiness
+templates:
+  - destination-rule.yaml
+
+tests:
+  - it: should not render DestinationRule when autoscaling.sessionStickiness is disabled by default
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render DestinationRule when autoscaling.sessionStickiness.enabled is false
+    set:
+      autoscaling:
+        sessionStickiness:
+          enabled: false
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render DestinationRule when autoscaling.sessionStickiness.enabled is true
+    set:
+      autoscaling:
+        sessionStickiness:
+          enabled: true
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: DestinationRule
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-keycloa-sticky-session
+      - equal:
+          path: spec.host
+          value: RELEASE-NAME-keycloa-http.NAMESPACE.svc.cluster.local
+      - equal:
+          path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.name
+          value: RELEASE-NAME-keycloa-session
+      - equal:
+          path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.ttl
+          value: 0s
+

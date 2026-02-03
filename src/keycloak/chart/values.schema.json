@@ -117,6 +117,14 @@
         },
         "minReplicas": {
           "type": "number"
+        },
+        "sessionStickiness": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
         }
       }
     }
@@ -142,6 +150,14 @@
     },
     "autoscaling": {
       "$ref": "#/definitions/autoscalingSchema"
+    },
+    "waypoint": {
+      "type": "object",
+      "properties": {
+        "deployment": {
+          "type": "boolean"
+        }
+      }
     },
     "waypoint": {
       "type": "object",
