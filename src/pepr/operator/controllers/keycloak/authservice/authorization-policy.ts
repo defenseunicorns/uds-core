@@ -16,6 +16,8 @@ import { UDSConfig } from "../../config/config";
 import { matchesLabels } from "../../istio/waypoint-utils";
 import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
+import { setAuthservicePolicyManager } from "./shared/registry";
+import { MonitorExemption } from "./shared/types";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
 
 const operationMap: {
@@ -48,11 +50,6 @@ function setPolicyTarget(
     spec.selector = { matchLabels: labelSelector };
     delete spec.targetRef;
   }
-}
-
-interface MonitorExemption {
-  port?: string;
-  path?: string;
 }
 
 // Build 'to.operation' entries that represent NON-metrics traffic for the
@@ -400,3 +397,16 @@ function computeMonitorExemptions(
 
   return out;
 }
+
+// Register the policy manager
+setAuthservicePolicyManager({
+  updatePolicy: async (
+    event: AddOrRemoveClientEvent,
+    labelSelector: { [key: string]: string },
+    pkg: UDSPackage,
+    isAmbient?: boolean,
+    waypointName?: string,
+  ) => {
+    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
+  },
+});

@@ -9,7 +9,7 @@ import { Component, setupLogger } from "../logger";
 import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
 import { processExemptions } from "../operator/controllers/exemptions/exemptions";
 import { registerWatchEventHandlers, watchCfg } from "../operator/controllers/utils";
-import { Matcher, Policy, UDSExemption } from "../operator/crd";
+import { UDSExemption } from "../operator/crd";
 import "./istio";
 import "./networking";
 import "./security";
@@ -19,9 +19,6 @@ import "./storage";
 const log = setupLogger(Component.POLICIES);
 
 export { policies } from "./common";
-
-export type StoredMatcher = Matcher & { owner: string };
-export type PolicyMap = Map<Policy, StoredMatcher[]>;
 
 export async function startExemptionWatch() {
   ExemptionStore.init();

@@ -13,7 +13,7 @@ import {
   getSharedAnnotationKey,
   log,
   sharedEgressPkgId,
-} from "./istio-resources";
+} from "./shared/constants";
 import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
 
 export const egressWaypointName = "egress-waypoint";
@@ -143,8 +143,9 @@ export async function isWaypointPodHealthy(
 
     return (
       pods.items?.some(
-        pod =>
-          pod.status?.phase === "Running" && pod.status?.containerStatuses?.every(cs => cs.ready),
+        (pod: kind.Pod) =>
+          pod.status?.phase === "Running" &&
+          pod.status?.containerStatuses?.every((cs: { ready?: boolean }) => cs.ready),
       ) ?? false
     );
   } catch (error) {
@@ -341,7 +342,7 @@ async function cleanupPodsWithWaypointLabel(
     .Get();
 
   await Promise.all(
-    pods.items.map(async pod => {
+    pods.items.map(async (pod: kind.Pod) => {
       const podName = pod.metadata?.name;
       if (!podName) return;
 
@@ -390,7 +391,7 @@ async function cleanupServicesWithWaypointLabel(
     .Get();
 
   await Promise.all(
-    services.items.map(async svc => {
+    services.items.map(async (svc: kind.Service) => {
       const svcName = svc.metadata?.name;
       if (!svcName) return;
 
@@ -449,11 +450,11 @@ export async function reconcileExistingResources(
       K8s(kind.Pod).InNamespace(namespace).Get(),
     ]);
 
-    const matchingServices = services.items.filter(svc =>
+    const matchingServices = services.items.filter((svc: kind.Service) =>
       serviceMatchesSelector(svc, ssoClient.enableAuthserviceSelector!),
     );
 
-    const matchingPods = pods.items.filter(pod => {
+    const matchingPods = pods.items.filter((pod: kind.Pod) => {
       const matches = matchesLabels(
         pod.metadata?.labels || {},
         ssoClient.enableAuthserviceSelector!,

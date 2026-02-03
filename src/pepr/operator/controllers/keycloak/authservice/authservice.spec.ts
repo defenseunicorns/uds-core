@@ -13,14 +13,65 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
 import { Sso, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
+import { UDSConfig } from "../../config/config";
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
+import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
+
+// Mock the registry functions
+let mockConfigManager: unknown = null;
+let mockPolicyManager: unknown = null;
+
+vi.mock("./shared/registry", () => ({
+  setAuthserviceConfigManager: vi.fn(),
+  setAuthservicePolicyManager: vi.fn(),
+  getAuthserviceConfigManager: vi.fn(
+    () =>
+      mockConfigManager || {
+        getAuthserviceConfig: vi.fn().mockResolvedValue({
+          listen_address: "0.0.0.0",
+          listen_port: "8080",
+          log_level: "info",
+          threads: 4,
+          allow_unmatched_requests: true,
+          default_oidc_config: {
+            authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+            token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+            callback_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/callback",
+            client_id: "authservice",
+            client_secret: "test-secret",
+            scopes: ["openid", "profile", "email"],
+            logout: {
+              path: "/oauth2/sign_out",
+              redirect_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/sign_out",
+            },
+          },
+          chains: [],
+        }),
+        setAuthserviceConfig: vi.fn(),
+        updateAuthServiceSecret: vi.fn(),
+      },
+  ),
+  getAuthservicePolicyManager: vi.fn(
+    () =>
+      mockPolicyManager || {
+        updatePolicy: vi.fn(),
+      },
+  ),
+  getAuthserviceOperatorConfig: vi.fn(() => ({
+    namespace: "authservice",
+    secretName: "authservice-uds",
+    baseDomain: "https://sso.uds.dev",
+    realm: "uds",
+  })),
+  setAuthserviceOperatorConfig: vi.fn(),
+}));
+
 import * as authorizationPolicy from "./authorization-policy";
 import { authservice, buildChain, buildConfig } from "./authservice";
 import * as configModule from "./config";
 import * as mockConfig from "./mock-authservice-config.json";
-import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
 const mockBuildCABundleContent = vi.mocked(buildCABundleContent);
 
 // Mock the waypoint utilities
@@ -384,6 +435,39 @@ describe("authservice", () => {
 
     // Initialize the operator config
     await configModule.initializeOperatorConfig();
+
+    // Mock UDSConfig.domain
+    UDSConfig.domain = "uds.dev";
+
+    // Initialize the registry for tests
+    mockConfigManager = {
+      getAuthserviceConfig: vi.fn().mockResolvedValue({
+        listen_address: "0.0.0.0",
+        listen_port: "8080",
+        log_level: "info",
+        threads: 4,
+        allow_unmatched_requests: true,
+        default_oidc_config: {
+          authorization_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/auth",
+          token_uri: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
+          callback_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/callback",
+          client_id: "authservice",
+          client_secret: "test-secret",
+          scopes: ["openid", "profile", "email"],
+          logout: {
+            path: "/oauth2/sign_out",
+            redirect_uri: "https://authservice.test-ns.svc.cluster.local/oauth2/sign_out",
+          },
+        },
+        chains: [],
+      }),
+      setAuthserviceConfig: vi.fn(),
+      updateAuthServiceSecret: vi.fn(),
+    };
+
+    mockPolicyManager = {
+      updatePolicy: vi.fn(),
+    };
   });
 
   test("should update redis session store config to add value", async () => {

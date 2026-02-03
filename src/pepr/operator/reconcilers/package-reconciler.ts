@@ -125,7 +125,13 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
   // Create the CA Bundle Config Map if needed
-  await caBundleConfigMap(pkg, namespace!);
+  await caBundleConfigMap(pkg, namespace!, {
+    certs: UDSConfig.caBundle.certs || "",
+    includeDoDCerts: UDSConfig.caBundle.includeDoDCerts || false,
+    includePublicCerts: UDSConfig.caBundle.includePublicCerts || false,
+    dodCerts: UDSConfig.caBundle.dodCerts || "",
+    publicCerts: UDSConfig.caBundle.publicCerts || "",
+  });
 
   await updateStatus(pkg, {
     phase: Phase.Ready,

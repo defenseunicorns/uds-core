@@ -8,10 +8,14 @@ import { kind } from "pepr";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ClusterConfig, ClusterConfigName, ConfigPhase as Phase } from "../../crd";
 import { updateAllCaBundleConfigMaps, updateIstioCAConfigMap } from "../ca-bundles/ca-bundle";
-import { reconcileAuthservice } from "../keycloak/authservice/authservice";
+import * as authserviceModule from "../keycloak/authservice/authservice";
 import { Action } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+
+// Get the mocked reconcileAuthservice function
+const { reconcileAuthservice } = vi.mocked(authserviceModule);
+
 import {
   ConfigAction,
   ConfigStep,
@@ -36,6 +40,18 @@ const mockBuildCABundleContent = vi.fn();
 
 vi.mock("../keycloak/authservice/authservice", () => ({
   reconcileAuthservice: vi.fn(),
+}));
+
+// Mock the shared events to register the event handler
+vi.mock("../shared/events", () => ({
+  setAuthserviceEventHandler: vi.fn(),
+  triggerAuthserviceUpdate: vi.fn().mockImplementation(async event => {
+    // Call the mocked reconcileAuthservice function
+    const { reconcileAuthservice } = vi.mocked(
+      await import("../keycloak/authservice/authservice.js"),
+    );
+    await reconcileAuthservice(event);
+  }),
 }));
 
 vi.mock("../network/generators/kubeAPI", () => ({
@@ -440,6 +456,16 @@ describe("handleUDSConfig", () => {
   });
 
   describe("reconcileAuthservice", () => {
+    beforeEach(() => {
+      // Set up the default mock for ConfigMap
+      mockConfigMapGet.mockResolvedValue({
+        data: {
+          dodCACerts: "",
+          publicCACerts: "",
+        },
+      });
+    });
+
     it("calls if CA Cert changes", async () => {
       UDSConfig.caBundle.certs = "old-ca-cert";
       mockBuildCABundleContent.mockReturnValue(exampleCACert);

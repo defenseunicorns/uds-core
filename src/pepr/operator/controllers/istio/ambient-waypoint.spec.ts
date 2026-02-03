@@ -153,9 +153,9 @@ const mockLog = vi.hoisted(() => ({
   child: vi.fn().mockReturnThis(),
 }));
 
-// Mock the istio-resources module
-vi.mock("./istio-resources.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("./istio-resources")>();
+// Mock the shared/constants module to override the log
+vi.mock("./shared/constants", async importOriginal => {
+  const actual = await importOriginal<typeof import("./shared/constants")>();
   return {
     ...actual,
     log: mockLog,

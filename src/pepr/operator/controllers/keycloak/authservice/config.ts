@@ -10,7 +10,12 @@ import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { UDSConfig } from "../../config/config";
 import { Client } from "../types";
 import { buildChain, log } from "./authservice";
+import { initializeOperatorConfig, operatorConfig } from "./shared/config";
+import { setAuthserviceConfigManager } from "./shared/registry";
 import { Action, AuthserviceConfig } from "./types";
+
+// Export operatorConfig for test access
+export { initializeOperatorConfig, operatorConfig };
 
 let pendingSecretFetch: Promise<AuthserviceConfig> | null = null;
 
@@ -32,18 +37,30 @@ let debounceTimer: NodeJS.Timeout | null = null;
 // Debounce duration (1 seconds) to reduce excessive updates, configurable via environment variable
 const DEBOUNCE_DURATION = parseInt(process.env.DEBOUNCE_DURATION || "1000", 10);
 
-export let operatorConfig: Record<string, string> = {};
+/**
+ * Fetches the authservice configuration from the Kubernetes secret
+ *
+ * @returns {AuthserviceConfig} The authservice configuration
+ */
+export async function fetchAuthserviceConfig(): Promise<AuthserviceConfig> {
+  try {
+    const secret = await K8s(kind.Secret)
+      .InNamespace(operatorConfig.namespace)
+      .Get(operatorConfig.secretName);
 
-export function initializeOperatorConfig() {
-  operatorConfig = {
-    namespace: "authservice",
-    secretName: "authservice-uds",
-    baseDomain: `https://sso.${UDSConfig.domain}`,
-    realm: "uds",
-  };
+    const configData = secret.data?.["config.json"];
+    if (!configData) {
+      throw new Error("Authservice secret does not contain config.json");
+    }
 
-  log.info(operatorConfig, `Authservice operator config initialized`);
+    const config = JSON.parse(atob(configData)) as AuthserviceConfig;
+    return config;
+  } catch (error) {
+    log.error(error, "Failed to fetch authservice configuration");
+    throw error;
+  }
 }
+
 /**
  * Sets up the initial authservice secret in the Kubernetes cluster.
  * If in dev mode, it ensures the namespace exists and initializes
@@ -106,7 +123,13 @@ export function buildInitialSecret(): AuthserviceConfig {
         preamble: "Bearer",
         header: "Authorization",
       },
-      trusted_certificate_authority: buildCABundleContent(),
+      trusted_certificate_authority: buildCABundleContent({
+        certs: UDSConfig.caBundle.certs || "",
+        includeDoDCerts: UDSConfig.caBundle.includeDoDCerts || false,
+        includePublicCerts: UDSConfig.caBundle.includePublicCerts || false,
+        dodCerts: UDSConfig.caBundle.dodCerts || "",
+        publicCerts: UDSConfig.caBundle.publicCerts || "",
+      }),
       logout: {
         path: "/globallogout",
         redirect_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token/logout`,
@@ -312,3 +335,27 @@ function encodeConfig(c: AuthserviceConfig): { base64EncodedConfig: string; hash
 
   return { base64EncodedConfig: config, hash };
 }
+
+// Register the config manager
+setAuthserviceConfigManager({
+  getAuthserviceConfig: async () => {
+    if (inMemorySecret) {
+      log.info("Returning in-memory authservice secret");
+      return Promise.resolve(inMemorySecret);
+    }
+
+    if (pendingSecretFetch) {
+      log.debug("Using pending authservice secret fetch");
+      return pendingSecretFetch;
+    }
+
+    pendingSecretFetch = fetchAuthserviceConfig();
+    return pendingSecretFetch;
+  },
+  setAuthserviceConfig: (config: AuthserviceConfig) => {
+    inMemorySecret = config;
+  },
+  updateAuthServiceSecret: async (config: AuthserviceConfig, checksum = true) => {
+    await updateAuthServiceSecret(config, checksum);
+  },
+});

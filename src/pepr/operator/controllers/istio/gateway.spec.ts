@@ -11,7 +11,7 @@ import {
   generateGatewayName,
   warnMatchingExistingGateways,
 } from "./gateway";
-import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
+import { sharedEgressPkgId, sidecarEgressNamespace } from "./shared/constants";
 import { EgressResource } from "./types";
 
 describe("test generate egress gateway", () => {

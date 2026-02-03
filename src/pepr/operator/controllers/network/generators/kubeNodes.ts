@@ -9,7 +9,7 @@ import { K8s, kind, R } from "pepr";
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
 import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { UDSConfig } from "../../config/config";
+import { NetworkConfig } from "../../shared/network-config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";
 
@@ -27,15 +27,17 @@ let authorizationPolicyExists = false;
 /**
  * Initialize the node targets by fetching the current nodes in the cluster
  * and populating the nodeSet with their Internal IPs.
+ *
+ * @param networkConfig The network configuration containing CIDR settings
  */
-export async function initAllNodesTarget() {
+export async function initAllNodesTarget(networkConfig: NetworkConfig) {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     // if a list of CIDRs is defined, use those
-    if (UDSConfig.kubeNodeCIDRs.length > 0) {
-      for (const nodeCidr of UDSConfig.kubeNodeCIDRs) {
+    if (networkConfig.kubeNodeCIDRs.length > 0) {
+      for (const nodeCidr of networkConfig.kubeNodeCIDRs) {
         nodeSet.add(nodeCidr);
       }
-      await updateKubeNodesNetworkPolicies();
+      await updateKubeNodesNetworkPolicies(networkConfig);
       await updateKubeNodesAuthorizationPolicies();
       return;
     }
@@ -53,7 +55,7 @@ export async function initAllNodesTarget() {
           nodeNameToIPMap.set(nodeName, ip);
         }
       }
-      await updateKubeNodesNetworkPolicies();
+      await updateKubeNodesNetworkPolicies(networkConfig);
       await updateKubeNodesAuthorizationPolicies();
     } catch (err) {
       log.error("error fetching node IPs:", err);
@@ -77,7 +79,10 @@ export function kubeNodes(): V1NetworkPolicyPeer[] {
  * When a node is created or updated, if it's Ready, add its IP to the nodeSet and nodeNameToIPMap,
  * rebuild the policies, and update the NetworkPolicies.
  */
-export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
+export async function updateKubeNodesFromCreateUpdate(
+  node: kind.Node,
+  networkConfig: NetworkConfig,
+) {
   const ip = getNodeInternalIP(node);
   const nodeName = node.metadata!.name!;
 
@@ -93,7 +98,7 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
     }
   }
 
-  await updateKubeNodesNetworkPolicies();
+  await updateKubeNodesNetworkPolicies(networkConfig);
   await updateKubeNodesAuthorizationPolicies();
 }
 
@@ -101,7 +106,7 @@ export async function updateKubeNodesFromCreateUpdate(node: kind.Node) {
  * When a node is deleted, remove its IP from the set, rebuild the policies,
  * and update the NetworkPolicies.
  */
-export async function updateKubeNodesFromDelete(node: kind.Node) {
+export async function updateKubeNodesFromDelete(node: kind.Node, networkConfig: NetworkConfig) {
   const ip = getNodeInternalIP(node);
   const nodeName = node.metadata!.name!;
   if (ip) {
@@ -109,7 +114,7 @@ export async function updateKubeNodesFromDelete(node: kind.Node) {
     nodeNameToIPMap.delete(nodeName);
   }
 
-  await updateKubeNodesNetworkPolicies();
+  await updateKubeNodesNetworkPolicies(networkConfig);
   await updateKubeNodesAuthorizationPolicies();
 }
 
@@ -123,8 +128,10 @@ async function fetchKubernetesNodes(): Promise<KubernetesListObject<kind.Node>> 
 /**
  * Update all NetworkPolicies labeled with uds/generated=KubeNodes to
  * reflect the given node CIDRs.
+ *
+ * @param networkConfig The network configuration containing CIDR settings
  */
-export async function updateKubeNodesNetworkPolicies() {
+export async function updateKubeNodesNetworkPolicies(networkConfig: NetworkConfig) {
   const newNodes = buildNodePolicies([...nodeSet]);
   const netPols = await K8s(kind.NetworkPolicy)
     .WithLabel("uds/generated", RemoteGenerated.KubeNodes)
@@ -170,7 +177,7 @@ export async function updateKubeNodesNetworkPolicies() {
         await K8s(kind.NetworkPolicy).Apply(netPol, { force: true });
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
-        if (UDSConfig.kubeNodeCIDRs.length > 0) {
+        if (networkConfig.kubeNodeCIDRs.length > 0) {
           message +=
             ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
         }
@@ -219,7 +226,10 @@ export async function updateKubeNodesAuthorizationPolicies(): Promise<void> {
 
   if (authPols.items.length > 0) {
     const summary = authPols.items
-      .map(pol => `name: ${pol.metadata?.name}, namespace: ${pol.metadata?.namespace}`)
+      .map(
+        (pol: AuthorizationPolicy) =>
+          `name: ${pol.metadata?.name}, namespace: ${pol.metadata?.namespace}`,
+      )
       .join(" | ");
     log.trace(`Fetched ${authPols.items.length} AuthorizationPolicies: ${summary}`);
   }

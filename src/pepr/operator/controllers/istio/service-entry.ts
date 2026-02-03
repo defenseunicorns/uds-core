@@ -19,15 +19,13 @@ import { UDSConfig } from "../config/config";
 import { sanitizeResourceName } from "../utils";
 import { egressWaypointName } from "./ambient-waypoint";
 import {
+  ambientEgressNamespace,
+  ambientSharedEgressPkgId,
+  getSharedAnnotationKey,
   sidecarEgressNamespace,
   sharedEgressPkgId as sidecarSharedEgressPkgId,
-} from "./egress-sidecar";
-import {
-  ambientEgressNamespace,
-  sharedEgressPkgId as ambientSharedEgressPkgId,
-  getSharedAnnotationKey,
-} from "./istio-resources";
-import { EgressResource, HostResource, PortProtocol } from "./types";
+} from "./shared/constants";
+import { EgressResource, HostResource, PortProtocol } from "./shared/types";
 
 // Convert PortProtocol[] to IstioPort[] consistently
 function buildIstioPorts(portProtocols: PortProtocol[]): IstioPort[] {

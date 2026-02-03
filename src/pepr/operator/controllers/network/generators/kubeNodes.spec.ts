@@ -60,7 +60,10 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
     process.env.PEPR_WATCH_MODE = "true";
     process.env.PEPR_MODE = "dev";
 
-    await initAllNodesTarget(); // resets nodeSet to []
+    await initAllNodesTarget({
+      kubeApiCIDR: "",
+      kubeNodeCIDRs: [],
+    }); // resets nodeSet to []
   });
 
   it("should update AuthorizationPolicy if ipBlocks differ", async () => {
@@ -83,10 +86,16 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
     mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
 
-    await updateKubeNodesFromCreateUpdate({
-      metadata: { name: "node1" },
-      status: { addresses: [{ type: "InternalIP", address: "10.0.0.5" }] },
-    } as MockNode);
+    await updateKubeNodesFromCreateUpdate(
+      {
+        metadata: { name: "node1" },
+        status: { addresses: [{ type: "InternalIP", address: "10.0.0.5" }] },
+      } as MockNode,
+      {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      },
+    );
 
     expect(authPol.spec!.rules![0].from![0].source!.ipBlocks).toEqual(["10.0.0.5/32"]);
     expect(authPol.metadata!.managedFields).toBeUndefined();
@@ -113,10 +122,16 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
     mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
 
-    await updateKubeNodesFromCreateUpdate({
-      metadata: { name: "node2" },
-      status: { addresses: [{ type: "InternalIP", address: "10.0.0.6" }] },
-    } as MockNode);
+    await updateKubeNodesFromCreateUpdate(
+      {
+        metadata: { name: "node2" },
+        status: { addresses: [{ type: "InternalIP", address: "10.0.0.6" }] },
+      } as MockNode,
+      {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      },
+    );
 
     expect(mockApply).not.toHaveBeenCalled();
   });
@@ -137,10 +152,16 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
     mockGetAuthPolicies.mockResolvedValue({ items: [authPol] });
 
-    await updateKubeNodesFromCreateUpdate({
-      metadata: { name: "node3" },
-      status: { addresses: [{ type: "InternalIP", address: "10.0.0.7" }] },
-    } as MockNode);
+    await updateKubeNodesFromCreateUpdate(
+      {
+        metadata: { name: "node3" },
+        status: { addresses: [{ type: "InternalIP", address: "10.0.0.7" }] },
+      } as MockNode,
+      {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      },
+    );
 
     expect(authPol.spec!.rules![0].from?.[0]?.source?.ipBlocks).toEqual(["10.0.0.7/32"]);
     expect(mockApply).toHaveBeenCalled();
@@ -230,7 +251,10 @@ describe("kubeNodes module", () => {
   describe("initAllNodesTarget", () => {
     it("should initialize nodeSet with internal IPs from nodes", async () => {
       mockK8sGetNodes.mockResolvedValue(mockNodeList);
-      await initAllNodesTarget();
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrs = kubeNodes();
       // Should have two IPs from mockNodeList
       expect(cidrs).toHaveLength(2);
@@ -246,7 +270,10 @@ describe("kubeNodes module", () => {
   describe("nodeCIDRs", () => {
     it("should return anywhere if no nodes known", async () => {
       mockK8sGetNodes.mockResolvedValue({ items: [] });
-      await initAllNodesTarget();
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrs = kubeNodes();
       // expect it to match "anywhere"
       expect(cidrs).toEqual([anywhere]);
@@ -257,14 +284,23 @@ describe("kubeNodes module", () => {
     it("should add a node IP if node is ready", async () => {
       mockK8sGetNodes.mockResolvedValueOnce({ items: [] });
       mockGetNetworkPolicies.mockResolvedValue(mockNetworkPolicyList);
-      await initAllNodesTarget(); // start empty
-      await updateKubeNodesFromCreateUpdate(mockNodeList.items[0]);
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      }); // start empty
+      await updateKubeNodesFromCreateUpdate(mockNodeList.items[0], {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       let cidrs = kubeNodes();
       expect(cidrs).toHaveLength(1);
       expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.1/32");
       expect(mockApply).toHaveBeenCalled();
 
-      await updateKubeNodesFromCreateUpdate(mockNodeList.items[1]);
+      await updateKubeNodesFromCreateUpdate(mockNodeList.items[1], {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       cidrs = kubeNodes();
       expect(cidrs).toHaveLength(2);
       expect(cidrs[1].ipBlock?.cidr).toBe("10.0.0.2/32");
@@ -273,7 +309,10 @@ describe("kubeNodes module", () => {
 
     it("should not remove a node that's no longer ready", async () => {
       mockK8sGetNodes.mockResolvedValue(mockNodeList);
-      await initAllNodesTarget();
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       let cidrs = kubeNodes();
       // Should have two IPs from mockNodeList
       expect(cidrs).toHaveLength(2);
@@ -291,7 +330,10 @@ describe("kubeNodes module", () => {
           conditions: [{ type: "Ready", status: "False" }],
         },
       };
-      await updateKubeNodesFromCreateUpdate(notReadyNode);
+      await updateKubeNodesFromCreateUpdate(notReadyNode, {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       cidrs = kubeNodes();
       expect(cidrs).toHaveLength(2);
       expect(cidrs).toEqual(
@@ -306,7 +348,10 @@ describe("kubeNodes module", () => {
       // setup 1 node in the set and expect 1 application to a policy
       mockK8sGetNodes.mockResolvedValueOnce({ items: [] });
       mockGetNetworkPolicies.mockResolvedValue(mockNetworkPolicyList);
-      await initAllNodesTarget(); // start empty
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      }); // start empty
       // add a node even if it's not ready
       const initialNode = {
         metadata: { name: "node1" },
@@ -315,7 +360,10 @@ describe("kubeNodes module", () => {
           conditions: [{ type: "Ready", status: "False" }],
         },
       };
-      await updateKubeNodesFromCreateUpdate(initialNode);
+      await updateKubeNodesFromCreateUpdate(initialNode, {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       let cidrs = kubeNodes();
       expect(cidrs).toHaveLength(1);
       expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.9/32");
@@ -325,7 +373,10 @@ describe("kubeNodes module", () => {
       mockApply.mockClear();
       // change initialNode to set the status to ready
       initialNode.status.conditions[0].status = "True";
-      await updateKubeNodesFromCreateUpdate(initialNode);
+      await updateKubeNodesFromCreateUpdate(initialNode, {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       cidrs = kubeNodes();
       expect(cidrs).toHaveLength(1);
       expect(cidrs[0].ipBlock?.cidr).toBe("10.0.0.9/32");
@@ -348,7 +399,10 @@ describe("kubeNodes module", () => {
       };
 
       mockK8sGetNodes.mockResolvedValueOnce(oneNodeList);
-      await initAllNodesTarget();
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrsBeforeUpdate = kubeNodes();
       expect(cidrsBeforeUpdate).toHaveLength(1);
       expect(cidrsBeforeUpdate[0].ipBlock?.cidr).toBe("10.0.0.1/32");
@@ -362,7 +416,10 @@ describe("kubeNodes module", () => {
         },
       };
 
-      await updateKubeNodesFromCreateUpdate(updatedNode);
+      await updateKubeNodesFromCreateUpdate(updatedNode, {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrsAfterUpdate = kubeNodes();
       expect(cidrsAfterUpdate).toHaveLength(1);
       expect(cidrsAfterUpdate[0].ipBlock?.cidr).toBe("10.0.0.2/32");
@@ -372,11 +429,17 @@ describe("kubeNodes module", () => {
   describe("updateKubeNodesFromDelete", () => {
     it("should remove the node IP from nodeSet", async () => {
       mockK8sGetNodes.mockResolvedValueOnce(mockNodeList);
-      await initAllNodesTarget();
+      await initAllNodesTarget({
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrsBeforeDelete = kubeNodes();
       expect(cidrsBeforeDelete).toHaveLength(2);
 
-      await updateKubeNodesFromDelete(mockNodeList.items[0]);
+      await updateKubeNodesFromDelete(mockNodeList.items[0], {
+        kubeApiCIDR: "",
+        kubeNodeCIDRs: [],
+      });
       const cidrsAfterDelete = kubeNodes();
       expect(cidrsAfterDelete).toHaveLength(1);
       expect(cidrsAfterDelete[0].ipBlock?.cidr).toBe("10.0.0.2/32");

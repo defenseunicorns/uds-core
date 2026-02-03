@@ -4,14 +4,12 @@
  */
 
 import { Component, setupLogger } from "../../../logger";
-import { StoredMatcher } from "../../../policies";
 import { Matcher, Policy, UDSExemption } from "../../crd";
+import { PolicyMap, PolicyOwnerMap, StoredMatcher } from "../shared/policy-types";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_EXEMPTIONS);
 
-export type PolicyOwnerMap = Map<string, UDSExemption>;
-export type PolicyMap = Map<Policy, StoredMatcher[]>;
 let policyExemptionMap: PolicyMap;
 let policyOwnerMap: PolicyOwnerMap;
 

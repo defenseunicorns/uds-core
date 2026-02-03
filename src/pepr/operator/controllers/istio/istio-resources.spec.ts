@@ -13,28 +13,68 @@ import { getPackageId, getSharedAnnotationKey, istioResources } from "./istio-re
 import * as seMod from "./service-entry";
 import * as vsMod from "./virtual-service";
 
-vi.mock("pepr", () => {
-  return {
-    K8s: vi.fn(() => ({
-      Apply: vi.fn(async () => undefined),
+vi.mock("pepr", () => ({
+  K8s: vi.fn(() => ({
+    Apply: vi.fn(async () => undefined),
+  })),
+  Log: {
+    child: vi.fn(() => ({
+      info: vi.fn(),
+      debug: vi.fn(),
+      error: vi.fn(),
+      warn: vi.fn(),
+      level: "info",
     })),
-    Log: {
-      child: vi.fn(() => ({
-        info: vi.fn(),
-        debug: vi.fn(),
-        error: vi.fn(),
-        warn: vi.fn(),
-        level: "info",
-      })),
-    },
-    kind: {
-      VirtualService: "VirtualService",
-      ServiceEntry: "ServiceEntry",
-      IstioSidecar: "Sidecar",
-      IstioAuthorizationPolicy: "AuthorizationPolicy",
-    },
-  };
-});
+  },
+  kind: {
+    Namespace: vi.fn(),
+    Secret: vi.fn(),
+    Deployment: vi.fn(),
+    VirtualService: "VirtualService",
+    ServiceEntry: "ServiceEntry",
+    IstioSidecar: "Sidecar",
+    IstioAuthorizationPolicy: "AuthorizationPolicy",
+  },
+}));
+
+// Mock UDSConfig
+vi.mock("../../config/config", () => ({
+  UDSConfig: {
+    domain: "uds.dev",
+    adminDomain: "uds.dev",
+  },
+}));
+
+// Mock the shared virtual-service module to ensure UDSConfig is properly mocked
+vi.mock("./shared/virtual-service", () => ({
+  generateIngressVirtualService: vi.fn((expose, namespace, pkgName, generation, ownerRefs) => {
+    const { host } = expose;
+    const fqdn = `${host}.uds.dev`;
+    return {
+      metadata: {
+        name: `vs-${pkgName}-${host}`,
+        namespace,
+        generation,
+        ownerRefs,
+      },
+      spec: {
+        hosts: [fqdn],
+        http: [
+          {
+            route: [
+              {
+                destination: {
+                  host: `${expose.service}.${namespace}.svc.cluster.local`,
+                  port: { number: expose.port },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    };
+  }),
+}));
 
 describe("istio-resources (ingress)", () => {
   const pkgBase: UDSPackage = {

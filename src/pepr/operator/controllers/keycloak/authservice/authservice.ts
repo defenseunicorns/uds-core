@@ -3,22 +3,22 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { R } from "pepr";
-
+import * as R from "ramda";
 import { Component, setupLogger } from "../../../../logger";
 import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
+import { UDSConfig } from "../../config/config";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
+import { setAuthserviceEventHandler } from "../../shared/events";
 import { getAuthserviceClients, purgeOrphans } from "../../utils";
 import { Client } from "../types";
-import { UDSConfig, updatePolicy } from "./authorization-policy";
+import { initializeOperatorConfig } from "./shared/config";
 import {
-  getAuthserviceConfig,
-  operatorConfig,
-  setAuthserviceConfig,
-  updateAuthServiceSecret,
-} from "./config";
+  getAuthserviceConfigManager,
+  getAuthserviceOperatorConfig,
+  getAuthservicePolicyManager,
+} from "./shared/registry";
 import {
   Action,
   AddOrRemoveClientEvent,
@@ -29,6 +29,12 @@ import {
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
+
+// Register the event handler
+setAuthserviceEventHandler(reconcileAuthservice);
+
+// Initialize operator config
+initializeOperatorConfig();
 
 export async function authservice(
   pkg: UDSPackage,
@@ -171,7 +177,8 @@ export async function reconcileAuthservice(
     if (!pkg) {
       throw new Error("Package must be provided for AddClient or RemoveClient events");
     }
-    await updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
+    const policyManager = getAuthservicePolicyManager();
+    await policyManager.updatePolicy(event, labelSelector, pkg, isAmbient, waypointName);
   }
 }
 
@@ -185,18 +192,19 @@ export async function updateConfig(event: AuthServiceEvent) {
   }
 
   let config: AuthserviceConfig;
+  const configManager = getAuthserviceConfigManager();
 
   try {
     log.debug("Locking config for update");
     lock = true;
 
     // build updated config based on event
-    config = await getAuthserviceConfig().then(config => {
+    config = await configManager.getAuthserviceConfig().then(config => {
       return buildConfig(config, event);
     });
 
     // Update the in-memory config immediately
-    setAuthserviceConfig(config);
+    configManager.setAuthserviceConfig(config);
   } catch (e) {
     log.error({ event, e }, "Failed to build in memory authservice secret for event");
     throw e;
@@ -208,7 +216,7 @@ export async function updateConfig(event: AuthServiceEvent) {
 
   // apply the authservice secret
   log.debug("Applying authservice secret");
-  await updateAuthServiceSecret(config);
+  await configManager.updateAuthServiceSecret(config);
 }
 
 export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
@@ -258,6 +266,8 @@ export function buildChain(update: AuthServiceEvent) {
   // TODO: update to loop and build multiple chains on redirectUris
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
+
+  const operatorConfig = getAuthserviceOperatorConfig();
 
   const chain: Chain = {
     name: update.name,

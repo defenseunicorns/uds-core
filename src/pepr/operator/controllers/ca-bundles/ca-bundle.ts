@@ -6,7 +6,7 @@
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
-import { UDSConfig } from "../config/config";
+import { CABundleConfig } from "../shared/ca-types";
 import { getOwnerRef, purgeOrphans } from "../utils";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
@@ -22,9 +22,14 @@ const log = setupLogger(Component.OPERATOR_CA_BUNDLE);
  *
  * @param pkg The UDS Package CR that defines the ConfigMap configuration
  * @param namespace The target namespace where the ConfigMap will be created
+ * @param caBundle The CA bundle configuration
  * @throws Error if ConfigMap creation or orphan cleanup fails
  */
-export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Promise<void> {
+export async function caBundleConfigMap(
+  pkg: UDSPackage,
+  namespace: string,
+  caBundle: CABundleConfig,
+): Promise<void> {
   const pkgName = pkg.metadata!.name!;
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
@@ -39,7 +44,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
     log.debug(`Reconciling CA Bundle ConfigMap for ${pkgName}`);
 
     // Build the CA bundle content by combining available certs
-    const caBundleContent = buildCABundleContent();
+    const caBundleContent = buildCABundleContent(caBundle);
 
     // If no CA bundle content, delete any existing ConfigMaps instead of creating empty ones
     if (!caBundleContent || caBundleContent.trim() === "") {
@@ -107,7 +112,7 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
  *
  * @throws Error if the ConfigMap cannot be applied to the cluster.
  */
-export async function updateIstioCAConfigMap(): Promise<void> {
+export async function updateIstioCAConfigMap(caBundle?: CABundleConfig): Promise<void> {
   const namespace = "istio-system";
   const configMapName = "uds-trust-bundle";
 
@@ -120,7 +125,10 @@ export async function updateIstioCAConfigMap(): Promise<void> {
       });
 
       // Build the combined CA bundle content
-      const caBundleContent = buildCABundleContent();
+      if (!caBundle) {
+        throw new Error("CA bundle configuration is required");
+      }
+      const caBundleContent = buildCABundleContent(caBundle);
 
       // Directly apply the ConfigMap (handles create and update)
       const configMap: kind.ConfigMap = {
@@ -155,31 +163,32 @@ export async function updateIstioCAConfigMap(): Promise<void> {
  * Combines user-provided certificates, DoD certificates, and public certificates
  * based on the current UDS configuration settings.
  *
+ * @param caBundle The CA bundle configuration
  * @returns The combined PEM-formatted certificate bundle as a string.
  *          Returns empty string if no certificate sources are configured.
  */
-export function buildCABundleContent(): string {
+export function buildCABundleContent(caBundle: CABundleConfig): string {
   const certs: string[] = [];
 
   // Add user-provided certs (base64 encoded)
-  if (UDSConfig.caBundle.certs) {
-    const userCerts = atob(UDSConfig.caBundle.certs);
+  if (caBundle.certs) {
+    const userCerts = atob(caBundle.certs);
     if (userCerts) {
       certs.push(userCerts);
     }
   }
 
   // Add DoD certs if included
-  if (UDSConfig.caBundle.includeDoDCerts && UDSConfig.caBundle.dodCerts) {
-    const dodCerts = atob(UDSConfig.caBundle.dodCerts);
+  if (caBundle.includeDoDCerts && caBundle.dodCerts) {
+    const dodCerts = atob(caBundle.dodCerts);
     if (dodCerts) {
       certs.push(dodCerts);
     }
   }
 
   // Add public certs if included
-  if (UDSConfig.caBundle.includePublicCerts && UDSConfig.caBundle.publicCerts) {
-    const publicCerts = atob(UDSConfig.caBundle.publicCerts);
+  if (caBundle.includePublicCerts && caBundle.publicCerts) {
+    const publicCerts = atob(caBundle.publicCerts);
     if (publicCerts) {
       certs.push(publicCerts);
     }
@@ -195,11 +204,12 @@ export function buildCABundleContent(): string {
 /**
  * Updates the CA bundle ConfigMap for all UDS packages and the Istio trust bundle.
  * This is a global synchronization operation that ensures all managed namespaces and the
- * Istio control plane are up-to-date with the latest certificate configuration from `UDSConfig`.
+ * Istio control plane are up-to-date with the latest certificate configuration from the provided CA bundle.
  *
+ * @param caBundle The CA bundle configuration
  * @throws Error if the package listing or any update operation fails.
  */
-export async function updateAllCaBundleConfigMaps(): Promise<void> {
+export async function updateAllCaBundleConfigMaps(caBundle: CABundleConfig): Promise<void> {
   try {
     log.debug("Starting CA bundle ConfigMap updates for all UDS packages");
 
@@ -207,12 +217,12 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     const packages = await K8s(UDSPackage).Get();
 
     // Process each package and update/delete its CA bundle ConfigMap as needed
-    const packageUpdates = (packages.items || []).map(async pkg => {
+    const packageUpdates = (packages.items || []).map(async (pkg: UDSPackage) => {
       if (!pkg.metadata?.name || !pkg.metadata?.namespace) {
         return;
       }
       try {
-        await caBundleConfigMap(pkg, pkg.metadata.namespace);
+        await caBundleConfigMap(pkg, pkg.metadata.namespace, caBundle);
       } catch (err) {
         log.error(
           `Failed to process CA bundle ConfigMap for package ${pkg.metadata.name} in namespace ${pkg.metadata.namespace}`,

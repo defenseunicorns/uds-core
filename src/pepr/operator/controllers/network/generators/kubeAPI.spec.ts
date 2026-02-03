@@ -73,7 +73,10 @@ describe("updateAPIServerCIDR", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateAPIServerCIDR(mockService, staticCIDR);
+    await updateAPIServerCIDR(mockService, staticCIDR, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).toHaveBeenCalledWith(
@@ -124,7 +127,10 @@ describe("updateAPIServerCIDR", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateAPIServerCIDR(mockService, mockSlice);
+    await updateAPIServerCIDR(mockService, mockSlice, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).toHaveBeenCalledWith(
@@ -179,7 +185,10 @@ describe("updateAPIServerCIDR", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateAPIServerCIDR(mockService, mockSlice);
+    await updateAPIServerCIDR(mockService, mockSlice, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).toHaveBeenCalledWith(
@@ -228,7 +237,10 @@ describe("updateAPIServerCIDR", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateAPIServerCIDR(mockService, mockSlice);
+    await updateAPIServerCIDR(mockService, mockSlice, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).toHaveBeenCalledWith(
@@ -265,7 +277,10 @@ describe("updateAPIServerCIDR", () => {
       items: [],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateAPIServerCIDR(mockService, mockSlice);
+    await updateAPIServerCIDR(mockService, mockSlice, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalledWith();
     expect(mockApply).not.toHaveBeenCalled();
@@ -302,7 +317,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).not.toHaveBeenCalled(); // No update needed
@@ -328,7 +346,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).not.toHaveBeenCalled(); // No update needed
@@ -355,7 +376,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -397,7 +421,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -438,7 +465,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -479,7 +509,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -516,7 +549,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -553,7 +589,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       ],
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).toHaveBeenCalledWith(
@@ -580,7 +619,10 @@ describe("updateKubeAPINetworkPolicies", () => {
       items: [], // No NetworkPolicies found
     } as KubernetesList<kind.NetworkPolicy>);
 
-    await updateKubeAPINetworkPolicies(newPeers);
+    await updateKubeAPINetworkPolicies(newPeers, {
+      kubeApiCIDR: "10.96.0.0/12",
+      kubeNodeCIDRs: [],
+    });
 
     expect(mockGet).toHaveBeenCalled();
     expect(mockApply).not.toHaveBeenCalled(); // No policies to update

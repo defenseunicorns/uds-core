@@ -9,10 +9,6 @@ import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { egressWaypointName } from "./ambient-waypoint";
 import { ownerRefsMock } from "./defaultTestMocks";
-import {
-  sidecarEgressNamespace,
-  sharedEgressPkgId as sidecarSharedEgressPkgId,
-} from "./egress-sidecar";
 import { ambientEgressNamespace } from "./istio-resources";
 import {
   generateIngressServiceEntry,
@@ -20,6 +16,10 @@ import {
   generateSharedAmbientServiceEntry,
   generateSharedServiceEntry,
 } from "./service-entry";
+import {
+  sidecarEgressNamespace,
+  sharedEgressPkgId as sidecarSharedEgressPkgId,
+} from "./shared/constants";
 import { EgressResource, HostResource } from "./types";
 
 beforeEach(() => {

@@ -4,22 +4,20 @@
  */
 
 import { K8s } from "pepr";
-
-import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
-import { generateIngressVirtualService } from "./virtual-service";
+import {
+  ambientEgressNamespace,
+  getPackageId,
+  getSharedAnnotationKey,
+  log,
+  sharedEgressPkgId,
+} from "./shared/constants";
+import { generateIngressVirtualService } from "./shared/virtual-service";
 
-// Central Ambient egress identifiers:
-// - ambientEgressNamespace: namespace where shared Ambient egress resources live
-// - sharedEgressPkgId: label value used to group and purge UDS-managed Ambient
-//   egress resources by generation during reconciliation
-export const ambientEgressNamespace = "istio-egress-ambient";
-export const sharedEgressPkgId = "shared-ambient-egress-resource";
-
-// configure subproject logger
-export const log = setupLogger(Component.OPERATOR_ISTIO);
+// Re-export for backward compatibility
+export { ambientEgressNamespace, getPackageId, getSharedAnnotationKey, log, sharedEgressPkgId };
 
 /**
  * Creates a VirtualService and ServiceEntry for each exposed service in the package
@@ -98,13 +96,3 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
  * @param pkg
  * @param namespace
  */
-
-// Get the shared annotation key for the package
-export function getSharedAnnotationKey(pkgId: string) {
-  return `uds.dev/user-${pkgId}`;
-}
-
-// Get the unique package ID
-export function getPackageId(pkg: UDSPackage) {
-  return `${pkg.metadata?.name}-${pkg.metadata?.namespace}`;
-}

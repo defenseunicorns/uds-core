@@ -190,7 +190,7 @@ export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
   const ports = service.spec?.ports ?? [];
   for (const host in hostResourceMap) {
     for (const portProtocol of hostResourceMap[host].portProtocol) {
-      const port = ports.find(p => p.port === portProtocol.port);
+      const port = ports.find((p: { port?: number }) => p.port === portProtocol.port);
       if (!port) {
         const errText = `Egress gateway does not expose port ${portProtocol.port} for host ${host}. Please update the egress gateway service to expose this port.`;
         log.error(errText);

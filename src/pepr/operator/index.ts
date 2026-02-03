@@ -58,12 +58,17 @@ const log = setupLogger(Component.OPERATOR);
 
 // Watch for changes to the API server EndpointSlice and update the API server CIDR
 // Skip if a CIDR is defined in the UDS Config
+const networkConfig = {
+  kubeApiCIDR: UDSConfig.kubeApiCIDR,
+  kubeNodeCIDRs: UDSConfig.kubeNodeCIDRs,
+};
+
 if (!UDSConfig.kubeApiCIDR) {
   When(a.EndpointSlice)
     .IsCreatedOrUpdated()
     .InNamespace("default")
     .WithName("kubernetes")
-    .Reconcile(updateAPIServerCIDRFromEndpointSlice);
+    .Reconcile(slice => updateAPIServerCIDRFromEndpointSlice(slice, networkConfig));
 }
 
 // Watch for changes to the API server Service and update the API server CIDR
@@ -71,7 +76,7 @@ When(a.Service)
   .IsCreatedOrUpdated()
   .InNamespace("default")
   .WithName("kubernetes")
-  .Reconcile(updateAPIServerCIDRFromService);
+  .Reconcile(svc => updateAPIServerCIDRFromService(svc, networkConfig));
 
 // Watch for Service mutations to apply ambient waypoint labels
 When(a.Service)
@@ -117,12 +122,16 @@ When(UDSPackage)
 
 // Watch for changes to the Nodes and update the Node CIDR list
 if (UDSConfig.kubeNodeCIDRs.length === 0) {
-  When(a.Node).IsCreatedOrUpdated().Reconcile(updateKubeNodesFromCreateUpdate);
+  When(a.Node)
+    .IsCreatedOrUpdated()
+    .Reconcile(node => updateKubeNodesFromCreateUpdate(node, networkConfig));
 }
 
 // Watch for Node deletions and update the Node CIDR list
 if (UDSConfig.kubeNodeCIDRs.length === 0) {
-  When(a.Node).IsDeleted().Reconcile(updateKubeNodesFromDelete);
+  When(a.Node)
+    .IsDeleted()
+    .Reconcile(node => updateKubeNodesFromDelete(node, networkConfig));
 }
 
 // Watch the UDS Operator Config Secret and handle changes

@@ -9,7 +9,11 @@ import cfg from "./package.json";
 
 import { Component, setupLogger } from "./src/pepr/logger";
 import { operator } from "./src/pepr/operator";
-import { loadUDSConfig, startConfigWatch } from "./src/pepr/operator/controllers/config/config";
+import {
+  loadUDSConfig,
+  startConfigWatch,
+  UDSConfig,
+} from "./src/pepr/operator/controllers/config/config";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
 import { initAPIServerCIDR } from "./src/pepr/operator/controllers/network/generators/kubeAPI";
@@ -31,8 +35,12 @@ const log = setupLogger(Component.STARTUP);
   await startExemptionWatch();
   await startPackageWatch();
   // Initialize API Server and Nodes IPs in-memory
-  await initAPIServerCIDR();
-  await initAllNodesTarget();
+  const networkConfig = {
+    kubeApiCIDR: UDSConfig.kubeApiCIDR,
+    kubeNodeCIDRs: UDSConfig.kubeNodeCIDRs,
+  };
+  await initAPIServerCIDR(networkConfig);
+  await initAllNodesTarget(networkConfig);
   // Setup Authservice and Keycloak Secrets used by the operator
   await setupAuthserviceSecret();
   await setupKeycloakClientSecret();
