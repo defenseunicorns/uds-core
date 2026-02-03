@@ -158,3 +158,50 @@ tests:
                     type: Pods
                     value: 1
                   stabilizationWindowSeconds: 300
+
+  - it: should use autoscaling.minReplicas when autoscaling.enabled is true
+    set:
+      autoscaling.enabled: true
+      autoscaling.minReplicas: 3
+      waypoint.horizontalPodAutoscaler.enabled: true
+      waypoint.horizontalPodAutoscaler.minReplicas: 1
+      waypoint.horizontalPodAutoscaler.maxReplicas: 5
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.horizontalPodAutoscaler
+          value: |
+            spec:
+              minReplicas: 3
+              maxReplicas: 5
+              metrics:
+                - resource:
+                    name: cpu
+                    target:
+                      averageUtilization: 90
+                      type: Utilization
+                  type: Resource
+
+  - it: should use waypoint.horizontalPodAutoscaler.minReplicas when autoscaling.enabled is false
+    set:
+      autoscaling.enabled: false
+      autoscaling.minReplicas: 3
+      waypoint.horizontalPodAutoscaler.enabled: true
+      waypoint.horizontalPodAutoscaler.minReplicas: 1
+      waypoint.horizontalPodAutoscaler.maxReplicas: 5
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.horizontalPodAutoscaler
+          value: |
+            spec:
+              minReplicas: 1
+              maxReplicas: 5
+              metrics:
+                - resource:
+                    name: cpu
+                    target:
+                      averageUtilization: 90
+                      type: Utilization
+                  type: Resource
+

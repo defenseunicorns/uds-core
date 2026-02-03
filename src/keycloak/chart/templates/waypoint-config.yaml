@@ -45,7 +45,11 @@ data:
   {{- with .Values.waypoint.horizontalPodAutoscaler }}
   horizontalPodAutoscaler: |
     spec:
+      {{- if $.Values.autoscaling.enabled }}
+      minReplicas: {{ $.Values.autoscaling.minReplicas }}
+      {{- else }}
       {{ with .minReplicas }}minReplicas: {{ . }}{{- end }}
+      {{- end }}
       {{ with .maxReplicas }}maxReplicas: {{ . }}{{- end }}
       {{- if .metrics }}
       metrics:
