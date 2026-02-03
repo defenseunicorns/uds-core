@@ -8,11 +8,13 @@ templates:
   - destination-rule.yaml
 
 tests:
-  - it: should not render DestinationRule when autoscaling.sessionStickiness is disabled by default
+  - it: should render DestinationRule when autoscaling.sessionStickiness is enabled by default
     template: destination-rule.yaml
     asserts:
       - hasDocuments:
-          count: 0
+          count: 1
+      - isKind:
+          of: DestinationRule
 
   - it: should not render DestinationRule when autoscaling.sessionStickiness.enabled is false
     set:
@@ -47,4 +49,3 @@ tests:
       - equal:
           path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.ttl
           value: 0s
-

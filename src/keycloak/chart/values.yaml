@@ -368,8 +368,8 @@ autoscaling:
   # When enabled, creates a DestinationRule with consistent hash load balancing based on HTTP cookies
   # This ensures requests from the same client are routed to the same Keycloak pod
   sessionStickiness:
-    # Enable session stickiness (disabled by default)
-    enabled: false
+    # Enable session stickiness (enabled by default)
+    enabled: true
 
 # Istio waypoint configuration
 waypoint:
