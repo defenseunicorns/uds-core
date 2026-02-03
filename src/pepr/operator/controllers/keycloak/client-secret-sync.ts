@@ -5,7 +5,7 @@
 
 import { K8s, kind } from "pepr";
 import { v4 as uuidv4 } from "uuid";
-import { Component, setupLogger } from "../../../logger";
+import { Component, setupLogger } from "../../../logger.js";
 
 export const KEYCLOAK_CLIENT_SECRET_KEY = "uds-operator";
 

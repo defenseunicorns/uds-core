@@ -10,17 +10,17 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
   buildCABundleContent: vi.fn(),
 }));
 
-import { Sso, UDSPackage } from "../../../crd";
-import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
-import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
-import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
-import { getWaypointName } from "../../istio/waypoint-utils";
-import { Client } from "../types";
-import * as authorizationPolicy from "./authorization-policy";
-import { authservice, buildChain, buildConfig } from "./authservice";
-import * as configModule from "./config";
-import * as mockConfig from "./mock-authservice-config.json";
-import { Action, AuthserviceConfig, AuthServiceEvent } from "./types";
+import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1.js";
+import { Sso, UDSPackage } from "../../../crd/index.js";
+import { buildCABundleContent } from "../../ca-bundles/ca-bundle.js";
+import { cleanupWaypointLabels } from "../../istio/ambient-waypoint.js";
+import { getWaypointName } from "../../istio/waypoint-utils.js";
+import { Client } from "../types.js";
+import * as authorizationPolicy from "./authorization-policy.js";
+import { authservice, buildChain, buildConfig } from "./authservice.js";
+import * as configModule from "./config.js";
+import * as mockConfig from "./mock-authservice-config.json" with { type: "json" };
+import { Action, AuthserviceConfig, AuthServiceEvent } from "./types.js";
 const mockBuildCABundleContent = vi.mocked(buildCABundleContent);
 
 // Mock the waypoint utilities
@@ -387,7 +387,7 @@ describe("authservice", () => {
   });
 
   test("should update redis session store config to add value", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    let config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.AddClient,
@@ -406,7 +406,7 @@ describe("authservice", () => {
 
   test("should update redis session store config to remove redis uri", async () => {
     const redisUri = "redis://localhost:6379";
-    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    const config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       name: "redis-update",
       action: Action.UpdateGlobalConfig,
       redisUri: redisUri,
@@ -435,7 +435,7 @@ describe("authservice", () => {
     mockBuildCABundleContent.mockReturnValue("");
 
     const trustedCA = "some-trusted-ca";
-    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    const config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       name: "trusted-ca-update",
       action: Action.UpdateGlobalConfig,
       trustedCA: trustedCA,
@@ -447,7 +447,7 @@ describe("authservice", () => {
 
   test("should update trusted certificate authority to remove value", async () => {
     const trustedCA = "some-trusted-ca";
-    const config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    const config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       name: "trusted-ca-update",
       action: Action.UpdateGlobalConfig,
       trustedCA: trustedCA,
@@ -495,7 +495,7 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain removal", async () => {
-    const config = buildConfig(mockConfig as AuthserviceConfig, {
+    const config = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.RemoveClient,
@@ -506,7 +506,7 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain addition", async () => {
-    let config = buildConfig(mockConfig as AuthserviceConfig, {
+    let config = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.RemoveClient,
@@ -527,14 +527,14 @@ describe("authservice", () => {
   });
 
   test("should test chain removal by name", async () => {
-    let config = buildConfig(mockConfig as AuthserviceConfig, {
+    let config = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "nothere",
       action: Action.RemoveClient,
     });
     expect(config.chains.length).toEqual(1);
 
-    config = buildConfig(mockConfig as AuthserviceConfig, {
+    config = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.RemoveClient,
@@ -573,7 +573,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice", async () => {
-    let config = buildConfig(mockConfig as AuthserviceConfig, {
+    let config = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.AddClient,
@@ -599,7 +599,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice and be sorted", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    let config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.RemoveClient,
@@ -635,7 +635,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice and be sorted, with removals", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
+    let config1 = buildConfig(mockConfig as unknown as AuthserviceConfig, {
       client: mockClient,
       name: "local",
       action: Action.RemoveClient,

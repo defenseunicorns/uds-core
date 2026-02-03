@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types.js";
 import { K8s } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { UDSPackage } from "../../crd";
-import { registerWatchEventHandlers, watchCfg } from "../utils";
-import { PackageStore } from "./package-store";
+import { Component, setupLogger } from "../../../logger.js";
+import { UDSPackage } from "../../crd/index.js";
+import { registerWatchEventHandlers, watchCfg } from "../utils.js";
+import { PackageStore } from "./package-store.js";
 /**
  * Processes exemptions based on the watch phase.
  * This function determines how to handle a UDSPackage based on whether it has been added or deleted

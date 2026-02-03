@@ -4,10 +4,10 @@
  */
 
 import { K8s, kind } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { UDSPackage } from "../../crd";
-import { UDSConfig } from "../config/config";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { Component, setupLogger } from "../../../logger.js";
+import { UDSPackage } from "../../crd/index.js";
+import { UDSConfig } from "../config/config.js";
+import { getOwnerRef, purgeOrphans } from "../utils.js";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";

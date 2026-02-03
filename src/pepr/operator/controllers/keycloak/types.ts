@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { ProtocolMapper } from "../../crd/generated/package-v1alpha1";
+import { ProtocolMapper } from "../../crd/generated/package-v1alpha1.js";
 
 // An internal interface for sending Client Representation to Keycloak from the UDS Operator
 // Should be as close as possible to the https://www.keycloak.org/docs-api/latest/rest-api/index.html#ClientRepresentation

@@ -4,19 +4,19 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { purgeOrphans } from "../utils";
-import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks";
-import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd/index.js";
+import { purgeOrphans } from "../utils.js";
+import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks.js";
+import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports.js";
 
-import { waitForWaypointPodHealthy } from "./ambient-waypoint";
-import * as apMod from "./auth-policy";
-import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
+import { waitForWaypointPodHealthy } from "./ambient-waypoint.js";
+import * as apMod from "./auth-policy.js";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient.js";
 
-import { AmbientPackageMap } from "./types";
+import { AmbientPackageMap } from "./types.js";
 
-import * as seMod from "./service-entry";
+import * as seMod from "./service-entry.js";
 
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();

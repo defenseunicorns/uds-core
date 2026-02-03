@@ -4,14 +4,14 @@
  */
 
 import { K8s, kind } from "pepr";
-import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
+import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace.js";
 
 // Import the utility functions for direct testing
 // Note: These need to be exported in namespace.ts for testing
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
-import { applyNamespaceUpdates, getCurrentIstioState, getIstioLabels } from "./namespace";
+import { applyNamespaceUpdates, getCurrentIstioState, getIstioLabels } from "./namespace.js";
 
 vi.mock("pepr", async () => {
   const originalModule = (await vi.importActual("pepr")) as object;

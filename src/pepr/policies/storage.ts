@@ -6,9 +6,9 @@
 import { a, sdk } from "pepr";
 
 import { V1Container, V1Volume } from "@kubernetes/client-node";
-import { Policy } from "../operator/crd";
-import { When, volumes } from "./common";
-import { isExempt, markExemption } from "./exemptions";
+import { Policy } from "../operator/crd/index.js";
+import { When, volumes } from "./common.js";
+import { isExempt, markExemption } from "./exemptions/index.js";
 
 const { containers } = sdk;
 /**

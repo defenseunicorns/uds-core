@@ -5,12 +5,12 @@
 
 import { K8s, kind } from "pepr";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1.js";
 import {
   updateAPIServerCIDR,
   updateKubeAPIAuthorizationPolicies,
   updateKubeAPINetworkPolicies,
-} from "./kubeAPI";
+} from "./kubeAPI.js";
 
 type KubernetesList<T> = {
   items: T[];

@@ -6,12 +6,12 @@
 import { KubernetesListObject, V1NetworkPolicyPeer, V1NodeAddress } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 
-import { Component, setupLogger } from "../../../../logger";
-import { RemoteGenerated } from "../../../crd";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { UDSConfig } from "../../config/config";
-import { retryWithDelay } from "../../utils";
-import { anywhere } from "./anywhere";
+import { Component, setupLogger } from "../../../../logger.js";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1.js";
+import { RemoteGenerated } from "../../../crd/index.js";
+import { UDSConfig } from "../../config/config.js";
+import { retryWithDelay } from "../../utils.js";
+import { anywhere } from "./anywhere.js";
 
 const log = setupLogger(Component.OPERATOR_GENERATORS);
 

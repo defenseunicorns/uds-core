@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Direction } from "../../../crd";
-import { generate } from "../generate";
+import { Direction } from "../../../crd/index.js";
+import { generate } from "../generate.js";
 
 export const allowIngressSidecarMonitoring = (namespace: string) =>
   generate(namespace, {

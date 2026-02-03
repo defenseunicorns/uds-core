@@ -5,6 +5,8 @@
 
 import { PeprValidateRequest } from "pepr";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { PackageStore } from "../../controllers/packages/package-store.js";
+import { Mode, RemoteProtocol } from "../generated/package-v1alpha1.js";
 import {
   Allow,
   Direction,
@@ -15,10 +17,8 @@ import {
   RemoteGenerated,
   Sso,
   UDSPackage,
-} from "..";
-import { PackageStore } from "../../controllers/packages/package-store";
-import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
-import { validator } from "./package-validator";
+} from "../index.js";
+import { validator } from "./package-validator.js";
 
 PackageStore.init();
 

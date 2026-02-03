@@ -4,9 +4,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { IstioOutboundTrafficPolicyMode } from "../../crd";
-import { ownerRefsMock } from "./defaultTestMocks";
-import { generateEgressSidecar } from "./sidecar";
+import { IstioOutboundTrafficPolicyMode } from "../../crd/index.js";
+import { ownerRefsMock } from "./defaultTestMocks.js";
+import { generateEgressSidecar } from "./sidecar.js";
 
 describe("test generate sidecar", () => {
   const packageName = "test-pkg";

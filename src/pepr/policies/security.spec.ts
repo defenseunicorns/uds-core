@@ -10,7 +10,7 @@ import {
   V1PodSpec,
 } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
-import { Ctx } from "./common";
+import { Ctx } from "./common.js";
 import {
   findContainersWithoutDropAllCapability,
   isRootSecurityContext,
@@ -23,7 +23,7 @@ import {
   validateSeccompProfile,
   validateSELinuxOptions,
   validateSELinuxTypes,
-} from "./security";
+} from "./security.js";
 
 describe("setPrivilegeEscalation", () => {
   const ape = (c: V1Container) => c.securityContext?.allowPrivilegeEscalation;

@@ -4,9 +4,9 @@
  */
 
 import { Capability } from "pepr";
-import { Component, setupLogger } from "../logger";
-import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd";
-import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
+import { Component, setupLogger } from "../logger.js";
+import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1.js";
+import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd/index.js";
 
 const log = setupLogger(Component.PROMETHEUS);
 

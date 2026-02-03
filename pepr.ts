@@ -5,20 +5,21 @@
 
 import { PeprModule } from "pepr";
 
-import cfg from "./package.json";
+import cfg from "./package.json" with { type: "json" };
 
-import { Component, setupLogger } from "./src/pepr/logger";
-import { operator } from "./src/pepr/operator";
-import { loadUDSConfig, startConfigWatch } from "./src/pepr/operator/controllers/config/config";
-import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
-import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
-import { initAPIServerCIDR } from "./src/pepr/operator/controllers/network/generators/kubeAPI";
-import { initAllNodesTarget } from "./src/pepr/operator/controllers/network/generators/kubeNodes";
-import { startPackageWatch } from "./src/pepr/operator/controllers/packages/packages";
-import { registerCRDs } from "./src/pepr/operator/crd/register";
-import { patches } from "./src/pepr/patches";
-import { policies, startExemptionWatch } from "./src/pepr/policies";
-import { prometheus } from "./src/pepr/prometheus";
+import { Component, setupLogger } from "./src/pepr/logger.js";
+import { operator } from "./src/pepr/operator/common.js";
+import { loadUDSConfig, startConfigWatch } from "./src/pepr/operator/controllers/config/config.js";
+import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config.js";
+import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config.js";
+import { initAPIServerCIDR } from "./src/pepr/operator/controllers/network/generators/kubeAPI.js";
+import { initAllNodesTarget } from "./src/pepr/operator/controllers/network/generators/kubeNodes.js";
+import { startPackageWatch } from "./src/pepr/operator/controllers/packages/packages.js";
+import { registerCRDs } from "./src/pepr/operator/crd/register.js";
+import { patches } from "./src/pepr/patches/index.js";
+import { policies } from "./src/pepr/policies/common.js";
+import { startExemptionWatch } from "./src/pepr/policies/index.js";
+import { prometheus } from "./src/pepr/prometheus/index.js";
 
 const log = setupLogger(Component.STARTUP);
 

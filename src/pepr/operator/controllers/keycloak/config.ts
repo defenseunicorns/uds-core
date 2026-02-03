@@ -4,12 +4,12 @@
  */
 
 import { K8s, kind } from "pepr";
+import { Component, setupLogger } from "../../../logger.js";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
-} from "./client-secret-sync";
-import { Component, setupLogger } from "../../../logger";
+} from "./client-secret-sync.js";
 
 export const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 

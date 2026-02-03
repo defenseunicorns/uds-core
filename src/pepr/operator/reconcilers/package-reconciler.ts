@@ -3,29 +3,38 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
-import { Component, setupLogger } from "../../logger";
-import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
-import { UDSConfig } from "../controllers/config/config";
-import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
-import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
-import { istioResources } from "../controllers/istio/istio-resources";
-import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
-import { PackageAction } from "../controllers/istio/types";
+import { Component, setupLogger } from "../../logger.js";
+import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle.js";
+import { UDSConfig } from "../controllers/config/config.js";
+import { istioEgressResources } from "../controllers/istio/egress-orchestrator.js";
+import {
+  createHostResourceMap,
+  reconcileSharedEgressResources,
+} from "../controllers/istio/egress.js";
+import { istioResources } from "../controllers/istio/istio-resources.js";
+import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace.js";
+import { PackageAction } from "../controllers/istio/types.js";
 import {
   authservice,
   purgeAuthserviceClients,
-} from "../controllers/keycloak/authservice/authservice";
-import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync";
-import { Client } from "../controllers/keycloak/types";
-import { podMonitor } from "../controllers/monitoring/pod-monitor";
-import { serviceMonitor } from "../controllers/monitoring/service-monitor";
-import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
-import { networkPolicies } from "../controllers/network/policies";
-import { retryWithDelay } from "../controllers/utils";
-import { Phase, UDSPackage } from "../crd";
-import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
-import { migrate } from "../crd/migrate";
+} from "../controllers/keycloak/authservice/authservice.js";
+import { keycloak, purgeSSOClients } from "../controllers/keycloak/client-sync.js";
+import { Client } from "../controllers/keycloak/types.js";
+import { podMonitor } from "../controllers/monitoring/pod-monitor.js";
+import { serviceMonitor } from "../controllers/monitoring/service-monitor.js";
+import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies.js";
+import { networkPolicies } from "../controllers/network/policies.js";
+import { retryWithDelay } from "../controllers/utils.js";
+import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1.js";
+import { Phase, UDSPackage } from "../crd/index.js";
+import { migrate } from "../crd/migrate.js";
+import {
+  getReadinessConditions,
+  handleFailure,
+  shouldSkip,
+  updateStatus,
+  writeEvent,
+} from "./index.js";
 
 // @lulaStart 5c6d86fa-5206-4bb5-a685-62ec52ff5694
 // configure subproject logger

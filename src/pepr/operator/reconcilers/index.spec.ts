@@ -6,9 +6,9 @@
 import { GenericKind } from "kubernetes-fluent-client";
 import { K8s, kind, Log } from "pepr";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from ".";
-import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { StatusEnum } from "../crd/generated/package-v1alpha1";
+import { StatusEnum } from "../crd/generated/package-v1alpha1.js";
+import { Phase, PkgStatus, UDSPackage } from "../crd/index.js";
+import { handleFailure, shouldSkip, uidSeen, updateStatus, writeEvent } from "./index.js";
 
 vi.mock("pepr", () => ({
   K8s: vi.fn(),

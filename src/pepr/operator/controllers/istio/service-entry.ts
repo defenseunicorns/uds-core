@@ -5,6 +5,7 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
 import {
   Expose,
   Gateway,
@@ -13,21 +14,20 @@ import {
   IstioPort,
   IstioResolution,
   IstioServiceEntry,
-} from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { UDSConfig } from "../config/config";
-import { sanitizeResourceName } from "../utils";
-import { egressWaypointName } from "./ambient-waypoint";
+} from "../../crd/index.js";
+import { UDSConfig } from "../config/config.js";
+import { sanitizeResourceName } from "../utils.js";
+import { egressWaypointName } from "./ambient-waypoint.js";
 import {
   sidecarEgressNamespace,
   sharedEgressPkgId as sidecarSharedEgressPkgId,
-} from "./egress-sidecar";
+} from "./egress-sidecar.js";
 import {
   ambientEgressNamespace,
   sharedEgressPkgId as ambientSharedEgressPkgId,
   getSharedAnnotationKey,
-} from "./istio-resources";
-import { EgressResource, HostResource, PortProtocol } from "./types";
+} from "./istio-resources.js";
+import { EgressResource, HostResource, PortProtocol } from "./types.js";
 
 // Convert PortProtocol[] to IstioPort[] consistently
 function buildIstioPorts(portProtocols: PortProtocol[]): IstioPort[] {

@@ -5,18 +5,27 @@
 
 import { K8s, kind } from "pepr";
 
-import { Component, setupLogger } from "../../../logger";
-import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { UDSConfig } from "../config/config";
-import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
-import { allowEgressDNS } from "./defaults/allow-egress-dns";
-import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
-import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
-import { defaultDenyAll } from "./defaults/default-deny-all";
-import { generate } from "./generate";
-import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes";
+import { Component, setupLogger } from "../../../logger.js";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Allow, Direction, Gateway, RemoteGenerated, Sso, UDSPackage } from "../../crd/index.js";
+import { UDSConfig } from "../config/config.js";
+import {
+  getPodSelector,
+  getWaypointName,
+  shouldUseAmbientWaypoint,
+} from "../istio/waypoint-utils.js";
+import {
+  getAuthserviceClients,
+  getOwnerRef,
+  purgeOrphans,
+  sanitizeResourceName,
+} from "../utils.js";
+import { allowEgressDNS } from "./defaults/allow-egress-dns.js";
+import { allowEgressIstiod } from "./defaults/allow-egress-istiod.js";
+import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring.js";
+import { defaultDenyAll } from "./defaults/default-deny-all.js";
+import { generate } from "./generate.js";
+import { allowAmbientHealthprobes } from "./generators/ambientHealthprobes.js";
 
 /**
  * Finds an SSO client that matches the given pod labels.
@@ -28,19 +37,25 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
 
   if (!podLabels || authserviceClients.length === 0) return undefined;
 
-  return authserviceClients.find(sso => {
-    const selector = sso.enableAuthserviceSelector;
+  return authserviceClients.find(
+    (
+      sso,
+    ): sso is Sso & {
+      enableAuthserviceSelector: NonNullable<Sso["enableAuthserviceSelector"]>;
+    } => {
+      const selector = sso.enableAuthserviceSelector;
 
-    // If the selector is empty, it matches all pods in the namespace
-    if (Object.keys(selector!).length === 0) {
-      return true;
-    }
+      // If the selector is empty, it matches all pods in the namespace
+      if (Object.keys(selector!).length === 0) {
+        return true;
+      }
 
-    // Otherwise, check that every label in the selector exists and matches in podLabels
-    return Object.entries(selector!).every(
-      ([key, value]) => key in podLabels && podLabels[key] === value,
-    );
-  });
+      // Otherwise, check that every label in the selector exists and matches in podLabels
+      return Object.entries(selector!).every(
+        ([key, value]) => key in podLabels && podLabels[key] === value,
+      );
+    },
+  );
 }
 
 // configure subproject logger

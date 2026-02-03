@@ -4,9 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, MockedFunction, vi } from "vitest";
-import { Sso, UDSPackage } from "../../crd";
-import { syncClient } from "./client-sync";
-import * as clientCredentials from "./clients/client-credentials";
+import { Sso, UDSPackage } from "../../crd/index.js";
+import { syncClient } from "./client-sync.js";
+import * as clientCredentials from "./clients/client-credentials.js";
 
 // Mock the logger before importing the modules that use it
 vi.mock("../../../logger", () => ({
@@ -25,8 +25,8 @@ import {
   convertSsoToClient,
   extractSamlCertificateFromXML,
   generateSecretData,
-} from "./client-sync";
-import { Client } from "./types";
+} from "./client-sync.js";
+import { Client } from "./types.js";
 
 // Mock the K8s Apply function
 const mockApply = vi.fn().mockImplementation(resource => Promise.resolve(resource));

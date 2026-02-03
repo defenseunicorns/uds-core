@@ -5,7 +5,7 @@
 
 import { V1Container, V1Volume } from "@kubernetes/client-node";
 import { describe, expect, it } from "vitest";
-import { validateHostPathVolumes, validateVolumeTypes } from "./storage";
+import { validateHostPathVolumes, validateVolumeTypes } from "./storage.js";
 
 describe("Storage Validation Tests", () => {
   describe("validateVolumeTypes", () => {

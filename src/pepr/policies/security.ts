@@ -11,15 +11,15 @@ import {
   V1PodSecurityContext,
   V1PodSpec,
 } from "@kubernetes/client-node";
-import { Policy } from "../operator/crd";
+import { Policy } from "../operator/crd/index.js";
 import {
   Ctx,
   When,
   annotateMutation,
   securityContextContainers,
   securityContextMessage,
-} from "./common";
-import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
+} from "./common.js";
+import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions/index.js";
 
 const { containers } = sdk;
 

@@ -5,12 +5,12 @@
 
 import { kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import * as utils from "../utils";
-import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
-import * as egressMod from "./egress";
-import { istioEgressResources } from "./egress-orchestrator";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Direction, RemoteGenerated, RemoteProtocol } from "../../crd/index.js";
+import * as utils from "../utils.js";
+import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks.js";
+import { istioEgressResources } from "./egress-orchestrator.js";
+import * as egressMod from "./egress.js";
 
 vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;

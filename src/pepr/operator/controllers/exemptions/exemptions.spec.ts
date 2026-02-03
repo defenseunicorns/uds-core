@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types.js";
 import { beforeEach, describe, expect, it } from "vitest";
-import { MatcherKind, Policy } from "../../crd";
-import { Exemption } from "../../crd/generated/exemption-v1alpha1";
-import { ExemptionStore } from "./exemption-store";
-import { processExemptions } from "./exemptions";
+import { Exemption } from "../../crd/generated/exemption-v1alpha1.js";
+import { MatcherKind, Policy } from "../../crd/index.js";
+import { ExemptionStore } from "./exemption-store.js";
+import { processExemptions } from "./exemptions.js";
 
 const falcoMatcher = {
   namespace: "falco",

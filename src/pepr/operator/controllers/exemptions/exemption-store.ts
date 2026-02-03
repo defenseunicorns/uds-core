@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Component, setupLogger } from "../../../logger";
-import { StoredMatcher } from "../../../policies";
-import { Matcher, Policy, UDSExemption } from "../../crd";
+import { Component, setupLogger } from "../../../logger.js";
+import { StoredMatcher } from "../../../policies/index.js";
+import { Matcher, Policy, UDSExemption } from "../../crd/index.js";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_EXEMPTIONS);

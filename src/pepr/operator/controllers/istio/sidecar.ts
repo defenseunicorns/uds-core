@@ -4,8 +4,8 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { IstioSidecar, IstioOutboundTrafficPolicyMode } from "../../crd";
-import { sanitizeResourceName } from "../utils";
+import { IstioOutboundTrafficPolicyMode, IstioSidecar } from "../../crd/index.js";
+import { sanitizeResourceName } from "../utils.js";
 
 /**
  * Creates a Sidecar to enforce outbound traffic policies

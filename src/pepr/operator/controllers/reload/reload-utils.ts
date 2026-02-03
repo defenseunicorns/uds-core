@@ -7,7 +7,7 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { createEvent, retryWithDelay } from "../utils";
+import { createEvent, retryWithDelay } from "../utils.js";
 
 /**
  * Reload a list of pods using controller-based rolling restart when possible,

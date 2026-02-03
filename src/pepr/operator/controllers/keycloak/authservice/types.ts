@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Client } from "../types";
+import { Client } from "../types.js";
 
 export enum Action {
   AddClient = "AddClient",

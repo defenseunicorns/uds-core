@@ -3,17 +3,17 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef, validateNamespace } from "../utils";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
+import { getOwnerRef, validateNamespace } from "../utils.js";
+import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar.js";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,
   reconcileSharedEgressResources,
-} from "./egress";
-import { createSidecarWorkloadEgressResources, validateEgressGateway } from "./egress-sidecar";
-import { ambientEgressNamespace, log } from "./istio-resources";
-import { PackageAction } from "./types";
+} from "./egress.js";
+import { ambientEgressNamespace, log } from "./istio-resources.js";
+import { PackageAction } from "./types.js";
 
 // Creates ServiceEntry/Sidecar for egress and reconciles shared egress resources
 export async function istioEgressResources(pkg: UDSPackage, namespace: string) {

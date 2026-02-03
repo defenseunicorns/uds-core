@@ -5,9 +5,9 @@
 
 import { PeprValidateRequest, kind } from "pepr";
 import { beforeAll, describe, expect, it, vi } from "vitest";
-import { isExempt } from ".";
-import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
-import { MatcherKind, Policy } from "../../operator/crd";
+import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store.js";
+import { MatcherKind, Policy } from "../../operator/crd/index.js";
+import { isExempt } from "./index.js";
 
 describe("test registering exemptions", () => {
   beforeAll(() => {

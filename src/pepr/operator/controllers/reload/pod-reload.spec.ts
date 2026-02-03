@@ -15,8 +15,8 @@ import {
   handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
-} from "./pod-reload";
-import * as utils from "./reload-utils";
+} from "./pod-reload.js";
+import * as utils from "./reload-utils.js";
 
 // Create hoisted mocks
 const mocks = vi.hoisted(() => ({
@@ -62,7 +62,7 @@ vi.mock("./reload-utils", async () => {
 });
 
 // Import the caches directly
-import { secretChecksumCache } from "./pod-reload";
+import { secretChecksumCache } from "./pod-reload.js";
 
 describe("pod-reload", () => {
   // Clear the caches before each test

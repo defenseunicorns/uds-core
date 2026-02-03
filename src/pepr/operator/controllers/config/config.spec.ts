@@ -6,12 +6,11 @@
 import { kind } from "pepr";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ClusterConfig, ClusterConfigName, ConfigPhase as Phase } from "../../crd";
-import { updateAllCaBundleConfigMaps, updateIstioCAConfigMap } from "../ca-bundles/ca-bundle";
-import { reconcileAuthservice } from "../keycloak/authservice/authservice";
-import { Action } from "../keycloak/authservice/types";
-import { initAPIServerCIDR } from "../network/generators/kubeAPI";
-import { initAllNodesTarget } from "../network/generators/kubeNodes";
+import { updateAllCaBundleConfigMaps, updateIstioCAConfigMap } from "../ca-bundles/ca-bundle.js";
+import { reconcileAuthservice } from "../keycloak/authservice/authservice.js";
+import { Action } from "../keycloak/authservice/types.js";
+import { initAPIServerCIDR } from "../network/generators/kubeAPI.js";
+import { initAllNodesTarget } from "../network/generators/kubeNodes.js";
 import {
   ConfigAction,
   ConfigStep,
@@ -25,7 +24,7 @@ import {
   loadUDSConfig,
   shouldSkip,
   shouldUpdateClusterResources,
-} from "./config";
+} from "./config.js";
 
 // Mock dependencies
 const mockClusterConfGet = vi.fn();
@@ -56,7 +55,9 @@ vi.mock("../ca-bundles/ca-bundle", () => ({
   buildCABundleContent: vi.fn(),
 }));
 
-import * as caBundleModule from "../ca-bundles/ca-bundle";
+import { Status } from "../../crd/generated/clusterconfig-v1alpha1.js";
+import { ClusterConfig, ClusterConfigName, Phase } from "../../crd/index.js";
+import * as caBundleModule from "../ca-bundles/ca-bundle.js";
 vi.spyOn(caBundleModule, "buildCABundleContent").mockImplementation(mockBuildCABundleContent);
 
 vi.mock("../../../logger", () => {
@@ -298,7 +299,7 @@ describe("Config Helper Functions", () => {
         status: {
           phase: Phase.Pending,
           observedGeneration: 0,
-        },
+        } as Status,
       };
 
       expect(shouldSkip(cfg)).toBe(true);
@@ -313,7 +314,7 @@ describe("Config Helper Functions", () => {
         status: {
           phase: Phase.Ready,
           observedGeneration: 1,
-        },
+        } as Status,
       };
 
       expect(shouldSkip(cfg)).toBe(true);
@@ -328,7 +329,7 @@ describe("Config Helper Functions", () => {
         status: {
           phase: Phase.Ready,
           observedGeneration: 1,
-        },
+        } as Status,
       };
 
       expect(shouldSkip(cfg)).toBe(false);
@@ -354,7 +355,7 @@ describe("Config Helper Functions", () => {
         status: {
           phase: Phase.Failed,
           observedGeneration: 2,
-        },
+        } as Status,
       };
 
       expect(shouldSkip(cfg)).toBe(false);
@@ -1029,7 +1030,7 @@ describe("handleUDSConfig", () => {
     it("returns early when shouldSkip is true for UPDATE action without processing", async () => {
       const skippableCfg: ClusterConfig = {
         metadata: { name: ClusterConfigName.UdsClusterConfig, generation: 1 },
-        status: { phase: Phase.Pending, observedGeneration: 1 },
+        status: { phase: Phase.Pending, observedGeneration: 1 } as Status,
       };
 
       await handleCfg(skippableCfg, ConfigAction.UPDATE);
@@ -1042,7 +1043,7 @@ describe("handleUDSConfig", () => {
     it("processes config during LOAD action even when shouldSkip would return true", async () => {
       const skippableCfg: ClusterConfig = {
         metadata: { name: ClusterConfigName.UdsClusterConfig, generation: 1 },
-        status: { phase: Phase.Pending, observedGeneration: 1 },
+        status: { phase: Phase.Pending, observedGeneration: 1 } as Status,
         spec: {
           caBundle: {
             certs: "",

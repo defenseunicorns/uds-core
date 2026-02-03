@@ -5,14 +5,14 @@
 
 import { K8s } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { IstioGateway, IstioTLSMode, RemoteProtocol } from "../../crd";
+import { IstioGateway, IstioTLSMode, RemoteProtocol } from "../../crd/index.js";
+import { sharedEgressPkgId, sidecarEgressNamespace } from "./egress-sidecar.js";
 import {
   generateEgressGateway,
   generateGatewayName,
   warnMatchingExistingGateways,
-} from "./gateway";
-import { sidecarEgressNamespace, sharedEgressPkgId } from "./egress-sidecar";
-import { EgressResource } from "./types";
+} from "./gateway.js";
+import { EgressResource } from "./types.js";
 
 describe("test generate egress gateway", () => {
   it("should create an http gateway object", () => {

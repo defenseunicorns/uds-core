@@ -5,9 +5,9 @@
 
 import { PeprValidateRequest } from "pepr";
 import { beforeEach, describe, expect, it } from "vitest";
-import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { PackageStore } from "./package-store";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
+import { PackageStore } from "./package-store.js";
 PackageStore.init();
 
 const makeMockReq = (pkg: Partial<UDSPackage>) => {

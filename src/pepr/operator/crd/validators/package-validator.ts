@@ -5,14 +5,14 @@
 
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "..";
-import { generateVSName } from "../../controllers/istio/virtual-service";
-import { generateMonitorName } from "../../controllers/monitoring/common";
-import { generateName } from "../../controllers/network/generate";
-import { PackageStore } from "../../controllers/packages/package-store";
-import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
-import { migrate } from "../migrate";
+import { generateVSName } from "../../controllers/istio/virtual-service.js";
+import { generateMonitorName } from "../../controllers/monitoring/common.js";
+import { generateName } from "../../controllers/network/generate.js";
+import { PackageStore } from "../../controllers/packages/package-store.js";
+import { sanitizeResourceName } from "../../controllers/utils.js";
+import { Kind, Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "../index.js";
+import { migrate } from "../migrate.js";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 

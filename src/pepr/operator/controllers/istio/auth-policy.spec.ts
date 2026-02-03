@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
+import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy.js";
 
 describe("test generate authorization policy", () => {
   describe("test generate central ambient authorization policy", () => {
@@ -71,17 +71,19 @@ describe("test generate authorization policy", () => {
 
       expect(rules[0].to?.[0]?.operation?.ports).toEqual(["80"]);
       const r0Sources = (rules[0].from ?? []).map(f => f.source);
-      expect(r0Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/http"))).toBe(
-        true,
-      );
-      expect(r0Sources.some(s => s?.namespaces?.includes("ns-http"))).toBe(true);
+      expect(
+        r0Sources.some(s => s?.principals && s.principals.includes("cluster.local/ns/ns1/sa/http")),
+      ).toBe(true);
+      expect(r0Sources.some(s => s?.namespaces && s.namespaces.includes("ns-http"))).toBe(true);
 
       expect(rules[1].to?.[0]?.operation?.ports).toEqual(["443"]);
       const r1Sources = (rules[1].from ?? []).map(f => f.source);
-      expect(r1Sources.some(s => s?.principals?.includes("cluster.local/ns/ns1/sa/https"))).toBe(
-        true,
-      );
-      expect(r1Sources.some(s => s?.namespaces?.includes("ns-https"))).toBe(true);
+      expect(
+        r1Sources.some(
+          s => s?.principals && s.principals.includes("cluster.local/ns/ns1/sa/https"),
+        ),
+      ).toBe(true);
+      expect(r1Sources.some(s => s?.namespaces && s.namespaces.includes("ns-https"))).toBe(true);
     });
   });
 });

@@ -4,15 +4,18 @@
  */
 
 import { describe, expect, test, vi } from "vitest";
-import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { IstioState } from "../istio/namespace";
+import {
+  Action,
+  AuthorizationPolicy,
+} from "../../crd/generated/istio/authorizationpolicy-v1beta1.js";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd/index.js";
+import { IstioState } from "../istio/namespace.js";
 import {
   createDenyAllExceptWaypointPolicy,
   findMatchingSsoClient,
   generateAuthorizationPolicies,
-} from "./authorizationPolicies";
+} from "./authorizationPolicies.js";
 
 vi.mock("../../../logger", () => ({
   setupLogger: () => ({

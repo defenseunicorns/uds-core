@@ -15,7 +15,7 @@ export {
   RemoteProtocol,
   Sso,
   Package as UDSPackage,
-} from "./generated/package-v1alpha1";
+} from "./generated/package-v1alpha1.js";
 
 // Type for the standard gateways
 export enum Gateway {
@@ -30,25 +30,25 @@ export {
   Kind as MatcherKind,
   Policy,
   Exemption as UDSExemption,
-} from "./generated/exemption-v1alpha1";
+} from "./generated/exemption-v1alpha1.js";
 
 export {
   Attributes,
   ClusterConfig,
-  Expose as ConfigExpose,
-  Policy as ConfigPolicy,
-  CABundle as ConfigCABundle,
-  Phase as ConfigPhase,
   Name as ClusterConfigName,
+  CABundle as ConfigCABundle,
+  Expose as ConfigExpose,
+  Phase as ConfigPhase,
+  Policy as ConfigPolicy,
   Networking,
-} from "./generated/clusterconfig-v1alpha1";
+} from "./generated/clusterconfig-v1alpha1.js";
 
 export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,
   Tl as IstioTLS,
   VirtualService as IstioVirtualService,
-} from "./generated/istio/virtualservice-v1beta1";
+} from "./generated/istio/virtualservice-v1beta1.js";
 
 export {
   Endpoint as IstioEndpoint,
@@ -56,37 +56,40 @@ export {
   Port as IstioPort,
   Resolution as IstioResolution,
   ServiceEntry as IstioServiceEntry,
-} from "./generated/istio/serviceentry-v1beta1";
+} from "./generated/istio/serviceentry-v1beta1.js";
 
 export {
   PodMetricsEndpoint as PodMonitorEndpoint,
   Scheme as PodMonitorScheme,
   PodMonitor as PrometheusPodMonitor,
-} from "./generated/prometheus/podmonitor-v1";
+} from "./generated/prometheus/podmonitor-v1.js";
 
 export {
   ServiceMonitor as PrometheusServiceMonitor,
   Endpoint as ServiceMonitorEndpoint,
   Scheme as ServiceMonitorScheme,
-} from "./generated/prometheus/servicemonitor-v1";
+} from "./generated/prometheus/servicemonitor-v1.js";
 
 export {
   Action as IstioAction,
   AuthorizationPolicy as IstioAuthorizationPolicy,
-} from "./generated/istio/authorizationpolicy-v1beta1";
-export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
+} from "./generated/istio/authorizationpolicy-v1beta1.js";
+export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1.js";
 
-export { DestinationRule as IstioDestinationRule } from "./generated/istio/destinationrule-v1";
+export { DestinationRule as IstioDestinationRule } from "./generated/istio/destinationrule-v1.js";
 
 export {
   Gateway as IstioGateway,
   Server as IstioServer,
   Mode as IstioTLSMode,
-} from "./generated/istio/gateway-v1";
+} from "./generated/istio/gateway-v1.js";
 
 export {
   OutboundTrafficPolicyMode as IstioOutboundTrafficPolicyMode,
   Sidecar as IstioSidecar,
-} from "./generated/istio/sidecar-v1";
+} from "./generated/istio/sidecar-v1.js";
 
-export { K8sGateway as K8sGateway, From as K8sGatewayFromType } from "./generated/k8s/gateway-v1";
+export {
+  K8sGateway as K8sGateway,
+  From as K8sGatewayFromType,
+} from "./generated/k8s/gateway-v1.js";

@@ -4,9 +4,9 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { buildMigratedAuthserviceStatus, migrate, migrateStatus } from "./migrate";
-import { PkgStatus, Sso, UDSPackage } from ".";
-import { AuthserviceClient } from "./generated/package-v1alpha1";
+import { AuthserviceClient } from "./generated/package-v1alpha1.js";
+import { PkgStatus, Sso, UDSPackage } from "./index.js";
+import { buildMigratedAuthserviceStatus, migrate, migrateStatus } from "./migrate.js";
 
 function makePkg(partial: Partial<UDSPackage>): UDSPackage {
   return {

@@ -8,9 +8,9 @@
  * Manages an in-memory map of UDSPackage resources
  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
  */
-import { Component, setupLogger } from "../../../logger";
-import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Component, setupLogger } from "../../../logger.js";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)

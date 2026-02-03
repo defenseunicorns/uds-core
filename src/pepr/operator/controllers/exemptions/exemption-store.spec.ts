@@ -4,8 +4,8 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { Matcher, MatcherKind, Policy } from "../../crd";
-import { ExemptionStore } from "./exemption-store";
+import { Matcher, MatcherKind, Policy } from "../../crd/index.js";
+import { ExemptionStore } from "./exemption-store.js";
 
 const falcoMatcher = {
   namespace: "falco",

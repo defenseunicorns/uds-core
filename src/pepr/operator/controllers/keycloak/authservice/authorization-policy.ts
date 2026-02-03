@@ -11,12 +11,17 @@ import {
   IstioRequestAuthentication,
   Monitor,
   UDSPackage,
-} from "../../../crd";
-import { UDSConfig } from "../../config/config";
-import { matchesLabels } from "../../istio/waypoint-utils";
-import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
-import { log } from "./authservice";
-import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
+} from "../../../crd/index.js";
+import { UDSConfig } from "../../config/config.js";
+import { matchesLabels } from "../../istio/waypoint-utils.js";
+import {
+  PROMETHEUS_PRINCIPAL,
+  getOwnerRef,
+  purgeOrphans,
+  sanitizeResourceName,
+} from "../../utils.js";
+import { log } from "./authservice.js";
+import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types.js";
 
 const operationMap: {
   [AuthServiceAction.AddClient]: "Apply";

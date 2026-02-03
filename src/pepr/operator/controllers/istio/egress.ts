@@ -2,17 +2,17 @@
  * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { validateNamespace } from "../utils";
-import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
-import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd/index.js";
+import { validateNamespace } from "../utils.js";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient.js";
+import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports.js";
 import {
   applySidecarEgressResources,
   purgeSidecarEgressResources,
   sidecarEgressNamespace,
-} from "./egress-sidecar";
-import { ambientEgressNamespace, log } from "./istio-resources";
+} from "./egress-sidecar.js";
+import { ambientEgressNamespace, log } from "./istio-resources.js";
 import {
   AmbientEgressRule,
   AmbientPackageEntry,
@@ -21,7 +21,7 @@ import {
   HostResourceMap,
   PackageAction,
   PackageHostMap,
-} from "./types";
+} from "./types.js";
 
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};

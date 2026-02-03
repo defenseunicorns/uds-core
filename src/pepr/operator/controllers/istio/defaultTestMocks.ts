@@ -15,8 +15,8 @@ import {
   K8sGateway,
   RemoteProtocol,
   UDSPackage,
-} from "../../crd";
-import { PackageHostMap } from "./types";
+} from "../../crd/index.js";
+import { PackageHostMap } from "./types.js";
 
 export const pkgMock: UDSPackage = {
   metadata: {

@@ -5,9 +5,9 @@
 
 import { kind } from "pepr";
 import { describe, expect, it } from "vitest";
-import { Direction } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { generate } from "./generate";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Direction } from "../../crd/index.js";
+import { generate } from "./generate.js";
 
 describe("network policy generate", () => {
   it("should generate correct network policy", async () => {

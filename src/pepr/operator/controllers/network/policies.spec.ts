@@ -5,9 +5,9 @@
 
 import { V1NetworkPolicy } from "@kubernetes/client-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Gateway, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { findMatchingClient, networkPolicies } from "./policies";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Gateway, UDSPackage } from "../../crd/index.js";
+import { findMatchingClient, networkPolicies } from "./policies.js";
 
 // Mock dependencies
 vi.mock("pepr", () => {

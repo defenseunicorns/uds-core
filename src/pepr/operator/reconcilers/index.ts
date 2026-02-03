@@ -6,14 +6,14 @@
 import { K8s, kind } from "pepr";
 
 import { GenericKind } from "kubernetes-fluent-client";
-import { Component, setupLogger } from "../../logger";
-import { Phase, PkgStatus, UDSPackage } from "../crd";
-import { buildMigratedAuthserviceStatus } from "../crd/migrate";
+import { Component, setupLogger } from "../../logger.js";
 import {
   AuthserviceClient,
   StatusObject as Status,
   StatusEnum,
-} from "../crd/generated/package-v1alpha1";
+} from "../crd/generated/package-v1alpha1.js";
+import { Phase, PkgStatus, UDSPackage } from "../crd/index.js";
+import { buildMigratedAuthserviceStatus } from "../crd/migrate.js";
 
 export const uidSeen = new Set<string>();
 

@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Monitor } from "../../crd";
-import { generatePodMonitor } from "./pod-monitor";
+import { Monitor } from "../../crd/index.js";
+import { generatePodMonitor } from "./pod-monitor.js";
 
 describe("test generate Pod monitor", () => {
   it("should return a valid Pod Monitor object", () => {

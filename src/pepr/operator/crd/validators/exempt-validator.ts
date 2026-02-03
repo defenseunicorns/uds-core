@@ -4,8 +4,8 @@
  */
 
 import { PeprValidateRequest } from "pepr";
-import { MatcherKind, Policy, UDSExemption } from "..";
-import { UDSConfig } from "../../controllers/config/config";
+import { UDSConfig } from "../../controllers/config/config.js";
+import { MatcherKind, Policy, UDSExemption } from "../index.js";
 
 function checkForSlashes(name: string) {
   return name[0] === "/" && name[name.length - 1] === "/";

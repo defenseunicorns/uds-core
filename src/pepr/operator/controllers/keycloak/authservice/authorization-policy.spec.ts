@@ -4,20 +4,20 @@
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
-import type { UDSPackage } from "../../../crd";
 import type {
   Operation as IstioOperation,
   Rule as IstioRule,
   To as IstioTo,
-} from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { PROMETHEUS_PRINCIPAL } from "../../utils";
+} from "../../../crd/generated/istio/authorizationpolicy-v1beta1.js";
+import type { UDSPackage } from "../../../crd/index.js";
+import { PROMETHEUS_PRINCIPAL } from "../../utils.js";
 import {
   authNRequestAuthentication,
   authserviceAuthorizationPolicy,
   computeMonitorExemptions,
   jwtAuthZAuthorizationPolicy,
   UDSConfig,
-} from "./authorization-policy";
+} from "./authorization-policy.js";
 
 // Patch UDSConfig for deterministic output
 beforeAll(() => {

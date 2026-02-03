@@ -5,8 +5,8 @@
 
 import { a } from "pepr";
 import { describe, expect, it, test, vi } from "vitest";
-import { Sso, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Sso, UDSPackage } from "../../crd/index.js";
 import {
   getPodSelector,
   getWaypointName,
@@ -14,7 +14,7 @@ import {
   matchesLabels,
   serviceMatchesSelector,
   shouldUseAmbientWaypoint,
-} from "./waypoint-utils";
+} from "./waypoint-utils.js";
 
 // Test helpers
 const createMockPackage = (

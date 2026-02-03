@@ -11,7 +11,7 @@ import {
   checkIstioTrafficInterceptionOverrides,
   findContainerUsingIstioUserID,
   isPodUsingIstioUserID,
-} from "./istio";
+} from "./istio.js";
 
 describe("isPodUsingIstioUserID", () => {
   const testCases = [

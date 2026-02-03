@@ -5,8 +5,8 @@
 
 import { PeprValidateRequest } from "pepr";
 import { describe, expect, it, vi } from "vitest";
-import { ClusterConfig, Name } from "../generated/clusterconfig-v1alpha1";
-import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator";
+import { ClusterConfig, Name } from "../generated/clusterconfig-v1alpha1.js";
+import { validateCfg, validateCfgUpdate } from "./clusterconfig-validator.js";
 
 const validCert = `-----BEGIN CERTIFICATE-----
 MIIDTDCCAjSgAwIBAgIId3cGJyapsXwwDQYJKoZIhvcNAQELBQAwRDELMAkGA1UE

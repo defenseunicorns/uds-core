@@ -3,22 +3,22 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types.js";
 import { K8s, kind } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd";
-import { validateCfg } from "../../crd/validators/clusterconfig-validator";
+import { Component, setupLogger } from "../../../logger.js";
+import { ClusterConfig, ConfigCABundle, ConfigPhase as Phase } from "../../crd/index.js";
+import { validateCfg } from "../../crd/validators/clusterconfig-validator.js";
 import {
   buildCABundleContent,
   updateAllCaBundleConfigMaps,
   updateIstioCAConfigMap,
-} from "../ca-bundles/ca-bundle";
-import { reconcileAuthservice } from "../keycloak/authservice/authservice";
-import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
-import { initAPIServerCIDR } from "../network/generators/kubeAPI";
-import { initAllNodesTarget } from "../network/generators/kubeNodes";
-import { registerWatchEventHandlers, watchCfg } from "../utils";
-import { Config } from "./types";
+} from "../ca-bundles/ca-bundle.js";
+import { reconcileAuthservice } from "../keycloak/authservice/authservice.js";
+import { Action, AuthServiceEvent } from "../keycloak/authservice/types.js";
+import { initAPIServerCIDR } from "../network/generators/kubeAPI.js";
+import { initAllNodesTarget } from "../network/generators/kubeNodes.js";
+import { registerWatchEventHandlers, watchCfg } from "../utils.js";
+import { Config } from "./types.js";
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 

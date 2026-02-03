@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { IstioAction, IstioAuthorizationPolicy } from "../../crd";
-import { sanitizeResourceName } from "../utils";
+import { IstioAction, IstioAuthorizationPolicy } from "../../crd/index.js";
+import { sanitizeResourceName } from "../utils.js";
 import {
   ambientEgressNamespace,
   sharedEgressPkgId as ambientSharedEgressPkgId,
   getSharedAnnotationKey,
-} from "./istio-resources";
+} from "./istio-resources.js";
 
 // Generate centralized AuthorizationPolicy for ambient egress
 // - Namespace: istio-egress-ambient

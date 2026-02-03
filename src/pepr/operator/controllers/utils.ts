@@ -5,11 +5,11 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
-import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
+import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types.js";
 import { K8s, kind } from "pepr";
-import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor";
+import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor.js";
 import { Logger } from "pino";
-import { UDSPackage } from "../crd";
+import { UDSPackage } from "../crd/index.js";
 
 export const PROMETHEUS_PRINCIPAL =
   "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";

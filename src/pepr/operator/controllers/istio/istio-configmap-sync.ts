@@ -5,8 +5,8 @@
 
 import yaml from "js-yaml";
 import { K8s, kind } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { reloadPods } from "../reload/reload-utils";
+import { Component, setupLogger } from "../../../logger.js";
+import { reloadPods } from "../reload/reload-utils.js";
 
 export const TENANT_GATEWAY_NAMESPACE = "istio-tenant-gateway";
 export const ADMIN_GATEWAY_NAMESPACE = "istio-admin-gateway";

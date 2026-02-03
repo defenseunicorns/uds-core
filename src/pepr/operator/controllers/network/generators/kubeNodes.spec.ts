@@ -7,15 +7,15 @@ import { beforeAll, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { V1NetworkPolicyList } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { anywhere } from "./anywhere";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1.js";
+import { anywhere } from "./anywhere.js";
 import {
   initAllNodesTarget,
   kubeNodes,
   updateKubeNodesAuthorizationPolicies,
   updateKubeNodesFromCreateUpdate,
   updateKubeNodesFromDelete,
-} from "./kubeNodes";
+} from "./kubeNodes.js";
 
 type KubernetesList<T> = {
   items: T[];

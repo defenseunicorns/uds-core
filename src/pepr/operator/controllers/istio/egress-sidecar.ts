@@ -4,24 +4,24 @@
  */
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
 import {
   Allow,
   IstioGateway,
   IstioServiceEntry,
   IstioSidecar,
   IstioVirtualService,
-} from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { purgeOrphans, validateNamespace } from "../utils";
-import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
-import { log } from "./istio-resources";
-import { generateLocalEgressServiceEntry, generateSharedServiceEntry } from "./service-entry";
-import { generateEgressSidecar } from "./sidecar";
-import { EgressResource, EgressResourceMap, HostResourceMap, PackageHostMap } from "./types";
+} from "../../crd/index.js";
+import { purgeOrphans, validateNamespace } from "../utils.js";
+import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway.js";
+import { log } from "./istio-resources.js";
+import { generateLocalEgressServiceEntry, generateSharedServiceEntry } from "./service-entry.js";
+import { generateEgressSidecar } from "./sidecar.js";
+import { EgressResource, EgressResourceMap, HostResourceMap, PackageHostMap } from "./types.js";
 import {
   generateEgressVirtualService,
   warnMatchingExistingVirtualServices,
-} from "./virtual-service";
+} from "./virtual-service.js";
 
 // Sidecar Egress Gateway Namespace
 export const sidecarEgressNamespace = "istio-egress-gateway";

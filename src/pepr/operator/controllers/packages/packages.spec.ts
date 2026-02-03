@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types";
+import { WatchPhase } from "kubernetes-fluent-client/dist/fluent/shared-types.js";
 import { PeprValidateRequest } from "pepr";
 import { describe, expect, it } from "vitest";
-import { UDSPackage } from "../../crd";
-import { PackageStore } from "./package-store";
-import { processPackages } from "./packages";
+import { UDSPackage } from "../../crd/index.js";
+import { PackageStore } from "./package-store.js";
+import { processPackages } from "./packages.js";
 
 PackageStore.init();
 

@@ -5,10 +5,10 @@
 
 import { K8s, kind } from "pepr";
 
-import { Component, setupLogger } from "../../logger";
-import { v1alpha1 as clusterConfig } from "./sources/cluster-config/v1alpha1";
-import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1";
-import { v1alpha1 as pkg } from "./sources/package/v1alpha1";
+import { Component, setupLogger } from "../../logger.js";
+import { v1alpha1 as clusterConfig } from "./sources/cluster-config/v1alpha1.js";
+import { v1alpha1 as exemption } from "./sources/exemption/v1alpha1.js";
+import { v1alpha1 as pkg } from "./sources/package/v1alpha1.js";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_CRD);

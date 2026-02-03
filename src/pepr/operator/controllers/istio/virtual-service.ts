@@ -13,13 +13,13 @@ import {
   IstioHTTPRoute,
   IstioTLS,
   IstioVirtualService,
-} from "../../crd";
-import { UDSConfig } from "../config/config";
-import { sanitizeResourceName } from "../utils";
-import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
-import { generateGatewayName } from "./gateway";
-import { getSharedAnnotationKey, log } from "./istio-resources";
-import { EgressResource } from "./types";
+} from "../../crd/index.js";
+import { UDSConfig } from "../config/config.js";
+import { sanitizeResourceName } from "../utils.js";
+import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar.js";
+import { generateGatewayName } from "./gateway.js";
+import { getSharedAnnotationKey, log } from "./istio-resources.js";
+import { EgressResource } from "./types.js";
 
 // @lulaStart 8bdce490-04f6-45db-9353-d429ba24e1ff
 /**

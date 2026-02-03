@@ -5,10 +5,10 @@
 
 import { kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Direction, IstioGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
-import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks";
-import { PackageHostMap } from "./types";
+import { Direction, IstioGateway, RemoteProtocol } from "../../crd/index.js";
+import { purgeOrphans } from "../utils.js";
+import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks.js";
+import { PackageHostMap } from "./types.js";
 
 import {
   applySidecarEgressResources,
@@ -16,7 +16,7 @@ import {
   purgeSidecarEgressResources,
   remapEgressResources,
   validateEgressGateway,
-} from "./egress-sidecar";
+} from "./egress-sidecar.js";
 
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();

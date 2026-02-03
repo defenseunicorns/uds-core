@@ -2,7 +2,7 @@
  * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { RemoteProtocol } from "../../crd";
+import { RemoteProtocol } from "../../crd/index.js";
 
 export type PackageHostMap = Record<string, HostResourceMap>;
 export type HostResourceMap = Record<string, HostResource>;

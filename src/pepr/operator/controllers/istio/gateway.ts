@@ -4,11 +4,11 @@
  */
 
 import { K8s } from "pepr";
-import { IstioGateway, IstioServer, IstioTLSMode, RemoteProtocol } from "../../crd";
-import { getSharedAnnotationKey, log } from "./istio-resources";
-import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
-import { sanitizeResourceName } from "../utils";
-import { EgressResource } from "./types";
+import { IstioGateway, IstioServer, IstioTLSMode, RemoteProtocol } from "../../crd/index.js";
+import { sanitizeResourceName } from "../utils.js";
+import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar.js";
+import { getSharedAnnotationKey, log } from "./istio-resources.js";
+import { EgressResource } from "./types.js";
 
 /**
  * Create the egress gateway resource

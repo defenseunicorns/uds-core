@@ -5,8 +5,8 @@
 
 import { kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
-import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
+import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd/index.js";
+import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks.js";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,
@@ -20,8 +20,8 @@ import {
   updateInMemoryAmbientPackageMap,
   updateInMemoryPackageMap,
   validateProtocolConflicts,
-} from "./egress";
-import { HostResourceMap, PackageAction, PackageHostMap } from "./types";
+} from "./egress.js";
+import { HostResourceMap, PackageAction, PackageHostMap } from "./types.js";
 
 // Mock istio-resources
 vi.mock("./istio-resources", async () => {
@@ -35,12 +35,12 @@ vi.mock("./istio-resources", async () => {
   };
 });
 
-import { log } from "./istio-resources";
+import { log } from "./istio-resources.js";
 
 // Mock purge orphans
-import { purgeOrphans } from "../utils";
+import { purgeOrphans } from "../utils.js";
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("../utils", async () => {
+vi.mock("../utils.js", async () => {
   const originalModule = (await vi.importActual("../utils")) as object;
   return {
     ...originalModule,
@@ -49,10 +49,10 @@ vi.mock("../utils", async () => {
 });
 
 // Mock apply functions for sidecar
-import { applySidecarEgressResources } from "./egress-sidecar";
+import { applySidecarEgressResources } from "./egress-sidecar.js";
 const mockApplySidecarEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-sidecar", async () => {
-  const originalModule = await vi.importActual("./egress-sidecar");
+vi.mock("./egress-sidecar.js", async () => {
+  const originalModule = await vi.importActual("./egress-sidecar.js");
   return {
     ...originalModule,
     applySidecarEgressResources: vi.fn(),
@@ -60,11 +60,11 @@ vi.mock("./egress-sidecar", async () => {
 });
 
 // Mock apply functions for ambient
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient.js";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
-vi.mock("./egress-ambient", async () => {
-  const originalModule = await vi.importActual("./egress-ambient");
+vi.mock("./egress-ambient.js", async () => {
+  const originalModule = await vi.importActual("./egress-ambient.js");
   return {
     ...originalModule,
     applyAmbientEgressResources: vi.fn(),

@@ -48,14 +48,14 @@ vi.mock("pepr", () => ({
 
 // ---- Imports that depend on mocks ----
 import { K8s, Log } from "pepr";
-import { writeEvent } from ".";
-import { reconcileSharedEgressResources } from "../controllers/istio/egress";
-import { cleanupNamespace } from "../controllers/istio/namespace";
-import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
-import { purgeSSOClients } from "../controllers/keycloak/client-sync";
-import { retryWithDelay } from "../controllers/utils";
-import { Phase, UDSPackage } from "../crd";
-import { packageFinalizer, packageReconciler } from "./package-reconciler";
+import { reconcileSharedEgressResources } from "../controllers/istio/egress.js";
+import { cleanupNamespace } from "../controllers/istio/namespace.js";
+import { purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice.js";
+import { purgeSSOClients } from "../controllers/keycloak/client-sync.js";
+import { retryWithDelay } from "../controllers/utils.js";
+import { Phase, UDSPackage } from "../crd/index.js";
+import { writeEvent } from "./index.js";
+import { packageFinalizer, packageReconciler } from "./package-reconciler.js";
 
 const mockCleanupNamespace: MockedFunction<() => Promise<void>> = vi.fn();
 const mockPurgeSSO: MockedFunction<() => Promise<void>> = vi.fn();

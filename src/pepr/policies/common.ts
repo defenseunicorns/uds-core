@@ -5,8 +5,8 @@
 
 import { KubernetesObject, V1Container, V1SecurityContext } from "@kubernetes/client-node";
 import { Capability, PeprMutateRequest, PeprValidateRequest, a, sdk } from "pepr";
-import { Component, setupLogger } from "../logger";
-import { Policy } from "../operator/crd";
+import { Component, setupLogger } from "../logger.js";
+import { Policy } from "../operator/crd/index.js";
 
 const { containers } = sdk;
 export type Ctx = {

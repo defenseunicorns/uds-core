@@ -5,9 +5,9 @@
 
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { retryWithDelay } from "../utils";
-import { reloadPods } from "./reload-utils";
+import { Component, setupLogger } from "../../../logger.js";
+import { retryWithDelay } from "../utils.js";
+import { reloadPods } from "./reload-utils.js";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 

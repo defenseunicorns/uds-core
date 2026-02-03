@@ -10,8 +10,8 @@ import {
   getAuthserviceConfig,
   setupAuthserviceSecret,
   updateAuthServiceSecret,
-} from "./config";
-import { AuthserviceConfig } from "./types";
+} from "./config.js";
+import { AuthserviceConfig } from "./types.js";
 
 const getChain = (name: string) => {
   return {

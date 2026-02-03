@@ -7,8 +7,8 @@ import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import * as reloadUtils from "./reload-utils";
-import { reloadPods, restartController } from "./reload-utils";
+import * as reloadUtils from "./reload-utils.js";
+import { reloadPods, restartController } from "./reload-utils.js";
 
 // Mock K8s client
 vi.mock("pepr", () => {

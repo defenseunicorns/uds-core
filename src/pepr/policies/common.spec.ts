@@ -11,7 +11,7 @@ import {
   isIstioProxyContainer,
   parseImageRef,
   validateIstioImage,
-} from "./common";
+} from "./common.js";
 
 // Mock the K8s client
 vi.mock("pepr", async () => {

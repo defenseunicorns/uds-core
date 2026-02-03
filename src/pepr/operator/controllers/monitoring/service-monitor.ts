@@ -6,12 +6,12 @@
 import { K8s } from "pepr";
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { Component, setupLogger } from "../../../logger";
-import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
-import { Kind } from "../../crd/generated/package-v1alpha1";
-import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/servicemonitor-v1";
-import { getOwnerRef, purgeOrphans } from "../utils";
-import { generateMonitorName } from "./common";
+import { Component, setupLogger } from "../../../logger.js";
+import { Kind } from "../../crd/generated/package-v1alpha1.js";
+import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/servicemonitor-v1.js";
+import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd/index.js";
+import { getOwnerRef, purgeOrphans } from "../utils.js";
+import { generateMonitorName } from "./common.js";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_MONITORING);

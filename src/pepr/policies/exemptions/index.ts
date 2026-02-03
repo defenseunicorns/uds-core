@@ -5,9 +5,9 @@
 
 import { KubernetesObject } from "kubernetes-fluent-client";
 import { PeprMutateRequest, PeprValidateRequest } from "pepr";
-import { Component, setupLogger } from "../../logger";
-import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store";
-import { Policy } from "../../operator/crd";
+import { Component, setupLogger } from "../../logger.js";
+import { ExemptionStore } from "../../operator/controllers/exemptions/exemption-store.js";
+import { Policy } from "../../operator/crd/index.js";
 
 // configure subproject logger
 const log = setupLogger(Component.POLICIES_EXEMPTIONS);

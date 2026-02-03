@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
 
 // Constants for waypoint configuration
 const WAYPOINT_SUFFIX = "-waypoint"; // Suffix for waypoint resource names

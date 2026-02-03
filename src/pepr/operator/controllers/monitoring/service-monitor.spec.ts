@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Monitor } from "../../crd";
-import { generateServiceMonitor } from "./service-monitor";
+import { Monitor } from "../../crd/index.js";
+import { generateServiceMonitor } from "./service-monitor.js";
 
 describe("test generate service monitor", () => {
   it("should return a valid Service Monitor object", () => {

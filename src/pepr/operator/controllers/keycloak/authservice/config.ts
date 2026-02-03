@@ -6,11 +6,11 @@
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 
-import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
-import { UDSConfig } from "../../config/config";
-import { Client } from "../types";
-import { buildChain, log } from "./authservice";
-import { Action, AuthserviceConfig } from "./types";
+import { buildCABundleContent } from "../../ca-bundles/ca-bundle.js";
+import { UDSConfig } from "../../config/config.js";
+import { Client } from "../types.js";
+import { buildChain, log } from "./authservice.js";
+import { Action, AuthserviceConfig } from "./types.js";
 
 let pendingSecretFetch: Promise<AuthserviceConfig> | null = null;
 

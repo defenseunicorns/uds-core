@@ -6,8 +6,8 @@
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { UDSPackage } from "../crd";
-import { createEvent, getAuthserviceClients, retryWithDelay, validateNamespace } from "./utils";
+import { UDSPackage } from "../crd/index.js";
+import { createEvent, getAuthserviceClients, retryWithDelay, validateNamespace } from "./utils.js";
 
 // Mock K8s client and Log
 vi.mock("pepr", () => {

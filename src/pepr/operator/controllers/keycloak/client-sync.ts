@@ -5,11 +5,11 @@
 
 import { fetch, K8s, kind } from "pepr";
 
-import { Component, setupLogger } from "../../../logger";
-import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
-import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
-import { Client, clientKeys } from "./types";
+import { Component, setupLogger } from "../../../logger.js";
+import { Sso, UDSPackage } from "../../crd/index.js";
+import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils.js";
+import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials.js";
+import { Client, clientKeys } from "./types.js";
 
 const samlDescriptorUrl =
   "http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor";
@@ -77,7 +77,7 @@ export async function keycloak(pkg: UDSPackage) {
 export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []) {
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
-  const toRemove = currentClients.filter(client => !newClients.includes(client));
+  const toRemove = currentClients.filter((client: string) => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
       await credentialsDelete({ clientId: ref });

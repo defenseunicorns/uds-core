@@ -4,8 +4,8 @@
  */
 
 import { V1NetworkPolicyPeer } from "@kubernetes/client-node";
-import { ambientEgressNamespace } from "../../istio/istio-resources";
-import { sidecarEgressNamespace } from "../../istio/egress-sidecar";
+import { sidecarEgressNamespace } from "../../istio/egress-sidecar.js";
+import { ambientEgressNamespace } from "../../istio/istio-resources.js";
 
 /* Matches the egress gateway resource */
 export const egressGateway: V1NetworkPolicyPeer = {

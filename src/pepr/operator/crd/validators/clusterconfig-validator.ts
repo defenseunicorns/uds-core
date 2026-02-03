@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { PeprValidateRequest } from "pepr";
 import { X509Certificate } from "crypto";
-import { isBase64 } from "../../controllers/utils";
-import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
+import { PeprValidateRequest } from "pepr";
+import { isBase64 } from "../../controllers/utils.js";
+import { ClusterConfig } from "../generated/clusterconfig-v1alpha1.js";
 
 export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>) {
   try {

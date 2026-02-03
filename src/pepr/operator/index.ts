@@ -5,13 +5,13 @@
 
 // Common imports
 import { a } from "pepr";
-import { When } from "./common";
+import { When } from "./common.js";
 
 // Controller imports
 import {
   updateAPIServerCIDRFromEndpointSlice,
   updateAPIServerCIDRFromService,
-} from "./controllers/network/generators/kubeAPI";
+} from "./controllers/network/generators/kubeAPI.js";
 
 // Resource Pod Reload controllers
 import {
@@ -19,40 +19,40 @@ import {
   handleConfigMapUpdate,
   handleSecretDelete,
   handleSecretUpdate,
-} from "./controllers/reload/pod-reload";
+} from "./controllers/reload/pod-reload.js";
 
 // Controller imports
 import {
   updateKubeNodesFromCreateUpdate,
   updateKubeNodesFromDelete,
-} from "./controllers/network/generators/kubeNodes";
+} from "./controllers/network/generators/kubeNodes.js";
 
 // CRD imports
-import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
-import { validator } from "./crd/validators/package-validator";
+import { ClusterConfig, UDSExemption, UDSPackage } from "./crd/index.js";
+import { validator } from "./crd/validators/package-validator.js";
 
 // Reconciler imports
-import { Component, setupLogger } from "../logger";
+import { Component, setupLogger } from "../logger.js";
 import {
   ConfigAction,
   handleCfg,
   handleCfgSecret,
   handleUDSCACertsConfigMapUpdate,
   UDSConfig,
-} from "./controllers/config/config";
-import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
-import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
+} from "./controllers/config/config.js";
+import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint.js";
+import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync.js";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
-} from "./controllers/keycloak/client-secret-sync";
-import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
-import { exemptValidator } from "./crd/validators/exempt-validator";
-import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
+} from "./controllers/keycloak/client-secret-sync.js";
+import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator.js";
+import { exemptValidator } from "./crd/validators/exempt-validator.js";
+import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler.js";
 
 // Export the operator capability for registration in the root pepr.ts
-export { operator } from "./common";
+export { operator } from "./common.js";
 
 const log = setupLogger(Component.OPERATOR);
 

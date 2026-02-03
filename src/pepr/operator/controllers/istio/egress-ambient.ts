@@ -4,13 +4,18 @@
  */
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
-import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
-import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
-import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
-import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
-import { generateSharedAmbientServiceEntry } from "./service-entry";
-import { AmbientPackageMap } from "./types";
+import {
+  IstioAuthorizationPolicy,
+  IstioServiceEntry,
+  K8sGateway,
+  RemoteProtocol,
+} from "../../crd/index.js";
+import { purgeOrphans } from "../utils.js";
+import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint.js";
+import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy.js";
+import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources.js";
+import { generateSharedAmbientServiceEntry } from "./service-entry.js";
+import { AmbientPackageMap } from "./types.js";
 
 function addPortsToMap(map: Map<string, Set<number>>, key: string, ports: number[]) {
   const portSet = map.get(key) ?? new Set<number>();

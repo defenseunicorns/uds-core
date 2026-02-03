@@ -5,27 +5,27 @@
 
 import { R } from "pepr";
 
-import { Component, setupLogger } from "../../../../logger";
-import { K8sGateway, UDSPackage } from "../../../crd";
-import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
-import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
-import { getWaypointName } from "../../istio/waypoint-utils";
-import { getAuthserviceClients, purgeOrphans } from "../../utils";
-import { Client } from "../types";
-import { UDSConfig, updatePolicy } from "./authorization-policy";
+import { Component, setupLogger } from "../../../../logger.js";
+import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1.js";
+import { K8sGateway, UDSPackage } from "../../../crd/index.js";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint.js";
+import { getWaypointName } from "../../istio/waypoint-utils.js";
+import { getAuthserviceClients, purgeOrphans } from "../../utils.js";
+import { Client } from "../types.js";
+import { UDSConfig, updatePolicy } from "./authorization-policy.js";
 import {
   getAuthserviceConfig,
   operatorConfig,
   setAuthserviceConfig,
   updateAuthServiceSecret,
-} from "./config";
+} from "./config.js";
 import {
   Action,
   AddOrRemoveClientEvent,
   AuthServiceEvent,
   AuthserviceConfig,
   Chain,
-} from "./types";
+} from "./types.js";
 
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
@@ -104,12 +104,13 @@ export async function purgeAuthserviceClients(
 
   // First handle truly removed clients
   const removedClients = prevClients.filter(
-    oldClient => !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
+    (oldClient: { clientId: string }) =>
+      !newAuthserviceClients.some(c => c.clientId === oldClient.clientId),
   );
 
   // Process removed clients
   await Promise.all(
-    removedClients.map(async client => {
+    removedClients.map(async (client: { clientId: string }) => {
       const fullWaypointName = getWaypointName(client.clientId);
       log.info(`Removing authservice client ${client.clientId}`);
 

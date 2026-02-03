@@ -4,15 +4,15 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { UDSPackage } from "../../crd";
-import { UDSConfig } from "../config/config";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { UDSPackage } from "../../crd/index.js";
+import { UDSConfig } from "../config/config.js";
+import { getOwnerRef, purgeOrphans } from "../utils.js";
 import {
   buildCABundleContent,
   CA_BUNDLE_CONFIGMAP_LABEL,
   caBundleConfigMap,
   updateAllCaBundleConfigMaps,
-} from "./ca-bundle";
+} from "./ca-bundle.js";
 
 // Mock dependencies
 const mockK8sApply = vi.fn();

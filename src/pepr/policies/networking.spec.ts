@@ -10,7 +10,7 @@ import {
   checkNoHostPorts,
   checkNotExternalNameService,
   checkNotNodePortService,
-} from "./networking";
+} from "./networking.js";
 
 describe("checkNoHostNamespaces", () => {
   it("should approve pods that don't use host namespaces", () => {

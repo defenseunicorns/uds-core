@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { Component, setupLogger } from "../../../../logger";
+import { Component, setupLogger } from "../../../../logger.js";
 
 export let baseUrl = "http://keycloak-http.keycloak.svc.cluster.local:8080";
 // Support dev mode with port-forwarded keycloak svc

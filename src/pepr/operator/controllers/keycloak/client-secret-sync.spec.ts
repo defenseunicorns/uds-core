@@ -28,7 +28,7 @@ import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
   KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
   updateKeycloakClientsSecret,
-} from "./client-secret-sync";
+} from "./client-secret-sync.js";
 
 interface Config {
   metadata: {

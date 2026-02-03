@@ -4,17 +4,17 @@
  */
 
 import { a, K8s, kind } from "pepr";
-import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
-import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
-import { PackageStore } from "../packages/package-store";
-import { getAuthserviceClients, getOwnerRef } from "../utils";
+import { Mode, Sso } from "../../crd/generated/package-v1alpha1.js";
+import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd/index.js";
+import { PackageStore } from "../packages/package-store.js";
+import { getAuthserviceClients, getOwnerRef } from "../utils.js";
 import {
   ambientEgressNamespace,
   getSharedAnnotationKey,
   log,
   sharedEgressPkgId,
-} from "./istio-resources";
-import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils";
+} from "./istio-resources.js";
+import { getWaypointName, matchesLabels, serviceMatchesSelector } from "./waypoint-utils.js";
 
 export const egressWaypointName = "egress-waypoint";
 
@@ -220,8 +220,11 @@ export async function reconcileService(svc: a.Service): Promise<void> {
 
   // Find the SSO client that matches this service's selector (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
+  const matchingSso = authClients.find(
+    (
+      sso,
+    ): sso is Sso & { enableAuthserviceSelector: NonNullable<Sso["enableAuthserviceSelector"]> } =>
+      serviceMatchesSelector(svc, sso.enableAuthserviceSelector!),
   );
 
   if (!matchingSso?.clientId) return;
@@ -274,8 +277,11 @@ export async function reconcilePod(pod: a.Pod): Promise<void> {
 
   // Find the SSO client that matches this pod's labels (only authservice-enabled)
   const authClients = getAuthserviceClients(pkg);
-  const matchingSso = authClients.find(sso =>
-    matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
+  const matchingSso = authClients.find(
+    (
+      sso,
+    ): sso is Sso & { enableAuthserviceSelector: NonNullable<Sso["enableAuthserviceSelector"]> } =>
+      matchesLabels(pod.metadata?.labels || {}, sso.enableAuthserviceSelector!),
   );
 
   if (!matchingSso?.clientId) return;

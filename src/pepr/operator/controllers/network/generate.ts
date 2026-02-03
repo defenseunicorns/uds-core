@@ -6,15 +6,15 @@
 import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-node";
 import { kind } from "pepr";
 
-import { Allow, RemoteGenerated } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { anywhere, anywhereInCluster } from "./generators/anywhere";
-import { cloudMetadata } from "./generators/cloudMetadata";
-import { intraNamespace } from "./generators/intraNamespace";
-import { kubeAPI } from "./generators/kubeAPI";
-import { kubeNodes } from "./generators/kubeNodes";
-import { remoteCidr } from "./generators/remoteCidr";
-import { egressGateway, egressWaypoint } from "./generators/egress";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Allow, RemoteGenerated } from "../../crd/index.js";
+import { anywhere, anywhereInCluster } from "./generators/anywhere.js";
+import { cloudMetadata } from "./generators/cloudMetadata.js";
+import { egressGateway, egressWaypoint } from "./generators/egress.js";
+import { intraNamespace } from "./generators/intraNamespace.js";
+import { kubeAPI } from "./generators/kubeAPI.js";
+import { kubeNodes } from "./generators/kubeNodes.js";
+import { remoteCidr } from "./generators/remoteCidr.js";
 
 function isWildcardNamespace(namespace: string) {
   return namespace === "" || namespace === "*";

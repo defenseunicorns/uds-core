@@ -4,27 +4,27 @@
  */
 
 import { K8s } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { Allow, Expose, Gateway, Monitor, RemoteGenerated, UDSPackage } from "../../crd";
+import { Component, setupLogger } from "../../../logger.js";
 import {
   Action,
   AuthorizationPolicy,
   Rule,
   Source,
-} from "../../crd/generated/istio/authorizationpolicy-v1beta1";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { IstioState } from "../istio/namespace";
-import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
+} from "../../crd/generated/istio/authorizationpolicy-v1beta1.js";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { Allow, Expose, Gateway, Monitor, RemoteGenerated, UDSPackage } from "../../crd/index.js";
+import { IstioState } from "../istio/namespace.js";
+import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils.js";
 import {
   PROMETHEUS_PRINCIPAL,
   getAuthserviceClients,
   getOwnerRef,
   purgeOrphans,
   sanitizeResourceName,
-} from "../utils";
-import { META_IP } from "./generators/cloudMetadata";
-import { kubeAPI } from "./generators/kubeAPI";
-import { kubeNodes } from "./generators/kubeNodes";
+} from "../utils.js";
+import { META_IP } from "./generators/cloudMetadata.js";
+import { kubeAPI } from "./generators/kubeAPI.js";
+import { kubeNodes } from "./generators/kubeNodes.js";
 
 const log = setupLogger(Component.OPERATOR_NETWORK);
 

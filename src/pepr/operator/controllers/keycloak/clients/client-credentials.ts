@@ -4,8 +4,8 @@
  */
 
 import { fetch, K8s, kind } from "pepr";
-import { Client } from "../types";
-import { baseUrl, log, throwErrorIfNeeded } from "./common";
+import { Client } from "../types.js";
+import { baseUrl, log, throwErrorIfNeeded } from "./common.js";
 
 export interface ClientWithId extends Client {
   id: string;

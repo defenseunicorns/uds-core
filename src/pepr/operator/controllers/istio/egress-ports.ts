@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { RemoteProtocol } from "../../crd";
+import { RemoteProtocol } from "../../crd/index.js";
 
 export function getAllowedPorts(allow: { ports?: number[]; port?: number }): number[] | undefined {
   if (Array.isArray(allow.ports) && allow.ports.length > 0) {

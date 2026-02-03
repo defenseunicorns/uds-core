@@ -5,11 +5,11 @@
 
 import { PeprValidateRequest } from "pepr";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { MatcherKind, UDSExemption } from "..";
+import { MatcherKind, UDSExemption } from "../index.js";
 
-import { UDSConfig } from "../../controllers/config/config";
-import { ExemptionElement, Policy } from "../generated/exemption-v1alpha1";
-import { exemptValidator } from "./exempt-validator";
+import { UDSConfig } from "../../controllers/config/config.js";
+import { ExemptionElement, Policy } from "../generated/exemption-v1alpha1.js";
+import { exemptValidator } from "./exempt-validator.js";
 
 type mockReqArgs = {
   ns?: string;

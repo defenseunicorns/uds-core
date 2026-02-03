@@ -6,12 +6,12 @@
 import { K8s } from "pepr";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import * as utils from "../utils";
-import { getPackageId, getSharedAnnotationKey, istioResources } from "./istio-resources";
-import * as seMod from "./service-entry";
-import * as vsMod from "./virtual-service";
+import { Mode } from "../../crd/generated/package-v1alpha1.js";
+import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd/index.js";
+import * as utils from "../utils.js";
+import { getPackageId, getSharedAnnotationKey, istioResources } from "./istio-resources.js";
+import * as seMod from "./service-entry.js";
+import * as vsMod from "./virtual-service.js";
 
 vi.mock("pepr", () => {
   return {

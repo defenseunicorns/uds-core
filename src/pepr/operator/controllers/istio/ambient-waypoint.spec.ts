@@ -5,9 +5,9 @@
 
 import { a } from "pepr";
 import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
-import { UDSPackage } from "../../crd";
-import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
-import { PackageStore } from "../packages/package-store";
+import { Mode, Sso } from "../../crd/generated/package-v1alpha1.js";
+import { UDSPackage } from "../../crd/index.js";
+import { PackageStore } from "../packages/package-store.js";
 import {
   cleanupWaypointLabels,
   createEgressWaypointGateway,
@@ -18,8 +18,8 @@ import {
   reconcilePod,
   reconcileService,
   setupAmbientWaypoint,
-} from "./ambient-waypoint";
-import { ambientEgressNamespace, sharedEgressPkgId } from "./istio-resources";
+} from "./ambient-waypoint.js";
+import { ambientEgressNamespace, sharedEgressPkgId } from "./istio-resources.js";
 
 // Test helpers
 const createMockPackage = (
@@ -155,7 +155,7 @@ const mockLog = vi.hoisted(() => ({
 
 // Mock the istio-resources module
 vi.mock("./istio-resources.js", async importOriginal => {
-  const actual = await importOriginal<typeof import("./istio-resources")>();
+  const actual = await importOriginal<typeof import("./istio-resources.js")>();
   return {
     ...actual,
     log: mockLog,

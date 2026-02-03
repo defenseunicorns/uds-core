@@ -4,9 +4,9 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd";
-import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
-import { mutatePodMonitor, mutateServiceMonitor } from "./index";
+import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1.js";
+import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd/index.js";
+import { mutatePodMonitor, mutateServiceMonitor } from "./index.js";
 
 vi.mock("./utils", () => ({
   isIstioInjected: vi.fn().mockResolvedValue(true), // Default to true

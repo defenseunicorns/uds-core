@@ -5,11 +5,16 @@
 
 import { K8s } from "pepr";
 
-import { Component, setupLogger } from "../../../logger";
-import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans } from "../utils";
-import { generateIngressServiceEntry } from "./service-entry";
-import { generateIngressVirtualService } from "./virtual-service";
+import { Component, setupLogger } from "../../../logger.js";
+import {
+  IstioServiceEntry,
+  IstioSidecar,
+  IstioVirtualService,
+  UDSPackage,
+} from "../../crd/index.js";
+import { getOwnerRef, purgeOrphans } from "../utils.js";
+import { generateIngressServiceEntry } from "./service-entry.js";
+import { generateIngressVirtualService } from "./virtual-service.js";
 
 // Central Ambient egress identifiers:
 // - ambientEgressNamespace: namespace where shared Ambient egress resources live
@@ -58,7 +63,7 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
     // Apply the VirtualService and force overwrite any existing policy
     await K8s(IstioVirtualService).Apply(vsPayload, { force: true });
 
-    vsPayload.spec!.hosts!.forEach(h => hosts.add(h));
+    vsPayload.spec!.hosts!.forEach((h: string) => hosts.add(h));
 
     // Generate a ServiceEntry for this `expose` entry
     const sePayload = generateIngressServiceEntry(

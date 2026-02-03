@@ -5,11 +5,11 @@
 
 // Various validation actions for Kubernetes resources from Big Bang
 import { K8s } from "pepr";
-import { Component, setupLogger } from "../logger";
-import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store";
-import { processExemptions } from "../operator/controllers/exemptions/exemptions";
-import { registerWatchEventHandlers, watchCfg } from "../operator/controllers/utils";
-import { Matcher, Policy, UDSExemption } from "../operator/crd";
+import { Component, setupLogger } from "../logger.js";
+import { ExemptionStore } from "../operator/controllers/exemptions/exemption-store.js";
+import { processExemptions } from "../operator/controllers/exemptions/exemptions.js";
+import { registerWatchEventHandlers, watchCfg } from "../operator/controllers/utils.js";
+import { Matcher, Policy, UDSExemption } from "../operator/crd/index.js";
 import "./istio";
 import "./networking";
 import "./security";
@@ -18,7 +18,7 @@ import "./storage";
 // configure subproject logger
 const log = setupLogger(Component.POLICIES);
 
-export { policies } from "./common";
+export { policies } from "./common.js";
 
 export type StoredMatcher = Matcher & { owner: string };
 export type PolicyMap = Map<Policy, StoredMatcher[]>;
