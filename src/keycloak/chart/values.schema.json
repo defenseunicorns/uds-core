@@ -155,14 +155,6 @@
       "type": "object",
       "properties": {
         "deployment": {
-          "type": "boolean"
-        }
-      }
-    },
-    "waypoint": {
-      "type": "object",
-      "properties": {
-        "deployment": {
           "type": "object",
           "properties": {
             "requests": {

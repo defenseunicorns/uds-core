@@ -233,8 +233,12 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
                   apiVersion: v1
+          # Based on https://www.keycloak.org/server/reverseproxy#_enable_sticky_sessions
+          # Infinispan session stickiness should be disabled when session stickiness based on cookies is enabled
+          {{- if not .Values.autoscaling.sessionStickiness.enabled }}
             - name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
               value: "false"
+          {{- end }}
             # Rely on Istio mTLS encryption
             # See https://www.keycloak.org/server/caching#_running_inside_a_service_mesh
             - name: KC_CACHE_EMBEDDED_MTLS_ENABLED

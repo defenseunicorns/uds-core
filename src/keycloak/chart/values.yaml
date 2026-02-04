@@ -364,9 +364,9 @@ autoscaling:
         - type: Pods
           value: 1
           periodSeconds: 300
-  # Session stickiness configuration for Istio traffic routing
-  # When enabled, creates a DestinationRule with consistent hash load balancing based on HTTP cookies
-  # This ensures requests from the same client are routed to the same Keycloak pod
+  # Session stickiness configuration for Keycloak.
+  # As highlighted in https://www.keycloak.org/server/reverseproxy#_enable_sticky_sessions these settings
+  # are not strictly mandatory for the HA configuration but they are recommended for getting the best performance.
   sessionStickiness:
     # Enable session stickiness (enabled by default)
     enabled: true

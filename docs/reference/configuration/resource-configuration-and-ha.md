@@ -226,7 +226,7 @@ packages:
         keycloak:
           values:
             - path: waypoint.horizontalPodAutoscaler.minReplicas
-              value: 1
+              value: 2
             - path: waypoint.horizontalPodAutoscaler.maxReplicas
               value: 5
             - path: waypoint.horizontalPodAutoscaler.metrics
@@ -242,6 +242,10 @@ packages:
             - path: waypoint.deployment.requests.memory
               value: 256Mi
 ```
+
+:::tip
+For HA Keycloak deployments running on multiple nodes, it is recommended to set `waypoint.horizontalPodAutoscaler.minReplicas` to at least 2. This ensures there is no downtime when waypoint pods are restarted or rescheduled.
+:::
 
 ### AuthService
 
