@@ -3,4 +3,4 @@
 
 image:
   repository: quay.io/rfcurated/vector
-  tag: 0.52.0-jammy-fips-rfcurated-rfhardened
+  tag: 0.53.0-jammy-fips-rfcurated-rfhardened
