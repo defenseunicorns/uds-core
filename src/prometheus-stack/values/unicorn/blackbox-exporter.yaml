@@ -5,4 +5,4 @@
 image:
   registry: quay.io
   repository: rfcurated/prometheus/blackbox-exporter
-  tag: 0.28.0-jammy-scratch-fips-rfcurated
+  tag: 0.28.0-jammy-scratch-fips-rfcurated-rfhardened

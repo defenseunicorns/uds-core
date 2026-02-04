@@ -4,15 +4,11 @@ sidebar:
     order: 4.5
 ---
 
-UDS Core includes an optional Prometheus Blackbox Exporter component for uptime monitoring and endpoint probing.
-
 ## Overview
 
-The Blackbox Exporter enables HTTP/HTTPS probing of external endpoints and services to monitor uptime and availability. It's deployed as an optional component within the UDS Core monitoring stack.
+The Blackbox Exporter enables HTTP/HTTPS probing of external endpoints and services to monitor uptime and availability.
 
 ## Bundle Configuration
-
-Blackbox Exporter is included as an optional component of the UDS Core package.
 
 :::note
 Blackbox Exporter is deployed as an optional component within the core package. You must explicitly enable it in the `optionalComponents` section of your bundle configuration.

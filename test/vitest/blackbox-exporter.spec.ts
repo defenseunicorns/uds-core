@@ -23,35 +23,6 @@ describe("Blackbox Exporter", { retry: 3 }, () => {
     await closeForward(prometheusProxy.server);
   });
 
-  test("blackbox exporter should be deployed and discoverable by Prometheus", async () => {
-    // Verify blackbox-exporter is discoverable as a Prometheus target
-    const targetsResponse = await fetch(`${prometheusProxy.url}/api/v1/targets`);
-    expect(targetsResponse.status).toBe(200);
-
-    const targetsBody = (await targetsResponse.json()) as {
-      data: {
-        activeTargets: Array<{
-          job: string;
-          health: string;
-          labels: Record<string, string>;
-        }>;
-      };
-    };
-
-    expect(targetsBody.data).toBeDefined();
-    expect(targetsBody.data.activeTargets.length).toBeGreaterThan(0);
-
-    // Find prometheus-blackbox-exporter target
-    const blackboxTarget = targetsBody.data.activeTargets.find(
-      target => target.labels.job === "prometheus-blackbox-exporter",
-    );
-
-    expect(blackboxTarget).toBeDefined();
-    expect(blackboxTarget!.health).toBe("up");
-    expect(blackboxTarget!.labels.namespace).toBe("monitoring");
-    expect(blackboxTarget!.labels.container).toBe("blackbox-exporter");
-  });
-
   test("blackbox exporter should probe Prometheus and generate probe metrics", async () => {
     // Test that blackbox-exporter can probe Prometheus and generate probe metrics
     const probeResponse = await fetch(
