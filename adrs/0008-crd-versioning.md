@@ -16,6 +16,8 @@ UDS Core will follow the **Kubernetes-native CRD versioning strategy** as define
 
 The Kubernetes-native CRD versioning principles are outlined in the [Kubernetes-native CRD versioning principles](#Kubernetes-native-CRD-versioning-principles) section below.
 
+Because of the time constraints, the UDS Core will keep using the `v1alpha1` CRD versions. Upgrading to `v1beta1` or `v1` will be considered for the future releases.
+
 UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provides guaranteed backwards compatibility for production workloads and ensures that users can confidently build on UDS Core APIs knowing the stability contract.
 
 ## Consequences
@@ -29,7 +31,7 @@ UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provid
 
 ### Negative
 
-- CRD schema evolution will require implementing migration logic (either with a [Conversion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks) or with a dedicated [migration code block in the UDS Operator](https://github.com/defenseunicorns/uds-core/blob/1d1a826ef54b68d6ee7697eb153f7a3707a44a93/src/pepr/operator/crd/migrate.ts#L15))
+- CRD schema evolution will require implementing migration logic (preferably using a [Conversion Webhook](https://kubernetes.io/docs/tasks/extend-kubernetes/custom-resources/custom-resource-definition-versioning/#configure-customresourcedefinition-to-use-conversion-webhooks) as opposed to an  [in-memory migration performed by the UDS Operator](https://github.com/defenseunicorns/uds-core/blob/1d1a826ef54b68d6ee7697eb153f7a3707a44a93/src/pepr/operator/crd/migrate.ts#L15), it enables upgrading the CRD Storage Version)
 - Long deprecation periods and increased maintenance burden to keep removed/renamed fields in the CRD schema
 
 ## Alternatives Considered
@@ -60,6 +62,7 @@ This paragraph contains information related to the UDS Core based on [Kubernetes
 ### CRD versions
 
 **Alpha (v1alpha1, v1alpha2, etc.)**
+
 - Fields may be added, removed, or renamed without notice
 - No schema compatibility guarantees between alpha versions
 - May be removed in any UDS Core release without prior deprecation
@@ -67,6 +70,7 @@ This paragraph contains information related to the UDS Core based on [Kubernetes
 - Users should expect breaking changes
 
 **Beta (v1beta1, v1beta2, etc.)**
+
 - Schema is well-tested and considered stable
 - Fields may only be removed or have breaking changes with proper deprecation
 - Once marked as deprecated, beta versions must remain supported for a minimum of 3 months or 3 UDS Core minor releases (whichever is longer) before removal, aligning with the Kubernetes API deprecation policy
@@ -74,6 +78,7 @@ This paragraph contains information related to the UDS Core based on [Kubernetes
 - Beta versions must support conversion to/from other served versions
 
 **GA/Stable (v1, v2, etc.)**
+
 - Considered fully-matured with strong stability guarantees
 - May be marked as deprecated but must not be removed within a major version of UDS Core
 - Breaking changes require incrementing to a new major API version (v1 → v2)
