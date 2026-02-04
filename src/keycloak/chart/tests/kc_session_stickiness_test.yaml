@@ -6,6 +6,9 @@
 suite: Keycloak - Session Stickiness
 templates:
   - destination-rule.yaml
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
 
 tests:
   - it: should not render DestinationRule when autoscaling is disabled (even with sessionStickiness enabled by default)
@@ -16,6 +19,12 @@ tests:
 
   - it: should not render DestinationRule when autoscaling.sessionStickiness.enabled is false
     set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
       autoscaling:
         enabled: true
         sessionStickiness:
@@ -38,6 +47,12 @@ tests:
 
   - it: should render DestinationRule when both autoscaling.enabled and autoscaling.sessionStickiness.enabled are true
     set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
       autoscaling:
         enabled: true
         sessionStickiness:
@@ -60,3 +75,80 @@ tests:
       - equal:
           path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.ttl
           value: 0s
+
+  - it: should NOT render KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE when autoscaling is disabled
+    set:
+      devMode: false
+      autoscaling:
+        enabled: false
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+
+  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when autoscaling is enabled but sessionStickiness is disabled
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+        sessionStickiness:
+          enabled: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+            value: "false"
+
+  - it: should NOT render KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE when both autoscaling and sessionStickiness are enabled
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+        sessionStickiness:
+          enabled: true
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+
+  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when sessionStickiness.enabled is explicitly false with autoscaling enabled
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+        sessionStickiness:
+          enabled: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+            value: "false"
+      # Also verify other HA-related env vars are present
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_CACHE
+            value: ispn
