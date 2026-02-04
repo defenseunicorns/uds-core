@@ -120,4 +120,4 @@ components:
         valuesFiles:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
-      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened"
