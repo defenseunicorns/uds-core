@@ -223,6 +223,40 @@ const expose = {
           type: "string",
         },
       },
+      uptime: {
+        description: "Uptime monitoring configuration for this exposed service.",
+        type: "object",
+        properties: {
+          checks: {
+            description: "HTTP probe checks configuration for blackbox-exporter",
+            type: "object",
+            properties: {
+              enabled: {
+                description: "Enable uptime monitoring for this endpoint (default: false)",
+                type: "boolean",
+                default: false,
+              },
+              paths: {
+                description:
+                  "List of paths to check for uptime monitoring, appended to the host (default: ['/'])",
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                default: ["/"],
+              },
+              interval: {
+                description: "How frequently to scrape the targets (e.g., 30s, 1m)",
+                type: "string",
+              },
+              scrapeTimeout: {
+                description: "Timeout for each scrape request (e.g., 10s)",
+                type: "string",
+              },
+            },
+          },
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;

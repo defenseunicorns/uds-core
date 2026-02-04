@@ -93,6 +93,7 @@ components:
           - "blackbox-exporter/values/upstream-values.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.88.1"
 
   - name: prometheus-blackbox-exporter
     required: false
@@ -107,6 +108,7 @@ components:
           - "blackbox-exporter/values/registry1-values.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.88.1"
 
   - name: prometheus-blackbox-exporter
     required: false
@@ -121,3 +123,4 @@ components:
           - "blackbox-exporter/values/unicorn-values.yaml"
     images:
       - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated"
+      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.88.1-jammy-scratch-fips-rfcurated"

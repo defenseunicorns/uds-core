@@ -175,6 +175,7 @@ rbac:
     resources:
       - podmonitors
       - servicemonitors
+      - probes
     verbs:
       - create
       - delete

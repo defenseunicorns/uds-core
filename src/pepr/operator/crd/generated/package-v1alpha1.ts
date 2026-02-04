@@ -325,6 +325,10 @@ export interface Expose {
    * different from the target port (so the NetworkPolicy can be generated correctly).
    */
   targetPort?: number;
+  /**
+   * Uptime monitoring configuration for this exposed service.
+   */
+  uptime?: Uptime;
 }
 
 /**
@@ -634,6 +638,38 @@ export interface FluffyURI {
    * RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).
    */
   regex?: string;
+}
+
+/**
+ * Uptime monitoring configuration for this exposed service.
+ */
+export interface Uptime {
+  /**
+   * HTTP probe checks configuration for blackbox-exporter
+   */
+  checks?: Checks;
+}
+
+/**
+ * HTTP probe checks configuration for blackbox-exporter
+ */
+export interface Checks {
+  /**
+   * Enable uptime monitoring for this endpoint (default: false)
+   */
+  enabled?: boolean;
+  /**
+   * How frequently to scrape the targets (e.g., 30s, 1m)
+   */
+  interval?: string;
+  /**
+   * List of paths to check for uptime monitoring, appended to the host (default: ['/'])
+   */
+  paths?: string[];
+  /**
+   * Timeout for each scrape request (e.g., 10s)
+   */
+  scrapeTimeout?: string;
 }
 
 /**

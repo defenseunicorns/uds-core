@@ -155,6 +155,8 @@ spec:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
+        uptime:
+          enabled: false # Note: this is needed to ensure only one probe is created for fqdn/pepr will block otherwise
         {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
