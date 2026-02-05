@@ -7,9 +7,9 @@ import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
 
-import { v1alpha1 as clusterConfig } from "../operator/crd/sources/cluster-config/v1alpha1";
-import { v1alpha1 as exemption } from "../operator/crd/sources/exemption/v1alpha1";
-import { v1alpha1 as pkg } from "../operator/crd/sources/package/v1alpha1";
+import { v1alpha1 as clusterConfig } from "../operator/crd/sources/cluster-config/v1alpha1.js";
+import { v1alpha1 as exemption } from "../operator/crd/sources/exemption/v1alpha1.js";
+import { v1alpha1 as pkg } from "../operator/crd/sources/package/v1alpha1.js";
 
 const HELM_TEMPLATE_DIR = path.resolve(__dirname, "../uds-cluster-crds/templates");
 if (!fs.existsSync(HELM_TEMPLATE_DIR)) fs.mkdirSync(HELM_TEMPLATE_DIR, { recursive: true });
