@@ -244,7 +244,7 @@ packages:
 ```
 
 :::tip
-For HA Keycloak deployments running on multiple nodes, it is recommended to set `waypoint.horizontalPodAutoscaler.minReplicas` to at least 2. This ensures there is no downtime when waypoint pods are restarted or rescheduled.
+For HA Keycloak deployments running on multiple nodes, it is recommended to set `waypoint.horizontalPodAutoscaler.minReplicas` to at least 2 and use proper Affinity settings (to distribute Keycloak Waypoint Pods across the Kubernetes Nodes). This ensures there is no downtime when waypoint pods are restarted or rescheduled.
 :::
 
 ### AuthService
