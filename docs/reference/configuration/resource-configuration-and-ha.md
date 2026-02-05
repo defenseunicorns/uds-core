@@ -214,7 +214,7 @@ packages:
               value: "2Gi"
 ```
 
-You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below override example includes the default values which could be changed based on your needs:
+You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below provides an override example that can be changed based on your needs:
 
 ```yaml
 packages:
