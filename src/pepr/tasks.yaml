@@ -83,7 +83,7 @@ tasks:
           CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
           for CRD in $CRD_LIST; do
               # Convert YAML to JSON and extract openAPIV3Schema for v1alpha1
-              yq -o=json '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' src/pepr/uds-cluster-crds/templates/$CRD.yaml > $CRD-crd.json
+              uds zarf tools yq -o=json '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' src/pepr/uds-cluster-crds/templates/$CRD.yaml > $CRD-crd.json
               version="v1alpha1"
               # Typescript format markdown
               npx ts-node --project src/pepr/tsconfig-docs-gen.json src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
