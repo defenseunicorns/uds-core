@@ -434,7 +434,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">enabled</td><td style="white-space: nowrap;">boolean</td><td>Enable uptime monitoring for this endpoint (default: false)</td></tr><tr><td style="white-space: nowrap;">paths</td><td style="white-space: nowrap;">string[]</td><td>List of paths to check for uptime monitoring, appended to the host (default: ['/'])</td></tr><tr><td style="white-space: nowrap;">interval</td><td style="white-space: nowrap;">string</td><td>How frequently to scrape the targets (e.g., 30s, 1m)</td></tr><tr><td style="white-space: nowrap;">scrapeTimeout</td><td style="white-space: nowrap;">string</td><td>Timeout for each scrape request (e.g., 10s)</td></tr>
+    <tr><td style="white-space: nowrap;">enabled</td><td style="white-space: nowrap;">boolean</td><td>Enable uptime monitoring for this endpoint (default: false)</td></tr><tr><td style="white-space: nowrap;">paths</td><td style="white-space: nowrap;">string[]</td><td>List of paths to check for uptime monitoring, appended to the host (default: ['/'])</td></tr>
   </tbody>
 </table>
 </div>

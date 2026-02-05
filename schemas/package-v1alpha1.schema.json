@@ -880,20 +880,12 @@
           "type": "boolean",
           "description": "Enable uptime monitoring for this endpoint (default: false)"
         },
-        "interval": {
-          "type": "string",
-          "description": "How frequently to scrape the targets (e.g., 30s, 1m)"
-        },
         "paths": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "description": "List of paths to check for uptime monitoring, appended to the host (default: ['/'])"
-        },
-        "scrapeTimeout": {
-          "type": "string",
-          "description": "Timeout for each scrape request (e.g., 10s)"
         }
       },
       "required": [],
@@ -1184,6 +1176,12 @@
         },
         "phase": {
           "$ref": "#/definitions/Phase"
+        },
+        "probes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "retryAttempt": {
           "type": "integer"

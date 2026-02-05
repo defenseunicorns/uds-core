@@ -659,17 +659,9 @@ export interface Checks {
    */
   enabled?: boolean;
   /**
-   * How frequently to scrape the targets (e.g., 30s, 1m)
-   */
-  interval?: string;
-  /**
    * List of paths to check for uptime monitoring, appended to the host (default: ['/'])
    */
   paths?: string[];
-  /**
-   * Timeout for each scrape request (e.g., 10s)
-   */
-  scrapeTimeout?: string;
 }
 
 /**
@@ -896,6 +888,7 @@ export interface StatusObject {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  probes?: string[];
   retryAttempt?: number;
   ssoClients?: string[];
 }

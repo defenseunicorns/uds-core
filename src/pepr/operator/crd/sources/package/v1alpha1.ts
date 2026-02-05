@@ -245,14 +245,6 @@ const expose = {
                 },
                 default: ["/"],
               },
-              interval: {
-                description: "How frequently to scrape the targets (e.g., 30s, 1m)",
-                type: "string",
-              },
-              scrapeTimeout: {
-                description: "Timeout for each scrape request (e.g., 10s)",
-                type: "string",
-              },
             },
           },
         },
@@ -637,6 +629,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.monitors",
     },
     {
+      name: "Probes",
+      type: "string",
+      description: "Uptime probes for the package",
+      jsonPath: ".status.probes",
+    },
+    {
       name: "Network Policies",
       type: "integer",
       description: "The number of network policies created by the package",
@@ -744,6 +742,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               },
             },
             monitors: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            probes: {
               type: "array",
               items: {
                 type: "string",

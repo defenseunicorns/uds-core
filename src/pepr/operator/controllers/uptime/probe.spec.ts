@@ -66,6 +66,16 @@ describe("getFqdn", () => {
 
     UDSConfig.adminDomain = originalAdminDomain;
   });
+
+  it("should use expose.domain when specified for custom gateways", () => {
+    const expose: Expose = {
+      host: "app",
+      gateway: "custom-gateway",
+      domain: "custom.example.com",
+    };
+    const fqdn = getFqdn(expose);
+    expect(fqdn).toEqual("app.custom.example.com");
+  });
 });
 
 describe("generateProbe", () => {
@@ -121,24 +131,5 @@ describe("generateProbe", () => {
       "https://app.uds.dev/health",
       "https://app.uds.dev/ready",
     ]);
-  });
-
-  it("should include interval and scrapeTimeout when specified", () => {
-    const expose: Expose = {
-      host: "app",
-      gateway: "tenant",
-      uptime: {
-        checks: {
-          enabled: true,
-          interval: "30s",
-          scrapeTimeout: "10s",
-        },
-      },
-    };
-
-    const payload = generateProbe(expose, "test", "test", "1", ownerRefs);
-
-    expect(payload.spec?.interval).toEqual("30s");
-    expect(payload.spec?.scrapeTimeout).toEqual("10s");
   });
 });

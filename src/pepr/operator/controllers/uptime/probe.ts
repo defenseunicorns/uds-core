@@ -14,14 +14,14 @@ import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 const log = setupLogger(Component.OPERATOR_UPTIME);
 
 /**
- * Get the FQDN for an expose entry based on host and gateway
+ * Get the FQDN for an expose entry based on host, domain, and gateway
  *
  * @param entry The expose entry
  * @returns The fully qualified domain name
  */
 export function getFqdn(entry: Expose): string {
   const gateway = entry.gateway;
-  const domain = gateway === "admin" ? UDSConfig.adminDomain : UDSConfig.domain;
+  const domain = entry.domain ?? (gateway === "admin" ? UDSConfig.adminDomain : UDSConfig.domain);
   return entry.host === "." ? domain : `${entry.host}.${domain}`;
 }
 
@@ -113,8 +113,6 @@ export function generateProbe(
           static: targets,
         },
       },
-      interval: uptime?.checks?.interval,
-      scrapeTimeout: uptime?.checks?.scrapeTimeout,
     },
   };
 

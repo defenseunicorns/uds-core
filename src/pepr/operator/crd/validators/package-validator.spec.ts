@@ -994,6 +994,30 @@ describe("Uptime probe FQDN validation", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  it("denies paths that don't start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { enabled: true, paths: ["health"] } } }],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows paths that start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { enabled: true, paths: ["/health", "/ready"] } } }],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Test proper generation of a unique name for service monitors", () => {

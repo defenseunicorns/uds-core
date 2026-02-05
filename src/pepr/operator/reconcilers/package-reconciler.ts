@@ -126,7 +126,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
   // Configure the Uptime Probes
-  await probe(pkg, namespace!);
+  const probes = await probe(pkg, namespace!);
 
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);
@@ -138,6 +138,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     authserviceClients,
     endpoints,
     monitors,
+    probes,
     networkPolicyCount: netPol.length,
     authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
     meshMode: istioMode,
