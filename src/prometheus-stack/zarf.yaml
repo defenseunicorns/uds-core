@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -30,7 +30,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/upstream-values.yaml"
+          - "values/upstream/kube-prometheus-stack.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.10.2"
       - "quay.io/prometheus-operator/prometheus-operator:v0.88.0"
@@ -50,7 +50,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/registry1-values.yaml"
+          - "values/registry1/kube-prometheus-stack.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.10.2"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.88.0"
@@ -70,7 +70,7 @@ components:
     charts:
       - name: kube-prometheus-stack
         valuesFiles:
-          - "values/unicorn-values.yaml"
+          - "values/unicorn/kube-prometheus-stack.yaml"
     images:
       - "quay.io/rfcurated/prometheus/node-exporter:1.10.2-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus-operator:0.88.0-jammy-scratch-fips-rfcurated"
@@ -79,3 +79,45 @@ components:
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.88.0-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus:3.9.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.5-jammy-fips-rfcurated-rfhardened"
+
+  - name: prometheus-blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - "values/upstream/blackbox-exporter.yaml"
+    images:
+      - "quay.io/prometheus/blackbox-exporter:v0.28.0"
+
+  - name: prometheus-blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - "values/registry1/blackbox-exporter.yaml"
+    images:
+      - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
+
+  - name: prometheus-blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - "values/unicorn/blackbox-exporter.yaml"
+    images:
+      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened"
