@@ -5,6 +5,9 @@
 role: "Agent"
 
 # Add trust bundle configuration using vector's supported pattern
+# Because of this https://github.com/rustls/openssl-probe/blob/main/src/lib.rs#L138-L139
+# the rust based image should accept this `/etc/ssl/certs/ca-bundle.pem` path
+# additional vector specific documentation: https://vector.dev/docs/reference/configuration/tls/#trusted-certificates
 extraVolumes:
   - name: ca-certs
     configMap:

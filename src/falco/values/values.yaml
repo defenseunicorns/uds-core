@@ -58,14 +58,12 @@ mounts:
       mountPath: /etc/falco/rules.d/disable-rules.yaml
       subPath: disable-rules.yaml
       readOnly: true
-    - name: ca-certs
-      mountPath: /etc/ssl/certs/ca-bundle.pem
-      subPath: ca-bundle.pem
-      readOnly: true
 
 falcosidekick:
   enabled: true
 
+  # FalcoSidekick is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+  # based on https://go.dev/src/crypto/x509/root_linux.go
   extraVolumes:
     - name: ca-certs
       configMap:
