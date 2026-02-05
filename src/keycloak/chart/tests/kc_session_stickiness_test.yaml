@@ -88,7 +88,7 @@ tests:
           content:
             name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
 
-  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when autoscaling is enabled but sessionStickiness is disabled
+  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when autoscaling is enabled
     set:
       devMode: false
       postgresql:
@@ -98,47 +98,6 @@ tests:
         database: keycloak
       autoscaling:
         enabled: true
-        sessionStickiness:
-          enabled: false
-    template: statefulset.yaml
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
-            value: "false"
-
-  - it: should NOT render KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE when both autoscaling and sessionStickiness are enabled
-    set:
-      devMode: false
-      postgresql:
-        username: test
-        password: test
-        host: postgres
-        database: keycloak
-      autoscaling:
-        enabled: true
-        sessionStickiness:
-          enabled: true
-    template: statefulset.yaml
-    asserts:
-      - notContains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
-
-  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when sessionStickiness.enabled is explicitly false with autoscaling enabled
-    set:
-      devMode: false
-      postgresql:
-        username: test
-        password: test
-        host: postgres
-        database: keycloak
-      autoscaling:
-        enabled: true
-        sessionStickiness:
-          enabled: false
     template: statefulset.yaml
     asserts:
       - contains:
