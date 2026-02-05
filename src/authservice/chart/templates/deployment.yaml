@@ -49,10 +49,6 @@ spec:
           volumeMounts:
             - name: {{ include "authservice.name" . }}
               mountPath: /etc/authservice
-            - name: ca-certs
-              mountPath: /etc/ssl/certs/ca-bundle.pem
-              subPath: ca-bundle.pem
-              readOnly: true
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -69,7 +65,3 @@ spec:
         - name: {{ include "authservice.name" . }}
           secret:
             secretName: {{ include "authservice.fullname" . }}-uds
-        - name: ca-certs
-          configMap:
-            name: uds-trust-bundle
-            optional: true
