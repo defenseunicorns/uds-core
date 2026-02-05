@@ -5,7 +5,7 @@
 
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
-import { advancedHTTP } from "../istio/virtualservice-v1beta1.js";
+import { advancedHTTP } from "../istio/virtualservice-v1beta1.ts";
 
 const AuthorizationSchema: V1JSONSchemaProps = {
   description: "Authorization settings.",
