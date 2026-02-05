@@ -361,6 +361,10 @@
         "targetPort": {
           "type": "number",
           "description": "The service targetPort. This defaults to port and is only required if the service port is\ndifferent from the target port (so the NetworkPolicy can be generated correctly)."
+        },
+        "uptime": {
+          "$ref": "#/definitions/Uptime",
+          "description": "Uptime monitoring configuration for this exposed service."
         }
       },
       "required": [
@@ -854,6 +858,47 @@
       },
       "required": [],
       "title": "FluffyURI"
+    },
+    "Uptime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "$ref": "#/definitions/Checks",
+          "description": "HTTP probe checks configuration for blackbox-exporter"
+        }
+      },
+      "required": [],
+      "title": "Uptime",
+      "description": "Uptime monitoring configuration for this exposed service."
+    },
+    "Checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable uptime monitoring for this endpoint (default: false)"
+        },
+        "interval": {
+          "type": "string",
+          "description": "How frequently to scrape the targets (e.g., 30s, 1m)"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of paths to check for uptime monitoring, appended to the host (default: ['/'])"
+        },
+        "scrapeTimeout": {
+          "type": "string",
+          "description": "Timeout for each scrape request (e.g., 10s)"
+        }
+      },
+      "required": [],
+      "title": "Checks",
+      "description": "HTTP probe checks configuration for blackbox-exporter"
     },
     "ServiceMesh": {
       "type": "object",

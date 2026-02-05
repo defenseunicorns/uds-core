@@ -72,7 +72,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr>
+    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">uptime</td><td style="white-space: nowrap;"><a href="#Uptime">Uptime</a></td><td>Uptime monitoring configuration for this exposed service.</td></tr>
   </tbody>
 </table>
 </div>
@@ -399,6 +399,42 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
   </thead>
   <tbody>
     <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Uptime"></a>
+<div style="margin-left: 100px; padding-top: 30px;">
+
+##### Uptime
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">checks</td><td style="white-space: nowrap;"><a href="#Checks">Checks</a></td><td>HTTP probe checks configuration for blackbox-exporter</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Checks"></a>
+<div style="margin-left: 120px; padding-top: 30px;">
+
+###### Checks
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">enabled</td><td style="white-space: nowrap;">boolean</td><td>Enable uptime monitoring for this endpoint (default: false)</td></tr><tr><td style="white-space: nowrap;">paths</td><td style="white-space: nowrap;">string[]</td><td>List of paths to check for uptime monitoring, appended to the host (default: ['/'])</td></tr><tr><td style="white-space: nowrap;">interval</td><td style="white-space: nowrap;">string</td><td>How frequently to scrape the targets (e.g., 30s, 1m)</td></tr><tr><td style="white-space: nowrap;">scrapeTimeout</td><td style="white-space: nowrap;">string</td><td>Timeout for each scrape request (e.g., 10s)</td></tr>
   </tbody>
 </table>
 </div>

@@ -124,6 +124,9 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: 8080
+        uptime:
+          checks:
+            enabled: true
         advancedHTTP:
           match:
             - name: redirect-welcome
@@ -172,6 +175,9 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
+        uptime:
+          checks:
+            enabled: true
         {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:

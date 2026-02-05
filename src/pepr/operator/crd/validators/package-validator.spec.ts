@@ -930,6 +930,72 @@ describe("Test Allowed SSO Client Attributes", () => {
   });
 });
 
+describe("Uptime probe FQDN validation", () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("allows expose entries with different hosts", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app1", uptime: { checks: { enabled: true } } },
+        { host: "app2", uptime: { checks: { enabled: true } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies duplicate FQDNs with uptime enabled", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
+        { host: "app", description: "second", uptime: { checks: { enabled: true } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows duplicate hosts when uptime is not enabled", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
+        { host: "app", description: "second", uptime: { checks: { enabled: false } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows duplicate hosts when uptime is undefined", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
+        { host: "app", description: "second" },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Test proper generation of a unique name for service monitors", () => {
   afterEach(() => {
     vi.resetAllMocks();

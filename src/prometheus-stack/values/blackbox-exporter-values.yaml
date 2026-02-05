@@ -44,3 +44,10 @@ serviceMonitor:
   selfMonitor:
     enabled: true
     interval: 30s
+
+podAnnotations:
+  ambient.istio.io/dns-capture: "false" # enables Probes to leave the mesh for DNS resolution/network path
+
+# Config reloader
+configReloader:
+  enabled: true

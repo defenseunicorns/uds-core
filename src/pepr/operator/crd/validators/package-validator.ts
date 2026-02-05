@@ -11,6 +11,7 @@ import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { sanitizeResourceName } from "../../controllers/utils";
+import { getFqdn } from "../../controllers/uptime/probe";
 import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
@@ -91,6 +92,25 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     // Add the name to the set to track it
     virtualServiceNames.add(name);
+  }
+
+  // Validate no duplicate FQDNs for uptime probes
+  const uptimeFqdns = new Set<string>();
+  for (const expose of exposeList) {
+    // Skip entries with uptime not enabled
+    if (!expose.uptime?.checks?.enabled) {
+      continue;
+    }
+
+    const fqdn = getFqdn(expose);
+    if (uptimeFqdns.has(fqdn)) {
+      return req.Deny(
+        `Duplicate uptime probe for FQDN "${fqdn}". ` +
+          `Only one expose entry per FQDN can have uptime enabled. ` +
+          `Disable uptime on duplicate entries with "uptime.checks.enabled: false".`,
+      );
+    }
+    uptimeFqdns.add(fqdn);
   }
 
   const networkPolicy = pkg.spec?.network?.allow ?? [];
