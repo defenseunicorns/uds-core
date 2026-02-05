@@ -49,10 +49,15 @@ cat "$TEMP_IMAGES" | while read -r IMAGE; do
     AMD64=${AMD64:-0}
     ARM64=${ARM64:-0}
 
-    if [ "$AMD64" -eq 0 ] || [ "$ARM64" -eq 0 ]; then
-        ARCHS=$(echo "$MANIFEST" | jq -r '.manifests[]?.platform.architecture // .architecture // "unknown"' 2>/dev/null | paste -sd "," -)
-        echo "  ✗ MISSING [$ARCHS]"
-        echo "$IMAGE" >> "$TEMP_MISSING"
+    missing_arches=()
+    [ "$AMD64" -eq 0 ] && missing_arches+=("amd64")
+    [ "$ARM64" -eq 0 ] && missing_arches+=("arm64")
+
+    if [ ${#missing_arches[@]} -gt 0 ]; then
+        missing_key=$(IFS=,; echo "${missing_arches[*]}")
+        available_arches=$(echo "$MANIFEST" | jq -r '.manifests[]?.platform.architecture // .architecture // "unknown"' 2>/dev/null | paste -sd "," -)
+        echo "  ✗ MISSING [$missing_key]"${available_arches:+" (found: $available_arches)"}
+        echo "$missing_key|$IMAGE" >> "$TEMP_MISSING"
     else
         echo "  ✓ OK"
     fi

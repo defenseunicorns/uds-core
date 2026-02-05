@@ -23,3 +23,13 @@ components:
         version: 81.2.2
         valuesFiles:
           - "../values/kube-prometheus-stack-values.yaml"
+  - name: prometheus-blackbox-exporter
+    required: false
+    description: "UDS Core Prometheus Blackbox Exporter"
+    charts:
+      - name: prometheus-blackbox-exporter
+        namespace: monitoring
+        url: https://prometheus-community.github.io/helm-charts
+        version: 11.7.0
+        valuesFiles:
+          - "../values/blackbox-exporter-values.yaml"

@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
@@ -31,20 +31,15 @@ tasks:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
 
-      - description: "Register CRDs in cluster"
-        cmd: npx ts-node -e "import { registerCRDs } from './src/pepr/operator/crd/register'; registerCRDs()"
-        env:
-          - "PEPR_MODE=dev"
-
       - description: "Create required namespaces"
         cmd: |
           uds zarf tools kubectl create ns uds-policy-exemptions
           uds zarf tools kubectl create ns istio-system
           uds zarf tools kubectl create ns pepr-system
 
-      - description: "Deploy the UDS Cluster Config CRD and apply all hack dev manifests"
+      - description: "Deploy the UDS CRDs and apply all hack dev manifests"
         cmd: |
-          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml
+          uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/
           uds zarf tools kubectl apply -f hack/dev-manifests/
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
@@ -209,3 +204,16 @@ tasks:
     description: "Updates CA certificates"
     actions:
       - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts
+      - description: "Add license headers to generated CA configmap"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml

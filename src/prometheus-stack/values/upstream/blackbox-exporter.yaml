@@ -1,0 +1,8 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Image configuration for upstream flavor
+image:
+  registry: quay.io
+  repository: prometheus/blackbox-exporter
+  tag: v0.28.0

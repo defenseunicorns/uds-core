@@ -6,102 +6,41 @@ kind: CustomResourceDefinition
 metadata:
   name: clusterconfig.uds.dev
 spec:
-  conversion:
-    strategy: None
   group: uds.dev
+  scope: Cluster
   names:
-    kind: ClusterConfig
-    listKind: ClusterConfigList
     plural: clusterconfig
     singular: clusterconfig
-  scope: Cluster
+    kind: ClusterConfig
+    listKind: ClusterConfigList
   versions:
-    - additionalPrinterColumns:
-        - description: The status of the cluster config
-          jsonPath: .status.phase
-          name: Status
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: Status
           type: string
-        - description: The age of the cluster config
-          jsonPath: .metadata.creationTimestamp
-          name: Age
+          description: The status of the cluster config
+          jsonPath: .status.phase
+        - name: Age
           type: date
-      name: v1alpha1
+          description: The age of the cluster config
+          jsonPath: .metadata.creationTimestamp
+      subresources:
+        status: {}
       schema:
         openAPIV3Schema:
+          type: object
           properties:
             metadata:
+              type: object
               properties:
                 name:
+                  type: string
                   enum:
                     - uds-cluster-config
-                  type: string
-              type: object
-            spec:
-              properties:
-                attributes:
-                  properties:
-                    clusterName:
-                      description: Friendly name to associate with your UDS cluster
-                      type: string
-                    tags:
-                      description: Tags to apply to your UDS cluster
-                      items:
-                        type: string
-                      type: array
-                  type: object
-                caBundle:
-                  properties:
-                    certs:
-                      description: Contents of user provided CA bundle certificates
-                      type: string
-                    includeDoDCerts:
-                      default: false
-                      description: Include DoD CA certificates in the bundle
-                      type: boolean
-                    includePublicCerts:
-                      default: false
-                      description: Include public CA certificates in the bundle
-                      type: boolean
-                  type: object
-                expose:
-                  properties:
-                    adminDomain:
-                      description: Domain all cluster services on the admin gateway will be exposed on
-                      type: string
-                    caCert:
-                      description: The trusted CA that signed your domain certificates if using Private PKI
-                      type: string
-                    domain:
-                      description: Domain all cluster services will be exposed on
-                      type: string
-                  required:
-                    - domain
-                  type: object
-                networking:
-                  properties:
-                    kubeApiCIDR:
-                      description: CIDR range for your Kubernetes control plane nodes. This is a manual override that can be used instead of relying on Pepr to automatically watch and update the values
-                      type: string
-                    kubeNodeCIDRs:
-                      description: CIDR(s) for all Kubernetes nodes (not just control plane). Similar reason to above,annual override instead of relying on watch
-                      items:
-                        type: string
-                      type: array
-                  type: object
-                policy:
-                  properties:
-                    allowAllNsExemptions:
-                      default: false
-                      description: Allow UDS Exemption custom resources to live in any namespace (default false)
-                      type: boolean
-                  required:
-                    - allowAllNsExemptions
-                  type: object
-              required:
-                - expose
-                - policy
-              type: object
             status:
+              type: object
               properties:
                 observedGeneration:
                   type: integer
@@ -111,11 +50,82 @@ spec:
                     - Ready
                     - Failed
                   type: string
+            spec:
               type: object
+              properties:
+                attributes:
+                  type: object
+                  properties:
+                    clusterName:
+                      type: string
+                      description: Friendly name to associate with your UDS cluster
+                    tags:
+                      type: array
+                      description: Tags to apply to your UDS cluster
+                      items:
+                        type: string
+                networking:
+                  type: object
+                  properties:
+                    kubeApiCIDR:
+                      type: string
+                      description: >-
+                        CIDR range for your Kubernetes control plane nodes. This
+                        is a manual override that can be used instead of relying
+                        on Pepr to automatically watch and update the values
+                    kubeNodeCIDRs:
+                      type: array
+                      description: >-
+                        CIDR(s) for all Kubernetes nodes (not just control
+                        plane). Similar reason to above,annual override instead
+                        of relying on watch
+                      items:
+                        type: string
+                caBundle:
+                  type: object
+                  properties:
+                    certs:
+                      type: string
+                      description: Contents of user provided CA bundle certificates
+                    includeDoDCerts:
+                      type: boolean
+                      description: Include DoD CA certificates in the bundle
+                      default: false
+                    includePublicCerts:
+                      type: boolean
+                      description: Include public CA certificates in the bundle
+                      default: false
+                expose:
+                  type: object
+                  properties:
+                    domain:
+                      type: string
+                      description: Domain all cluster services will be exposed on
+                    adminDomain:
+                      type: string
+                      description: >-
+                        Domain all cluster services on the admin gateway will be
+                        exposed on
+                    caCert:
+                      type: string
+                      description: >-
+                        The trusted CA that signed your domain certificates if
+                        using Private PKI
+                  required:
+                    - domain
+                policy:
+                  type: object
+                  properties:
+                    allowAllNsExemptions:
+                      type: boolean
+                      description: >-
+                        Allow UDS Exemption custom resources to live in any
+                        namespace (default false)
+                      default: false
+                  required:
+                    - allowAllNsExemptions
+              required:
+                - expose
+                - policy
           required:
             - spec
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}

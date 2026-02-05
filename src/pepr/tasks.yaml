@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -6,20 +6,19 @@ tasks:
     actions:
       - description: "Run Pepr Validate"
   - name: gen-crds
-    description: "Generate CRDS, requires a running kubernetes cluster"
+    description: "Generate CRDs"
     actions:
-      - cmd: npx ts-node -e "import { registerCRDs, registerClusterConfig } from './src/pepr/operator/crd/register'; registerCRDs(); registerClusterConfig();"
-        description: "Register CRDs in cluster"
-        env:
-          - "PEPR_MODE=dev"
+      - cmd: |
+          npx ts-node src/pepr/scripts/gen-crds.ts
+        description: "Generate CRD YAML files"
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd packages.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd packages.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -29,12 +28,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd exemptions.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd exemptions.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -44,20 +43,18 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd clusterconfig.uds.dev src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for clusterconfig.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd clusterconfig.uds.dev -l json-schema schemas
+          npx kubernetes-fluent-client@3.10.14 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
           uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/clusterconfig-v1alpha1.schema.json
           uds zarf tools yq -i '.definitions.ClusterConfig.additionalProperties = {}' schemas/clusterconfig-v1alpha1.schema.json
         description: "Generate JSON schema for clusterconfig.uds.dev"
-
-      - task: gen-manifests
 
       - description: "Add license headers to generated CRD files"
         shell:
@@ -78,33 +75,19 @@ tasks:
 
       - cmd: "npx pepr format"
 
-  - name: gen-manifests
-    description: "Generate CRD manifests"
-    actions:
-      - cmd: |
-          CRD_LIST="clusterconfig.uds.dev"
-          for CRD in $CRD_LIST; do
-             FILE="src/pepr/uds-cluster-crds/templates/$CRD.yaml"
-             uds zarf tools kubectl get crd $CRD -o yaml > $FILE
-             uds zarf tools yq -i 'del(.metadata.creationTimestamp,.metadata.generation,.metadata.resourceVersion,.metadata.uid,.status,.metadata.labels,.metadata.annotations)' $FILE
-          done
-
   - name: gen-docs
-    description: "Generate Docs for generated CRDs, requires a running kubernetes cluster"
+    description: "Generate Docs for generated CRDs"
     actions:
       - description: "Generate Docs for CRDs"
         cmd: |
-          # Define CRD list as a space-separated string
           CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
-          # For each CRD retrieve the CRD and create a Go struct file to then create a markdown file
           for CRD in $CRD_LIST; do
-              # Retrieve CRD Json from Cluster
-              kubectl get crd $CRD -o json | jq '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' >> $CRD-crd.json
-              # Extract the version (e.g., v1alpha1)
-              version=$(kubectl get crd $CRD -o json | jq -r '.status.storedVersions[0]')
+              # Convert YAML to JSON and extract openAPIV3Schema for v1alpha1
+              uds zarf tools yq -o=json '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' src/pepr/uds-cluster-crds/templates/$CRD.yaml > $CRD-crd.json
+              version="v1alpha1"
               # Typescript format markdown
               npx ts-node --project src/pepr/tsconfig-docs-gen.json src/pepr/docs-gen/main.ts "$CRD-crd.json" "$version"
-              # Remove the json and go files
+              # Remove the json file
               rm -f "$CRD-crd.json"
           done
 
