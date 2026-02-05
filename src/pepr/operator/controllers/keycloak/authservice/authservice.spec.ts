@@ -490,7 +490,8 @@ describe("authservice", () => {
       );
       expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
       expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
-      expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
+      const expectedCallbackUri = `https://foo.uds.dev/.uds/auth/callback/${Buffer.from(mockClient.clientId).toString("base64url").substring(0, 8)}`;
+      expect(chain.filters[0].oidc_override.callback_uri).toEqual(expectedCallbackUri);
     }
   });
 

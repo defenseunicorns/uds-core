@@ -109,6 +109,17 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     }
   }
 
+  // If authservice is enabled, automatically add the computed callback URI to redirectUris
+  if (sso.enableAuthserviceSelector && client.redirectUris && client.redirectUris.length > 0) {
+    const hostname = new URL(client.redirectUris[0]).hostname;
+    const callbackUri = generateCallbackUri(hostname, client.clientId!);
+
+    // Only add if it doesn't already exist
+    if (!client.redirectUris.includes(callbackUri)) {
+      client.redirectUris = [...client.redirectUris, callbackUri];
+    }
+  }
+
   // Group auth based on sso group membership
   client.attributes = client.attributes || {};
 
@@ -299,4 +310,18 @@ function templateData(secretTemplate: { [key: string]: string }, client: Client)
 
   // Return the processed secret template without any further processing
   return stringMap;
+}
+
+/**
+ * Generate a deterministic, unique callback URI for authservice.
+ * Uses a hash of the clientId to ensure consistency across reconciliations
+ * while avoiding conflicts with application paths.
+ *
+ * @param hostname - The hostname extracted from the redirectUri
+ * @param clientId - The Keycloak client ID
+ * @returns A unique callback URI in the format: https://hostname/.uds/auth/callback/{hash}
+ */
+export function generateCallbackUri(hostname: string, clientId: string): string {
+  const hash = Buffer.from(clientId).toString("base64url").substring(0, 8);
+  return `https://${hostname}/.uds/auth/callback/${hash}`;
 }

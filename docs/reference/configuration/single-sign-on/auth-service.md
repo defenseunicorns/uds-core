@@ -26,7 +26,14 @@ spec:
 ```
 
 :::note
-The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
+The UDS Operator automatically generates a unique callback URI for Authservice in the format `https://{hostname}/.uds/auth/callback/{hash}` where the hash is derived from the clientId. This callback URI is automatically added to the Keycloak client's `redirectUris` and used in the authservice chain configuration. The hostname is extracted from the first `redirectUri` you specify.
+
+**Important:** When using `enableAuthserviceSelector`, your `redirectUris` must:
+- Include a specific path (e.g., `/login`, `/callback`)
+- Root paths (`/` or empty) are not allowed
+- Not contain wildcards in the path portion
+
+These restrictions prevent authservice crashes and ensure proper authentication flow.
 :::
 
 For complete examples, see [app-ambient-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-ambient-authservice-tenant.yaml) and [app-sidecar-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-sidecar-authservice-tenant.yaml)

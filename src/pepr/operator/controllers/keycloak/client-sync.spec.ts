@@ -222,6 +222,7 @@ describe("convertSsoToClient function", () => {
       webOrigins: ["https://example.com"],
     };
 
+    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
@@ -234,7 +235,7 @@ describe("convertSsoToClient function", () => {
       enabled: true,
       name: "Test Client",
       publicClient: true,
-      redirectUris: ["https://example.com/callback"],
+      redirectUris: ["https://example.com/callback", expectedCallbackUri],
       secret: "secret",
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
@@ -304,6 +305,7 @@ describe("convertSsoToClient function", () => {
       webOrigins: ["https://example.com"],
     };
 
+    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
@@ -316,13 +318,28 @@ describe("convertSsoToClient function", () => {
       enabled: true,
       name: "Test Client",
       publicClient: true,
-      redirectUris: ["https://example.com/callback"],
+      redirectUris: ["https://example.com/callback", expectedCallbackUri],
       secret: "secret",
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
+  });
+
+  it("should not duplicate callback URI if already present", () => {
+    const callbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
+    const sso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      enableAuthserviceSelector: { key: "value" },
+      redirectUris: ["https://example.com/callback", callbackUri],
+    };
+
+    const result = convertSsoToClient(sso);
+
+    expect(result.redirectUris).toEqual(["https://example.com/callback", callbackUri]);
+    expect(result.redirectUris?.filter(uri => uri === callbackUri).length).toBe(1);
   });
 });
 

@@ -11,6 +11,7 @@ import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { getAuthserviceClients, purgeOrphans } from "../../utils";
+import { generateCallbackUri } from "../client-sync";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
@@ -258,6 +259,7 @@ export function buildChain(update: AuthServiceEvent) {
   // TODO: update to loop and build multiple chains on redirectUris
   // Parse the hostname from the first client redirect URI
   const hostname = new URL(update.client!.redirectUris[0]).hostname;
+  const callbackUri = generateCallbackUri(hostname, update.client!.clientId);
 
   const chain: Chain = {
     name: update.name,
@@ -270,7 +272,7 @@ export function buildChain(update: AuthServiceEvent) {
         oidc_override: {
           authorization_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/auth`,
           token_uri: `https://sso.${UDSConfig.domain}/realms/${operatorConfig.realm}/protocol/openid-connect/token`,
-          callback_uri: update.client!.redirectUris[0],
+          callback_uri: callbackUri,
           client_id: update.client!.clientId,
           client_secret: update.client!.secret,
           scopes: [],
