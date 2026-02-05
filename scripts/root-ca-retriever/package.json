@@ -12,7 +12,6 @@
     "typescript": "^5.3.3",
     "vitest": "^4.0.0",
     "@types/adm-zip": "^0.5.7",
-    "@types/csv-parse": "^1.1.12",
     "adm-zip": "^0.5.16",
     "csv-parse": "^6.1.0",
     "js-yaml": "^4.1.1",
