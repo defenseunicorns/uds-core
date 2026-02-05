@@ -18,8 +18,6 @@ The Kubernetes-native CRD versioning principles are outlined in the [Kubernetes-
 
 For the 1.0 release, UDS Core will continue to include the `v1alpha1` CRD versions to reduce user impact. Upgrading to `v1beta1` or `v1` will be considered for the future releases.
 
-UDS Core 1.0 will be released with all the CRDs promoted to v1beta1. This provides guaranteed backwards compatibility for production workloads and ensures that users can confidently build on UDS Core APIs knowing the stability contract.
-
 ## Consequences
 
 ### Positive
