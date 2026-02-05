@@ -192,9 +192,9 @@ spec:
             - name: QUARKUS_SHUTDOWN_DELAY_ENABLED
               value: "true"
             - name: QUARKUS_SHUTDOWN_DELAY
-              value: "5s"
+              value: "5"
             - name: QUARKUS_SHUTDOWN_TIMEOUT
-              value: "5s"
+              value: "5"
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
