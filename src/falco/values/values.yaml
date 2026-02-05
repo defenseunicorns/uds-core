@@ -37,10 +37,6 @@ mounts:
     - name: disable-rules
       configMap:
         name: falco-disable-rules
-    - name: ca-certs
-      configMap:
-        name: uds-trust-bundle
-        optional: true
   volumeMounts:
     - name: stable-rules
       mountPath: /etc/falco/rules.d/stable-rules.yaml

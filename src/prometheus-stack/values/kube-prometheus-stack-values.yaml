@@ -59,6 +59,8 @@ prometheus:
           name: uds-trust-bundle
           optional: true
     volumeMounts:
+      # Kube Prometheus Stack is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+      # based on https://go.dev/src/crypto/x509/root_linux.go
       - name: ca-certs
         mountPath: /etc/ssl/certs/ca-bundle.pem
         subPath: ca-bundle.pem

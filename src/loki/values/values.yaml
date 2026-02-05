@@ -6,6 +6,8 @@ global:
   dnsService: "uds-loki-dns"
   # Add trust bundle configuration using loki's supported pattern
   # These will apply to all Loki components (backend, read, write, gateway)
+  # Loki is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+  # based on https://go.dev/src/crypto/x509/root_linux.go
   extraVolumes:
     - name: ca-certs
       configMap:

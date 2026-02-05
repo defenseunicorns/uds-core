@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Add trust bundle configuration using velero's supported pattern
+# Velero is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+# based on https://go.dev/src/crypto/x509/root_linux.go
 extraVolumes:
   - name: ca-certs
     configMap:
