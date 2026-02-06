@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2026 Defense Unicorns
+ * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -15,6 +15,7 @@ import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
+import { generateCallbackUri } from "../callback-uri";
 import { Client } from "../types";
 import * as authorizationPolicy from "./authorization-policy";
 import { authservice, buildChain, buildConfig } from "./authservice";
@@ -33,6 +34,18 @@ vi.mock("../../istio/ambient-waypoint", () => ({
   cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
   setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
 }));
+
+// Helper function to create a minimal mock package for authservice tests
+function createMockAuthservicePackage(mockClient: Client): UDSPackage {
+  return createMockPackage("test-pkg", {}, [
+    {
+      clientId: mockClient.clientId,
+      name: "Test SSO",
+      enableAuthserviceSelector: { app: "test" },
+      redirectUris: mockClient.redirectUris,
+    },
+  ]);
+}
 
 // --- Pepr K8s and R utility mock ---
 const mockGet = vi.fn();
@@ -387,15 +400,7 @@ describe("authservice", () => {
   });
 
   test("should update redis session store config to add value", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     let config1 = buildConfig(
       mockConfig as AuthserviceConfig,
       {
@@ -485,15 +490,7 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain build", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     const chain = buildChain(
       {
         client: mockClient,
@@ -515,7 +512,7 @@ describe("authservice", () => {
       );
       expect(chain.filters[0].oidc_override.client_id).toEqual(mockClient.clientId);
       expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
-      const expectedCallbackUri = `https://foo.uds.dev/.uds/auth/callback/${Buffer.from(mockClient.clientId).toString("base64url").substring(0, 8)}`;
+      const expectedCallbackUri = generateCallbackUri("foo.uds.dev", mockClient.clientId);
       expect(chain.filters[0].oidc_override.callback_uri).toEqual(expectedCallbackUri);
     }
   });
@@ -532,15 +529,7 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain addition", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     let config = buildConfig(
       mockConfig as AuthserviceConfig,
       {
@@ -620,15 +609,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     let config = buildConfig(
       mockConfig as AuthserviceConfig,
       {
@@ -671,15 +652,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice and be sorted", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     let config1 = buildConfig(
       mockConfig as AuthserviceConfig,
       {
@@ -724,15 +697,7 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice and be sorted, with removals", async () => {
-    const mockPkg = createMockPackage("test-pkg", {}, [
-      {
-        clientId: mockClient.clientId,
-        name: "Test SSO",
-        enableAuthserviceSelector: { app: "test" },
-        redirectUris: mockClient.redirectUris,
-      },
-    ]);
-
+    const mockPkg = createMockAuthservicePackage(mockClient);
     let config1 = buildConfig(
       mockConfig as AuthserviceConfig,
       {
@@ -821,7 +786,7 @@ describe("authservice", () => {
       config1,
       {
         client: mockClient,
-        name: "zzzz-final",
+        name: "10-something",
         action: Action.AddClient,
       },
       mockPkg,
@@ -838,8 +803,8 @@ describe("authservice", () => {
     );
     expect(config1.chains.length).toEqual(7);
     expect(config1.chains[0].name).toEqual("1-something");
-    expect(config1.chains[1].name).toEqual("2-something");
-    expect(config1.chains[2].name).toEqual("aaaa-final");
+    expect(config1.chains[1].name).toEqual("10-something");
+    expect(config1.chains[2].name).toEqual("2-something");
   });
 });
 
