@@ -342,17 +342,3 @@ function templateData(secretTemplate: { [key: string]: string }, client: Client)
   // Return the processed secret template without any further processing
   return stringMap;
 }
-
-/**
- * Generate a deterministic, unique callback URI for authservice.
- * Uses a hash of the clientId to ensure consistency across reconciliations
- * while avoiding conflicts with application paths.
- *
- * @param hostname - The hostname extracted from the redirectUri
- * @param clientId - The Keycloak client ID
- * @returns A unique callback URI in the format: https://hostname/.uds/auth/callback/{hash}
- */
-export function generateCallbackUri(hostname: string, clientId: string): string {
-  const hash = Buffer.from(clientId).toString("base64url").substring(0, 8);
-  return `https://${hostname}/.uds/auth/callback/${hash}`;
-}

@@ -21,6 +21,7 @@ vi.mock("../../../logger", () => ({
   }),
 }));
 
+import { generateCallbackUri } from "./callback-uri";
 import {
   convertSsoToClient,
   extractSamlCertificateFromXML,
@@ -236,7 +237,7 @@ describe("convertSsoToClient function", () => {
       publicClient: true,
       redirectUris: [
         "https://example.com/callback",
-        "https://example.com/.uds/auth/callback/dGVzdC1j",
+        generateCallbackUri("example.com", "test-client"),
       ],
       secret: "secret",
       standardFlowEnabled: true,
@@ -321,7 +322,7 @@ describe("convertSsoToClient function", () => {
       publicClient: true,
       redirectUris: [
         "https://example.com/callback",
-        "https://example.com/.uds/auth/callback/dGVzdC1j",
+        generateCallbackUri("example.com", "test-client"),
       ],
       secret: "secret",
       standardFlowEnabled: true,
@@ -332,7 +333,7 @@ describe("convertSsoToClient function", () => {
   });
 
   it("should not duplicate callback URI if already present", () => {
-    const callbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
+    const callbackUri = generateCallbackUri("example.com", "test-client");
     const sso: Sso = {
       clientId: "test-client",
       name: "Test Client",
@@ -372,7 +373,7 @@ describe("convertSsoToClient function", () => {
       },
     };
 
-    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
+    const expectedCallbackUri = generateCallbackUri("example.com", "test-client");
     const result = convertSsoToClient(sso, pkg);
 
     expect(result.redirectUris).toEqual([expectedCallbackUri]);
