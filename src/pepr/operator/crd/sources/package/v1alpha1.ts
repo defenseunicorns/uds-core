@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
+import {
+  V1CustomResourceDefinition,
+  V1CustomResourceDefinitionVersion,
+  V1JSONSchemaProps,
+} from "@kubernetes/client-node";
 
 import { advancedHTTP } from "../istio/virtualservice-v1beta1.ts";
 
@@ -746,5 +750,23 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
         } as V1JSONSchemaProps,
       },
     },
+  },
+};
+
+export const packageCRD: V1CustomResourceDefinition = {
+  apiVersion: "apiextensions.k8s.io/v1",
+  kind: "CustomResourceDefinition",
+  metadata: { name: "packages.uds.dev" },
+  spec: {
+    group: "uds.dev",
+    scope: "Namespaced",
+    names: {
+      plural: "packages",
+      singular: "package",
+      kind: "Package",
+      listKind: "PackageList",
+      shortNames: ["pkg"],
+    },
+    versions: [v1alpha1],
   },
 };
