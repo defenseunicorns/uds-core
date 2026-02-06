@@ -6,9 +6,11 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import { clusterConfigCRD, exemptionCRD, packageCRD } from "../operator/crd/sources/definitions.ts";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const HELM_TEMPLATE_DIR = path.resolve(__dirname, "../uds-cluster-crds/templates");
 if (!fs.existsSync(HELM_TEMPLATE_DIR)) fs.mkdirSync(HELM_TEMPLATE_DIR, { recursive: true });
 
