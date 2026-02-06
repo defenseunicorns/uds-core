@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -222,7 +222,6 @@ describe("convertSsoToClient function", () => {
       webOrigins: ["https://example.com"],
     };
 
-    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
@@ -235,7 +234,10 @@ describe("convertSsoToClient function", () => {
       enabled: true,
       name: "Test Client",
       publicClient: true,
-      redirectUris: ["https://example.com/callback", expectedCallbackUri],
+      redirectUris: [
+        "https://example.com/callback",
+        "https://example.com/.uds/auth/callback/dGVzdC1j",
+      ],
       secret: "secret",
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
@@ -305,7 +307,6 @@ describe("convertSsoToClient function", () => {
       webOrigins: ["https://example.com"],
     };
 
-    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       alwaysDisplayInConsole: true,
@@ -318,7 +319,10 @@ describe("convertSsoToClient function", () => {
       enabled: true,
       name: "Test Client",
       publicClient: true,
-      redirectUris: ["https://example.com/callback", expectedCallbackUri],
+      redirectUris: [
+        "https://example.com/callback",
+        "https://example.com/.uds/auth/callback/dGVzdC1j",
+      ],
       secret: "secret",
       standardFlowEnabled: true,
       webOrigins: ["https://example.com"],
@@ -340,6 +344,38 @@ describe("convertSsoToClient function", () => {
 
     expect(result.redirectUris).toEqual(["https://example.com/callback", callbackUri]);
     expect(result.redirectUris?.filter(uri => uri === callbackUri).length).toBe(1);
+  });
+
+  it("should generate callback URI for authservice clients with no redirectUris", () => {
+    const sso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      enableAuthserviceSelector: { app: "test" },
+      // No redirectUris provided
+    };
+
+    const pkg: UDSPackage = {
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+      },
+      spec: {
+        network: {
+          expose: [
+            {
+              host: "example.com",
+              selector: { app: "test" },
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const expectedCallbackUri = `https://example.com/.uds/auth/callback/${Buffer.from("test-client").toString("base64url").substring(0, 8)}`;
+    const result = convertSsoToClient(sso, pkg);
+
+    expect(result.redirectUris).toEqual([expectedCallbackUri]);
   });
 });
 

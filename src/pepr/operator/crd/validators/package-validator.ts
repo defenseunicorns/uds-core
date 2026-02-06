@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,6 +7,7 @@ import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "..";
 import { generateVSName } from "../../controllers/istio/virtual-service";
+import { findMatchingExpose } from "../../controllers/keycloak/redirect-uris-utils";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
@@ -261,11 +262,48 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" uses an invalid secret name ${client.secretConfig.name}`,
       );
     }
-    // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
-    if (client.standardFlowEnabled !== false && !client.redirectUris) {
-      return req.Deny(
-        `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
-      );
+    // Mode-specific validation for redirectUris
+    if (client.standardFlowEnabled !== false) {
+      // Validate redirectUris format if provided
+      if (client.redirectUris) {
+        for (const uri of client.redirectUris) {
+          if (typeof uri === "string" && uri.trim().length === 0) {
+            return req.Deny(
+              `The client ID '${client.clientId}' contains empty or whitespace-only redirect URI`,
+            );
+          }
+        }
+      }
+
+      // For authservice clients, allow optional redirectUris in ambient mode with matching expose
+      if (client.enableAuthserviceSelector) {
+        const isAmbient = istioMode === Mode.Ambient;
+
+        if (!client.redirectUris || client.redirectUris.length === 0) {
+          if (isAmbient) {
+            // In ambient mode, check if there's a matching expose entry
+            const matchingExpose = findMatchingExpose(pkg, client.enableAuthserviceSelector);
+
+            if (!matchingExpose) {
+              return req.Deny(
+                `The authservice client '${client.clientId}' must specify redirectUris in ambient mode, or ensure there's an expose entry with a matching selector for ${JSON.stringify(client.enableAuthserviceSelector)}`,
+              );
+            }
+          } else {
+            // In sidecar mode, redirectUris is required for authservice clients
+            return req.Deny(
+              `The authservice client '${client.clientId}' must specify redirectUris in sidecar mode`,
+            );
+          }
+        }
+      } else {
+        // For non-authservice clients, redirectUris is required
+        if (!client.redirectUris) {
+          return req.Deny(
+            `The client ID '${client.clientId}' must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
+          );
+        }
+      }
     }
     // If serviceAccountsEnabled is true, do not allow standard flow
     if (client.serviceAccountsEnabled && client.standardFlowEnabled) {

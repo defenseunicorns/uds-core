@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -68,7 +68,15 @@ const makeMockReq = (
       clientId: "uds-package-application",
       redirectUris: ["https://app.uds.dev/redirect"],
     };
-    defaultPkg.spec!.sso?.push({ ...defaultClient, ...client });
+    const mergedClient = { ...defaultClient, ...client };
+    // Handle the case where redirectUris is explicitly set to undefined or empty array
+    if (
+      "redirectUris" in client &&
+      (client.redirectUris === undefined || client.redirectUris === null)
+    ) {
+      delete mergedClient.redirectUris;
+    }
+    defaultPkg.spec!.sso?.push(mergedClient);
   }
 
   for (const monitor of monitorList) {
@@ -817,6 +825,39 @@ describe("Test validation of Package CRs", () => {
         },
       ],
       [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows authservice clients without redirectUris in ambient mode with matching expose", async () => {
+    const mockReq = makeMockReq(
+      {
+        spec: {
+          network: {
+            serviceMesh: {
+              mode: Mode.Ambient,
+            },
+            expose: [
+              {
+                host: "example.com",
+                selector: { app: "test" },
+                port: 8080,
+              },
+            ],
+          },
+        },
+      },
+      [],
+      [],
+      [
+        {
+          enableAuthserviceSelector: { app: "test" },
+          redirectUris: undefined, // No redirectUris
+        },
+      ],
+      [],
+      true, // ambient
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);

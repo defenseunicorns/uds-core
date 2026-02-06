@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,7 +11,8 @@ import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { getAuthserviceClients, purgeOrphans } from "../../utils";
-import { generateCallbackUri } from "../client-sync";
+import { generateCallbackUri } from "../callback-uri";
+import { extractHostname } from "../redirect-uris-utils";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
@@ -167,7 +168,7 @@ export async function reconcileAuthservice(
   pkg?: UDSPackage,
   waypointName?: string,
 ) {
-  await updateConfig(event);
+  await updateConfig(event, pkg);
   if (isAddOrRemoveClientEvent(event)) {
     if (!pkg) {
       throw new Error("Package must be provided for AddClient or RemoveClient events");
@@ -177,11 +178,11 @@ export async function reconcileAuthservice(
 }
 
 // Write authservice config to secret (ensure the new function name is referenced)
-export async function updateConfig(event: AuthServiceEvent) {
+export async function updateConfig(event: AuthServiceEvent, pkg?: UDSPackage) {
   // Lock to prevent concurrent updates
   if (lock) {
     log.debug("Lock is set for config update, retrying...");
-    setTimeout(() => updateConfig(event), 0);
+    setTimeout(() => updateConfig(event, pkg), 0);
     return;
   }
 
@@ -193,7 +194,7 @@ export async function updateConfig(event: AuthServiceEvent) {
 
     // build updated config based on event
     config = await getAuthserviceConfig().then(config => {
-      return buildConfig(config, event);
+      return buildConfig(config, event, pkg);
     });
 
     // Update the in-memory config immediately
@@ -212,13 +213,13 @@ export async function updateConfig(event: AuthServiceEvent) {
   await updateAuthServiceSecret(config);
 }
 
-export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) {
+export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent, pkg?: UDSPackage) {
   let chains: Chain[];
 
   if (event.action === Action.AddClient) {
     // Add the new chain to the existing authservice config
     chains = config.chains.filter(chain => chain.name !== event.name);
-    chains = chains.concat(buildChain(event));
+    chains = chains.concat(buildChain(event, pkg));
     // Sort the chains by their name before returning. Note that the accuracy of
     // sorting here is not relevant, only the consistency.
     const sortByName = R.sortBy(R.prop("name"));
@@ -254,11 +255,25 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
   return { ...config, chains } as AuthserviceConfig;
 }
 
-export function buildChain(update: AuthServiceEvent) {
-  // TODO: get this from the package
-  // TODO: update to loop and build multiple chains on redirectUris
-  // Parse the hostname from the first client redirect URI
-  const hostname = new URL(update.client!.redirectUris[0]).hostname;
+export function buildChain(update: AuthServiceEvent, pkg?: UDSPackage) {
+  // Find the matching SSO client to get the selector
+  const ssoClient = pkg?.spec?.sso?.find(
+    (sso: { clientId: string }) => sso.clientId === update.client!.clientId,
+  );
+
+  if (!ssoClient || !ssoClient.enableAuthserviceSelector) {
+    throw new Error(
+      `No matching SSO client with "enableAuthserviceSelector" found for authservice client "${update.name}". ` +
+        `Either provide redirectUris or ensure there's an SSO client with "enableAuthserviceSelector" and a matching expose entry.`,
+    );
+  }
+
+  // Extract hostname with fallback to expose entries
+  const hostname = extractHostname(
+    update.client!.redirectUris,
+    pkg,
+    ssoClient.enableAuthserviceSelector,
+  );
   const callbackUri = generateCallbackUri(hostname, update.client!.clientId);
 
   const chain: Chain = {

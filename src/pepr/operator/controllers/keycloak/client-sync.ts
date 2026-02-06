@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -9,6 +9,12 @@ import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
+import {
+  extractHostname,
+  filterRootPaths,
+  hasRootPaths,
+  processRedirectUris,
+} from "./redirect-uris-utils";
 import { Client, clientKeys } from "./types";
 
 const samlDescriptorUrl =
@@ -77,7 +83,7 @@ export async function keycloak(pkg: UDSPackage) {
 export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []) {
   // Check for any clients that are no longer in the package and remove them
   const currentClients = pkg.status?.ssoClients || [];
-  const toRemove = currentClients.filter(client => !newClients.includes(client));
+  const toRemove = currentClients.filter((client: string) => !newClients.includes(client));
   for (const ref of toRemove) {
     try {
       await credentialsDelete({ clientId: ref });
@@ -99,7 +105,7 @@ export async function purgeSSOClients(pkg: UDSPackage, newClients: string[] = []
  * @param sso
  * @returns
  */
-export function convertSsoToClient(sso: Partial<Sso>): Client {
+export function convertSsoToClient(sso: Partial<Sso>, pkg?: UDSPackage): Client {
   const client: Partial<Client> = {};
 
   // Iterate over the properties of Client and check if they exist in sso
@@ -109,15 +115,40 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     }
   }
 
-  // If authservice is enabled, automatically add the computed callback URI to redirectUris
-  if (sso.enableAuthserviceSelector && client.redirectUris && client.redirectUris.length > 0) {
-    const hostname = new URL(client.redirectUris[0]).hostname;
-    const callbackUri = generateCallbackUri(hostname, client.clientId!);
-
-    // Only add if it doesn't already exist
-    if (!client.redirectUris.includes(callbackUri)) {
-      client.redirectUris = [...client.redirectUris, callbackUri];
+  // Handle redirectUris logic - unified approach
+  if (!client.redirectUris || client.redirectUris.length === 0) {
+    // No redirectUris provided - only for authservice clients
+    if (sso.enableAuthserviceSelector && pkg) {
+      const hostname = extractHostname(client.redirectUris, pkg, sso.enableAuthserviceSelector);
+      client.redirectUris = processRedirectUris(
+        client.redirectUris,
+        hostname,
+        client.clientId!,
+        true,
+      );
     }
+  } else {
+    // Has redirectUris - check if they're all root paths
+    if (hasRootPaths(client.redirectUris) && filterRootPaths(client.redirectUris).length === 0) {
+      // All redirectUris are root paths - need to generate callback URI
+      const hostname = extractHostname(client.redirectUris, pkg, sso.enableAuthserviceSelector);
+      client.redirectUris = processRedirectUris(
+        client.redirectUris,
+        hostname,
+        client.clientId!,
+        true,
+      );
+    } else if (sso.enableAuthserviceSelector) {
+      // Has valid redirectUris and is authservice client - add callback URI
+      const hostname = extractHostname(client.redirectUris, pkg, sso.enableAuthserviceSelector);
+      client.redirectUris = processRedirectUris(
+        client.redirectUris,
+        hostname,
+        client.clientId!,
+        true,
+      );
+    }
+    // Otherwise, leave redirectUris unchanged to preserve user's configuration
   }
 
   // Group auth based on sso group membership
@@ -150,7 +181,7 @@ export async function syncClient(
 
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
-  let client = convertSsoToClient(clientReq);
+  let client = convertSsoToClient(clientReq, pkg);
 
   try {
     client = await credentialsCreateOrUpdate(client);

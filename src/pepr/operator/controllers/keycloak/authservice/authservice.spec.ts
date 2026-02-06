@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -387,11 +387,24 @@ describe("authservice", () => {
   });
 
   test("should update redis session store config to add value", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.AddClient,
-    });
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
+
+    let config1 = buildConfig(
+      mockConfig as AuthserviceConfig,
+      {
+        client: mockClient,
+        name: "local",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
 
     const redisUri = "redis://localhost:6379";
     config1 = buildConfig(config1, {
@@ -472,11 +485,23 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain build", async () => {
-    const chain = buildChain({
-      client: mockClient,
-      name: "sso-client-test",
-      action: Action.AddClient,
-    } as unknown as AuthServiceEvent);
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
+
+    const chain = buildChain(
+      {
+        client: mockClient,
+        name: "sso-client-test",
+        action: Action.AddClient,
+      } as unknown as AuthServiceEvent,
+      mockPkg,
+    );
 
     expect(chain.name).toEqual("sso-client-test");
     expect(chain.match.prefix).toEqual("foo.uds.dev");
@@ -507,22 +532,43 @@ describe("authservice", () => {
   });
 
   test("should test authservice chain addition", async () => {
-    let config = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.RemoveClient,
-    });
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
 
-    config = buildConfig(config, {
-      client: mockClient,
-      name: "sso-client-a",
-      action: Action.AddClient,
-    });
-    config = buildConfig(config, {
-      client: mockClient,
-      name: "sso-client-b",
-      action: Action.AddClient,
-    });
+    let config = buildConfig(
+      mockConfig as AuthserviceConfig,
+      {
+        client: mockClient,
+        name: "local",
+        action: Action.RemoveClient,
+      },
+      mockPkg,
+    );
+
+    config = buildConfig(
+      config,
+      {
+        client: mockClient,
+        name: "sso-client-a",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
+    config = buildConfig(
+      config,
+      {
+        client: mockClient,
+        name: "sso-client-b",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
 
     expect(config.chains.length).toEqual(2);
   });
@@ -574,37 +620,75 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice", async () => {
-    let config = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.AddClient,
-    });
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
 
-    config = buildConfig(config, {
-      client: mockClient,
-      name: "some-other-name",
-      action: Action.AddClient,
-    });
-    config = buildConfig(config, {
-      client: mockClient,
-      name: "some-second-name",
-      action: Action.AddClient,
-    });
-    config = buildConfig(config, {
-      client: mockClient,
-      name: "some-third-name",
-      action: Action.AddClient,
-    });
+    let config = buildConfig(
+      mockConfig as AuthserviceConfig,
+      {
+        client: mockClient,
+        name: "local",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
+
+    config = buildConfig(
+      config,
+      {
+        client: mockClient,
+        name: "some-other-name",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
+    config = buildConfig(
+      config,
+      {
+        client: mockClient,
+        name: "some-second-name",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
+    config = buildConfig(
+      config,
+      {
+        client: mockClient,
+        name: "some-third-name",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
 
     expect(config.chains.length).toEqual(4);
   });
 
   test("should add multiple chains to authservice and be sorted", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.RemoveClient,
-    });
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
+
+    let config1 = buildConfig(
+      mockConfig as AuthserviceConfig,
+      {
+        client: mockClient,
+        name: "local",
+        action: Action.RemoveClient,
+      },
+      mockPkg,
+    );
 
     // after sorting, the order should be like so:
     // const unsortedNames = [
@@ -624,11 +708,15 @@ describe("authservice", () => {
     ];
     shuffleArray(unsortedNames);
     unsortedNames.map(val => {
-      config1 = buildConfig(config1, {
-        client: mockClient,
-        name: val,
-        action: Action.AddClient,
-      });
+      config1 = buildConfig(
+        config1,
+        {
+          client: mockClient,
+          name: val,
+          action: Action.AddClient,
+        },
+        mockPkg,
+      );
     });
 
     expect(config1.chains.length).toEqual(5);
@@ -636,11 +724,24 @@ describe("authservice", () => {
   });
 
   test("should add multiple chains to authservice and be sorted, with removals", async () => {
-    let config1 = buildConfig(mockConfig as AuthserviceConfig, {
-      client: mockClient,
-      name: "local",
-      action: Action.RemoveClient,
-    });
+    const mockPkg = createMockPackage("test-pkg", {}, [
+      {
+        clientId: mockClient.clientId,
+        name: "Test SSO",
+        enableAuthserviceSelector: { app: "test" },
+        redirectUris: mockClient.redirectUris,
+      },
+    ]);
+
+    let config1 = buildConfig(
+      mockConfig as AuthserviceConfig,
+      {
+        client: mockClient,
+        name: "local",
+        action: Action.RemoveClient,
+      },
+      mockPkg,
+    );
 
     const unsortedNames = [
       "some-other-name",
@@ -651,66 +752,94 @@ describe("authservice", () => {
     ];
     shuffleArray(unsortedNames);
     unsortedNames.map(val => {
-      config1 = buildConfig(config1, {
-        client: mockClient,
-        name: val,
-        action: Action.AddClient,
-      });
+      config1 = buildConfig(
+        config1,
+        {
+          client: mockClient,
+          name: val,
+          action: Action.AddClient,
+        },
+        mockPkg,
+      );
     });
 
     expect(config1.chains.length).toEqual(5);
     expect(config1.chains[0].name).toEqual("first-name");
     expect(config1.chains[4].name).toEqual("some-third-name");
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "some-third-name",
-      action: Action.RemoveClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "some-third-name",
+        action: Action.RemoveClient,
+      },
+      mockPkg,
+    );
 
     expect(config1.chains.length).toEqual(4);
     expect(config1.chains[0].name).toEqual("first-name");
     expect(config1.chains[3].name).toEqual("some-second-name");
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "some-fifth-name",
-      action: Action.RemoveClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "some-fifth-name",
+        action: Action.RemoveClient,
+      },
+      mockPkg,
+    );
 
     expect(config1.chains.length).toEqual(3);
     expect(config1.chains[0].name).toEqual("first-name");
     expect(config1.chains[2].name).toEqual("some-second-name");
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "aaaa-final",
-      action: Action.AddClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "aaaa-final",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
     expect(config1.chains.length).toEqual(4);
     expect(config1.chains[0].name).toEqual("aaaa-final");
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "1-something",
-      action: Action.AddClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "1-something",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "10-something",
-      action: Action.AddClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "zzzz-final",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
 
-    config1 = buildConfig(config1, {
-      client: mockClient,
-      name: "2-something",
-      action: Action.AddClient,
-    });
+    config1 = buildConfig(
+      config1,
+      {
+        client: mockClient,
+        name: "2-something",
+        action: Action.AddClient,
+      },
+      mockPkg,
+    );
     expect(config1.chains.length).toEqual(7);
     expect(config1.chains[0].name).toEqual("1-something");
-    expect(config1.chains[1].name).toEqual("10-something");
-    expect(config1.chains[2].name).toEqual("2-something");
+    expect(config1.chains[1].name).toEqual("2-something");
+    expect(config1.chains[2].name).toEqual("aaaa-final");
   });
 });
 

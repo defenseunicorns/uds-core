@@ -1,11 +1,12 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 
+import { UDSPackage } from "../../../crd";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
 import { UDSConfig } from "../../config/config";
 import { Client } from "../types";
@@ -117,15 +118,30 @@ export function buildInitialSecret(): AuthserviceConfig {
     },
     threads: 8,
     chains: [
-      buildChain({
-        name: "placeholder",
-        action: Action.AddClient,
-        client: {
-          clientId: "placeholder",
-          secret: "placeholder",
-          redirectUris: ["https://localhost/login"],
-        } as Client,
-      }),
+      buildChain(
+        {
+          name: "placeholder",
+          action: Action.AddClient,
+          client: {
+            clientId: "placeholder",
+            secret: "placeholder",
+            redirectUris: ["https://localhost/login"],
+          } as Client,
+        },
+        {
+          metadata: { name: "test-pkg" },
+          spec: {
+            sso: [
+              {
+                clientId: "placeholder",
+                name: "Placeholder SSO",
+                enableAuthserviceSelector: { app: "placeholder" },
+                redirectUris: ["https://localhost/login"],
+              },
+            ],
+          },
+        } as UDSPackage,
+      ),
     ],
   };
 

@@ -16,6 +16,31 @@ metadata:
   name: httpbin
   namespace: httpbin
 spec:
+  network:
+    serviceMesh:
+      mode: ambient  # Enable ambient mode
+    expose:
+      - host: httpbin.uds.dev
+        selector:
+          app: httpbin
+        port: 8080
+  sso:
+    - name: Demo SSO httpbin
+      clientId: uds-core-httpbin
+      # redirectUris optional - will use expose host for callback URI if unset
+      enableAuthserviceSelector:
+        app: httpbin
+```
+
+**Example with redirectUris provided (works in both modes):**
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: httpbin
+  namespace: httpbin
+spec:
   sso:
     - name: Demo SSO httpbin
       clientId: uds-core-httpbin
@@ -26,17 +51,51 @@ spec:
 ```
 
 :::note
-The UDS Operator automatically generates a unique callback URI for Authservice in the format `https://{hostname}/.uds/auth/callback/{hash}` where the hash is derived from the clientId. This callback URI is automatically added to the Keycloak client's `redirectUris` and used in the authservice chain configuration. The hostname is extracted from the first `redirectUri` you specify.
-
-**Important:** When using `enableAuthserviceSelector`, your `redirectUris` must:
-- Include a specific path (e.g., `/login`, `/callback`)
-- Root paths (`/` or empty) are not allowed
-- Not contain wildcards in the path portion
-
-These restrictions prevent authservice crashes and ensure proper authentication flow.
+The UDS Operator automatically generates a unique callback URI for Authservice in the format `https://{hostname}/.uds/auth/callback/{hash}` where the hash is derived from the clientId. This callback URI is automatically added to the Keycloak client's `redirectUris` and used in the authservice chain configuration.
 :::
 
 For complete examples, see [app-ambient-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-ambient-authservice-tenant.yaml) and [app-sidecar-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-sidecar-authservice-tenant.yaml)
+
+### Redirect URI Processing
+
+The UDS Operator automatically handles redirect URIs for authservice clients:
+
+- **Valid redirect URIs** (with specific paths) are preserved unchanged
+- **Root paths only** (`/` or `/*`) are replaced with a generated callback URI
+- **No redirect URIs** generates a callback URI using the expose host (ambient mode only)
+
+**Example:**
+```yaml
+sso:
+  - name: "My App"
+    clientId: my-app
+    redirectUris:
+      - "https://myapp.example.com/login"  # Preserved
+    enableAuthserviceSelector:
+      app: myapp
+# Result: User URI + generated callback URI
+```
+
+### Hostname Extraction Priority
+
+The hostname for the callback URI is determined using the following priority:
+
+1. **First valid redirectUri** (if provided): Extract hostname from the first valid `redirectUri` in your SSO configuration
+2. **Expose entry host** (ambient mode only): If no valid `redirectUris` provided, use the `host` from a matching `network.expose` entry
+
+### Mode-Specific Behavior
+
+**Ambient Mode:**
+- `redirectUris` is **optional** for authservice clients
+- If omitted, there must be a matching `network.expose` entry with the same selector
+- The `host` from the expose entry is used for the callback URI
+
+**Sidecar Mode:**
+- `redirectUris` is **required** for authservice clients
+- No hostname inference is available in sidecar mode
+
+**Normal OAuth Clients:**
+- `redirectUris` is **required** (no change from existing behavior)
 
 ## Multiple Services and Selectors
 
