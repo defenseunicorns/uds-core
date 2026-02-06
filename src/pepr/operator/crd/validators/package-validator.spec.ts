@@ -821,6 +821,136 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  it("denies authservice clients with redirectUris containing any root paths", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["/"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
+    );
+  });
+
+  it("denies authservice clients with redirectUris containing any /* root paths", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["/*"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
+    );
+  });
+
+  it("denies authservice clients with redirectUris containing mixed root paths", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["/", "/*"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
+    );
+  });
+
+  it("allows authservice clients with valid redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["https://example.com/callback"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies authservice clients with mixed valid and root redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["/", "https://example.com/callback"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
+    );
+  });
+
+  it("allows non-authservice clients with root-only redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          // No enableAuthserviceSelector
+          redirectUris: ["/"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {

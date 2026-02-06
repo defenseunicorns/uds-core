@@ -305,6 +305,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
     }
+
+    // If this is an authservice client, deny redirectUris that contain any root paths
+    if (client.enableAuthserviceSelector && client.redirectUris) {
+      const hasRootPaths = client.redirectUris.some(uri => uri === "/" || uri === "/*");
+      if (hasRootPaths) {
+        return req.Deny(
+          `The client ID "${client.clientId}" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.`,
+        );
+      }
+    }
   }
 
   const monitors = pkg.spec?.monitor ?? [];
