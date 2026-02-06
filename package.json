@@ -2,6 +2,7 @@
   "name": "uds-core",
   "version": "0.6.0",
   "description": "A collection of capabilities for UDS Core",
+  "type": "module",
   "keywords": [
     "pepr",
     "k8s",
