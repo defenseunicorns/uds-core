@@ -4,6 +4,21 @@
 # Sets the global DNS service to the service created in this chart
 global:
   dnsService: "uds-loki-dns"
+  # Add trust bundle configuration using loki's supported pattern
+  # These will apply to all Loki components (backend, read, write, gateway)
+  # Loki is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+  # based on https://go.dev/src/crypto/x509/root_linux.go
+  extraVolumes:
+    - name: ca-certs
+      configMap:
+        name: uds-trust-bundle
+        optional: true
+
+  extraVolumeMounts:
+    - name: ca-certs
+      mountPath: /etc/ssl/certs/ca-bundle.pem
+      subPath: ca-bundle.pem
+      readOnly: true
 
 # -- Overrides the chart's name
 nameOverride: loki
@@ -23,6 +38,7 @@ loki:
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false
+
   storage:
     bucketNames:
       chunks: uds
