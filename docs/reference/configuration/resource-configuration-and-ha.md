@@ -214,7 +214,7 @@ packages:
               value: "2Gi"
 ```
 
-You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below override example includes the default values which could be changed based on your needs:
+You can also configure autoscaling for the Keycloak [waypoint](https://istio.io/latest/docs/ambient/usage/waypoint/) (its Istio Layer7 proxy). The independent scalability of the waypoint proxy ensures that you never encounter a bottleneck due to service mesh integration. An HPA is enabled by default for the waypoint, with access to the configuration parameters via values. The below provides an override example that can be changed based on your needs:
 
 ```yaml
 packages:
@@ -226,7 +226,7 @@ packages:
         keycloak:
           values:
             - path: waypoint.horizontalPodAutoscaler.minReplicas
-              value: 1
+              value: 2
             - path: waypoint.horizontalPodAutoscaler.maxReplicas
               value: 5
             - path: waypoint.horizontalPodAutoscaler.metrics
@@ -242,6 +242,10 @@ packages:
             - path: waypoint.deployment.requests.memory
               value: 256Mi
 ```
+
+:::tip
+For HA Keycloak deployments running on multiple nodes, it is recommended to set `waypoint.horizontalPodAutoscaler.minReplicas` to at least 2 and use proper Affinity settings (to distribute Keycloak Waypoint Pods across the Kubernetes Nodes). This ensures there is no downtime when waypoint pods are restarted or rescheduled.
+:::
 
 ### AuthService
 

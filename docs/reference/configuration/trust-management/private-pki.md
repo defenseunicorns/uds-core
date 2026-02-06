@@ -10,7 +10,22 @@ Example scenarios include:
 - **Your domain cert is self-signed or private PKI**: Grafana would need the CA for SSO to work with Keycloak
 - **External dependencies use private PKI**: Velero, Loki (object storage) and potentially Grafana/Keycloak for databases, data sources, external identity providers
 
-This guide explains how to configure UDS Core components to recognize and trust your private CA certificates. Not every component requires this configuration — only those that make outbound TLS connections (for example, to identity providers, object storage, or other HTTPS endpoints).
+:::tip[Automatic Trust Bundle Mounting]
+**All UDS Core applications automatically mount and trust the UDS Core CA bundle** when configured via the UDS Operator (using `UDS_CA_BUNDLE_CERTS` and optionally `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS`). This includes:
+- Authservice
+- Falco (including Falcosidekick)
+- Grafana
+- Keycloak
+- Loki (all components)
+- Metrics Server
+- Prometheus Stack (Prometheus and Alertmanager)
+- Vector
+- Velero
+
+You do **not** need to manually configure trust bundle mounting for these applications unless you want to override the default behavior.
+:::
+
+This guide explains how the automatic trust bundle mounting works and how to manually configure or override it if needed.
 
 :::tip[Who should use this guide?]
 If your UDS Core environment connects to services using **self-signed certificates** or certificates issued by a **private CA**, you'll need to follow this configuration.
@@ -73,6 +88,8 @@ Many Go-based applications automatically check `/etc/ssl/certs/ca.pem` for addit
 - `/etc/ssl/certs/ca.pem` (Go applications)
 
 ## Component Configuration
+
+All UDS Core applications automatically mount the `uds-trust-bundle` ConfigMap when it exists. The trust bundle is created by the UDS Operator when you configure `UDS_CA_BUNDLE_CERTS` (and optionally `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS`) in your `uds-config.yaml`:
 
 ### Authservice
 

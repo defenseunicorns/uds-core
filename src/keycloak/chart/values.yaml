@@ -364,6 +364,12 @@ autoscaling:
         - type: Pods
           value: 1
           periodSeconds: 300
+  # Session stickiness configuration for Keycloak.
+  # As highlighted in https://www.keycloak.org/server/reverseproxy#_enable_sticky_sessions these settings
+  # are not strictly mandatory for the HA configuration but they are recommended for getting the best performance.
+  sessionStickiness:
+    # Enable session stickiness (enabled by default)
+    enabled: true
 
 # Istio waypoint configuration
 waypoint:

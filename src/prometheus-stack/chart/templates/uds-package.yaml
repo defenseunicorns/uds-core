@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: uds.dev/v1alpha1
@@ -108,3 +108,9 @@ spec:
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
       {{- end }}
+
+      # Blackbox Exporter networking
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: prometheus-blackbox-exporter
+        remoteGenerated: Anywhere

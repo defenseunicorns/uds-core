@@ -1,0 +1,113 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Session Stickiness
+templates:
+  - destination-rule.yaml
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should not render DestinationRule when autoscaling is disabled (even with sessionStickiness enabled by default)
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render DestinationRule when autoscaling.sessionStickiness.enabled is false
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+        sessionStickiness:
+          enabled: false
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should not render DestinationRule when autoscaling is disabled
+    set:
+      autoscaling:
+        enabled: false
+        sessionStickiness:
+          enabled: true
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render DestinationRule when both autoscaling.enabled and autoscaling.sessionStickiness.enabled are true
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+        sessionStickiness:
+          enabled: true
+    template: destination-rule.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: DestinationRule
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-keycloa-sticky-session
+      - equal:
+          path: spec.host
+          value: RELEASE-NAME-keycloa-http.NAMESPACE.svc.cluster.local
+      - equal:
+          path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.name
+          value: RELEASE-NAME-keycloa-session
+      - equal:
+          path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.ttl
+          value: 0s
+
+  - it: should NOT render KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE when autoscaling is disabled
+    set:
+      devMode: false
+      autoscaling:
+        enabled: false
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+
+  - it: should set KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE to false when autoscaling is enabled
+    set:
+      devMode: false
+      postgresql:
+        username: test
+        password: test
+        host: postgres
+        database: keycloak
+      autoscaling:
+        enabled: true
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
+            value: "false"
+      # Also verify other HA-related env vars are present
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_CACHE
+            value: ispn

@@ -187,6 +187,14 @@ spec:
             # Dumb value (not used in the nginx provider, but required by the SPI)
             - name: KC_SPI_X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
+            # Below 3 settings are a workaround for https://github.com/keycloak/keycloak/issues/43589
+            # After Keycloak 26.6.0 release, they should be removed
+            - name: QUARKUS_SHUTDOWN_DELAY_ENABLED
+              value: "true"
+            - name: QUARKUS_SHUTDOWN_DELAY
+              value: "5"
+            - name: QUARKUS_SHUTDOWN_TIMEOUT
+              value: "5"
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
@@ -225,6 +233,9 @@ spec:
                 fieldRef:
                   fieldPath: spec.nodeName
                   apiVersion: v1
+            # Since we use sticky sessions managed by Istio, we assign our cookie ("keycloak-session"), and we do not use AUTH_SESSION_ID.
+            # This means this option has to be always false.
+            # See https://www.keycloak.org/server/reverseproxy#_enable_sticky_sessions
             - name: KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE
               value: "false"
             # Rely on Istio mTLS encryption
