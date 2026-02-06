@@ -6,3 +6,9 @@ image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/prometheus/blackbox_exporter
   tag: v0.28.0
+
+configReloader:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
+    tag: v0.88.0

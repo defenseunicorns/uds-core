@@ -325,6 +325,10 @@ export interface Expose {
    * different from the target port (so the NetworkPolicy can be generated correctly).
    */
   targetPort?: number;
+  /**
+   * Uptime monitoring configuration for this exposed service.
+   */
+  uptime?: Uptime;
 }
 
 /**
@@ -637,6 +641,30 @@ export interface FluffyURI {
 }
 
 /**
+ * Uptime monitoring configuration for this exposed service.
+ */
+export interface Uptime {
+  /**
+   * HTTP probe checks configuration for blackbox-exporter
+   */
+  checks?: Checks;
+}
+
+/**
+ * HTTP probe checks configuration for blackbox-exporter
+ */
+export interface Checks {
+  /**
+   * Enable uptime monitoring for this endpoint (default: false)
+   */
+  enabled?: boolean;
+  /**
+   * List of paths to check for uptime monitoring, appended to the host (default: ['/'])
+   */
+  paths?: string[];
+}
+
+/**
  * Service Mesh configuration for the package
  */
 export interface ServiceMesh {
@@ -860,6 +888,7 @@ export interface StatusObject {
   networkPolicyCount?: number;
   observedGeneration?: number;
   phase?: Phase;
+  probes?: string[];
   retryAttempt?: number;
   ssoClients?: string[];
 }
