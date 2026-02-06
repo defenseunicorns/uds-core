@@ -117,6 +117,14 @@
         },
         "minReplicas": {
           "type": "number"
+        },
+        "sessionStickiness": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
         }
       }
     }
