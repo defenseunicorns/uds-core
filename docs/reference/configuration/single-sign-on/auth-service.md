@@ -65,7 +65,7 @@ sso:
 sso:
   - name: "My App"
     clientId: my-app
-    redirectUris: ["https://myapp.example.com/login", "/"]  # Mixed with root path
+    redirectUris: ["https://myapp.example.com/login", "https://myapp.example.com/"]  # Mixed with root path
     enableAuthserviceSelector:
       app: myapp
 ```
