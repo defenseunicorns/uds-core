@@ -108,6 +108,7 @@ export function generateProbe(
       prober: {
         url: "prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115",
       },
+      interval: "5s",
       targets: {
         staticConfig: {
           static: targets,

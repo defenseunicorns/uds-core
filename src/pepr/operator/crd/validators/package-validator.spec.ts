@@ -935,7 +935,7 @@ describe("Uptime probe FQDN validation", () => {
     vi.resetAllMocks();
   });
 
-  it("allows expose entries with different hosts", async () => {
+  it("allows expose entries with different FQDNs", async () => {
     const mockReq = makeMockReq(
       {},
       [
@@ -965,7 +965,7 @@ describe("Uptime probe FQDN validation", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("allows duplicate hosts when uptime is not enabled", async () => {
+  it("allows duplicate FQDNs when uptime is not enabled", async () => {
     const mockReq = makeMockReq(
       {},
       [
@@ -980,7 +980,7 @@ describe("Uptime probe FQDN validation", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  it("allows duplicate hosts when uptime is undefined", async () => {
+  it("allows duplicate FQDNs when uptime is undefined", async () => {
     const mockReq = makeMockReq(
       {},
       [

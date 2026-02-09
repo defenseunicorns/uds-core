@@ -37,7 +37,7 @@ spec:
             enabled: true
 ```
 
-This creates a Prometheus Probe that monitors `https://myapp.uds.dev/` using the default `http_2xx` module.
+This creates a Prometheus Probe that monitors `https://myapp.uds.dev/` using the default `http_2xx` module, which issues HTTP GET requests at a regular interval and checks for a successful (2xx) response.
 
 ### Custom Paths
 
