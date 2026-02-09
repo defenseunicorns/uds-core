@@ -888,7 +888,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  it("denies authservice clients with mixed valid and root redirectUris", async () => {
+  it("url parsing failure when redirectUri is not a valid URL", async () => {
     const mockReq = makeMockReq(
       {},
       [],
@@ -907,7 +907,7 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
+      'The client ID "test-client" has an invalid redirect URI "/". Redirect URIs must be valid URLs.',
     );
   });
 
