@@ -889,7 +889,7 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      'The client ID "test-client" requires at least one redirect URI when enableAuthserviceSelector is true',
+      'The client ID "test-client" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)',
     );
     expect(mockReq.Approve).not.toHaveBeenCalled();
   });
@@ -913,7 +913,7 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
     expect(mockReq.Deny).toHaveBeenCalledWith(
-      'The client ID "test-client" requires at least one redirect URI when enableAuthserviceSelector is true',
+      'The client ID "test-client" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)',
     );
     expect(mockReq.Approve).not.toHaveBeenCalled();
   });
