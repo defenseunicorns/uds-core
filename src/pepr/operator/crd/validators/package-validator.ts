@@ -307,24 +307,29 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // If this is an authservice client, deny redirectUris that contain any root paths
-    if (client.enableAuthserviceSelector && client.redirectUris) {
-      const hasRootPaths = client.redirectUris.some(uri => {
+    if (client.enableAuthserviceSelector) {
+      if (!client.redirectUris || client.redirectUris.length === 0) {
+        return req.Deny(
+          `The client ID "${client.clientId}" requires at least one redirect URI when enableAuthserviceSelector is true`,
+        );
+      }
+
+      for (const uri of client.redirectUris) {
+        let url: URL;
         try {
-          // Try to parse as URL to check the path component
-          const url = new URL(uri);
-          const path = url.pathname;
-          return path === "/" || path === "/*";
+          url = new URL(uri);
         } catch {
-          // If URL parsing fails, reject the invalid URI
           return req.Deny(
             `The client ID "${client.clientId}" has an invalid redirect URI "${uri}". Redirect URIs must be valid URLs.`,
           );
         }
-      });
-      if (hasRootPaths) {
-        return req.Deny(
-          `The client ID "${client.clientId}" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.`,
-        );
+
+        const path = url.pathname;
+        if (path === "/" || path === "/*") {
+          return req.Deny(
+            `The client ID "${client.clientId}" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.`,
+          );
+        }
       }
     }
   }

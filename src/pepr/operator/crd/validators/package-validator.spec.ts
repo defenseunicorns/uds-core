@@ -843,6 +843,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledWith(
       'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
     );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
   });
 
   it("denies authservice clients with redirectUris containing URLs with wildcard root paths", async () => {
@@ -866,6 +867,55 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledWith(
       'The client ID "test-client" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.',
     );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("denies authservice clients with missing redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: [],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" requires at least one redirect URI when enableAuthserviceSelector is true',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("denies authservice clients with empty redirectUris array", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: [],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" requires at least one redirect URI when enableAuthserviceSelector is true',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
   });
 
   it("allows authservice clients with valid redirectUris", async () => {
@@ -909,6 +959,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledWith(
       'The client ID "test-client" has an invalid redirect URI "/". Redirect URIs must be valid URLs.',
     );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
   });
 
   it("allows non-authservice clients with root-only redirectUris", async () => {
