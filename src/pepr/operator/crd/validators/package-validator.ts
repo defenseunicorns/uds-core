@@ -310,18 +310,15 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (client.enableAuthserviceSelector && client.redirectUris) {
       const hasRootPaths = client.redirectUris.some(uri => {
         try {
-          // Check for exact root path matches first
-          if (uri === "/" || uri === "/*") {
-            return true;
-          }
-
           // Try to parse as URL to check the path component
           const url = new URL(uri);
           const path = url.pathname;
           return path === "/" || path === "/*";
         } catch {
-          // If URL parsing fails, fall back to checking if it's a root path
-          return uri === "/" || uri === "/*";
+          // If URL parsing fails, reject the invalid URI
+          return req.Deny(
+            `The client ID "${client.clientId}" has an invalid redirect URI "${uri}". Redirect URIs must be valid URLs.`,
+          );
         }
       });
       if (hasRootPaths) {

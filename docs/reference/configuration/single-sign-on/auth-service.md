@@ -55,7 +55,7 @@ sso:
 sso:
   - name: "My App"
     clientId: my-app
-    redirectUris: ["/"]  # Root path not allowed
+    redirectUris: ["https://myapp.example.com/"]  # Root path not allowed
     enableAuthserviceSelector:
       app: myapp
 ```
