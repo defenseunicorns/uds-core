@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.60.0"
+    default: "0.61.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
