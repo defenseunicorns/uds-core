@@ -262,7 +262,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       );
     }
     // If standardFlowEnabled is undefined (defaults to `true`) or explicitly true and there are no redirectUris set, deny the req
-    if (client.standardFlowEnabled !== false && !client.redirectUris) {
+    if (client.standardFlowEnabled !== false && !client.redirectUris?.length) {
       return req.Deny(
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
       );
@@ -304,6 +304,27 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(
         `The client ID "${client.clientId}" is invalid as an Authservice client - Authservice does not support client IDs with the ":" character`,
       );
+    }
+
+    // If this is an authservice client, deny redirectUris that contain any root paths
+    if (client.enableAuthserviceSelector && client.redirectUris?.length) {
+      for (const uri of client.redirectUris) {
+        let url: URL;
+        try {
+          url = new URL(uri);
+        } catch {
+          return req.Deny(
+            `The client ID "${client.clientId}" has an invalid redirect URI "${uri}". Redirect URIs must be valid URLs.`,
+          );
+        }
+
+        const path = url.pathname;
+        if (path === "/" || path === "/*") {
+          return req.Deny(
+            `The client ID "${client.clientId}" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.`,
+          );
+        }
+      }
     }
   }
 
