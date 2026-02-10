@@ -3,4 +3,4 @@
 
 image:
   repository: quay.io/rfcurated/metrics-server
-  tag: "0.8.0-jammy-scratch-fips-rfcurated-rfhardened"
+  tag: "0.8.1-jammy-scratch-fips-rfcurated-rfhardened"
