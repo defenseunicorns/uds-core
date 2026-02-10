@@ -27,29 +27,33 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
 
   const probeNames: string[] = [];
 
-  for (const entry of expose) {
-    // Skip if uptime checks are not configured (paths must be defined)
-    if (!entry.uptime?.checks?.paths?.length) {
-      continue;
+  try {
+    for (const entry of expose) {
+      // Skip if uptime checks are not configured (paths must be defined)
+      if (!entry.uptime?.checks?.paths?.length) {
+        continue;
+      }
+
+      log.debug(
+        `Processing uptime probes for package: ${pkgName}, host: ${entry.host}, gateway: ${entry.gateway} in namespace ${namespace}`,
+      );
+
+      // Generate the probe
+      const payload = generateProbe(entry, namespace, pkgName, generation, ownerRefs);
+
+      log.debug(payload, `Applying Probe ${payload.metadata?.name}`);
+
+      // Apply the Probe and force overwrite any existing resource
+      await K8s(PrometheusProbe).Apply(payload, { force: true });
+
+      probeNames.push(payload.metadata!.name!);
     }
 
-    log.debug(
-      `Processing uptime probes for package: ${pkgName}, host: ${entry.host}, gateway: ${entry.gateway} in namespace ${namespace}`,
-    );
-
-    // Generate the probe
-    const payload = generateProbe(entry, namespace, pkgName, generation, ownerRefs);
-
-    log.debug(payload, `Applying Probe ${payload.metadata?.name}`);
-
-    // Apply the Probe and force overwrite any existing resource
-    await K8s(PrometheusProbe).Apply(payload, { force: true });
-
-    probeNames.push(payload.metadata!.name!);
+    // Purge any orphaned probes from previous generations
+    await purgeOrphans(generation, namespace, pkgName, PrometheusProbe, log);
+  } catch (err) {
+    throw new Error(`Failed to process Probes for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }
-
-  // Purge any orphaned probes from previous generations
-  await purgeOrphans(generation, namespace, pkgName, PrometheusProbe, log);
 
   return probeNames;
 }

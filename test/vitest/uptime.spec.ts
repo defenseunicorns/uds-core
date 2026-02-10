@@ -27,6 +27,14 @@ describe("Uptime Probes", { retry: 3 }, () => {
     expect(metric).toBe(1);
   });
 
+  test("probe_success metric should be 1 for sso.uds.dev/realms/uds/.well-known/openid-configuration", async () => {
+    const metric = await queryPrometheusMetric(
+      prometheusProxy.url,
+      'probe_success{instance="https://sso.uds.dev/realms/uds/.well-known/openid-configuration"}',
+    );
+    expect(metric).toBe(1);
+  });
+
   test("probe_success metric should be 1 for keycloak.admin.uds.dev", async () => {
     const metric = await queryPrometheusMetric(
       prometheusProxy.url,
