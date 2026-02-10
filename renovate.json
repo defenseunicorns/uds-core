@@ -75,6 +75,23 @@
       "commitMessageTopic": "support dependencies"
     },
     {
+      "matchFileNames": [
+        "tasks/iac.yaml",
+        ".github/bundles/aks/**",
+        ".github/bundles/rke2/**",
+        ".github/bundles/eks/**",
+        ".github/test-infra/azure/aks/**",
+        ".github/test-infra/aws/rke2/**",
+        ".github/test-infra/aws/eks/**",
+        ".github/workflows/test-iac.yaml",
+        ".github/workflows/test-aks.yaml",
+        ".github/workflows/test-rke2.yaml",
+        ".github/workflows/test-eks.yaml"
+      ],
+      "groupName": "iac-support-deps",
+      "commitMessageTopic": "iac support dependencies"
+    },
+    {
       "matchFileNames": ["package.json", "package-lock.json"],
       "groupName": "operator-deps",
       "commitMessageTopic": "operator-deps",
