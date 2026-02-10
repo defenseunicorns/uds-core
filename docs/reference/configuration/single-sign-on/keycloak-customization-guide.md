@@ -163,14 +163,14 @@ packages:
 
 ### Configuration Options
 
-| Option                 | Description                           | Default | Recommended                      |
-|------------------------|---------------------------------------|---------|----------------------------------|
-| `enabled`              | Enable/disable HTTP retries           | `false` | Enable for production resilience |
-| `maxRetries`           | Maximum retry attempts (0 = disabled) | `2`     | 2-3 for production               |
-| `initialBackoffMillis` | Initial backoff time in milliseconds  | `1000`  | 1000-2000ms                      |
-| `backoffMultiplier`    | Exponential backoff multiplier        | `2.0`   | 2.0 (standard)                   |
-| `applyJitter`          | Apply jitter to prevent retry storms  | `true`  | Always enable                    |
-| `jitterFactor`         | Jitter factor for backoff variation   | `0.5`   | 0.5 (50%-150% range)             |
+| Option                 | Description                           | Default |
+|------------------------|---------------------------------------|---------|
+| `enabled`              | Enable/disable HTTP retries           | `false` |
+| `maxRetries`           | Maximum retry attempts (0 = disabled) | `2`     |
+| `initialBackoffMillis` | Initial backoff time in milliseconds  | `1000`  |
+| `backoffMultiplier`    | Exponential backoff multiplier        | `2.0`   |
+| `applyJitter`          | Apply jitter to prevent retry storms  | `true`  |
+| `jitterFactor`         | Jitter factor for backoff variation   | `0.5`   |
 
 ### When to Enable HTTP Retries
 
