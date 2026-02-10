@@ -3,7 +3,7 @@
 
 includes:
   - utils: ../../tasks/utils.yaml
-  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.23.0/tasks/setup.yaml
+  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.0/tasks/setup.yaml
 
 tasks:
   - name: validate
@@ -37,7 +37,7 @@ tasks:
       - description: "Run Ambient Playwright Test"
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.58.0-noble sh -c " \
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.58.2-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test ambient-waypoint.test.ts \
