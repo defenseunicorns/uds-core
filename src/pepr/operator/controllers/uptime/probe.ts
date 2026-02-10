@@ -7,23 +7,11 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Expose, PrometheusProbe, UDSPackage } from "../../crd";
-import { UDSConfig } from "../config/config";
+import { getFqdn } from "../domain-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_UPTIME);
-
-/**
- * Get the FQDN for an expose entry based on host, domain, and gateway
- *
- * @param entry The expose entry
- * @returns The fully qualified domain name
- */
-export function getFqdn(entry: Expose): string {
-  const gateway = entry.gateway;
-  const domain = entry.domain ?? (gateway === "admin" ? UDSConfig.adminDomain : UDSConfig.domain);
-  return entry.host === "." ? domain : `${entry.host}.${domain}`;
-}
 
 /**
  * Generate Probes for uptime monitoring via blackbox-exporter
@@ -40,8 +28,8 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
   const probeNames: string[] = [];
 
   for (const entry of expose) {
-    // Skip if uptime is not enabled
-    if (!entry.uptime?.checks?.enabled) {
+    // Skip if uptime checks are not configured (paths must be defined)
+    if (!entry.uptime?.checks?.paths?.length) {
       continue;
     }
 
@@ -85,8 +73,8 @@ export function generateProbe(
   const { uptime } = expose;
   const fqdn = getFqdn(expose);
 
-  // Build the list of target URLs from paths (default to "/" if not specified)
-  const paths = uptime?.checks?.paths ?? ["/"];
+  // Build the list of target URLs from paths
+  const paths = uptime!.checks!.paths!;
   const targets = paths.map(path => `https://${fqdn}${path}`);
 
   // Generate a sanitized name for the probe

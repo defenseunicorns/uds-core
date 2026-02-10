@@ -10,8 +10,8 @@ import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
+import { getFqdn } from "../../controllers/domain-utils";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { getFqdn } from "../../controllers/uptime/probe";
 import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
@@ -95,11 +95,10 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // Add the name to the set to track it
     virtualServiceNames.add(name);
 
-    // Validate uptime probe configuration
-    if (expose.uptime?.checks?.enabled) {
+    // Validate uptime probe configuration (paths presence enables uptime)
+    if (expose.uptime?.checks?.paths?.length) {
       // Validate paths start with /
-      const paths = expose.uptime.checks.paths ?? ["/"];
-      for (const path of paths) {
+      for (const path of expose.uptime.checks.paths) {
         if (!path.startsWith("/")) {
           return req.Deny(`Uptime probe path "${path}" must start with "/"`);
         }
@@ -110,8 +109,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       if (uptimeFqdns.has(fqdn)) {
         return req.Deny(
           `Duplicate uptime probe for FQDN "${fqdn}". ` +
-            `Only one expose entry per FQDN can have uptime enabled. ` +
-            `Disable uptime on duplicate entries with "uptime.checks.enabled: false".`,
+            `Only one expose entry per FQDN can have uptime checks configured.`,
         );
       }
       uptimeFqdns.add(fqdn);

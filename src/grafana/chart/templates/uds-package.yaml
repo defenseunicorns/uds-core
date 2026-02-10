@@ -49,7 +49,6 @@ spec:
         targetPort: 3000
         uptime:
           checks:
-            enabled: true
             paths:
               - /healthz # monitor the healthz path as all other paths redirect to keycloak
     # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626

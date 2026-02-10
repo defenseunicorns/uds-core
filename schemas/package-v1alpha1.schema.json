@@ -364,7 +364,7 @@
         },
         "uptime": {
           "$ref": "#/definitions/Uptime",
-          "description": "Uptime monitoring configuration for this exposed service."
+          "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths\nenables monitoring."
         }
       },
       "required": [
@@ -865,32 +865,30 @@
       "properties": {
         "checks": {
           "$ref": "#/definitions/Checks",
-          "description": "HTTP probe checks configuration for blackbox-exporter"
+          "description": "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime\nmonitoring."
         }
       },
       "required": [],
       "title": "Uptime",
-      "description": "Uptime monitoring configuration for this exposed service."
+      "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring."
     },
     "Checks": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": {
-          "type": "boolean",
-          "description": "Enable uptime monitoring for this endpoint (default: false)"
-        },
         "paths": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "List of paths to check for uptime monitoring, appended to the host (default: ['/'])"
+          "description": "List of paths to check for uptime monitoring, appended to the host."
         }
       },
-      "required": [],
+      "required": [
+        "paths"
+      ],
       "title": "Checks",
-      "description": "HTTP probe checks configuration for blackbox-exporter"
+      "description": "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime monitoring."
     },
     "ServiceMesh": {
       "type": "object",

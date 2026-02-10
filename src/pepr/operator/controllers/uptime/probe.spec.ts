@@ -6,77 +6,10 @@
 import { describe, expect, it } from "vitest";
 import { Expose } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { generateProbe, getFqdn } from "./probe";
+import { generateProbe } from "./probe";
 
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
-
-describe("getFqdn", () => {
-  it("should return fqdn for tenant gateway", () => {
-    const expose: Expose = {
-      host: "app",
-      gateway: "tenant",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("app.uds.dev");
-  });
-
-  it("should return fqdn for admin gateway", () => {
-    const expose: Expose = {
-      host: "app",
-      gateway: "admin",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("app.admin.uds.dev");
-  });
-
-  it("should return domain only when host is '.'", () => {
-    const expose: Expose = {
-      host: ".",
-      gateway: "tenant",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("uds.dev");
-  });
-
-  it("should use custom domain from UDSConfig", () => {
-    const originalDomain = UDSConfig.domain;
-    UDSConfig.domain = "custom.example.com";
-
-    const expose: Expose = {
-      host: "app",
-      gateway: "tenant",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("app.custom.example.com");
-
-    UDSConfig.domain = originalDomain;
-  });
-
-  it("should use custom admin domain from UDSConfig", () => {
-    const originalAdminDomain = UDSConfig.adminDomain;
-    UDSConfig.adminDomain = "admin.custom.example.com";
-
-    const expose: Expose = {
-      host: "app",
-      gateway: "admin",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("app.admin.custom.example.com");
-
-    UDSConfig.adminDomain = originalAdminDomain;
-  });
-
-  it("should use expose.domain when specified for custom gateways", () => {
-    const expose: Expose = {
-      host: "app",
-      gateway: "custom-gateway",
-      domain: "custom.example.com",
-    };
-    const fqdn = getFqdn(expose);
-    expect(fqdn).toEqual("app.custom.example.com");
-  });
-});
 
 describe("generateProbe", () => {
   const ownerRefs = [
@@ -94,7 +27,7 @@ describe("generateProbe", () => {
       gateway: "tenant",
       uptime: {
         checks: {
-          enabled: true,
+          paths: ["/"],
         },
       },
     };
@@ -119,7 +52,6 @@ describe("generateProbe", () => {
       gateway: "tenant",
       uptime: {
         checks: {
-          enabled: true,
           paths: ["/health", "/ready"],
         },
       },

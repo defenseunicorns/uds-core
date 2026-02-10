@@ -326,7 +326,8 @@ export interface Expose {
    */
   targetPort?: number;
   /**
-   * Uptime monitoring configuration for this exposed service.
+   * Uptime monitoring configuration for this exposed service. Presence of checks.paths
+   * enables monitoring.
    */
   uptime?: Uptime;
 }
@@ -641,27 +642,26 @@ export interface FluffyURI {
 }
 
 /**
- * Uptime monitoring configuration for this exposed service.
+ * Uptime monitoring configuration for this exposed service. Presence of checks.paths
+ * enables monitoring.
  */
 export interface Uptime {
   /**
-   * HTTP probe checks configuration for blackbox-exporter
+   * HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime
+   * monitoring.
    */
   checks?: Checks;
 }
 
 /**
- * HTTP probe checks configuration for blackbox-exporter
+ * HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime
+ * monitoring.
  */
 export interface Checks {
   /**
-   * Enable uptime monitoring for this endpoint (default: false)
+   * List of paths to check for uptime monitoring, appended to the host.
    */
-  enabled?: boolean;
-  /**
-   * List of paths to check for uptime monitoring, appended to the host (default: ['/'])
-   */
-  paths?: string[];
+  paths: string[];
 }
 
 /**

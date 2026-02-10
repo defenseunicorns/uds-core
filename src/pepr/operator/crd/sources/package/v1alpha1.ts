@@ -224,26 +224,23 @@ const expose = {
         },
       },
       uptime: {
-        description: "Uptime monitoring configuration for this exposed service.",
+        description:
+          "Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring.",
         type: "object",
         properties: {
           checks: {
-            description: "HTTP probe checks configuration for blackbox-exporter",
+            description:
+              "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime monitoring.",
             type: "object",
+            required: ["paths"],
             properties: {
-              enabled: {
-                description: "Enable uptime monitoring for this endpoint (default: false)",
-                type: "boolean",
-                default: false,
-              },
               paths: {
-                description:
-                  "List of paths to check for uptime monitoring, appended to the host (default: ['/'])",
+                description: "List of paths to check for uptime monitoring, appended to the host.",
                 type: "array",
                 items: {
                   type: "string",
                 },
-                default: ["/"],
+                minItems: 1,
               },
             },
           },

@@ -126,7 +126,10 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
+            paths:
+              - /
+              - /realms/uds/.well-known/openid-configuration
+              - /realms/uds/protocol/openid-connect/token
         advancedHTTP:
           match:
             - name: redirect-welcome

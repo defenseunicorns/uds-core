@@ -939,8 +939,8 @@ describe("Uptime probe FQDN validation", () => {
     const mockReq = makeMockReq(
       {},
       [
-        { host: "app1", uptime: { checks: { enabled: true } } },
-        { host: "app2", uptime: { checks: { enabled: true } } },
+        { host: "app1", uptime: { checks: { paths: ["/"] } } },
+        { host: "app2", uptime: { checks: { paths: ["/"] } } },
       ],
       [],
       [],
@@ -950,12 +950,12 @@ describe("Uptime probe FQDN validation", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
-  it("denies duplicate FQDNs with uptime enabled", async () => {
+  it("denies duplicate FQDNs with uptime configured", async () => {
     const mockReq = makeMockReq(
       {},
       [
-        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
-        { host: "app", description: "second", uptime: { checks: { enabled: true } } },
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
+        { host: "app", description: "second", uptime: { checks: { paths: ["/"] } } },
       ],
       [],
       [],
@@ -965,26 +965,11 @@ describe("Uptime probe FQDN validation", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("allows duplicate FQDNs when uptime is not enabled", async () => {
+  it("allows duplicate FQDNs when uptime is not configured", async () => {
     const mockReq = makeMockReq(
       {},
       [
-        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
-        { host: "app", description: "second", uptime: { checks: { enabled: false } } },
-      ],
-      [],
-      [],
-      [],
-    );
-    await validator(mockReq);
-    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
-  });
-
-  it("allows duplicate FQDNs when uptime is undefined", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [
-        { host: "app", description: "first", uptime: { checks: { enabled: true } } },
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
         { host: "app", description: "second" },
       ],
       [],
@@ -998,7 +983,7 @@ describe("Uptime probe FQDN validation", () => {
   it("denies paths that don't start with /", async () => {
     const mockReq = makeMockReq(
       {},
-      [{ host: "app", uptime: { checks: { enabled: true, paths: ["health"] } } }],
+      [{ host: "app", uptime: { checks: { paths: ["health"] } } }],
       [],
       [],
       [],
@@ -1010,7 +995,7 @@ describe("Uptime probe FQDN validation", () => {
   it("allows paths that start with /", async () => {
     const mockReq = makeMockReq(
       {},
-      [{ host: "app", uptime: { checks: { enabled: true, paths: ["/health", "/ready"] } } }],
+      [{ host: "app", uptime: { checks: { paths: ["/health", "/ready"] } } }],
       [],
       [],
       [],

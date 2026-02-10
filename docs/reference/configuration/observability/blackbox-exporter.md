@@ -13,7 +13,7 @@ UDS Core includes Blackbox Exporter for HTTP/HTTPS probing of endpoints to monit
 To enable uptime monitoring for an exposed service, configure the `uptime.checks` section within your Package CR's `expose` entries.
 
 :::note
-Uptime checks do not currently support applications protected by Authservice. Support for probing Authservice-enabled applications is planned for a future release.
+Uptime checks for Authservice-protected applications will probe the external interface but not the application itself - the probe will receive a successful response from the Authservice redirect rather than reaching the actual application. Support for probing through Authservice is planned for a future release.
 :::
 
 ### Basic Example
@@ -34,7 +34,8 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
+            paths:
+              - /
 ```
 
 This creates a Prometheus Probe that monitors `https://myapp.uds.dev/` using the default `http_2xx` module, which issues HTTP GET requests at a regular interval and checks for a successful (2xx) response.
@@ -54,7 +55,6 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
             paths:
               - /health
               - /ready
@@ -68,14 +68,13 @@ Monitor multiple services in a single package:
 spec:
   network:
     expose:
-      # monitors: https://app.uds.dev/healthz, https://api.uds.dev/health, https://api.uds.dev/ready, https://admin.uds.dev/
+      # monitors: https://app.uds.dev/healthz, https://api.uds.dev/health, https://api.uds.dev/ready, https://app.admin.uds.dev/
       - service: frontend
         host: app
         gateway: tenant
         port: 3000
         uptime:
           checks:
-            enabled: true
             paths:
               - /healthz
       - service: api
@@ -84,22 +83,22 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
             paths:
               - /health
               - /ready
       - service: admin
-        host: admin
+        host: app
         gateway: admin
         port: 8080
         uptime:
           checks:
-            enabled: true
+            paths:
+              - /
 ```
 
-### Disabling Uptime for Specific Endpoints
+### Multiple Expose Entries for Same FQDN
 
-Uptime monitoring is disabled by default. If you have multiple expose entries for the same FQDN, only one can have uptime enabled:
+Uptime monitoring is opt-in by defining `uptime.checks.paths`. If you have multiple expose entries for the same FQDN, only one can have uptime checks configured:
 
 ```yaml
 spec:
@@ -111,13 +110,14 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
+            paths:
+              - /
       - service: my-app
         host: myapp
         gateway: tenant
         port: 8443
         description: secondary-port
-        # uptime not enabled (default)
+        # no uptime configuration (not monitored)
 ```
 
 ## Metrics
@@ -130,6 +130,16 @@ The Blackbox Exporter provides some of the following key metrics (not exhaustive
 | `probe_duration_seconds` | Total probe duration |
 | `probe_http_status_code` | HTTP response status code |
 | `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp |
+
+### Example Queries
+
+```promql
+# Check all probes and their success status
+probe_success
+
+# Check if a specific endpoint is up
+probe_success{instance="https://myapp.uds.dev/health"}
+```
 
 ## Grafana Dashboard
 
