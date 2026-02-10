@@ -11,13 +11,12 @@ Example scenarios include:
 - **External dependencies use private PKI**: Velero, Loki (object storage) and potentially Grafana/Keycloak for databases, data sources, external identity providers
 
 :::tip[Automatic Trust Bundle Mounting]
-**All UDS Core applications automatically mount and trust the UDS Core CA bundle** when configured via the UDS Operator (using `UDS_CA_BUNDLE_CERTS` and optionally `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS`). This includes:
+**All UDS Core applications automatically mount and trust the UDS Core CA bundle** when configured via the UDS Operator (using `UDS_CA_BUNDLE_CERTS` and optionally `UDS_CA_BUNDLE_INCLUDE_DOD_CERTS`). This includes all applications that would commonly connect to external services:
 - Authservice
-- Falco (including Falcosidekick)
+- Falcosidekick
 - Grafana
 - Keycloak
 - Loki (all components)
-- Metrics Server
 - Prometheus Stack (Prometheus and Alertmanager)
 - Vector
 - Velero
