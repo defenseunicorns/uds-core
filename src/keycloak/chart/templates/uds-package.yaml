@@ -180,7 +180,8 @@ spec:
         port: 8080
         uptime:
           checks:
-            enabled: true
+            paths:
+              - /
         {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
