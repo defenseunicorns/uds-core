@@ -65,7 +65,7 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Checkpoint Zarf Package"
-        cmd: "uds zarf package create packages/checkpoint-dev --confirm --no-progress --skip-sbom"
+        cmd: "uds zarf package create packages/checkpoint-dev --confirm --skip-sbom"
 
   # This task is a wrapper to support --set LAYER=identity-authorization
   - name: single-layer-callable

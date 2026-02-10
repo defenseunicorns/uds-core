@@ -65,15 +65,15 @@ tasks:
         cmd: "mkdir -p build"
 
       - description: Create zarf package for the test resources
-        cmd: uds zarf package create src/test --confirm --no-progress --skip-sbom -a ${{ index .inputs "architecture" }}
+        cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
 
       - description: Deploy the test resources (with egress-app)
         if: ${{ eq .inputs.validate_egress "true" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress --components egress-app"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
 
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
 
       - description: Verify the admin app is accessible
         wait:
@@ -172,4 +172,4 @@ tasks:
   - name: remove
     actions:
       - description: Remove the test apps zarf package
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress"
+        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
