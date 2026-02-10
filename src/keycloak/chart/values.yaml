@@ -446,6 +446,26 @@ truststorePaths:
   # Default path for UDS trust bundle certificates
   - "/tmp/ca-certs"
 
+# HTTP retry configuration for outgoing Keycloak requests
+# This configures retry behavior for transient network errors and temporary service unavailability
+httpRetry:
+  # Enable/disable HTTP retries for outgoing requests
+  # When disabled, no retries will be attempted for failed HTTP requests
+  enabled: true
+  # Maximum number of retry attempts for failed HTTP requests (0 = disabled)
+  maxRetries: 12
+  # Initial backoff time in milliseconds before the first retry attempt
+  initialBackoffMillis: 1000
+  # Multiplier for exponential backoff between retry attempts
+  # Example: 2.0 with 1000ms initial = 1000ms, 2000ms, 4000ms, etc.
+  backoffMultiplier: 2.0
+  # Apply jitter to backoff times to prevent synchronized retry storms
+  # When true, adds random variation to prevent multiple clients retrying simultaneously
+  applyJitter: false
+  # Jitter factor for backoff time variation (0.5 = 50% to 150% of calculated time)
+  # Only used when applyJitter is true
+  jitterFactor: 0
+
 # Detailed observability settings (Dashboards, Alerts, etc)
 # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
 detailedObservability:

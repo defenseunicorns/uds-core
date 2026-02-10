@@ -706,6 +706,30 @@
       },
       "additionalProperties": false
     },
+    "httpRetry": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "maxRetries": {
+          "type": "number"
+        },
+        "initialBackoffMillis": {
+          "type": "number"
+        },
+        "backoffMultiplier": {
+          "type": "number"
+        },
+        "applyJitter": {
+          "type": "boolean"
+        },
+        "jitterFactor": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
     "podAnnotations": {
       "type": "object",
       "additionalProperties": {

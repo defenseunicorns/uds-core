@@ -124,6 +124,22 @@ spec:
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
+            {{- if .Values.httpRetry.enabled }}
+            # HTTP retry configuration for outgoing requests
+            - "--spi-connections-http-client-default-max-retries={{ .Values.httpRetry.maxRetries }}"
+            - "--spi-connections-http-client-default-initial-backoff-millis={{ .Values.httpRetry.initialBackoffMillis }}"
+            - "--spi-connections-http-client-default-backoff-multiplier={{ .Values.httpRetry.backoffMultiplier }}"
+            {{- if not .Values.httpRetry.applyJitter }}
+            - "--spi-connections-http-client-default-apply-jitter=false"
+            {{- end }}
+            {{- if .Values.httpRetry.applyJitter }}
+            - "--spi-connections-http-client-default-jitter-factor={{ .Values.httpRetry.jitterFactor }}"
+            {{- end }}
+            {{- end }}
+            # Enable OCSP verification to force external HTTP calls
+            - "--spi-x509cert-lookup-nginx-ocsp-enabled=true"
+            - "--spi-x509cert-lookup-nginx-ocsp-responder-url=http://ocsp.digicert.com"
+            - "--spi-x509cert-lookup-nginx-ocsp-cache-size=0"
           {{- with .Values.lifecycleHooks }}
           lifecycle:
           {{- toYaml . | nindent 12 }}
@@ -195,6 +211,19 @@ spec:
               value: "5"
             - name: QUARKUS_SHUTDOWN_TIMEOUT
               value: "5"
+          {{- if .Values.httpRetry.enabled }}
+            # HTTP retry configuration via environment variables (alternative to startup flags)
+            - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_MAX_RETRIES
+              value: "{{ .Values.httpRetry.maxRetries }}"
+            - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_INITIAL_BACKOFF_MILLIS
+              value: "{{ .Values.httpRetry.initialBackoffMillis }}"
+            - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_BACKOFF_MULTIPLIER
+              value: "{{ .Values.httpRetry.backoffMultiplier }}"
+            - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_APPLY_JITTER
+              value: "{{ .Values.httpRetry.applyJitter }}"
+            - name: KC_SPI_CONNECTIONS_HTTP_CLIENT_DEFAULT_JITTER_FACTOR
+              value: "{{ .Values.httpRetry.jitterFactor }}"
+          {{- end }}
           {{- if or .Values.devMode .Values.debugMode }}
             # Enable debug logs
             - name: KC_LOG_LEVEL
