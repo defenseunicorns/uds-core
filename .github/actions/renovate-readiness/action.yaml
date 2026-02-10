@@ -50,9 +50,9 @@ runs:
           echo "package=pepr" >> $GITHUB_OUTPUT
           echo "is_pepr=true" >> $GITHUB_OUTPUT
           echo "needs_comparison=false" >> $GITHUB_OUTPUT
-        elif [[ "$PACKAGE_NAME" == "support-deps" ]]; then
+        elif [[ "$PACKAGE_NAME" == "support-deps" ]] || [[ "$PACKAGE_NAME" == "iac-support-deps" ]]; then
           echo "Detected support dependencies update"
-          echo "package=support-deps" >> $GITHUB_OUTPUT
+          echo "package=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "is_support_deps=true" >> $GITHUB_OUTPUT
           echo "needs_comparison=false" >> $GITHUB_OUTPUT
         elif [[ "$PACKAGE_NAME" == "operator-deps" ]]; then
