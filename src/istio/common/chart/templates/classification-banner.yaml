@@ -60,6 +60,7 @@ spec:
           "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
           inlineCode: |-
             -- Setup colors, text and banner div(s)
+            -- Color reference: https://www.astrouxds.com/components/classification-markings/
             local classColorMap = {
               UNCLASSIFIED = { backgroundColor = "#007a33", textColor = "#ffffff" },
               CUI = { backgroundColor = "#502b85", textColor = "#ffffff" },
@@ -70,7 +71,48 @@ spec:
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
             local classification = "{{ .Values.classificationBanner.text }}"
-            local colors = classColorMap[classification] or classColorMap["UNKNOWN"]
+
+            local function trim(s)
+              return (s:gsub("^%s*(.-)%s*$", "%1"))
+            end
+
+            local function classificationKey(text)
+              local upper = string.upper(trim(text or ""))
+
+              -- Split on // segments to avoid substring matches
+              local segments = {}
+              for segment in upper:gmatch("[^/]+") do
+                table.insert(segments, trim(segment))
+              end
+
+              local base = segments[1] or ""
+              local hasSCI = false
+              for i = 2, #segments do
+                if segments[i] == "SCI" then
+                  hasSCI = true
+                  break
+                end
+              end
+
+              if string.find(base, "^TOP SECRET") then
+                if hasSCI then
+                  return "TOP SECRET//SCI"
+                end
+                return "TOP SECRET"
+              elseif string.find(base, "^SECRET") then
+                return "SECRET"
+              elseif string.find(base, "^CONFIDENTIAL") then
+                return "CONFIDENTIAL"
+              elseif string.find(base, "^CUI") then
+                return "CUI"
+              elseif string.find(base, "^UNCLASSIFIED") then
+                return "UNCLASSIFIED"
+              else
+                return "UNKNOWN"
+              end
+            end
+
+            local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
             local backgroundColor = colors.backgroundColor
             local textColor = colors.textColor
             local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"

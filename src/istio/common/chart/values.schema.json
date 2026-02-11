@@ -11,8 +11,8 @@
         },
         "text": {
           "type": ["string", "null"],
-          "pattern": "^(?i)(UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET|TOP SECRET//SCI|UNKNOWN|)$",
-          "description": "The classification banner text must match one of the allowed values (case-insensitive): UNCLASSIFIED, CONTROLLED, CONFIDENTIAL, SECRET, TOP SECRET, TOP SECRET//SCI, UNKNOWN, or it can be an empty string or null."
+          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN)?$",
+          "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN or empty/null are also allowed."
         }
       }
     }
