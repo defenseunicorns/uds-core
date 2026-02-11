@@ -34,7 +34,7 @@ The UDS Operator uses the first `redirectUris` to populate the `match.prefix` ho
 
 When using `enableAuthserviceSelector`, the UDS Operator validates the `redirectUris` array to ensure proper configuration:
 
-- **Root paths (`/` or `/*`) are not allowed** in `redirectUris` for authservice clients
+- **Root paths (`/`) are not allowed** in `redirectUris` for authservice clients
 - **Valid redirect URIs must be fully qualified URLs** (e.g., `https://example.com/callback`)
 - **Non-authservice clients are not affected** by this validation
 
