@@ -300,7 +300,7 @@ async function updatePolicy(
     monitorExemptions.push({ port: "15020", path: "/stats/prometheus" });
   }
 
-  const meshMode = isAmbient ? Mode.Ambient : Mode.Sidecar;
+  const meshMode = pkg.spec?.network?.serviceMesh?.mode ?? Mode.Ambient;
   const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
