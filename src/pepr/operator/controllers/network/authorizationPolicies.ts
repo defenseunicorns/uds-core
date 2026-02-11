@@ -13,7 +13,6 @@ import {
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import {
   PROMETHEUS_PRINCIPAL,
@@ -164,6 +163,7 @@ function buildAuthPolicy(
   selector: Record<string, string> | undefined,
   source: Source,
   ports: string[],
+  istioMode: Mode,
   additionalLabels?: Record<string, string>,
 ): AuthorizationPolicy {
   const ruleEntry: Rule = {};
@@ -188,6 +188,7 @@ function buildAuthPolicy(
         "uds/package": pkgName,
         "uds/generation": generation,
         "uds/for": "network",
+        "uds/mesh-mode": istioMode,
         ...additionalLabels,
       },
       ownerReferences: getOwnerRef(pkg),
@@ -209,7 +210,7 @@ function buildAuthPolicy(
 export async function generateAuthorizationPolicies(
   pkg: UDSPackage,
   pkgNamespace: string,
-  istioMode: string,
+  istioMode: Mode,
 ): Promise<AuthorizationPolicy[]> {
   const pkgName = pkg.metadata?.name ?? "unknown";
   const generation = pkg.metadata?.generation?.toString() ?? "0";
@@ -246,6 +247,7 @@ export async function generateAuthorizationPolicies(
           waypointSelector,
           source,
           ports,
+          istioMode,
           additionalLabels,
         );
         policies.push(authPolicy);
@@ -262,6 +264,7 @@ export async function generateAuthorizationPolicies(
           rule.selector,
           source,
           ports,
+          istioMode,
           additionalLabels,
         );
         policies.push(authPolicy);
@@ -298,6 +301,7 @@ export async function generateAuthorizationPolicies(
             waypointSelector,
             source,
             waypointPorts,
+            istioMode,
           );
           policies.push(authPolicy);
           log.trace(`Generated waypoint authpol: ${authPolicy.metadata?.name}`);
@@ -314,7 +318,14 @@ export async function generateAuthorizationPolicies(
         // Regular expose rule processing
         const { source, ports } = processExposeRule(rule);
         const policyName = sanitizeResourceName(`protect-${pkgName}-${generateExposeName(rule)}`);
-        const authPolicy = buildAuthPolicy(policyName, pkg, rule.selector, source, ports);
+        const authPolicy = buildAuthPolicy(
+          policyName,
+          pkg,
+          rule.selector,
+          source,
+          ports,
+          istioMode,
+        );
         policies.push(authPolicy);
         log.trace(`Generated authpol: ${authPolicy.metadata?.name}`);
       }
@@ -340,9 +351,17 @@ export async function generateAuthorizationPolicies(
           `protect-${pkgName}-monitor-${generateMonitorName(monitor)}-${waypointName}`,
         );
 
-        const authPolicy = buildAuthPolicy(policyName, pkg, waypointSelector, source, ports, {
-          "uds/waypoint": waypointName,
-        });
+        const authPolicy = buildAuthPolicy(
+          policyName,
+          pkg,
+          waypointSelector,
+          source,
+          ports,
+          istioMode,
+          {
+            "uds/waypoint": waypointName,
+          },
+        );
         policies.push(authPolicy);
         log.trace(`Generated waypoint monitor authpol: ${authPolicy.metadata?.name}`);
       } else {
@@ -350,7 +369,7 @@ export async function generateAuthorizationPolicies(
         const policyName = sanitizeResourceName(
           `protect-${pkgName}-${generateMonitorName(monitor)}`,
         );
-        const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports);
+        const authPolicy = buildAuthPolicy(policyName, pkg, selector, source, ports, istioMode);
         policies.push(authPolicy);
         log.trace(`Generated monitor authpol: ${authPolicy.metadata?.name}`);
       }
@@ -366,7 +385,12 @@ export async function generateAuthorizationPolicies(
       const appSelector = sso.enableAuthserviceSelector;
 
       // Add deny-all policy that only allows traffic from the waypoint
-      const denyPolicy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
+      const denyPolicy = createDenyAllExceptWaypointPolicy(
+        pkg,
+        waypointName,
+        appSelector,
+        istioMode,
+      );
       policies.push(denyPolicy);
     }
   }
@@ -374,7 +398,7 @@ export async function generateAuthorizationPolicies(
   // With Prometheus in Ambient mode, all traffic is sent over mTLS and the
   // destination sidecar requires an ALLOW policy to expose sidecar metrics.
   // Add an AuthorizationPolicy to allow all traffic on port 15020 for the package's namespace.
-  if (istioMode === IstioState.Sidecar) {
+  if (istioMode === Mode.Sidecar) {
     const extraPolicyName = sanitizeResourceName(
       `protect-${pkgName}-ingress-15020-sidecar-metric-scraping`,
     );
@@ -384,6 +408,7 @@ export async function generateAuthorizationPolicies(
       {}, // empty selector to apply to all workloads in the namespace
       { principals: [PROMETHEUS_PRINCIPAL] },
       ["15020"],
+      istioMode,
     );
     policies.push(extraPolicy);
     log.trace(
@@ -407,9 +432,15 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log, {
-    "uds/for": "network",
-  });
+  await purgeOrphans(
+    generation,
+    pkgNamespace,
+    pkgName,
+    AuthorizationPolicy,
+    log,
+    { "uds/for": "network" },
+    istioMode,
+  );
 
   return policies;
 }
@@ -452,6 +483,7 @@ export function createDenyAllExceptWaypointPolicy(
   pkg: UDSPackage,
   waypointName: string,
   appSelector: Record<string, string>,
+  istioMode: Mode,
 ): AuthorizationPolicy {
   const pkgName = pkg.metadata?.name ?? "unknown";
   const policyName = sanitizeResourceName(`deny-all-except-waypoint-${waypointName}`);
@@ -467,6 +499,7 @@ export function createDenyAllExceptWaypointPolicy(
         "uds/package": pkgName,
         "uds/generation": pkg.metadata?.generation?.toString() ?? "0",
         "uds/for": "network",
+        "uds/mesh-mode": istioMode,
         "uds/ambient-waypoint": waypointName,
       },
       ownerReferences: getOwnerRef(pkg),

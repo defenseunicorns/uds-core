@@ -7,7 +7,14 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSPackage } from "../crd";
-import { createEvent, getAuthserviceClients, retryWithDelay, validateNamespace } from "./utils";
+import { Mode } from "../crd/generated/package-v1alpha1";
+import {
+  createEvent,
+  getAuthserviceClients,
+  purgeOrphans,
+  retryWithDelay,
+  validateNamespace,
+} from "./utils";
 
 // Mock K8s client and Log
 vi.mock("pepr", () => {
@@ -340,5 +347,112 @@ describe("getAuthserviceClients", () => {
 
     const res = getAuthserviceClients(pkg);
     expect(res.map(c => c.clientId)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("purgeOrphans", () => {
+  let mockLogger: ReturnType<typeof createMockLogger>;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
+  let mockDelete: Mock;
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockLogger = createMockLogger();
+    mockDelete = vi.fn().mockResolvedValue({});
+    mockK8sClient = createMockK8sClient({
+      Delete: mockDelete,
+    });
+  });
+
+  it("should delete resources with mismatched generation", async () => {
+    const resources = {
+      items: [
+        { metadata: { name: "old-resource", labels: { "uds/generation": "1" } }, kind: "Policy" },
+        {
+          metadata: { name: "current-resource", labels: { "uds/generation": "2" } },
+          kind: "Policy",
+        },
+      ],
+    };
+
+    mockK8sClient.Get = vi.fn().mockResolvedValue(resources);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
+
+    await purgeOrphans("2", "test-ns", "test-pkg", kind.Pod, mockLogger);
+
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledWith(resources.items[0]);
+  });
+
+  it("should delete resources with mismatched mesh mode", async () => {
+    const resources = {
+      items: [
+        {
+          metadata: {
+            name: "sidecar-resource",
+            labels: { "uds/generation": "1", "uds/mesh-mode": "sidecar" },
+          },
+          kind: "Policy",
+        },
+        {
+          metadata: {
+            name: "ambient-resource",
+            labels: { "uds/generation": "1", "uds/mesh-mode": "ambient" },
+          },
+          kind: "Policy",
+        },
+      ],
+    };
+
+    mockK8sClient.Get = vi.fn().mockResolvedValue(resources);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
+
+    await purgeOrphans("1", "test-ns", "test-pkg", kind.Pod, mockLogger, undefined, Mode.Ambient);
+
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledWith(resources.items[0]); // sidecar resource deleted
+  });
+
+  it("should not delete resources when mesh mode matches", async () => {
+    const resources = {
+      items: [
+        {
+          metadata: {
+            name: "ambient-resource",
+            labels: { "uds/generation": "1", "uds/mesh-mode": "ambient" },
+          },
+          kind: "Policy",
+        },
+      ],
+    };
+
+    mockK8sClient.Get = vi.fn().mockResolvedValue(resources);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
+
+    await purgeOrphans("1", "test-ns", "test-pkg", kind.Pod, mockLogger, undefined, Mode.Ambient);
+
+    expect(mockDelete).not.toHaveBeenCalled();
+  });
+
+  it("should ignore mesh mode check when currentMeshMode is not provided", async () => {
+    const resources = {
+      items: [
+        {
+          metadata: {
+            name: "sidecar-resource",
+            labels: { "uds/generation": "1", "uds/mesh-mode": "sidecar" },
+          },
+          kind: "Policy",
+        },
+      ],
+    };
+
+    mockK8sClient.Get = vi.fn().mockResolvedValue(resources);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
+
+    // No currentMeshMode provided - should not delete based on mesh mode
+    await purgeOrphans("1", "test-ns", "test-pkg", kind.Pod, mockLogger);
+
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 });

@@ -10,6 +10,7 @@ import { K8s, kind } from "pepr";
 import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor";
 import { Logger } from "pino";
 import { UDSPackage } from "../crd";
+import { Mode } from "../crd/generated/package-v1alpha1";
 
 export const PROMETHEUS_PRINCIPAL =
   "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus";
@@ -104,16 +105,23 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
 }
 
 /**
- * Purges orphaned Kubernetes resources of a specified kind within a namespace that do not match the provided generation.
+ * Purges orphaned Kubernetes resources of a specified kind within a namespace.
  *
- * @template T
- * @param {string} generation - The generation label to retain.
- * @param {string} namespace - The namespace to search for resources.
- * @param {string} pkgName - The package name label to filter resources.
- * @param {T} kind - The Kubernetes resource kind to purge.
- * @param {Logger} log - Logger instance for logging debug messages.
- * @param {Record<string, string>} [additionalLabels] - Optional additional label filters to further narrow down the resources to purge.
- * @returns {Promise<void>} - A promise that resolves when the operation is complete.
+ * A resource is considered orphaned and will be deleted if:
+ * 1. Its generation label is missing or doesn't match the current generation, OR
+ * 2. Its mesh-mode label doesn't match the current mesh mode (when currentMeshMode is provided)
+ *
+ * The mesh mode check enables cleanup when switching between sidecar and ambient modes,
+ * even if the package generation hasn't changed.
+ *
+ * @param generation - The generation label to retain.
+ * @param namespace - The namespace to search for resources.
+ * @param pkgName - The package name label to filter resources.
+ * @param kind - The Kubernetes resource kind to purge.
+ * @param log - Logger instance for logging debug messages.
+ * @param additionalLabels - Optional additional label filters to narrow down resources.
+ * @param currentMeshMode - Optional current mesh mode. When provided, resources with a
+ *   different mesh-mode label will also be purged.
  */
 export async function purgeOrphans<T extends GenericClass>(
   generation: string,
@@ -121,7 +129,8 @@ export async function purgeOrphans<T extends GenericClass>(
   pkgName: string,
   kind: T,
   log: Logger,
-  additionalLabels?: Record<string, string> | undefined,
+  additionalLabels?: Record<string, string>,
+  currentMeshMode?: Mode,
 ) {
   let query = K8s(kind).InNamespace(namespace).WithLabel("uds/package", pkgName);
 
@@ -135,11 +144,23 @@ export async function purgeOrphans<T extends GenericClass>(
 
   for (const resource of resources.items) {
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
+    const resourceMeshMode = resource.metadata?.labels?.["uds/mesh-mode"];
 
-    const shouldDelete = resourceGenLabel == null || resourceGenLabel !== generation;
+    // Delete if generation is missing or mismatched
+    const hasGenerationMismatch = resourceGenLabel == null || resourceGenLabel !== generation;
 
-    if (shouldDelete) {
-      log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
+    // Delete if mesh mode is provided and the resource has a different mesh mode
+    const hasMeshModeMismatch =
+      currentMeshMode != null && resourceMeshMode != null && resourceMeshMode !== currentMeshMode;
+
+    if (hasGenerationMismatch || hasMeshModeMismatch) {
+      const reason = hasMeshModeMismatch
+        ? `mesh-mode mismatch (${resourceMeshMode} != ${currentMeshMode})`
+        : `generation mismatch`;
+      log.debug(
+        { resource },
+        `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}: ${reason}`,
+      );
       await K8s(kind).Delete(resource);
     }
   }

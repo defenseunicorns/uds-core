@@ -5,6 +5,7 @@
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
+import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
@@ -354,6 +355,8 @@ export async function purgeAmbientEgressResources(
       sharedEgressPkgId,
       IstioAuthorizationPolicy,
       log,
+      undefined,
+      Mode.Ambient,
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;

@@ -12,6 +12,7 @@ import {
   Monitor,
   UDSPackage,
 } from "../../../crd";
+import { Mode } from "../../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../../config/config";
 import { matchesLabels } from "../../istio/waypoint-utils";
 import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
@@ -299,11 +300,13 @@ async function updatePolicy(
     monitorExemptions.push({ port: "15020", path: "/stats/prometheus" });
   }
 
+  const meshMode = isAmbient ? Mode.Ambient : Mode.Sidecar;
   const updateMetadata = (resource: IstioAuthorizationPolicy | IstioRequestAuthentication) => {
     resource!.metadata!.ownerReferences = ownerReferences;
     resource!.metadata!.labels = {
       "uds/package": pkg.metadata!.name!,
       "uds/generation": generation,
+      "uds/mesh-mode": meshMode,
     };
     return resource;
   };
@@ -355,15 +358,20 @@ async function updatePolicy(
   }
 
   try {
-    await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!);
+    await purgeOrphanPolicies(generation, namespace, pkg.metadata!.name!, meshMode);
   } catch (e) {
     log.error(e, `Failed to purge orphan auth policies ${event.name} in ${namespace}: ${e}`);
   }
 }
 
-async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
+async function purgeOrphanPolicies(
+  generation: string,
+  namespace: string,
+  pkgName: string,
+  currentMeshMode: Mode,
+) {
   for (const kind of [IstioAuthorizationPolicy, IstioRequestAuthentication]) {
-    await purgeOrphans(generation, namespace, pkgName, kind, log);
+    await purgeOrphans(generation, namespace, pkgName, kind, log, undefined, currentMeshMode);
   }
 }
 

@@ -85,6 +85,7 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
         "uds/package": ambientSharedEgressPkgId,
         "uds/generation": generation.toString(),
         "uds/for": "egress",
+        "uds/mesh-mode": "ambient",
       },
     },
     spec: {
