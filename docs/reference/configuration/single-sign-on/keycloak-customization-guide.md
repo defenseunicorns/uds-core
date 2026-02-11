@@ -40,6 +40,7 @@ This guide helps you choose the right approach for your customization needs.
 - Configuring session timeouts
 - Enabling/disabling authentication methods at install time
 - Simple branding (logo, favicon, background)
+- Configuring HTTP retry behavior for outgoing requests
 
 **Key Point**: Changes are applied via UDS bundle overrides and don't require rebuilding images.
 
@@ -130,6 +131,58 @@ packages:
   - Managing resources during upgrades
   - Advanced configurations not supported by Package CRs
 :::
+
+## HTTP Retry Configuration
+
+Keycloak can automatically retry failed outgoing HTTP requests to handle transient network errors or temporary service unavailability. This is useful for improving resilience when Keycloak communicates with external services (identity providers, databases, etc.).
+
+### Configuration
+
+HTTP retry behavior is disabled by default and must be explicitly enabled by setting `maxRetries` above `0`. Configure it via Helm chart values:
+
+```yaml
+packages:
+  - name: core
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: httpRetry.maxRetries
+              value: 2
+            - path: httpRetry.initialBackoffMillis
+              value: 1000
+            - path: httpRetry.backoffMultiplier
+              value: 2.0
+            - path: httpRetry.applyJitter
+              value: true
+            - path: httpRetry.jitterFactor
+              value: 0.5
+```
+
+### Configuration Options
+
+| Option                 | Description                           | Default |
+|------------------------|---------------------------------------|---------|
+| `maxRetries`           | Maximum retry attempts (0 = disabled) | `0`     |
+| `initialBackoffMillis` | Initial backoff time in milliseconds  | `1000`  |
+| `backoffMultiplier`    | Exponential backoff multiplier        | `2.0`   |
+| `applyJitter`          | Apply jitter to prevent retry storms  | `true`  |
+| `jitterFactor`         | Jitter factor for backoff variation   | `0.5`   |
+
+### When to Enable HTTP Retries
+
+**Enable retries when**:
+- Keycloak communicates with external identity providers over unreliable networks
+- Database connections experience transient failures
+- External services (email, LDAP, etc.) have occasional availability issues
+- OCSP responders need multiple attempts to validate certificates
+- You need improved resilience for production deployments
+
+**Keep disabled when**:
+- Network is stable and reliable
+- You want faster failure detection
+- External services have circuit breakers implemented
+- Development/testing environments where fast feedback is preferred
 
 ## Additional Resources
 

@@ -124,6 +124,18 @@ spec:
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
+            {{- if gt (int .Values.httpRetry.maxRetries) 0 }}
+            # HTTP retry configuration for outgoing requests
+            - "--spi-connections-http-client-default-max-retries={{ .Values.httpRetry.maxRetries }}"
+            - "--spi-connections-http-client-default-initial-backoff-millis={{ .Values.httpRetry.initialBackoffMillis }}"
+            - "--spi-connections-http-client-default-backoff-multiplier={{ .Values.httpRetry.backoffMultiplier }}"
+            {{- if not .Values.httpRetry.applyJitter }}
+            - "--spi-connections-http-client-default-apply-jitter=false"
+            {{- end }}
+            {{- if .Values.httpRetry.applyJitter }}
+            - "--spi-connections-http-client-default-jitter-factor={{ .Values.httpRetry.jitterFactor }}"
+            {{- end }}
+            {{- end }}
           {{- with .Values.lifecycleHooks }}
           lifecycle:
           {{- toYaml . | nindent 12 }}
