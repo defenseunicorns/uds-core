@@ -319,9 +319,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         }
 
         const path = url.pathname;
-        if (path === "/" || path === "/*") {
+        if (path === "/") {
           return req.Deny(
-            `The client ID "${client.clientId}" has redirectUris containing root paths ("/" or "/*"). Authservice clients cannot have root path redirect URIs.`,
+            `The client ID "${client.clientId}" has redirectUris containing root paths ("/"). Authservice clients cannot have root path redirect URIs.`,
           );
         }
       }
