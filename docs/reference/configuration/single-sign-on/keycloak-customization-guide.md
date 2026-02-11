@@ -138,7 +138,7 @@ Keycloak can automatically retry failed outgoing HTTP requests to handle transie
 
 ### Configuration
 
-HTTP retry behavior is disabled by default and must be explicitly enabled. Configure it via Helm chart values:
+HTTP retry behavior is disabled by default and must be explicitly enabled by setting `maxRetries` above `0`. Configure it via Helm chart values:
 
 ```yaml
 packages:
@@ -147,8 +147,6 @@ packages:
       keycloak:
         keycloak:
           values:
-            - path: httpRetry.enabled
-              value: true
             - path: httpRetry.maxRetries
               value: 2
             - path: httpRetry.initialBackoffMillis
@@ -165,8 +163,7 @@ packages:
 
 | Option                 | Description                           | Default |
 |------------------------|---------------------------------------|---------|
-| `enabled`              | Enable/disable HTTP retries           | `false` |
-| `maxRetries`           | Maximum retry attempts (0 = disabled) | `2`     |
+| `maxRetries`           | Maximum retry attempts (0 = disabled) | `0`     |
 | `initialBackoffMillis` | Initial backoff time in milliseconds  | `1000`  |
 | `backoffMultiplier`    | Exponential backoff multiplier        | `2.0`   |
 | `applyJitter`          | Apply jitter to prevent retry storms  | `true`  |
@@ -178,6 +175,7 @@ packages:
 - Keycloak communicates with external identity providers over unreliable networks
 - Database connections experience transient failures
 - External services (email, LDAP, etc.) have occasional availability issues
+- OCSP responders need multiple attempts to validate certificates
 - You need improved resilience for production deployments
 
 **Keep disabled when**:

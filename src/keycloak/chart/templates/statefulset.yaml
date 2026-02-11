@@ -124,7 +124,7 @@ spec:
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
-            {{- if .Values.httpRetry.enabled }}
+            {{- if gt (int .Values.httpRetry.maxRetries) 0 }}
             # HTTP retry configuration for outgoing requests
             - "--spi-connections-http-client-default-max-retries={{ .Values.httpRetry.maxRetries }}"
             - "--spi-connections-http-client-default-initial-backoff-millis={{ .Values.httpRetry.initialBackoffMillis }}"

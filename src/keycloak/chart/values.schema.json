@@ -709,9 +709,6 @@
     "httpRetry": {
       "type": "object",
       "properties": {
-        "enabled": {
-          "type": "boolean"
-        },
         "maxRetries": {
           "type": "number"
         },
