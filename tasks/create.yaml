@@ -11,11 +11,11 @@ variables:
 
   - name: REGISTRY1_PEPR_IMAGE
     # renovate: datasource=docker depName=registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller versioning=semver
-    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v1.0.8
+    default: registry1.dso.mil/ironbank/opensource/defenseunicorns/pepr/controller:v1.1.0
 
   - name: UNICORN_PEPR_IMAGE
     # renovate: datasource=github-tags depName=defenseunicorns/pepr versioning=semver
-    default: ghcr.io/defenseunicorns/pepr/private/controller:v1.0.8
+    default: ghcr.io/defenseunicorns/pepr/private/controller:v1.1.0
 
   - name: LAYER
 
