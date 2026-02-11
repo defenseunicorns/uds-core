@@ -149,13 +149,14 @@ export async function purgeOrphans<T extends GenericClass>(
     // Delete if generation is missing or mismatched
     const hasGenerationMismatch = resourceGenLabel == null || resourceGenLabel !== generation;
 
-    // Delete if mesh mode is provided and the resource has a different mesh mode
+    // Delete if mesh mode is provided and the resource is missing the label or has a different mode.
+    // This ensures old resources without the mesh-mode label get cleaned up during mode transitions.
     const hasMeshModeMismatch =
-      currentMeshMode != null && resourceMeshMode != null && resourceMeshMode !== currentMeshMode;
+      currentMeshMode != null && (resourceMeshMode == null || resourceMeshMode !== currentMeshMode);
 
     if (hasGenerationMismatch || hasMeshModeMismatch) {
       const reason = hasMeshModeMismatch
-        ? `mesh-mode mismatch (${resourceMeshMode} != ${currentMeshMode})`
+        ? `mesh-mode mismatch (${resourceMeshMode ?? "missing"} != ${currentMeshMode})`
         : `generation mismatch`;
       log.debug(
         { resource },

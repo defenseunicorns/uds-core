@@ -434,6 +434,29 @@ describe("purgeOrphans", () => {
     expect(mockDelete).not.toHaveBeenCalled();
   });
 
+  it("should delete old resources missing mesh-mode label when currentMeshMode is provided", async () => {
+    const resources = {
+      items: [
+        {
+          metadata: {
+            name: "old-resource-no-mesh-label",
+            labels: { "uds/generation": "1" }, // no mesh-mode label (old resource)
+          },
+          kind: "Policy",
+        },
+      ],
+    };
+
+    mockK8sClient.Get = vi.fn().mockResolvedValue(resources);
+    vi.mocked(K8s as Mock).mockImplementation(() => mockK8sClient);
+
+    await purgeOrphans("1", "test-ns", "test-pkg", kind.Pod, mockLogger, undefined, Mode.Ambient);
+
+    // Should delete because resource is missing mesh-mode label
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    expect(mockDelete).toHaveBeenCalledWith(resources.items[0]);
+  });
+
   it("should ignore mesh mode check when currentMeshMode is not provided", async () => {
     const resources = {
       items: [
