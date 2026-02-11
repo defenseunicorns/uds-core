@@ -7,7 +7,6 @@ import { describe, expect, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { IstioState } from "../istio/namespace";
 import {
   createDenyAllExceptWaypointPolicy,
   findMatchingSsoClient,
@@ -67,7 +66,7 @@ describe("flexible gateway configuration", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe(
@@ -96,7 +95,7 @@ describe("flexible gateway configuration", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
@@ -122,7 +121,7 @@ describe("flexible gateway configuration", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.spec?.rules?.[0].from?.[0].source).toEqual({
@@ -150,7 +149,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe(
@@ -177,7 +176,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-kubeapi-test-ingress-kubeapi-test-kubeapi");
@@ -202,7 +201,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-kubenodes-test-ingress-kubenodes-test-kubenodes");
@@ -230,7 +229,7 @@ describe("authorization policy generation", () => {
     const policies: AuthorizationPolicy[] = await generateAuthorizationPolicies(
       pkg,
       "curl-ns-remote-cidr",
-      IstioState.Ambient,
+      Mode.Ambient,
     );
     expect(policies).toHaveLength(1);
     const policy = policies[0];
@@ -300,7 +299,7 @@ describe("authorization policy generation", () => {
     const policies = await generateAuthorizationPolicies(
       pkg,
       "authservice-sidecar-test-app",
-      IstioState.Ambient,
+      Mode.Ambient,
     );
     // We expect exactly two policies: one for the expose rule and one for the allow rule.
     expect(policies.length).toBe(2);
@@ -356,11 +355,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(
-      pkg,
-      "test-tenant-app",
-      IstioState.Ambient,
-    );
+    const policies = await generateAuthorizationPolicies(pkg, "test-tenant-app", Mode.Ambient);
     expect(policies.length).toBe(2);
     const names = policies.map(p => p.metadata?.name);
     expect(new Set(names).size).toBe(2);
@@ -384,7 +379,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "loki", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "loki", Mode.Ambient);
     // With one allow rule (Ingress/IntraNamespace), expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -428,7 +423,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "falco", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "falco", Mode.Ambient);
     // With current design we expect three policies (Ingress IntraNamespace + two Prometheus metrics)
     expect(policies.length).toBe(3);
 
@@ -511,7 +506,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "vector", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "vector", Mode.Ambient);
     expect(policies.length).toBe(1);
     const policy = policies[0];
     expect(policy.metadata?.name).toBe("protect-vector-ingress-prometheus-metrics");
@@ -546,7 +541,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "velero", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "velero", Mode.Ambient);
     // Expect one policy
     expect(policies.length).toBe(1);
     const policy = policies[0];
@@ -584,7 +579,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "authservice", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "authservice", Mode.Ambient);
     // Expect two policies
     expect(policies.length).toBe(2);
     const nsPolicy = policies.find(
@@ -630,7 +625,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "authservice", IstioState.Sidecar);
+    const policies = await generateAuthorizationPolicies(pkg, "authservice", Mode.Sidecar);
     // Expect three policies
     expect(policies.length).toBe(3);
     const nsPolicy = policies.find(
@@ -703,7 +698,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "monitoring", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "monitoring", Mode.Ambient);
     // Expect three policies
     expect(policies.length).toBe(3);
     const nsPolicy = policies.find(
@@ -781,7 +776,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "grafana", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "grafana", Mode.Ambient);
     // Expect three policies: one from expose, one from allow, and one monitor policy
     expect(policies.length).toBe(3);
     const exposePolicy = policies.find(
@@ -947,7 +942,7 @@ describe("authorization policy generation", () => {
       },
     };
 
-    const policies = await generateAuthorizationPolicies(pkg, "keycloak", IstioState.Ambient);
+    const policies = await generateAuthorizationPolicies(pkg, "keycloak", Mode.Ambient);
     // We expect 6 policies
     expect(policies.length).toBe(6);
 
@@ -1090,7 +1085,7 @@ describe("createDenyAllExceptWaypointPolicy", () => {
     const waypointName = "test-waypoint";
     const appSelector = { app: "test-app" };
 
-    const policy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
+    const policy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector, Mode.Ambient);
 
     // Verify basic policy structure
     expect(policy.apiVersion).toBe("security.istio.io/v1beta1");
@@ -1103,6 +1098,7 @@ describe("createDenyAllExceptWaypointPolicy", () => {
       "uds/package": "test-app",
       "uds/generation": "1",
       "uds/for": "network",
+      "uds/mesh-mode": "ambient",
       "uds/ambient-waypoint": "test-waypoint",
     });
 
