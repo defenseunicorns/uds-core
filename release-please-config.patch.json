@@ -7,7 +7,6 @@
       "versioning": "always-bump-patch",
       "skip-changelog": true,
       "extra-files": [
-        "README.md",
         "packages/checkpoint-dev/zarf.yaml",
         "packages/base/zarf.yaml",
         "packages/identity-authorization/zarf.yaml",
