@@ -55,6 +55,11 @@ mounts:
       subPath: disable-rules.yaml
       readOnly: true
 
+containerSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  privileged: true
+
 falcosidekick:
   enabled: true
 
