@@ -10,8 +10,9 @@ spec:
   exemptions:
     - policies:
         - DisallowHostNamespaces
+        - DisallowPrivileged
         - RequireNonRootUser
-        - RestrictCapabilities
+        - DropAllCapabilities
         - RestrictHostPathWrite
         - RestrictVolumeTypes
       matcher:
@@ -19,6 +20,6 @@ spec:
         name: "falco-(?!falcosidekick-).*" # regex to match falco but not falcosidekick
       title: "falco"
       description: "Falco requires elevated privileges and host access for runtime security monitoring.
-          As a security monitoring tool, Falco needs to use host namespaces, run as root, add security
-          capabilities, access host filesystems, and use restricted volume types to effectively monitor
-          system calls and detect security threats at the kernel level."
+          As a security monitoring tool, Falco needs to run with privileged access, use host namespaces,
+          run as root, retain security capabilities, access host filesystems, and use restricted volume types
+          to effectively monitor system calls and detect security threats at the kernel level."

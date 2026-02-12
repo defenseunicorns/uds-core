@@ -55,19 +55,10 @@ mounts:
       subPath: disable-rules.yaml
       readOnly: true
 
-# This uses the least privileged setup for Falco: https://falco.org/docs/setup/container/#docker-least-privileged-ebpf-probe
 containerSecurityContext:
   runAsUser: 0
   runAsGroup: 0
-  privileged: false
-  capabilities:
-    drop:
-      - ALL
-    add:
-      - BPF
-      - SYS_RESOURCE
-      - PERFMON
-      - SYS_PTRACE
+  privileged: true
 
 falcosidekick:
   enabled: true
