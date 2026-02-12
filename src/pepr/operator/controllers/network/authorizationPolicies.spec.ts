@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { K8s } from "pepr";
+import { describe, expect, Mock, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
@@ -1115,6 +1116,134 @@ describe("createDenyAllExceptWaypointPolicy", () => {
     expect(policy.spec?.rules?.[0].from?.[0].source?.notPrincipals).toEqual([
       "cluster.local/ns/test-ns/sa/test-waypoint",
     ]);
+  });
+});
+
+describe("cleanup mismatched mesh-mode policies", () => {
+  test("should delete policies with mismatched mesh-mode labels", async () => {
+    const mockDelete = vi.fn().mockResolvedValue({});
+    const mockApply = vi.fn().mockResolvedValue({});
+
+    // Mock to return mismatched policies on both calls (purgeOrphans and cleanup check)
+    const mockGet = vi.fn().mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "policy-with-wrong-mode",
+            namespace: "test-ns",
+            labels: {
+              "uds/package": "test-pkg",
+              "uds/generation": "1", // Matching generation to avoid purgeOrphans deletion
+              "uds/for": "network",
+              "uds/mesh-mode": "sidecar", // Wrong mode - package is in ambient
+            },
+          },
+        },
+        {
+          metadata: {
+            name: "policy-with-no-mode",
+            namespace: "test-ns",
+            labels: {
+              "uds/package": "test-pkg",
+              "uds/generation": "1", // Matching generation to avoid purgeOrphans deletion
+              "uds/for": "network",
+              // Missing uds/mesh-mode label
+            },
+          },
+        },
+      ],
+    });
+
+    vi.mocked(K8s as Mock).mockImplementation(() => ({
+      Apply: mockApply,
+      InNamespace: vi.fn().mockReturnThis(),
+      WithLabel: vi.fn().mockReturnThis(),
+      Get: mockGet,
+      Delete: mockDelete,
+    }));
+
+    const pkg: UDSPackage = {
+      metadata: { name: "test-pkg", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          serviceMesh: { mode: Mode.Ambient }, // Package is in Ambient mode
+          allow: [
+            {
+              direction: Direction.Ingress,
+              selector: { app: "test" },
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+
+    // Verify Delete was called twice (once for each mismatched policy)
+    expect(mockDelete).toHaveBeenCalledTimes(2);
+    expect(mockDelete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: "policy-with-wrong-mode" }),
+      }),
+    );
+    expect(mockDelete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ name: "policy-with-no-mode" }),
+      }),
+    );
+  });
+
+  test("should not delete policies with matching mesh-mode labels", async () => {
+    const mockDelete = vi.fn().mockResolvedValue({});
+    const mockApply = vi.fn().mockResolvedValue({});
+
+    // Mock to return matching policy on both calls (purgeOrphans and cleanup check)
+    const mockGet = vi.fn().mockResolvedValue({
+      items: [
+        {
+          metadata: {
+            name: "policy-with-correct-mode",
+            namespace: "test-ns",
+            labels: {
+              "uds/package": "test-pkg",
+              "uds/generation": "1", // Matching generation
+              "uds/for": "network",
+              "uds/mesh-mode": "ambient", // Correct mode
+            },
+          },
+        },
+      ],
+    });
+
+    vi.mocked(K8s as Mock).mockImplementation(() => ({
+      Apply: mockApply,
+      InNamespace: vi.fn().mockReturnThis(),
+      WithLabel: vi.fn().mockReturnThis(),
+      Get: mockGet,
+      Delete: mockDelete,
+    }));
+
+    const pkg: UDSPackage = {
+      metadata: { name: "test-pkg", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          serviceMesh: { mode: Mode.Ambient },
+          allow: [
+            {
+              direction: Direction.Ingress,
+              selector: { app: "test" },
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+
+    // Verify Delete was not called
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 });
 

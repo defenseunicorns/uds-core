@@ -188,6 +188,7 @@ function buildAuthPolicy(
         "uds/package": pkgName,
         "uds/generation": generation,
         "uds/for": "network",
+        "uds/mesh-mode": pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient,
         ...additionalLabels,
       },
       ownerReferences: getOwnerRef(pkg),
@@ -198,6 +199,49 @@ function buildAuthPolicy(
       rules: [ruleEntry],
     },
   };
+}
+
+/**
+ * Cleans up authorization policies that either don't have a mesh-mode label
+ * or have a mesh-mode that doesn't match the current package configuration.
+ *
+ * @param pkg - The UDSPackage resource containing the current mesh mode configuration
+ * @param pkgNamespace - The namespace where the authorization policies are deployed
+ * @param pkgName - The name of the package for label filtering
+ * @returns A promise that resolves when cleanup is complete
+ * @throws Will rethrow any errors encountered during policy deletion
+ */
+async function cleanupMismatchedMeshModePolicies(
+  pkg: UDSPackage,
+  pkgNamespace: string,
+  pkgName: string,
+): Promise<void> {
+  const currentMeshMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+
+  try {
+    // Get all AuthorizationPolicies for this package in the namespace
+    const policies = await K8s(AuthorizationPolicy)
+      .InNamespace(pkgNamespace)
+      .WithLabel("uds/package", pkgName)
+      .WithLabel("uds/for", "network")
+      .Get();
+
+    for (const policy of policies.items) {
+      const policyMeshMode = policy.metadata?.labels?.["uds/mesh-mode"];
+
+      // Delete if mesh-mode label is missing or doesn't match current mode
+      if (!policyMeshMode || policyMeshMode !== currentMeshMode) {
+        log.debug(
+          `Deleting AuthorizationPolicy ${policy.metadata?.name} with mismatched mesh-mode: ` +
+            `current=${currentMeshMode}, policy=${policyMeshMode || "undefined"}`,
+        );
+        await K8s(AuthorizationPolicy).Delete(policy);
+      }
+    }
+  } catch (err) {
+    log.error(err, `Error cleaning up mismatched mesh-mode policies in namespace ${pkgNamespace}`);
+    throw err;
+  }
 }
 
 /**
@@ -410,6 +454,9 @@ export async function generateAuthorizationPolicies(
   await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log, {
     "uds/for": "network",
   });
+
+  // Cleanup any authpolicies that don't match the current meshmode or don't have a mesh-mode label at all.
+  await cleanupMismatchedMeshModePolicies(pkg, pkgNamespace, pkgName);
 
   return policies;
 }
