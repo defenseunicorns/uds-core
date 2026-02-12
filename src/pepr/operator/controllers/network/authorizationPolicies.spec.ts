@@ -1105,6 +1105,7 @@ describe("createDenyAllExceptWaypointPolicy", () => {
       "uds/generation": "1",
       "uds/for": "network",
       "uds/ambient-waypoint": "test-waypoint",
+      "uds/mesh-mode": "ambient",
     });
 
     // Verify spec

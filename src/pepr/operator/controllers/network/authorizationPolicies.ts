@@ -515,6 +515,7 @@ export function createDenyAllExceptWaypointPolicy(
         "uds/generation": pkg.metadata?.generation?.toString() ?? "0",
         "uds/for": "network",
         "uds/ambient-waypoint": waypointName,
+        "uds/mesh-mode": Mode.Ambient, // This policy is specifically for ambient mode
       },
       ownerReferences: getOwnerRef(pkg),
     },
