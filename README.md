@@ -53,13 +53,9 @@ UDS Core publishes bundles you can use for trying out UDS Core or for UDS Packag
 
 If you want to try out UDS Core, you can use the [k3d-core-demo bundle](./bundles/k3d-standard/README.md) to create a local k3d cluster with UDS Core installed by running the following command:
 
-<!-- x-release-please-start-version -->
-
 ```bash
 uds deploy k3d-core-demo:latest
 ```
-
-<!-- x-release-please-end -->
 
 #### UDS Package Development
 
@@ -67,13 +63,9 @@ In addition to the demo bundle, a [k3d-slim-dev bundle](./bundles/k3d-slim-dev/R
 
 Deploy Istio, Keycloak and Pepr:
 
-<!-- x-release-please-start-version -->
-
 ```bash
 uds deploy k3d-core-slim-dev:latest
 ```
-
-<!-- x-release-please-end -->
 
 > [!IMPORTANT]
 > The k3d-core-slim-dev bundle is intended for dev/test/demo environments and should not be used for production use.

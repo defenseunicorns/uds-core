@@ -1,7 +1,7 @@
 # Copyright 2025 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# egress-ambient-1 tests curl to example.com via 443
+# egress-ambient-1 tests curl to bing.com via 443
 apiVersion: v1
 kind: Service
 metadata:
