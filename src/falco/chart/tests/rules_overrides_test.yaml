@@ -1,0 +1,233 @@
+suite: overrides ConfigMap (override-rules.yaml)
+templates:
+  - templates/rules-configmap.yaml
+
+tests:
+  - it: renders override ConfigMap when list overrides exist (append)
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides:
+        lists:
+          my_programs:
+            action: append
+            items:
+              - cp
+              - mv
+      extraRules: []
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+      - exists:
+          path: data["override-rules.yaml"]
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '- list: "my_programs"'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: "(?s)items:.*- cp"
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: "(?s)items:.*- mv"
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)override:\n\s*items:\s*append'
+
+  - it: renders override ConfigMap when macro overrides exist (replace)
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides:
+        macros:
+          open_write:
+            action: replace
+            condition: "evt.type=open"
+      extraRules: []
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+      - exists:
+          path: data["override-rules.yaml"]
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '- macro: "open_write"'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)condition:\s*"evt\.type=open"'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)override:\n\s*condition:\s*replace'
+
+  - it: renders override ConfigMap when rule exception overrides exist (append) and does NOT emit rule condition override
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides:
+        rules:
+          "Terminal shell in container":
+            exceptions:
+              action: append
+              items:
+                - name: allow_ci_shell
+                  fields:
+                    - container.image.repository
+                  comps:
+                    - in
+                  values:
+                    - ghcr.io/my-org/ci-runner
+      extraRules: []
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+      - exists:
+          path: data["override-rules.yaml"]
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '- rule: "Terminal shell in container"'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: "exceptions:"
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: 'name:\s*allow_ci_shell'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)override:\n\s*exceptions:\s*append'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: 'values:\s*\n\s*-\s*ghcr\.io/my-org/ci-runner'
+
+      # exceptions-only UX: do not render condition for rule overrides
+      - notMatchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)- rule: "Terminal shell in container".*\n\s*condition:'
+
+  - it: renders override ConfigMap when extraRules is non-empty
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides: {}
+      extraRules:
+        - rule: "My Local Rule"
+          desc: "Example additional rule"
+          condition: evt.type=open
+          output: "opened file"
+          priority: NOTICE
+          tags: ["local"]
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+      - exists:
+          path: data["override-rules.yaml"]
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)-.*rule:\s*My Local Rule'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)condition:\s*evt\.type=open'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)condition:\s*evt\.type=open'
+
+  - it: renders override ConfigMap with lists + macros + rule exceptions + extraRules together (order sanity)
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides:
+        lists:
+          trusted_images:
+            action: replace
+            items:
+              - registry.corp/*
+        macros:
+          open_write:
+            action: append
+            condition: "or evt.type=openat"
+        rules:
+          "Terminal shell in container":
+            exceptions:
+              action: replace
+              items:
+                - name: allow_shell
+                  values:
+                    - bash
+                    - sh
+      extraRules:
+        - list: "extra_list"
+          items: ["x"]
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+
+      - exists:
+          path: data["override-rules.yaml"]
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)- list: "trusted_images".*override:\n\s*items:\s*replace'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)- macro: "open_write".*override:\n\s*condition:\s*append'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)- rule: "Terminal shell in container".*override:\n\s*exceptions:\s*replace'
+
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '(?s)- list: "trusted_images".*- macro: "open_write".*- rule: "Terminal shell in container".*- items:\s*\n\s*-\s*x.*\n\s*list:\s*extra_list'
