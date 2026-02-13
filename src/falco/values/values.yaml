@@ -60,6 +60,9 @@ containerSecurityContext:
   runAsGroup: 0
   privileged: true
 
+podSecurityContext:
+  runAsNonRoot: false
+
 falcosidekick:
   enabled: true
 
