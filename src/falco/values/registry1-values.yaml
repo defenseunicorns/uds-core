@@ -4,7 +4,7 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/falcosecurity/falco
-  tag: 0.42.1
+  tag: 0.43.0
   pullPolicy: IfNotPresent
 
 falcosidekick:
