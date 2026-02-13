@@ -16,6 +16,7 @@ export enum Component {
   OPERATOR_KEYCLOAK = "operator.keycloak",
   OPERATOR_AUTHSERVICE = "operator.authservice",
   OPERATOR_MONITORING = "operator.monitoring",
+  OPERATOR_UPTIME = "operator.uptime",
   OPERATOR_NETWORK = "operator.network",
   OPERATOR_PACKAGES = "operator.packages",
   OPERATOR_SECRETS = "operator.secrets",

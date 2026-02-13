@@ -15,7 +15,7 @@ import {
   IstioServiceEntry,
 } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { UDSConfig } from "../config/config";
+import { getFqdn } from "../domain-utils";
 import { sanitizeResourceName } from "../utils";
 import { egressWaypointName } from "./ambient-waypoint";
 import {
@@ -60,20 +60,10 @@ export function generateIngressServiceEntry(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const { gateway = Gateway.Tenant, host } = expose;
+  const { gateway = Gateway.Tenant } = expose;
 
   const name = generateSEName(pkgName, expose);
-
-  // Get the correct domain based on gateway
-  const domain = gateway === Gateway.Admin ? UDSConfig.adminDomain : UDSConfig.domain;
-
-  // Add the host to the domain, unless this is the reserved root domain host (`.`)
-  let fqdn = "";
-  if (host === ".") {
-    fqdn = domain;
-  } else {
-    fqdn = `${host}.${domain}`;
-  }
+  const fqdn = getFqdn(expose);
 
   const serviceEntryPort: IstioPort = {
     name: "https",

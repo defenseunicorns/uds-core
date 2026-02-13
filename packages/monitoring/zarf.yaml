@@ -26,7 +26,7 @@ components:
 
   # Blackbox Exporter
   - name: prometheus-blackbox-exporter
-    required: false
+    required: true
     import:
       path: ../../src/prometheus-stack
 

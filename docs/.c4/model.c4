@@ -218,6 +218,7 @@ model {
           prometheus -> kube-state-metrics
           prometheus -> node-exporter
           prometheus -> alertmanager
+          prometheus -> blackbox-exporter
 
           // observability relationships
           prometheus -[observability]-> custom-application 'scrapes application metrics'
@@ -252,6 +253,15 @@ model {
 
           // observability relationships
           alertmanager -[observability]-> ext-alerts 'routes alerts to external systems'
+        }
+
+        blackbox-exporter = pod {
+          title 'Blackbox Exporter'
+          summary ' '
+          description 'Probes external and internal endpoints to monitor service availability and performance. Performs active monitoring by probing HTTP/HTTPS endpoints. Exposes metrics about probe success, response times, and certificate expiration for monitoring critical services and detecting outages.'
+
+          // observability relationships
+          blackbox-exporter -[observability]-> custom-application 'probes application endpoints'
         }
       }
 

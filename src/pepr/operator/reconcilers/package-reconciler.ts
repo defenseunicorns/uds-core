@@ -21,6 +21,7 @@ import { Client } from "../controllers/keycloak/types";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
+import { probe } from "../controllers/uptime/probe";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -124,6 +125,9 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   monitors.push(...(await podMonitor(pkg, namespace!)));
   monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
+  // Configure the Uptime Probes
+  const probes = await probe(pkg, namespace!);
+
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);
 
@@ -134,6 +138,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
     authserviceClients,
     endpoints,
     monitors,
+    probes,
     networkPolicyCount: netPol.length,
     authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
     meshMode: istioMode,

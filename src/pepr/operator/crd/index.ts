@@ -70,6 +70,8 @@ export {
   Scheme as ServiceMonitorScheme,
 } from "./generated/prometheus/servicemonitor-v1";
 
+export { Probe as PrometheusProbe } from "./generated/prometheus/probe-v1";
+
 export {
   Action as IstioAction,
   AuthorizationPolicy as IstioAuthorizationPolicy,
