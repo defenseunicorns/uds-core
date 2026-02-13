@@ -27,19 +27,19 @@ UDS Core ships with **sandbox** and **incubating** rulesets from the Falco commu
 
 #### Enabling and Configuring Rulesets
 
-To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/default-rules/) rulesets and exclude specific rules, override the `extraRules` value in your UDS Core bundle:
+To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/default-rules/) rulesets and exclude specific rules, override the `falco.uds-falco-config` value in your UDS Core bundle:
 
 ```yaml
-  overrides:
-    falco:
-      uds-falco-config:
-        values:
-          - path: "sandboxRulesEnabled"
-            value: true
-          - path: "incubatingRulesEnabled"
-            value: true
-          - path: "disabledRules"
-            value: ["Write below root", "Read environment variable from /proc files"]
+overrides:
+  falco:
+    uds-falco-config:
+      values:
+        - path: "sandboxRulesEnabled"
+          value: true
+        - path: "incubatingRulesEnabled"
+          value: true
+        - path: "disabledRules"
+          value: ["Write below root", "Read environment variable from /proc files"]
 ```
 
 This configuration:
@@ -47,24 +47,95 @@ This configuration:
 1. Enables the sandbox ruleset while excluding the "Write below root" rule.
 2. Enables the incubating ruleset while excluding the "Read environment variable from /proc files" rule.
 
-#### Finding Rule Names for `disabledRules`
+#### Disable Rules
 
-The rule names used in the `disabledRules` array should match the `rule` field from the Falco rules files. `disabledRules` applies to all rulesets from falco, including the default rules and any additional rulesets you enable. You can find these rule names in the following locations:
+You can explicitly disable any Falco rule by name using the `disabledRules` value. This is useful for reducing noise or suppressing rules that are not relevant to your environment. The rules you list here will be disabled across all enabled rulesets (stable, sandbox, and incubating).
 
-1. **From Falco Official Documentation**:
-  - [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
+To use this feature, provide an array of rule names under the `disabledRules` value in your configuration. The names must match the `rule` field in the Falco rules files.
 
-2. **In the rule files shipped with UDS Core**:
-   - Sandbox rules: [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml)
-   - Incubating rules: [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml)
+**How to find rule names:**
 
-   Look for entries that start with `- rule:` to find the rule names.
+1. **Falco Official Documentation:**
 
-3. **From Falco logs**:
-   When Falco detects an event, it logs the rule name in the output. You can find these logs by querying Loki with:
-   ```txt
-   {rule=~".+"}
-   ```
+- [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
+
+1. **UDS Core rule files:**
+
+- Stable rules: ['src/falco/chart/rules/stable-rules.yaml'](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml)
+- Sandbox rules: [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml)
+- Incubating rules: [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml)
+- Look for entries that start with `- rule:` to find the rule names.
+
+1. **Falco logs:**
+
+- When Falco detects an event, it logs the rule name in the output. You can find these logs by querying Loki with:
+
+  ```txt
+  {rule=~".+"}
+  ```
+
+### Rule Overrides and Custom Rules
+
+In addition to enabling/disabling rulesets, you can customize Falco behavior with the following values:
+
+- `overrides.lists`: modify list items used by Falco rules.
+- `overrides.macros`: modify macro conditions used by rules.
+- `overrides.rules`: add rule exceptions for specific rules.
+- `extraRules`: define entirely new Falco rules.
+
+#### Override Values Example
+
+```yaml
+overrides:
+  falco:
+    uds-falco-config:
+      values:
+        - path: overrides
+          value:
+            lists:
+              trusted_images:
+                action: replace
+                items:
+                  - "registry.corp/*"
+                  - "gcr.io/distroless/*"
+            macros:
+              open_write:
+                action: append
+                condition: "or evt.type=openat"
+            rules:
+              "Unexpected UDP Traffic":
+                exceptions:
+                  action: append
+                  items:
+                    - name: allow_udp_in_smoke_ns
+                      fields: ["proc.name", "fd.l4proto"]
+                      comps: ["=", "="]
+                      values:
+                        - ["iptables-restor", "udp"]
+        - path: extraRules
+          value:
+            - rule: "My Local Rule"
+              desc: "Example additional rule"
+              condition: evt.type=open
+              output: "opened file"
+              priority: NOTICE
+              tags: ["local"]
+```
+
+#### Value Reference
+
+- `overrides.lists.<listName>.action`: how to apply list items (for example `replace` or `append`).
+- `overrides.lists.<listName>.items`: list entries to apply.
+- `overrides.macros.<macroName>.action`: how to apply the macro condition.
+- `overrides.macros.<macroName>.condition`: macro condition string.
+- `overrides.rules.<ruleName>.exceptions.action`: how to apply exceptions.
+- `overrides.rules.<ruleName>.exceptions.items`: exception entries (`name`, `fields`, `comps`, `values`).
+- `extraRules`: array of Falco rule objects (`rule`, `desc`, `condition`, `output`, `priority`, `tags`, etc.).
+
+**Exception Structure Rules**
+
+- `fields`, `comps`, and `values` must have the same length.
+- Each element in `values` must itself be an array.
 
 ### Querying Events with Loki
 
@@ -89,10 +160,11 @@ The upstream Falco helm chart includes a Grafana dashboard out of the box for vi
 
 ### External Alert Forwarding
 
-While Loki integration provides centralized logging of Falco events, it's recommended to configure external alert forwarding using [Falco Sidekick's native output forwarding](https://github.com/falcosecurity/falcosidekick#outputs) for real-time notifications.  It is generally a good idea to send these alerts to a messaging platform like Slack, Microsoft Teams where these security events can be more visbile to relevant teams.
+While Loki integration provides centralized logging of Falco events, it's recommended to configure external alert forwarding using [Falco Sidekick's native output forwarding](https://github.com/falcosecurity/falcosidekick#outputs) for real-time notifications. It is generally a good idea to send these alerts to a messaging platform like Slack, Microsoft Teams where these security events can be more visbile to relevant teams.
 
 :::tip[Network Egress]
-By default, the Falco UDS Package locks down network egress for security reasons.  If you need to ship alerts to external services, ensure you override the `additionalNetworkAllow` value like so:
+By default, the Falco UDS Package locks down network egress for security reasons. If you need to ship alerts to external services, ensure you override the `additionalNetworkAllow` value like so:
+
 ```yaml
 packages:
   - name: core
@@ -115,6 +187,7 @@ packages:
                     remoteProtocol: TLS
                     description: "Allow egress Falco Sidekick to your.remotehost.com" # update description as needed
 ```
+
 :::
 
 #### Slack Integration
@@ -158,7 +231,7 @@ packages:
                     app.kubernetes.io/name: falcosidekick
                     ports:
                       - 443
-                    remoteHost: api.slack.com 
+                    remoteHost: api.slack.com
                     remoteProtocol: TLS
                     description: "Allow egress Falco Sidekick to Slack API"
 ```
