@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.62.0](https://github.com/defenseunicorns/uds-core/compare/v0.61.0...v0.62.0) (2026-02-13)
+
+
+### Features
+
+* expose keycloak http client retry configurations ([#2358](https://github.com/defenseunicorns/uds-core/issues/2358)) ([75d5154](https://github.com/defenseunicorns/uds-core/commit/75d5154590d46d38cf665265c72bde93b65b7b71))
+
+
+### Bug Fixes
+
+* add logic to cleanup stale network authpolicies when default meshmode changes ([#2368](https://github.com/defenseunicorns/uds-core/issues/2368)) ([8aa4369](https://github.com/defenseunicorns/uds-core/commit/8aa43694b12a158b6024abd93e4f4c90e41b44c1))
+* allow access and distribution requirements in classification banner ([#2363](https://github.com/defenseunicorns/uds-core/issues/2363)) ([9fa29dc](https://github.com/defenseunicorns/uds-core/commit/9fa29dcd038f5222e3e3fced3586f13230c6bee0))
+* revert breaking change that required non wildcard paths in redirecturis ([#2365](https://github.com/defenseunicorns/uds-core/issues/2365)) ([829547b](https://github.com/defenseunicorns/uds-core/commit/829547baa7ecfa44a6de977770acff2c8629aaa8))
+
+
+### Miscellaneous
+
+* **deps:** update falco ([#2251](https://github.com/defenseunicorns/uds-core/issues/2251)) ([04c6c7b](https://github.com/defenseunicorns/uds-core/commit/04c6c7b5927a80b8511ec45b206c75be54c90751))
+* **deps:** update pepr to v1.1.0 ([#2361](https://github.com/defenseunicorns/uds-core/issues/2361)) ([c462ec7](https://github.com/defenseunicorns/uds-core/commit/c462ec75e6019565c0426af0b701d25b66905dad))
+* **deps:** update prometheus-stack ([#2304](https://github.com/defenseunicorns/uds-core/issues/2304)) ([bc74a58](https://github.com/defenseunicorns/uds-core/commit/bc74a58733b73b09fca6f32b285ad4bcaed7f5af))
+* explicitly set runAsNonRoot false for vector/falco ([#2378](https://github.com/defenseunicorns/uds-core/issues/2378)) ([dfb2816](https://github.com/defenseunicorns/uds-core/commit/dfb2816d4f94dd44e07a69f2079e8a88a1c12d48))
+* separate IAC support dependencies in renovate ([#2355](https://github.com/defenseunicorns/uds-core/issues/2355)) ([d3c83e5](https://github.com/defenseunicorns/uds-core/commit/d3c83e5022ed7686067b6e088b512c3ea6119122))
+* set explicit securityContext for Falco ([#2367](https://github.com/defenseunicorns/uds-core/issues/2367)) ([5cc2c77](https://github.com/defenseunicorns/uds-core/commit/5cc2c772fc223651554309a688d466cd8ccb5685))
+* swap example.com for bing.com in our network tests ([#2383](https://github.com/defenseunicorns/uds-core/issues/2383)) ([ff7a75b](https://github.com/defenseunicorns/uds-core/commit/ff7a75b4a15f918020e71fda50b3683b5c671145))
+
+
+### Documentation
+
+* adjust wording/app list for private CA doc ([#2356](https://github.com/defenseunicorns/uds-core/issues/2356)) ([017e255](https://github.com/defenseunicorns/uds-core/commit/017e25510af66135830cdb97cf8a132bcae53025))
+* cleanup lingering readme comments ([#2384](https://github.com/defenseunicorns/uds-core/issues/2384)) ([b7e116a](https://github.com/defenseunicorns/uds-core/commit/b7e116af3b9832d8df418e9ab68c794ec07b9cc8))
+* use latest tag in readme ([#2375](https://github.com/defenseunicorns/uds-core/issues/2375)) ([14665a3](https://github.com/defenseunicorns/uds-core/commit/14665a3b177b5daf7f98ef68004b93b6a19d5e8e))
+
 ## [0.61.0](https://github.com/defenseunicorns/uds-core/compare/v0.60.0...v0.61.0) (2026-02-10)
 
 
