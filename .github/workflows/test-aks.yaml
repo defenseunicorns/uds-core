@@ -93,8 +93,8 @@ jobs:
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
-      - name: Wait 15m for control plane to stabilize
-        run: sleep 900
+      - name: Wait 30m for control plane to stabilize
+        run: sleep 1800
 
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
