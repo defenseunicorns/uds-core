@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "0.60.0"
+    default: "0.61.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -71,7 +71,7 @@ tasks:
         cmd: uds deploy bundles/base-shim/uds-bundle-base-shim-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
       - description: "Deploy a single UDS Core Layer (must set UDS_LAYER environment variable)"
         if: ${{ ne .inputs.layer "base"}}
-        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-${{ index .inputs "layer" }}-${UDS_ARCH}-${VERSION}.tar.zst --confirm --components '*'
 
   - name: resolve-latest-core-release
     actions:
@@ -157,9 +157,9 @@ tasks:
   - name: standard-package
     actions:
       - description: "Deploy the standard UDS Core zarf package"
-        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress --components '*'
+        cmd: uds zarf package deploy build/zarf-package-core-${UDS_ARCH}-${VERSION}.tar.zst --confirm --components '*'
 
   - name: checkpoint-package
     actions:
       - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
-        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
+        cmd: uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm

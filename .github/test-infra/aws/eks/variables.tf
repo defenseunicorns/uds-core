@@ -82,7 +82,7 @@ variable "databases" {
 variable "kubernetes_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.33"
+  default     = "1.34"
 }
 
 variable "vpc_name" {

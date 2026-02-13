@@ -19,7 +19,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - registry.k8s.io/metrics-server/metrics-server:v0.8.0
+      - registry.k8s.io/metrics-server/metrics-server:v0.8.1
 
   - name: metrics-server
     required: false
@@ -32,7 +32,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.8.0
+      - registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.8.1
 
   - name: metrics-server
     required: false
@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - quay.io/rfcurated/metrics-server:0.8.0-jammy-scratch-fips-rfcurated-rfhardened
+      - quay.io/rfcurated/metrics-server:0.8.1-jammy-scratch-fips-rfcurated-rfhardened

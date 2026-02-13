@@ -4,6 +4,22 @@
 # Run as an agent daemonset
 role: "Agent"
 
+# Add trust bundle configuration using vector's supported pattern
+# Because of this https://github.com/rustls/openssl-probe/blob/main/src/lib.rs#L138-L139
+# the rust based image should accept this `/etc/ssl/certs/ca-bundle.pem` path
+# additional vector specific documentation: https://vector.dev/docs/reference/configuration/tls/#trusted-certificates
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
+
+extraVolumeMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca-bundle.pem
+    subPath: ca-bundle.pem
+    readOnly: true
+
 customConfig:
   api:
     enabled: false
@@ -69,13 +85,13 @@ customConfig:
       encoding:
         codec: "raw_message"
       labels:
-        namespace: '{{`{{ kubernetes.pod_namespace }}`}}'
-        app: '{{`{{ app }}`}}'
-        job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}'
-        container: '{{`{{ kubernetes.container_name }}`}}'
-        component: '{{`{{ component }}`}}'
-        host: '{{`{{ kubernetes.pod_node_name }}`}}'
-        filename: '{{`{{ file }}`}}'
+        namespace: "{{`{{ kubernetes.pod_namespace }}`}}"
+        app: "{{`{{ app }}`}}"
+        job: "{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}"
+        container: "{{`{{ kubernetes.container_name }}`}}"
+        component: "{{`{{ component }}`}}"
+        host: "{{`{{ kubernetes.pod_node_name }}`}}"
+        filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
         type: disk
@@ -88,9 +104,9 @@ customConfig:
       encoding:
         codec: "raw_message"
       labels:
-        job: '{{`{{ job }}`}}'
-        host: '{{`{{ node_name }}`}}'
-        filename: '{{`{{ file }}`}}'
+        job: "{{`{{ job }}`}}"
+        host: "{{`{{ node_name }}`}}"
+        filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
         type: disk
@@ -119,6 +135,8 @@ securityContext:
   runAsUser: 0
   seLinuxOptions:
     type: spc_t
+podSecurityContext:
+  runAsNonRoot: false
 
 env:
   - name: NODE_HOSTNAME

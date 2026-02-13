@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
@@ -44,11 +44,11 @@ tasks:
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
-        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --no-progress --components=${{ .inputs.istio_components }}"
+        cmd: "uds zarf dev deploy src/istio --flavor upstream --registry-url docker.io --components=${{ .inputs.istio_components }}"
 
       # Note: Since this is a dev deploy without any `--flavor` it only deploys the CRDs (other components are flavored)
       - description: "Deploy the Prometheus-Stack source package with Zarf Dev to only install the CRDs"
-        cmd: "uds zarf dev deploy src/prometheus-stack --no-progress"
+        cmd: "uds zarf dev deploy src/prometheus-stack"
 
       - description: "Dev instructions"
         cmd: |
@@ -91,7 +91,7 @@ tasks:
   - name: dev-deploy
     description: "Deploy the given core layer with Zarf Dev"
     actions:
-      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --components '*' --no-progress"
+      - cmd: "uds zarf dev deploy packages/${LAYER} --flavor ${FLAVOR} --components '*'"
 
   - name: setup-cluster
     description: "Create a k3d Cluster and Initialize with Zarf"
@@ -204,3 +204,16 @@ tasks:
     description: "Updates CA certificates"
     actions:
       - cmd: npx ts-node --project scripts/root-ca-retriever/tsconfig.json scripts/root-ca-retriever/index.ts
+      - description: "Add license headers to generated CA configmap"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml
