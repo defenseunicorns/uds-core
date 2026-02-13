@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [unicorn] # [upstream, registry1, unicorn]
+        flavor: [upstream, registry1, unicorn]
     runs-on: ubuntu-latest
     name: test-aks
     permissions:
@@ -93,6 +93,9 @@ jobs:
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
+      - name: Wait 15m for control plane to stabilize
+        run: sleep 900
+
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
@@ -116,16 +119,15 @@ jobs:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
 
-      # Disable temporarily for observing metrics about run
-      # - name: Remove UDS Core
-      #   if: always()
-      #   run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done
-      #   timeout-minutes: 10
-      #   continue-on-error: true
+      - name: Remove UDS Core
+        if: always()
+        run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done
+        timeout-minutes: 10
+        continue-on-error: true
 
-      # - name: Remove IAC
-      #   if: always()
-      #   run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
+      - name: Remove IAC
+        if: always()
+        run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

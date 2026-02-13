@@ -70,16 +70,16 @@ jobs:
               - ".github/bundles/aks/**"
               - ".github/test-infra/azure/aks/**"
               - ".github/workflows/test-aks.yaml"
-        # rke2:
-        #   - "tasks/iac.yaml"
-        #   - ".github/bundles/rke2/**"
-        #   - ".github/test-infra/aws/rke2/**"
-        #   - ".github/workflows/test-rke2.yaml"
-        # eks:
-        #   - "tasks/iac.yaml"
-        #   - ".github/bundles/eks/**"
-        #   - ".github/test-infra/aws/eks/**"
-        #   - ".github/workflows/test-eks.yaml"
+            rke2:
+              - "tasks/iac.yaml"
+              - ".github/bundles/rke2/**"
+              - ".github/test-infra/aws/rke2/**"
+              - ".github/workflows/test-rke2.yaml"
+            eks:
+              - "tasks/iac.yaml"
+              - ".github/bundles/eks/**"
+              - ".github/test-infra/aws/eks/**"
+              - ".github/workflows/test-eks.yaml"
 
   # Trigger IaC
   run-eks-test:
