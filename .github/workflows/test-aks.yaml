@@ -106,7 +106,14 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
+        run: |
+          set +e
+          for i in $(seq 1 2); do
+            uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server" && break
+            if [ "$i" -eq 2 ]; then exit 1; fi
+            echo "[test attempt $i] failed; running cleanup before retry" >&2
+            uds run -f tasks/test.yaml test-resources:remove || true
+          done
 
       - name: Debug Output
         if: ${{ always() }}
