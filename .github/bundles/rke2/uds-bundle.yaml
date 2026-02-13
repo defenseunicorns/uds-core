@@ -43,8 +43,6 @@ packages:
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
-      - falco
-      - prometheus-blackbox-exporter
     overrides:
       istio-admin-gateway:
         gateway:
