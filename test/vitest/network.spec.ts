@@ -284,13 +284,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_ambient_http_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" http://www.bing.com`,
     ];
 
     const egress_ambient_tls_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://www.bing.com`,
     ];
 
     // Validate successful tls request when using Egress for egress-ambient-1
@@ -301,7 +301,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       egress_ambient_tls_curl,
     );
 
-    const tlsDebugMessage = `TLS example.com curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
+    const tlsDebugMessage = `TLS bing.com curl failed: stdout=${success_response_tls.stdout}, stderr=${success_response_tls.stderr}`;
 
     expect(isResponseError(success_response_tls), tlsDebugMessage).toBe(false);
 
@@ -353,14 +353,10 @@ describe("Network Policy Validation", { retry: 2 }, () => {
   test.concurrent(
     "Admin (Anywhere, ambient) can reach remoteHost defined in another namespace",
     async () => {
-      const EXAMPLE_TLS = [
-        "sh",
-        "-c",
-        `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
-      ];
+      const EXAMPLE_TLS = ["sh", "-c", `curl -s -w " HTTP_CODE:%{http_code}" https://www.bing.com`];
 
       // Source: test-admin-app (Anywhere via app-admin-package, now ambient)
-      // Target: www.example.com defined as remoteHost in egress-ambient-1
+      // Target: www.bing.com defined as remoteHost in egress-ambient-1
       const resp = await execInPod("test-admin-app", testAdminApp, "curl", EXAMPLE_TLS);
       const msg = `Admin Anywhere->remoteHost cross-ns: stdout=${resp.stdout}, stderr=${resp.stderr}`;
       expect(isResponseError(resp), msg).toBe(false);
@@ -372,7 +368,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const EXAMPLE_TLS_DENIED = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://www.example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://www.bing.com`,
     ];
 
     const resp = await execInPod(
@@ -381,7 +377,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       "curl",
       EXAMPLE_TLS_DENIED,
     );
-    const msg = `Egress Ambient per-host isolation (example.com denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
+    const msg = `Egress Ambient per-host isolation (bing.com denied for egress-ambient-2 SA): stdout=${resp.stdout}, stderr=${resp.stderr}`;
     expect(isResponseError(resp), msg).toBe(true);
   });
 
@@ -391,7 +387,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
       const EXAMPLE_HTTP_DENIED = [
         "sh",
         "-c",
-        `curl -s -w " HTTP_CODE:%{http_code}" http://www.example.com`,
+        `curl -s -w " HTTP_CODE:%{http_code}" http://www.bing.com`,
       ];
 
       const resp = await execInPod(
@@ -400,7 +396,7 @@ describe("Network Policy Validation", { retry: 2 }, () => {
         "curl",
         EXAMPLE_HTTP_DENIED,
       );
-      const msg = `Egress Ambient HTTP example.com denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
+      const msg = `Egress Ambient HTTP bing.com denied for egress-ambient-2 SA: stdout=${resp.stdout}, stderr=${resp.stderr}`;
       expect(isResponseError(resp), msg).toBe(true);
     },
   );
@@ -409,13 +405,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_gateway_http_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" http://example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" http://bing.com`,
     ];
 
     const egress_gateway_tls_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://example.com`,
+      `curl -s -w " HTTP_CODE:%{http_code}" https://bing.com`,
     ];
 
     // Validate successful tls request when using Egress Gateway for egress-gw-1
