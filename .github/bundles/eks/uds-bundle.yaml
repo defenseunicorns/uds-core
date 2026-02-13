@@ -54,6 +54,8 @@ packages:
               value: ""
             - path: loki.storage.s3.accessKeyId
               value: ""
+            - path: sidecar.rules.logLevel
+              value: DEBUG
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -72,6 +74,11 @@ packages:
               path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
       grafana:
         grafana:
+          values:
+            - path: sidecar.dashboards.logLevel
+              value: DEBUG
+            - path: sidecar.datasources.logLevel
+              value: DEBUG
           variables:
             - name: GRAFANA_HA
               description: Enable HA Grafana
