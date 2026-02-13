@@ -257,12 +257,13 @@ packages:
           values:
             - path: overrides
               value:
-                "Unexpected UDP Traffic":
-                  exceptions:
-                    action: append
-                    items:
-                      - name: allow_udp_in_smoke_ns
-                        fields: ["proc.name", "fd.l4proto"]
-                        comps: ["=", "="]
-                        values:
-                          - ["iptables-restor", "udp"]
+                rules:
+                  "Unexpected UDP Traffic":
+                    exceptions:
+                      action: append
+                      items:
+                        - name: allow_udp_in_smoke_ns
+                          fields: ["proc.name", "fd.l4proto"]
+                          comps: ["=", "="]
+                          values:
+                            - ["iptables-restor", "udp"]
