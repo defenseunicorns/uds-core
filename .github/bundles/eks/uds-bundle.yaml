@@ -129,20 +129,21 @@ packages:
           values:
             - path: overrides
               value:
-                "Mount Launched in Privileged Container":
-                  exceptions:
-                    action: append
-                    items:
-                      - name: allow_csi_node_mounts
-                        fields:
-                          - k8s.ns.name
-                          - k8s.pod.name
-                          - proc.name
-                        comps:
-                          - =
-                          - startswith
-                          - =
-                        values:
-                          - ["kube-system"]
-                          - ["ebs-csi-node-", "efs-csi-node-"]
-                          - ["mount"]
+                rules:
+                  "Mount Launched in Privileged Container":
+                    exceptions:
+                      action: append
+                      items:
+                        - name: allow_csi_node_mounts
+                          fields:
+                            - k8s.ns.name
+                            - k8s.pod.name
+                            - proc.name
+                          comps:
+                            - =
+                            - startswith
+                            - =
+                          values:
+                            - ["kube-system"]
+                            - ["ebs-csi-node-", "efs-csi-node-"]
+                            - ["mount"]
