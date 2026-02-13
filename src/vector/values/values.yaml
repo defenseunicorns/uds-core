@@ -85,13 +85,13 @@ customConfig:
       encoding:
         codec: "raw_message"
       labels:
-        namespace: '{{`{{ kubernetes.pod_namespace }}`}}'
-        app: '{{`{{ app }}`}}'
-        job: '{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}'
-        container: '{{`{{ kubernetes.container_name }}`}}'
-        component: '{{`{{ component }}`}}'
-        host: '{{`{{ kubernetes.pod_node_name }}`}}'
-        filename: '{{`{{ file }}`}}'
+        namespace: "{{`{{ kubernetes.pod_namespace }}`}}"
+        app: "{{`{{ app }}`}}"
+        job: "{{`{{ kubernetes.pod_namespace }}`}}/{{`{{ app }}`}}"
+        container: "{{`{{ kubernetes.container_name }}`}}"
+        component: "{{`{{ component }}`}}"
+        host: "{{`{{ kubernetes.pod_node_name }}`}}"
+        filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
         type: disk
@@ -104,9 +104,9 @@ customConfig:
       encoding:
         codec: "raw_message"
       labels:
-        job: '{{`{{ job }}`}}'
-        host: '{{`{{ node_name }}`}}'
-        filename: '{{`{{ file }}`}}'
+        job: "{{`{{ job }}`}}"
+        host: "{{`{{ node_name }}`}}"
+        filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
         type: disk
@@ -135,6 +135,8 @@ securityContext:
   runAsUser: 0
   seLinuxOptions:
     type: spc_t
+podSecurityContext:
+  runAsNonRoot: false
 
 env:
   - name: NODE_HOSTNAME
