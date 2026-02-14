@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
@@ -28,7 +28,7 @@ tests:
           pattern: '- rule: "Contact K8S API Server From Container"'
       - matchRegex:
           path: data["disable-rules.yaml"]
-          pattern: 'enabled: false'
+          pattern: "enabled: false"
       - matchRegex:
           path: data["disable-rules.yaml"]
           pattern: 'override:\s+enabled: replace'
@@ -57,7 +57,7 @@ tests:
           pattern: '- rule: "Contact EC2 Instance Metadata Service From Container"'
       - matchRegex:
           path: data["disable-rules.yaml"]
-          pattern: 'enabled: false'
+          pattern: "enabled: false"
       - matchRegex:
           path: data["disable-rules.yaml"]
           pattern: 'override:\s+enabled: replace'
@@ -86,7 +86,7 @@ tests:
           pattern: '- rule: "Custom Rule 2"'
       - matchRegex:
           path: data["disable-rules.yaml"]
-          pattern: 'enabled: false'
+          pattern: "enabled: false"
       - matchRegex:
           path: data["disable-rules.yaml"]
           pattern: 'override:\s+enabled: replace'
@@ -198,7 +198,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["sandbox-rules.yaml"]
-          pattern: '# Sandbox rules are disabled by default'
+          pattern: "# Sandbox rules are disabled by default"
 
   - it: should include sandbox rules when sandboxRulesEnabled is true
     set:
@@ -219,7 +219,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["incubating-rules.yaml"]
-          pattern: '# Incubating rules are disabled by default'
+          pattern: "# Incubating rules are disabled by default"
 
   - it: should include incubating rules when incubatingRulesEnabled is true
     set:

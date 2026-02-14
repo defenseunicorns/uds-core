@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "UDS Falco Values Schema (overrides + exception-only rule overrides)",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "lists": {
+          "type": "object",
+          "description": "Falco list overrides rendered into override-rules.yaml.",
+          "additionalProperties": {
+            "$ref": "#/definitions/listOverride"
+          },
+          "default": {}
+        },
+        "macros": {
+          "type": "object",
+          "description": "Falco macro overrides rendered into override-rules.yaml.",
+          "additionalProperties": {
+            "$ref": "#/definitions/macroOverride"
+          },
+          "default": {}
+        },
+        "rules": {
+          "type": "object",
+          "description": "Rule overrides limited to exceptions only (no condition replacement).",
+          "additionalProperties": {
+            "$ref": "#/definitions/ruleExceptionOverride"
+          },
+          "default": {}
+        }
+      },
+      "default": {}
+    },
+    "extraRules": {
+      "type": "array",
+      "description": "Raw Falco rules list appended as-is.",
+      "default": []
+    }
+  },
+  "definitions": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "append",
+        "replace"
+      ]
+    },
+    "listOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "items"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/action"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "macroOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "condition"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/action"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "description": "For append, provide a valid condition fragment (e.g., 'or ...', 'and ...')."
+        }
+      }
+    },
+    "ruleExceptionOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exceptions"
+      ],
+      "properties": {
+        "exceptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "items"
+          ],
+          "properties": {
+            "action": {
+              "$ref": "#/definitions/action"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/exceptionItem"
+              }
+            }
+          }
+        }
+      }
+    },
+    "exceptionItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "comps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "values": {
+          "description": "Either a list of scalars or a list of tuples (list-of-lists), depending on fields/comps usage.",
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

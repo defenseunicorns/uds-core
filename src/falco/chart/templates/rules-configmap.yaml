@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -56,7 +56,7 @@ data:
   {{- $allDisabledRules = concat $allDisabledRules .Values.udsDefaultDisabledRulesSandbox }}
 {{- end }}
 {{- $allDisabledRules = concat $allDisabledRules .Values.disabledRules | uniq }}
-{{- if (gt (len $allDisabledRules) 0) }}
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -73,4 +73,54 @@ data:
       override:
         enabled: replace
 {{- end }}
+
+{{/*
+Renders a ConfigMap with a single key: override-rules.yaml
+Always created (but may be empty).
+*/}}
+
+{{ $lists := (.Values.overrides.lists | default dict) }}
+{{ $macros := (.Values.overrides.macros | default dict) }}
+{{ $rules := (.Values.overrides.rules | default dict) }}
+{{ $extraRules := (.Values.extraRules | default list) }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-override-rules
+  namespace: falco
+  labels:
+    uds.dev/pod-reload: "true"
+data:
+  override-rules.yaml: |-
+{{- /* LIST OVERRIDES */}}
+{{- range $name, $cfg := $lists }}
+    - list: {{ $name | quote }}
+      items:
+{{ toYaml $cfg.items | nindent 8 }}
+      override:
+        items: {{ $cfg.action }}
+{{- end }}
+
+{{- /* MACRO OVERRIDES */}}
+{{- range $name, $cfg := $macros }}
+    - macro: {{ $name | quote }}
+      condition: {{ $cfg.condition | quote }}
+      override:
+        condition: {{ $cfg.action }}
+{{- end }}
+
+{{- /* RULE OVERRIDES (EXCEPTIONS ONLY) */}}
+{{- range $name, $cfg := $rules }}
+    - rule: {{ $name | quote }}
+      exceptions:
+{{ toYaml $cfg.exceptions.items | nindent 8 }}
+      override:
+        exceptions: {{ $cfg.exceptions.action }}
+{{- end }}
+
+{{- /* STRUCTURED EXTRA RULES */}}
+{{- if gt (len $extraRules) 0 }}
+{{ toYaml $extraRules | nindent 4 }}
 {{- end }}
