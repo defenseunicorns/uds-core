@@ -19,6 +19,7 @@ let prometheusProxy: { server: net.Server; url: string };
 let keycloakProxy: { server: net.Server; url: string };
 
 const testTimeoutMs = 5 * 60 * 1000; // 5 minutes timeout for the test
+const hookTimeoutMs = 60 * 1000; // 1 minute for hook timeout (realm/user changes)
 
 describe("integration - Keycloak Notifications", () => {
   beforeAll(async () => {
@@ -46,7 +47,7 @@ describe("integration - Keycloak Notifications", () => {
 
     const randomMasterRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
     await createUser(keycloakProxy.url, accessToken, randomMasterRealmUsername, "master");
-  }, testTimeoutMs);
+  }, hookTimeoutMs);
 
   afterAll(async () => {
     await closeForward(alertmanagerProxy.server);
