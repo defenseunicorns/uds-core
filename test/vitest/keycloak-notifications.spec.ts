@@ -2,16 +2,16 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import * as net from "net";
 import * as crypto from "crypto";
+import * as net from "net";
 import { afterAll, beforeAll, describe, test } from "vitest";
-import { closeForward, getForward } from "./helpers/forward";
 import { expectAlertFires } from "./helpers/alertmanager";
+import { closeForward, getForward } from "./helpers/forward";
 import {
-  getAdminToken,
   createRandomClient,
   createRandomUserAndJoinGroup,
   createUser,
+  getAdminToken,
 } from "./helpers/keycloak";
 
 let alertmanagerProxy: { server: net.Server; url: string };
@@ -46,7 +46,7 @@ describe("integration - Keycloak Notifications", () => {
 
     const randomMasterRealmUsername = `keycloak-notifications-test-${crypto.randomBytes(6).toString("base64url")}`;
     await createUser(keycloakProxy.url, accessToken, randomMasterRealmUsername, "master");
-  });
+  }, testTimeoutMs);
 
   afterAll(async () => {
     await closeForward(alertmanagerProxy.server);
