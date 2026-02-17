@@ -36,7 +36,7 @@ udsDefaultDisabledRulesIncubating:
 # Sandbox ruleset disabled rules
 udsDefaultDisabledRulesSandbox: []
 
-# Overrides for built-in Falco rules, macros, and lists. Each entry supports an "action" field (replace, append, or remove) and an "items" field with the relevant YAML snippet for the override.
+# Overrides for built-in Falco rules, macros, and lists. Each entry supports an "action" field (replace, append) and an "items" field with the relevant YAML snippet for the override.
 overrides:
   lists: {}
   macros: {}

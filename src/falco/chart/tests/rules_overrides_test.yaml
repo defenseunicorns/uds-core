@@ -177,10 +177,6 @@ tests:
           path: data["override-rules.yaml"]
           pattern: '(?s)condition:\s*evt\.type=open'
 
-      - matchRegex:
-          path: data["override-rules.yaml"]
-          pattern: '(?s)condition:\s*evt\.type=open'
-
   - it: renders override ConfigMap with lists + macros + rule exceptions + extraRules together (order sanity)
     set:
       incubatingRulesEnabled: false

@@ -61,7 +61,7 @@ To use this feature, provide an array of rule names under the `disabledRules` va
 
 1. **UDS Core rule files:**
 
-- Stable rules: ['src/falco/chart/rules/stable-rules.yaml'](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml)
+- Stable rules: [`src/falco/chart/rules/stable-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml)
 - Sandbox rules: [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml)
 - Incubating rules: [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml)
 - Look for entries that start with `- rule:` to find the rule names.
@@ -134,8 +134,8 @@ overrides:
 
 **Exception Structure Rules**
 
-- `fields`, `comps`, and `values` must have the same length.
-- Each element in `values` must itself be an array.
+- `fields`, `comps` must have the same length.
+- When using multiple fields, each element in `values` must be an array (tuple) whose length matches the number of fields. When using a single field or omitting the `fields` specification, `values` can be a simple array of scalar values.
 
 ### Querying Events with Loki
 
@@ -160,7 +160,7 @@ The upstream Falco helm chart includes a Grafana dashboard out of the box for vi
 
 ### External Alert Forwarding
 
-While Loki integration provides centralized logging of Falco events, it's recommended to configure external alert forwarding using [Falco Sidekick's native output forwarding](https://github.com/falcosecurity/falcosidekick#outputs) for real-time notifications. It is generally a good idea to send these alerts to a messaging platform like Slack, Microsoft Teams where these security events can be more visbile to relevant teams.
+While Loki integration provides centralized logging of Falco events, it's recommended to configure external alert forwarding using [Falco Sidekick's native output forwarding](https://github.com/falcosecurity/falcosidekick#outputs) for real-time notifications. It is generally a good idea to send these alerts to a messaging platform like Slack, Microsoft Teams where these security events can be more visible to relevant teams.
 
 :::tip[Network Egress]
 By default, the Falco UDS Package locks down network egress for security reasons. If you need to ship alerts to external services, ensure you override the `additionalNetworkAllow` value like so:

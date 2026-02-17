@@ -136,11 +136,11 @@ packages:
                       items:
                         - name: allow_csi_efs_node_mounts
                           fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                          comps: [in, startswith, in]
+                          comps: [=, startswith, =]
                           values:
                             - [kube-system, efs-csi-node-, mount]
                         - name: allow_csi_ebs_node_mounts
                           fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                          comps: [in, startswith, in]
+                          comps: [=, startswith, =]
                           values:
                             - [kube-system, ebs-csi-node, mount]
