@@ -13,7 +13,7 @@ components:
       - name: keycloak
         namespace: keycloak
         # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
-        version: 26.5.2
+        version: 26.5.3
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
