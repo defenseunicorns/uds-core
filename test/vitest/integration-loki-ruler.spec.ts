@@ -29,7 +29,7 @@ describe("integration - Loki Ruler Tests", () => {
   // Note: The loki-test-rules ConfigMap is deployed as part of the src/test package (loki-ruler-test-configmap.yaml)
   // The following tests assert that the Loki ruler is correctly evaluating rules based on that CM and sending metrics/alerts
 
-  test.skip("Loki ruler should send recording rule metrics to Prometheus", async () => {
+  test("Loki ruler should send recording rule metrics to Prometheus", async () => {
     await pollUntilSuccess(
       () => queryPrometheusMetric(prometheusProxy.url, "loki:test_constant"),
       value => value === 1,
@@ -39,7 +39,7 @@ describe("integration - Loki Ruler Tests", () => {
     );
   }, 12000); // 12 second total test timeout
 
-  test.skip("Loki ruler should send alerts to Alertmanager", async () => {
+  test("Loki ruler should send alerts to Alertmanager", async () => {
     await pollUntilSuccess(
       () => checkAlertInAlertmanager(alertmanagerProxy.url, "LokiAlwaysFiring"),
       isAlertFiring => isAlertFiring === true,
