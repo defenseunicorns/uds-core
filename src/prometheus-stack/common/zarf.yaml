@@ -20,7 +20,7 @@ components:
         namespace: monitoring
         # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
         url: https://prometheus-community.github.io/helm-charts
-        version: 81.6.5
+        version: 82.0.2
         valuesFiles:
           - "../values/kube-prometheus-stack-values.yaml"
   - name: prometheus-blackbox-exporter
