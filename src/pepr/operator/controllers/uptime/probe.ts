@@ -6,7 +6,7 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { Expose, PrometheusProbe, UDSPackage } from "../../crd";
+import { Expose, Gateway, PrometheusProbe, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 
@@ -74,15 +74,15 @@ export function generateProbe(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ): PrometheusProbe {
-  const { uptime } = expose;
+  const { uptime, host, gateway = Gateway.Tenant } = expose;
   const fqdn = getFqdn(expose);
 
   // Build the list of target URLs from paths
   const paths = uptime!.checks!.paths!;
   const targets = paths.map(path => `https://${fqdn}${path}`);
 
-  // Generate a sanitized name for the probe
-  const name = sanitizeResourceName(`uds-${fqdn}-uptime`);
+  // Generate a sanitized name for the probe using host+gateway
+  const name = sanitizeResourceName(`uds-${host}-${gateway}-uptime`);
 
   const payload: PrometheusProbe = {
     metadata: {

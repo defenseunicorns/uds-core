@@ -38,7 +38,7 @@ describe("generateProbe", () => {
     const payload = generateProbe(expose, namespace, pkgName, generation, ownerRefs);
 
     expect(payload).toBeDefined();
-    expect(payload.metadata?.name).toEqual("uds-app-uds-dev-uptime");
+    expect(payload.metadata?.name).toEqual("uds-app-tenant-uptime");
     expect(payload.spec?.module).toEqual("http_2xx");
     expect(payload.spec?.prober?.url).toEqual(
       "prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115",
