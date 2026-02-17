@@ -93,8 +93,8 @@ jobs:
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
-      - name: Wait 30m for control plane to stabilize
-        run: sleep 1800
+      - name: Wait 20m for control plane to stabilize
+        run: sleep 1200
 
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
@@ -102,8 +102,13 @@ jobs:
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
-        run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
-        timeout-minutes: 40
+        run: |
+          set +e
+          for i in $(seq 1 2); do
+            uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm && break
+            if [ "$i" -eq 2 ]; then exit 1; fi
+          done
+        timeout-minutes: 50
 
       - name: Test UDS Core
         run: |
@@ -111,8 +116,6 @@ jobs:
           for i in $(seq 1 2); do
             uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server" && break
             if [ "$i" -eq 2 ]; then exit 1; fi
-            echo "[test attempt $i] failed; running cleanup before retry" >&2
-            uds run -f tasks/test.yaml test-resources:remove || true
           done
 
       - name: Debug Output

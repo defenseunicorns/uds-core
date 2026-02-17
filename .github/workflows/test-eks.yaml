@@ -93,9 +93,6 @@ jobs:
       - name: Setup GP3 Storage Class
         run: uds run -f tasks/utils.yaml eks-storageclass-setup --no-progress
 
-      - name: Wait 30m for control plane to stabilize
-        run: sleep 1800
-
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
@@ -106,14 +103,7 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
-        run: |
-          set +e
-          for i in $(seq 1 2); do
-            uds run -f tasks/test.yaml uds-core-non-k3d && break
-            if [ "$i" -eq 2 ]; then exit 1; fi
-            echo "[test attempt $i] failed; running cleanup before retry" >&2
-            uds run -f tasks/test.yaml test-resources:remove || true
-          done
+        run: uds run -f tasks/test.yaml uds-core-non-k3d
 
       - name: Debug Output
         if: ${{ always() }}

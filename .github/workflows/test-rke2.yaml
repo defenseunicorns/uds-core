@@ -94,8 +94,8 @@ jobs:
         run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress
         timeout-minutes: 20
 
-      - name: Wait 30m for control plane to stabilize
-        run: sleep 1800
+      - name: Wait 10m for control plane to stabilize
+        run: sleep 600
 
       - name: Wait for RKE2 Cluster
         run: uds run -f tasks/iac.yaml rke2-cluster-ready --no-progress
@@ -108,14 +108,7 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
-        run: |
-          set +e
-          for i in $(seq 1 2); do
-            uds run -f tasks/test.yaml uds-core-non-k3d && break
-            echo "[test attempt $i] failed; running cleanup before retry" >&2
-            if [ "$i" -eq 2 ]; then exit 1; fi
-            uds run -f tasks/test.yaml test-resources:remove || true
-          done
+        run: uds run -f tasks/test.yaml uds-core-non-k3d
 
       - name: Debug Output
         if: ${{ always() }}

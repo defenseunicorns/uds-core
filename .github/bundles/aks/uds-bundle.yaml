@@ -148,6 +148,41 @@ packages:
                   cloud: |
                     AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
                     AZURE_CLOUD_NAME=AzureUSGovernmentCloud
+      pepr-uds-core:
+        module:
+          values:
+            - path: "watcher.env"
+              value:
+                - name: UDS_LOG_LEVEL
+                  value: "###ZARF_VAR_UDS_LOG_LEVEL###"
+                - name: PEPR_RECONCILE_STRATEGY
+                  value: "kindNsName"
+                - name: ZARF_REGISTRY_ADDRESS
+                  value: "###ZARF_REGISTRY###"
+                - name: PINO_TIME_STAMP
+                  value: "iso"
+                - name: PEPR_PRETTY_LOG
+                  value: "false"
+                - name: LOG_LEVEL
+                  value: "info"
+                - name: PEPR_LAST_SEEN_LIMIT_SECONDS
+                  value: "60"
+            - path: "admission.env"
+              value:
+                - name: UDS_LOG_LEVEL
+                  value: "###ZARF_VAR_UDS_LOG_LEVEL###"
+                - name: PEPR_RECONCILE_STRATEGY
+                  value: "kindNsName"
+                - name: ZARF_REGISTRY_ADDRESS
+                  value: "###ZARF_REGISTRY###"
+                - name: PINO_TIME_STAMP
+                  value: "iso"
+                - name: PEPR_PRETTY_LOG
+                  value: "false"
+                - name: LOG_LEVEL
+                  value: "info"
+                - name: PEPR_LAST_SEEN_LIMIT_SECONDS
+                  value: "60"
       falco:
         uds-falco-config:
           variables:
