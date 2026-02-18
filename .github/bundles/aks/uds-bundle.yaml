@@ -74,6 +74,8 @@ packages:
           values:
             - path: loki.storage.type
               value: "azure"
+            - path: sidecar.rules.logLevel
+              value: DEBUG
 
       kube-prometheus-stack:
         kube-prometheus-stack:
@@ -85,6 +87,11 @@ packages:
                     memory: 512Mi
       grafana:
         grafana:
+          values:
+            - path: sidecar.dashboards.logLevel
+              value: DEBUG
+            - path: sidecar.datasources.logLevel
+              value: DEBUG
           variables:
             - name: GRAFANA_HA
               description: Enable HA Grafana
