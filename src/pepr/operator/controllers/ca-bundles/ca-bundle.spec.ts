@@ -32,6 +32,7 @@ const mockLog = vi.hoisted(() => ({
 vi.mock("../utils", () => ({
   getOwnerRef: vi.fn(),
   purgeOrphans: vi.fn(),
+  retryWithDelay: vi.fn(async (fn: () => Promise<unknown>) => fn()),
 }));
 
 vi.mock("../../../logger", () => ({

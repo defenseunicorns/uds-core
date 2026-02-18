@@ -16,12 +16,8 @@ vi.mock("../utils", async importOriginal => {
   const original = (await importOriginal()) as typeof utils;
   return {
     ...original,
-    purgeOrphans: vi.fn(async <T>(fn?: () => Promise<T>) => {
-      if (typeof fn === "function") {
-        return await fn();
-      }
-      return;
-    }),
+    purgeOrphans: vi.fn().mockResolvedValue(undefined),
+    retryWithDelay: vi.fn(async (fn: () => Promise<unknown>) => fn()),
   };
 });
 

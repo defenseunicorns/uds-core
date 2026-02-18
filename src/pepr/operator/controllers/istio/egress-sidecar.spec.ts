@@ -24,7 +24,8 @@ vi.mock("../utils", async () => {
   const originalModule = (await vi.importActual("../utils")) as object;
   return {
     ...originalModule,
-    purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+    purgeOrphans: vi.fn().mockResolvedValue(undefined),
+    retryWithDelay: vi.fn(async (fn: () => Promise<unknown>) => fn()),
   };
 });
 

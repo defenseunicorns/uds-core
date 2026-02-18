@@ -40,6 +40,7 @@ vi.mock("../utils", async () => {
     ...originalModule,
     getOwnerRef: vi.fn().mockReturnValue([{ kind: "UDSPackage", name: "test-pkg" }]),
     purgeOrphans: vi.fn().mockResolvedValue({}),
+    retryWithDelay: vi.fn(async (fn: () => Promise<unknown>) => fn()),
     sanitizeResourceName: vi.fn().mockImplementation(name => name),
   };
 });
