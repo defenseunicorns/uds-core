@@ -10,7 +10,13 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import {
+  getAuthserviceClients,
+  getOwnerRef,
+  purgeOrphans,
+  retryWithDelay,
+  sanitizeResourceName,
+} from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -316,7 +322,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     }
   }
 
-  await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);
+  await retryWithDelay(async function purgeOrphanedNetworkPolicies() {
+    return purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);
+  }, log);
 
   // Return the list of policies
   return policies;

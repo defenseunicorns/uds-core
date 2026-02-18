@@ -10,7 +10,7 @@ import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusServiceMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/servicemonitor-v1";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay } from "../utils";
 import { generateMonitorName } from "./common";
 
 // configure subproject logger
@@ -49,7 +49,9 @@ export async function serviceMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    await purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
+    await retryWithDelay(async function purgeOrphanedServiceMonitors() {
+      return purgeOrphans(generation, namespace, pkgName, PrometheusServiceMonitor, log);
+    }, log);
   } catch (err) {
     throw new Error(
       `Failed to process ServiceMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`,

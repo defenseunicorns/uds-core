@@ -27,10 +27,10 @@ export const watchCfg: WatchCfg = {
     : 5,
   lastSeenLimitSeconds: process.env.PEPR_LAST_SEEN_LIMIT_SECONDS
     ? parseInt(process.env.PEPR_LAST_SEEN_LIMIT_SECONDS, 10)
-    : 300,
+    : 30,
   relistIntervalSec: process.env.PEPR_RELIST_INTERVAL_SECONDS
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
-    : 600,
+    : 60,
 };
 
 export function registerWatchEventHandlers(

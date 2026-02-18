@@ -9,7 +9,7 @@ import { Component, setupLogger } from "../../../logger";
 import { Monitor, PrometheusPodMonitor, UDSPackage } from "../../crd";
 import { Kind } from "../../crd/generated/package-v1alpha1";
 import { FallbackScrapeProtocol } from "../../crd/generated/prometheus/podmonitor-v1";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay } from "../utils";
 import { generateMonitorName } from "./common";
 
 // configure subproject logger
@@ -48,7 +48,9 @@ export async function podMonitor(pkg: UDSPackage, namespace: string) {
       }
     }
 
-    await purgeOrphans(generation, namespace, pkgName, PrometheusPodMonitor, log);
+    await retryWithDelay(async function purgeOrphanedPodMonitors() {
+      return purgeOrphans(generation, namespace, pkgName, PrometheusPodMonitor, log);
+    }, log);
   } catch (err) {
     throw new Error(`Failed to process PodMonitors for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }

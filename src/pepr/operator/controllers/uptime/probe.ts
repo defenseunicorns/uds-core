@@ -8,7 +8,7 @@ import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { Expose, Gateway, PrometheusProbe, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_UPTIME);
@@ -50,7 +50,9 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
     }
 
     // Purge any orphaned probes from previous generations
-    await purgeOrphans(generation, namespace, pkgName, PrometheusProbe, log);
+    await retryWithDelay(async function purgeOrphanedProbes() {
+      return purgeOrphans(generation, namespace, pkgName, PrometheusProbe, log);
+    }, log);
   } catch (err) {
     throw new Error(`Failed to process Probes for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }

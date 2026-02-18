@@ -14,7 +14,13 @@ import {
 } from "../../../crd";
 import { UDSConfig } from "../../config/config";
 import { matchesLabels } from "../../istio/waypoint-utils";
-import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
+import {
+  PROMETHEUS_PRINCIPAL,
+  getOwnerRef,
+  purgeOrphans,
+  retryWithDelay,
+  sanitizeResourceName,
+} from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
 
@@ -363,7 +369,9 @@ async function updatePolicy(
 
 async function purgeOrphanPolicies(generation: string, namespace: string, pkgName: string) {
   for (const kind of [IstioAuthorizationPolicy, IstioRequestAuthentication]) {
-    await purgeOrphans(generation, namespace, pkgName, kind, log);
+    await retryWithDelay(async function purgeOrphanedAuthPolicies() {
+      return purgeOrphans(generation, namespace, pkgName, kind, log);
+    }, log);
   }
 }
 

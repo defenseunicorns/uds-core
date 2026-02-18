@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
 
@@ -83,9 +83,15 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   }
 
   // Purge any orphaned resources
-  await purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
-  await purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log); // for ingress and egress
-  await purgeOrphans(generation, namespace, pkgName, IstioSidecar, log); // for egress only
+  await retryWithDelay(async function purgeOrphanedVirtualServices() {
+    return purgeOrphans(generation, namespace, pkgName, IstioVirtualService, log);
+  }, log);
+  await retryWithDelay(async function purgeOrphanedServiceEntries() {
+    return purgeOrphans(generation, namespace, pkgName, IstioServiceEntry, log);
+  }, log); // for ingress and egress
+  await retryWithDelay(async function purgeOrphanedSidecars() {
+    return purgeOrphans(generation, namespace, pkgName, IstioSidecar, log);
+  }, log); // for egress only
 
   // Return the list of unique hostnames
   return [...hosts];

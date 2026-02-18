@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { UDSConfig } from "../config/config";
-import { getOwnerRef, purgeOrphans } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay } from "../utils";
 
 export const CA_BUNDLE_CONFIGMAP_LABEL = "uds/ca-bundle"; // Label to identify CA bundle ConfigMaps
 const DEFAULT_CONFIGMAP_NAME = "uds-trust-bundle";
@@ -88,9 +88,11 @@ export async function caBundleConfigMap(pkg: UDSPackage, namespace: string): Pro
     await K8s(kind.ConfigMap).Apply(configMapManifest, { force: true });
 
     // Purge any orphaned ConfigMaps from previous generations
-    await purgeOrphans(generation, namespace, pkgName, kind.ConfigMap, log, {
-      [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
-    });
+    await retryWithDelay(async function purgeOrphanedCABundleConfigMaps() {
+      return purgeOrphans(generation, namespace, pkgName, kind.ConfigMap, log, {
+        [CA_BUNDLE_CONFIGMAP_LABEL]: "true",
+      });
+    }, log);
   } catch (err) {
     throw new Error(
       `Failed to process CA Bundle ConfigMap for ${pkgName}, cause: ${JSON.stringify(err)}`,

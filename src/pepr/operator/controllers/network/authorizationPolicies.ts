@@ -20,6 +20,7 @@ import {
   getAuthserviceClients,
   getOwnerRef,
   purgeOrphans,
+  retryWithDelay,
   sanitizeResourceName,
 } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
@@ -451,9 +452,11 @@ export async function generateAuthorizationPolicies(
     }
   }
 
-  await purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log, {
-    "uds/for": "network",
-  });
+  await retryWithDelay(async function purgeOrphanedAuthorizationPolicies() {
+    return purgeOrphans(generation, pkgNamespace, pkgName, AuthorizationPolicy, log, {
+      "uds/for": "network",
+    });
+  }, log);
 
   // Cleanup any authpolicies that don't match the current meshmode or don't have a mesh-mode label at all.
   await cleanupMismatchedMeshModePolicies(pkg, pkgNamespace, pkgName);

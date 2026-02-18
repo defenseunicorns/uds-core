@@ -7,7 +7,7 @@ import { fetch, K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
-import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { getOwnerRef, purgeOrphans, retryWithDelay, sanitizeResourceName } from "../utils";
 import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
 import { Client, clientKeys } from "./types";
 
@@ -60,7 +60,15 @@ export async function keycloak(pkg: UDSPackage) {
 
   // Purge orphaned SSO secrets
   try {
-    await purgeOrphans(generation, pkg.metadata!.namespace!, pkg.metadata!.name!, kind.Secret, log);
+    await retryWithDelay(async function purgeOrphanedSSOSecrets() {
+      return purgeOrphans(
+        generation,
+        pkg.metadata!.namespace!,
+        pkg.metadata!.name!,
+        kind.Secret,
+        log,
+      );
+    }, log);
   } catch (e) {
     log.error(e, `Failed to purge orphaned SSO secrets in for ${pkg.metadata!.name!}: ${e}`);
   }

@@ -10,7 +10,7 @@ import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
-import { getAuthserviceClients, purgeOrphans } from "../../utils";
+import { getAuthserviceClients, purgeOrphans, retryWithDelay } from "../../utils";
 import { Client } from "../types";
 import { UDSConfig, updatePolicy } from "./authorization-policy";
 import {
@@ -79,13 +79,15 @@ export async function authservice(
   await purgeAuthserviceClients(pkg, newAuthserviceClients, previousMeshMode, istioMode);
 
   // Clean up any existing waypoint resources if SSO is not configured
-  await purgeOrphans(
-    (pkg.metadata?.generation ?? 0).toString(),
-    pkg.metadata.namespace,
-    pkg.metadata.name,
-    K8sGateway,
-    log,
-  );
+  await retryWithDelay(async function purgeOrphanedWaypointGateways() {
+    return purgeOrphans(
+      (pkg.metadata?.generation ?? 0).toString(),
+      pkg.metadata!.namespace!,
+      pkg.metadata!.name!,
+      K8sGateway,
+      log,
+    );
+  }, log);
 
   // Return the new status objects for status update
   return newAuthserviceClients;

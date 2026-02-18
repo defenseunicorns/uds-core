@@ -5,7 +5,7 @@
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import { purgeOrphans, retryWithDelay } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
@@ -340,21 +340,27 @@ export async function purgeAmbientEgressResources(
       return;
     }
 
-    await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
-    await purgeOrphans(
-      generation,
-      ambientEgressNamespace,
-      sharedEgressPkgId,
-      IstioServiceEntry,
-      log,
-    );
-    await purgeOrphans(
-      generation,
-      ambientEgressNamespace,
-      sharedEgressPkgId,
-      IstioAuthorizationPolicy,
-      log,
-    );
+    await retryWithDelay(async function purgeOrphanedAmbientEgressGateways() {
+      return purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
+    }, log);
+    await retryWithDelay(async function purgeOrphanedAmbientEgressServiceEntries() {
+      return purgeOrphans(
+        generation,
+        ambientEgressNamespace,
+        sharedEgressPkgId,
+        IstioServiceEntry,
+        log,
+      );
+    }, log);
+    await retryWithDelay(async function purgeOrphanedAmbientEgressAuthorizationPolicies() {
+      return purgeOrphans(
+        generation,
+        ambientEgressNamespace,
+        sharedEgressPkgId,
+        IstioAuthorizationPolicy,
+        log,
+      );
+    }, log);
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
     log.error(`Failed to purge orphaned ambient egress resources`, e);

@@ -12,7 +12,7 @@ import {
   IstioVirtualService,
 } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { purgeOrphans, validateNamespace } from "../utils";
+import { purgeOrphans, retryWithDelay, validateNamespace } from "../utils";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { log } from "./istio-resources";
 import { generateLocalEgressServiceEntry, generateSharedServiceEntry } from "./service-entry";
@@ -53,21 +53,27 @@ export async function applySidecarEgressResources(
 // Purge any orphaned sidecar shared resources
 export async function purgeSidecarEgressResources(generation: string) {
   try {
-    await purgeOrphans(generation, sidecarEgressNamespace, sharedEgressPkgId, IstioGateway, log);
-    await purgeOrphans(
-      generation,
-      sidecarEgressNamespace,
-      sharedEgressPkgId,
-      IstioVirtualService,
-      log,
-    );
-    await purgeOrphans(
-      generation,
-      sidecarEgressNamespace,
-      sharedEgressPkgId,
-      IstioServiceEntry,
-      log,
-    );
+    await retryWithDelay(async function purgeOrphanedSidecarEgressGateways() {
+      return purgeOrphans(generation, sidecarEgressNamespace, sharedEgressPkgId, IstioGateway, log);
+    }, log);
+    await retryWithDelay(async function purgeOrphanedSidecarEgressVirtualServices() {
+      return purgeOrphans(
+        generation,
+        sidecarEgressNamespace,
+        sharedEgressPkgId,
+        IstioVirtualService,
+        log,
+      );
+    }, log);
+    await retryWithDelay(async function purgeOrphanedSidecarEgressServiceEntries() {
+      return purgeOrphans(
+        generation,
+        sidecarEgressNamespace,
+        sharedEgressPkgId,
+        IstioServiceEntry,
+        log,
+      );
+    }, log);
   } catch (e) {
     const errText = `Failed to purge orphaned sidecar egress resources`;
     log.error(`Failed to purge orphaned sidecar egress resources`, e);
