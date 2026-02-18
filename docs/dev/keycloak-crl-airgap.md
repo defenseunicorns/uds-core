@@ -1,7 +1,3 @@
----
-title: Local Testing Example (Fake CA + CRL) for Keycloak X.509
----
-
 # Local Testing Example (Fake CA + CRL) for Keycloak X.509
 
 This guide is for **local/dev testing only**. It validates that Keycloak:

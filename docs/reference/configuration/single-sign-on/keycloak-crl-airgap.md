@@ -182,20 +182,6 @@ If any `Next Update` is in the past, that CRL is expired. Download a fresh copy 
 
 The CRL files need to reach the Kubernetes cluster. Package them as a Kubernetes **Secret** inside a Zarf package to transport them through your airgap pipeline alongside other images and packages.
 
-:::note[If you are not airgapped]
-For local/dev environments, you can skip Zarf packaging and apply the Secret directly:
-
-```bash
-kubectl create secret generic keycloak-crls \
-  --from-file=DODROOTCA3.crl=dod-crls/DODROOTCA3.crl \
-  --from-file=DODSWCA60.crl=dod-crls/DODSWCA60.crl \
-  --from-file=DODIDCA59.crl=dod-crls/DODIDCA59.crl \
-  --namespace keycloak \
-  --dry-run=client \
-  -o yaml | kubectl apply -f -
-```
-:::
-
 ### Create the Secret Manifest
 
 ```bash
@@ -208,10 +194,6 @@ kubectl create secret generic keycloak-crls \
   --dry-run=client \
   -o yaml > keycloak-crls-secret.yaml
 ```
-
-:::note[Note on Secret size:]
-Kubernetes Secrets have a 1 MiB default size limit. Base64 encoding adds ~33% overhead. If your total CRL file size approaches 700 KB, split them across multiple Secrets and multiple volume mounts. Check with `ls -lh dod-crls/`.
-:::
 
 :::note[ConfigMap alternative:]
 CRL files are public information by definition, so using a ConfigMap instead of a Secret is also acceptable. Replace `secret` with `configmap` in the command above, and use `configMap:` instead of `secret:` in the volume definition in Step 4.
@@ -320,30 +302,16 @@ kubectl exec -n keycloak -it keycloak-0 -- ls -la /opt/keycloak/data/crls/
 
 The x509 authenticator must be configured to disable OCSP and enable local CRL file checking. This is done via the **Keycloak Admin Console** and persists in the Keycloak database across pod restarts.
 
-:::note[CRL signature verification requires the issuing CA]
-Keycloak verifies the CRL signature. Ensure the CA(s) that issued the CRL are trusted by Keycloak (for example via the UDS Core trust bundle).
-:::
-
 :::note[Why not `realmInitEnv`?]
 The `X509_OCSP_FAIL_OPEN` setting in `realmInitEnv` controls what happens when an OCSP check _fails_; it does not disable OCSP. More critically, `realmInitEnv` values are applied only during the **initial realm import**. If Keycloak is already running, changes there have no effect until the realm is re-imported from scratch. The Admin Console steps below take effect immediately.
 :::
 
-### Access the Admin Console
-
-```bash
-# Port-forward if not already accessible via ingress
-kubectl port-forward -n keycloak svc/keycloak-http 8080:8080
-# Then open: http://localhost:8080/admin
-```
-
-Or use `zarf connect keycloak` if configured in your environment.
-
 ### Navigate to the X.509 Step Config
 
-1. Confirm you are in the **`uds` realm**, not `master`. Use the realm dropdown in the top-left corner to confirm or switch.
-2. Click **Authentication** in the left-hand navigation.
+1. Confirm you are in the **`uds` realm**, not `master`.
+2. Click **Authentication** in the left-hand navigation (near the bottom).
 3. Click the **`UDS Authentication`** flow.
-4. Locate the step named **`X509/Validate Username Form`** (any step with "X509" in the name).
+4. Locate the step named **`X509/Validate Username Form`**.
 5. Click the **⚙️ gear icon** or **Config** link next to that step.
 
 ### Set the Following Fields
@@ -360,23 +328,17 @@ Or use `zarf connect keycloak` if configured in your environment.
 
 Adjust filenames and path to match what you packaged in Step 3 and the `mountPath` from Step 4.
 
-### Resulting Authenticator Config Keys
-
-After saving, the relevant keys in the realm's authenticator configuration will be:
-
-| Config Key | Value |
-|---|---|
-| `x509-cert-auth.ocsp-checking-enabled` | `false` |
-| `x509-cert-auth.ocsp-fail-open` | `false` |
-| `x509-cert-auth.crl-checking-enabled` | `true` |
-| `x509-cert-auth.crl-relative-path` | `../data/crls/DODROOTCA3.crl;...` |
-| `x509-cert-auth.crldp-checking-enabled` | `false` |
-
 These values persist in the Keycloak database and survive pod restarts.
 
 ---
 
 ## Step 6: Verify and Troubleshoot
+
+It is recommended to restart Keycloak after making all these changes to make sure infinispan is reloaded with the new CRLs.
+
+```bash
+kubectl rollout restart statefulset keycloak -n keycloak
+```
 
 ### Confirm CRL Files Are Present
 
@@ -408,17 +370,6 @@ kubectl logs -n keycloak keycloak-0 | grep -i "CRL from"
 kubectl logs -n keycloak -f keycloak-0 | grep -i "x509\|crl\|revoc"
 ```
 
-### Common Errors
-
-| Error | Cause | Fix |
-|---|---|---|
-| `Unable to read CRL from "..."` | File not present at the resolved path in the pod, or not readable by the Keycloak process | Verify the CRL exists in the pod and is readable with `kubectl exec ... ls -la`; ensure the Secret was deployed and mounted before Keycloak starts |
-| `Unable to load CRL from "..."` with `Loading crl with key '...' returned null.` | Keycloak could not load the CRL file. A common cause is setting `CRL Path` to an absolute filesystem path (for example `/opt/keycloak/...`), which Keycloak still resolves relative to `/opt/keycloak/conf`. | Use a relative path like `../data/crls/<filename>` for CRLs mounted under `/opt/keycloak/data/crls`. |
-| `Not possible to verify signature on CRL. X509 certificate doesn't have CA chain available` | Issuing CA cert not in Keycloak's truststore | Add DoD CA certs to the truststore. See [Truststore Customization](https://uds.defenseunicorns.com/reference/uds-core/idam/truststore-customization/) |
-| `Truststore not available` | Truststore not configured | Configure the truststore (linked above) |
-| `CRL has expired` | `nextUpdate` is in the past | Re-download and redeploy fresh CRL files |
-| Revoked cert authenticates successfully | Wrong CRL; issuing CA mismatch | Inspect the cert's `CRL Distribution Points`; ensure you have the CRL for the exact CA that signed that cert |
-
 ---
 
 ## CRL Renewal and Maintenance
@@ -439,14 +390,3 @@ Confirm the update landed:
 kubectl exec -n keycloak keycloak-0 -- cat /opt/keycloak/data/crls/DODROOTCA3.crl > ./DODROOTCA3.crl
 openssl crl -in ./DODROOTCA3.crl -inform DER -noout -text | grep "Next Update"
 ```
-
----
-
-## Summary of Configuration Touchpoints
-
-| What | How | Where |
-|---|---|---|
-| CRL files delivered to cluster | Zarf package → Kubernetes Secret | `keycloak-crls` Secret in `keycloak` namespace |
-| CRL files mounted in pod | UDS bundle `extraVolumes` / `extraVolumeMounts` override | Helm values override in `uds-bundle.yaml` |
-| OCSP disabled, CRL enabled | Keycloak Admin Console → Authentication → `UDS Authentication` flow → x509 step → ⚙️ Config | Persisted in Keycloak database |
-| CA certs for CRL signature verification | Default DoD truststore (when enabled) or truststore customization | Keycloak truststore |
