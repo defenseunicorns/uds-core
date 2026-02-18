@@ -21,8 +21,6 @@ packages:
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
-      - falco
-      - prometheus-blackbox-exporter
     overrides:
       istio-admin-gateway:
         gateway:

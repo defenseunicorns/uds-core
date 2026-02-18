@@ -223,6 +223,29 @@ const expose = {
           type: "string",
         },
       },
+      uptime: {
+        description:
+          "Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring.",
+        type: "object",
+        properties: {
+          checks: {
+            description:
+              "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime monitoring.",
+            type: "object",
+            required: ["paths"],
+            properties: {
+              paths: {
+                description: "List of paths to check for uptime monitoring, appended to the host.",
+                type: "array",
+                items: {
+                  type: "string",
+                },
+                minItems: 1,
+              },
+            },
+          },
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
@@ -603,6 +626,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
       jsonPath: ".status.monitors",
     },
     {
+      name: "Probes",
+      type: "string",
+      description: "Uptime probes for the package",
+      jsonPath: ".status.probes",
+    },
+    {
       name: "Network Policies",
       type: "integer",
       description: "The number of network policies created by the package",
@@ -710,6 +739,12 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
               },
             },
             monitors: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+            probes: {
               type: "array",
               items: {
                 type: "string",

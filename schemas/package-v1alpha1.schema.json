@@ -361,6 +361,10 @@
         "targetPort": {
           "type": "number",
           "description": "The service targetPort. This defaults to port and is only required if the service port is\ndifferent from the target port (so the NetworkPolicy can be generated correctly)."
+        },
+        "uptime": {
+          "$ref": "#/definitions/Uptime",
+          "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths\nenables monitoring."
         }
       },
       "required": [
@@ -855,6 +859,37 @@
       "required": [],
       "title": "FluffyURI"
     },
+    "Uptime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "$ref": "#/definitions/Checks",
+          "description": "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime\nmonitoring."
+        }
+      },
+      "required": [],
+      "title": "Uptime",
+      "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring."
+    },
+    "Checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of paths to check for uptime monitoring, appended to the host."
+        }
+      },
+      "required": [
+        "paths"
+      ],
+      "title": "Checks",
+      "description": "HTTP probe checks configuration for blackbox-exporter. Defining paths enables uptime monitoring."
+    },
     "ServiceMesh": {
       "type": "object",
       "additionalProperties": false,
@@ -1139,6 +1174,12 @@
         },
         "phase": {
           "$ref": "#/definitions/Phase"
+        },
+        "probes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "retryAttempt": {
           "type": "integer"

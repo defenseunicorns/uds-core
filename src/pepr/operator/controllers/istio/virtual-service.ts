@@ -14,7 +14,7 @@ import {
   IstioTLS,
   IstioVirtualService,
 } from "../../crd";
-import { UDSConfig } from "../config/config";
+import { getFqdn } from "../domain-utils";
 import { sanitizeResourceName } from "../utils";
 import { sidecarEgressNamespace as namespace, sharedEgressPkgId } from "./egress-sidecar";
 import { generateGatewayName } from "./gateway";
@@ -35,25 +35,10 @@ export function generateIngressVirtualService(
   generation: string,
   ownerRefs: V1OwnerReference[],
 ) {
-  const { gateway = Gateway.Tenant, host, port, service, advancedHTTP = {} } = expose;
+  const { gateway = Gateway.Tenant, port, service, advancedHTTP = {} } = expose;
 
   const name = generateVSName(pkgName, expose);
-
-  // Get the correct domain based on gateway or custom domain
-  let domain = UDSConfig.domain;
-  if (expose.domain) {
-    domain = expose.domain;
-  } else if (gateway === Gateway.Admin || gateway.includes("admin")) {
-    domain = UDSConfig.adminDomain;
-  }
-
-  // Add the host to the domain, unless this is the reserved root domain host (`.`)
-  let fqdn = "";
-  if (host === ".") {
-    fqdn = domain;
-  } else {
-    fqdn = `${host}.${domain}`;
-  }
+  const fqdn = getFqdn(expose);
 
   const http: IstioHTTP = { ...advancedHTTP };
 

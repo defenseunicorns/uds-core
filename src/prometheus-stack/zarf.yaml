@@ -81,7 +81,7 @@ components:
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.7-jammy-fips-rfcurated-rfhardened"
 
   - name: prometheus-blackbox-exporter
-    required: false
+    required: true
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: upstream
@@ -93,9 +93,10 @@ components:
           - "values/upstream/blackbox-exporter.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.88.0"
 
   - name: prometheus-blackbox-exporter
-    required: false
+    required: true
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: registry1
@@ -107,9 +108,10 @@ components:
           - "values/registry1/blackbox-exporter.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.88.0"
 
   - name: prometheus-blackbox-exporter
-    required: false
+    required: true
     description: "UDS Core Prometheus Blackbox Exporter"
     only:
       flavor: unicorn
@@ -121,3 +123,4 @@ components:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
       - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.88.0-jammy-scratch-fips-rfcurated"

@@ -98,8 +98,6 @@ packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
     ref: x.x.x-upstream
-    optionalComponents:
-      - falco
     overrides:
       falco:
         uds-falco-config:
@@ -128,8 +126,6 @@ packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
     ref: x.x.x-upstream
-    optionalComponents:
-      - falco
     overrides:
       falco:
         falco:
@@ -178,8 +174,6 @@ packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
     ref: x.x.x-upstream
-    optionalComponents:
-      - falco
     overrides:
       falco:
         falco:
@@ -226,8 +220,6 @@ packages:
   - name: core
     repository: oci://ghcr.io/defenseunicorns/packages/uds/core
     ref: x.x.x-upstream
-    optionalComponents:
-      - falco
     overrides:
       falco:
         falco:

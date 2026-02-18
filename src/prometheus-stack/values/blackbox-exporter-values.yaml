@@ -44,3 +44,23 @@ serviceMonitor:
   selfMonitor:
     enabled: true
     interval: 30s
+
+podAnnotations:
+  ambient.istio.io/dns-capture: "false" # enables Probes to leave the mesh for DNS resolution/network path
+
+# Config reloader
+configReloader:
+  enabled: true
+
+# Mount UDS Core Trust Bundle
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
+
+extraVolumeMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca-bundle.pem
+    subPath: ca-bundle.pem
+    readOnly: true
