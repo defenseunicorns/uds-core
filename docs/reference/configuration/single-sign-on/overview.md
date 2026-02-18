@@ -79,7 +79,7 @@ grafana:
   grafana:
     values:
       # Sets the role mappings in grafana
-      - path: grafana\.ini.role_attribute_path
+      - path: grafana\.ini.auth\.generic_oauth.role_attribute_path
         value: "contains(groups[], 'KEYCLOAK_ADMIN_GROUP') && 'Admin' || contains(groups[], 'KEYCLOAK_AUDITOR_GROUP') && 'Viewer' || 'Unauthorized'"
 
 ```
