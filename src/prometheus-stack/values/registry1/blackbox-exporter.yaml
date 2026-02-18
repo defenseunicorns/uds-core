@@ -11,4 +11,4 @@ configReloader:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-    tag: v0.88.0
+    tag: v0.89.0
