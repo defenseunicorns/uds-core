@@ -101,4 +101,5 @@ All groups are under the `UDS Core` parent group. Frequently a group will be ref
 1. [Service Account Roles Clients](/reference/configuration/single-sign-on/service-account/)
 1. [Client Attribute Validation](/reference/configuration/single-sign-on/sso-client-validation/)
 1. [Secret Templating](/reference/configuration/single-sign-on/sso-templating/)
+1. [Airgap CRL Configuration for X.509 Authentication](/reference/configuration/single-sign-on/keycloak-crl-airgap/)
 1. [Trusted Certificate Authority](/reference/configuration/single-sign-on/trusted-ca/)
