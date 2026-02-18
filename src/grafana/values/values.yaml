@@ -8,6 +8,7 @@ sidecar:
     searchNamespace: ALL
     initDashboards: true
     restartPolicy: Always
+    watchMethod: SLEEP # use sleep method to avoid watch issues (will relist every 60 secs)
     startupProbe:
       httpGet:
         path: /healthz
@@ -20,6 +21,7 @@ sidecar:
     label: grafana_datasource
     initDatasources: true
     restartPolicy: Always
+    watchMethod: SLEEP # use sleep method to avoid watch issues (will relist every 60 secs)
     startupProbe:
       httpGet:
         path: /healthz
