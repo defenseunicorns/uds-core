@@ -15,7 +15,34 @@ variable "resource_group_name" {
 variable "location" {
   description = "(Required) Specifies the location where the AKS cluster will be deployed."
   type        = string
-  default     = "usgovvirginia"
+  default     = "centralus"
+}
+
+variable "log_analytics_retention_days" {
+  description = "Number of days to retain logs in Log Analytics."
+  type        = number
+  default     = 30
+}
+
+variable "enable_control_plane_logs" {
+  description = "Enable control plane diagnostic logs to Log Analytics."
+  type        = bool
+  default     = false
+}
+
+variable "control_plane_log_categories" {
+  description = "Control plane diagnostic categories to enable on AKS."
+  type        = list(string)
+  default = [
+    "kube-apiserver",
+    "kube-controller-manager",
+    "kube-scheduler",
+    "cluster-autoscaler",
+    "guard",
+    "cloud-controller-manager",
+    "kube-audit",
+    "kube-audit-admin",
+  ]
 }
 
 variable "dns_prefix" {
@@ -49,19 +76,7 @@ variable "enable_autoscaling" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_A8_v2"
-  type        = string
-}
-
-variable "worker_node_pool_count" {
-  description = "Number of nodes to add to the worker nodepool"
-  default     = 3
-  type        = number
-}
-
-variable "worker_pool_vm_size" {
-  description = "Specifies the vm size of the worker node pool"
-  default     = "Standard_A8_v2"
+  default     = "Standard_F8s_v2"
   type        = string
 }
 
@@ -115,7 +130,7 @@ variable "default_node_pool_os_disk_type" {
 variable "default_node_pool_node_count" {
   description = "(Optional) The initial number of nodes which should exist within this Node Pool. Valid values are between 0 and 1000 and must be a value in the range min_count - max_count."
   type        = number
-  default     = 1
+  default     = 3
 }
 
 variable "tags" {

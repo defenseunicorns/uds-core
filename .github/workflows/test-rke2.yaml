@@ -94,9 +94,6 @@ jobs:
         run: uds run -f tasks/iac.yaml rke2-get-kubeconfig --no-progress
         timeout-minutes: 20
 
-      - name: Wait 10m for control plane to stabilize
-        run: sleep 600
-
       - name: Wait for RKE2 Cluster
         run: uds run -f tasks/iac.yaml rke2-cluster-ready --no-progress
         timeout-minutes: 20
