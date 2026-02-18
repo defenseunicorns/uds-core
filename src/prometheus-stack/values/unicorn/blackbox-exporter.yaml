@@ -6,3 +6,9 @@ image:
   registry: quay.io
   repository: rfcurated/prometheus/blackbox-exporter
   tag: 0.28.0-jammy-scratch-fips-rfcurated-rfhardened
+
+configReloader:
+  image:
+    registry: quay.io
+    repository: rfcurated/prometheus-operator/prometheus-config-reloader
+    tag: 0.88.0-jammy-scratch-fips-rfcurated

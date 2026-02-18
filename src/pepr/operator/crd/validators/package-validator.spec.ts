@@ -1064,6 +1064,81 @@ describe("Test Allowed SSO Client Attributes", () => {
   });
 });
 
+describe("Uptime probe FQDN validation", () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("allows expose entries with different FQDNs", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app1", uptime: { checks: { paths: ["/"] } } },
+        { host: "app2", uptime: { checks: { paths: ["/"] } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies duplicate FQDNs with uptime configured", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
+        { host: "app", description: "second", uptime: { checks: { paths: ["/"] } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows duplicate FQDNs when uptime is not configured", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
+        { host: "app", description: "second" },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies paths that don't start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["health"] } } }],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows paths that start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health", "/ready"] } } }],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("Test proper generation of a unique name for service monitors", () => {
   afterEach(() => {
     vi.resetAllMocks();

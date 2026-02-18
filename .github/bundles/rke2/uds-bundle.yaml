@@ -43,8 +43,6 @@ packages:
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
-      - falco
-      - prometheus-blackbox-exporter
     overrides:
       istio-admin-gateway:
         gateway:
@@ -85,6 +83,8 @@ packages:
               value: ""
             - path: global.dnsService
               value: rke2-coredns-rke2-coredns
+            - path: sidecar.rules.logLevel
+              value: DEBUG
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
@@ -100,6 +100,11 @@ packages:
               path: serviceAccount.annotations.irsa/role-arn
       grafana:
         grafana:
+          values:
+            - path: sidecar.dashboards.logLevel
+              value: DEBUG
+            - path: sidecar.datasources.logLevel
+              value: DEBUG
           variables:
             - name: GRAFANA_HA
               description: Enable HA Grafana
