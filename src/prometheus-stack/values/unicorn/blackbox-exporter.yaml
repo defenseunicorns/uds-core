@@ -11,4 +11,4 @@ configReloader:
   image:
     registry: quay.io
     repository: rfcurated/prometheus-operator/prometheus-config-reloader
-    tag: 0.88.0-jammy-scratch-fips-rfcurated
+    tag: 0.89.0-jammy-scratch-fips-rfcurated
