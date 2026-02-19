@@ -28,10 +28,10 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: usgovvirginia
-      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_GOV_RESOURCE_GROUP }}
-      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_GOV_STORAGE_ACCOUNT_NAME }}
-      UDS_CONTAINER_NAME: ${{ secrets.AZURE_GOV_STORAGE_CONTAINER_NAME }}
+      UDS_REGION: centralus
+      UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
+      UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
+      UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
 
     steps:
       - name: Set ENV
@@ -41,11 +41,10 @@ jobs:
           echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_ID=${{ secrets.AZURE_GOV_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.AZURE_GOV_TENANT_ID }}" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
+          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
           echo "ARM_USE_OIDC=true" >> $GITHUB_ENV
-          echo "ARM_ENVIRONMENT=usgovernment" >> $GITHUB_ENV
           echo "ARM_STORAGE_USE_AZUREAD=true" >> $GITHUB_ENV
 
       - name: Checkout repository
@@ -60,10 +59,9 @@ jobs:
       - name: Azure login
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
         with:
-          client-id: ${{ secrets.AZURE_GOV_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_GOV_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_GOV_SUBSCRIPTION_ID }}
-          environment: "AzureUSGovernment"
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -92,6 +90,9 @@ jobs:
 
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
+
+      - name: Wait for cluster ready
+        run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
       - name: Deploy Core Bundle
         env:

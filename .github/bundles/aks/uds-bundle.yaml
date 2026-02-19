@@ -152,7 +152,7 @@ packages:
                 secretContents:
                   cloud: |
                     AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
-                    AZURE_CLOUD_NAME=AzureUSGovernmentCloud
+                    AZURE_CLOUD_NAME=AzurePublicCloud
       falco:
         uds-falco-config:
           variables:

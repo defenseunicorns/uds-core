@@ -93,6 +93,9 @@ jobs:
       - name: Setup GP3 Storage Class
         run: uds run -f tasks/utils.yaml eks-storageclass-setup --no-progress
 
+      - name: Wait for cluster ready
+        run: uds run -f tasks/iac.yaml cluster-ready --no-progress
+
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/eks/uds-config.yaml
