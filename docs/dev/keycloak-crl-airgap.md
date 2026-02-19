@@ -218,7 +218,7 @@ kubectl logs -n keycloak keycloak-0 | grep -i "x509\|crl\|revoc" | tail -n 120
 
 ## Negative tests (and how to make them reliably take effect)
 
-Keycloak caches CRLs in an internal Infinispan cache keyed by the configured CRL path. In practice, when iterating locally you may need to force Keycloak to re-read the CRL file.
+Keycloak caches CRLs in an internal Infinispan cache keyed by the configured CRL path. In practice, when iterating locally you may need to force Keycloak to re-read the CRL file. For debugging, prefer running a **single replica** so cached data is not preserved during Infinispan rebalances.
 
 If a negative test doesn’t change behavior immediately:
 

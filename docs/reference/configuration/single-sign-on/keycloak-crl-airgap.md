@@ -6,9 +6,9 @@ title: Airgap CRL Configuration for Keycloak X.509 Authentication
 
 ## Overview
 
-By default, Keycloak uses **OCSP (Online Certificate Status Protocol)** to check whether an X.509 certificate (like a DoD CAC) has been revoked. In an airgapped environment, Keycloak cannot reach the external OCSP responder URLs embedded in those certificates, which causes authentication failures or forces accepting the security risk of `X509_OCSP_FAIL_OPEN`.
+By default, Keycloak uses **OCSP (Online Certificate Status Protocol)** to check whether an X.509 certificate (like a DoD CAC) has been revoked. OCSP provides the freshest signal and is best paired with CRLs as a resilience layer: if OCSP is temporarily unavailable, the cached CRLs allow continued validation. In an airgapped environment, OCSP is unreachable, which forces either disabling revocation entirely (`X509_OCSP_FAIL_OPEN`) or relying on CRLs.
 
-The preferred alternative is **Certificate Revocation Lists (CRLs)**: signed, offline-capable snapshots published by the issuing CA that enumerate all revoked certificates for that CA. CRLs can be downloaded before entering the airgap, packaged, and loaded directly into Keycloak's filesystem. Keycloak then performs revocation checking against these local files instead of reaching out to an external server.
+CRLs are signed, offline-capable snapshots published by the issuing CA that enumerate revoked certificates. They can be downloaded before entering the airgap, packaged, and loaded directly into Keycloak's filesystem. Keycloak then performs revocation checking against these local files. The tradeoff is staleness between CRL refreshes, so you must plan an update cadence.
 
 This guide covers the complete process: identifying what CRLs you need, downloading them, packaging them for airgap transport, mounting them into the Keycloak pod, and configuring the x509 authenticator to use them.
 
@@ -26,10 +26,10 @@ You do not need to rebuild or customize the `uds-identity-config` image to use C
 
 ## Quick Start
 
-1. Get the correct DoD CRL(s) for the certificate chain(s) you expect to see.
-2. Deliver those CRLs to the cluster (for example as a Kubernetes Secret).
-3. Mount them into the Keycloak pod (recommended: `/opt/keycloak/data/crls`).
-4. In the Keycloak Admin Console:
+1. [Identify which CRLs you need](#step-1-identify-which-crls-you-need) for the certificate chain(s) you expect to see.
+2. [Download, validate, and package the CRLs for delivery](#step-2-download-and-validate-the-crls) (for example as a Kubernetes Secret).
+3. [Mount the CRLs into the Keycloak pod](#step-4-mount-the-crl-files-into-the-keycloak-pod) (recommended: `/opt/keycloak/data/crls`).
+4. [Configure the X.509 authenticator in the Keycloak Admin Console](#step-5-configure-the-keycloak-x509-authenticator):
    1. Select the **`uds`** realm
    2. Go to **Authentication**
    3. Open the **`UDS Authentication`** flow
