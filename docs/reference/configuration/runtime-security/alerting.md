@@ -27,7 +27,7 @@ UDS Core ships with **sandbox** and **incubating** rulesets from the Falco commu
 
 #### Enabling and Configuring Rulesets
 
-To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/default-rules/) rulesets and exclude specific rules, override the `falco.uds-falco-config` value in your UDS Core bundle:
+To enable the [sandbox and incubating](https://falco.org/docs/reference/rules/default-rules/) rulesets and exclude specific rules, override the `sandBoxRulesEnabled`, `incubatingRulesEnabled`, `disabledRules` values in the `uds-falco-config` helm chart in your UDS Core bundle:
 
 ```yaml
 overrides:
@@ -53,20 +53,20 @@ You can explicitly disable any Falco rule by name using the `disabledRules` valu
 
 To use this feature, provide an array of rule names under the `disabledRules` value in your configuration. The names must match the `rule` field in the Falco rules files.
 
-**How to find rule names:**
+#### How to find rule names
 
-1. **Falco Official Documentation:**
+**Falco Official Documentation:**
 
-- [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
+  - [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
 
-1. **UDS Core rule files:**
+**UDS Core rule files:**
 
 - Stable rules: [`src/falco/chart/rules/stable-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml)
 - Sandbox rules: [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml)
 - Incubating rules: [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml)
 - Look for entries that start with `- rule:` to find the rule names.
 
-1. **Falco logs:**
+**Falco logs:**
 
 - When Falco detects an event, it logs the rule name in the output. You can find these logs by querying Loki with:
 
@@ -136,6 +136,31 @@ overrides:
 
 - `fields`, `comps` must have the same length.
 - When using multiple fields, each element in `values` must be an array (tuple) whose length matches the number of fields. When using a single field or omitting the `fields` specification, `values` can be a simple array of scalar values.
+
+#### Common Overrides
+
+In AWS EKS environments, it is common to see Falco alerts triggered by the CSI (Container Storage Interface) drivers, such as EFS and EBS, because these drivers launch privileged containers to perform storage operations. These alerts are expected and do not indicate malicious activity. To reduce noise and avoid unnecessary investigation of these known benign events, it is recommended to add rule exceptions for the affected CSI driver pods. The following override demonstrates how to safely suppress these alerts while maintaining visibility into other privileged container activity.
+
+```
+  values:
+    - path: overrides
+      value:
+        rules:
+          "Mount Launched in Privileged Container":
+            exceptions:
+              action: append
+              items:
+                - name: allow_csi_efs_node_mounts
+                  fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                  comps: [=, startswith, =]
+                  values:
+                    - [kube-system, efs-csi-node-, mount]
+                - name: allow_csi_ebs_node_mounts
+                  fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                  comps: [=, startswith, =]
+                  values:
+                    - [kube-system, ebs-csi-node, mount]
+```
 
 ### Querying Events with Loki
 

@@ -4,9 +4,64 @@
   "type": "object",
   "additionalProperties": true,
   "properties": {
+    "additionalNetworkAllow": {
+      "type": "array",
+      "default": [],
+      "description": "Additional entries merged into the UDS Package spec.network.allow list (escape hatch for custom network policy rules).",
+      "items": {
+        "$ref": "#/definitions/networkAllowEntry"
+      }
+    },
+    "incubatingRulesEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Toggle inclusion of Falco's incubating ruleset."
+    },
+    "sandboxRulesEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Toggle inclusion of Falco's sandbox (experimental) ruleset."
+    },
+    "disabledRules": {
+      "type": "array",
+      "default": [],
+      "description": "List of Falco rule names to explicitly disable by name.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesStable": {
+      "type": "array",
+      "default": [],
+      "description": "Falco stable rules that are disabled by default in UDS.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesIncubating": {
+      "type": "array",
+      "default": [],
+      "description": "Falco incubating rules that are disabled by default in UDS (only used when incubatingRulesEnabled=true).",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesSandbox": {
+      "type": "array",
+      "default": [],
+      "description": "Falco sandbox rules that are disabled by default in UDS (only used when sandboxRulesEnabled=true).",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
     "overrides": {
       "type": "object",
       "additionalProperties": false,
+      "default": {},
       "properties": {
         "lists": {
           "type": "object",
@@ -32,13 +87,16 @@
           },
           "default": {}
         }
-      },
-      "default": {}
+      }
     },
     "extraRules": {
       "type": "array",
-      "description": "Raw Falco rules list appended as-is.",
-      "default": []
+      "description": "Additional Falco rules/list/macro YAML objects appended as-is after override blocks.",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
     }
   },
   "definitions": {
@@ -48,6 +106,50 @@
         "append",
         "replace"
       ]
+    },
+    "networkAllowEntry": {
+      "type": "object",
+      "description": "A UDS Package network.allow entry (per https://uds.defenseunicorns.com/ reference). This schema is intentionally permissive to avoid blocking valid CR shapes.",
+      "additionalProperties": true,
+      "properties": {
+        "direction": {
+          "type": "string",
+          "enum": [
+            "Ingress",
+            "Egress"
+          ]
+        },
+        "selector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "remoteGenerated": {
+          "type": "string",
+          "description": "UDS-generated remote target identifier (e.g., Anywhere, IntraNamespace)."
+        },
+        "remoteNamespace": {
+          "type": "string"
+        },
+        "remoteSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "remoteServiceAccount": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "description": {
+          "type": "string"
+        }
+      }
     },
     "listOverride": {
       "type": "object",
@@ -136,7 +238,8 @@
       "properties": {
         "name": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Exception name. If this matches an existing exception in the base rules, fields/comps may be omitted and Falco will apply values to that exception definition."
         },
         "fields": {
           "type": "array",
@@ -155,7 +258,7 @@
           }
         },
         "values": {
-          "description": "Either a list of scalars or a list of tuples (list-of-lists), depending on fields/comps usage.",
+          "description": "Falco exception values. For single-field exceptions, Falco accepts either a flat list (values: [a,b]) OR tuple rows (values: [[a],[b]]). For multi-field exceptions, use tuple rows (values: [[a,b],[c,d]]).",
           "oneOf": [
             {
               "type": "array",
