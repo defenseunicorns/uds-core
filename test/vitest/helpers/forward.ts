@@ -8,34 +8,20 @@ import { K8s, kind } from "kubernetes-fluent-client";
 import * as net from "net";
 
 const kc = new k8s.KubeConfig();
-const forward = new k8s.PortForward(kc);
 kc.loadFromDefault();
+
+// Fail fast if kubeconfig cannot be loaded or no context is set
+if (!kc.getCurrentContext()) {
+  throw new Error(
+    "No current Kubernetes context found. Ensure KUBECONFIG is set or in-cluster config is available.",
+  );
+}
+
+const forward = new k8s.PortForward(kc);
 
 interface ForwardResult {
   server: net.Server;
   url: string;
-}
-
-// Utility function to get an available random port within a range
-async function getAvailablePort(min = 1024, max = 65535): Promise<number> {
-  let port: number;
-  let isAvailable = false;
-
-  while (!isAvailable) {
-    port = Math.floor(Math.random() * (max - min + 1)) + min;
-    isAvailable = await new Promise<boolean>(resolve => {
-      const server = net.createServer();
-
-      server.once("error", () => resolve(false)); // Port is in use
-      server.once("listening", () => {
-        server.close(() => resolve(true)); // Port is available
-      });
-
-      server.listen(port, "127.0.0.1");
-    });
-  }
-
-  return port!;
 }
 
 export async function getPodFromService(svc: string, namespace: string): Promise<string> {
@@ -75,24 +61,41 @@ export async function getForward(
 ): Promise<ForwardResult> {
   try {
     const podName = await getPodFromService(service, namespace);
-    const randomPort = await getAvailablePort(3000, 65535);
 
     return await new Promise<ForwardResult>((resolve, reject) => {
       const server = net.createServer(socket => {
-        // Explicitly ignore the promise with `void` to avoid eslint no-floating-promises error
-        void forward.portForward(namespace, podName, [port], socket, null, socket);
-      });
-
-      server.listen(randomPort, "127.0.0.1", () => {
-        resolve({ server, url: `http://localhost:${randomPort}` });
+        // Surface port-forward setup errors on the socket so callers can see failures quickly
+        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(err => {
+          socket.destroy(err instanceof Error ? err : new Error(String(err)));
+        });
       });
 
       server.on("error", err => {
         if (err instanceof Error) {
-          reject(new Error(`Error binding to port ${randomPort}: ${err.message}`));
+          reject(new Error(`Error binding to local port for forward: ${err.message}`));
         } else {
-          reject(new Error(`Unknown error occurred while binding to port ${randomPort}`));
+          reject(new Error("Unknown error occurred while binding local port for forward"));
         }
+      });
+
+      // Allow the OS to automatically select a port
+      server.listen(0, "127.0.0.1", () => {
+        const address = server.address();
+        if (
+          !address ||
+          typeof address !== "object" ||
+          address.address === undefined ||
+          address.port === undefined
+        ) {
+          reject(new Error("Failed to determine local port for forward"));
+          server.close();
+          return;
+        }
+
+        const localPort = address.port;
+        // Allow the process to exit even if the server is still open (tests should close it explicitly)
+        server.unref();
+        resolve({ server, url: `http://localhost:${localPort}` });
       });
     });
   } catch (err) {
