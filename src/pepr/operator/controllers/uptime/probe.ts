@@ -34,8 +34,8 @@ export async function probe(
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
-  const probeNames: string[] = [];
   const probeClients: { clientId: string; secret: string }[] = [];
+  const probePayloads: PrometheusProbe[] = [];
 
   try {
     for (const entry of expose) {
@@ -54,7 +54,7 @@ export async function probe(
       // Get the matching Authservice SSO entry for this expose entry, if any
       const authserviceSso = getAuthserviceSso(entry, pkg.spec?.sso ?? []);
 
-      // If Authservice is enabled, create a probe Keycloak client for the matched SSO entry and update blackbox config with new module
+      // If Authservice is enabled, create a probe Keycloak client for the matched SSO entry
       if (authserviceSso) {
         const { clientId, secret } = await createProbeKeycloakClient(authserviceSso);
         log.debug(
@@ -64,20 +64,18 @@ export async function probe(
         module = `http_200x_sso_${namespace}_${clientId}`; // Set module name to match the one generated in updateBlackboxConfig
       }
 
-      // Generate the probe
-      const payload = generateProbe(entry, namespace, pkgName, generation, ownerRefs, module);
-
-      log.debug(payload, `Applying Probe ${payload.metadata?.name}`);
-
-      // Apply the Probe and force overwrite any existing resource
-      await K8s(PrometheusProbe).Apply(payload, { force: true });
-
-      probeNames.push(payload.metadata!.name!);
+      probePayloads.push(generateProbe(entry, namespace, pkgName, generation, ownerRefs, module));
     }
 
-    // Update the shared blackbox config with all SSO modules for this namespace
+    // Update the blackbox config first so SSO modules exist before Probes reference them
     // Note: this will also remove any SSO modules for probes that no longer exist in this namespace
     await updateBlackboxConfig(namespace, probeClients);
+
+    // Apply all Probe CRs now that the blackbox config is ready
+    for (const payload of probePayloads) {
+      log.debug(payload, `Applying Probe ${payload.metadata?.name}`);
+      await K8s(PrometheusProbe).Apply(payload, { force: true });
+    }
 
     // Purge any orphaned probes from previous generations
     await purgeOrphans(generation, namespace, pkgName, PrometheusProbe, log);
@@ -85,7 +83,10 @@ export async function probe(
     throw new Error(`Failed to process Probes for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }
 
-  return { probeNames, ssoClients: probeClients.map(c => c.clientId) };
+  return {
+    probeNames: probePayloads.map(p => p.metadata!.name!),
+    ssoClients: probeClients.map(c => c.clientId),
+  };
 }
 
 /**
@@ -178,7 +179,13 @@ export async function createProbeKeycloakClient(
     ],
   });
 
-  return { clientId: (client as ClientWithId).clientId, secret: (client as ClientWithId).secret };
+  const { clientId, secret } = client as ClientWithId;
+  if (!secret) {
+    throw new Error(
+      `Failed to create uptime probe Keycloak client "${probeClientId}": no client secret returned from Keycloak`,
+    );
+  }
+  return { clientId, secret };
 }
 
 /**

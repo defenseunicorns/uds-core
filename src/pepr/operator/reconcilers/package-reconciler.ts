@@ -261,7 +261,9 @@ export async function packageFinalizer(pkg: UDSPackage) {
 
   // Remove SSO modules for this namespace from the shared blackbox exporter config
   try {
-    await updateBlackboxConfig(pkg.metadata!.namespace!, []);
+    await retryWithDelay(async function cleanupBlackboxConfig() {
+      await updateBlackboxConfig(pkg.metadata!.namespace!, []);
+    }, log);
   } catch (e) {
     log.debug(
       `Removal of blackbox SSO modules during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
