@@ -13,7 +13,7 @@ UDS Core includes Blackbox Exporter for HTTP/HTTPS probing of endpoints to monit
 To enable uptime monitoring for an exposed service, configure the `uptime.checks` section within your Package CR's `expose` entries.
 
 :::note
-Uptime checks for Authservice-protected applications will probe the external interface but not the application itself - the probe will receive a successful response from the Authservice redirect rather than reaching the actual application. Support for probing through Authservice is planned for a future release.
+Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client for each Authservice-protected expose entry and configures the Blackbox Exporter with OAuth2 client credentials, allowing probes to authenticate and reach the application directly.
 :::
 
 ### Basic Example
@@ -95,6 +95,43 @@ spec:
             paths:
               - /
 ```
+
+### Authservice-Protected Applications
+
+For applications protected by Authservice, add `uptime.checks` to the expose entry as normal. The UDS Operator detects the `enableAuthserviceSelector` on the matching SSO entry and automatically:
+
+1. Creates a Keycloak service account client (`<clientId>-probe`) with an audience mapper scoped to the application's SSO client
+2. Configures the Blackbox Exporter with an OAuth2 module that obtains a token via client credentials before probing
+
+No additional configuration is required beyond adding `uptime.checks.paths`:
+
+```yaml
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: my-app
+  namespace: my-app
+spec:
+  sso:
+    - name: My App
+      clientId: uds-my-app
+      redirectUris:
+        - "https://myapp.uds.dev/login"
+      enableAuthserviceSelector:
+        app: my-app
+  network:
+    expose:
+      - service: my-app
+        host: myapp
+        gateway: tenant
+        port: 8080
+        uptime:
+          checks:
+            paths:
+              - /healthz
+```
+
+The operator matches the expose entry to the SSO entry via the redirect URI origin (`https://myapp.uds.dev`) and configures the probe to authenticate transparently through Authservice.
 
 ### Multiple Expose Entries for Same FQDN
 

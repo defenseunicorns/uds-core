@@ -22,6 +22,7 @@ import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { probe } from "../controllers/uptime/probe";
+import { updateBlackboxConfig } from "../controllers/uptime/config";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -92,11 +93,11 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
-  // 1. First, ensure network policies are in place
+  // Ensure network policies are in place
   const netPol = await networkPolicies(pkg, namespace!, istioMode);
   const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
 
-  // 2. Now enable Istio injection (this may restart pods in sidecar mode)
+  // Enable Istio injection (this may restart pods in sidecar mode)
   await enableIstio(pkg);
 
   let endpoints: string[] = [];
@@ -126,7 +127,15 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   monitors.push(...(await serviceMonitor(pkg, namespace!)));
 
   // Configure the Uptime Probes
-  const probes = await probe(pkg, namespace!);
+  const { probeNames: probes, ssoClients: probeSsoClients } = await probe(pkg, namespace!);
+
+  // Purge orphaned SSO clients now that both keycloak and probe clients are known
+  const allSsoClients = [...ssoClients.keys(), ...probeSsoClients];
+  try {
+    await purgeSSOClients(pkg, allSsoClients);
+  } catch (e) {
+    log.error(e, `Failed to purge orphaned SSO clients for ${pkg.metadata!.name!}: ${e}`);
+  }
 
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);
@@ -134,7 +143,7 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   await updateStatus(pkg, {
     phase: Phase.Ready,
     conditions: getReadinessConditions(true),
-    ssoClients: [...ssoClients.keys()],
+    ssoClients: [...ssoClients.keys(), ...probeSsoClients],
     authserviceClients,
     endpoints,
     monitors,
@@ -243,6 +252,22 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of SSO clients failed: ${e.message}. Clients must be manually removed from Keycloak.`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Remove SSO modules for this namespace from the shared blackbox exporter config
+  try {
+    await updateBlackboxConfig(pkg.metadata!.namespace!, []);
+  } catch (e) {
+    log.debug(
+      `Removal of blackbox SSO modules during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of blackbox SSO modules failed: ${e.message}. Blackbox config secret should be reviewed and cleaned up as needed.`,
       reason: "RemovalFailed",
       type: "Warning",
     });
