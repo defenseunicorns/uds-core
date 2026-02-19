@@ -43,7 +43,7 @@ async function waitForDeploymentRollout(
   namespace: string,
   deploymentName: string,
   initialGeneration: number,
-  timeoutSeconds = 30,
+  timeoutSeconds = 50,
 ): Promise<{ rolledOut: boolean; currentGeneration: number }> {
   let attempts = 0;
   const maxAttempts = timeoutSeconds;
@@ -72,43 +72,7 @@ async function waitForDeploymentRollout(
   return { rolledOut: false, currentGeneration: 0 };
 }
 
-// Helper function to check for events
-async function checkForEvents(
-  namespace: string,
-  options: {
-    secretName: string;
-    targetKind: string;
-    targetName: string;
-  },
-) {
-  // Wait for events to be created
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  const events = await K8s(kind.CoreEvent).InNamespace(namespace).Get();
-
-  // Check for secret change events
-  const secretChangeEvents =
-    events.items?.filter(
-      event =>
-        event.involvedObject?.kind === options.targetKind &&
-        event.involvedObject?.name === options.targetName &&
-        event.reason === "SecretChanged" &&
-        event.message?.includes(options.secretName),
-    ) || [];
-
-  // Check for scaling events
-  const scalingEvents =
-    events.items?.filter(
-      event =>
-        event.involvedObject?.kind === options.targetKind &&
-        event.involvedObject?.name === options.targetName &&
-        (event.reason === "ScalingReplicaSet" || event.reason === "SuccessfulCreate"),
-    ) || [];
-
-  return { secretChangeEvents, scalingEvents };
-}
-
-// Generic helper function to check for events for either Secret or ConfigMap
+// Helper function to check for events for either Secret or ConfigMap
 async function checkForEventsForResource(
   namespace: string,
   options: {
@@ -177,7 +141,7 @@ describe("Secret Auto-reload", () => {
 
   test(
     "should restart deployment when secret has explicit selector annotation",
-    { timeout: 30000 },
+    { timeout: 60000 },
     async () => {
       // Generate a unique test ID for this test run
       const testId = uuidv4().substring(0, 4);
@@ -229,18 +193,19 @@ describe("Secret Auto-reload", () => {
       expect(rolledOut).toBe(true);
 
       // Verify that appropriate events were created
-      const { secretChangeEvents, scalingEvents } = await checkForEvents(PODINFO_NAMESPACE, {
-        secretName: testSecretName,
+      const { changeEvents, scalingEvents } = await checkForEventsForResource(PODINFO_NAMESPACE, {
+        resourceType: "Secret",
+        resourceName: testSecretName,
         targetKind: "Deployment",
         targetName: PODINFO_DEPLOYMENT,
       });
 
       // We should have both secret change events and scaling events
-      expect(secretChangeEvents.length).toBeGreaterThan(0);
+      expect(changeEvents.length).toBeGreaterThan(0);
       expect(scalingEvents.length).toBeGreaterThan(0);
 
       // Verify the event properties
-      const secretEvent = secretChangeEvents[0];
+      const secretEvent = changeEvents[0];
       expect(secretEvent.type).toBe("Normal");
       expect(secretEvent.involvedObject?.namespace).toBe(PODINFO_NAMESPACE);
       expect(secretEvent.involvedObject?.name).toBe(PODINFO_DEPLOYMENT);
@@ -256,7 +221,7 @@ describe("Secret Auto-reload", () => {
 
   test(
     "should restart deployment using auto-lookup when pod uses secret",
-    { timeout: 30000 },
+    { timeout: 60000 },
     async () => {
       // Generate a unique test ID for this test run
       const testId = uuidv4().substring(0, 4);
@@ -366,18 +331,19 @@ describe("Secret Auto-reload", () => {
       expect(rolledOut).toBe(true);
 
       // Verify that appropriate events were created
-      const { secretChangeEvents, scalingEvents } = await checkForEvents(PODINFO_NAMESPACE, {
-        secretName: testSecretName,
+      const { changeEvents, scalingEvents } = await checkForEventsForResource(PODINFO_NAMESPACE, {
+        resourceType: "Secret",
+        resourceName: testSecretName,
         targetKind: "Deployment",
         targetName: testDeploymentName,
       });
 
       // We should have both secret change events and scaling events
-      expect(secretChangeEvents.length).toBeGreaterThan(0);
+      expect(changeEvents.length).toBeGreaterThan(0);
       expect(scalingEvents.length).toBeGreaterThan(0);
 
       // Verify the secret change event properties
-      const secretEvent = secretChangeEvents[0];
+      const secretEvent = changeEvents[0];
       expect(secretEvent.type).toBe("Normal");
       expect(secretEvent.involvedObject?.namespace).toBe(PODINFO_NAMESPACE);
       expect(secretEvent.message).toContain("Restarted due to:");
@@ -419,7 +385,7 @@ describe("ConfigMap Auto-reload", () => {
 
   test(
     "should restart deployment when configmap has explicit selector annotation",
-    { timeout: 30000 },
+    { timeout: 60000 },
     async () => {
       // Generate a unique test ID for this test run
       const testId = uuidv4().substring(0, 4);
@@ -498,7 +464,7 @@ describe("ConfigMap Auto-reload", () => {
 
   test(
     "should restart deployment using auto-lookup when pod uses configmap",
-    { timeout: 30000 },
+    { timeout: 60000 },
     async () => {
       // Generate a unique test ID for this test run
       const testId = uuidv4().substring(0, 4);

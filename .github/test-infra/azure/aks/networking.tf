@@ -60,7 +60,7 @@ resource "azurerm_subnet" "cluster_api_subnet" {
 }
 
 resource "azurerm_private_dns_zone" "cluster_dns_zone" {
-  name                = "${local.cluster_name}.postgres.database.usgovcloudapi.net"
+  name                = "${local.cluster_name}.postgres.database.azure.com"
   resource_group_name = azurerm_resource_group.this.name
 }
 
