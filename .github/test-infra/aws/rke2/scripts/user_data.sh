@@ -24,7 +24,7 @@ EOM
 envsubst < helmchart-template.yaml > /var/lib/rancher/rke2/server/manifests/00-helmcharts.yaml
 # We install longhorn from a template to avoid install issues with the HelmController
 # <!-- renovate: datasource=helm depName=longhorn versioning=helm registryUrl=https://charts.longhorn.io -->
-LONGHORN_VERSION=1.10.1
+LONGHORN_VERSION=1.11.0
 HELM_LATEST=$(curl -L --silent --show-error --fail "https://get.helm.sh/helm-latest-version" 2>&1 || true)
 curl https://get.helm.sh/helm-$HELM_LATEST-linux-amd64.tar.gz --output helm.tar.gz
 tar -xvf ./helm.tar.gz && rm -rf ./helm.tar.gz

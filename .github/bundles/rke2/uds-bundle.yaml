@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "0.60.0"
+  version: "0.61.0"
   # x-release-please-end
 
 packages:
@@ -16,7 +16,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.70.1
+    ref: v0.71.1
     overrides:
       zarf-registry:
         docker-registry:
@@ -38,12 +38,11 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.60.0
+    ref: 0.61.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
-      - falco
     overrides:
       istio-admin-gateway:
         gateway:
@@ -84,13 +83,12 @@ packages:
               value: ""
             - path: global.dnsService
               value: rke2-coredns-rke2-coredns
+            - path: sidecar.rules.logLevel
+              value: DEBUG
           variables:
             - name: LOKI_CHUNKS_BUCKET
               description: "The object storage bucket for Loki chunks"
               path: loki.storage.bucketNames.chunks
-            - name: LOKI_RULER_BUCKET
-              description: "The object storage bucket for Loki ruler"
-              path: loki.storage.bucketNames.ruler
             - name: LOKI_ADMIN_BUCKET
               description: "The object storage bucket for Loki admin"
               path: loki.storage.bucketNames.admin
@@ -102,6 +100,11 @@ packages:
               path: serviceAccount.annotations.irsa/role-arn
       grafana:
         grafana:
+          values:
+            - path: sidecar.dashboards.logLevel
+              value: DEBUG
+            - path: sidecar.datasources.logLevel
+              value: DEBUG
           variables:
             - name: GRAFANA_HA
               description: Enable HA Grafana

@@ -24,7 +24,32 @@ tasks:
       - cmd: chmod +x ./scripts/get-kubeconfig.sh && ./scripts/get-kubeconfig.sh
         dir: .github/test-infra/aws/rke2/
 
-  - name: rke2-nodes-ready
+  - name: cluster-api-ready
+    actions:
+      - description: Wait for Kubernetes API server to respond
+        cmd: |
+          set -e
+          ATTEMPTS=${API_WAIT_ATTEMPTS:-60}
+          SLEEP=${API_WAIT_SLEEP:-10}
+          for i in $(seq 1 $ATTEMPTS); do
+            if uds zarf tools kubectl get --raw="/readyz" >/dev/null 2>&1; then
+              echo "API server ready"
+              exit 0
+            fi
+            echo "[$i/$ATTEMPTS] API not ready yet; sleeping ${SLEEP}s"
+            sleep $SLEEP
+          done
+
+          echo "API server did not become ready in time" >&2
+          uds zarf tools kubectl get --raw="/readyz?verbose"
+          exit 1
+
+  - name: cluster-ready
+    actions:
+      - task: cluster-api-ready
+      - task: cluster-nodes-ready
+
+  - name: cluster-nodes-ready
     actions:
       - cmd: sleep 30
       - wait:
@@ -36,7 +61,7 @@ tasks:
 
   - name: rke2-cluster-ready
     actions:
-      - task: rke2-nodes-ready
+      - task: cluster-nodes-ready
       - cmd: |
           # wait for nodes to be ready
           echo "Waiting for all cluster nodes to be ready...";
@@ -91,7 +116,6 @@ tasks:
               -backend-config="storage_account_name=$STORAGE_ACCOUNT_NAME" \
               -backend-config="container_name=$CONTAINER_NAME" \
               -backend-config="key=${STATE_KEY}" \
-              -backend-config="environment=usgovernment" \
               -backend-config="use_azuread_auth=true"
           else
             echo "Invalid cloud provider specified."

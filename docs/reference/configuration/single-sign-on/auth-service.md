@@ -29,6 +29,50 @@ spec:
 The UDS Operator uses the first `redirectUris` to populate the `match.prefix` hostname and `callback_uri` in the authservice chain.
 :::
 
+:::warning
+### Redirect URI Validation
+
+When using `enableAuthserviceSelector`, the UDS Operator validates the `redirectUris` array to ensure proper configuration:
+
+- **Root paths (`/`) are not allowed** in `redirectUris` for authservice clients
+- **Valid redirect URIs must be fully qualified URLs** (e.g., `https://example.com/callback`)
+- **Non-authservice clients are not affected** by this validation
+
+#### Examples:
+
+✅ **Valid:**
+```yaml
+sso:
+  - name: "My App"
+    clientId: my-app
+    redirectUris: ["https://myapp.example.com/login"]
+    enableAuthserviceSelector:
+      app: myapp
+```
+
+❌ **Invalid:**
+```yaml
+sso:
+  - name: "My App"
+    clientId: my-app
+    redirectUris: ["https://myapp.example.com/"]  # Root path not allowed
+    enableAuthserviceSelector:
+      app: myapp
+```
+
+❌ **Invalid:**
+```yaml
+sso:
+  - name: "My App"
+    clientId: my-app
+    redirectUris: ["https://myapp.example.com/login", "https://myapp.example.com/"]  # Mixed with root path
+    enableAuthserviceSelector:
+      app: myapp
+```
+
+If invalid redirect URIs are detected, the Package will be denied with an error message indicating the issue.
+:::
+
 For complete examples, see [app-ambient-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-ambient-authservice-tenant.yaml) and [app-sidecar-authservice-tenant.yaml](https://github.com/defenseunicorns/uds-core/blob/main/src/test/app-sidecar-authservice-tenant.yaml)
 
 ## Multiple Services and Selectors

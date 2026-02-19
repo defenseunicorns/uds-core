@@ -1,0 +1,14 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Image configuration for registry1 flavor
+image:
+  registry: registry1.dso.mil
+  repository: ironbank/opensource/prometheus/blackbox_exporter
+  tag: v0.28.0
+
+configReloader:
+  image:
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
+    tag: v0.89.0

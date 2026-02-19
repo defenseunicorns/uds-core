@@ -55,8 +55,29 @@ mounts:
       subPath: disable-rules.yaml
       readOnly: true
 
+containerSecurityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  privileged: true
+
+podSecurityContext:
+  runAsNonRoot: false
+
 falcosidekick:
   enabled: true
+
+  # FalcoSidekick is a Go based image and accepts this `/etc/ssl/certs/ca-bundle.pem` path
+  # based on https://go.dev/src/crypto/x509/root_linux.go
+  extraVolumes:
+    - name: ca-certs
+      configMap:
+        name: uds-trust-bundle
+        optional: true
+  extraVolumeMounts:
+    - name: ca-certs
+      mountPath: /etc/ssl/certs/ca-bundle.pem
+      subPath: ca-bundle.pem
+      readOnly: true
 
   serviceMonitor:
     enabled: true

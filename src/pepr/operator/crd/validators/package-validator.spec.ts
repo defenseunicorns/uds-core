@@ -821,6 +821,140 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  it("denies authservice clients with redirectUris containing URLs with root paths", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["https://google.com/"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has redirectUris containing root paths ("/"). Authservice clients cannot have root path redirect URIs.',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("denies authservice clients with missing redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: [],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("denies authservice clients with empty redirectUris array", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: [],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("allows authservice clients with valid redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["https://example.com/callback"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("url parsing failure when redirectUri is not a valid URL", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          enableAuthserviceSelector: {
+            app: "test",
+          },
+          redirectUris: ["/", "https://example.com/callback"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      'The client ID "test-client" has an invalid redirect URI "/". Redirect URIs must be valid URLs.',
+    );
+    expect(mockReq.Approve).not.toHaveBeenCalled();
+  });
+
+  it("allows non-authservice clients with root-only redirectUris", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          clientId: "test-client",
+          // No enableAuthserviceSelector
+          redirectUris: ["/"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {
@@ -925,6 +1059,81 @@ describe("Test Allowed SSO Client Attributes", () => {
 
   it("allows clients with no attributes defined", async () => {
     const mockReq = makeMockReq({}, [], [], [{}], []);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("Uptime probe FQDN validation", () => {
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("allows expose entries with different FQDNs", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app1", uptime: { checks: { paths: ["/"] } } },
+        { host: "app2", uptime: { checks: { paths: ["/"] } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies duplicate FQDNs with uptime configured", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
+        { host: "app", description: "second", uptime: { checks: { paths: ["/"] } } },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows duplicate FQDNs when uptime is not configured", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [
+        { host: "app", description: "first", uptime: { checks: { paths: ["/"] } } },
+        { host: "app", description: "second" },
+      ],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies paths that don't start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["health"] } } }],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows paths that start with /", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: "app", uptime: { checks: { paths: ["/health", "/ready"] } } }],
+      [],
+      [],
+      [],
+    );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });

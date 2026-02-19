@@ -57,6 +57,8 @@ export function registerWatchEventHandlers(
     [WatchEvent.NETWORK_ERROR]: err =>
       log.warn(`WatchEvent NetworkError (${watchName}): ${err.message}`),
     [WatchEvent.LIST_ERROR]: err => log.warn(`WatchEvent ListError (${watchName}): ${err.message}`),
+    [WatchEvent.WATCH_ERROR]: err =>
+      log.warn(`WatchEvent WatchError (${watchName}): ${err.message}`),
   };
   Object.entries(eventHandlers).forEach(([event, handler]) => {
     watcher.events.on(event, handler);
@@ -129,7 +131,8 @@ export async function purgeOrphans<T extends GenericClass>(
     }
   }
 
-  const resources = await query.Get();
+  const fetchResources = () => query.Get();
+  const resources = await retryWithDelay(fetchResources, log, 5, 1000);
 
   for (const resource of resources.items) {
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];

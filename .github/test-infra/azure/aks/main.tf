@@ -24,6 +24,16 @@ resource "azurerm_resource_group" "this" {
   }
 }
 
+resource "azurerm_log_analytics_workspace" "aks" {
+  count               = var.enable_control_plane_logs ? 1 : 0
+  name                = "${local.cluster_name}-law"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  sku                 = "PerGB2018"
+  retention_in_days   = var.log_analytics_retention_days
+  tags                = var.tags
+}
+
 resource "azurerm_role_assignment" "cluster_admin" {
   scope                = azurerm_kubernetes_cluster.aks_cluster.id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
@@ -82,13 +92,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   role_based_access_control_enabled = true
 
   network_profile {
-    dns_service_ip     = var.network_dns_service_ip
-    service_cidr       = var.network_service_cidr
-    load_balancer_sku  = "standard"
-    network_data_plane = "azure"
-    network_plugin     = "azure"
-    network_policy     = "azure"
-    outbound_type      = var.outbound_type
+    dns_service_ip      = var.network_dns_service_ip
+    service_cidr        = var.network_service_cidr
+    load_balancer_sku   = "standard"
+    network_data_plane  = "azure"
+    network_plugin      = "azure"
+    network_plugin_mode = "overlay"
+    network_policy      = "azure"
+    outbound_type       = var.outbound_type
   }
 
   storage_profile {
@@ -103,11 +114,12 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   sku_tier            = var.sku_tier
 
   default_node_pool {
-    name           = var.default_node_pool_name
-    vm_size        = var.default_node_pool_vm_size
-    vnet_subnet_id = azurerm_subnet.cluster_node_subnet.id
-    zones          = var.default_node_pool_availability_zones
-    max_pods       = var.default_node_pool_max_pods
+    name                        = var.default_node_pool_name
+    vm_size                     = var.default_node_pool_vm_size
+    vnet_subnet_id              = azurerm_subnet.cluster_node_subnet.id
+    zones                       = var.default_node_pool_availability_zones
+    temporary_name_for_rotation = "tmp"
+    max_pods                    = var.default_node_pool_max_pods
 
     os_sku          = "Ubuntu"
     os_disk_size_gb = 128
@@ -130,27 +142,16 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   }
 }
 
-resource "azurerm_kubernetes_cluster_node_pool" "worker1" {
-  name                  = "worker1"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.aks_cluster.id
-  mode                  = "User"
+resource "azurerm_monitor_diagnostic_setting" "aks_control_plane" {
+  count                      = var.enable_control_plane_logs ? 1 : 0
+  name                       = "${local.cluster_name}-controlplane"
+  target_resource_id         = azurerm_kubernetes_cluster.aks_cluster.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.aks[0].id
 
-  vm_size        = var.worker_pool_vm_size
-  vnet_subnet_id = azurerm_subnet.cluster_worker_node_subnet.id
-
-  os_sku          = "Ubuntu"
-  os_disk_size_gb = 128
-  os_disk_type    = "Managed"
-
-  max_pods = 30
-
-  node_public_ip_enabled  = false
-  host_encryption_enabled = false
-  fips_enabled            = false
-  ultra_ssd_enabled       = false
-  kubelet_disk_type       = "OS"
-  scale_down_mode         = "Delete"
-
-  auto_scaling_enabled = var.enable_autoscaling
-  node_count           = var.worker_node_pool_count
+  dynamic "enabled_log" {
+    for_each = toset(var.control_plane_log_categories)
+    content {
+      category = enabled_log.value
+    }
+  }
 }

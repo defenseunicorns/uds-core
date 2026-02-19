@@ -124,6 +124,11 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: 8080
+        uptime:
+          checks:
+            paths:
+              - /
+              - /realms/uds/.well-known/openid-configuration
         advancedHTTP:
           match:
             - name: redirect-welcome
@@ -172,6 +177,10 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
+        uptime:
+          checks:
+            paths:
+              - /
         {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:

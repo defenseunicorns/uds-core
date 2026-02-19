@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -38,11 +38,15 @@ tasks:
       - description: Generate servicemonitor types
         cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.88.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus
+          npx kubernetes-fluent-client@3.11.1 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.89.0/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml src/pepr/operator/crd/generated/prometheus
       - description: Generate podmonitor types
         cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.10.14 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.88.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus
+          npx kubernetes-fluent-client@3.11.1 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.89.0/example/prometheus-operator-crd/monitoring.coreos.com_podmonitors.yaml src/pepr/operator/crd/generated/prometheus
+      - description: Generate probe types
+        cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.1 crd https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/v0.89.0/example/prometheus-operator-crd/monitoring.coreos.com_probes.yaml src/pepr/operator/crd/generated/prometheus
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
@@ -64,4 +68,9 @@ tasks:
       - description: "Run Prometheus-Stack E2E tests"
         cmd: |
           npm ci && npx vitest run "prometheus"
+        dir: test/vitest
+      - description: "Run Blackbox Exporter integration tests"
+        cmd: |
+          echo "Running Blackbox Exporter integration tests..."
+          npm ci && npx vitest run "blackbox-exporter"
         dir: test/vitest

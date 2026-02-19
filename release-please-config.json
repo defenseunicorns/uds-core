@@ -13,7 +13,6 @@
       "bump-minor-pre-major": true,
       "versioning": "always-bump-minor",
       "extra-files": [
-        "README.md",
         "packages/checkpoint-dev/zarf.yaml",
         "packages/base/zarf.yaml",
         "packages/identity-authorization/zarf.yaml",

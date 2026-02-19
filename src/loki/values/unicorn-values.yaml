@@ -5,12 +5,12 @@ loki:
   image:
     registry: quay.io
     repository: rfcurated/grafana/loki
-    tag: 3.6.4-jammy-fips-rfcurated-rfhardened
+    tag: 3.6.5-jammy-fips-rfcurated-rfhardened
 gateway:
   image:
     registry: quay.io
     repository: rfcurated/nginx
-    tag: 1.29.4-slim-jammy-fips-rfcurated-rfhardened
+    tag: 1.29.5-slim-jammy-fips-rfcurated-rfhardened
 memcached:
   image:
     repository: quay.io/rfcurated/memcached

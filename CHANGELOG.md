@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.61.0](https://github.com/defenseunicorns/uds-core/compare/v0.60.0...v0.61.0) (2026-02-10)
+
+
+### Features
+
+* add blackbox exporter to uds-core as optional component ([#2314](https://github.com/defenseunicorns/uds-core/issues/2314)) ([2f08ee5](https://github.com/defenseunicorns/uds-core/commit/2f08ee59d8ae89a72b534967cc42ed69e4769d95))
+* automount uds trust bundle to all applications ([#2337](https://github.com/defenseunicorns/uds-core/issues/2337)) ([ce66203](https://github.com/defenseunicorns/uds-core/commit/ce662038b19e83cb298356d0eb2207975a940086))
+* cluster-less crd pipeline ([#2316](https://github.com/defenseunicorns/uds-core/issues/2316)) ([5128ffb](https://github.com/defenseunicorns/uds-core/commit/5128ffb64186d547f2fd577985f22619495b9089))
+* improve Keycloak availability ([#2334](https://github.com/defenseunicorns/uds-core/issues/2334)) ([a306465](https://github.com/defenseunicorns/uds-core/commit/a306465ea54d0207d502eff289c3dc2882417f45))
+
+
+### Bug Fixes
+
+* cleanup zarf --no-progress deprecation ([#2352](https://github.com/defenseunicorns/uds-core/issues/2352)) ([78d3b15](https://github.com/defenseunicorns/uds-core/commit/78d3b15b8612cc9ba404cbb0173a03cb3ae51e25))
+* ensure ambient mode is the default in all operator code ([#2326](https://github.com/defenseunicorns/uds-core/issues/2326)) ([bda5384](https://github.com/defenseunicorns/uds-core/commit/bda5384adce387707b43a0af3bc294e9f0b87894))
+* multiarch script output ([#2338](https://github.com/defenseunicorns/uds-core/issues/2338)) ([457d9b3](https://github.com/defenseunicorns/uds-core/commit/457d9b34601efcf380b9c116d5fad4d87962f94c))
+* validate authservice callback uri + redirect uri ([#2349](https://github.com/defenseunicorns/uds-core/issues/2349)) ([0ae9121](https://github.com/defenseunicorns/uds-core/commit/0ae9121170e7275242fe27c08f1259240f3ed957))
+
+
+### Miscellaneous
+
+* bump eks/aks k8s to 1.34 ([#2339](https://github.com/defenseunicorns/uds-core/issues/2339)) ([4145337](https://github.com/defenseunicorns/uds-core/commit/4145337e10d9c4a45ec4c62a25d9012f13c81396))
+* crd versioning adr ([#2308](https://github.com/defenseunicorns/uds-core/issues/2308)) ([f1e5a86](https://github.com/defenseunicorns/uds-core/commit/f1e5a86171b46e3b36a6f5465f35057f1f602b5e))
+* **deps:** bump @isaacs/brace-expansion from 5.0.0 to 5.0.1 ([#2336](https://github.com/defenseunicorns/uds-core/issues/2336)) ([5db96c7](https://github.com/defenseunicorns/uds-core/commit/5db96c7db7b2ee571b65724fa52059b1aabf40db))
+* **deps:** bump lodash from 4.17.21 to 4.17.23 ([#2319](https://github.com/defenseunicorns/uds-core/issues/2319)) ([ad29405](https://github.com/defenseunicorns/uds-core/commit/ad294051338ddff1109c82dd40ec3ef1660a9c9d))
+* **deps:** update grafana ([#2257](https://github.com/defenseunicorns/uds-core/issues/2257)) ([74ad882](https://github.com/defenseunicorns/uds-core/commit/74ad882df4fa9fb3f20fe4bb1b01b9d2505dc6de))
+* **deps:** update keycloak to v26.5.2 ([#2297](https://github.com/defenseunicorns/uds-core/issues/2297)) ([e393a3d](https://github.com/defenseunicorns/uds-core/commit/e393a3d08968a673c8c28c9e5a63dcc324aa1ae7))
+* **deps:** update loki ([#2265](https://github.com/defenseunicorns/uds-core/issues/2265)) ([e12859b](https://github.com/defenseunicorns/uds-core/commit/e12859b344a45ebc6aaee8914b25ff307466ce21))
+* **deps:** update metrics-server to v0.8.1 ([#2324](https://github.com/defenseunicorns/uds-core/issues/2324)) ([a48c45a](https://github.com/defenseunicorns/uds-core/commit/a48c45a41663bbb919cb6dc026a493cb9817ab54))
+* **deps:** update pepr to v1.0.8 ([#2320](https://github.com/defenseunicorns/uds-core/issues/2320)) ([b4b1b48](https://github.com/defenseunicorns/uds-core/commit/b4b1b48085b1faa63a0109a5e77c82771fae9a81))
+* **deps:** update vector ([#2315](https://github.com/defenseunicorns/uds-core/issues/2315)) ([872f083](https://github.com/defenseunicorns/uds-core/commit/872f083068706ef5d54afbbdba8976cdf0a89a92))
+* remove deprecated devDep for root-ca script ([#2342](https://github.com/defenseunicorns/uds-core/issues/2342)) ([616fbdb](https://github.com/defenseunicorns/uds-core/commit/616fbdb345155e617cc0b1e8b4deebd5ede4e815))
+* update uds package icon to new doug logo ([#2353](https://github.com/defenseunicorns/uds-core/issues/2353)) ([77150aa](https://github.com/defenseunicorns/uds-core/commit/77150aa684dfc583af0c3787276bd91fbd908d38))
+
+
+### Documentation
+
+* add clarity on label placement for reload ([#2330](https://github.com/defenseunicorns/uds-core/issues/2330)) ([1a2515f](https://github.com/defenseunicorns/uds-core/commit/1a2515f0d201e13dc70180af503183048d84af31))
+* fix broken link and adjust markdown annotation ([#2331](https://github.com/defenseunicorns/uds-core/issues/2331)) ([5d542a3](https://github.com/defenseunicorns/uds-core/commit/5d542a309dcb1abc3f74c91c57eb6d5dd5016ed9))
+
 ## [0.60.0](https://github.com/defenseunicorns/uds-core/compare/v0.59.0...v0.60.0) (2026-01-29)
 
 

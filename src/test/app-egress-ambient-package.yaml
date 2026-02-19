@@ -23,7 +23,7 @@ spec:
           app: curl
         ports:
           - 443
-        remoteHost: www.example.com
+        remoteHost: www.bing.com
         remoteProtocol: TLS
         description: "Example Curl"
 ---

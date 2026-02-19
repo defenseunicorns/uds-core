@@ -10,7 +10,6 @@ resource "local_sensitive_file" "uds_config" {
     "variables" : {
       "core" : {
         "loki_chunks_bucket" : module.S3["loki"].bucket_name
-        "loki_ruler_bucket" : module.S3["loki"].bucket_name,
         "loki_admin_bucket" : module.S3["loki"].bucket_name,
         "loki_s3_region" : data.aws_region.current.region,
         "loki_irsa_role_arn" : module.irsa["loki"].role_arn,

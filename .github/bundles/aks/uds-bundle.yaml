@@ -6,22 +6,21 @@ metadata:
   name: uds-core-aks-nightly
   description: A UDS bundle for deploying UDS Core on AKS
   # x-release-please-start-version
-  version: "0.60.0"
+  version: "0.61.0"
   # x-release-please-end
 
 packages:
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.70.1
+    ref: v0.71.1
 
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 0.60.0
+    ref: 0.61.0
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
-      - falco
     overrides:
       istio-admin-gateway:
         gateway:
@@ -75,6 +74,8 @@ packages:
           values:
             - path: loki.storage.type
               value: "azure"
+            - path: sidecar.rules.logLevel
+              value: DEBUG
 
       kube-prometheus-stack:
         kube-prometheus-stack:
@@ -86,6 +87,11 @@ packages:
                     memory: 512Mi
       grafana:
         grafana:
+          values:
+            - path: sidecar.dashboards.logLevel
+              value: DEBUG
+            - path: sidecar.datasources.logLevel
+              value: DEBUG
           variables:
             - name: GRAFANA_HA
               description: Enable HA Grafana
@@ -146,7 +152,7 @@ packages:
                 secretContents:
                   cloud: |
                     AZURE_STORAGE_ACCOUNT_ACCESS_KEY=${AZURE_VELERO_STORAGE_ACCOUNT_ACCESS_KEY}
-                    AZURE_CLOUD_NAME=AzureUSGovernmentCloud
+                    AZURE_CLOUD_NAME=AzurePublicCloud
       falco:
         uds-falco-config:
           variables:

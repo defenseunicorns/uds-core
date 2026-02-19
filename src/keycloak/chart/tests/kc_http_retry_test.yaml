@@ -1,0 +1,53 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - HTTP Retry
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should not render HTTP retry args when maxRetries is 0 (default)
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-max-retries="
+
+  - it: should render HTTP retry args when maxRetries > 0
+    set:
+      httpRetry:
+        maxRetries: 3
+        initialBackoffMillis: 1500
+        backoffMultiplier: 2.5
+        applyJitter: true
+        jitterFactor: 0.3
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-max-retries=3"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-initial-backoff-millis=1500"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-backoff-multiplier=2.5"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-jitter-factor=0.3"
+
+  - it: should render apply-jitter=false flag when applyJitter is false
+    set:
+      httpRetry:
+        maxRetries: 2
+        applyJitter: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-apply-jitter=false"
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--spi-connections-http-client-default-jitter-factor="
