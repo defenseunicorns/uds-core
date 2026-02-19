@@ -10,8 +10,9 @@ echo "tofu version: $(tofu --version)"
 # Get required outputs from tofu
 tofu output -raw private_key >key.pem
 chmod 600 key.pem
-trap 'rm -f key.pem' EXIT
-
+if [[ "${CI:-}" == "true" ]]; then # Don't delete the key if not running in CI, since it may be needed for debugging
+  trap 'rm -f key.pem' EXIT
+fi
 bootstrap_ip=$(tofu output -raw bootstrap_ip)
 node_user=$(tofu output -raw node_user)
 cluster_hostname=$(tofu output -raw cluster_hostname)
@@ -51,10 +52,14 @@ else
   sed -i '' "s/127.0.0.1/${bootstrap_ip}/g" ./rke2-config >/dev/null
 fi
 
-mkdir -p ~/.kube
-mv ./rke2-config ~/.kube/config
-#export KUBECONFIG=$(pwd)/rke2-config
-
+if [[ "${CI:-}" == "true" ]]; then
+  mkdir -p /home/runner/.kube
+  mv ./rke2-config /home/runner/.kube/config
+  # export KUBECONFIG=$(pwd)/rke2-config
+else
+  mkdir -p ~/.kube
+  mv ./rke2-config ~/.kube/config
+fi
 # Add or update /etc/hosts file record
 matches_in_hosts="$(grep -nF -- "$cluster_hostname" /etc/hosts | cut -f1 -d: || true)"
 host_entry="${bootstrap_ip} ${cluster_hostname}"
