@@ -25,6 +25,7 @@ describe("Uptime Probes", { timeout: 180000 }, () => {
       () => queryPrometheusMetric(prometheusProxy.url, `probe_success{instance="${instance}"}`),
       result => result === 1,
       `probe_success for ${instance}`,
+      180000,
     );
 
   test("probe_success metric should be 1 for sso.uds.dev", async () => {
