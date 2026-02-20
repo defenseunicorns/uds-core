@@ -50,6 +50,28 @@ tests:
           path: data["override-rules.yaml"]
           pattern: '(?s)override:\n\s*items:\s*append'
 
+  - it: renders override ConfigMap when all overrides and extraRules are empty
+    set:
+      incubatingRulesEnabled: false
+      sandboxRulesEnabled: false
+      udsDefaultDisabledRulesStable: []
+      udsDefaultDisabledRulesIncubating: []
+      udsDefaultDisabledRulesSandbox: []
+      disabledRules: []
+      overrides: {}
+      extraRules: []
+    documentSelector:
+      path: metadata.name
+      value: falco-override-rules
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - exists:
+          path: data["override-rules.yaml"]
+      - matchRegex:
+          path: data["override-rules.yaml"]
+          pattern: '^\s*$'
+
   - it: renders override ConfigMap when macro overrides exist (replace)
     set:
       incubatingRulesEnabled: false
