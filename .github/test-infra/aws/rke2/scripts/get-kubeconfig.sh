@@ -35,9 +35,6 @@ if [[ "$ok" != true ]]; then
   exit 1
 fi
 
-# Make sure .kube directory exists
-mkdir -p ~/.kube
-
 # Copy kubeconfig from cluster node
 ssh "${ssh_opts[@]}" "${node_user}@${bootstrap_ip}" \
   "mkdir -p /home/${node_user}/.kube && sudo cp /etc/rancher/rke2/rke2.yaml /home/${node_user}/.kube/config && sudo chown ${node_user} /home/${node_user}/.kube/config" >/dev/null
@@ -58,7 +55,13 @@ if [[ "${CI:-}" == "true" ]]; then
   # export KUBECONFIG=$(pwd)/rke2-config
 else
   mkdir -p ~/.kube
-  mv ./rke2-config ~/.kube/config
+  if [[ -f ~/.kube/config ]]; then
+    KUBECONFIG=./rke2-config:~/.kube/config kubectl config view --merge --flatten >~/.kube/config.merged
+    mv ~/.kube/config.merged ~/.kube/config
+    rm ./rke2-config
+  else
+    mv ./rke2-config ~/.kube/config
+  fi
 fi
 # Add or update /etc/hosts file record
 matches_in_hosts="$(grep -nF -- "$cluster_hostname" /etc/hosts | cut -f1 -d: || true)"
