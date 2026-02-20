@@ -7,7 +7,13 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSPackage } from "../crd";
-import { createEvent, getAuthserviceClients, retryWithDelay, validateNamespace } from "./utils";
+import {
+  createEvent,
+  getAuthserviceClients,
+  Mutex,
+  retryWithDelay,
+  validateNamespace,
+} from "./utils";
 
 // Mock K8s client and Log
 vi.mock("pepr", () => {
@@ -317,6 +323,47 @@ describe("test validateNamespace", () => {
     );
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
+  });
+});
+
+describe("Mutex", () => {
+  it("releases lock so subsequent acquires succeed", async () => {
+    const mutex = new Mutex();
+    const release1 = await mutex.acquire();
+    release1();
+    const release2 = await mutex.acquire();
+    release2();
+  });
+
+  it("serializes concurrent operations in acquisition order", async () => {
+    const mutex = new Mutex();
+    const order: number[] = [];
+
+    const task = async (id: number) => {
+      const release = await mutex.acquire();
+      order.push(id);
+      release();
+    };
+
+    await Promise.all([task(1), task(2), task(3)]);
+
+    expect(order).toEqual([1, 2, 3]);
+  });
+
+  it("does not allow concurrent holders", async () => {
+    const mutex = new Mutex();
+    let inside = false;
+
+    const task = async () => {
+      const release = await mutex.acquire();
+      expect(inside).toBe(false);
+      inside = true;
+      await Promise.resolve(); // yield to check concurrent access
+      inside = false;
+      release();
+    };
+
+    await Promise.all([task(), task(), task()]);
   });
 });
 

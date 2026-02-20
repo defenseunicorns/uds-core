@@ -38,6 +38,10 @@ spec:
       - service: httpbin
         selector:
           app: httpbin
+        uptime:
+          checks:
+            paths:
+              - /
         gateway: tenant
         host: ambient-protected
         port: 8000
@@ -45,6 +49,10 @@ spec:
       - service: httpbin2
         selector:
           app: httpbin2
+        uptime:
+          checks:
+            paths:
+              - /
         gateway: tenant
         host: ambient2-protected
         port: 8000

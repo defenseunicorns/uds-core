@@ -12,6 +12,7 @@ import { operator } from "./src/pepr/operator";
 import { loadUDSConfig, startConfigWatch } from "./src/pepr/operator/controllers/config/config";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
 import { setupKeycloakClientSecret } from "./src/pepr/operator/controllers/keycloak/config";
+import { setupUptimeConfig } from "./src/pepr/operator/controllers/uptime/config";
 import { initAPIServerCIDR } from "./src/pepr/operator/controllers/network/generators/kubeAPI";
 import { initAllNodesTarget } from "./src/pepr/operator/controllers/network/generators/kubeNodes";
 import { startPackageWatch } from "./src/pepr/operator/controllers/packages/packages";
@@ -34,6 +35,8 @@ const log = setupLogger(Component.STARTUP);
   // Setup Authservice and Keycloak Secrets used by the operator
   await setupAuthserviceSecret();
   await setupKeycloakClientSecret();
+  // Setup the Monitoring Namespace and Blackbox Config Secret if it doesn't exist
+  await setupUptimeConfig();
   // Start the PeprModule
   new PeprModule(cfg, [
     // UDS Core Operator
