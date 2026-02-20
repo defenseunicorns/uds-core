@@ -187,6 +187,7 @@ sidecar:
     folder: /rules/fake # Note: when auth is not enabled on Loki the tenant is 'fake'
     # -- Look for configmaps/secrets in all namespaces
     searchNamespace: ALL
+    watchMethod: SLEEP # use sleep method to avoid watch issues (will relist every 60 secs)
 
 memcachedExporter:
   # -- Whether memcached metrics should be exported
