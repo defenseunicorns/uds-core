@@ -1,0 +1,265 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "UDS Falco Values Schema (overrides + exception-only rule overrides)",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "additionalNetworkAllow": {
+      "type": "array",
+      "default": [],
+      "description": "Additional entries merged into the UDS Package spec.network.allow list (escape hatch for custom network policy rules).",
+      "items": {
+        "$ref": "#/definitions/networkAllowEntry"
+      }
+    },
+    "incubatingRulesEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Toggle inclusion of Falco's incubating ruleset."
+    },
+    "sandboxRulesEnabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Toggle inclusion of Falco's sandbox (experimental) ruleset."
+    },
+    "disabledRules": {
+      "type": "array",
+      "default": [],
+      "description": "List of Falco rule names to explicitly disable by name.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesStable": {
+      "type": "array",
+      "default": [],
+      "description": "Falco stable rules that are disabled by default in UDS.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesIncubating": {
+      "type": "array",
+      "default": [],
+      "description": "Falco incubating rules that are disabled by default in UDS (only used when incubatingRulesEnabled=true).",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "udsDefaultDisabledRulesSandbox": {
+      "type": "array",
+      "default": [],
+      "description": "Falco sandbox rules that are disabled by default in UDS (only used when sandboxRulesEnabled=true).",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "lists": {
+          "type": "object",
+          "description": "Falco list overrides rendered into override-rules.yaml.",
+          "additionalProperties": {
+            "$ref": "#/definitions/listOverride"
+          },
+          "default": {}
+        },
+        "macros": {
+          "type": "object",
+          "description": "Falco macro overrides rendered into override-rules.yaml.",
+          "additionalProperties": {
+            "$ref": "#/definitions/macroOverride"
+          },
+          "default": {}
+        },
+        "rules": {
+          "type": "object",
+          "description": "Rule overrides limited to exceptions only (no condition replacement).",
+          "additionalProperties": {
+            "$ref": "#/definitions/ruleExceptionOverride"
+          },
+          "default": {}
+        }
+      }
+    },
+    "extraRules": {
+      "type": "array",
+      "description": "Additional Falco rules/list/macro YAML objects appended as-is after override blocks.",
+      "default": [],
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  },
+  "definitions": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "append",
+        "replace"
+      ]
+    },
+    "networkAllowEntry": {
+      "type": "object"
+    },
+    "listOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "items"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/action"
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "macroOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "condition"
+      ],
+      "properties": {
+        "action": {
+          "$ref": "#/definitions/action"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "description": "For append, provide a valid condition fragment (e.g., 'or ...', 'and ...')."
+        }
+      }
+    },
+    "ruleExceptionOverride": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "exceptions"
+      ],
+      "properties": {
+        "exceptions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "items"
+          ],
+          "properties": {
+            "action": {
+              "$ref": "#/definitions/action"
+            },
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/exceptionItem"
+              }
+            }
+          }
+        }
+      }
+    },
+    "exceptionItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "values"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exception name. If this matches an existing exception in the base rules, fields/comps may be omitted and Falco will apply values to that exception definition."
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "comps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "values": {
+          "description": "Falco exception values. For single-field exceptions, Falco accepts either a flat list (values: [a,b]) OR tuple rows (values: [[a],[b]]). For multi-field exceptions, use tuple rows (values: [[a,b],[c,d]]).",
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "oneOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

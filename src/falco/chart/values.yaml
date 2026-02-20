@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Support for custom `network.allow` entries on the Package CR, useful for sending Falco Sidekick alerts to external destinations
@@ -35,3 +35,41 @@ udsDefaultDisabledRulesIncubating:
 
 # Sandbox ruleset disabled rules
 udsDefaultDisabledRulesSandbox: []
+
+# Overrides for built-in Falco rules, macros, and lists. Each entry supports an "action" field (replace, append) and an "items" field with the relevant YAML snippet for the override.
+overrides:
+  lists: {}
+  macros: {}
+  rules: {}
+# Raw Falco rules YAML appended as-is (optional)
+extraRules: []
+# Example usage:
+#
+# overrides:
+#   lists:
+#     trusted_images:
+#       action: replace
+#       items:
+#         - "registry.corp/*"
+#         - "gcr.io/distroless/*"
+#   macros:
+#     open_write:
+#       action: append
+#       condition: "or evt.type=openat"
+#   rules:
+#     "Terminal shell in container":
+#       exceptions:
+#         action: append
+#         items:
+#           - name: allow_ci_shell
+#             fields: ["container.image.repository"]
+#             comps: ["in"]
+#             values: ["ghcr.io/my-org/ci-runner"]
+#
+# extraRules:
+#   - rule: "My Local Rule"
+#     desc: "Example additional rule"
+#     condition: evt.type=open
+#     output: "opened file"
+#     priority: NOTICE
+#     tags: ["local"]

@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Disable automatic update/loading of Falco default rules for airgapped environments
@@ -22,6 +22,7 @@ falco:
     - /etc/falco/rules.d/incubating-rules.yaml
     - /etc/falco/rules.d/sandbox-rules.yaml
     - /etc/falco/rules.d/disable-rules.yaml
+    - /etc/falco/rules.d/override-rules.yaml
 
 mounts:
   volumes:
@@ -37,6 +38,9 @@ mounts:
     - name: disable-rules
       configMap:
         name: falco-disable-rules
+    - name: override-rules
+      configMap:
+        name: falco-override-rules
   volumeMounts:
     - name: stable-rules
       mountPath: /etc/falco/rules.d/stable-rules.yaml
@@ -53,6 +57,10 @@ mounts:
     - name: disable-rules
       mountPath: /etc/falco/rules.d/disable-rules.yaml
       subPath: disable-rules.yaml
+      readOnly: true
+    - name: override-rules
+      mountPath: /etc/falco/rules.d/override-rules.yaml
+      subPath: override-rules.yaml
       readOnly: true
 
 containerSecurityContext:

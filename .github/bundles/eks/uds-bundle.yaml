@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: UDSBundle
@@ -126,3 +126,21 @@ packages:
               description: Enable incubating rules
               path: incubatingRulesEnabled
               default: "true"
+          values:
+            - path: overrides
+              value:
+                rules:
+                  "Mount Launched in Privileged Container":
+                    exceptions:
+                      action: append
+                      items:
+                        - name: allow_csi_efs_node_mounts
+                          fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                          comps: [=, startswith, =]
+                          values:
+                            - [kube-system, efs-csi-node-, mount]
+                        - name: allow_csi_ebs_node_mounts
+                          fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                          comps: [=, startswith, =]
+                          values:
+                            - [kube-system, ebs-csi-node, mount]
