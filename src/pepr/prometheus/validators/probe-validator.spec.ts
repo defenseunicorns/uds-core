@@ -5,7 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { PrometheusProbe } from "..";
+import { PrometheusProbe } from "../../operator/crd";
 import { probeValidator } from "./probe-validator";
 
 function makeMockReq({ namespace = "test-ns", module }: { namespace?: string; module?: string }) {

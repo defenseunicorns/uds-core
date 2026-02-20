@@ -4,7 +4,7 @@
  */
 
 import { PeprValidateRequest } from "pepr";
-import { PrometheusProbe } from "..";
+import { PrometheusProbe } from "../../operator/crd";
 
 /**
  * Validates Prometheus Probe CRs to prevent cross-namespace exploitation of

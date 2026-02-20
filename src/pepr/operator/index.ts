@@ -28,9 +28,8 @@ import {
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
-import { ClusterConfig, PrometheusProbe, UDSExemption, UDSPackage } from "./crd";
+import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
-import { probeValidator } from "./crd/validators/probe-validator";
 
 // Reconciler imports
 import { Component, setupLogger } from "../logger";
@@ -180,6 +179,3 @@ When(a.ConfigMap)
   .InNamespace("istio-system")
   .WithName("istio")
   .Reconcile(restartGatewayPods);
-
-// Validate Probe CRs to prevent cross-namespace exploitation of SSO blackbox modules
-When(PrometheusProbe).IsCreatedOrUpdated().Validate(probeValidator);
