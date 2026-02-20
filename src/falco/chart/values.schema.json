@@ -108,48 +108,7 @@
       ]
     },
     "networkAllowEntry": {
-      "type": "object",
-      "description": "A UDS Package network.allow entry (per https://uds.defenseunicorns.com/ reference). This schema is intentionally permissive to avoid blocking valid CR shapes.",
-      "additionalProperties": true,
-      "properties": {
-        "direction": {
-          "type": "string",
-          "enum": [
-            "Ingress",
-            "Egress"
-          ]
-        },
-        "selector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "remoteGenerated": {
-          "type": "string",
-          "description": "UDS-generated remote target identifier (e.g., Anywhere, IntraNamespace)."
-        },
-        "remoteNamespace": {
-          "type": "string"
-        },
-        "remoteSelector": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "remoteServiceAccount": {
-          "type": "string"
-        },
-        "port": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 65535
-        },
-        "description": {
-          "type": "string"
-        }
-      }
+      "type": "object"
     },
     "listOverride": {
       "type": "object",

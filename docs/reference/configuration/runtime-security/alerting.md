@@ -57,7 +57,7 @@ To use this feature, provide an array of rule names under the `disabledRules` va
 
 **Falco Official Documentation:**
 
-  - [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
+- [List of Falco Rules](https://falco.org/docs/reference/rules/default-rules/)
 
 **UDS Core rule files:**
 
@@ -141,25 +141,25 @@ overrides:
 
 In AWS EKS environments, it is common to see Falco alerts triggered by the CSI (Container Storage Interface) drivers, such as EFS and EBS, because these drivers launch privileged containers to perform storage operations. These alerts are expected and do not indicate malicious activity. To reduce noise and avoid unnecessary investigation of these known benign events, it is recommended to add rule exceptions for the affected CSI driver pods. The following override demonstrates how to safely suppress these alerts while maintaining visibility into other privileged container activity.
 
-```
-  values:
-    - path: overrides
-      value:
-        rules:
-          "Mount Launched in Privileged Container":
-            exceptions:
-              action: append
-              items:
-                - name: allow_csi_efs_node_mounts
-                  fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                  comps: [=, startswith, =]
-                  values:
-                    - [kube-system, efs-csi-node-, mount]
-                - name: allow_csi_ebs_node_mounts
-                  fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                  comps: [=, startswith, =]
-                  values:
-                    - [kube-system, ebs-csi-node, mount]
+```yaml
+values:
+  - path: overrides
+    value:
+      rules:
+        "Mount Launched in Privileged Container":
+          exceptions:
+            action: append
+            items:
+              - name: allow_csi_efs_node_mounts
+                fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                comps: [=, startswith, =]
+                values:
+                  - [kube-system, efs-csi-node-, mount]
+              - name: allow_csi_ebs_node_mounts
+                fields: [k8s.ns.name, k8s.pod.name, proc.name]
+                comps: [=, startswith, =]
+                values:
+                  - [kube-system, ebs-csi-node, mount]
 ```
 
 ### Querying Events with Loki
