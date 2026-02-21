@@ -12,7 +12,7 @@ metadata:
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.19.4-airgap
+    ref: 0.19.5-airgap
     overrides:
       uds-dev-stack:
         minio:
@@ -32,7 +32,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.71.1
+    ref: v0.73.0
 
   - name: core
     path: ../../build/

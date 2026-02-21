@@ -6,7 +6,7 @@ tasks:
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
-        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.19.4-airgap --confirm"
+        cmd: "uds zarf package deploy oci://defenseunicorns/uds-k3d:0.19.5-airgap --confirm"
 
   - name: k3d-test-cluster
     actions:
@@ -14,7 +14,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.71.1 --confirm"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.73.0 --confirm"
 
   - name: ha-postgres
     actions:
@@ -96,7 +96,7 @@ tasks:
       - description: "Start Redis Docker container"
         cmd: |
           # renovate: datasource=docker depName=redis versioning=docker
-          REDIS_VERSION=8.4.0
+          REDIS_VERSION=8.6.0
           docker run -p 6379:6379 --network=k3d-uds --rm --name redis \
             -v $(pwd)/build/redis/users.acl:/usr/local/etc/redis/users.acl:ro \
             -d redis:${REDIS_VERSION} \
