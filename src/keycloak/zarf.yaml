@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # @lulaStart 4147b6a6-3339-4d5d-b10a-f16502b52206
@@ -32,7 +32,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.5.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.23.0
+      - uds-core-config:keycloak
 
   - name: keycloak
     required: true
@@ -46,7 +46,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.5.3
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.23.0
+      - uds-core-config:keycloak
 
   - name: keycloak
     required: true
@@ -60,4 +60,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - quay.io/rfcurated/keycloak:26.5.3-jammy-fips-rfcurated
-      - ghcr.io/defenseunicorns/uds/identity-config:0.23.0
+      - uds-core-config:keycloak
