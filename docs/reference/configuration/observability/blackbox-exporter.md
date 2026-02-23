@@ -8,6 +8,10 @@ sidebar:
 
 UDS Core includes Blackbox Exporter for HTTP/HTTPS probing of endpoints to monitor uptime and availability. Uptime checks can be configured through the UDS Package CR, and Prometheus [Probes](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources are automatically created based on your configuration.
 
+:::caution
+The UDS Core Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically based on Package CR configurations — custom modules cannot be added and this secret should not be manually overridden, as the operator will reconcile any changes.
+:::
+
 ## Uptime Monitoring
 
 To enable uptime monitoring for an exposed service, configure the `uptime.checks` section within your Package CR's `expose` entries.
