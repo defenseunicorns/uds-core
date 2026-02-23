@@ -57,7 +57,7 @@ When you run `create-keycloak-crl-oci-volume-package.sh`, it will:
 
 Run the script on a machine that has:
 
-* `bash`, `curl`, `unzip`, `zip`, `find`, `sort`
+* `bash`, `curl`, `unzip`, `find`, `sort`
 * `docker` (to build the OCI data image)
 * `uds` (so the script can run `uds zarf package create`)
 
@@ -114,7 +114,7 @@ After the script finishes, you should have:
 * **Zarf package to add to your bundle/deploy:**
   * `./keycloak-crls/zarf-package-keycloak-crls-*.tar.zst`
 
-## Step 4: Configure your UDS bundle
+## Configure your UDS bundle
 
 Before deploying, configure your bundle to:
 1. deploy the CRL package before Keycloak
@@ -122,7 +122,7 @@ Before deploying, configure your bundle to:
 3. configure Keycloak X.509 settings to use the generated CRL Path
 4. add policy exemptions if needed
 
-### 4.1 Add Keycloak CRL configuration to bundle
+### Add Keycloak CRL configuration to bundle
 
 Add the following to your bundle’s Keycloak values:
 
@@ -136,7 +136,7 @@ keycloak:
           X509_OCSP_CHECKING_ENABLED: "false"
           X509_CRL_CHECKING_ENABLED: "true"
           X509_CRL_ABORT_IF_NON_UPDATED: "false"
-          X509_CRL_RELATIVE_PATH: "ca.pem" # Replace with keycloak-crl-paths.txt content
+          X509_CRL_RELATIVE_PATH: "<paste keycloak-crl-paths.txt contents here>"
       - path: extraVolumes
         value:
           - name: ca-certs
@@ -145,7 +145,7 @@ keycloak:
               optional: true
           - name: keycloak-crls
             image:
-              reference: 127.0.0.1:31999/library/keycloak-crls:local
+              reference: 127.0.0.1:31999/library/keycloak-crls:local # Common Zarf registry address; adjust for your environment
               pullPolicy: Always
       - path: extraVolumeMounts
         value:
@@ -157,11 +157,15 @@ keycloak:
             readOnly: true
 ```
 
+:::note
+`realmInitEnv` values are applied during realm initialization/import. If you change these values after initial deployment, you may need to redeploy Keycloak (and in some cases re-import/recreate the realm) for the changes to take effect.
+:::
+
 :::caution
 Using the `X509_CRL_ABORT_IF_NON_UPDATED` to false means that if the CRL cannot be updated, the connection will be allowed. This is useful for air-gapped environments where the CRL may not be available. If it's set to true, the connection will be denied if the CRL cannot be updated on time.
 :::
 
-### 4.2 Add CRL package to bundle (deployment order)
+### Add CRL package to bundle (deployment order)
 
 Make sure the CRL package deploys **before** Keycloak.
 
@@ -176,7 +180,7 @@ packages:
     ref: x.x.x
 ```
 
-### 4.3 Configure UDS policy exemptions (if required)
+### Configure UDS policy exemptions (if required)
 
 If ImageVolume is denied by policy, add an exemption targeting Keycloak pods:
 
@@ -198,7 +202,7 @@ uds-exemptions:
                 description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
 ```
 
-### 4.4 Configure ImageVolume feature gates (k3s/k3d only)
+### Configure ImageVolume feature gates (k3s/k3d only)
 
 If using k3s/k3d on a Kubernetes version that requires explicit enablement, create a `uds-config.yaml`:
 
@@ -212,7 +216,7 @@ variables:
 
 ---
 
-## Step 5: Deploy UDS Core with CRL support
+## Deploy UDS Core with CRL support
 
 Deploy the fully configured bundle.
 
@@ -222,25 +226,25 @@ UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/
 ```
 ---
 
-## Step 6: Verify
+## Verify
 
-### 6.1 Verify CRL package deployment
+### Verify CRL package deployment
 
 ```bash
 uds zarf package list | grep keycloak-crls
 ```
 
-### 6.2 Verify CRLs are mounted in Keycloak
+### Verify CRLs are mounted in Keycloak
 
 ```bash
 kubectl exec -n keycloak keycloak-0 -c keycloak -- ls -la /tmp/keycloak-crls
 ```
 
-### 6.3 Verify Keycloak CRL configuration
+### Verify Keycloak CRL configuration
 
 Confirm the realm’s X.509 configuration uses the CRL Path value you generated (the contents of `keycloak-crl-paths.txt`).
 
-### 6.4 Test X.509 authentication
+### Test X.509 authentication
 
 Use your normal mTLS/browser client cert flow and confirm Keycloak validates certificates without CRL-related errors.
 

@@ -137,7 +137,7 @@ variables:
 
 Reference that in the deployment of slim-dev bundle:
 ```bash
-
+UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-*.tar.zst --confirm --no-progress
 ```
 
 ### 1.3) Add keycloak-crls package to bundle
@@ -178,7 +178,7 @@ UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/
 # Configure tenant gateway to trust our demo CA and advertise to browsers
 kubectl -n istio-tenant-gateway patch secret gateway-tls \
   --type merge \
-  -p '{"data": {"cacert": "'"$(base64 -w 0 pki-crl-test/ca.crt)"'"}}'
+  -p '{"data": {"cacert": "'"$(base64 < pki-crl-test/ca.crt | tr -d '\n')"'"}}'
 
 # Restart tenant gateway to apply CA trust changes
 kubectl -n istio-tenant-gateway rollout restart deployment tenant-ingressgateway
@@ -234,7 +234,7 @@ zip -j demo-crls.zip demoCA/demo-ca.crl
 ```bash
 cd <path-to-uds-core-repo>
 
-bash scripts/keycloak-crl-airgap/update-keycloak-crl-oci-volume-package.sh \
+bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh \
   --crl-zip "$WORKDIR/demo-crls.zip"
 
 uds zarf package deploy keycloak-crls/zarf-package-keycloak-crls-*.tar.zst --confirm
