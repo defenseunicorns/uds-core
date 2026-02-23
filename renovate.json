@@ -133,6 +133,12 @@
     },
     {
       "matchPackageNames": [
+        "@eslint/js"
+      ],
+      "allowedVersions": "<10"
+    },
+    {
+      "matchPackageNames": [
         "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],
       "allowedVersions": "!/99.99.99/"
