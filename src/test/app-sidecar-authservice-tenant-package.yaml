@@ -29,6 +29,10 @@ spec:
       - service: httpbin
         selector:
           app: httpbin
+        uptime:
+          checks:
+            paths:
+              - /
         gateway: tenant
         host: protected
         port: 8000

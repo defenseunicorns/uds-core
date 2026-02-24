@@ -6,7 +6,9 @@
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
-import { Expose, Gateway, PrometheusProbe, UDSPackage } from "../../crd";
+import { ClientWithId, credentialsCreateOrUpdate } from "../keycloak/clients/client-credentials";
+import { updateBlackboxConfig } from "./config";
+import { Expose, Gateway, Protocol, PrometheusProbe, Sso, UDSPackage } from "../../crd";
 import { getFqdn } from "../domain-utils";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 
@@ -14,18 +16,26 @@ import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 const log = setupLogger(Component.OPERATOR_UPTIME);
 
 /**
- * Generate Probes for uptime monitoring via blackbox-exporter
+ * Generate Probes for uptime monitoring via blackbox-exporter.
+ * For Authservice-protected applications, also creates a probe Keycloak client
+ * with service account credentials and the appropriate audience mapper.
  *
  * @param pkg UDS Package
- * @param namespace
+ * @param namespace The namespace of the package
+ * @returns probeNames - Kubernetes Probe resource names applied to the cluster
+ * @returns ssoClients - Keycloak client IDs created for probe authentication
  */
-export async function probe(pkg: UDSPackage, namespace: string): Promise<string[]> {
+export async function probe(
+  pkg: UDSPackage,
+  namespace: string,
+): Promise<{ probeNames: string[]; ssoClients: string[] }> {
   const pkgName = pkg.metadata!.name!;
   const expose = pkg.spec?.network?.expose ?? [];
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
 
-  const probeNames: string[] = [];
+  const probeClients: { clientId: string; secret: string }[] = [];
+  const probePayloads: PrometheusProbe[] = [];
 
   try {
     for (const entry of expose) {
@@ -38,15 +48,33 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
         `Processing uptime probes for package: ${pkgName}, host: ${entry.host}, gateway: ${entry.gateway} in namespace ${namespace}`,
       );
 
-      // Generate the probe
-      const payload = generateProbe(entry, namespace, pkgName, generation, ownerRefs);
+      // Default to the standard http_2xx module
+      let module = "http_2xx";
 
+      // Get the matching Authservice SSO entry for this expose entry, if any
+      const authserviceSso = getAuthserviceSso(entry, pkg.spec?.sso ?? []);
+
+      // If Authservice is enabled, create a probe Keycloak client for the matched SSO entry
+      if (authserviceSso) {
+        const { clientId, secret } = await createProbeKeycloakClient(authserviceSso);
+        log.debug(
+          `Probe Keycloak client ready: clientId=${clientId} secret.length=${secret?.length}`,
+        );
+        probeClients.push({ clientId, secret });
+        module = `http_200x_sso_${namespace}_${clientId}`; // Set module name to match the one generated in updateBlackboxConfig
+      }
+
+      probePayloads.push(generateProbe(entry, namespace, pkgName, generation, ownerRefs, module));
+    }
+
+    // Update the blackbox config first so SSO modules exist before Probes reference them
+    // Note: this will also remove any SSO modules for probes that no longer exist in this namespace
+    await updateBlackboxConfig(namespace, probeClients);
+
+    // Apply all Probe CRs now that the blackbox config is ready
+    for (const payload of probePayloads) {
       log.debug(payload, `Applying Probe ${payload.metadata?.name}`);
-
-      // Apply the Probe and force overwrite any existing resource
       await K8s(PrometheusProbe).Apply(payload, { force: true });
-
-      probeNames.push(payload.metadata!.name!);
     }
 
     // Purge any orphaned probes from previous generations
@@ -55,7 +83,10 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
     throw new Error(`Failed to process Probes for ${pkgName}, cause: ${JSON.stringify(err)}`);
   }
 
-  return probeNames;
+  return {
+    probeNames: probePayloads.map(p => p.metadata!.name!),
+    ssoClients: probeClients.map(c => c.clientId),
+  };
 }
 
 /**
@@ -66,6 +97,7 @@ export async function probe(pkg: UDSPackage, namespace: string): Promise<string[
  * @param pkgName The package name
  * @param generation The package generation for tracking
  * @param ownerRefs Owner references for garbage collection
+ * @param module The blackbox exporter module to use (defaults to http_2xx)
  */
 export function generateProbe(
   expose: Expose,
@@ -73,6 +105,7 @@ export function generateProbe(
   pkgName: string,
   generation: string,
   ownerRefs: V1OwnerReference[],
+  module = "http_2xx",
 ): PrometheusProbe {
   const { uptime, host, gateway = Gateway.Tenant } = expose;
   const fqdn = getFqdn(expose);
@@ -95,8 +128,7 @@ export function generateProbe(
       ownerReferences: ownerRefs,
     },
     spec: {
-      // Use default http_2xx module
-      module: "http_2xx",
+      module,
       prober: {
         url: "prometheus-blackbox-exporter.monitoring.svc.cluster.local:9115",
       },
@@ -109,4 +141,71 @@ export function generateProbe(
   };
 
   return payload;
+}
+
+/**
+ * Creates or updates a Keycloak client for uptime probing of an Authservice-protected application.
+ * The client uses service account credentials and includes an audience mapper for the app's SSO client.
+ *
+ * @param sso The matched SSO entry whose clientId is used to derive the probe client ID and audience
+ */
+export async function createProbeKeycloakClient(
+  sso: Sso,
+): Promise<{ clientId: string; secret: string }> {
+  const probeClientId = `${sso.clientId}-probe`;
+
+  const client = await credentialsCreateOrUpdate({
+    clientId: probeClientId,
+    name: `${sso.name} Uptime Probe`,
+    serviceAccountsEnabled: true,
+    standardFlowEnabled: false,
+    protocolMappers: [
+      {
+        name: "audience",
+        protocol: Protocol.OpenidConnect,
+        protocolMapper: "oidc-audience-mapper",
+        config: {
+          "included.client.audience": sso.clientId,
+          "access.token.claim": "true",
+          "introspection.token.claim": "true",
+          "id.token.claim": "false",
+          "lightweight.claim": "false",
+          "userinfo.token.claim": "false",
+        },
+      },
+    ],
+  });
+
+  const { clientId, secret } = client as ClientWithId;
+  if (!secret) {
+    throw new Error(
+      `Failed to create uptime probe Keycloak client "${probeClientId}": no client secret returned from Keycloak`,
+    );
+  }
+  return { clientId, secret };
+}
+
+/**
+ * Returns the matching SSO entry with enableAuthserviceSelector defined whose redirectUris
+ * match the scheme+host of the expose entry's FQDN (path component is ignored).
+ *
+ * @param expose The expose entry to check
+ * @param ssoEntries The SSO entries from the package spec
+ */
+export function getAuthserviceSso(expose: Expose, ssoEntries: Sso[]): Sso | undefined {
+  const fqdnOrigin = `https://${getFqdn(expose)}`;
+
+  return ssoEntries.find(sso => {
+    if (!sso.enableAuthserviceSelector) {
+      return false;
+    }
+
+    return (sso.redirectUris ?? []).some(uri => {
+      try {
+        return new URL(uri).origin === fqdnOrigin;
+      } catch {
+        return false;
+      }
+    });
+  });
 }
