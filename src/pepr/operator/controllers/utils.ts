@@ -284,3 +284,25 @@ export function getAuthserviceClients(pkg: UDSPackage) {
   const list = pkg.spec?.sso || [];
   return list.filter(sso => sso?.enableAuthserviceSelector != null);
 }
+
+/**
+ * A simple promise-chain mutex for serializing async operations.
+ * Call acquire() to get a release function; call release() when done.
+ */
+export class Mutex {
+  private current = Promise.resolve();
+
+  async acquire(): Promise<() => void> {
+    let release!: () => void;
+
+    const next = new Promise<void>(resolve => {
+      release = resolve;
+    });
+
+    const prev = this.current;
+    this.current = this.current.then(() => next);
+
+    await prev;
+    return release;
+  }
+}

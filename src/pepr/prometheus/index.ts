@@ -5,7 +5,8 @@
 
 import { Capability } from "pepr";
 import { Component, setupLogger } from "../logger";
-import { PrometheusPodMonitor, PrometheusServiceMonitor } from "../operator/crd";
+import { PrometheusPodMonitor, PrometheusProbe, PrometheusServiceMonitor } from "../operator/crd";
+import { probeValidator } from "./validators/probe-validator";
 import { FallbackScrapeProtocol } from "../operator/crd/generated/prometheus/servicemonitor-v1";
 
 const log = setupLogger(Component.PROMETHEUS);
@@ -51,3 +52,6 @@ export async function mutatePodMonitor(pm: PrometheusPodMonitor): Promise<void> 
 When(PrometheusPodMonitor)
   .IsCreatedOrUpdated()
   .Mutate(async pm => await mutatePodMonitor(pm));
+
+// Validate Probe CRs to prevent cross-namespace exploitation of SSO blackbox modules
+When(PrometheusProbe).IsCreatedOrUpdated().Validate(probeValidator);
