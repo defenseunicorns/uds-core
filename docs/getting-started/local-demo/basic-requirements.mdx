@@ -1,0 +1,214 @@
+---
+title: Basic Requirements (10m)
+sidebar:
+  order: 2
+---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## System Requirements
+
+In order to complete this tutorial on macOS or Linux, your Docker Desktop/VM/WSL environment must have at least:
+- 4 CPU cores
+- 10 GiB RAM
+- ~40 GiB free storage
+
+These are absolute minimums to schedule all components. More resources improve responsiveness.
+
+Windows Users running Windows Subsystem for Linux (WSL) will require an even more powerful setup. It is advised that
+your system has the following:
+
+- At least 18GB of RAM
+- At least 8 or more CPU cores
+
+WSL has access to 50% of the host machine's available RAM (e.g. 32GB allows WSL access to 16GB), and 100% of its
+available CPUs.
+
+> [!NOTE]
+> WSL's resource allocation defaults can be changed with the creation of a `.wslconfig` or `wsl.config`.
+
+Optional, but recommended are the following, as they're used in other examples and tutorials:
+- A code editor of your choice
+- [Helm](https://helm.sh/)
+- A graphical Kubernetes cluster management tool, such as:
+    - [K9s](https://k9scli.io/)
+    - [Kubernetes for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-kubernetes-tools.vscode-kubernetes-tools)
+    - [Lens](https://k8slens.dev/) (non-free at companies over $10m in revenue)
+
+If you don't have any of these, you can continue with the following setup guides to install these tools or verify that
+you have everything you need.
+
+## Setup Guides
+
+#### Install Docker Desktop
+
+If you've done development with Docker in the past, you may already have it installed. If you do, you can likely
+skip the rest of this step.
+
+> [!NOTE]
+> Use of Docker Desktop at a company with greater than 250 employees or $10 million in annual revenue requires a
+paid subscription. If you don't wish to use Docker Desktop as a result, we would recommend an alternative
+platform such as [colima](https://github.com/abiosoft/colima), which is free and open-source.
+
+Visit the [Docker Desktop](https://www.docker.com/products/docker-desktop/) website. (Linux users see the Note
+below) and select the correct download version for the Docker Desktop based on your computer's OS.  Once the
+installer is downloaded, navigate to the location it downloaded (usually the Downloads folder) and
+install Docker Desktop.
+
+> [!NOTE]
+> Docker Desktop support on Linux is not as extensive as macOS, and at the time of this writing, the latest Ubuntu 24.04 LTS is not yet supported. Due to a change in how the latest Ubuntu release restricts the unprivileged namespaces, `sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0` needs to be run at least once. Refer to the Ubuntu Blog for more details.
+
+All of the above said, you do not have to run Docker Desktop on Linux, and can instead install Docker Engine.
+
+After installation, you can follow OS-specific steps below.
+
+
+### OS-specific steps
+<Tabs>
+    <TabItem label="macOS">
+        **1. Install Homebrew**
+
+        [Homebrew](https://brew.sh/) is a widely used package manager for macOS which also works with Linux. You can
+        install it via the following terminal command:
+
+        ```bash
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        ```
+
+        **2. Install k3d**
+
+        For getting started quickly, we recommend using [k3d](https://k3d.io/), a lightweight wrapper for
+        [k3s](https://github.com/rancher/k3s), which is Rancher Lab's minimal Kubernetes distribution. k3d's site
+        contains detailed installation instructions, but if you're using Homebrew, you can easily install it with a
+        simple command:
+
+        ```bash
+        brew install k3d
+        ```
+    </TabItem>
+    <TabItem label="Linux">
+        **1. Install Homebrew**
+
+        [Homebrew](https://brew.sh/) is a widely used package manager for macOS, although it  also works with Linux.
+        You can install it via the following terminal command:
+
+        ```bash
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        ```
+
+        After installation, you'll need to ensure the `brew` command is added to your PATH. The installer should tell
+        you how to do this, and the command should look similar to the following:
+
+        ```bash
+        `(echo; echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"') >> /home/[USERNAME]/.bashrc`
+        ```
+
+        You will also need to install Homebrew's dependencies:
+
+        ```bash
+        sudo apt-get install build-essential
+        ```
+
+        Lastly, it's recommended to install GCC:
+
+        ```bash
+        brew install gcc
+        ```
+
+        **2. Install k3d**
+
+        For getting started quickly, we recommend using [k3d](https://k3d.io/), a lightweight wrapper for
+        [k3s](https://github.com/rancher/k3s), which is Rancher Lab's minimal Kubernetes distribution. k3d's site
+        contains detailed installation instructions, but if you're using Homebrew, you can easily install it with a
+        simple command:
+
+        ```bash
+        brew install k3d
+        ```
+    </TabItem>
+    <TabItem label="Windows">
+        > [!CAUTION]
+        > Your computer needs to be running Windows 10 version 2004 and higher (Build 19041 and higher) or Windows 11.
+        > If you are on an older build, there are manual installation steps for older versions of WSL available
+        [here](https://learn.microsoft.com/en-us/windows/wsl/install-manual).
+
+        #### Overview
+        We will be following [Install WSL | Microsoft Learn](https://learn.microsoft.com/en-us/windows/wsl/install) for
+        compatible Windows builds. However, the Microsoft instructions will provide more details if needed and will be
+        more up-to-date over time.
+
+        #### WSL --install
+        If you are running Windows at or above the mentioned Builds, we can use the WSL --install command.
+
+        Open PowerShell and run this command:
+        `wsl --install`
+
+        The `--install` argument performs the following actions:
+
+        - Enables the optional WSL and Virtual Machine Platform components.
+        - Downloads and installs the latest Linux kernel.
+        - Sets WSL 2 as the default.
+        - Downloads and installs the Ubuntu Linux distribution (reboot may be required).
+
+        Once the --install command is complete, you will be asked to restart your computer. After the restart, a
+        terminal should open and ask you to create a username and password. If the terminal does not open, we can select
+        the start menu and search for and select Ubuntu to open its terminal. Once the terminal opens, it will ask us to
+        create a Username and Password for Linux. Go ahead and do that.
+
+        Now that we have WSL working and have installed Ubuntu let's do some Linux housekeeping and run the following
+        command in the Ubuntu terminal:
+
+        `sudo apt update && sudo apt upgrade`
+
+        > [!CAUTION]
+        > Based on end user reports you may need to be on a Linux kernel version of 6.6.x+ in order to have the required kernel modules for Istio (see [prerequisite documentation](https://uds.defenseunicorns.com/reference/uds-core/prerequisites/#istio)).
+        > You can update your kernel to the latest prerelease version using `wsl --update --pre-release`.
+
+        #### WSL Configurations
+        By default, WSL will have access 100% of your system's CPU cores and 50% of your memory/RAM.  If you need to
+        increase the available memory/RAM or change configurations, you will need to create a `.wslconfig` or wsl.config
+        by following [these instructions](https://learn.microsoft.com/en-us/windows/wsl/wsl-config)
+
+        ```
+        Example .wslconfig
+
+        [ws12]
+        memory=25GB
+
+        ```
+
+        #### End Of WSL installation and Setup
+        From this point on, the paths for Windows WSL and macOS converge. The next step is to install Docker Desktop.
+
+        #### Troubleshooting WSL
+        If you're having issues with WSL, you can try some of the following:
+
+        - **Check your BIOS Settings**
+
+            If Ubuntu does not start up, you may need to enable virtualization in your BIOS.
+            - This will require entering the BIOS for your machine and enabling virtualization. An online search can
+            help you find instructions on how to do this. If you're on a work computer, you'll need to have access to
+            the BIOS settings, which may require a password or a system administrator who can do it for you.
+        - **Verify that Windows features are enabled**
+
+            From the start menu, search `turn Windows features on or off`.
+            The following features should have a checked box:
+            - Virtual Machine Platform
+            - Windows Subsystem for Linux
+        - **Check what version of WSL is running**
+
+            Run `wsl -l -v` in a PowerShell or Windows Terminal prompt. If Ubuntu has a `1` listed under `VERSION`,
+            change it to a 2:
+
+            `wsl --set-version [distro name] 2` (replacing [distro name]) with the name of the Linux distribution.
+        - **Run Windows as a VM**
+
+            - If you're running Windows in a VM, you need to enable nested virtualization. This is a hardware-specific
+            feature and needs to be enabled in your BIOS settings for the host machine and in the Hypervisor software
+            you're running. Not all CPUs or Hypervisor software support nested virtualization.
+
+
+        > [!TIP]
+        > If you need to update the WSL kernel, use this command:
+        > `wsl --update`
+    </TabItem>
+</Tabs>
