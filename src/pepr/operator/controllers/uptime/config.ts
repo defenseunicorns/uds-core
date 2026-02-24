@@ -7,6 +7,7 @@ import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSConfig } from "../config/config";
 import { Mutex } from "../utils";
+import type { BlackboxConfig } from "./types";
 
 const log = setupLogger(Component.OPERATOR_UPTIME);
 
@@ -15,7 +16,7 @@ const blackboxConfigMutex = new Mutex();
 
 export const BLACKBOX_CONFIG_SECRET_NAME = "uds-prometheus-blackbox-config";
 export const BLACKBOX_CONFIG_NAMESPACE = "monitoring";
-export const BLACKBOX_BASE_CONFIG = {
+export const BLACKBOX_BASE_CONFIG: BlackboxConfig = {
   modules: {
     http_2xx: {
       prober: "http",
@@ -51,13 +52,11 @@ export async function updateBlackboxConfig(
       .InNamespace(BLACKBOX_CONFIG_NAMESPACE)
       .Get(BLACKBOX_CONFIG_SECRET_NAME);
 
-    const currentConfig = JSON.parse(atob(secret.data!["blackbox.yaml"])) as {
-      modules: Record<string, unknown>;
-    };
+    const currentConfig = JSON.parse(atob(secret.data!["blackbox.yaml"])) as BlackboxConfig;
 
     // Remove all existing SSO modules owned by this namespace
     const namespacePrefix = `http_200x_sso_${namespace}_`;
-    const modules: Record<string, unknown> = Object.fromEntries(
+    const modules: BlackboxConfig["modules"] = Object.fromEntries(
       Object.entries(currentConfig.modules).filter(([name]) => !name.startsWith(namespacePrefix)),
     );
 
@@ -71,6 +70,7 @@ export async function updateBlackboxConfig(
         http: {
           valid_http_versions: ["HTTP/1.1", "HTTP/2.0"],
           preferred_ip_protocol: "ip4",
+          follow_redirects: false,
           oauth2: {
             client_id: clientId,
             client_secret: clientSecret,

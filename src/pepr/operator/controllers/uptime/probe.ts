@@ -159,9 +159,6 @@ export async function createProbeKeycloakClient(
     name: `${sso.name} Uptime Probe`,
     serviceAccountsEnabled: true,
     standardFlowEnabled: false,
-    publicClient: false,
-    redirectUris: [],
-    webOrigins: [],
     protocolMappers: [
       {
         name: "audience",
