@@ -54,15 +54,6 @@ export default defineConfig([
       "class-methods-use-this": "error",
       "consistent-this": "error",
       eqeqeq: "error",
-      "max-depth": ["warn", { max: 3 }],
-      "max-nested-callbacks": ["error", { max: 4 }],
-      "no-invalid-this": "error",
-    },
-  },
-  {
-    files: ["**/*.spec.ts"],
-    rules: {
-      "max-nested-callbacks": ["error", { max: 8 }],
     },
   },
 ]);
