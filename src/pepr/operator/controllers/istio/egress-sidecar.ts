@@ -177,7 +177,7 @@ export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
     await validateNamespace(sidecarEgressNamespace);
   } catch (e) {
     let errText = `Unable to get the egress gateway namespace ${sidecarEgressNamespace}.`;
-    if (e?.status == 404) {
+    if (e?.status === 404) {
       errText = `Egress gateway is not enabled in the cluster. Please enable the egress gateway and retry.`;
     }
     log.error(errText);

@@ -31,9 +31,9 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
   if (mesh) {
     const meshConfig = yaml.load(mesh) as IstioConfiguration;
     if (
-      meshConfig.defaultConfig?.gatewayTopology?.numTrustedProxies !=
+      meshConfig.defaultConfig?.gatewayTopology?.numTrustedProxies !==
         lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.numTrustedProxies ||
-      meshConfig.defaultConfig?.gatewayTopology?.forwardClientCertDetails !=
+      meshConfig.defaultConfig?.gatewayTopology?.forwardClientCertDetails !==
         lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.forwardClientCertDetails
     ) {
       lastSeenMeshConfig = meshConfig;
