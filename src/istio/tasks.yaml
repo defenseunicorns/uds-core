@@ -30,29 +30,6 @@ tasks:
             name: tenant-gateway
             namespace: istio-tenant-gateway
 
-  - name: gen-crds
-    description: "Generate Istio CRD source fragments from upstream Istio CRDs"
-    actions:
-      - description: "Generate VirtualService advancedHTTP schema from Istio"
-        cmd: |
-          # renovate: datasource=github-tags depName=istio/istio versioning=semver
-          ISTIO_VERSION="1.28.3" npx ts-node src/pepr/scripts/gen-istio-crd-sources.ts
-      - description: "Add license headers to generated CRD files"
-        shell:
-          darwin: bash
-          linux: bash
-        cmd: |
-          # check for addlicense bin
-          if [ -x "$HOME/go/bin/addlicense" ]; then
-            echo "addlicense installed in $HOME/go/bin"
-          else
-            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
-            exit 1
-          fi
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/sources/istio
-      - description: Pepr Format
-        cmd: "npx pepr format"
-
   - name: e2e-test
     actions:
       - description: "Run Istio E2E tests"

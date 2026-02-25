@@ -8,6 +8,10 @@ tasks:
   - name: gen-crds
     description: "Generate CRDs"
     actions:
+      - description: "Generate VirtualService advancedHTTP schema from Istio"
+        cmd: |
+          # renovate: datasource=github-tags depName=istio/istio versioning=semver
+          ISTIO_VERSION="1.28.3" npx ts-node src/pepr/scripts/gen-istio-crd-sources.ts
       - cmd: |
           npx ts-node src/pepr/scripts/gen-crds.ts
         description: "Generate CRD YAML files"

@@ -21,6 +21,11 @@
       "commitMessageTopic": "istio"
     },
     {
+      "matchDepNames": ["istio/istio"],
+      "groupName": "istio",
+      "commitMessageTopic": "istio"
+    },
+    {
       "matchFileNames": ["src/vector/**"],
       "groupName": "vector",
       "commitMessageTopic": "vector"
@@ -90,12 +95,6 @@
       ],
       "groupName": "iac-support-deps",
       "commitMessageTopic": "iac support dependencies"
-    },
-    {
-      "matchFileNames": ["package.json", "package-lock.json"],
-      "groupName": "operator-deps",
-      "commitMessageTopic": "operator-deps",
-      "matchDepNames": ["!pepr"]
     },
     {
       "matchFileNames": [

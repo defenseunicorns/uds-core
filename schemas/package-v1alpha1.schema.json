@@ -68,7 +68,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "key": {
           "type": "string",
@@ -79,7 +79,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "name": {
           "type": "string",
@@ -119,7 +119,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "portName": {
           "type": "string",
@@ -130,7 +130,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "targetPort": {
           "type": "number",
@@ -230,14 +230,14 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "podLabels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "port": {
           "type": "number",
@@ -271,7 +271,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "remoteProtocol": {
           "$ref": "#/definitions/RemoteProtocol",
@@ -282,7 +282,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "remoteServiceAccount": {
           "type": "string",
@@ -293,7 +293,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "serviceAccount": {
           "type": "string",
@@ -334,14 +334,14 @@
           "items": {
             "$ref": "#/definitions/ExposeMatch"
           },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
+          "description": "Match conditions to be satisfied for the rule to be activated."
         },
         "podLabels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "port": {
           "type": "number",
@@ -352,7 +352,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "service": {
           "type": "string",
@@ -392,7 +392,7 @@
           "items": {
             "$ref": "#/definitions/AdvancedHTTPMatch"
           },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
+          "description": "Match conditions to be satisfied for the rule to be activated."
         },
         "redirect": {
           "$ref": "#/definitions/Redirect",
@@ -409,10 +409,6 @@
         "timeout": {
           "type": "string",
           "description": "Timeout for HTTP requests, default is disabled."
-        },
-        "weight": {
-          "type": "integer",
-          "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination."
         }
       },
       "required": [],
@@ -464,6 +460,10 @@
         "maxAge": {
           "type": "string",
           "description": "Specifies how long the results of a preflight request can be cached."
+        },
+        "unmatchedPreflights": {
+          "$ref": "#/definitions/UnmatchedPreflights",
+          "description": "Indicates whether preflight requests not matching the configured allowed origin shouldn't\nbe forwarded to the upstream.\n\nValid Options: FORWARD, IGNORE"
         }
       },
       "required": [],
@@ -482,7 +482,7 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
@@ -546,7 +546,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "remove": {
           "type": "array",
@@ -559,7 +559,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         }
       },
       "required": [],
@@ -574,7 +574,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "remove": {
           "type": "array",
@@ -587,7 +587,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         }
       },
       "required": [],
@@ -597,16 +597,39 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authority": {
+          "$ref": "#/definitions/PurpleAuthority",
+          "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "gateways": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Names of gateways where the rule should be applied."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/PurpleHeader"
+          },
+          "description": "The header keys must be lowercase and use hyphen as the separator, e.g."
+        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
         },
         "method": {
-          "$ref": "#/definitions/PurpleMethod"
+          "$ref": "#/definitions/PurpleMethod",
+          "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "name": {
           "type": "string",
           "description": "The name assigned to a match."
+        },
+        "port": {
+          "type": "integer",
+          "description": "Specifies the ports on the host that is being addressed."
         },
         "queryParams": {
           "type": "object",
@@ -615,14 +638,76 @@
           },
           "description": "Query parameters for matching."
         },
+        "scheme": {
+          "$ref": "#/definitions/PurpleScheme",
+          "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "sourceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+        },
+        "sourceNamespace": {
+          "type": "string",
+          "description": "Source namespace constraining the applicability of a rule to workloads in that namespace."
+        },
+        "statPrefix": {
+          "type": "string",
+          "description": "The human readable prefix to use when emitting statistics for this route."
+        },
         "uri": {
-          "$ref": "#/definitions/PurpleURI"
+          "$ref": "#/definitions/PurpleURI",
+          "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "withoutHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/PurpleWithoutHeader"
+          },
+          "description": "withoutHeader has the same syntax with the header, but has opposite meaning."
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": [],
       "title": "AdvancedHTTPMatch"
+    },
+    "PurpleAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "PurpleAuthority",
+      "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+    },
+    "PurpleHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "PurpleHeader"
     },
     "PurpleMethod": {
       "type": "object",
@@ -636,11 +721,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "PurpleMethod"
+      "title": "PurpleMethod",
+      "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "PurpleQueryParam": {
       "type": "object",
@@ -654,11 +740,30 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
       "title": "PurpleQueryParam"
+    },
+    "PurpleScheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "PurpleScheme",
+      "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "PurpleURI": {
       "type": "object",
@@ -672,11 +777,30 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "PurpleURI"
+      "title": "PurpleURI",
+      "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+    },
+    "PurpleWithoutHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "PurpleWithoutHeader"
     },
     "Redirect": {
       "type": "object",
@@ -719,9 +843,17 @@
           "type": "integer",
           "description": "Number of retries to be allowed for a given request."
         },
+        "backoff": {
+          "type": "string",
+          "description": "Specifies the minimum duration between retry attempts."
+        },
         "perTryTimeout": {
           "type": "string",
           "description": "Timeout per attempt for a given request, including the initial call and any retries."
+        },
+        "retryIgnorePreviousHosts": {
+          "type": "boolean",
+          "description": "Flag to specify whether the retries should ignore previously tried hosts during retry."
         },
         "retryOn": {
           "type": "string",
@@ -763,7 +895,7 @@
       "properties": {
         "match": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "rewrite": {
           "type": "string",
@@ -778,16 +910,39 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authority": {
+          "$ref": "#/definitions/FluffyAuthority",
+          "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "gateways": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Names of gateways where the rule should be applied."
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/FluffyHeader"
+          },
+          "description": "The header keys must be lowercase and use hyphen as the separator, e.g."
+        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
         },
         "method": {
-          "$ref": "#/definitions/FluffyMethod"
+          "$ref": "#/definitions/FluffyMethod",
+          "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "name": {
           "type": "string",
           "description": "The name assigned to a match."
+        },
+        "port": {
+          "type": "integer",
+          "description": "Specifies the ports on the host that is being addressed."
         },
         "queryParams": {
           "type": "object",
@@ -796,14 +951,76 @@
           },
           "description": "Query parameters for matching."
         },
+        "scheme": {
+          "$ref": "#/definitions/FluffyScheme",
+          "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "sourceLabels": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+        },
+        "sourceNamespace": {
+          "type": "string",
+          "description": "Source namespace constraining the applicability of a rule to workloads in that namespace."
+        },
+        "statPrefix": {
+          "type": "string",
+          "description": "The human readable prefix to use when emitting statistics for this route."
+        },
         "uri": {
-          "$ref": "#/definitions/FluffyURI"
+          "$ref": "#/definitions/FluffyURI",
+          "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        },
+        "withoutHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/FluffyWithoutHeader"
+          },
+          "description": "withoutHeader has the same syntax with the header, but has opposite meaning."
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": [],
       "title": "ExposeMatch"
+    },
+    "FluffyAuthority": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "FluffyAuthority",
+      "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+    },
+    "FluffyHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "FluffyHeader"
     },
     "FluffyMethod": {
       "type": "object",
@@ -817,11 +1034,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "FluffyMethod"
+      "title": "FluffyMethod",
+      "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "FluffyQueryParam": {
       "type": "object",
@@ -835,11 +1053,30 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
       "title": "FluffyQueryParam"
+    },
+    "FluffyScheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "FluffyScheme",
+      "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "FluffyURI": {
       "type": "object",
@@ -853,11 +1090,30 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "FluffyURI"
+      "title": "FluffyURI",
+      "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+    },
+    "FluffyWithoutHeader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "type": "string"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string",
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
+        }
+      },
+      "required": [],
+      "title": "FluffyWithoutHeader"
     },
     "Uptime": {
       "type": "object",
@@ -920,7 +1176,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "baseUrl": {
           "type": "string",
@@ -950,7 +1206,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "enabled": {
           "type": "boolean",
@@ -999,7 +1255,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "secretConfig": {
           "$ref": "#/definitions/SecretConfig",
@@ -1010,7 +1266,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "secretName": {
           "type": "string",
@@ -1021,7 +1277,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "serviceAccountsEnabled": {
           "type": "boolean",
@@ -1070,7 +1326,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "consentRequired": {
           "type": "boolean",
@@ -1105,14 +1361,14 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "labels": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
         "name": {
           "type": "string",
@@ -1123,7 +1379,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         }
       },
       "required": [],
@@ -1206,7 +1462,7 @@
           "additionalProperties": {
             "type": "string"
           },
-          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
+          "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nOne or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         }
       },
       "required": [
@@ -1303,6 +1559,16 @@
       ],
       "title": "RemoteProtocol",
       "description": "Protocol used for external connection"
+    },
+    "UnmatchedPreflights": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "FORWARD",
+        "IGNORE"
+      ],
+      "title": "UnmatchedPreflights",
+      "description": "Indicates whether preflight requests not matching the configured allowed origin shouldn't be forwarded to the upstream.\n\nValid Options: FORWARD, IGNORE"
     },
     "DerivePort": {
       "type": "string",
