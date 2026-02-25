@@ -52,6 +52,7 @@ export default defineConfig([
     rules: {
       "@typescript-eslint/no-floating-promises": ["error"],
       eqeqeq: "error",
+      "max-depth": ["warn", { max: 3 }],
     },
   },
 ]);
