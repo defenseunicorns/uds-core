@@ -39,10 +39,9 @@ extraSecretMounts:
 
 extraConfigmapMounts:
   - name: ca-certs
-    mountPath: /etc/ssl/certs/ca.pem
+    mountPath: /etc/ssl/certs
     configMap: uds-trust-bundle
     readOnly: true
-    subPath: ca-bundle.pem
     optional: true
 
 grafana.ini:

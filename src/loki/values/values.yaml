@@ -16,8 +16,7 @@ global:
 
   extraVolumeMounts:
     - name: ca-certs
-      mountPath: /etc/ssl/certs/ca-bundle.pem
-      subPath: ca-bundle.pem
+      mountPath: /etc/ssl/certs
       readOnly: true
 
 # -- Overrides the chart's name
@@ -66,16 +65,16 @@ loki:
           {{- $futureDate := now | dateModify \"+48h\" | date \"2006-01-02\" -}}
           {{- $result := $pastDate -}}
           {{- if $secret -}}
-            {{- $result = $futureDate -}}
-            {{- if (index $secret.data \"config.yaml\") -}}
-              {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
-              {{- range $configYAML.schema_config.configs -}}
-                {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
-                  {{- $result = .from -}}
-                  {{- break -}}
-                {{- end -}}
-              {{- end -}}
-            {{- end -}}
+          {{- $result = $futureDate -}}
+          {{- if (index $secret.data \"config.yaml\") -}}
+          {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
+          {{- range $configYAML.schema_config.configs -}}
+          {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
+          {{- $result = .from -}}
+          {{- break -}}
+          {{- end -}}
+          {{- end -}}
+          {{- end -}}
           {{- end -}}
           {{- $result -}}"
         store: tsdb

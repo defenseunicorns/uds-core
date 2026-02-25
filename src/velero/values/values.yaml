@@ -12,8 +12,7 @@ extraVolumes:
 
 extraVolumeMounts:
   - name: ca-certs
-    mountPath: /etc/ssl/certs/ca-bundle.pem
-    subPath: ca-bundle.pem
+    mountPath: /etc/ssl/certs
     readOnly: true
 
 credentials:

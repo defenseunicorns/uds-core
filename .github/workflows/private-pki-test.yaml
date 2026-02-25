@@ -16,7 +16,6 @@ on:
       - "bundles/k3d-standard/**"
       - "test/playwright/private-pki/**"
 
-
 permissions:
   contents: read
   id-token: write
