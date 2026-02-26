@@ -30,6 +30,7 @@ const INCLUDED_HTTP_FIELDS = [
 ];
 // Fields we exclude from match for simplicity
 const EXCLUDED_MATCH_FIELDS = [
+  "authority",
   "gateways",
   "headers",
   "port",

@@ -236,25 +236,7 @@ Valid Options: FORWARD, IGNORE</td></tr>
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">authority</td><td style="white-space: nowrap;"><a href="#Authority">Authority</a></td><td>HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
-  </tbody>
-</table>
-</div>
-
-<a id="Authority"></a>
-<div style="margin-left: 140px; padding-top: 30px;">
-
-###### Authority
-<table style="width: 100%; table-layout: fixed;">
-  <thead>
-    <tr>
-      <th style="width: 20%; white-space: nowrap;">Field</th>
-      <th style="width: 25%; white-space: nowrap;">Type</th>
-      <th style="width: 55%; white-space: nowrap;">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -382,25 +364,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">authority</td><td style="white-space: nowrap;"><a href="#Authority">Authority</a></td><td>HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
-  </tbody>
-</table>
-</div>
-
-<a id="Authority"></a>
-<div style="margin-left: 120px; padding-top: 30px;">
-
-###### Authority
-<table style="width: 100%; table-layout: fixed;">
-  <thead>
-    <tr>
-      <th style="width: 20%; white-space: nowrap;">Field</th>
-      <th style="width: 25%; white-space: nowrap;">Type</th>
-      <th style="width: 55%; white-space: nowrap;">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>

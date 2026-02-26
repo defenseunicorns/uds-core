@@ -472,12 +472,6 @@ export interface Response {
 
 export interface AdvancedHTTPMatch {
   /**
-   * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
-   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
-   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
-   */
-  authority?: PurpleAuthority;
-  /**
    * Flag to specify whether the URI matching should be case-insensitive.
    */
   ignoreUriCase?: boolean;
@@ -501,20 +495,6 @@ export interface AdvancedHTTPMatch {
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   uri?: PurpleURI;
-}
-
-/**
- * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
- * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
- * style regex-based match](https://github.com/google/re2/wiki/Syntax).
- */
-export interface PurpleAuthority {
-  exact?: string;
-  prefix?: string;
-  /**
-   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
-   */
-  regex?: string;
 }
 
 /**
@@ -662,12 +642,6 @@ export interface URIRegexRewrite {
 
 export interface ExposeMatch {
   /**
-   * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
-   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
-   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
-   */
-  authority?: FluffyAuthority;
-  /**
    * Flag to specify whether the URI matching should be case-insensitive.
    */
   ignoreUriCase?: boolean;
@@ -691,20 +665,6 @@ export interface ExposeMatch {
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   uri?: FluffyURI;
-}
-
-/**
- * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
- * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
- * style regex-based match](https://github.com/google/re2/wiki/Syntax).
- */
-export interface FluffyAuthority {
-  exact?: string;
-  prefix?: string;
-  /**
-   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
-   */
-  regex?: string;
 }
 
 /**

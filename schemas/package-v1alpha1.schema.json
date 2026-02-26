@@ -597,10 +597,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "authority": {
-          "$ref": "#/definitions/PurpleAuthority",
-          "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
@@ -627,25 +623,6 @@
       },
       "required": [],
       "title": "AdvancedHTTPMatch"
-    },
-    "PurpleAuthority": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleAuthority",
-      "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "PurpleMethod": {
       "type": "object",
@@ -811,10 +788,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "authority": {
-          "$ref": "#/definitions/FluffyAuthority",
-          "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
@@ -841,25 +814,6 @@
       },
       "required": [],
       "title": "ExposeMatch"
-    },
-    "FluffyAuthority": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyAuthority",
-      "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "FluffyMethod": {
       "type": "object",

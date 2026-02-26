@@ -403,41 +403,6 @@ spec:
                                   passthrough gateway.
                                 items:
                                   properties:
-                                    authority:
-                                      description: >-
-                                        HTTP Authority values are case-sensitive
-                                        and formatted as follows: - `exact:
-                                        "value"` for exact string match -
-                                        `prefix: "value"` for prefix-based match
-                                        - `regex: "value"` for [RE2 style
-                                        regex-based
-                                        match](https://github.com/google/re2/wiki/Syntax).
-                                      oneOf:
-                                        - not:
-                                            anyOf:
-                                              - required:
-                                                  - exact
-                                              - required:
-                                                  - prefix
-                                              - required:
-                                                  - regex
-                                        - required:
-                                            - exact
-                                        - required:
-                                            - prefix
-                                        - required:
-                                            - regex
-                                      properties:
-                                        exact:
-                                          type: string
-                                        prefix:
-                                          type: string
-                                        regex:
-                                          description: >-
-                                            [RE2 style regex-based
-                                            match](https://github.com/google/re2/wiki/Syntax).
-                                          type: string
-                                      type: object
                                     ignoreUriCase:
                                       description: >-
                                         Flag to specify whether the URI matching
@@ -704,40 +669,6 @@ spec:
                               passthrough gateway.
                             items:
                               properties:
-                                authority:
-                                  description: >-
-                                    HTTP Authority values are case-sensitive and
-                                    formatted as follows: - `exact: "value"` for
-                                    exact string match - `prefix: "value"` for
-                                    prefix-based match - `regex: "value"` for
-                                    [RE2 style regex-based
-                                    match](https://github.com/google/re2/wiki/Syntax).
-                                  oneOf:
-                                    - not:
-                                        anyOf:
-                                          - required:
-                                              - exact
-                                          - required:
-                                              - prefix
-                                          - required:
-                                              - regex
-                                    - required:
-                                        - exact
-                                    - required:
-                                        - prefix
-                                    - required:
-                                        - regex
-                                  properties:
-                                    exact:
-                                      type: string
-                                    prefix:
-                                      type: string
-                                    regex:
-                                      description: >-
-                                        [RE2 style regex-based
-                                        match](https://github.com/google/re2/wiki/Syntax).
-                                      type: string
-                                  type: object
                                 ignoreUriCase:
                                   description: >-
                                     Flag to specify whether the URI matching
