@@ -8,6 +8,10 @@ tasks:
   - name: gen-crds
     description: "Generate CRDs"
     actions:
+      - description: "Generate VirtualService advancedHTTP schema from Istio"
+        cmd: |
+          # renovate: datasource=github-tags depName=istio/istio versioning=semver
+          ISTIO_VERSION="1.28.3" npx ts-node src/pepr/scripts/gen-istio-crd-sources.ts
       - cmd: |
           npx ts-node src/pepr/scripts/gen-crds.ts
         description: "Generate CRD YAML files"
@@ -68,6 +72,7 @@ tasks:
             echo "Error: addlicense is not installed in $HOME/go/bin" >&2
             exit 1
           fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/sources
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-cluster-crds/templates
 
