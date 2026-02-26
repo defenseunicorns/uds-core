@@ -213,7 +213,8 @@ const expose = {
       advancedHTTP,
       // Deprecated field
       match: {
-        description: "Deprecated: use advancedHTTP.match",
+        description:
+          "Deprecated: use advancedHTTP.match. Not permitted when using the passthrough gateway.",
         ...advancedHTTP.properties?.match,
       },
       podLabels: {

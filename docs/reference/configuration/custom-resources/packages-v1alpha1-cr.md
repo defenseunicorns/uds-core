@@ -72,7 +72,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">uptime</td><td style="white-space: nowrap;"><a href="#Uptime">Uptime</a></td><td>Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring.</td></tr>
+    <tr><td style="white-space: nowrap;">description</td><td style="white-space: nowrap;">string</td><td>A description of this expose entry, this will become part of the VirtualService name</td></tr><tr><td style="white-space: nowrap;">host</td><td style="white-space: nowrap;">string</td><td>The hostname to expose the service on</td></tr><tr><td style="white-space: nowrap;">gateway</td><td style="white-space: nowrap;">string</td><td>The name of the gateway to expose the service on (default: tenant)</td></tr><tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>The domain to expose the service on, only valid for additional gateways (not tenant, admin, or passthrough)</td></tr><tr><td style="white-space: nowrap;">service</td><td style="white-space: nowrap;">string</td><td>The name of the service to expose</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">number</td><td>The port number to expose</td></tr><tr><td style="white-space: nowrap;">selector</td><td style="white-space: nowrap;"></td><td>Selector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">targetPort</td><td style="white-space: nowrap;">number</td><td>The service targetPort. This defaults to port and is only required if the service port is different from the target port (so the NetworkPolicy can be generated correctly).</td></tr><tr><td style="white-space: nowrap;">advancedHTTP</td><td style="white-space: nowrap;"><a href="#AdvancedHTTP">AdvancedHTTP</a></td><td>Advanced HTTP settings for the route.</td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match conditions to be satisfied for the rule to be activated. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">podLabels</td><td style="white-space: nowrap;"></td><td>Deprecated: use selector</td></tr><tr><td style="white-space: nowrap;">uptime</td><td style="white-space: nowrap;"><a href="#Uptime">Uptime</a></td><td>Uptime monitoring configuration for this exposed service. Presence of checks.paths enables monitoring.</td></tr>
   </tbody>
 </table>
 </div>
@@ -90,7 +90,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">corsPolicy</td><td style="white-space: nowrap;"><a href="#CorsPolicy">CorsPolicy</a></td><td>Cross-Origin Resource Sharing policy (CORS).</td></tr><tr><td style="white-space: nowrap;">directResponse</td><td style="white-space: nowrap;"><a href="#DirectResponse">DirectResponse</a></td><td>A HTTP rule can either return a direct_response, redirect or forward (default) traffic.</td></tr><tr><td style="white-space: nowrap;">headers</td><td style="white-space: nowrap;"><a href="#Headers">Headers</a></td><td></td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match the incoming request based on custom rules. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">rewrite</td><td style="white-space: nowrap;"><a href="#Rewrite">Rewrite</a></td><td>Rewrite HTTP URIs and Authority headers.</td></tr><tr><td style="white-space: nowrap;">redirect</td><td style="white-space: nowrap;"><a href="#Redirect">Redirect</a></td><td>A HTTP rule can either return a direct_response, redirect or forward (default) traffic.</td></tr><tr><td style="white-space: nowrap;">retries</td><td style="white-space: nowrap;"><a href="#Retries">Retries</a></td><td>Retry policy for HTTP requests.</td></tr><tr><td style="white-space: nowrap;">weight</td><td style="white-space: nowrap;">integer</td><td>Weight specifies the relative proportion of traffic to be forwarded to the destination.</td></tr><tr><td style="white-space: nowrap;">timeout</td><td style="white-space: nowrap;">string</td><td>Timeout for HTTP requests, default is disabled.</td></tr>
+    <tr><td style="white-space: nowrap;">corsPolicy</td><td style="white-space: nowrap;"><a href="#CorsPolicy">CorsPolicy</a></td><td>Cross-Origin Resource Sharing policy (CORS).</td></tr><tr><td style="white-space: nowrap;">directResponse</td><td style="white-space: nowrap;"><a href="#DirectResponse">DirectResponse</a></td><td>A HTTP rule can either return a direct_response, redirect or forward (default) traffic.</td></tr><tr><td style="white-space: nowrap;">headers</td><td style="white-space: nowrap;"><a href="#Headers">Headers</a></td><td></td></tr><tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;"><a href="#Match">Match[]</a></td><td>Match conditions to be satisfied for the rule to be activated. Not permitted when using the passthrough gateway.</td></tr><tr><td style="white-space: nowrap;">redirect</td><td style="white-space: nowrap;"><a href="#Redirect">Redirect</a></td><td>A HTTP rule can either return a direct_response, redirect or forward (default) traffic.</td></tr><tr><td style="white-space: nowrap;">retries</td><td style="white-space: nowrap;"><a href="#Retries">Retries</a></td><td>Retry policy for HTTP requests.</td></tr><tr><td style="white-space: nowrap;">rewrite</td><td style="white-space: nowrap;"><a href="#Rewrite">Rewrite</a></td><td>Rewrite HTTP URIs and Authority headers.</td></tr><tr><td style="white-space: nowrap;">timeout</td><td style="white-space: nowrap;">string</td><td>Timeout for HTTP requests, default is disabled.</td></tr>
   </tbody>
 </table>
 </div>
@@ -108,7 +108,9 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">allowCredentials</td><td style="white-space: nowrap;">boolean</td><td>Indicates whether the caller is allowed to send the actual request (not the preflight) using credentials.</td></tr><tr><td style="white-space: nowrap;">allowHeaders</td><td style="white-space: nowrap;">string[]</td><td>List of HTTP headers that can be used when requesting the resource.</td></tr><tr><td style="white-space: nowrap;">allowMethods</td><td style="white-space: nowrap;">string[]</td><td>List of HTTP methods allowed to access the resource.</td></tr><tr><td style="white-space: nowrap;">allowOrigin</td><td style="white-space: nowrap;">string[]</td><td></td></tr><tr><td style="white-space: nowrap;">allowOrigins</td><td style="white-space: nowrap;"><a href="#AllowOrigins">AllowOrigins[]</a></td><td>String patterns that match allowed origins.</td></tr><tr><td style="white-space: nowrap;">exposeHeaders</td><td style="white-space: nowrap;">string[]</td><td>A list of HTTP headers that the browsers are allowed to access.</td></tr><tr><td style="white-space: nowrap;">maxAge</td><td style="white-space: nowrap;">string</td><td>Specifies how long the results of a preflight request can be cached.</td></tr>
+    <tr><td style="white-space: nowrap;">allowCredentials</td><td style="white-space: nowrap;">boolean</td><td>Indicates whether the caller is allowed to send the actual request (not the preflight) using credentials.</td></tr><tr><td style="white-space: nowrap;">allowHeaders</td><td style="white-space: nowrap;">string[]</td><td>List of HTTP headers that can be used when requesting the resource.</td></tr><tr><td style="white-space: nowrap;">allowMethods</td><td style="white-space: nowrap;">string[]</td><td>List of HTTP methods allowed to access the resource.</td></tr><tr><td style="white-space: nowrap;">allowOrigin</td><td style="white-space: nowrap;">string[]</td><td></td></tr><tr><td style="white-space: nowrap;">allowOrigins</td><td style="white-space: nowrap;"><a href="#AllowOrigins">AllowOrigins[]</a></td><td>String patterns that match allowed origins.</td></tr><tr><td style="white-space: nowrap;">exposeHeaders</td><td style="white-space: nowrap;">string[]</td><td>A list of HTTP headers that the browsers are allowed to access.</td></tr><tr><td style="white-space: nowrap;">maxAge</td><td style="white-space: nowrap;">string</td><td>Specifies how long the results of a preflight request can be cached.</td></tr><tr><td style="white-space: nowrap;">unmatchedPreflights</td><td style="white-space: nowrap;">string (enum):<ul><li><code>UNSPECIFIED</code></li><li><code>FORWARD</code></li><li><code>IGNORE</code></li></ul></td><td>Indicates whether preflight requests not matching the configured allowed origin shouldn't be forwarded to the upstream.
+
+Valid Options: FORWARD, IGNORE</td></tr>
   </tbody>
 </table>
 </div>
@@ -126,7 +128,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -234,7 +236,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td></td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -252,7 +254,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -270,7 +272,45 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Redirect"></a>
+<div style="margin-left: 120px; padding-top: 30px;">
+
+###### Redirect
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">authority</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the Authority/Host portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">derivePort</td><td style="white-space: nowrap;">string (enum):<ul><li><code>FROM_PROTOCOL_DEFAULT</code></li><li><code>FROM_REQUEST_PORT</code></li></ul></td><td>On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.
+
+Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">integer</td><td>On a redirect, overwrite the port portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">redirectCode</td><td style="white-space: nowrap;">integer</td><td>On a redirect, Specifies the HTTP status code to use in the redirect response.</td></tr><tr><td style="white-space: nowrap;">scheme</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the scheme portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the Path portion of the URL with this value.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<a id="Retries"></a>
+<div style="margin-left: 120px; padding-top: 30px;">
+
+###### Retries
+<table style="width: 100%; table-layout: fixed;">
+  <thead>
+    <tr>
+      <th style="width: 20%; white-space: nowrap;">Field</th>
+      <th style="width: 25%; white-space: nowrap;">Type</th>
+      <th style="width: 55%; white-space: nowrap;">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style="white-space: nowrap;">attempts</td><td style="white-space: nowrap;">integer</td><td>Number of retries to be allowed for a given request.</td></tr><tr><td style="white-space: nowrap;">backoff</td><td style="white-space: nowrap;">string</td><td>Specifies the minimum duration between retry attempts.</td></tr><tr><td style="white-space: nowrap;">perTryTimeout</td><td style="white-space: nowrap;">string</td><td>Timeout per attempt for a given request, including the initial call and any retries.</td></tr><tr><td style="white-space: nowrap;">retryIgnorePreviousHosts</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the retries should ignore previously tried hosts during retry.</td></tr><tr><td style="white-space: nowrap;">retryOn</td><td style="white-space: nowrap;">string</td><td>Specifies the conditions under which retry takes place.</td></tr><tr><td style="white-space: nowrap;">retryRemoteLocalities</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the retries should retry to other localities.</td></tr>
   </tbody>
 </table>
 </div>
@@ -306,45 +346,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">rewrite</td><td style="white-space: nowrap;">string</td><td>The string that should replace into matching portions of original URI.</td></tr>
-  </tbody>
-</table>
-</div>
-
-<a id="Redirect"></a>
-<div style="margin-left: 120px; padding-top: 30px;">
-
-###### Redirect
-<table style="width: 100%; table-layout: fixed;">
-  <thead>
-    <tr>
-      <th style="width: 20%; white-space: nowrap;">Field</th>
-      <th style="width: 25%; white-space: nowrap;">Type</th>
-      <th style="width: 55%; white-space: nowrap;">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td style="white-space: nowrap;">authority</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the Authority/Host portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">port</td><td style="white-space: nowrap;">integer</td><td>On a redirect, overwrite the port portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">derivePort</td><td style="white-space: nowrap;">string (enum):<ul><li><code>FROM_PROTOCOL_DEFAULT</code></li><li><code>FROM_REQUEST_PORT</code></li></ul></td><td>On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.
-
-Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="white-space: nowrap;">redirectCode</td><td style="white-space: nowrap;">integer</td><td>On a redirect, Specifies the HTTP status code to use in the redirect response.</td></tr><tr><td style="white-space: nowrap;">scheme</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the scheme portion of the URL with this value.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;">string</td><td>On a redirect, overwrite the Path portion of the URL with this value.</td></tr>
-  </tbody>
-</table>
-</div>
-
-<a id="Retries"></a>
-<div style="margin-left: 120px; padding-top: 30px;">
-
-###### Retries
-<table style="width: 100%; table-layout: fixed;">
-  <thead>
-    <tr>
-      <th style="width: 20%; white-space: nowrap;">Field</th>
-      <th style="width: 25%; white-space: nowrap;">Type</th>
-      <th style="width: 55%; white-space: nowrap;">Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr><td style="white-space: nowrap;">attempts</td><td style="white-space: nowrap;">integer</td><td>Number of retries to be allowed for a given request.</td></tr><tr><td style="white-space: nowrap;">perTryTimeout</td><td style="white-space: nowrap;">string</td><td>Timeout per attempt for a given request, including the initial call and any retries.</td></tr><tr><td style="white-space: nowrap;">retryOn</td><td style="white-space: nowrap;">string</td><td>Specifies the conditions under which retry takes place.</td></tr><tr><td style="white-space: nowrap;">retryRemoteLocalities</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the retries should retry to other localities.</td></tr>
+    <tr><td style="white-space: nowrap;">match</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">rewrite</td><td style="white-space: nowrap;">string</td><td>The string that should replace into matching portions of original URI.</td></tr>
   </tbody>
 </table>
 </div>
@@ -362,7 +364,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td></td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td></td></tr>
+    <tr><td style="white-space: nowrap;">ignoreUriCase</td><td style="white-space: nowrap;">boolean</td><td>Flag to specify whether the URI matching should be case-insensitive.</td></tr><tr><td style="white-space: nowrap;">method</td><td style="white-space: nowrap;"><a href="#Method">Method</a></td><td>HTTP Method values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr><tr><td style="white-space: nowrap;">name</td><td style="white-space: nowrap;">string</td><td>The name assigned to a match.</td></tr><tr><td style="white-space: nowrap;">queryParams</td><td style="white-space: nowrap;"></td><td>Query parameters for matching.</td></tr><tr><td style="white-space: nowrap;">uri</td><td style="white-space: nowrap;"><a href="#Uri">Uri</a></td><td>URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -380,7 +382,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>
@@ -398,7 +400,7 @@ Valid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT</td></tr><tr><td style="
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax).</td></tr>
+    <tr><td style="white-space: nowrap;">exact</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">prefix</td><td style="white-space: nowrap;">string</td><td></td></tr><tr><td style="white-space: nowrap;">regex</td><td style="white-space: nowrap;">string</td><td>[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).</td></tr>
   </tbody>
 </table>
 </div>

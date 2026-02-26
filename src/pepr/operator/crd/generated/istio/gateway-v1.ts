@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -78,6 +78,10 @@ export interface Port {
  */
 export interface TLS {
   /**
+   * For mutual TLS, the name of the secret or the configmap that holds CA certificates.
+   */
+  caCertCredentialName?: string;
+  /**
    * REQUIRED if mode is `MUTUAL` or `OPTIONAL_MUTUAL`.
    */
   caCertificates?: string;
@@ -95,6 +99,10 @@ export interface TLS {
    * including the CA certificates.
    */
   credentialName?: string;
+  /**
+   * Same as CredentialName but for multiple certificates.
+   */
+  credentialNames?: string[];
   /**
    * If set to true, the load balancer will send a 301 redirect for all http connections,
    * asking the clients to use HTTPS.
@@ -132,6 +140,11 @@ export interface TLS {
    * the client.
    */
   subjectAltNames?: string[];
+  /**
+   * Only one of `server_certificate`, `private_key` or `credential_name` or
+   * `credential_names` or `tls_certificates` should be specified.
+   */
+  tlsCertificates?: TLSCertificate[];
   /**
    * An optional list of hex-encoded SHA-256 hashes of the authorized client certificates.
    */
@@ -175,14 +188,23 @@ export enum Mode {
   Simple = "SIMPLE",
 }
 
+export interface TLSCertificate {
+  caCertificates?: string;
+  /**
+   * REQUIRED if mode is `SIMPLE` or `MUTUAL`.
+   */
+  privateKey?: string;
+  /**
+   * REQUIRED if mode is `SIMPLE` or `MUTUAL`.
+   */
+  serverCertificate?: string;
+}
+
 export interface Status {
   /**
    * Current service state of the resource.
    */
   conditions?: Condition[];
-  /**
-   * Resource Generation to which the Reconciled Condition refers.
-   */
   observedGeneration?: number | string;
   /**
    * Includes any errors or warnings detected by Istio's analyzers.
@@ -203,6 +225,10 @@ export interface Condition {
    * Human-readable message indicating details about last transition.
    */
   message?: string;
+  /**
+   * Resource Generation to which the Condition refers.
+   */
+  observedGeneration?: number | string;
   /**
    * Unique, one-word, CamelCase reason for the condition's last transition.
    */
