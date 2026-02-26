@@ -215,60 +215,10 @@ export const advancedHTTP: V1JSONSchemaProps = {
       type: "object",
     },
     match: {
-      description: "Match conditions to be satisfied for the rule to be activated.",
+      description:
+        "Match conditions to be satisfied for the rule to be activated. Not permitted when using the passthrough gateway.",
       items: {
         properties: {
-          authority: {
-            description:
-              'HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).',
-            oneOf: [
-              {
-                not: {
-                  anyOf: [
-                    {
-                      required: ["exact"],
-                    },
-                    {
-                      required: ["prefix"],
-                    },
-                    {
-                      required: ["regex"],
-                    },
-                  ],
-                },
-              },
-              {
-                required: ["exact"],
-              },
-              {
-                required: ["prefix"],
-              },
-              {
-                required: ["regex"],
-              },
-            ],
-            properties: {
-              exact: {
-                type: "string",
-              },
-              prefix: {
-                type: "string",
-              },
-              regex: {
-                description:
-                  "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).",
-                type: "string",
-              },
-            },
-            type: "object",
-          },
-          gateways: {
-            description: "Names of gateways where the rule should be applied.",
-            items: {
-              type: "string",
-            },
-            type: "array",
-          },
           headers: {
             additionalProperties: {
               oneOf: [
@@ -462,24 +412,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
               },
             },
             type: "object",
-          },
-          sourceLabels: {
-            additionalProperties: {
-              type: "string",
-            },
-            description:
-              "One or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.",
-            type: "object",
-          },
-          sourceNamespace: {
-            description:
-              "Source namespace constraining the applicability of a rule to workloads in that namespace.",
-            type: "string",
-          },
-          statPrefix: {
-            description:
-              "The human readable prefix to use when emitting statistics for this route.",
-            type: "string",
           },
           uri: {
             description:
