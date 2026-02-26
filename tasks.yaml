@@ -168,12 +168,13 @@ tasks:
           # Clone uds-docs repo
           git clone --branch move-stubbed-content-to-core-repo https://github.com/defenseunicorns/uds-docs.git uds-docs
 
-          # Clean up old runs
-          rm -rf uds-docs/src/content/docs/*
+          # Clean up old runs (including dot-dirs like .c4 and .images)
+          rm -rf uds-docs/src/content/docs/{*,.*} 2>/dev/null || true
 
           # Symlink relevant docs folders (skip dev - not for public docs site)
-          for f in $(pwd)/docs/*; do [[ "$(basename $f)" == "dev" ]] && continue; ln -s "$f" uds-docs/src/content/docs/; done
+          for f in $(pwd)/docs/*; do [ "$(basename "$f")" = "dev" ] && continue; ln -s "$f" uds-docs/src/content/docs/; done
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
+          ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
 
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
