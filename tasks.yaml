@@ -165,16 +165,20 @@ tasks:
           rm -rf uds-docs
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
-          git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
-          rm -rf uds-docs/src/content/docs/reference uds-docs/src/content/docs/.images uds-docs/src/content/docs/.c4
-          # This only symlinks the reference, images, and c4 folders since these are the only docs we use in the docs site
-          ln -s $(pwd)/docs/reference uds-docs/src/content/docs/reference
-          ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
+          # Clone uds-docs repo
+          git clone --branch move-stubbed-content-to-core-repo https://github.com/defenseunicorns/uds-docs.git uds-docs
+
+          # Clean up old runs
+          rm -rf uds-docs/src/content/docs/*
+
+          # Symlink relevant docs folders
+          for f in $(pwd)/docs/site/content/docs/*; do ln -s "$f" uds-docs/src/content/docs/; done
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
+
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
-          cd uds-docs && npm i && echo "Sidebar will be different from the live docs, this is expected" && npm run dev && echo ""
+          cd uds-docs && npm i && npm run dev
 
   - name: uds-docs-validate
     description: "Validate and build uds-docs with latest uds-core docs"
