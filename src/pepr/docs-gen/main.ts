@@ -7,7 +7,7 @@ import * as path from "path";
 const INDENT_SIZE = 20;
 const MAX_HEADER_LEVEL = 6;
 const MAX_DEPTH = 10;
-const OUTPUT_DIR = "./docs/reference/configuration/custom-resources/";
+const OUTPUT_DIR = "./docs/reference/operator-and-crds/";
 const TABLE_STYLE = 'style="width: 100%; table-layout: fixed;"';
 
 // Utility to capitalize the first letter of a string
