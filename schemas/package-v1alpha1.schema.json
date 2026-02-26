@@ -334,7 +334,7 @@
           "items": {
             "$ref": "#/definitions/ExposeMatch"
           },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
+          "description": "Match conditions to be satisfied for the rule to be activated. Not permitted when using\nthe passthrough gateway."
         },
         "podLabels": {
           "type": "object",
@@ -392,7 +392,7 @@
           "items": {
             "$ref": "#/definitions/AdvancedHTTPMatch"
           },
-          "description": "Match the incoming request based on custom rules. Not permitted when using the\npassthrough gateway."
+          "description": "Match conditions to be satisfied for the rule to be activated. Not permitted when using\nthe passthrough gateway."
         },
         "redirect": {
           "$ref": "#/definitions/Redirect",
@@ -409,10 +409,6 @@
         "timeout": {
           "type": "string",
           "description": "Timeout for HTTP requests, default is disabled."
-        },
-        "weight": {
-          "type": "integer",
-          "description": "Weight specifies the relative proportion of traffic to be forwarded to the destination."
         }
       },
       "required": [],
@@ -464,6 +460,10 @@
         "maxAge": {
           "type": "string",
           "description": "Specifies how long the results of a preflight request can be cached."
+        },
+        "unmatchedPreflights": {
+          "$ref": "#/definitions/UnmatchedPreflights",
+          "description": "Indicates whether preflight requests not matching the configured allowed origin shouldn't\nbe forwarded to the upstream.\n\nValid Options: FORWARD, IGNORE"
         }
       },
       "required": [],
@@ -482,7 +482,7 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
@@ -602,7 +602,8 @@
           "description": "Flag to specify whether the URI matching should be case-insensitive."
         },
         "method": {
-          "$ref": "#/definitions/PurpleMethod"
+          "$ref": "#/definitions/PurpleMethod",
+          "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "name": {
           "type": "string",
@@ -616,12 +617,11 @@
           "description": "Query parameters for matching."
         },
         "uri": {
-          "$ref": "#/definitions/PurpleURI"
+          "$ref": "#/definitions/PurpleURI",
+          "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": [],
       "title": "AdvancedHTTPMatch"
     },
     "PurpleMethod": {
@@ -636,11 +636,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "PurpleMethod"
+      "title": "PurpleMethod",
+      "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "PurpleQueryParam": {
       "type": "object",
@@ -654,7 +655,7 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
@@ -672,11 +673,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "PurpleURI"
+      "title": "PurpleURI",
+      "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "Redirect": {
       "type": "object",
@@ -719,9 +721,17 @@
           "type": "integer",
           "description": "Number of retries to be allowed for a given request."
         },
+        "backoff": {
+          "type": "string",
+          "description": "Specifies the minimum duration between retry attempts."
+        },
         "perTryTimeout": {
           "type": "string",
           "description": "Timeout per attempt for a given request, including the initial call and any retries."
+        },
+        "retryIgnorePreviousHosts": {
+          "type": "boolean",
+          "description": "Flag to specify whether the retries should ignore previously tried hosts during retry."
         },
         "retryOn": {
           "type": "string",
@@ -763,7 +773,7 @@
       "properties": {
         "match": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "rewrite": {
           "type": "string",
@@ -783,7 +793,8 @@
           "description": "Flag to specify whether the URI matching should be case-insensitive."
         },
         "method": {
-          "$ref": "#/definitions/FluffyMethod"
+          "$ref": "#/definitions/FluffyMethod",
+          "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
         "name": {
           "type": "string",
@@ -797,12 +808,11 @@
           "description": "Query parameters for matching."
         },
         "uri": {
-          "$ref": "#/definitions/FluffyURI"
+          "$ref": "#/definitions/FluffyURI",
+          "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
-      "required": [
-        "name"
-      ],
+      "required": [],
       "title": "ExposeMatch"
     },
     "FluffyMethod": {
@@ -817,11 +827,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "FluffyMethod"
+      "title": "FluffyMethod",
+      "description": "HTTP Method values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "FluffyQueryParam": {
       "type": "object",
@@ -835,7 +846,7 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
@@ -853,11 +864,12 @@
         },
         "regex": {
           "type": "string",
-          "description": "RE2 style regex-based match (https://github.com/google/re2/wiki/Syntax)."
+          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
         }
       },
       "required": [],
-      "title": "FluffyURI"
+      "title": "FluffyURI",
+      "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
     },
     "Uptime": {
       "type": "object",
@@ -1303,6 +1315,16 @@
       ],
       "title": "RemoteProtocol",
       "description": "Protocol used for external connection"
+    },
+    "UnmatchedPreflights": {
+      "type": "string",
+      "enum": [
+        "UNSPECIFIED",
+        "FORWARD",
+        "IGNORE"
+      ],
+      "title": "UnmatchedPreflights",
+      "description": "Indicates whether preflight requests not matching the configured allowed origin shouldn't be forwarded to the upstream.\n\nValid Options: FORWARD, IGNORE"
     },
     "DerivePort": {
       "type": "string",
