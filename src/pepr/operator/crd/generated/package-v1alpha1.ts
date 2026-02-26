@@ -472,6 +472,20 @@ export interface Response {
 
 export interface AdvancedHTTPMatch {
   /**
+   * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
+   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  authority?: PurpleAuthority;
+  /**
+   * Names of gateways where the rule should be applied.
+   */
+  gateways?: string[];
+  /**
+   * The header keys must be lowercase and use hyphen as the separator, e.g.
+   */
+  headers?: { [key: string]: PurpleHeader };
+  /**
    * Flag to specify whether the URI matching should be case-insensitive.
    */
   ignoreUriCase?: boolean;
@@ -486,15 +500,65 @@ export interface AdvancedHTTPMatch {
    */
   name?: string;
   /**
+   * Specifies the ports on the host that is being addressed.
+   */
+  port?: number;
+  /**
    * Query parameters for matching.
    */
   queryParams?: { [key: string]: PurpleQueryParam };
+  /**
+   * URI Scheme values are case-sensitive and formatted as follows: - `exact: "value"` for
+   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  scheme?: PurpleScheme;
+  /**
+   * One or more labels that constrain the applicability of a rule to source (client)
+   * workloads with the given labels.
+   */
+  sourceLabels?: { [key: string]: string };
+  /**
+   * Source namespace constraining the applicability of a rule to workloads in that namespace.
+   */
+  sourceNamespace?: string;
+  /**
+   * The human readable prefix to use when emitting statistics for this route.
+   */
+  statPrefix?: string;
   /**
    * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
    * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   uri?: PurpleURI;
+  /**
+   * withoutHeader has the same syntax with the header, but has opposite meaning.
+   */
+  withoutHeaders?: { [key: string]: PurpleWithoutHeader };
+}
+
+/**
+ * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
+ * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+ * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+ */
+export interface PurpleAuthority {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface PurpleHeader {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
 }
 
 /**
@@ -521,11 +585,34 @@ export interface PurpleQueryParam {
 }
 
 /**
+ * URI Scheme values are case-sensitive and formatted as follows: - `exact: "value"` for
+ * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+ * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+ */
+export interface PurpleScheme {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+/**
  * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
  * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
  * style regex-based match](https://github.com/google/re2/wiki/Syntax).
  */
 export interface PurpleURI {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface PurpleWithoutHeader {
   exact?: string;
   prefix?: string;
   /**
@@ -642,6 +729,20 @@ export interface URIRegexRewrite {
 
 export interface ExposeMatch {
   /**
+   * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
+   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  authority?: FluffyAuthority;
+  /**
+   * Names of gateways where the rule should be applied.
+   */
+  gateways?: string[];
+  /**
+   * The header keys must be lowercase and use hyphen as the separator, e.g.
+   */
+  headers?: { [key: string]: FluffyHeader };
+  /**
    * Flag to specify whether the URI matching should be case-insensitive.
    */
   ignoreUriCase?: boolean;
@@ -656,15 +757,65 @@ export interface ExposeMatch {
    */
   name?: string;
   /**
+   * Specifies the ports on the host that is being addressed.
+   */
+  port?: number;
+  /**
    * Query parameters for matching.
    */
   queryParams?: { [key: string]: FluffyQueryParam };
+  /**
+   * URI Scheme values are case-sensitive and formatted as follows: - `exact: "value"` for
+   * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+   * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  scheme?: FluffyScheme;
+  /**
+   * One or more labels that constrain the applicability of a rule to source (client)
+   * workloads with the given labels.
+   */
+  sourceLabels?: { [key: string]: string };
+  /**
+   * Source namespace constraining the applicability of a rule to workloads in that namespace.
+   */
+  sourceNamespace?: string;
+  /**
+   * The human readable prefix to use when emitting statistics for this route.
+   */
+  statPrefix?: string;
   /**
    * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
    * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   uri?: FluffyURI;
+  /**
+   * withoutHeader has the same syntax with the header, but has opposite meaning.
+   */
+  withoutHeaders?: { [key: string]: FluffyWithoutHeader };
+}
+
+/**
+ * HTTP Authority values are case-sensitive and formatted as follows: - `exact: "value"` for
+ * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+ * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+ */
+export interface FluffyAuthority {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface FluffyHeader {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
 }
 
 /**
@@ -691,11 +842,34 @@ export interface FluffyQueryParam {
 }
 
 /**
+ * URI Scheme values are case-sensitive and formatted as follows: - `exact: "value"` for
+ * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
+ * style regex-based match](https://github.com/google/re2/wiki/Syntax).
+ */
+export interface FluffyScheme {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+/**
  * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
  * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
  * style regex-based match](https://github.com/google/re2/wiki/Syntax).
  */
 export interface FluffyURI {
+  exact?: string;
+  prefix?: string;
+  /**
+   * [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).
+   */
+  regex?: string;
+}
+
+export interface FluffyWithoutHeader {
   exact?: string;
   prefix?: string;
   /**

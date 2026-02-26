@@ -28,18 +28,6 @@ const INCLUDED_HTTP_FIELDS = [
   "retries",
   "timeout",
 ];
-// Fields we historically have not included in our Package CRD for simplicity
-const EXCLUDED_MATCH_FIELDS = [
-  "authority",
-  "gateways",
-  "headers",
-  "port",
-  "scheme",
-  "sourceLabels",
-  "sourceNamespace",
-  "statPrefix",
-  "withoutHeaders",
-];
 
 function fetchText(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -112,14 +100,6 @@ async function main() {
   const sanitized = sanitizeKeys(properties) as Record<string, V1JSONSchemaProps>;
   if (sanitized.match?.description) {
     sanitized.match.description = `${sanitized.match.description} Not permitted when using the passthrough gateway.`;
-  }
-
-  // Drop match fields we don't support
-  const matchItemsProps = sanitized.match?.items?.properties as Record<string, unknown> | undefined;
-  if (matchItemsProps && typeof matchItemsProps === "object") {
-    for (const key of EXCLUDED_MATCH_FIELDS) {
-      delete matchItemsProps[key];
-    }
   }
 
   const advancedHTTP: V1JSONSchemaProps = {
