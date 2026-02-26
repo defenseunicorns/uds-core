@@ -33,3 +33,40 @@ tasks:
   - name: e2e-test
     actions:
       - description: "Run Istio E2E tests"
+
+  - name: gen-crds
+    description: "Generate Istio CRD types"
+    actions:
+      - description: "Generate Istio CRD types via kubernetes-fluent-client"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          OUT_DIR="src/pepr/operator/crd/generated/istio"
+
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.2 crd https://raw.githubusercontent.com/istio/istio/1.28.3/manifests/charts/base/files/crd-all.gen.yaml "$OUT_DIR"
+
+          # Istio includes all CRDs in a single YAML file so we need to prune down to just the subset we want to keep
+          KEEP="authorizationpolicy-v1beta1.ts gateway-v1.ts requestauthentication-v1.ts serviceentry-v1beta1.ts sidecar-v1.ts virtualservice-v1beta1.ts"
+          for f in "$OUT_DIR"/*.ts; do
+            base="$(basename "$f")"
+            if [[ " $KEEP " != *" $base "* ]]; then
+              rm -f "$f"
+            fi
+          done
+      - description: "Add license headers to generated CRD files"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          # check for addlicense bin
+          if [ -x "$HOME/go/bin/addlicense" ]; then
+            echo "addlicense installed in $HOME/go/bin"
+          else
+            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            exit 1
+          fi
+          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated/istio
+      - description: Pepr Format
+        cmd: "npx pepr format"

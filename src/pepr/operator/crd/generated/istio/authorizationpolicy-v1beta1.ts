@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,7 +11,7 @@ export class AuthorizationPolicy extends GenericKind {
    * https://istio.io/docs/reference/config/security/authorization-policy.html
    */
   spec?: Spec;
-  status?: { [key: string]: unknown };
+  status?: Status;
 }
 
 /**
@@ -37,10 +37,11 @@ export interface Spec {
    * Optional.
    */
   selector?: Selector;
+  targetRef?: PurpleTargetRef;
   /**
    * Optional.
    */
-  targetRef?: TargetRef;
+  targetRefs?: TargetRefElement[];
 }
 
 /**
@@ -212,10 +213,7 @@ export interface Selector {
   matchLabels?: { [key: string]: string };
 }
 
-/**
- * Optional.
- */
-export interface TargetRef {
+export interface PurpleTargetRef {
   /**
    * group is the group of the target resource.
    */
@@ -223,15 +221,115 @@ export interface TargetRef {
   /**
    * kind is kind of the target resource.
    */
-  kind?: string;
+  kind: string;
   /**
    * name is the name of the target resource.
    */
-  name?: string;
+  name: string;
   /**
    * namespace is the namespace of the referent.
    */
   namespace?: string;
+}
+
+export interface TargetRefElement {
+  /**
+   * group is the group of the target resource.
+   */
+  group?: string;
+  /**
+   * kind is kind of the target resource.
+   */
+  kind: string;
+  /**
+   * name is the name of the target resource.
+   */
+  name: string;
+  /**
+   * namespace is the namespace of the referent.
+   */
+  namespace?: string;
+}
+
+export interface Status {
+  /**
+   * Current service state of the resource.
+   */
+  conditions?: Condition[];
+  observedGeneration?: number | string;
+  /**
+   * Includes any errors or warnings detected by Istio's analyzers.
+   */
+  validationMessages?: ValidationMessage[];
+}
+
+export interface Condition {
+  /**
+   * Last time we probed the condition.
+   */
+  lastProbeTime?: Date;
+  /**
+   * Last time the condition transitioned from one status to another.
+   */
+  lastTransitionTime?: Date;
+  /**
+   * Human-readable message indicating details about last transition.
+   */
+  message?: string;
+  /**
+   * Resource Generation to which the Condition refers.
+   */
+  observedGeneration?: number | string;
+  /**
+   * Unique, one-word, CamelCase reason for the condition's last transition.
+   */
+  reason?: string;
+  /**
+   * Status is the status of the condition.
+   */
+  status?: string;
+  /**
+   * Type is the type of the condition.
+   */
+  type?: string;
+}
+
+export interface ValidationMessage {
+  /**
+   * A url pointing to the Istio documentation for this specific error type.
+   */
+  documentationUrl?: string;
+  /**
+   * Represents how severe a message is.
+   *
+   * Valid Options: UNKNOWN, ERROR, WARNING, INFO
+   */
+  level?: Level;
+  type?: Type;
+}
+
+/**
+ * Represents how severe a message is.
+ *
+ * Valid Options: UNKNOWN, ERROR, WARNING, INFO
+ */
+export enum Level {
+  Error = "ERROR",
+  Info = "INFO",
+  Unknown = "UNKNOWN",
+  Warning = "WARNING",
+}
+
+export interface Type {
+  /**
+   * A 7 character code matching `^IST[0-9]{4}$` intended to uniquely identify the message
+   * type.
+   */
+  code?: string;
+  /**
+   * A human-readable name for the message type.
+   */
+  name?: string;
 }
 
 RegisterKind(AuthorizationPolicy, {
