@@ -60,14 +60,7 @@ tasks:
           OUT_DIR="src/pepr/operator/crd/generated/k8s"
 
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR"
-
-          # Rename generated class to avoid colliding with Istio Gateway type
-          if sed --version &>/dev/null; then
-            sed -i 's/export class Gateway extends GenericKind/export class K8sGateway extends GenericKind/' "$OUT_DIR/gateway-v1.ts"
-          else
-            sed -i '' 's/export class Gateway extends GenericKind/export class K8sGateway extends GenericKind/' "$OUT_DIR/gateway-v1.ts"
-          fi
+          npx kubernetes-fluent-client@3.11.2 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR" --overrideClassName K8SGateway
 
           KEEP="gateway-v1"
           for f in "$OUT_DIR"/*.ts; do

@@ -9,7 +9,7 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
  * Gateway represents an instance of a service-traffic handling infrastructure
  * by binding Listeners to a set of IP addresses.
  */
-export class K8sGateway extends GenericKind {
+export class K8SGateway extends GenericKind {
   /**
    * APIVersion defines the versioned schema of this representation of an object.
    * Servers should convert recognized schemas to the latest internal value, and
@@ -1518,7 +1518,7 @@ export interface SupportedKind {
   kind: string;
 }
 
-RegisterKind(Gateway, {
+RegisterKind(K8SGateway, {
   group: "gateway.networking.k8s.io",
   version: "v1",
   kind: "Gateway",
