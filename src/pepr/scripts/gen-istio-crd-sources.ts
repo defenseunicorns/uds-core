@@ -28,12 +28,17 @@ const INCLUDED_HTTP_FIELDS = [
   "retries",
   "timeout",
 ];
+// Fields we historically have not included in our Package CRD for simplicity
 const EXCLUDED_MATCH_FIELDS = [
   "authority",
   "gateways",
+  "headers",
+  "port",
+  "scheme",
   "sourceLabels",
   "sourceNamespace",
   "statPrefix",
+  "withoutHeaders",
 ];
 
 function fetchText(url: string): Promise<string> {

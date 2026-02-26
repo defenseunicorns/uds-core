@@ -219,52 +219,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
         "Match conditions to be satisfied for the rule to be activated. Not permitted when using the passthrough gateway.",
       items: {
         properties: {
-          headers: {
-            additionalProperties: {
-              oneOf: [
-                {
-                  not: {
-                    anyOf: [
-                      {
-                        required: ["exact"],
-                      },
-                      {
-                        required: ["prefix"],
-                      },
-                      {
-                        required: ["regex"],
-                      },
-                    ],
-                  },
-                },
-                {
-                  required: ["exact"],
-                },
-                {
-                  required: ["prefix"],
-                },
-                {
-                  required: ["regex"],
-                },
-              ],
-              properties: {
-                exact: {
-                  type: "string",
-                },
-                prefix: {
-                  type: "string",
-                },
-                regex: {
-                  description:
-                    "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).",
-                  type: "string",
-                },
-              },
-              type: "object",
-            },
-            description: "The header keys must be lowercase and use hyphen as the separator, e.g.",
-            type: "object",
-          },
           ignoreUriCase: {
             description: "Flag to specify whether the URI matching should be case-insensitive.",
             type: "boolean",
@@ -317,12 +271,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
             description: "The name assigned to a match.",
             type: "string",
           },
-          port: {
-            description: "Specifies the ports on the host that is being addressed.",
-            maximum: 4294967295,
-            minimum: 0,
-            type: "integer",
-          },
           queryParams: {
             additionalProperties: {
               oneOf: [
@@ -369,50 +317,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
             description: "Query parameters for matching.",
             type: "object",
           },
-          scheme: {
-            description:
-              'URI Scheme values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).',
-            oneOf: [
-              {
-                not: {
-                  anyOf: [
-                    {
-                      required: ["exact"],
-                    },
-                    {
-                      required: ["prefix"],
-                    },
-                    {
-                      required: ["regex"],
-                    },
-                  ],
-                },
-              },
-              {
-                required: ["exact"],
-              },
-              {
-                required: ["prefix"],
-              },
-              {
-                required: ["regex"],
-              },
-            ],
-            properties: {
-              exact: {
-                type: "string",
-              },
-              prefix: {
-                type: "string",
-              },
-              regex: {
-                description:
-                  "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).",
-                type: "string",
-              },
-            },
-            type: "object",
-          },
           uri: {
             description:
               'URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).',
@@ -455,53 +359,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
                 type: "string",
               },
             },
-            type: "object",
-          },
-          withoutHeaders: {
-            additionalProperties: {
-              oneOf: [
-                {
-                  not: {
-                    anyOf: [
-                      {
-                        required: ["exact"],
-                      },
-                      {
-                        required: ["prefix"],
-                      },
-                      {
-                        required: ["regex"],
-                      },
-                    ],
-                  },
-                },
-                {
-                  required: ["exact"],
-                },
-                {
-                  required: ["prefix"],
-                },
-                {
-                  required: ["regex"],
-                },
-              ],
-              properties: {
-                exact: {
-                  type: "string",
-                },
-                prefix: {
-                  type: "string",
-                },
-                regex: {
-                  description:
-                    "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax).",
-                  type: "string",
-                },
-              },
-              type: "object",
-            },
-            description:
-              "withoutHeader has the same syntax with the header, but has opposite meaning.",
             type: "object",
           },
         },
