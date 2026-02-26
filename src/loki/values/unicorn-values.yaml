@@ -5,7 +5,7 @@ loki:
   image:
     registry: quay.io
     repository: rfcurated/grafana/loki
-    tag: 3.6.5-jammy-fips-rfcurated-rfhardened
+    tag: 3.6.7-jammy-fips-rfcurated-rfhardened
 gateway:
   image:
     registry: quay.io
