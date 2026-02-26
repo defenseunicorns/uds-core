@@ -1,4 +1,7 @@
 /**
+ * Copyright 2026 Defense Unicorns
+ * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+ *
  * Generate Istio VirtualService schema subset for pepr (advancedHTTP fields)
  * Usage: ISTIO_VERSION=1.28.3 npx ts-node src/pepr/scripts/gen-istio-crd-sources.ts
  * Or via the task: uds run -f src/istio/tasks.yaml gen-crds
