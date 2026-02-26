@@ -172,7 +172,7 @@ tasks:
           rm -rf uds-docs/src/content/docs/{*,.*} 2>/dev/null || true
 
           # Symlink relevant docs folders (skip dev - not for public docs site)
-          for f in $(pwd)/docs/*; do [ "$(basename "$f")" = "dev" ] && continue; ln -s "$f" uds-docs/src/content/docs/; done
+          for f in $(pwd)/docs/*; do [ "$(basename "$f")" = "dev" ] || [ "$(basename "$f")" = "README.md" ] && continue; ln -s "$f" uds-docs/src/content/docs/; done
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
           ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
 
