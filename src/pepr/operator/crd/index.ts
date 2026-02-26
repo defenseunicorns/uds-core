@@ -35,11 +35,11 @@ export {
 export {
   Attributes,
   ClusterConfig,
-  Expose as ConfigExpose,
-  Policy as ConfigPolicy,
-  CABundle as ConfigCABundle,
-  Phase as ConfigPhase,
   Name as ClusterConfigName,
+  CABundle as ConfigCABundle,
+  Expose as ConfigExpose,
+  Phase as ConfigPhase,
+  Policy as ConfigPolicy,
   Networking,
 } from "./generated/clusterconfig-v1alpha1";
 
@@ -78,8 +78,6 @@ export {
 } from "./generated/istio/authorizationpolicy-v1beta1";
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
 
-export { DestinationRule as IstioDestinationRule } from "./generated/istio/destinationrule-v1";
-
 export {
   Gateway as IstioGateway,
   Server as IstioServer,
@@ -91,4 +89,7 @@ export {
   Sidecar as IstioSidecar,
 } from "./generated/istio/sidecar-v1";
 
-export { K8sGateway as K8sGateway, From as K8sGatewayFromType } from "./generated/k8s/gateway-v1";
+export {
+  K8SGateway as K8sGateway,
+  FluffyFrom as K8sGatewayFromType,
+} from "./generated/k8s/gateway-v1";
