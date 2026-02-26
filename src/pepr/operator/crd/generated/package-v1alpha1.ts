@@ -478,10 +478,6 @@ export interface AdvancedHTTPMatch {
    */
   authority?: PurpleAuthority;
   /**
-   * Names of gateways where the rule should be applied.
-   */
-  gateways?: string[];
-  /**
    * The header keys must be lowercase and use hyphen as the separator, e.g.
    */
   headers?: { [key: string]: PurpleHeader };
@@ -513,19 +509,6 @@ export interface AdvancedHTTPMatch {
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   scheme?: PurpleScheme;
-  /**
-   * One or more labels that constrain the applicability of a rule to source (client)
-   * workloads with the given labels.
-   */
-  sourceLabels?: { [key: string]: string };
-  /**
-   * Source namespace constraining the applicability of a rule to workloads in that namespace.
-   */
-  sourceNamespace?: string;
-  /**
-   * The human readable prefix to use when emitting statistics for this route.
-   */
-  statPrefix?: string;
   /**
    * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
    * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2
@@ -735,10 +718,6 @@ export interface ExposeMatch {
    */
   authority?: FluffyAuthority;
   /**
-   * Names of gateways where the rule should be applied.
-   */
-  gateways?: string[];
-  /**
    * The header keys must be lowercase and use hyphen as the separator, e.g.
    */
   headers?: { [key: string]: FluffyHeader };
@@ -770,19 +749,6 @@ export interface ExposeMatch {
    * style regex-based match](https://github.com/google/re2/wiki/Syntax).
    */
   scheme?: FluffyScheme;
-  /**
-   * One or more labels that constrain the applicability of a rule to source (client)
-   * workloads with the given labels.
-   */
-  sourceLabels?: { [key: string]: string };
-  /**
-   * Source namespace constraining the applicability of a rule to workloads in that namespace.
-   */
-  sourceNamespace?: string;
-  /**
-   * The human readable prefix to use when emitting statistics for this route.
-   */
-  statPrefix?: string;
   /**
    * URI to match values are case-sensitive and formatted as follows: - `exact: "value"` for
    * exact string match - `prefix: "value"` for prefix-based match - `regex: "value"` for [RE2

@@ -438,13 +438,6 @@ spec:
                                             match](https://github.com/google/re2/wiki/Syntax).
                                           type: string
                                       type: object
-                                    gateways:
-                                      description: >-
-                                        Names of gateways where the rule should
-                                        be applied.
-                                      items:
-                                        type: string
-                                      type: array
                                     headers:
                                       additionalProperties:
                                         oneOf:
@@ -592,26 +585,6 @@ spec:
                                             match](https://github.com/google/re2/wiki/Syntax).
                                           type: string
                                       type: object
-                                    sourceLabels:
-                                      additionalProperties:
-                                        type: string
-                                      description: >-
-                                        One or more labels that constrain the
-                                        applicability of a rule to source
-                                        (client) workloads with the given
-                                        labels.
-                                      type: object
-                                    sourceNamespace:
-                                      description: >-
-                                        Source namespace constraining the
-                                        applicability of a rule to workloads in
-                                        that namespace.
-                                      type: string
-                                    statPrefix:
-                                      description: >-
-                                        The human readable prefix to use when
-                                        emitting statistics for this route.
-                                      type: string
                                     uri:
                                       description: >-
                                         URI to match values are case-sensitive
@@ -871,13 +844,6 @@ spec:
                                         match](https://github.com/google/re2/wiki/Syntax).
                                       type: string
                                   type: object
-                                gateways:
-                                  description: >-
-                                    Names of gateways where the rule should be
-                                    applied.
-                                  items:
-                                    type: string
-                                  type: array
                                 headers:
                                   additionalProperties:
                                     oneOf:
@@ -1023,25 +989,6 @@ spec:
                                         match](https://github.com/google/re2/wiki/Syntax).
                                       type: string
                                   type: object
-                                sourceLabels:
-                                  additionalProperties:
-                                    type: string
-                                  description: >-
-                                    One or more labels that constrain the
-                                    applicability of a rule to source (client)
-                                    workloads with the given labels.
-                                  type: object
-                                sourceNamespace:
-                                  description: >-
-                                    Source namespace constraining the
-                                    applicability of a rule to workloads in that
-                                    namespace.
-                                  type: string
-                                statPrefix:
-                                  description: >-
-                                    The human readable prefix to use when
-                                    emitting statistics for this route.
-                                  type: string
                                 uri:
                                   description: >-
                                     URI to match values are case-sensitive and

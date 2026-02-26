@@ -263,13 +263,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
             },
             type: "object",
           },
-          gateways: {
-            description: "Names of gateways where the rule should be applied.",
-            items: {
-              type: "string",
-            },
-            type: "array",
-          },
           headers: {
             additionalProperties: {
               oneOf: [
@@ -463,24 +456,6 @@ export const advancedHTTP: V1JSONSchemaProps = {
               },
             },
             type: "object",
-          },
-          sourceLabels: {
-            additionalProperties: {
-              type: "string",
-            },
-            description:
-              "One or more labels that constrain the applicability of a rule to source (client) workloads with the given labels.",
-            type: "object",
-          },
-          sourceNamespace: {
-            description:
-              "Source namespace constraining the applicability of a rule to workloads in that namespace.",
-            type: "string",
-          },
-          statPrefix: {
-            description:
-              "The human readable prefix to use when emitting statistics for this route.",
-            type: "string",
           },
           uri: {
             description:
