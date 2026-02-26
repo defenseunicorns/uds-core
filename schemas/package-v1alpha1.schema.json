@@ -601,13 +601,6 @@
           "$ref": "#/definitions/PurpleAuthority",
           "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/PurpleHeader"
-          },
-          "description": "The header keys must be lowercase and use hyphen as the separator, e.g."
-        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
@@ -620,10 +613,6 @@
           "type": "string",
           "description": "The name assigned to a match."
         },
-        "port": {
-          "type": "integer",
-          "description": "Specifies the ports on the host that is being addressed."
-        },
         "queryParams": {
           "type": "object",
           "additionalProperties": {
@@ -631,20 +620,9 @@
           },
           "description": "Query parameters for matching."
         },
-        "scheme": {
-          "$ref": "#/definitions/PurpleScheme",
-          "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
         "uri": {
           "$ref": "#/definitions/PurpleURI",
           "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
-        "withoutHeaders": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/PurpleWithoutHeader"
-          },
-          "description": "withoutHeader has the same syntax with the header, but has opposite meaning."
         }
       },
       "required": [],
@@ -668,24 +646,6 @@
       "required": [],
       "title": "PurpleAuthority",
       "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
-    "PurpleHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleHeader"
     },
     "PurpleMethod": {
       "type": "object",
@@ -724,25 +684,6 @@
       "required": [],
       "title": "PurpleQueryParam"
     },
-    "PurpleScheme": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleScheme",
-      "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
     "PurpleURI": {
       "type": "object",
       "additionalProperties": false,
@@ -761,24 +702,6 @@
       "required": [],
       "title": "PurpleURI",
       "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
-    "PurpleWithoutHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "PurpleWithoutHeader"
     },
     "Redirect": {
       "type": "object",
@@ -892,13 +815,6 @@
           "$ref": "#/definitions/FluffyAuthority",
           "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
         },
-        "headers": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/FluffyHeader"
-          },
-          "description": "The header keys must be lowercase and use hyphen as the separator, e.g."
-        },
         "ignoreUriCase": {
           "type": "boolean",
           "description": "Flag to specify whether the URI matching should be case-insensitive."
@@ -911,10 +827,6 @@
           "type": "string",
           "description": "The name assigned to a match."
         },
-        "port": {
-          "type": "integer",
-          "description": "Specifies the ports on the host that is being addressed."
-        },
         "queryParams": {
           "type": "object",
           "additionalProperties": {
@@ -922,20 +834,9 @@
           },
           "description": "Query parameters for matching."
         },
-        "scheme": {
-          "$ref": "#/definitions/FluffyScheme",
-          "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
         "uri": {
           "$ref": "#/definitions/FluffyURI",
           "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for\nexact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2\nstyle regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        },
-        "withoutHeaders": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/FluffyWithoutHeader"
-          },
-          "description": "withoutHeader has the same syntax with the header, but has opposite meaning."
         }
       },
       "required": [],
@@ -959,24 +860,6 @@
       "required": [],
       "title": "FluffyAuthority",
       "description": "HTTP Authority values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
-    "FluffyHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyHeader"
     },
     "FluffyMethod": {
       "type": "object",
@@ -1015,25 +898,6 @@
       "required": [],
       "title": "FluffyQueryParam"
     },
-    "FluffyScheme": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyScheme",
-      "description": "URI Scheme values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
     "FluffyURI": {
       "type": "object",
       "additionalProperties": false,
@@ -1052,24 +916,6 @@
       "required": [],
       "title": "FluffyURI",
       "description": "URI to match values are case-sensitive and formatted as follows: - `exact: \"value\"` for exact string match - `prefix: \"value\"` for prefix-based match - `regex: \"value\"` for [RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-    },
-    "FluffyWithoutHeader": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "exact": {
-          "type": "string"
-        },
-        "prefix": {
-          "type": "string"
-        },
-        "regex": {
-          "type": "string",
-          "description": "[RE2 style regex-based match](https://github.com/google/re2/wiki/Syntax)."
-        }
-      },
-      "required": [],
-      "title": "FluffyWithoutHeader"
     },
     "Uptime": {
       "type": "object",

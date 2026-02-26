@@ -29,7 +29,16 @@ const INCLUDED_HTTP_FIELDS = [
   "timeout",
 ];
 // Fields we exclude from match for simplicity
-const EXCLUDED_MATCH_FIELDS = ["gateways", "sourceLabels", "sourceNamespace", "statPrefix"];
+const EXCLUDED_MATCH_FIELDS = [
+  "gateways",
+  "headers",
+  "port",
+  "scheme",
+  "sourceLabels",
+  "sourceNamespace",
+  "statPrefix",
+  "withoutHeaders",
+];
 
 function fetchText(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
