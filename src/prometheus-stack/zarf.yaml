@@ -37,7 +37,7 @@ components:
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0"
       - "quay.io/prometheus/alertmanager:v0.31.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.89.0"
-      - "quay.io/prometheus/prometheus:v3.9.1"
+      - "quay.io/prometheus/prometheus:v3.10.0"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.7"
 
   - name: kube-prometheus-stack
@@ -57,7 +57,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.18.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.31.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.89.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.9.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.10.0"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.7"
 
   - name: kube-prometheus-stack
@@ -77,7 +77,7 @@ components:
       - "quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus/alertmanager:0.31.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.89.0-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus:3.9.1-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/prometheus:3.10.0-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.7-jammy-fips-rfcurated-rfhardened"
 
   - name: prometheus-blackbox-exporter
