@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus/prometheus
-      tag: v3.9.1
+      tag: v3.10.0
 prometheus-node-exporter:
   image:
     registry: registry1.dso.mil
