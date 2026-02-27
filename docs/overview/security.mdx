@@ -1,0 +1,124 @@
+---
+title: Security
+sidebar:
+  order: 3
+---
+
+
+## Defense-in-Depth at a Glance
+
+UDS Core maintains a defense-in-depth baseline, providing real security across the entire software delivery and runtime process:
+
+- **Secure supply chain** with CVE data and SBOMs for transparent software composition analysis and security audits.
+- **Airgap ready** with Zarf packages for predictable, offline deployments in disconnected environments.
+- **Zero-trust networking** with default-deny Kubernetes `NetworkPolicy`, Istio STRICT mTLS, and ALLOW-based `AuthorizationPolicy`.
+- **Identity & SSO** via Keycloak and Authservice so apps can be protected consistently, whether they natively support authentication or not.
+- **Admission control** enforced by Pepr policies (non-root, drop capabilities, block privileged/host access, etc.).
+- **Runtime security** with real-time detection and alerting on malicious behavior.
+- **Observability & audit**: centralized log collection and shipping, plus metrics and dashboards.
+
+> [!NOTE]
+> Security defaults are intentionally restrictive. Operators can loosen controls where needed, but any reduction in the default security posture should be made deliberately and documented.
+
+---
+
+## Secure Supply Chain
+
+UDS Core ships with transparency baked in:
+
+- **Per-release CVE scanning and SBOMs**: Every Core release includes full SBOMs and CVE scan results, available in the UDS Registry. You can verify exactly what ships with each release.
+- **Deterministic packaging**: Zarf packages include only what is needed for your environment, reducing drift and surprise dependencies.
+- **Open-source foundations**: All components are well-known, auditable open-source projects with active communities and security disclosure processes.
+
+> [!NOTE]
+> **Why it matters:** You have full visibility into what you are running. Transparent software composition analysis helps identify and mitigate security risks before deployment.
+
+---
+
+## Airgap Ready
+
+UDS Core is built from the ground up for disconnected operation:
+
+- **No external runtime dependencies**: All components operate without internet access after deployment.
+- **Zarf-powered offline delivery**: Packages carry all images and manifests needed to install and upgrade in an air-gapped cluster.
+- **Designed for constrained networks**: Unlike tools that require adaptation for airgapped environments, UDS assumes disconnected operation as the default.
+
+> [!NOTE]
+> **Why it matters:** You can deploy and operate securely in classified or offline environments without introducing network backdoors or hidden dependencies.
+
+---
+
+## Identity & Single Sign-On
+
+UDS Core provides centralized identity management through Keycloak and Authservice:
+
+- **Keycloak SSO** with opinionated defaults for realms, clients, and group-based access control.
+- **Authservice integration** protects applications that do not natively support OIDC—enforced at the mesh edge rather than relying on application-level controls.
+- **Consistent login, token handling, and group mapping** across all applications running on the platform.
+
+> [!NOTE]
+> **Why it matters:** Access control is centralized and auditable. Applications get authentication and authorization enforcement without having to implement it themselves.
+
+[Identity & Access Management Concepts &rarr;](/concepts/core-features/identity-access/)
+
+---
+
+## Zero-Trust Networking & Service Mesh
+
+UDS Core implements a zero-trust networking model by default:
+
+- **Default-deny network posture**: Per-namespace `NetworkPolicy` isolates workloads. Connectivity is explicitly allowed based on what each package declares it needs.
+- **Istio STRICT mTLS**: All in-mesh traffic is encrypted and identity-authenticated. There is no plaintext service-to-service communication.
+- **ALLOW-based authorization**: `AuthorizationPolicy` enforces least privilege at the service layer.
+- **Explicit egress**: Outbound access to both in-cluster endpoints and remote hosts must be declared in the package definition.
+- **Admin vs. tenant ingress**: Administrative UIs are isolated behind a dedicated gateway, separate from application traffic.
+
+> [!NOTE]
+> **Why it matters:** Lateral movement is constrained by both the Kubernetes networking layer and Istio. What your application can talk to is explicit and reviewable.
+
+[Networking & Service Mesh Concepts &rarr;](/concepts/core-features/networking/)
+
+---
+
+## Admission Control
+
+Pepr enforces admission policies that prevent misconfigured or overly permissive workloads from reaching the cluster:
+
+- **Secure defaults** block workloads running as root, requesting excess capabilities, or enabling privileged or host access.
+- **Security mutations** automatically downgrade workloads to more secure configurations where possible.
+- **Controlled exemptions** allow edge cases to be handled explicitly, keeping changes auditable and reviewable.
+
+> [!NOTE]
+> **Why it matters:** Misconfigurations are caught at admission time, before they can affect the running cluster. Exemptions are an explicit audit trail, not silent bypasses.
+
+[Policy & Compliance Concepts &rarr;](/concepts/core-features/policy-and-compliance/)
+
+---
+
+## Runtime Security
+
+Falco provides real-time threat detection for running workloads:
+
+- **Behavioral detection**: Falco monitors process, network, and file activity against rule sets tailored for Kubernetes and container environments.
+- **Alerts integrated with observability**: Security events route to your existing logging and metrics stack, not a separate silo.
+- **Detection without blocking**: Falco identifies suspicious behavior and alerts operators without risking false-positive outages in production traffic.
+
+> [!NOTE]
+> **Why it matters:** Malicious or anomalous behavior is detected immediately, enabling fast triage and response.
+
+[Runtime Security Concepts &rarr;](/concepts/core-features/runtime-security/)
+
+---
+
+## Observability & Audit
+
+UDS Core's observability stack doubles as an audit and compliance tool:
+
+- **Centralized logging**: Vector collects and ships logs from all cluster workloads to Loki, providing a searchable audit trail of application and platform activity.
+- **Metrics & dashboards**: Prometheus scrapes cluster and application metrics; Grafana provides pre-wired dashboards for both operational visibility and compliance reporting.
+- **Unified troubleshooting**: Logs and metrics are surfaced together, reducing mean time to resolution for security incidents.
+
+> [!NOTE]
+> **Why it matters:** Unified observability across logs and metrics means faster diagnosis during both security incidents and routine troubleshooting.
+
+[Logging Concepts &rarr;](/concepts/core-features/logging/) | [Monitoring & Observability Concepts &rarr;](/concepts/core-features/monitoring-observability/)

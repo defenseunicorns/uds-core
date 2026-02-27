@@ -1,0 +1,105 @@
+---
+title: UDS Core
+sidebar:
+  order: 2
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What is UDS Core?
+
+UDS Core is the runtime platform layer of the UDS ecosystem. It gives every application deployed on top of it a consistent, secure, and compliance-ready operating environment—so platform engineers do not have to rebuild those concerns for each project.
+
+Think of UDS Core as the foundation a UDS Bundle sits on. It provides shared platform services (identity, networking, logging, monitoring, runtime security, and more) with hardened defaults, and it integrates those services automatically with applications that declare their needs through the UDS Package custom resource.
+
+UDS Core is designed for teams operating in demanding environments: air-gapped networks, classified enclaves, multi-cluster deployments, and edge systems where internet connectivity cannot be assumed.
+
+---
+
+## Key Capabilities
+
+<CardGrid>
+  <LinkCard
+    title="Networking & Service Mesh"
+    description="Istio-based service mesh with mTLS, zero-trust network policies, and separate admin and tenant ingress gateways."
+    href="/concepts/core-features/networking/"
+  />
+  <LinkCard
+    title="Identity & Access Management"
+    description="Keycloak SSO with opinionated defaults for realms, clients, and group-based access. Authservice protects applications that do not natively speak OIDC."
+    href="/concepts/core-features/identity-access/"
+  />
+  <LinkCard
+    title="Logging"
+    description="Vector collects and ships logs from all cluster workloads. Loki provides storage and search. Grafana surfaces logs alongside metrics."
+    href="/concepts/core-features/logging/"
+  />
+  <LinkCard
+    title="Monitoring & Observability"
+    description="Prometheus scrapes cluster and application metrics. Grafana provides pre-wired dashboards and alerting."
+    href="/concepts/core-features/monitoring-observability/"
+  />
+  <LinkCard
+    title="Runtime Security"
+    description="Falco delivers real-time threat detection and runtime security monitoring, with alerts routed to your observability stack."
+    href="/concepts/core-features/runtime-security/"
+  />
+  <LinkCard
+    title="Backup & Restore"
+    description="Velero handles backup and restore for cluster resources and persistent volumes."
+    href="/concepts/core-features/backup-restore/"
+  />
+  <LinkCard
+    title="Policy & Compliance"
+    description="Pepr enforces admission policies (non-root, capability drops, no privileged access) and manages exemptions for edge cases."
+    href="/concepts/core-features/policy-and-compliance/"
+  />
+</CardGrid>
+
+---
+
+## Security Posture
+
+Security is built into UDS Core by default, not bolted on. The platform provides defense-in-depth across the software supply chain, network, identity, and runtime layers:
+
+- Secure supply chain with per-release CVE scans and SBOMs.
+- Airgap-native operation with no runtime external dependencies.
+- Zero-trust networking with default-deny network policies and Istio STRICT mTLS.
+- Centralized identity and SSO enforced at the mesh edge.
+- Admission control that blocks overly permissive workloads before they reach the cluster.
+- Runtime detection and alerting for malicious behavior.
+- Centralized logging and metrics for audit and incident response.
+
+For the full security overview, see [Security &rarr;](/overview/security/).
+
+---
+
+## Where to Go Next
+
+<CardGrid>
+  <LinkCard
+    title="Local Demo"
+    description="Try UDS Core locally with k3d. Explore capabilities and test integrations in about 15 minutes."
+    href="/getting-started/local-demo/overview/"
+  />
+  <LinkCard
+    title="Production Deployment"
+    description="Deploy UDS Core to production infrastructure. Covers prerequisites, bundle building, and deploy."
+    href="/getting-started/production/overview/"
+  />
+  <LinkCard
+    title="Concepts"
+    description="Understand how a particular capability works under the hood before configuring it."
+    href="/concepts/overview/"
+  />
+  <LinkCard
+    title="How-To Guides"
+    description="Step-by-step guides for configuring and operating each UDS Core capability."
+    href="/how-to-guides/overview/"
+  />
+  <LinkCard
+    title="Reference"
+    description="Exact configuration fields, CRD schemas, and UDS-specific reference material."
+    href="/reference/overview/"
+  />
+</CardGrid>
