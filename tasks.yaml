@@ -166,7 +166,7 @@ tasks:
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           # Clone uds-docs repo
-          git clone --branch move-stubbed-content-to-core-repo https://github.com/defenseunicorns/uds-docs.git uds-docs
+          git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
 
           # Clean up old runs (including dot-dirs like .c4 and .images)
           rm -rf uds-docs/src/content/docs/{*,.*} 2>/dev/null || true
@@ -188,7 +188,7 @@ tasks:
         cmd: |
           rm -rf uds-docs
       - description: "Clone the docs repo"
-        cmd: git clone --branch move-stubbed-content-to-core-repo https://github.com/defenseunicorns/uds-docs.git uds-docs
+        cmd: git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
       - description: "UDS Docs Integration Script"
         cmd: cd uds-docs && npm i && DOCS_OVERRIDES="uds-core=$(pwd)/.." npm run build
 
