@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
@@ -44,6 +44,10 @@ realmInitEnv:
   # EMAIL_AS_USERNAME: false
   # TERMS_AND_CONDITIONS_ENABLED: true
   # X509_OCSP_FAIL_OPEN: true
+  # X509_CRL_ABORT_IF_NON_UPDATED: false
+  # X509_CRL_CHECKING_ENABLED: true
+  # X509_CRL_RELATIVE_PATH: "crl.pem"
+  # X509_OCSP_CHECKING_ENABLED: true
   # Number of temporary lockouts allowed before permanent lockout
   # MAX_TEMPORARY_LOCKOUTS: "0"
   # @lulaStart ef276ec4-7921-4287-a18c-80dec5f8e742
