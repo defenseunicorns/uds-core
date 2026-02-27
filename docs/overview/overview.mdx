@@ -1,0 +1,80 @@
+---
+title: UDS Ecosystem
+sidebar:
+  order: 1
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What is UDS?
+
+The Unicorn Delivery Service (UDS) is a software delivery platform built for teams operating in secure, constrained, or disconnected environments. It addresses a common challenge in defense and enterprise computing: getting modern software—with all its dependencies—into environments where internet access is limited or absent, compliance requirements are strict, and one-off platform configurations are a constant maintenance burden.
+
+UDS provides a consistent, repeatable way to package, deliver, and run software across cloud, on-premises, and tactical edge environments. Whether you are standing up a new system quickly, maintaining an existing platform through software updates, or seeking an Authority to Operate (ATO), UDS gives teams the tooling and evidence to do so with confidence.
+
+With UDS, platform and mission teams can:
+
+- **Deploy anywhere**: Ship software to classified and unclassified cloud, on-premises, and edge environments from a single artifact.
+- **Work disconnected**: Operate fully offline with airgap-native packaging that carries all dependencies with it.
+- **Reduce platform one-offs**: Share a common runtime baseline so application teams do not need to reinvent platform concerns for each deployment.
+- **Support authorization**: Produce the compliance documentation and evidence needed to facilitate ATO processes.
+- **Stay vendor-neutral**: Build on open-source foundations (Zarf, Pepr) with no proprietary lock-in.
+
+---
+
+## Key Building Blocks
+
+<CardGrid>
+  <Card title="UDS Core" icon="rocket">
+    The runtime platform that provides shared, security-hardened services to every application deployed on top of it.
+    It handles networking, identity, logging, monitoring, runtime security, backup, and compliance—so application
+    teams can focus on their software rather than the environment.
+
+    <LinkCard title="Learn about UDS Core" href="/overview/uds-core/" />
+  </Card>
+
+  <Card title="UDS CLI" icon="laptop">
+    The primary user interface for the UDS platform. It provides tools for packaging, deploying, and managing
+    software on UDS Core—designed to be intuitive and flexible, supporting workflows from local development to
+    production operations.
+
+    <LinkCard title="CLI Reference" href="/reference/cli/" />
+  </Card>
+
+  <Card title="UDS Registry" icon="star">
+    A curated catalog of pre-built, scanned, and SBOMed UDS packages. The Registry gives teams a validated
+    starting point—browse available packages, inspect CVE reports, and pull artifacts to deploy.
+
+    <LinkCard title="UDS Registry" href="https://registry.defenseunicorns.com/" />
+  </Card>
+
+  <Card title="Open-Source Foundation" icon="open-book">
+    UDS is built on open-source projects created by Defense Unicorns:
+
+    **[Zarf](https://docs.zarf.dev/)** — Airgap packaging and delivery for Kubernetes workloads.
+
+    **[Pepr](https://docs.pepr.dev/)** — Policy engine and Kubernetes operator automation.
+  </Card>
+</CardGrid>
+
+---
+
+## Who Is This Documentation For?
+
+<CardGrid>
+  <LinkCard
+    title="Platform & Infrastructure Engineers"
+    description="Deploy, configure, and maintain UDS Core in cloud, on-premises, or airgapped environments. Start with Getting Started."
+    href="/getting-started/overview/"
+  />
+  <LinkCard
+    title="Security & Compliance Stakeholders"
+    description="Understand UDS Core's security posture, built-in controls, and how it supports authorization and audit requirements."
+    href="/overview/security/"
+  />
+  <LinkCard
+    title="Application Teams"
+    description="Running your app on a UDS environment? Learn how the platform layer affects your workloads in Concepts."
+    href="/concepts/overview/"
+  />
+</CardGrid>
