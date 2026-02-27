@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [0.63.0](https://github.com/defenseunicorns/uds-core/compare/v0.62.0...v0.63.0) (2026-02-27)
+
+
+### Bug Fixes
+
+* pull advancedHttp schema from istio upstream ([#2412](https://github.com/defenseunicorns/uds-core/issues/2412)) ([7116b65](https://github.com/defenseunicorns/uds-core/commit/7116b654ee27bc3d395e3acc25facdd70eb6a432))
+
+
+### Miscellaneous
+
+* add gen-crds task for istio ([#2413](https://github.com/defenseunicorns/uds-core/issues/2413)) ([ec4a255](https://github.com/defenseunicorns/uds-core/commit/ec4a255c382abf956628b0c161f176e89bb28916))
+* add new docs overview section ([#2421](https://github.com/defenseunicorns/uds-core/issues/2421)) ([fe37ae2](https://github.com/defenseunicorns/uds-core/commit/fe37ae2259cf6f6e348da9f85838f28f14003658))
+* add stubbed out new docs site ([#2415](https://github.com/defenseunicorns/uds-core/issues/2415)) ([570321c](https://github.com/defenseunicorns/uds-core/commit/570321ccb068fc83b4a1c3ac1a6f902c4887c27a))
+* **deps:** bump minimatch from 3.1.2 to 3.1.5 ([#2416](https://github.com/defenseunicorns/uds-core/issues/2416)) ([cba7161](https://github.com/defenseunicorns/uds-core/commit/cba7161f50ba26a5bdd466ffca22d214a0a938df))
+* **deps:** update keycloak from 26.5.3 to 26.5.4 ([#2399](https://github.com/defenseunicorns/uds-core/issues/2399)) ([01ce4cf](https://github.com/defenseunicorns/uds-core/commit/01ce4cf2d1ee9decc32df4580159da30a213717c))
+* **deps:** update loki from 3.6.5 to 3.6.7 ([#2391](https://github.com/defenseunicorns/uds-core/issues/2391)) ([cbcda8b](https://github.com/defenseunicorns/uds-core/commit/cbcda8b74e8b7065fb1a7edb9bf0dd64922426f9))
+* **deps:** update prometheus from 3.9.1 to 3.10.0 ([#2396](https://github.com/defenseunicorns/uds-core/issues/2396)) ([8b22eb1](https://github.com/defenseunicorns/uds-core/commit/8b22eb1c7d775d0810dd473d3c4ff3c044e36b95))
+
 ## [0.62.0](https://github.com/defenseunicorns/uds-core/compare/v0.61.0...v0.62.0) (2026-02-24)
 
 
