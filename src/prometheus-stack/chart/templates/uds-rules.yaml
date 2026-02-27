@@ -1,0 +1,55 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+{{- if .Values.clusterHealthRules.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: "{{ .Release.Name }}-uds-cluster-health"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    release:  {{ .Release.Name }}
+spec:
+  groups:
+    - name: "{{ .Release.Name }}-uds-cluster-health.rules"
+      interval: 1m
+      rules:
+        - record: uds_cluster_health_score
+          expr: |
+            (
+              # 25% weight for API Server health
+              (avg(up{job="apiserver"}) or vector(1)) * 25
+              +
+              # 25% weight for Kubelet health
+              (avg(up{job="kubelet"}) or vector(1)) * 25
+              +
+              # 15% weight for CoreDNS health
+              (avg(up{job="coredns"}) or vector(1)) * 15
+              +
+              # 15% weight for Pepr health
+              (avg(up{job="pepr-uds-core"}) or vector(1)) * 15
+              +
+              # 10% weight for Keycloak health
+              (avg(up{job="keycloak-http"}) or vector(1)) * 10
+              +
+              # 10% weight for Prometheus health
+              (avg(up{job="kube-prometheus-stack-prometheus"}) or vector(1)) * 10
+            )
+        - alert: UDSClusterHealthScoreWarning
+          expr: uds_cluster_health_score < 95
+          for: 1m
+          labels:
+            severity: warning
+            reason: "UDS cluster health score is below 95%"
+          annotations:
+            summary: "UDS Cluster Health Score Warning"
+            description: "The UDS cluster health score has been below 95% for more than 1 minute."
+        - alert: UDSClusterHealthScoreCritical
+          expr: uds_cluster_health_score < 90
+          for: 1m
+          labels:
+            severity: critical
+            reason: "UDS cluster health score is below 90%"
+          annotations:
+            summary: "UDS Cluster Health Score Critical"
+            description: "The UDS cluster health score has been below 90% for more than 1 minute."
+{{- end -}}
