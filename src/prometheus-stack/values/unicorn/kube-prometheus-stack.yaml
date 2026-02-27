@@ -23,7 +23,7 @@ prometheus:
     image:
       registry: quay.io
       repository: rfcurated/prometheus
-      tag: 3.9.1-jammy-fips-rfcurated-rfhardened
+      tag: 3.10.0-jammy-fips-rfcurated-rfhardened
 prometheus-node-exporter:
   image:
     registry: quay.io
