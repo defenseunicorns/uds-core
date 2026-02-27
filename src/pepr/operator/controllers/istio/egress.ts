@@ -268,7 +268,7 @@ export async function updateInMemoryPackageMap(
   const task = sidecarMapUpdateQueue
     .catch(() => undefined)
     .then(() => {
-      if (action == PackageAction.AddOrUpdate) {
+      if (action === PackageAction.AddOrUpdate) {
         if (hostResourceMap) {
           // Validate for protocol conflicts before updating
           validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
@@ -277,7 +277,7 @@ export async function updateInMemoryPackageMap(
         } else {
           removeMapResources(inMemoryPackageMap, pkgId);
         }
-      } else if (action == PackageAction.Remove) {
+      } else if (action === PackageAction.Remove) {
         removeMapResources(inMemoryPackageMap, pkgId);
       }
     });
@@ -296,11 +296,11 @@ export async function updateInMemoryAmbientPackageMap(
   const task = ambientMapUpdateQueue
     .catch(() => undefined)
     .then(() => {
-      if (action == PackageAction.AddOrUpdate) {
+      if (action === PackageAction.AddOrUpdate) {
         const entry = createAmbientPackageEntry(pkg);
         validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
         inMemoryAmbientPackageMap[pkgId] = entry;
-      } else if (action == PackageAction.Remove) {
+      } else if (action === PackageAction.Remove) {
         if (inMemoryAmbientPackageMap[pkgId]) {
           delete inMemoryAmbientPackageMap[pkgId];
         }

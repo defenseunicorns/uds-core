@@ -132,9 +132,9 @@ export function generateEgressVirtualService(
     const port = portProtocol.port;
     const protocol = portProtocol.protocol;
     const route = generateVirtualServiceRoutes(host, port, protocol);
-    if (protocol == "TLS") {
+    if (protocol === "TLS") {
       tlsRoutes.push(...(route as IstioTLS[]));
-    } else if (protocol == "HTTP") {
+    } else if (protocol === "HTTP") {
       httpRoutes.push(...(route as IstioHTTP[]));
     }
   }
@@ -166,13 +166,13 @@ function generateVirtualServiceRoutes(host: string, port: number, protocol: stri
   const meshMatch = {
     gateways: ["mesh"],
     port,
-    ...(protocol == "TLS" && { sniHosts: [host] }),
+    ...(protocol === "TLS" && { sniHosts: [host] }),
   };
 
   const gatewayMatch = {
     gateways: [`${generateGatewayName(host)}`],
     port,
-    ...(protocol == "TLS" && { sniHosts: [host] }),
+    ...(protocol === "TLS" && { sniHosts: [host] }),
   };
 
   return [
