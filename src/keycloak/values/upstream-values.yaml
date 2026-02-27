@@ -5,4 +5,4 @@ podSecurityContext:
   fsGroup: 1000
 image:
   repository: quay.io/keycloak/keycloak
-  tag: "26.5.3"
+  tag: "26.5.4"
