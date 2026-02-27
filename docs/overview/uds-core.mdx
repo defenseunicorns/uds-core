@@ -10,9 +10,9 @@ import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 UDS Core is the runtime platform layer of the UDS ecosystem. It gives every application deployed on top of it a consistent, secure, and compliance-ready operating environment—so platform engineers do not have to rebuild those concerns for each project.
 
-Think of UDS Core as the foundation a UDS Bundle sits on. It provides shared platform services (identity, networking, logging, monitoring, runtime security, and more) with hardened defaults, and it integrates those services automatically with applications that declare their needs through the UDS Package custom resource.
+UDS Core is the secure foundation your applications run on. It provides shared platform services (identity, networking, logging, monitoring, runtime security, and more) with hardened defaults, and integrates those services automatically with applications that declare their needs through the UDS Package custom resource.
 
-UDS Core is designed for teams operating in demanding environments: air-gapped networks, classified enclaves, multi-cluster deployments, and edge systems where internet connectivity cannot be assumed.
+UDS Core is designed for teams operating in demanding environments: airgapped networks, classified enclaves, multi-cluster deployments, and edge systems where internet connectivity cannot be assumed.
 
 ---
 
@@ -21,7 +21,7 @@ UDS Core is designed for teams operating in demanding environments: air-gapped n
 <CardGrid>
   <LinkCard
     title="Networking & Service Mesh"
-    description="Istio-based service mesh with mTLS, zero-trust network policies, and separate admin and tenant ingress gateways."
+    description="Istio-based service mesh with mTLS, zero-trust network policies, and controlled ingress paths."
     href="/concepts/core-features/networking/"
   />
   <LinkCard
@@ -36,7 +36,7 @@ UDS Core is designed for teams operating in demanding environments: air-gapped n
   />
   <LinkCard
     title="Monitoring & Observability"
-    description="Prometheus scrapes cluster and application metrics. Grafana provides pre-wired dashboards and alerting."
+    description="Prometheus scrapes cluster and application metrics. Grafana provides pre-wired dashboards, Alertmanager handles alert routing, and Blackbox Exporter monitors external endpoints."
     href="/concepts/core-features/monitoring-observability/"
   />
   <LinkCard
@@ -51,7 +51,7 @@ UDS Core is designed for teams operating in demanding environments: air-gapped n
   />
   <LinkCard
     title="Policy & Compliance"
-    description="Pepr enforces admission policies (non-root, capability drops, no privileged access) and manages exemptions for edge cases."
+    description="Pepr enforces admission policies (protecting from over-privileged and malicious workloads) and manages exemptions for edge cases."
     href="/concepts/core-features/policy-and-compliance/"
   />
 </CardGrid>
