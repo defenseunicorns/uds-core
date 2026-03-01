@@ -20,7 +20,7 @@ components:
           - ../chart/values.yaml
       - name: falco
         url: https://falcosecurity.github.io/charts
-        version: 8.0.0
+        version: 8.0.1
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
