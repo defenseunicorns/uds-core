@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.1/tasks/lint.yaml
 
 tasks:
   - name: ensure-uv

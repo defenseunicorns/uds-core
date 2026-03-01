@@ -17,12 +17,12 @@ tasks:
         description: "Generate CRD YAML files"
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for packages.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/package-v1alpha1.json-schema schemas/package-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -32,12 +32,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for exemptions.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/exemptions.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/exemption-v1alpha1.json-schema schemas/exemption-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
@@ -47,12 +47,12 @@ tasks:
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml src/pepr/operator/crd/generated
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml src/pepr/operator/crd/generated
         description: "Generate TS types for clusterconfig.uds.dev"
 
       - cmd: |
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l json-schema schemas
+          npx kubernetes-fluent-client@3.11.4 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l json-schema schemas
           # Move the schema files to a standard path
           mv schemas/clusterconfig-v1alpha1.json-schema schemas/clusterconfig-v1alpha1.schema.json
           # Make the schema strict on additionalProperties
