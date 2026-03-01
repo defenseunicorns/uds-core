@@ -96,7 +96,7 @@ tasks:
       - description: "Start Redis Docker container"
         cmd: |
           # renovate: datasource=docker depName=redis versioning=docker
-          REDIS_VERSION=8.6.0
+          REDIS_VERSION=8.6.1
           docker run -p 6379:6379 --network=k3d-uds --rm --name redis \
             -v $(pwd)/build/redis/users.acl:/usr/local/etc/redis/users.acl:ro \
             -d redis:${REDIS_VERSION} \

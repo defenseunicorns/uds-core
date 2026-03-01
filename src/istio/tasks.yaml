@@ -45,7 +45,7 @@ tasks:
           OUT_DIR="src/pepr/operator/crd/generated/istio"
 
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd https://raw.githubusercontent.com/istio/istio/1.28.3/manifests/charts/base/files/crd-all.gen.yaml "$OUT_DIR"
+          npx kubernetes-fluent-client@3.11.4 crd https://raw.githubusercontent.com/istio/istio/1.28.3/manifests/charts/base/files/crd-all.gen.yaml "$OUT_DIR"
 
           # Istio includes all CRDs in a single YAML file so we need to prune down to just the subset we want to keep
           KEEP="authorizationpolicy-v1beta1 gateway-v1 requestauthentication-v1 serviceentry-v1beta1 sidecar-v1 virtualservice-v1beta1"
@@ -60,7 +60,7 @@ tasks:
           OUT_DIR="src/pepr/operator/crd/generated/k8s"
 
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.2 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR" --overrideClassName K8SGateway
+          npx kubernetes-fluent-client@3.11.4 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.4.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR" --overrideClassName K8SGateway
 
           KEEP="gateway-v1"
           for f in "$OUT_DIR"/*.ts; do
