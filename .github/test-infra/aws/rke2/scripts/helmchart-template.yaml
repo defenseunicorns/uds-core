@@ -32,7 +32,7 @@ spec:
   chart: aws-load-balancer-controller
   repo: https://aws.github.io/eks-charts
   # renovate: datasource=helm depName=aws-load-balancer-controller versioning=helm registryUrl=https://aws.github.io/eks-charts
-  version: 3.0.0
+  version: 3.1.0
   targetNamespace: kube-system
   valuesContent: |-
     clusterName: ${CLUSTER_NAME}
