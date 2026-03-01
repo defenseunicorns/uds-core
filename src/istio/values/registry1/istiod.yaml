@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 pilot:
-  image: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.28.3-fips
+  image: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.28.4-fips
 global:
   proxy_init:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
-    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.28.3-fips"
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.28.4-fips"
   proxy:
     # renovate: image=registry1.dso.mil/ironbank/tetrate/istio/proxyv2
-    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.28.3-fips"
+    image: "###ZARF_REGISTRY###/ironbank/tetrate/istio/proxyv2:1.28.4-fips"
