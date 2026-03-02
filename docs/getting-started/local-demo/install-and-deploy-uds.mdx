@@ -1,0 +1,119 @@
+---
+title: Install and Deploy UDS
+sidebar:
+  order: 2.3
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+> [!CAUTION]
+> The `k3d-core-demo` bundle is for local development and evaluation only. It is **not intended for production use**.
+
+---
+
+## Install the UDS CLI
+
+<Steps>
+
+1. **Install via Homebrew**
+
+   ```bash
+   brew tap defenseunicorns/tap && brew install uds
+   ```
+
+2. **Verify the installation**
+
+   ```bash
+   uds version
+   ```
+
+   > [!TIP]
+   > All releases are available on the [UDS CLI GitHub releases page](https://github.com/defenseunicorns/uds-cli/releases).
+
+</Steps>
+
+---
+
+## Deploy UDS Core
+
+<Steps>
+
+1. **Deploy the [`k3d-core-demo`](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/README.md) bundle**
+
+   This creates a local k3d cluster and installs the full UDS Core stack on top of it.
+
+   ```bash
+   uds deploy k3d-core-demo:latest
+   ```
+
+   Confirm with `y` when prompted. The first run takes approximately **10–15 minutes** while images are pulled.
+
+   > [!NOTE]
+   > To deploy a specific version, replace `latest` with a version tag. See all versions on the [package registry](https://github.com/defenseunicorns/uds-core/pkgs/container/packages%2Fuds%2Fbundles%2Fk3d-core-demo).
+   >
+   > To update UDS Core on an existing cluster without recreating it:
+   > ```bash
+   > uds deploy k3d-core-demo:<new-version> --packages core
+   > ```
+
+2. **Watch the rollout** *(optional)*
+
+   In a second terminal, monitor the cluster state with k9s:
+
+   ```bash
+   uds zarf tools monitor
+   ```
+
+</Steps>
+
+---
+
+## Verify
+
+Once deployment completes, confirm UDS Core is healthy:
+
+```bash title="Terminal"
+# All pods should be Running or Completed
+kubectl get pods -A | grep -Ev '(Running|Completed)'
+```
+
+No output means all pods are healthy.
+
+**Access the platform UIs:**
+
+| Service | URL |
+|---|---|
+| Keycloak | https://keycloak.admin.uds.dev |
+| Grafana | https://grafana.admin.uds.dev |
+
+> [!NOTE]
+> The `*.uds.dev` domain resolves to your local cluster automatically. No DNS configuration required.
+
+---
+
+## Clean Up
+
+Delete the local k3d cluster:
+
+```bash title="Terminal"
+k3d cluster delete uds
+```
+
+If you used [Colima](https://github.com/abiosoft/colima) as your container runtime, also remove it:
+
+```bash title="Terminal"
+colima delete -f
+```
+
+---
+
+<CardGrid>
+  <LinkCard
+    title="← Set Up Your Environment"
+    href="/getting-started/local-demo/basic-requirements/"
+  />
+  <LinkCard
+    title="Add Your Own Package →"
+    href="/getting-started/local-demo/integrate-your-package/"
+  />
+</CardGrid>

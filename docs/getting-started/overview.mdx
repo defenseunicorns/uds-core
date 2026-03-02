@@ -1,43 +1,44 @@
 ---
 title: Getting Started with UDS Core
+sidebar:
+  order: 1
 ---
 
 import { Card, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
-## Getting Started with UDS Core
-
-Choose your path based on your goal:
+Choose your path based on your goal and environment.
 
 <CardGrid>
-  <Card title="Local Demo (15 min)" icon="star">
-    Try UDS Core locally with k3d for quick evaluation.
+  <Card title="Local Demo" icon="rocket">
+    Spin up UDS Core on your laptop using k3d. Explore capabilities, test integrations, and learn the platform—no production infrastructure required.
 
-    **Perfect for:**
-    - Exploring capabilities
-    - Testing integrations
-    - Learning the platform
+    - **Time:** ~15 minutes
+    - **Needs:** Docker/Colima, 4 CPU cores, 10 GiB RAM
+    - **Result:** A fully running local UDS Core cluster
 
-    <LinkCard title="Start Demo Path" href="/getting-started/local-demo/overview" />
+    <LinkCard title="Start the Local Demo" href="/getting-started/local-demo/overview/" />
   </Card>
 
-  <Card title="Production (2+ hours)" icon="rocket">
-    Deploy UDS Core to production infrastructure.
+  <Card title="Production Deployment" icon="setting">
+    Deploy UDS Core to a real Kubernetes cluster—cloud, on-premises, or airgapped. Covers prerequisites, bundle configuration, and deployment.
 
-    **Perfect for:**
-    - Mission deployments
-    - Production workloads
-    - Enterprise environments
-    <LinkCard title="Start Production Path" href="/getting-started/production/prerequisites/" />
+    - **Time:** 2–4 hours
+    - **Needs:** Kubernetes cluster, DNS, load balancer, object storage
+    - **Result:** A production-hardened UDS Core deployment
+
+    <LinkCard title="Start Production Deployment" href="/getting-started/production/overview/" />
   </Card>
 </CardGrid>
 
 ---
 
-### Source material from previous docs
+## Comparing the Two Paths
 
-This section and its child pages draw on content from:
-
-- `src/content/docs-old/getting-started/basic-requirements.mdx`
-- `src/content/docs-old/getting-started/install-and-deploy-uds.md`
-- `src/content/docs-old/tutorials/deploy-uds-on-rke2.md`
-- `src/content/docs-old/tutorials/deploy-with-uds-core.md`
+| | Local Demo | Production |
+|---|---|---|
+| **Time** | ~15 min | 2–4 hours |
+| **Infrastructure** | k3d cluster created for you | Your Kubernetes cluster |
+| **DNS & Certs** | Auto-configured for `*.uds.dev` | Your domain, real certificates |
+| **Storage** | Ephemeral (in-cluster) | Persistent object storage |
+| **Identity** | Keycloak with embedded dev-mode database | Keycloak with external database |
+| **Use case** | Evaluation, development, learning | Mission deployments, production workloads |

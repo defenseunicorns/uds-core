@@ -1,0 +1,417 @@
+---
+title: Build Your Bundle
+sidebar:
+  order: 3.4
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) is a single deployable artifact that captures your environment's configuration alongside all packages and images. You'll create two files: a `uds-bundle.yaml` that defines what to deploy and how to configure it, and a `uds-config.yaml` that supplies runtime values (credentials, certificates, domain names).
+
+---
+
+## Choose a Core Flavor
+
+UDS Core is published in multiple flavors that differ in the source registry for container images:
+
+| Flavor | Image Source | Use Case |
+|---|---|---|
+| `upstream` | Public registries (Docker Hub, GHCR) | Default; utilizes common upstream container images |
+| `registry1` | [IronBank / Registry One](https://registry1.dso.mil/) | DoD environments requiring hardened, Iron Bank-sourced images |
+| `unicorn` | Defense Unicorns private registry | FIPS-compliant hardened images; reserved for Defense Unicorns customers |
+
+Choose the flavor that matches your environment's registry access and compliance requirements. The bundle `ref` encodes the flavor:
+
+```text title="Bundle ref format"
+0.X.Y-upstream    # upstream flavor
+0.X.Y-registry1   # registry1 flavor
+0.X.Y-unicorn     # unicorn flavor
+```
+
+---
+
+## Base Bundle Structure
+
+Start with a minimal `uds-bundle.yaml`. You'll add overrides to this in the sections below.
+
+```yaml title="uds-bundle.yaml"
+kind: UDSBundle
+metadata:
+  name: my-uds-core
+  description: Production UDS Core deployment
+  version: 0.1.0
+
+packages:
+    # Enables Zarf in your cluster
+  - name: init
+    repository: ghcr.io/zarf-dev/packages/init
+    ref: v0.71.1
+
+  - name: core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.62.0-upstream
+```
+
+> [!NOTE]
+> Check the [UDS Core releases](https://github.com/defenseunicorns/uds-core/releases) page for the latest version to use.
+
+Unlike the local demo bundle, the production bundle does **not** include a `uds-k3d` package—your cluster already exists and is managed separately.
+
+---
+
+## Configure Object Storage
+
+### Loki
+
+The example below uses access keys, which work with AWS S3, MinIO, and any S3-compatible provider. For Azure and GCP, the override structure differs — see the [Loki cloud deployment guides](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/) for provider-specific examples.
+
+> [!NOTE]
+> For EKS deployments, IRSA (IAM Roles for Service Accounts) is preferred over access keys. See the [Loki AWS deployment guide](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/aws/) for the IRSA configuration.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      loki:
+        loki:
+          variables:
+            - name: LOKI_CHUNKS_BUCKET
+              description: "Object storage bucket for Loki chunks"
+              path: loki.storage.bucketNames.chunks
+            - name: LOKI_ADMIN_BUCKET
+              description: "Object storage bucket for Loki admin"
+              path: loki.storage.bucketNames.admin
+            - name: LOKI_S3_REGION
+              description: "Object storage region"
+              path: loki.storage.s3.region
+            - name: LOKI_ACCESS_KEY_ID
+              description: "Object storage access key ID"
+              path: loki.storage.s3.accessKeyId
+            - name: LOKI_SECRET_ACCESS_KEY
+              description: "Object storage secret access key"
+              path: loki.storage.s3.secretAccessKey
+          values:
+            - path: loki.storage.type
+              value: "s3"
+            - path: loki.storage.s3.endpoint
+              value: ""  # leave empty for AWS; set for MinIO or other S3-compatible providers
+```
+
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    loki_chunks_bucket: "your-loki-chunks-bucket"
+    loki_admin_bucket: "your-loki-admin-bucket"
+    loki_s3_region: "us-east-1"
+    loki_access_key_id: "your-access-key-id"
+    loki_secret_access_key: "your-secret-access-key"
+```
+
+### Velero
+
+The example below uses AWS S3. For other providers (Azure, GCP), the override structure and credentials format will differ — see [Velero's supported providers](https://velero.io/docs/main/supported-providers/#s3-compatible-object-store-providers) for provider-specific configuration.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      velero:
+        velero:
+          variables:
+            - name: VELERO_CLOUD_CREDENTIALS
+              description: "Velero cloud credentials file content"
+              path: credentials.secretContents.cloud
+          values:
+            - path: "configuration.backupStorageLocation"
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "<your-velero-bucket>"
+                  config:
+                    region: "<your-region>"
+                    s3ForcePathStyle: true
+                    s3Url: "<your-s3-endpoint>"
+                  credential:
+                    name: "velero-bucket-credentials"
+                    key: "cloud"
+```
+
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    velero_cloud_credentials: |
+      [default]
+      aws_access_key_id=your-access-key-id
+      aws_secret_access_key=your-secret-access-key
+```
+
+---
+
+## Configure TLS
+
+Expose the TLS certificate and key for each gateway as bundle variables so they can be supplied at deploy time without hardcoding them in the bundle.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "Base64-encoded TLS cert chain for admin gateway"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "Base64-encoded TLS key for admin gateway"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "Base64-encoded TLS cert chain for tenant gateway"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "Base64-encoded TLS key for tenant gateway"
+              path: tls.key
+```
+
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    admin_tls_cert: "LS0t..."   # base64-encoded full cert chain
+    admin_tls_key: "LS0t..."    # base64-encoded private key
+    tenant_tls_cert: "LS0t..."
+    tenant_tls_key: "LS0t..."
+```
+
+---
+
+## Configure Keycloak Database
+
+Disable Keycloak's embedded dev-mode database and connect it to your external database. The connection details are passed as variables.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+          variables:
+            - name: KEYCLOAK_DB_HOST
+              path: postgresql.host
+            - name: KEYCLOAK_DB_USERNAME
+              path: postgresql.username
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD
+              path: postgresql.password
+```
+
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    keycloak_db_host: "your-db-host"          # hostname or IP of your database server
+    keycloak_db_username: "keycloak"           # database user created in provision-services step
+    keycloak_db_database: "keycloak"           # database name created in provision-services step
+    keycloak_db_password: "your-db-password"   # password for the database user
+```
+
+---
+
+## Optional Components
+
+Some UDS Core components are disabled by default and must be explicitly enabled:
+
+### Metrics Server
+
+Enable if your distribution does not include a metrics server (e.g., a bare RKE2 cluster without built-in metrics):
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    optionalComponents:
+      - metrics-server
+```
+
+> [!NOTE]
+> Do **not** enable `metrics-server` if your distribution already provides one. Running two metrics servers in the same cluster causes conflicts.
+
+---
+
+## Complete Configuration
+
+With all overrides combined, here are the final files:
+
+```yaml title="uds-bundle.yaml"
+kind: UDSBundle
+metadata:
+  name: my-uds-core
+  description: Production UDS Core deployment
+  version: 0.1.0
+
+packages:
+  - name: init
+    repository: ghcr.io/zarf-dev/packages/init
+    ref: v0.71.1
+
+  - name: core
+    repository: ghcr.io/defenseunicorns/packages/uds/core
+    ref: 0.62.0-upstream
+    overrides:
+      loki:
+        loki:
+          variables:
+            - name: LOKI_CHUNKS_BUCKET
+              description: "Object storage bucket for Loki chunks"
+              path: loki.storage.bucketNames.chunks
+            - name: LOKI_ADMIN_BUCKET
+              description: "Object storage bucket for Loki admin"
+              path: loki.storage.bucketNames.admin
+            - name: LOKI_S3_REGION
+              description: "Object storage region"
+              path: loki.storage.s3.region
+            - name: LOKI_ACCESS_KEY_ID
+              description: "Object storage access key ID"
+              path: loki.storage.s3.accessKeyId
+            - name: LOKI_SECRET_ACCESS_KEY
+              description: "Object storage secret access key"
+              path: loki.storage.s3.secretAccessKey
+          values:
+            - path: loki.storage.type
+              value: "s3"
+            - path: loki.storage.s3.endpoint
+              value: ""
+      velero:
+        velero:
+          variables:
+            - name: VELERO_CLOUD_CREDENTIALS
+              description: "Velero cloud credentials file content"
+              path: credentials.secretContents.cloud
+          values:
+            - path: "configuration.backupStorageLocation"
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "<your-velero-bucket>"
+                  config:
+                    region: "<your-region>"
+                    s3ForcePathStyle: true
+                    s3Url: "<your-s3-endpoint>"
+                  credential:
+                    name: "velero-bucket-credentials"
+                    key: "cloud"
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "Base64-encoded TLS cert chain for admin gateway"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "Base64-encoded TLS key for admin gateway"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "Base64-encoded TLS cert chain for tenant gateway"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "Base64-encoded TLS key for tenant gateway"
+              path: tls.key
+      keycloak:
+        keycloak:
+          values:
+            - path: devMode
+              value: false
+          variables:
+            - name: KEYCLOAK_DB_HOST
+              path: postgresql.host
+            - name: KEYCLOAK_DB_USERNAME
+              path: postgresql.username
+            - name: KEYCLOAK_DB_DATABASE
+              path: postgresql.database
+            - name: KEYCLOAK_DB_PASSWORD
+              path: postgresql.password
+```
+
+```yaml title="uds-config.yaml"
+shared:
+  domain: "yourdomain.com"
+
+variables:
+  core:
+    # TLS (base64-encoded full cert chains)
+    admin_tls_cert: "LS0t..."
+    admin_tls_key: "LS0t..."
+    tenant_tls_cert: "LS0t..."
+    tenant_tls_key: "LS0t..."
+    # Loki object storage
+    loki_chunks_bucket: "your-loki-chunks-bucket"
+    loki_admin_bucket: "your-loki-admin-bucket"
+    loki_s3_region: "us-east-1"
+    loki_access_key_id: "your-access-key-id"
+    loki_secret_access_key: "your-secret-access-key"
+    # Velero backup storage
+    velero_cloud_credentials: |
+      [default]
+      aws_access_key_id=your-access-key-id
+      aws_secret_access_key=your-secret-access-key
+    # Keycloak database
+    keycloak_db_host: "your-db-host"          # hostname or IP of your database server
+    keycloak_db_username: "keycloak"           # database user created in provision-services step
+    keycloak_db_database: "keycloak"           # database name created in provision-services step
+    keycloak_db_password: "your-db-password"   # password for the database user
+```
+
+> [!NOTE]
+> The `shared` section values (`domain`) are automatically available to all packages in the bundle. No bundle YAML overrides are needed for domain configuration—they flow through automatically.
+
+---
+
+## Build the Bundle
+
+<Steps>
+
+1. **Create the bundle**
+
+   ```bash title="Terminal"
+   uds create --confirm
+   ```
+
+   This command pulls all referenced packages and their images, then packages them into a single archive. Depending on network speed and package sizes, this can take several minutes on first run.
+
+   The output is a file named:
+   ```text title="Output"
+   uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+3. **Inspect the bundle** *(optional)*
+
+   ```bash title="Terminal"
+   uds inspect uds-bundle-my-uds-core-*.tar.zst
+   ```
+
+   This lists the packages included in the bundle and their versions, letting you confirm the contents before deploying.
+
+</Steps>
+
+---
+
+> [!NOTE]
+> The resulting bundle is self-contained (all images embedded, no internet needed at deploy time), versioned and reproducible, and transferable to airgapped environments or artifact registries.
+
+---
+
+<CardGrid>
+  <LinkCard
+    title="← Provision External Services"
+    href="/getting-started/production/provision-services/"
+  />
+  <LinkCard
+    title="Deploy →"
+    href="/getting-started/production/deploy/"
+  />
+</CardGrid>
