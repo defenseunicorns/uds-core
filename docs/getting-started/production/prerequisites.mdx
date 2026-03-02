@@ -145,7 +145,7 @@ for key in "${!sysctl_settings[@]}"; do
   sysctl -w "$key=$value"
   echo "$key=$value" > "/etc/sysctl.d/$key.conf"
 done
-sysctl -p
+sysctl --system
 ```
 
 Apply this as part of your node image build or cloud-init process.

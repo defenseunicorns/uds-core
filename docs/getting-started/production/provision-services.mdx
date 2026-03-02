@@ -52,8 +52,8 @@ UDS Core requires TLS certificates for two Istio ingress gateways: admin and ten
 To base64-encode a full-chain PEM file:
 
 ```bash title="Terminal"
-base64 -w0 < fullchain.pem   # Linux
-base64 -i fullchain.pem      # macOS
+base64 -w0 < fullchain.pem                    # Linux
+base64 -i fullchain.pem | tr -d '\n'          # macOS
 ```
 
 The resulting values map to these variables in `uds-config.yaml`:

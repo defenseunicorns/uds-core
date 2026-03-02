@@ -121,7 +121,7 @@ Your container runtime must have access to at least:
      Docker Desktop integrates automatically with WSL 2. In Docker Desktop settings, enable **Use the WSL 2 based engine**.
 
      > [!NOTE]
-     > Docker Desktop requires a paid subscription for companies with 250+ employees or $10M+ revenue. [Colima](https://github.com/abiosoft/colima) is a free alternative.
+     > Docker Desktop requires a paid subscription for companies with 250+ employees or $10M+ revenue.
 
   3. **Install [Homebrew](https://brew.sh/) and [k3d](https://k3d.io/)** in your WSL terminal
 
@@ -149,12 +149,14 @@ Your container runtime must have access to at least:
 Confirm your tools are installed and working:
 
 ```bash title="Terminal"
-docker info              # Docker is running
-k3d version              # k3d is installed
-kubectl version --client # kubectl is available
+docker info   # Docker is running
+k3d version   # k3d is installed
 ```
 
-All three commands should return version output without errors.
+Both commands should return version output without errors.
+
+> [!NOTE]
+> `kubectl` is not required at this stage. Once UDS CLI is installed in the next step, you can use `uds zarf tools kubectl` as a built-in alternative.
 
 > [!NOTE]
 > The UDS CLI is installed in the next step.

@@ -50,7 +50,7 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ```bash title="Terminal"
 # All pods should be Running or Completed
-kubectl get pods -A | grep -Ev '(Running|Completed)'
+kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
 ```
 
 Any pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state indicate a problem. See [Common Issues](#common-issues) below.

@@ -45,7 +45,7 @@ packages:
     # Enables Zarf in your cluster
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.71.1
+    ref: v0.73.0
 
   - name: core
     repository: ghcr.io/defenseunicorns/packages/uds/core
@@ -255,7 +255,7 @@ metadata:
 packages:
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.71.1
+    ref: v0.73.0
 
   - name: core
     repository: ghcr.io/defenseunicorns/packages/uds/core
@@ -388,7 +388,7 @@ variables:
    uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-3. **Inspect the bundle** *(optional)*
+2. **Inspect the bundle** *(optional)*
 
    ```bash title="Terminal"
    uds inspect uds-bundle-my-uds-core-*.tar.zst

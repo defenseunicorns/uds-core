@@ -74,7 +74,7 @@ Once deployment completes, confirm UDS Core is healthy:
 
 ```bash title="Terminal"
 # All pods should be Running or Completed
-kubectl get pods -A | grep -Ev '(Running|Completed)'
+kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
 ```
 
 No output means all pods are healthy.
