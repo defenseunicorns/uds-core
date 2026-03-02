@@ -1,0 +1,72 @@
+---
+title: Runtime security
+sidebar:
+  order: 2.5
+---
+
+
+## Runtime Security in UDS Core
+
+UDS Core provides runtime threat detection using [Falco](https://falco.org/), a CNCF graduated project that monitors system-level behavior across containerized workloads. Runtime security is the layer of defense that watches what workloads are *doing*, not just what they are *configured* to do.
+
+## Why runtime security?
+
+Admission control and network policy prevent *known bad configurations* from entering the cluster. They cannot detect compromise that happens at runtime — a malicious binary executed inside a permitted container, credential theft from a mounted secret, or a process spawning an unexpected shell.
+
+Runtime security addresses this gap by observing behavior:
+
+- Which system calls are made
+- Which files are accessed or modified
+- Which network connections are opened
+- Which processes are spawned as children of container init processes
+
+When a pattern matches a known-bad signature, an alert is generated. Operators and security teams can then investigate and respond.
+
+## How Falco works
+
+Falco monitors the Linux kernel using eBPF probes. These probes observe system calls made by all processes on a node — including those inside containers — without modifying the containers themselves or requiring any application changes.
+
+| Component | Role |
+|---|---|
+| eBPF probe | Observes all syscalls on the node at the kernel level; no container changes required |
+| Falco engine | Evaluates the event stream against rules; generates an alert on match, discards on no match |
+| Falco Sidekick | Fans out alerts to multiple destinations: Alertmanager, SIEM, Slack, Elasticsearch, and others |
+
+Falco rules define what constitutes suspicious behavior. UDS Core ships with a default rule set covering common attack patterns. Teams can add custom rules or tune existing ones to match their environment's expected behavior.
+
+## Default detections
+
+The default Falco rule set covers a broad range of behaviors, including:
+
+- **Shell execution in containers** — unexpected shell spawns inside running containers are a common indicator of compromise
+- **Sensitive file access** — reads of `/etc/shadow`, `/proc/[pid]/mem`, credential files, and similar paths
+- **Privilege escalation attempts** — `setuid` execution, capability changes
+- **Network scanning and unexpected outbound connections** — unexpected connections to external IPs from workloads that should not be making them
+- **Cryptomining patterns** — process names and network connection patterns associated with mining software
+
+For the full list of rules, see the [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/).
+
+## Integration with platform alerting
+
+Falco integrates with the UDS Core alerting pipeline through **Falco Sidekick**, a fan-out forwarder that sits alongside Falco and routes alerts to multiple destinations. By default, runtime alerts flow into Alertmanager alongside Prometheus-based platform alerts, giving operators a single pane of glass for both metric-based and behavioral alerts.
+
+Falco Sidekick can also route alerts to external destinations: SIEM platforms (via HTTP webhooks), Slack/Mattermost/Teams channels, Elasticsearch, and others. This is important in environments where runtime security alerts must flow into a centralized security operations center.
+
+## Defense in depth
+
+Runtime security is one layer of a broader defense model in UDS Core:
+
+| Layer | Role |
+|---|---|
+| Policy engine (Pepr) | Blocks misconfigured workloads from entering the cluster |
+| Service mesh (Istio) | Blocks unauthorized lateral movement between services |
+| Network policy | Blocks unauthorized traffic at the IP level |
+| Runtime security (Falco) | Detects malicious behavior inside permitted workloads |
+
+> [!NOTE]
+> No single layer catches everything. The value of runtime security is specifically in catching compromise that the other layers cannot prevent — a legitimate container that has been exploited, or a supply chain attack that introduced a malicious binary into an otherwise-permitted image.
+
+---
+
+> [!TIP]
+> Ready to configure runtime security for your environment? See the [Runtime Security How-to Guides](/how-to-guides/runtime-security/overview/).

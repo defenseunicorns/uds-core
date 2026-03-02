@@ -1,0 +1,66 @@
+---
+title: Backup & restore
+sidebar:
+  order: 2.6
+---
+
+
+## Backup & Restore in UDS Core
+
+UDS Core provides cluster backup and restore capabilities through [Velero](https://velero.io/), an open-source tool for backing up Kubernetes resources and persistent volume data. The backup layer is what enables platform operators to recover from data loss, cluster corruption, or infrastructure failure without losing application state.
+
+## Why backup is a platform concern
+
+Application teams should not need to design backup strategies for each service they deploy. Backup belongs at the platform layer because:
+
+- **Consistency** — a cluster-level backup captures all namespaces and volumes in a coordinated way, avoiding split-brain scenarios where application data and Kubernetes state diverge
+- **Recovery testing** — the platform defines and tests restore procedures; application teams rely on the guarantee rather than each maintaining their own
+- **Compliance** — regulated environments require documented, tested backup and recovery capabilities with defined RPO and RTO targets
+
+## What Velero backs up
+
+| Component | Role |
+|---|---|
+| Velero | Orchestrates scheduled backups of Kubernetes resources and coordinates volume snapshots |
+| Object storage (S3/MinIO) | Stores serialized resource manifests (Deployments, ConfigMaps, Secrets, UDS CRs, etc.) |
+| Cloud provider snapshot API | Captures persistent volume state via EBS, Azure Disk, vSphere, or CSI-compatible snapshots |
+
+**Kubernetes resource backup** — Velero captures the state of Kubernetes objects: Deployments, StatefulSets, ConfigMaps, Secrets, PersistentVolumeClaims, and custom resources (including UDS Package and Exemption CRs). These are stored as serialized object manifests in an object store.
+
+**Volume snapshot backup** — Velero integrates with cloud provider volume snapshot APIs (AWS EBS, Azure Disk, vSphere) to capture the on-disk state of persistent volumes at a point in time. Volume snapshots are coordinated with the resource backup so that application data and Kubernetes state are consistent.
+
+## Backup schedule and retention
+
+Velero runs backups on a [configurable cron schedule](https://velero.io/docs/v1.17/backup-reference/), with retention controlled per-backup via a [`--ttl` flag](https://velero.io/docs/v1.17/how-velero-works/) (default: 30 days). A production configuration could be:
+
+- **Hourly snapshots** for recent point-in-time recovery
+- **Daily backups** retained for 30 days
+- **Weekly backups** retained for 90 days or longer for compliance requirements
+
+The right schedule depends on the RTO/RPO requirements for the workloads being protected.
+
+## Restore scenarios
+
+| Scenario | When to use |
+|---|---|
+| Namespace-level restore | Single application namespace was accidentally deleted or corrupted; other workloads are unaffected |
+| Cluster-level restore | Catastrophic infrastructure failure; provision new infrastructure and restore all namespaces from the most recent backup |
+| Point-in-time restore | Corruption or data loss discovered after the fact; restore to a snapshot from before the event occurred |
+
+## What backup does not cover
+
+> [!CAUTION]
+> - **In-memory state** — application state that exists only in memory (caches, session state not backed by a persistent volume) is not captured
+> - **External services** — databases or object stores that exist outside the cluster and are accessed by applications are not backed up by Velero
+> - **Real-time replication** — Velero provides point-in-time snapshots, not continuous replication; there is always some data loss window between the last backup and a failure
+>
+> For applications with low RPO requirements (seconds rather than hours), additional application-level replication should be considered alongside Velero.
+
+## Cloud provider integration
+
+Velero requires a cloud provider plugin and appropriate IAM permissions to perform volume snapshots. UDS Core's backup layer is configured at bundle deploy time with the target cloud provider and storage destination. For on-premises deployments, Velero works with CSI-compatible storage that supports the volume snapshot API.
+
+---
+
+> [!TIP]
+> Ready to configure backup and restore for your environment? See the [Backup & Restore How-to Guides](/how-to-guides/backup-restore/overview/).

@@ -1,0 +1,60 @@
+---
+title: Logging
+sidebar:
+  order: 2.4
+---
+
+
+## Logging in UDS Core
+
+UDS Core provides centralized log aggregation using [Vector](https://vector.dev/) and [Loki](https://grafana.com/oss/loki/). Every workload in the cluster — platform components and application workloads alike — has its logs collected, shipped to durable storage, and made queryable through Grafana.
+
+## Why centralized logging matters
+
+In a containerized environment, pod logs are ephemeral. When a pod restarts, its logs disappear. When a node is replaced, everything on it is gone. Centralized logging solves this by capturing logs as they are produced and shipping them to separate storage that persists independently of workload lifecycle.
+
+Beyond persistence, centralized logging enables:
+
+- **Correlation** — connecting events across multiple services to reconstruct what happened during an incident
+- **Audit** — maintaining a tamper-resistant record of authentication events, policy violations, and system changes
+- **Alerting** — detecting error patterns and anomalies in log streams before they surface as user-visible failures
+
+## The logging pipeline
+
+| Component | Role |
+|---|---|
+| Vector | DaemonSet log collector; enriches records with Kubernetes metadata (namespace, pod name, labels) and ships to Loki |
+| Loki | Indexes log metadata (not content), stores chunks in object storage; queried via LogQL |
+| Grafana | Query interface; same instance as metrics dashboards, enabling log/metric correlation |
+
+## What gets collected
+
+By default, UDS Core collects:
+
+- All container stdout/stderr from every pod in the cluster
+- Kubernetes events (pod scheduling, node conditions, etc.)
+- Platform component logs (Istio, Keycloak, Prometheus, etc.)
+
+There is no opt-in required for workload logs. Any container that writes to stdout/stderr is automatically captured.
+
+## Log-based alerting
+
+Loki includes a **Ruler** component that evaluates LogQL expressions on a schedule — similar to how Prometheus evaluates metric rules. This enables:
+
+- **Alerting rules** — trigger an Alertmanager notification when a specific log pattern appears (e.g., repeated authentication failures, application panics)
+- **Recording rules** — convert log queries into metrics that can be stored in Prometheus and used in dashboards or metric-based alerts
+
+Log-based alerting fills the gap between metrics (which measure *quantities*) and logs (which capture *events*). Some failure modes are only visible in log content and cannot be expressed as metric thresholds.
+
+## Storage considerations
+
+Loki stores log chunks in object storage (S3-compatible) in production deployments. The logging layer depends on either an internal MinIO instance or an external object store configured at bundle deploy time. Retention policies control how long logs are kept before being automatically deleted.
+
+## Shipping logs to external systems
+
+Vector is configurable to forward logs to external destinations — Elasticsearch, Splunk, S3 buckets — in addition to or instead of Loki. This is common in environments with existing SIEM infrastructure where UDS Core's centralized logs need to flow into a broader security analytics platform.
+
+---
+
+> [!TIP]
+> Ready to configure logging for your environment? See the [Logging How-to Guides](/how-to-guides/logging/overview/).

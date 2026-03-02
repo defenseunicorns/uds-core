@@ -1,0 +1,72 @@
+---
+title: UDS Core
+sidebar:
+  order: 1
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What is UDS Core?
+
+UDS Core is a curated collection of platform capabilities packaged as a single deployable Zarf package. It establishes a secure, compliant baseline for cloud-native systems, particularly those operating in highly regulated or air-gapped environments.
+
+> At its heart, UDS Core answers a fundamental question for teams building on Kubernetes: *what secure platform layer do I need before I deploy my application?* UDS Core is that layer.
+
+## How UDS Core is structured
+
+UDS Core is organized into **functional layers** — discrete Zarf packages grouped by capability.
+
+| Layer | What it provides |
+|---|---|
+| `core-base` | **Required.** Istio, UDS Operator, Policy Engine |
+| `core-identity-authorization` | Keycloak + Authservice (SSO) |
+| `core-metrics-server` | Kubernetes Metrics Server |
+| `core-runtime-security` | Falco (requires identity layer for UI login) |
+| `core-logging` | Vector + Loki |
+| `core-monitoring` | Prometheus + Grafana + Alertmanager |
+| `core-backup-restore` | Velero |
+
+## The UDS Operator
+
+The UDS Operator is the control plane for UDS Core. The key integration point is the **UDS Package custom resource (CR)** — when a team deploys an application, they create a Package CR that declares the application's networking intent (what to expose, what egress to allow), its SSO requirements, and any monitoring needs. The operator reconciles this CR and creates all the necessary platform resources automatically — the application team does not directly write Istio VirtualServices, NetworkPolicies, or Keycloak client configs.
+
+It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources and manages their lifecycle. Among other things, when a Package CR is created or updated, the operator:
+
+- Generates Istio `VirtualService` and `AuthorizationPolicy` resources to control traffic
+- Creates Kubernetes `NetworkPolicy` resources to enforce network boundaries
+- Configures Keycloak clients for SSO-protected services
+- Sets up an Authservice SSO flow to protect mission applications that don't natively implement OIDC
+- Creates `ServiceMonitor`, `PodMonitor`, and blackbox probe resources for Prometheus to scrape application metrics
+
+This automation means platform teams don't need to write low-level Istio or Kubernetes networking configuration for each application, nor manually configure SSO for each app — the Package CR drives all of it from a single declaration.
+
+## The Policy Engine
+
+The UDS Policy Engine (built on [Pepr](https://github.com/defenseunicorns/pepr)) runs as admission webhooks alongside the operator. It enforces a security baseline across all workloads — preventing privileged containers, enforcing non-root execution, restricting volume types, and more. Policies run as both mutations (automatically correcting safe defaults) and validations (blocking unsafe configurations). For the full list of enforced policies, see the [UDS Operator Policies](/reference/operator-policies/).
+
+When a workload legitimately needs an exemption, teams create a `UDSExemption` CR to declare the exception explicitly, keeping the audit trail clear.
+
+---
+
+<CardGrid>
+  <LinkCard
+    title="Core Features"
+    description="Networking, identity, logging, monitoring, runtime security, backup, and policy — what each layer does and why."
+    href="/concepts/core-features/overview/"
+  />
+  <LinkCard
+    title="Platform"
+    description="Environments, cluster flavors, and how UDS Core adapts to different deployment targets."
+    href="/concepts/platform/overview/"
+  />
+  <LinkCard
+    title="Configuration & Packaging"
+    description="Bundles, CRDs, and the packaging model that makes UDS Core composable."
+    href="/concepts/configuration-and-packaging/overview/"
+  />
+  <LinkCard
+    title="How-to Guides"
+    description="Step-by-step instructions for configuring and operating UDS Core in your environment."
+    href="/how-to-guides/overview/"
+  />
+</CardGrid>

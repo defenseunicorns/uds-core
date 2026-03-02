@@ -1,7 +1,7 @@
 ---
 title: Flavors (Core variants)
 sidebar:
-  order: 4
+  order: 3.3
 ---
 
 ## Flavors (Core variants)

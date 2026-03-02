@@ -1,0 +1,51 @@
+---
+title: Core Features
+sidebar:
+  order: 2
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Core Features
+
+UDS Core's capabilities are organized into functional areas, each addressing a distinct platform concern. Together, they form an integrated security and observability stack that application teams can rely on without needing to assemble and wire up individually.
+
+Each page explains *what* the feature does and *why* it is built the way it is. For configuration steps, see the corresponding [How-to Guides](/how-to-guides/overview/).
+
+<CardGrid>
+  <LinkCard
+    title="Networking & Service Mesh"
+    description="mTLS, traffic management, ingress/egress control via Istio. The security boundary that makes zero-trust networking practical."
+    href="/concepts/core-features/networking/"
+  />
+  <LinkCard
+    title="Identity & Authentication"
+    description="SSO, OIDC, and group-based authorization via Keycloak and Authservice — without requiring each application to implement its own auth flow."
+    href="/concepts/core-features/identity-access/"
+  />
+  <LinkCard
+    title="Logging"
+    description="Centralized log aggregation, durable storage, and log-based alerting via Vector and Loki."
+    href="/concepts/core-features/logging/"
+  />
+  <LinkCard
+    title="Monitoring & Observability"
+    description="Metrics collection, pre-built dashboards, and integrated alerting via Prometheus, Grafana, and Alertmanager."
+    href="/concepts/core-features/monitoring-observability/"
+  />
+  <LinkCard
+    title="Runtime Security"
+    description="Behavioral threat detection inside running containers via Falco — catching what admission control and network policy cannot."
+    href="/concepts/core-features/runtime-security/"
+  />
+  <LinkCard
+    title="Backup & Restore"
+    description="Volume and cluster-state backup via Velero, with support for namespace-level and full-cluster restore scenarios."
+    href="/concepts/core-features/backup-restore/"
+  />
+  <LinkCard
+    title="Policy & Compliance"
+    description="Admission control and pod security enforcement via Pepr, with explicit exemption management for auditable exceptions."
+    href="/concepts/core-features/policy-and-compliance/"
+  />
+</CardGrid>
