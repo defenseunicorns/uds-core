@@ -1,0 +1,175 @@
+---
+title: Deploy to Production
+sidebar:
+  order: 3.5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## Deploy
+
+<Steps>
+
+1. **Run the deploy command**
+
+   ```bash
+   uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
+   ```
+
+   If you are using a `uds-config.yaml` for variables, it is picked up automatically from the current directory. You can also specify it explicitly:
+
+   ```bash
+   UDS_CONFIG=uds-config.yaml uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
+   ```
+
+2. **Watch the rollout**
+
+   In a separate terminal, monitor the deployment as packages come up:
+
+   ```bash
+   watch kubectl get pods -A
+   ```
+
+   Or use k9s:
+
+   ```bash
+   uds zarf tools monitor
+   ```
+
+   Deployment order follows the package order in your bundle. The `init` package comes first (Zarf registry, agent), followed by `core`.
+
+   Full deployment time varies based on cluster resources and image pull speed. Expect **10–30 minutes** for a first deployment to a fresh cluster.
+
+</Steps>
+
+---
+
+## Verify
+
+<Steps>
+
+1. **Check pod health**
+
+   ```bash
+   # All pods should be Running or Completed
+   kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
+   ```
+
+   Any pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state indicate a problem. See [Common Issues](#common-issues) below.
+
+2. **Confirm namespaces**
+
+   ```bash
+   kubectl get namespaces
+   ```
+
+   Expected namespaces:
+
+   | Namespace | Component |
+   |---|---|
+   | `istio-system` | [Istio](https://istio.io/) control plane |
+   | `istio-tenant-gateway` | Tenant ingress gateway |
+   | `istio-admin-gateway` | Admin ingress gateway |
+   | `keycloak` | [Keycloak](https://www.keycloak.org/) identity provider |
+   | `authservice` | [Authservice](https://github.com/istio-ecosystem/authservice) SSO for mission applications |
+   | `monitoring` | [Prometheus](https://prometheus.io/), [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) |
+   | `grafana` | [Grafana](https://grafana.com/) |
+   | `logging` | [Loki](https://grafana.com/oss/loki/) log storage |
+   | `vector` | [Vector](https://vector.dev/) log aggregation |
+   | `velero` | [Velero](https://velero.io/) backup controller |
+   | `falco` | [Falco](https://falco.org/) runtime security |
+   | `pepr-system` | UDS Operator ([Pepr](https://docs.pepr.dev/)) |
+
+3. **Verify Istio gateways**
+
+   ```bash
+   kubectl get svc -n istio-tenant-gateway
+   kubectl get svc -n istio-admin-gateway
+   ```
+
+   Both `LoadBalancer` services should have an `EXTERNAL-IP` assigned. If they show `<pending>`, your load balancer provisioner may not be configured correctly.
+
+4. **Configure DNS records**
+
+   Now that the gateways have external IPs, create (or update) your wildcard DNS records to point to them:
+
+   | Record | Type | Value |
+   |---|---|---|
+   | `*.yourdomain.com` | A (or CNAME) | Tenant gateway `EXTERNAL-IP` |
+   | `*.admin.yourdomain.com` | A (or CNAME) | Admin gateway `EXTERNAL-IP` |
+
+5. **Access the admin UIs**
+
+   Once DNS is resolving to your load balancer, access:
+
+   | Service | URL |
+   |---|---|
+   | Keycloak | `https://keycloak.<your-admin-domain>` |
+   | Grafana | `https://grafana.<your-admin-domain>` |
+
+   The Keycloak admin console login verifies that identity and ingress are working end-to-end.
+
+</Steps>
+
+---
+
+## Common Issues
+
+### Pods stuck in `Pending`
+
+Usually indicates insufficient cluster resources or a missing storage class.
+
+```bash
+kubectl describe pod <pod-name> -n <namespace>
+```
+
+Look for `Insufficient cpu`, `Insufficient memory`, or `no persistent volumes available` in the events.
+
+### Loki or Velero failing to start
+
+Often caused by incorrect object storage credentials or unreachable storage endpoint. Check the pod logs:
+
+```bash
+kubectl logs -n logging -l app.kubernetes.io/name=loki --tail=50
+kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50
+```
+
+### Istio gateway `EXTERNAL-IP` stuck in `<pending>`
+
+Your load balancer provisioner is not assigning IPs. Verify the provisioner is installed and configured in your cluster. For on-premises deployments, ensure MetalLB or kube-vip is running and has an IP pool configured.
+
+### Keycloak not loading
+
+Check that:
+1. The Keycloak pod is `Running`: `kubectl get pods -n keycloak`
+2. DNS resolves to the load balancer IP
+3. The TLS certificate is valid for your admin domain
+
+### Keycloak failing to connect to database
+
+If Keycloak is running but crashing on startup, check the logs for database connection errors:
+
+```bash
+kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
+```
+
+Common causes: incorrect hostname, wrong credentials, database user lacks privileges, or the database server is not reachable from the cluster. Verify the values in your `uds-config.yaml` match what was provisioned in the [Provision External Services](/getting-started/production/provision-services/) step.
+
+---
+
+## You're Done
+
+Congratulations — you've completed the UDS Core production deployment tutorial. You've provisioned the external services, built a production bundle, and deployed UDS Core to your cluster.
+
+Here's what you've stood up:
+
+- **Istio** service mesh with admin and tenant ingress gateways, TLS-terminated with your certificates
+- **Keycloak** identity provider backed by an external database
+- **Authservice** providing SSO flows for your mission applications
+- **Loki** log storage with **Vector** for log aggregation, backed by persistent object storage
+- **Velero** cluster backups configured to your storage backend
+- **Prometheus, Grafana, Alertmanager** for platform observability
+- **Falco** for runtime security
+
+From here, explore the [How-To Guides](/how-to-guides/overview/) for topics like configuring log retention, setting up SSO, and managing policy exemptions. To configure high availability for UDS Core components, see the [High Availability Overview](/how-to-guides/high-availability/overview/).
+

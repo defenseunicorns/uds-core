@@ -1,0 +1,121 @@
+---
+title: Provision External Services
+sidebar:
+  order: 3.3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+Before building your bundle, provision the external services UDS Core requires: DNS, TLS certificates, object storage, and a database for Keycloak. Work through each section and note the values you'll need when configuring overrides in the next step.
+
+---
+
+<Steps>
+
+1. **DNS**
+
+   UDS Core uses two domains to route traffic:
+
+   - **Tenant domain** — application traffic (e.g., `yourdomain.com`)
+   - **Admin domain** — platform UIs: Keycloak Admin Console, Grafana (e.g., `admin.yourdomain.com`)
+
+   Create wildcard DNS records for both domains. You will point these to your load balancer IP or hostname after deployment — see [Deploy to Production](/getting-started/production/deploy/) for details on retrieving the gateway IPs.
+
+   The domain can be set in `uds-config.yaml` via the `shared` section:
+
+   ```yaml title="uds-config.yaml"
+   shared:
+     domain: "yourdomain.com"
+   ```
+
+   or via the `UDS_DOMAIN` environment variable.
+
+   For more detailed guidance, see [Configure Ingress Gateways](/how-to-guides/networking/configure-ingress-gateways/).
+
+2. **TLS Certificates**
+
+   UDS Core requires TLS certificates for two Istio ingress gateways: admin and tenant. Certificates must be provided in PEM format, base64-encoded, and must include the **full certificate chain** (server certificate → intermediates → root CA).
+
+   | Gateway | Purpose |
+   |---|---|
+   | Admin | Internal platform UIs (Keycloak Admin, Grafana) |
+   | Tenant | Application traffic |
+
+   > [!CAUTION]
+   > The certificate value must be the **full chain**, not just the leaf certificate. Providing only the leaf cert will cause TLS handshake failures for clients that don't have your CA in their trust store.
+
+   To base64-encode a full-chain PEM file:
+
+   ```bash
+   base64 -w0 < fullchain.pem                    # Linux
+   base64 -i fullchain.pem | tr -d '\n'          # macOS
+   ```
+
+   The resulting values map to these variables in `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       admin_tls_cert: "LS0t..."   # base64-encoded full cert chain for admin gateway
+       admin_tls_key: "LS0t..."    # base64-encoded private key for admin gateway
+       tenant_tls_cert: "LS0t..."  # base64-encoded full cert chain for tenant gateway
+       tenant_tls_key: "LS0t..."   # base64-encoded private key for tenant gateway
+   ```
+
+   For detailed guidance, see [Configure Ingress Gateways](/how-to-guides/networking/configure-ingress-gateways/).
+
+3. **Object Storage**
+
+   Loki (log storage) and Velero (backup storage) require object storage. Both support native cloud provider backends (S3, GCS, Azure Blob) as well as S3-compatible options like MinIO. Create the following buckets before deploying:
+
+   | Component | Buckets needed |
+   |---|---|
+   | Loki | `chunks`, `admin` |
+   | Velero | `velero-backups` (or your preferred name) |
+
+   **Provider options**
+
+   | Provider | Service | Notes |
+   |---|---|---|
+   | **AWS** | S3 | Use IAM role for service account or access keys |
+   | **Azure** | Azure Blob Storage | Use Managed Identity or storage account credentials |
+   | **GCP** | Google Cloud Storage | Use Workload Identity or service account key |
+   | **On-premises** | MinIO | [MinIO Operator UDS Package](https://github.com/uds-packages/minio-operator) available |
+
+   Note the following for each bucket: endpoint URL, region, and bucket name. For authentication, you can use static credentials (access key ID and secret access key) or cloud-native identity mechanisms such as [AWS IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html), [Azure Workload Identity](https://learn.microsoft.com/en-us/azure/aks/workload-identity-overview), or [GCP Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity). You will use these when configuring bundle overrides.
+
+   For provider-specific Loki setup, see the [Loki cloud deployment guides](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/) (AWS, Azure, GCP). For Velero, see the [Velero supported providers](https://velero.io/docs/main/supported-providers/#s3-compatible-object-store-providers) documentation.
+
+4. **Keycloak Database**
+
+   The local demo uses an embedded dev-mode database, which is not suitable for production. Production deployments require an external PostgreSQL database.
+
+   You will need a dedicated database and a dedicated user.
+
+   **Provider options (PostgreSQL)**
+
+   | Provider | Service |
+   |---|---|
+   | **AWS** | [RDS for PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html) |
+   | **Azure** | [Azure Database for PostgreSQL](https://learn.microsoft.com/en-us/azure/postgresql/) |
+   | **GCP** | [Cloud SQL for PostgreSQL](https://cloud.google.com/sql/docs/postgres) |
+   | **On-premises / In-cluster** | [UDS Postgres Operator Package](https://github.com/uds-packages/postgres-operator) (Zalando operator) |
+
+
+   Note the following: database host, database name, username, and password. You will use these when configuring bundle overrides.
+
+</Steps>
+
+---
+
+## Checklist
+
+Before moving on, confirm:
+
+- Wildcard DNS records created for tenant domain (`*.yourdomain.com`)
+- Wildcard DNS records created for admin domain (`*.admin.yourdomain.com`)
+- TLS certificates obtained and base64-encoded for both admin and tenant gateways
+- Loki object storage buckets created (`chunks`, `admin`) and credentials available
+- Velero object storage bucket created and credentials available
+- Keycloak external database provisioned with dedicated user and credentials available
+

@@ -1,0 +1,163 @@
+---
+title: Prerequisites
+sidebar:
+  order: 3.2
+---
+
+
+Work through each section and confirm your environment meets the requirements before building your bundle.
+
+---
+
+## Kubernetes Distribution
+
+UDS Core runs on any [CNCF-conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/) that has not reached [End-of-Life](https://kubernetes.io/releases/#release-history). Supported and tested distributions include:
+
+| Distribution | Notes |
+|---|---|
+| **RKE2** | Recommended for on-premises and classified deployments. See [RKE2 requirements](https://docs.rke2.io/install/requirements). |
+| **K3s** | Lightweight option for edge and resource-constrained environments. See [K3s requirements](https://docs.k3s.io/installation/requirements). |
+| **EKS** | AWS managed Kubernetes. See [EKS documentation](https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html). |
+| **AKS** | Azure managed Kubernetes. See [AKS documentation](https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-kubernetes-service). |
+
+> [!NOTE]
+> If your distribution has distribution-specific hardening guides (e.g., RKE2 CIS profile), review the component-specific notes below for required configuration changes.
+
+---
+
+## Cluster Capacity
+
+UDS Core deploys multiple platform services. Plan your cluster sizing to accommodate them. As a baseline for a production deployment:
+
+- **CPU:** 12+ vCPUs across worker nodes
+- **Memory:** 32+ GiB RAM across worker nodes
+- **Storage:** 100+ GiB persistent storage available through the default storage class
+
+These are conservative minimums. Size up based on the workloads you plan to run on top of UDS Core.
+
+---
+
+## Default Storage Class
+
+Several UDS Core components require persistent volumes. Verify your cluster has a default storage class configured:
+
+```bash
+kubectl get storageclass
+```
+
+The output should include `(default)` next to one of the listed storage classes:
+
+```text title="Output"
+NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE      ALLOWVOLUMEEXPANSION   AGE
+gp2 (default)          kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   10d
+```
+
+---
+
+## Networking Requirements
+
+### Load Balancer
+
+Istio's ingress gateways require a load balancer. When a `Service` of type `LoadBalancer` is created, your cluster must be able to provision an external IP automatically.
+
+- **Cloud environments:** Use your cloud provider's load balancer controller (e.g., [AWS Load Balancer Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)).
+- **On-premises:** Use a bare-metal load balancer such as [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). A [MetalLB UDS Package](https://github.com/uds-packages/metallb) is available.
+- **Conflicting ingress controllers:** Some distributions (e.g., RKE2) include `ingress-nginx` by default. Disable it before deploying UDS Core to avoid conflicts with Istio.
+
+### RKE2 with CIS Profile
+
+If running RKE2 with the CIS hardening profile, control plane components bind to `127.0.0.1` by default, which prevents Prometheus from scraping them. Add the following to your control plane node's `/etc/rancher/rke2/config.yaml`:
+
+```yaml title="/etc/rancher/rke2/config.yaml"
+kube-controller-manager-arg:
+  - bind-address=0.0.0.0
+kube-scheduler-arg:
+  - bind-address=0.0.0.0
+etcd-arg:
+  - listen-metrics-urls=http://0.0.0.0:2381
+```
+
+Restart RKE2 after making these changes.
+
+### DNS
+
+You must own a domain and be able to create wildcard DNS records pointing to your load balancer IP. See [Provision External Services](/getting-started/production/provision-services/) for details.
+
+### TLS Certificates
+
+You must have TLS certificates (or the ability to obtain them) for both your tenant and admin domains. See [Provision External Services](/getting-started/production/provision-services/) for options.
+
+---
+
+## Network Policy Support
+
+The UDS Operator dynamically provisions `NetworkPolicy` resources to secure traffic between components. Your CNI must enforce network policies.
+
+If you are using **[Cilium](https://cilium.io/)**, CIDR-based network policies require an additional [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock) for node addressability.
+
+---
+
+## Istio Requirements
+
+[Istio](https://istio.io/) requires certain kernel modules to be loaded on each node. Run the following as part of your node image build or cloud-init configuration:
+
+```bash
+modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
+for module in "${modules[@]}"; do
+  modprobe "$module"
+  echo "$module" >> "/etc/modules-load.d/istio-modules.conf"
+done
+```
+
+See [Istio's platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/) for the full upstream list.
+
+---
+
+## Falco Requirements
+
+UDS Core uses [Falco](https://falco.org/)'s [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe), which requires:
+
+- Kernel version **>= 5.8**
+- [BPF ring buffer](https://www.kernel.org/doc/html/next/bpf/ringbuf.html) support
+- [BTF](https://docs.kernel.org/bpf/btf.html) (BPF Type Format) exposure
+
+Most modern OS distributions meet these requirements out of the box.
+
+---
+
+## Vector Requirements
+
+[Vector](https://vector.dev/) scrapes logs from all cluster workloads and may require kernel parameter adjustments on your nodes:
+
+```bash
+declare -A sysctl_settings
+sysctl_settings["fs.nr_open"]=13181250
+sysctl_settings["fs.inotify.max_user_instances"]=1024
+sysctl_settings["fs.inotify.max_user_watches"]=1048576
+sysctl_settings["fs.file-max"]=13181250
+
+for key in "${!sysctl_settings[@]}"; do
+  value="${sysctl_settings[$key]}"
+  sysctl -w "$key=$value"
+  echo "$key=$value" > "/etc/sysctl.d/$key.conf"
+done
+sysctl --system
+```
+
+Apply this as part of your node image build or cloud-init process.
+
+---
+
+## Checklist
+
+Before moving on, confirm:
+
+- Kubernetes cluster is running
+- Default storage class is present
+- Load balancer provisioner is installed
+- You own a domain and can create wildcard DNS records
+- TLS certificates are available (or obtainable) for `*.yourdomain.com` and `*.admin.yourdomain.com`
+- Object storage buckets are created with credentials available
+- An external PostgreSQL database for Keycloak is available with credentials ready
+- UDS CLI is installed (`uds version`)
+
