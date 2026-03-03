@@ -3,7 +3,7 @@
 
 includes:
   - utils: ../../tasks/utils.yaml
-  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.0/tasks/setup.yaml
+  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.1/tasks/setup.yaml
 
 tasks:
   - name: validate
