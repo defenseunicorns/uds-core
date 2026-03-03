@@ -121,6 +121,146 @@ alertmanager:
       zarf.dev/connect-name: alertmanager
     annotations:
       zarf.dev/connect-description: "Directly connect to the Alertmanager HTTP service"
+## UDS Core uptime recording rules
+additionalPrometheusRulesMap:
+  uds-identity-uptime:
+    groups:
+      - name: uds-identity-uptime
+        rules:
+          - record: uds:keycloak:up
+            labels:
+              uds_layer: identity-authorization
+              uds_component: keycloak
+            expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}, 1)
+          - record: uds:keycloak_waypoint:up
+            labels:
+              uds_layer: identity-authorization
+              uds_component: keycloak_waypoint
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}, 1)
+          - record: uds:keycloak_endpoint:up
+            labels:
+              uds_layer: identity-authorization
+              uds_component: keycloak_endpoint
+            expr: min(probe_success{job="probe/keycloak/uds-sso-tenant-uptime"})
+          - record: uds:keycloak_admin_endpoint:up
+            labels:
+              uds_layer: identity-authorization
+              uds_component: keycloak_admin_endpoint
+            expr: min(probe_success{job="probe/keycloak/uds-keycloak-admin-uptime"})
+          - record: uds:authservice:up
+            labels:
+              uds_layer: identity-authorization
+              uds_component: authservice
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="authservice", namespace="authservice"}, 1)
+  uds-base-uptime:
+    groups:
+      - name: uds-base-uptime
+        rules:
+          - record: uds:pepr_admission:up
+            labels:
+              uds_layer: base
+              uds_component: pepr_admission
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="pepr-uds-core", namespace="pepr-system"}, 1)
+          - record: uds:pepr_watcher:up
+            labels:
+              uds_layer: base
+              uds_component: pepr_watcher
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="pepr-uds-core-watcher", namespace="pepr-system"}, 1)
+          - record: uds:istiod:up
+            labels:
+              uds_layer: base
+              uds_component: istiod
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="istiod", namespace="istio-system"}, 1)
+          - record: uds:istio_cni:up
+            labels:
+              uds_layer: base
+              uds_component: istio_cni
+            expr: kube_daemonset_status_number_ready{daemonset="istio-cni-node", namespace="istio-system"} >= bool kube_daemonset_status_desired_number_scheduled{daemonset="istio-cni-node", namespace="istio-system"}
+          - record: uds:admin_ingressgateway:up
+            labels:
+              uds_layer: base
+              uds_component: admin_ingressgateway
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}, 1)
+          - record: uds:ztunnel:up
+            labels:
+              uds_layer: base
+              uds_component: ztunnel
+            expr: kube_daemonset_status_number_ready{daemonset="ztunnel", namespace="istio-system"} >= bool kube_daemonset_status_desired_number_scheduled{daemonset="ztunnel", namespace="istio-system"}
+          - record: uds:tenant_ingressgateway:up
+            labels:
+              uds_layer: base
+              uds_component: tenant_ingressgateway
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}, 1)
+  uds-monitoring-uptime:
+    groups:
+      - name: uds-monitoring-uptime
+        rules:
+          - record: uds:prometheus:up
+            labels:
+              uds_layer: monitoring
+              uds_component: prometheus
+            expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}, 1)
+          - record: uds:alertmanager:up
+            labels:
+              uds_layer: monitoring
+              uds_component: alertmanager
+            expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}, 1)
+          - record: uds:grafana:up
+            labels:
+              uds_layer: monitoring
+              uds_component: grafana
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}, 1)
+          - record: uds:blackbox_exporter:up
+            labels:
+              uds_layer: monitoring
+              uds_component: blackbox_exporter
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="prometheus-blackbox-exporter", namespace="monitoring"}, 1)
+  uds-logging-uptime:
+    groups:
+      - name: uds-logging-uptime
+        rules:
+          - record: uds:loki:up
+            labels:
+              uds_layer: logging
+              uds_component: loki
+            expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="loki", namespace="loki"}, 1)
+          - record: uds:vector:up
+            labels:
+              uds_layer: logging
+              uds_component: vector
+            expr: kube_daemonset_status_number_ready{daemonset="vector", namespace="vector"} >= bool kube_daemonset_status_desired_number_scheduled{daemonset="vector", namespace="vector"}
+  uds-runtime-security-uptime:
+    groups:
+      - name: uds-runtime-security-uptime
+        rules:
+          - record: uds:falco:up
+            labels:
+              uds_layer: runtime-security
+              uds_component: falco
+            expr: kube_daemonset_status_number_ready{daemonset="falco", namespace="falco"} >= bool kube_daemonset_status_desired_number_scheduled{daemonset="falco", namespace="falco"}
+          - record: uds:falcosidekick:up
+            labels:
+              uds_layer: runtime-security
+              uds_component: falcosidekick
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="falcosidekick", namespace="falco"}, 1)
+  uds-backup-restore-uptime:
+    groups:
+      - name: uds-backup-restore-uptime
+        rules:
+          - record: uds:velero:up
+            labels:
+              uds_layer: backup-restore
+              uds_component: velero
+            expr: clamp_max(kube_deployment_status_replicas_available{deployment="velero", namespace="velero"}, 1)
+  uds-core-uptime:
+    groups:
+      - name: uds-core-uptime
+        rules:
+          - record: uds:core:up
+            labels:
+              uds_layer: core
+              uds_component: core
+            expr: uds:keycloak_endpoint:up * on() uds:keycloak:up * on() uds:keycloak_waypoint:up * on() uds:tenant_ingressgateway:up * on() uds:ztunnel:up
 ## Create default rules for monitoring the cluster
 ##
 defaultRules:
