@@ -4,7 +4,7 @@ sidebar:
   order: 3.4
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) is a single deployable artifact that captures your environment's configuration alongside all packages and images. You'll create two files: a `uds-bundle.yaml` that defines what to deploy and how to configure it, and a `uds-config.yaml` that supplies runtime values (credentials, certificates, domain names).
 
@@ -377,7 +377,7 @@ variables:
 
 1. **Create the bundle**
 
-   ```bash title="Terminal"
+   ```bash
    uds create --confirm
    ```
 
@@ -390,7 +390,7 @@ variables:
 
 2. **Inspect the bundle** *(optional)*
 
-   ```bash title="Terminal"
+   ```bash
    uds inspect uds-bundle-my-uds-core-*.tar.zst
    ```
 
@@ -403,15 +403,3 @@ variables:
 > [!NOTE]
 > The resulting bundle is self-contained (all images embedded, no internet needed at deploy time), versioned and reproducible, and transferable to airgapped environments or artifact registries.
 
----
-
-<CardGrid>
-  <LinkCard
-    title="← Provision External Services"
-    href="/getting-started/production/provision-services/"
-  />
-  <LinkCard
-    title="Deploy →"
-    href="/getting-started/production/deploy/"
-  />
-</CardGrid>

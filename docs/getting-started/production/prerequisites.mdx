@@ -4,7 +4,6 @@ sidebar:
   order: 3.2
 ---
 
-import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 Work through each section and confirm your environment meets the requirements before building your bundle.
 
@@ -42,7 +41,7 @@ These are conservative minimums. Size up based on the workloads you plan to run 
 
 Several UDS Core components require persistent volumes. Verify your cluster has a default storage class configured:
 
-```bash title="Terminal"
+```bash
 kubectl get storageclass
 ```
 
@@ -64,6 +63,21 @@ Istio's ingress gateways require a load balancer. When a `Service` of type `Load
 - **Cloud environments:** Use your cloud provider's load balancer controller (e.g., [AWS Load Balancer Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)).
 - **On-premises:** Use a bare-metal load balancer such as [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). A [MetalLB UDS Package](https://github.com/uds-packages/metallb) is available.
 - **Conflicting ingress controllers:** Some distributions (e.g., RKE2) include `ingress-nginx` by default. Disable it before deploying UDS Core to avoid conflicts with Istio.
+
+### RKE2 with CIS Profile
+
+If running RKE2 with the CIS hardening profile, control plane components bind to `127.0.0.1` by default, which prevents Prometheus from scraping them. Add the following to your control plane node's `/etc/rancher/rke2/config.yaml`:
+
+```yaml title="/etc/rancher/rke2/config.yaml"
+kube-controller-manager-arg:
+  - bind-address=0.0.0.0
+kube-scheduler-arg:
+  - bind-address=0.0.0.0
+etcd-arg:
+  - listen-metrics-urls=http://0.0.0.0:2381
+```
+
+Restart RKE2 after making these changes.
 
 ### DNS
 
@@ -87,7 +101,7 @@ If you are using **[Cilium](https://cilium.io/)**, CIDR-based network policies r
 
 [Istio](https://istio.io/) requires certain kernel modules to be loaded on each node. Run the following as part of your node image build or cloud-init configuration:
 
-```bash title="Terminal"
+```bash
 modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
 for module in "${modules[@]}"; do
   modprobe "$module"
@@ -96,24 +110,6 @@ done
 ```
 
 See [Istio's platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/) for the full upstream list.
-
-> [!NOTE]
-> **Windows WSL users:** You may need kernel version 6.6.x or later for the required Istio kernel modules. Update with `wsl --update --pre-release`.
-
-### RKE2 with CIS Profile
-
-If running RKE2 with the CIS hardening profile, control plane components bind to `127.0.0.1` by default, which prevents Prometheus from scraping them. Add the following to your control plane node's `/etc/rancher/rke2/config.yaml`:
-
-```yaml title="/etc/rancher/rke2/config.yaml"
-kube-controller-manager-arg:
-  - bind-address=0.0.0.0
-kube-scheduler-arg:
-  - bind-address=0.0.0.0
-etcd-arg:
-  - listen-metrics-urls=http://0.0.0.0:2381
-```
-
-Restart RKE2 after making these changes.
 
 ---
 
@@ -133,7 +129,7 @@ Most modern OS distributions meet these requirements out of the box.
 
 [Vector](https://vector.dev/) scrapes logs from all cluster workloads and may require kernel parameter adjustments on your nodes:
 
-```bash title="Terminal"
+```bash
 declare -A sysctl_settings
 sysctl_settings["fs.nr_open"]=13181250
 sysctl_settings["fs.inotify.max_user_instances"]=1024
@@ -165,15 +161,3 @@ Before moving on, confirm:
 - A [supported external database](https://www.keycloak.org/server/db#_supported_databases) for Keycloak is available with credentials ready
 - UDS CLI is installed (`uds version`)
 
----
-
-<CardGrid>
-  <LinkCard
-    title="← Overview"
-    href="/getting-started/production/overview/"
-  />
-  <LinkCard
-    title="Provision External Services →"
-    href="/getting-started/production/provision-services/"
-  />
-</CardGrid>

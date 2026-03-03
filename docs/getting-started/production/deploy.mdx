@@ -4,7 +4,7 @@ sidebar:
   order: 3.5
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## Deploy
 
@@ -12,13 +12,13 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 1. **Run the deploy command**
 
-   ```bash title="Terminal"
+   ```bash
    uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
    ```
 
    If you are using a `uds-config.yaml` for variables, it is picked up automatically from the current directory. You can also specify it explicitly:
 
-   ```bash title="Terminal"
+   ```bash
    UDS_CONFIG=uds-config.yaml uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
    ```
 
@@ -26,13 +26,13 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
    In a separate terminal, monitor the deployment as packages come up:
 
-   ```bash title="Terminal"
+   ```bash
    watch kubectl get pods -A
    ```
 
    Or use k9s:
 
-   ```bash title="Terminal"
+   ```bash
    uds zarf tools monitor
    ```
 
@@ -46,57 +46,71 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ## Verify
 
-### Pod health
+<Steps>
 
-```bash title="Terminal"
-# All pods should be Running or Completed
-kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
-```
+1. **Check pod health**
 
-Any pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state indicate a problem. See [Common Issues](#common-issues) below.
+   ```bash
+   # All pods should be Running or Completed
+   kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
+   ```
 
-### Namespaces
+   Any pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state indicate a problem. See [Common Issues](#common-issues) below.
 
-```bash title="Terminal"
-kubectl get namespaces | grep -E 'istio|keycloak|authservice|monitoring|grafana|logging|vector|velero|falco|pepr'
-```
+2. **Confirm namespaces**
 
-Expected namespaces:
+   ```bash
+   kubectl get namespaces
+   ```
 
-| Namespace | Component |
-|---|---|
-| `istio-system` | [Istio](https://istio.io/) control plane |
-| `istio-tenant-gateway` | Tenant ingress gateway |
-| `istio-admin-gateway` | Admin ingress gateway |
-| `keycloak` | [Keycloak](https://www.keycloak.org/) identity provider |
-| `authservice` | [Authservice](https://github.com/istio-ecosystem/authservice) SSO for mission applications |
-| `monitoring` | [Prometheus](https://prometheus.io/), [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) |
-| `grafana` | [Grafana](https://grafana.com/) |
-| `logging` | [Loki](https://grafana.com/oss/loki/) log storage |
-| `vector` | [Vector](https://vector.dev/) log aggregation |
-| `velero` | [Velero](https://velero.io/) backup controller |
-| `falco` | [Falco](https://falco.org/) runtime security |
-| `pepr-system` | UDS Operator ([Pepr](https://docs.pepr.dev/)) |
+   Expected namespaces:
 
-### Istio gateways
+   | Namespace | Component |
+   |---|---|
+   | `istio-system` | [Istio](https://istio.io/) control plane |
+   | `istio-tenant-gateway` | Tenant ingress gateway |
+   | `istio-admin-gateway` | Admin ingress gateway |
+   | `keycloak` | [Keycloak](https://www.keycloak.org/) identity provider |
+   | `authservice` | [Authservice](https://github.com/istio-ecosystem/authservice) SSO for mission applications |
+   | `monitoring` | [Prometheus](https://prometheus.io/), [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) |
+   | `grafana` | [Grafana](https://grafana.com/) |
+   | `logging` | [Loki](https://grafana.com/oss/loki/) log storage |
+   | `vector` | [Vector](https://vector.dev/) log aggregation |
+   | `velero` | [Velero](https://velero.io/) backup controller |
+   | `falco` | [Falco](https://falco.org/) runtime security |
+   | `prometheus-blackbox` | [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) endpoint probing |
+   | `pepr-system` | UDS Operator ([Pepr](https://docs.pepr.dev/)) |
 
-```bash title="Terminal"
-kubectl get svc -n istio-tenant-gateway
-kubectl get svc -n istio-admin-gateway
-```
+3. **Verify Istio gateways**
 
-Both `LoadBalancer` services should have an `EXTERNAL-IP` assigned. If they show `<pending>`, your load balancer provisioner may not be configured correctly.
+   ```bash
+   kubectl get svc -n istio-tenant-gateway
+   kubectl get svc -n istio-admin-gateway
+   ```
 
-### Admin UIs
+   Both `LoadBalancer` services should have an `EXTERNAL-IP` assigned. If they show `<pending>`, your load balancer provisioner may not be configured correctly.
 
-Once DNS is resolving to your load balancer, access:
+4. **Configure DNS records**
 
-| Service | URL |
-|---|---|
-| Keycloak | `https://keycloak.<your-admin-domain>` |
-| Grafana | `https://grafana.<your-admin-domain>` |
+   Now that the gateways have external IPs, create (or update) your wildcard DNS records to point to them:
 
-The Keycloak admin console login verifies that identity and ingress are working end-to-end.
+   | Record | Type | Value |
+   |---|---|---|
+   | `*.yourdomain.com` | A (or CNAME) | Tenant gateway `EXTERNAL-IP` |
+   | `*.admin.yourdomain.com` | A (or CNAME) | Admin gateway `EXTERNAL-IP` |
+
+5. **Access the admin UIs**
+
+   Once DNS is resolving to your load balancer, access:
+
+   | Service | URL |
+   |---|---|
+   | Keycloak | `https://keycloak.<your-admin-domain>` |
+   | Grafana | `https://grafana.<your-admin-domain>` |
+
+   The Keycloak admin console login verifies that identity and ingress are working end-to-end.
+
+</Steps>
 
 ---
 
@@ -106,7 +120,7 @@ The Keycloak admin console login verifies that identity and ingress are working 
 
 Usually indicates insufficient cluster resources or a missing storage class.
 
-```bash title="Terminal"
+```bash
 kubectl describe pod <pod-name> -n <namespace>
 ```
 
@@ -116,7 +130,7 @@ Look for `Insufficient cpu`, `Insufficient memory`, or `no persistent volumes av
 
 Often caused by incorrect object storage credentials or unreachable storage endpoint. Check the pod logs:
 
-```bash title="Terminal"
+```bash
 kubectl logs -n logging -l app.kubernetes.io/name=loki --tail=50
 kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50
 ```
@@ -136,7 +150,7 @@ Check that:
 
 If Keycloak is running but crashing on startup, check the logs for database connection errors:
 
-```bash title="Terminal"
+```bash
 kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
 ```
 
@@ -160,16 +174,3 @@ Here's what you've stood up:
 
 From here, explore the [How-To Guides](/how-to-guides/overview/) for topics like configuring log retention, setting up SSO, and managing policy exemptions. To configure high availability for UDS Core components, see the [High Availability Overview](/how-to-guides/high-availability/overview/).
 
----
-
-
-<CardGrid>
-  <LinkCard
-    title="← Build Your Bundle"
-    href="/getting-started/production/build-your-bundle/"
-  />
-  <LinkCard
-    title="How-To Guides →"
-    href="/how-to-guides/overview/"
-  />
-</CardGrid>

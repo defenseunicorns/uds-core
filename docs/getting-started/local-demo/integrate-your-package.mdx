@@ -4,7 +4,7 @@ sidebar:
   order: 2.4
 ---
 
-import { Steps, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 This tutorial walks through packaging a sample application and deploying it alongside UDS Core. By the end you'll have an app exposed through [Istio](https://istio.io/) ingress and protected by [Keycloak](https://www.keycloak.org/) SSO, wired up automatically by the UDS Operator.
 
@@ -17,11 +17,7 @@ The sample app is [podinfo](https://github.com/stefanprodan/podinfo), a lightwei
 
 ## Requirements
 
-- **UDS CLI** — installed in the previous step
-- **[Zarf](https://docs.zarf.dev/)** — for building packages:
-  ```bash
-  brew install zarf
-  ```
+- **UDS CLI** — installed in the previous step (includes Zarf via `uds zarf`)
 
 ---
 
@@ -39,7 +35,7 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
 
 2. **Create `zarf.yaml`**
 
-   ```yaml
+   ```yaml title="zarf.yaml"
    kind: ZarfPackageConfig
    metadata:
      name: podinfo
@@ -61,7 +57,7 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
 3. **Build the package**
 
    ```bash
-   zarf package create --confirm
+   uds zarf package create --confirm
    ```
 
    Produces `zarf-package-podinfo-<arch>-0.0.1.tar.zst`.
@@ -78,7 +74,7 @@ The UDS Operator watches for `Package` custom resources and automatically config
 
 1. **Create `podinfo-package.yaml`**
 
-   ```yaml
+   ```yaml title="podinfo-package.yaml"
    apiVersion: uds.dev/v1alpha1
    kind: Package
    metadata:
@@ -123,7 +119,7 @@ The UDS Operator watches for `Package` custom resources and automatically config
 
    Add a `manifests` block to the podinfo component:
 
-   ```yaml
+   ```yaml title="zarf.yaml"
    components:
      - name: podinfo
        required: true
@@ -145,66 +141,26 @@ The UDS Operator watches for `Package` custom resources and automatically config
 3. **Rebuild the package**
 
    ```bash
-   zarf package create --confirm
+   uds zarf package create --confirm
    ```
 
 </Steps>
 
 ---
 
-## Bundle and Deploy
+## Deploy to the Existing Cluster
 
-A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) groups packages into a single deployable artifact. Here you'll wrap UDS Core and podinfo together so they deploy as one unit.
+Since you already have a running k3d cluster with UDS Core from the previous step, deploy the podinfo package directly:
 
 <Steps>
 
-1. **Create `uds-bundle.yaml`** one directory above `podinfo-package/`
+1. **Deploy the package**
 
    ```bash
-   cd ..
+   uds zarf package deploy zarf-package-podinfo-*.tar.zst --confirm
    ```
 
-   ```yaml
-   kind: UDSBundle
-   metadata:
-     name: podinfo-bundle
-     description: k3d cluster with UDS Core and podinfo.
-     version: 0.0.1
-
-   packages:
-     - name: uds-k3d
-       repository: ghcr.io/defenseunicorns/packages/uds-k3d
-       ref: 0.19.4
-
-     - name: init
-       repository: ghcr.io/zarf-dev/packages/init
-       ref: v0.73.0
-
-     - name: core
-       repository: ghcr.io/defenseunicorns/packages/uds/core
-       ref: 0.62.0-upstream
-
-     - name: podinfo
-       path: ./podinfo-package
-       ref: 0.0.1
-   ```
-
-2. **Build the bundle**
-
-   ```bash
-   uds create --confirm
-   ```
-
-   Produces `uds-bundle-podinfo-bundle-<arch>-0.0.1.tar.zst`.
-
-3. **Tear down the previous cluster and deploy**
-
-   ```bash
-   k3d cluster delete uds
-   uds deploy uds-bundle-podinfo-bundle-*-0.0.1.tar.zst --confirm
-   ```
-
-   Deployment takes approximately 10–15 minutes.
+   This deploys podinfo and the `Package` CR onto your existing UDS Core cluster. The UDS Operator picks up the CR and configures ingress, SSO, monitoring, and network policies automatically.
 
 </Steps>
 
@@ -214,7 +170,7 @@ A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) groups packages i
 
 Check that the UDS Operator processed the `Package` resource:
 
-```bash title="Terminal"
+```bash
 kubectl get package -n podinfo
 ```
 
@@ -231,9 +187,16 @@ podinfo   Ready    ["uds-core-podinfo"]   ["podinfo.uds.dev"]   ["podinfo-..."] 
 
 Navigate to [https://podinfo.uds.dev](https://podinfo.uds.dev). You'll be redirected to Keycloak. Only members of `/UDS Core/Admin` can log in.
 
-Create a test user:
+Create a test user by setting up a simple [UDS task](https://uds.defenseunicorns.com/reference/cli/runner/) file that imports a helper from [uds-common](https://github.com/defenseunicorns/uds-common):
 
-```bash title="Terminal"
+```yaml title="tasks.yaml"
+includes:
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/main/tasks/setup.yaml
+```
+
+Then run the task:
+
+```bash
 uds run common-setup:keycloak-user --set KEYCLOAK_USER_GROUP="/UDS Core/Admin"
 ```
 
@@ -261,9 +224,3 @@ By declaring your app's needs in the `Package` CR, the UDS Operator automaticall
 
 For the full `Package` CR reference, see [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/).
 
----
-
-<LinkCard
-  title="← Install and Deploy UDS"
-  href="/getting-started/local-demo/install-and-deploy-uds/"
-/>

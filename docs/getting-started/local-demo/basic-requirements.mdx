@@ -4,7 +4,7 @@ sidebar:
   order: 2.2
 ---
 
-import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## Requirements
 
@@ -59,6 +59,9 @@ Your container runtime must have access to at least:
   1. **Install Docker Engine**
 
      Install [Docker Engine](https://docs.docker.com/engine/install/) for your distribution, or [Docker Desktop for Linux](https://docs.docker.com/desktop/install/linux-install/).
+
+     > [!NOTE]
+     > Docker Desktop requires a paid subscription for companies with 250+ employees or $10M+ revenue. [Docker Engine](https://docs.docker.com/engine/install/) is a free alternative.
 
   2. **Install [Homebrew](https://brew.sh/)**
 
@@ -116,12 +119,14 @@ Your container runtime must have access to at least:
      > wsl --update --pre-release
      > ```
 
-  2. **Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows**
+  2. **Install a container runtime**
 
-     Docker Desktop integrates automatically with WSL 2. In Docker Desktop settings, enable **Use the WSL 2 based engine**.
+     **Option A: [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** — integrates automatically with WSL 2. In Docker Desktop settings, enable **Use the WSL 2 based engine**.
 
      > [!NOTE]
      > Docker Desktop requires a paid subscription for companies with 250+ employees or $10M+ revenue.
+
+     **Option B: [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)** — install directly inside your WSL Ubuntu distribution as a free alternative.
 
   3. **Install [Homebrew](https://brew.sh/) and [k3d](https://k3d.io/)** in your WSL terminal
 
@@ -148,7 +153,7 @@ Your container runtime must have access to at least:
 
 Confirm your tools are installed and working:
 
-```bash title="Terminal"
+```bash
 docker info   # Docker is running
 k3d version   # k3d is installed
 ```
@@ -161,15 +166,3 @@ Both commands should return version output without errors.
 > [!NOTE]
 > The UDS CLI is installed in the next step.
 
----
-
-<CardGrid>
-  <LinkCard
-    title="← Overview"
-    href="/getting-started/local-demo/overview/"
-  />
-  <LinkCard
-    title="Install and Deploy UDS →"
-    href="/getting-started/local-demo/install-and-deploy-uds/"
-  />
-</CardGrid>

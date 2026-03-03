@@ -4,7 +4,7 @@ sidebar:
   order: 2.3
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 > [!CAUTION]
 > The `k3d-core-demo` bundle is for local development and evaluation only. It is **not intended for production use**.
@@ -72,7 +72,7 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 Once deployment completes, confirm UDS Core is healthy:
 
-```bash title="Terminal"
+```bash
 # All pods should be Running or Completed
 kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
 ```
@@ -95,25 +95,7 @@ No output means all pods are healthy.
 
 Delete the local k3d cluster:
 
-```bash title="Terminal"
+```bash
 k3d cluster delete uds
 ```
 
-If you used [Colima](https://github.com/abiosoft/colima) as your container runtime, also remove it:
-
-```bash title="Terminal"
-colima delete -f
-```
-
----
-
-<CardGrid>
-  <LinkCard
-    title="← Set Up Your Environment"
-    href="/getting-started/local-demo/basic-requirements/"
-  />
-  <LinkCard
-    title="Add Your Own Package →"
-    href="/getting-started/local-demo/integrate-your-package/"
-  />
-</CardGrid>
