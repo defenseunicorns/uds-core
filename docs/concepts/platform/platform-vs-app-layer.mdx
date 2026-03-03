@@ -1,0 +1,62 @@
+---
+title: Platform vs Application Layer
+sidebar:
+  order: 3.3
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+UDS Core provides a shared platform layer — networking, identity, observability, security, and backup — so application teams can focus on mission logic rather than infrastructure plumbing. This page clarifies the ownership boundary between the two layers.
+
+## Capability Ownership
+
+<CardGrid>
+  <Card title="Platform Provides" icon="approve-check-circle">
+    - Networking & mTLS
+    - Identity & SSO
+    - Logging
+    - Monitoring
+    - Runtime Security
+    - Backup & Restore
+    - Policy & Compliance
+  </Card>
+
+  <Card title="Application Teams Own" icon="document">
+    - Workload packaging
+    - Package CR declarations
+    - Application configuration
+    - Data management & migrations
+    - Scaling & resource requests
+  </Card>
+</CardGrid>
+
+## How the Two Layers Interact
+
+The **`Package` CR** is the contract between layers:
+
+- **App teams declare** *what* they need — ingress routes, SSO clients, monitoring endpoints, network policy exceptions
+- **The platform fulfills** *how* — Istio routing, Keycloak clients, Pepr policies are all handled automatically
+
+When an app needs a policy exception, the team creates an **`Exemption` CR** — keeping exceptions explicit, auditable, and separate from the `Package` CR.
+
+See [Core CRDs](/concepts/configuration-and-packaging/crd-overviews/) for details on both CRs.
+
+## Why This Separation Matters
+
+<CardGrid>
+  <Card title="Consistency" icon="approve-check">
+    Same security, networking, and observability baseline for every application.
+  </Card>
+
+  <Card title="Compliance" icon="setting">
+    Platform-wide controls enforced uniformly, simplifying accreditation.
+  </Card>
+
+  <Card title="Speed" icon="rocket">
+    Teams declare intent, not infrastructure details — ship faster.
+  </Card>
+
+  <Card title="Upgradability" icon="random">
+    Platform and app workloads upgrade independently.
+  </Card>
+</CardGrid>

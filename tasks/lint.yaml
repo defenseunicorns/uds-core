@@ -76,3 +76,42 @@ tasks:
     actions:
       - description: Add the SPDX license identifier to source files
         task: remote:fix-license
+
+  - name: k8s-version-check
+    description: "Verify documented Kubernetes version matches CI test config"
+    actions:
+      - description: Check k8s version consistency between docs and terraform
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          DOC_FILE="docs/concepts/platform/supported-distributions.mdx"
+
+          # Extract k8s versions from terraform config
+          EKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/aws/eks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
+          AKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/azure/aks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
+          RKE2_VERSION=$(sed -n 's/.*rke2_version *= *"\([0-9]*\.[0-9]*\)".*/\1/p' .github/test-infra/aws/rke2/terraform.tfvars)
+
+          # Extract k8s versions from the doc table (bold versions like **1.34**)
+          DOC_VERSIONS=$(sed -n 's/.*\*\*[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\)\*\*.*/\1/p' "$DOC_FILE" | sort -u)
+          DOC_VERSION_COUNT=$(echo "$DOC_VERSIONS" | wc -l | tr -d ' ')
+
+          echo "EKS version:  $EKS_VERSION"
+          echo "AKS version:  $AKS_VERSION"
+          echo "RKE2 version: $RKE2_VERSION"
+          echo "Doc versions: $DOC_VERSIONS (unique count: $DOC_VERSION_COUNT)"
+
+          FAILED=0
+
+          # All doc table versions should be the same
+          if [ "$DOC_VERSION_COUNT" -ne 1 ]; then
+            echo "ERROR: Multiple k8s versions found in docs table: $DOC_VERSIONS"
+            FAILED=1
+          fi
+
+          DOC_VERSION=$(echo "$DOC_VERSIONS" | head -1)
+
+          [ "$DOC_VERSION" != "$EKS_VERSION" ] && echo "ERROR: EKS version ($EKS_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
+          [ "$DOC_VERSION" != "$AKS_VERSION" ] && echo "ERROR: AKS version ($AKS_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
+          [ "$DOC_VERSION" != "$RKE2_VERSION" ] && echo "ERROR: RKE2 version ($RKE2_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
+          exit $FAILED

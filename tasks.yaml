@@ -149,6 +149,11 @@ tasks:
     actions:
       - task: lint:check
 
+  - name: k8s-version-check
+    description: "Verify documented k8s version matches CI config"
+    actions:
+      - task: lint:k8s-version-check
+
   - name: lint-fix
     description: "Fix linting issues"
     actions:
