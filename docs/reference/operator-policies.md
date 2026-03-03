@@ -4,7 +4,7 @@ sidebar:
   order: 6
 ---
 
-## UDS Operator policies
+## UDS Operator Policies
 
 This page lists all Pepr policies enforced by the UDS Operator, including which are validating (blocking) vs. mutating (auto-correcting), and what each enforces.
 

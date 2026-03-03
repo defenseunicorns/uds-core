@@ -44,7 +44,7 @@ This automation means platform teams don't need to write low-level Istio or Kube
 
 The UDS Policy Engine (built on [Pepr](https://github.com/defenseunicorns/pepr)) runs as admission webhooks alongside the operator. It enforces a security baseline across all workloads — preventing privileged containers, enforcing non-root execution, restricting volume types, and more. Policies run as both mutations (automatically correcting safe defaults) and validations (blocking unsafe configurations). For the full list of enforced policies, see the [UDS Operator Policies](/reference/operator-policies/).
 
-When a workload legitimately needs an exemption, teams create a `UDSExemption` CR to declare the exception explicitly, keeping the audit trail clear.
+When a workload legitimately needs an exemption, teams create an `Exemption` CR to declare the exception explicitly, keeping the audit trail clear.
 
 ---
 

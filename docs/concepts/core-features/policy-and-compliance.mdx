@@ -36,7 +36,7 @@ Mutations apply safe defaults where possible (capability drops, `runAsNonRoot`).
 
 ## Exemptions
 
-Some workloads legitimately require behavior that policy would otherwise block — a privileged DaemonSet for node-level observability, or a legacy application that cannot yet run as non-root. UDS Core handles these cases through the `UDSExemption` custom resource.
+Some workloads legitimately require behavior that policy would otherwise block — a privileged DaemonSet for node-level observability, or a legacy application that cannot yet run as non-root. UDS Core handles these cases through the `Exemption` custom resource.
 
 An exemption declares that a specific workload in a specific namespace is permitted to bypass a named policy. Exemptions are stored as Kubernetes objects, which means they appear in audit logs, require RBAC to create, and can be reviewed in code review like any other resource.
 
