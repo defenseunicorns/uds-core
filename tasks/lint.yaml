@@ -117,10 +117,12 @@ tasks:
             FAILED=1
           fi
 
-          # Check each table row contains the version
-          TABLE_MATCHES=$(grep -c "| \*\*${EXPECTED}\*\* |" "$DOC_FILE" || true)
-          if [ "$TABLE_MATCHES" -ne 4 ]; then
-            echo "ERROR: Expected 4 table rows with **${EXPECTED}**, found ${TABLE_MATCHES}"
+          # Check that all versioned table rows use the expected version
+          ALL_VERSION_ROWS=$(grep -E '^\| .* \*\*[0-9]+\.[0-9]+\*\* \|' "$DOC_FILE" || true)
+          TOTAL_ROWS=$(printf '%s\n' "$ALL_VERSION_ROWS" | sed -n '/./p' | wc -l | tr -d ' ')
+          EXPECTED_ROWS=$(printf '%s\n' "$ALL_VERSION_ROWS" | grep -F "| **${EXPECTED}** |" | wc -l | tr -d ' ')
+          if [ "$TOTAL_ROWS" -ne "$EXPECTED_ROWS" ]; then
+            echo "ERROR: One or more distribution rows use a Kubernetes version different from ${EXPECTED}"
             FAILED=1
           fi
 
