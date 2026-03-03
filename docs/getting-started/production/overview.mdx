@@ -25,7 +25,7 @@ This path is for:
 | **DNS** | `*.uds.dev` (automatic) | Wildcard records pointing to your load balancers |
 | **TLS** | TLS certs for `uds.dev` only | Real certificates for your domain |
 | **Log storage** | In-cluster | Object storage (Loki: chunks, admin buckets) |
-| **Backup storage** | None | Object storage (Velero) |
+| **Backup storage** | In-cluster Velero + MinIO (dev only) | External object storage (Velero) |
 | **Identity DB** | Embedded dev-mode database (not for prod) | External database |
 
 ---
