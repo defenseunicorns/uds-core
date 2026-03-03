@@ -94,12 +94,13 @@ Before building your bundle, provision the external services UDS Core requires: 
 
    **Provider options (PostgreSQL)**
 
-   | Provider | Service | Notes |
-   |---|---|---|
-   | **AWS** | RDS for PostgreSQL | Enable automated backups |
-   | **Azure** | Azure Database for PostgreSQL | Flexible Server recommended |
-   | **GCP** | Cloud SQL for PostgreSQL | Use private IP for security |
-   | **On-premises / In-cluster** | Postgres Operator | [UDS Postgres Operator Package](https://github.com/uds-packages/postgres-operator) (uses the Zalando operator) |
+   | Provider | Service |
+   |---|---|
+   | **AWS** | [RDS for PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html) |
+   | **Azure** | [Azure Database for PostgreSQL](https://learn.microsoft.com/en-us/azure/postgresql/) |
+   | **GCP** | [Cloud SQL for PostgreSQL](https://cloud.google.com/sql/docs/postgres) |
+   | **On-premises / In-cluster** | [UDS Postgres Operator Package](https://github.com/uds-packages/postgres-operator) (Zalando operator) |
+
 
    Note the following: database host, database name, username, and password. You will use these when configuring bundle overrides.
 
