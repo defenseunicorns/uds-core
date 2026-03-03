@@ -1,5 +1,5 @@
 ---
-title: UDS Core
+title: Overview
 sidebar:
   order: 1
 ---
@@ -28,9 +28,9 @@ UDS Core is organized into **functional layers** — discrete Zarf packages grou
 
 ## The UDS Operator
 
-The UDS Operator is the control plane for UDS Core. The key integration point is the **UDS Package custom resource (CR)** — when a team deploys an application, they create a Package CR that declares the application's networking intent (what to expose, what egress to allow), its SSO requirements, and any monitoring needs. The operator reconciles this CR and creates all the necessary platform resources automatically — the application team does not directly write Istio VirtualServices, NetworkPolicies, or Keycloak client configs.
+The UDS Operator is the control plane for UDS Core. The key integration point is the **UDS Package custom resource (CR)** — teams create a Package CR declaring networking intent, SSO requirements, and monitoring needs. The operator reconciles the CR and creates all necessary platform resources automatically.
 
-It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources and manages their lifecycle. Among other things, when a Package CR is created or updated, the operator:
+It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources. When a Package CR is created or updated, the operator:
 
 - Generates Istio `VirtualService` and `AuthorizationPolicy` resources to control traffic
 - Creates Kubernetes `NetworkPolicy` resources to enforce network boundaries

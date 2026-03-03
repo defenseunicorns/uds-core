@@ -31,7 +31,6 @@ Applications deployed on regulated platforms cannot each maintain their own user
 
 - Creates a Keycloak OIDC client with the correct redirect URIs
 - Stores the client credentials in a Kubernetes secret in the application namespace
-- Restarts pods that consume secrets labeled `uds.dev/pod-reload` when credentials rotate
 
 From there, how SSO works depends on whether the application supports OIDC natively.
 
