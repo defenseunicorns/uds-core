@@ -85,33 +85,46 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
+          set -euo pipefail
           DOC_FILE="docs/concepts/platform/supported-distributions.mdx"
+          FAILED=0
 
           # Extract k8s versions from terraform config
           EKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/aws/eks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
           AKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/azure/aks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
           RKE2_VERSION=$(sed -n 's/.*rke2_version *= *"\([0-9]*\.[0-9]*\)".*/\1/p' .github/test-infra/aws/rke2/terraform.tfvars)
 
-          # Extract k8s versions from the doc table (bold versions like **1.34**)
-          DOC_VERSIONS=$(sed -n 's/.*\*\*[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\)\*\*.*/\1/p' "$DOC_FILE" | sort -u)
-          DOC_VERSION_COUNT=$(echo "$DOC_VERSIONS" | wc -l | tr -d ' ')
+          for name in EKS AKS RKE2; do
+            val=$(eval echo "\$${name}_VERSION")
+            if [ -z "$val" ]; then
+              echo "ERROR: Failed to extract ${name} version from terraform config"
+              exit 1
+            fi
+            echo "${name} version: $val"
+          done
 
-          echo "EKS version:  $EKS_VERSION"
-          echo "AKS version:  $AKS_VERSION"
-          echo "RKE2 version: $RKE2_VERSION"
-          echo "Doc versions: $DOC_VERSIONS (unique count: $DOC_VERSION_COUNT)"
+          # All terraform versions must agree
+          if [ "$EKS_VERSION" != "$AKS_VERSION" ] || [ "$EKS_VERSION" != "$RKE2_VERSION" ]; then
+            echo "ERROR: Terraform versions disagree (EKS=$EKS_VERSION AKS=$AKS_VERSION RKE2=$RKE2_VERSION)"
+            exit 1
+          fi
+          EXPECTED="$EKS_VERSION"
+          echo "Expected version: $EXPECTED"
 
-          FAILED=0
-
-          # All doc table versions should be the same
-          if [ "$DOC_VERSION_COUNT" -ne 1 ]; then
-            echo "ERROR: Multiple k8s versions found in docs table: $DOC_VERSIONS"
+          # Check the [!NOTE] callout contains the version
+          if ! grep -q "tests against \*\*Kubernetes ${EXPECTED}\*\*" "$DOC_FILE"; then
+            echo "ERROR: [!NOTE] callout missing version (expected '**Kubernetes ${EXPECTED}**')"
             FAILED=1
           fi
 
-          DOC_VERSION=$(echo "$DOC_VERSIONS" | head -1)
+          # Check each table row contains the version
+          TABLE_MATCHES=$(grep -c "| \*\*${EXPECTED}\*\* |" "$DOC_FILE" || true)
+          if [ "$TABLE_MATCHES" -ne 4 ]; then
+            echo "ERROR: Expected 4 table rows with **${EXPECTED}**, found ${TABLE_MATCHES}"
+            FAILED=1
+          fi
 
-          [ "$DOC_VERSION" != "$EKS_VERSION" ] && echo "ERROR: EKS version ($EKS_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
-          [ "$DOC_VERSION" != "$AKS_VERSION" ] && echo "ERROR: AKS version ($AKS_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
-          [ "$DOC_VERSION" != "$RKE2_VERSION" ] && echo "ERROR: RKE2 version ($RKE2_VERSION) does not match docs ($DOC_VERSION)" && FAILED=1
+          if [ "$FAILED" -eq 0 ]; then
+            echo "OK: All versions match $EXPECTED"
+          fi
           exit $FAILED
