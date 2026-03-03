@@ -23,7 +23,7 @@ The sample app is [podinfo](https://github.com/stefanprodan/podinfo), a lightwei
 
 ## Create the Zarf Package
 
-A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and manifests for airgap-safe delivery.
+A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and manifests for airgap-safe delivery. The UDS Operator watches for `Package` custom resources and automatically configures Istio ingress, Keycloak SSO, [Prometheus](https://prometheus.io/) monitoring, and network policies for your app.
 
 <Steps>
 
@@ -33,46 +33,9 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
    mkdir podinfo-package && cd podinfo-package
    ```
 
-2. **Create `zarf.yaml`**
+2. **Create the UDS Package CR**
 
-   ```yaml title="zarf.yaml"
-   kind: ZarfPackageConfig
-   metadata:
-     name: podinfo
-     version: 0.0.1
-
-   components:
-     - name: podinfo
-       required: true
-       charts:
-         - name: podinfo
-           version: 6.10.1
-           namespace: podinfo
-           url: https://github.com/stefanprodan/podinfo.git
-           gitPath: charts/podinfo
-       images:
-         - ghcr.io/stefanprodan/podinfo:6.10.1
-   ```
-
-3. **Build the package**
-
-   ```bash
-   uds zarf package create --confirm
-   ```
-
-   Produces `zarf-package-podinfo-<arch>-0.0.1.tar.zst`.
-
-</Steps>
-
----
-
-## Add the UDS Package CR
-
-The UDS Operator watches for `Package` custom resources and automatically configures UDS Core services for your app: Istio ingress, Keycloak SSO, [Prometheus](https://prometheus.io/) monitoring, and network policies.
-
-<Steps>
-
-1. **Create `podinfo-package.yaml`**
+   This manifest tells the UDS Operator what platform integrations your app needs:
 
    ```yaml title="podinfo-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -108,18 +71,23 @@ The UDS Operator watches for `Package` custom resources and automatically config
          kind: PodMonitor
    ```
 
-   This manifest tells the UDS Operator to:
+   When the operator reconciles this CR, it will:
 
    - Create an Istio `VirtualService` exposing podinfo at `podinfo.uds.dev`
    - Register a Keycloak OIDC client and protect the app with [Authservice](https://github.com/istio-ecosystem/authservice)
    - Create a Prometheus `PodMonitor` for metrics scraping
    - Generate all required `NetworkPolicy` resources automatically
 
-2. **Add the manifest to `zarf.yaml`**
+3. **Create `zarf.yaml`**
 
-   Add a `manifests` block to the podinfo component:
+   The Zarf package definition bundles the Helm chart, the Package CR, and the container image together:
 
    ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: podinfo
+     version: 0.0.1
+
    components:
      - name: podinfo
        required: true
@@ -138,29 +106,14 @@ The UDS Operator watches for `Package` custom resources and automatically config
          - ghcr.io/stefanprodan/podinfo:6.10.1
    ```
 
-3. **Rebuild the package**
+4. **Build and deploy the package**
 
    ```bash
    uds zarf package create --confirm
-   ```
-
-</Steps>
-
----
-
-## Deploy to the Existing Cluster
-
-Since you already have a running k3d cluster with UDS Core from the previous step, deploy the podinfo package directly:
-
-<Steps>
-
-1. **Deploy the package**
-
-   ```bash
    uds zarf package deploy zarf-package-podinfo-*.tar.zst --confirm
    ```
 
-   This deploys podinfo and the `Package` CR onto your existing UDS Core cluster. The UDS Operator picks up the CR and configures ingress, SSO, monitoring, and network policies automatically.
+   This builds `zarf-package-podinfo-<arch>-0.0.1.tar.zst`, then deploys it onto your existing UDS Core cluster. The UDS Operator picks up the Package CR and configures ingress, SSO, monitoring, and network policies automatically.
 
 </Steps>
 
@@ -187,7 +140,7 @@ podinfo   Ready    ["uds-core-podinfo"]   ["podinfo.uds.dev"]   ["podinfo-..."] 
 
 Navigate to [https://podinfo.uds.dev](https://podinfo.uds.dev). You'll be redirected to Keycloak. Only members of `/UDS Core/Admin` can log in.
 
-Create a test user by setting up a simple [UDS task](https://uds.defenseunicorns.com/reference/cli/runner/) file that imports a helper from [uds-common](https://github.com/defenseunicorns/uds-common):
+Create a test user by setting up a simple `tasks.yaml` file that imports a helper from [uds-common](https://github.com/defenseunicorns/uds-common):
 
 ```yaml title="tasks.yaml"
 includes:
