@@ -109,7 +109,7 @@
           "refId": "A"
         }
       ],
-      "title": "Uptime",
+      "title": "Probe Uptime",
       "type": "state-timeline"
     },
     {
@@ -353,7 +353,10 @@
   ],
   "preload": false,
   "schemaVersion": 42,
-  "tags": ["uds", "blackbox-exporter"],
+  "tags": [
+    "uds",
+    "blackbox-exporter"
+  ],
   "templating": {
     "list": []
   },
@@ -363,7 +366,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "UDS / Monitoring / Uptime",
+  "title": "UDS / Monitoring / Probe Uptime",
   "uid": "dol8jdr",
   "version": 2
 }
