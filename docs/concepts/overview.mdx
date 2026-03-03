@@ -4,7 +4,7 @@ sidebar:
   order: 1
 ---
 
-import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What is UDS Core?
 
@@ -49,24 +49,20 @@ When a workload legitimately needs an exemption, teams create an `Exemption` CR 
 ---
 
 <CardGrid>
-  <LinkCard
-    title="Core Features"
-    description="Networking, identity, logging, monitoring, runtime security, backup, and policy — what each layer does and why."
-    href="/concepts/core-features/overview/"
-  />
-  <LinkCard
-    title="Platform"
-    description="Environments, cluster flavors, and how UDS Core adapts to different deployment targets."
-    href="/concepts/platform/overview/"
-  />
-  <LinkCard
-    title="Configuration & Packaging"
-    description="Bundles, CRDs, and the packaging model that makes UDS Core composable."
-    href="/concepts/configuration-and-packaging/overview/"
-  />
-  <LinkCard
-    title="How-to Guides"
-    description="Step-by-step instructions for configuring and operating UDS Core in your environment."
-    href="/how-to-guides/overview/"
-  />
+  <Card title="Core Features" icon="star">
+    Networking, identity, logging, monitoring, runtime security, backup, and policy — what each layer does and why.
+    <LinkCard title="Explore features" href="/concepts/core-features/overview/" />
+  </Card>
+  <Card title="Platform" icon="rocket">
+    Environments, cluster flavors, and how UDS Core adapts to different deployment targets.
+    <LinkCard title="Learn more" href="/concepts/platform/overview/" />
+  </Card>
+  <Card title="Configuration & Packaging" icon="document">
+    Bundles, CRDs, and the packaging model that makes UDS Core composable.
+    <LinkCard title="Learn more" href="/concepts/configuration-and-packaging/overview/" />
+  </Card>
+  <Card title="How-to Guides" icon="open-book">
+    Step-by-step instructions for configuring and operating UDS Core in your environment.
+    <LinkCard title="Get started" href="/how-to-guides/overview/" />
+  </Card>
 </CardGrid>
