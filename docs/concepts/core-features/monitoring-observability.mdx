@@ -5,8 +5,6 @@ sidebar:
 ---
 
 
-## Monitoring & Observability in UDS Core
-
 UDS Core ships a complete metrics-based monitoring stack built on [Prometheus](https://prometheus.io/), [Grafana](https://grafana.com/), [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/), and [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter). From the moment UDS Core is deployed, platform components are automatically instrumented — operators get visibility into cluster health without additional configuration.
 
 ## Why a built-in monitoring stack?
@@ -23,24 +21,20 @@ By including monitoring as a platform layer, UDS Core provides:
 
 | Component | Role |
 |---|---|
-| **Prometheus** | Scrapes `/metrics` endpoints, stores time-series data, and evaluates alerting rules |
+| **Prometheus** | Scrapes metrics endpoints, stores time-series data, and evaluates alerting rules |
 | **Grafana** | Dashboards and log exploration across Prometheus and Loki; access gated by UDS Core groups |
-| **Alertmanager** | Routes fired alerts to Slack, PagerDuty, email, or custom webhooks with grouping and silencing |
-| **Blackbox Exporter** | Probes HTTP/HTTPS/TCP endpoints for end-to-end availability monitoring independent of pod health |
+| **Alertmanager** | Routes fired alerts to [a wide range of integrations](https://prometheus.io/docs/alerting/latest/integrations/) with grouping, silencing, and deduplication |
+| **Blackbox Exporter** | Probes HTTPS endpoints for end-to-end availability monitoring independent of pod health |
 
 ## How application teams add metrics
 
-Applications declare their monitoring needs in the Package CR's `monitor` block. The UDS Operator automatically creates the appropriate `ServiceMonitor`, `PodMonitor`, and blackbox probe resources for Prometheus to scrape. Alert rules for application-specific conditions are expressed as `PrometheusRule` CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
+Applications declare their monitoring needs in the Package CR's `monitor` block. The UDS Operator automatically creates the appropriate [`ServiceMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor), [`PodMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor), and [`Probe`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources for Prometheus to scrape. Alert rules for application-specific conditions are expressed as [`PrometheusRule`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
 
 ## Alert routing principles
 
 UDS Core follows the principle that alerts should be evaluated at the source, not in Grafana. Prometheus-based rules belong in `PrometheusRule` CRDs; Loki-based rules belong in Loki Ruler ConfigMaps. Grafana-managed alerts should be reserved for advanced correlation scenarios where multiple data sources need to be combined in a single rule evaluation.
 
 This keeps alerting configuration declarative, version-controllable, and consistent across environments — the same `PrometheusRule` works whether it is deployed to a local development cluster or a production environment.
-
-## Blackbox monitoring
-
-UDS Core includes a [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) that probes external endpoints (HTTP, HTTPS, TCP, ICMP). This is useful for end-to-end availability monitoring — testing that a service is reachable from the platform's perspective, independent of whether individual pods are healthy.
 
 ---
 

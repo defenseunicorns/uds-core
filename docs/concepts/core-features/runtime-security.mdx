@@ -5,8 +5,6 @@ sidebar:
 ---
 
 
-## Runtime Security in UDS Core
-
 UDS Core provides runtime threat detection using [Falco](https://falco.org/), a CNCF graduated project that monitors system-level behavior across containerized workloads. Runtime security is the layer of defense that watches what workloads are *doing*, not just what they are *configured* to do.
 
 ## Why runtime security?
@@ -24,7 +22,7 @@ When a pattern matches a known-bad signature, an alert is generated. Operators a
 
 ## How Falco works
 
-Falco monitors the Linux kernel using eBPF probes. These probes observe system calls made by all processes on a node — including those inside containers — without modifying the containers themselves or requiring any application changes.
+Falco monitors the Linux kernel using [eBPF](https://ebpf.io/) probes. These probes observe system calls made by all processes on a node — including those inside containers — without modifying the containers themselves or requiring any application changes.
 
 | Component | Role |
 |---|---|
@@ -48,9 +46,9 @@ For the full list of rules, see the [Falco default rules reference](https://falc
 
 ## Integration with platform alerting
 
-Falco integrates with the UDS Core alerting pipeline through **Falco Sidekick**, a fan-out forwarder that sits alongside Falco and routes alerts to multiple destinations. By default, runtime alerts flow into Alertmanager alongside Prometheus-based platform alerts, giving operators a single pane of glass for both metric-based and behavioral alerts.
+Falco integrates with the UDS Core alerting pipeline through **Falco Sidekick**, a fan-out forwarder that sits alongside Falco and routes alerts to multiple destinations. By default, runtime alerts are sent as events to Loki, making them queryable alongside application logs in Grafana.
 
-Falco Sidekick can also route alerts to external destinations: SIEM platforms (via HTTP webhooks), Slack/Mattermost/Teams channels, Elasticsearch, and others. This is important in environments where runtime security alerts must flow into a centralized security operations center.
+Falco Sidekick can also route alerts to external destinations: Alertmanager, SIEM platforms (via HTTP webhooks), Slack/Mattermost/Teams channels, Elasticsearch, and others. This is important in environments where runtime security alerts must flow into a centralized security operations center.
 
 ## Defense in depth
 
@@ -65,6 +63,8 @@ Runtime security is one layer of a broader defense model in UDS Core:
 
 > [!NOTE]
 > No single layer catches everything. The value of runtime security is specifically in catching compromise that the other layers cannot prevent — a legitimate container that has been exploited, or a supply chain attack that introduced a malicious binary into an otherwise-permitted image.
+
+For a broader look at how these layers fit together, see the [Security overview](/overview/security/).
 
 ---
 

@@ -15,7 +15,7 @@ Application teams should not need to design backup strategies for each service t
 
 - **Consistency** — a cluster-level backup captures all namespaces and volumes in a coordinated way, avoiding split-brain scenarios where application data and Kubernetes state diverge
 - **Recovery testing** — the platform defines and tests restore procedures; application teams rely on the guarantee rather than each maintaining their own
-- **Compliance** — regulated environments require documented, tested backup and recovery capabilities with defined RPO and RTO targets
+- **Compliance** — regulated environments require documented, tested backup and recovery capabilities with defined [RPO and RTO](https://velero.io/docs/latest/disaster-case/) targets
 
 ## What Velero backs up
 
@@ -31,13 +31,12 @@ Application teams should not need to design backup strategies for each service t
 
 ## Backup schedule and retention
 
-Velero runs backups on a [configurable cron schedule](https://velero.io/docs/v1.17/backup-reference/), with retention controlled per-backup via a [`--ttl` flag](https://velero.io/docs/v1.17/how-velero-works/) (default: 30 days). A production configuration could be:
+Velero runs backups on a [configurable cron schedule](https://velero.io/docs/latest/backup-reference/), with retention controlled per-backup via a [`--ttl` flag](https://velero.io/docs/latest/how-velero-works/).
 
-- **Hourly snapshots** for recent point-in-time recovery
-- **Daily backups** retained for 30 days
-- **Weekly backups** retained for 90 days or longer for compliance requirements
+> [!NOTE]
+> **UDS Core default:** a daily backup at 03:00 UTC with a 10-day retention window (`240h`).
 
-The right schedule depends on the RTO/RPO requirements for the workloads being protected.
+Teams can customize the schedule, retention, and scope to match their RTO/RPO requirements — for example, adding more frequent snapshots for critical namespaces or extending retention for compliance.
 
 ## Restore scenarios
 
@@ -56,9 +55,9 @@ The right schedule depends on the RTO/RPO requirements for the workloads being p
 >
 > For applications with low RPO requirements (seconds rather than hours), additional application-level replication should be considered alongside Velero.
 
-## Cloud provider integration
+## Storage provider integration
 
-Velero requires a cloud provider plugin and appropriate IAM permissions to perform volume snapshots. UDS Core's backup layer is configured at bundle deploy time with the target cloud provider and storage destination. For on-premises deployments, Velero works with CSI-compatible storage that supports the volume snapshot API.
+Velero requires a storage provider plugin and appropriate permissions to perform volume snapshots. UDS Core's backup layer is configured at bundle deploy time with the target storage provider and destination. Velero supports cloud-native snapshot APIs (AWS EBS, Azure Disk, vSphere) as well as CSI-compatible storage that supports the volume snapshot API for on-premises deployments. See the [Velero supported providers](https://velero.io/docs/latest/supported-providers/) documentation for the full list of available plugins.
 
 ---
 

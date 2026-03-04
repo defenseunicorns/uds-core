@@ -4,8 +4,6 @@ sidebar:
   order: 2.7
 ---
 
-## Policy & compliance in UDS Core
-
 UDS Core enforces secure and compliant workload behavior through [Pepr](https://docs.pepr.dev/), a Kubernetes controller that runs as admission webhooks. Every resource submitted to the cluster passes through Pepr before being persisted — giving the platform a consistent, centralized place to enforce policy.
 
 ## How policies work
@@ -32,7 +30,7 @@ UDS Core's default policy set targets common misconfigurations that introduce ri
 Mutations apply safe defaults where possible (capability drops, `runAsNonRoot`). Validations block configurations that cannot be safely corrected automatically.
 
 > [!NOTE]
-> The full list of enforced policies, including which are mutations vs. validations and any configuration options, is documented in the [UDS Operator Policies](/reference/operator-policies/) reference.
+> The full list of enforced policies, including which are mutations vs. validations and any configuration options, is documented in the [Policy Engine](/reference/policy-engine/) reference.
 
 ## Exemptions
 
@@ -46,4 +44,4 @@ An exemption declares that a specific workload in a specific namespace is permit
 ---
 
 > [!TIP]
-> Ready to configure policies for your environment? See the [Policy & Compliance How-to Guides](/how-to-guides/policy-and-compliance/overview/). For a full list of enforced policies, see the [UDS Operator Policies](/reference/operator-policies/) reference.
+> Ready to configure policies for your environment? See the [Policy & Compliance How-to Guides](/how-to-guides/policy-and-compliance/overview/). For a full list of enforced policies, see the [Policy Engine](/reference/policy-engine/) reference.

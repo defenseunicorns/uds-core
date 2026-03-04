@@ -5,8 +5,6 @@ sidebar:
 ---
 
 
-## Logging in UDS Core
-
 UDS Core provides centralized log aggregation using [Vector](https://vector.dev/) and [Loki](https://grafana.com/oss/loki/). Every workload in the cluster — platform components and application workloads alike — has its logs collected, shipped to durable storage, and made queryable through Grafana.
 
 ## Why centralized logging matters
@@ -32,8 +30,7 @@ Beyond persistence, centralized logging enables:
 By default, UDS Core collects:
 
 - All container stdout/stderr from every pod in the cluster
-- Kubernetes events (pod scheduling, node conditions, etc.)
-- Platform component logs (Istio, Keycloak, Prometheus, etc.)
+- Node logs (`/var/log/*`) and Kubernetes audit logs (`/var/log/kubernetes/`) where available
 
 There is no opt-in required for workload logs. Any container that writes to stdout/stderr is automatically captured.
 
@@ -48,7 +45,7 @@ Log-based alerting fills the gap between metrics (which measure *quantities*) an
 
 ## Storage considerations
 
-Loki stores log chunks in object storage (S3-compatible) in production deployments. The logging layer depends on either an internal MinIO instance or an external object store configured at bundle deploy time. Retention policies control how long logs are kept before being automatically deleted.
+Loki stores log chunks in object storage (S3-compatible) in production deployments. The logging layer depends on either an internal object store or an external S3-compatible store configured at bundle deploy time. Retention policies control how long logs are kept before being automatically deleted.
 
 ## Shipping logs to external systems
 

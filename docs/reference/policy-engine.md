@@ -1,12 +1,12 @@
 ---
-title: UDS Operator Policies
+title: Policy Engine
 sidebar:
   order: 6
 ---
 
-## UDS Operator Policies
+## Policy Engine
 
-This page lists all Pepr policies enforced by the UDS Operator, including which are validating (blocking) vs. mutating (auto-correcting), and what each enforces.
+This page lists all Pepr policies enforced by the UDS Policy Engine, including which are validating (blocking) vs. mutating (auto-correcting), and what each enforces.
 
 ### Source material from previous docs
 

@@ -18,13 +18,13 @@ UDS Core is organized into **functional layers** — discrete Zarf packages grou
 
 | Layer | What it provides |
 |---|---|
-| `core-base` | **Required.** Istio, UDS Operator, Policy Engine |
-| `core-identity-authorization` | Keycloak + Authservice (SSO) |
-| `core-metrics-server` | Kubernetes Metrics Server |
-| `core-runtime-security` | Falco (requires identity layer for UI login) |
-| `core-logging` | Vector + Loki |
-| `core-monitoring` | Prometheus + Grafana + Alertmanager |
-| `core-backup-restore` | Velero |
+| `core-base` | **Required.** [Istio](https://istio.io/), UDS Operator, [Pepr](https://github.com/defenseunicorns/pepr) Policy Engine |
+| `core-identity-authorization` | [Keycloak](https://www.keycloak.org/) + [Authservice](https://github.com/istio-ecosystem/authservice) (SSO) |
+| `core-metrics-server` | [Kubernetes Metrics Server](https://github.com/kubernetes-sigs/metrics-server) |
+| `core-runtime-security` | [Falco](https://falco.org/) |
+| `core-logging` | [Vector](https://vector.dev/) + [Loki](https://grafana.com/oss/loki/) |
+| `core-monitoring` | [Prometheus](https://prometheus.io/) + [Grafana](https://grafana.com/oss/grafana/) + [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) + [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) |
+| `core-backup-restore` | [Velero](https://velero.io/) |
 
 ## The UDS Operator
 
@@ -42,9 +42,9 @@ This automation means platform teams don't need to write low-level Istio or Kube
 
 ## The Policy Engine
 
-The UDS Policy Engine (built on [Pepr](https://github.com/defenseunicorns/pepr)) runs as admission webhooks alongside the operator. It enforces a security baseline across all workloads — preventing privileged containers, enforcing non-root execution, restricting volume types, and more. Policies run as both mutations (automatically correcting safe defaults) and validations (blocking unsafe configurations). For the full list of enforced policies, see the [UDS Operator Policies](/reference/operator-policies/).
+The UDS Policy Engine (built on [Pepr](https://github.com/defenseunicorns/pepr)) runs as admission webhooks alongside the operator. It enforces a security baseline across all workloads — preventing privileged containers, enforcing non-root execution, restricting volume types, and more. Policies run as both mutations (automatically correcting safe defaults) and validations (blocking unsafe configurations). For the full list of enforced policies, see the [Policy Engine](/reference/policy-engine/) reference.
 
-When a workload legitimately needs an exemption, teams create an `Exemption` CR to declare the exception explicitly, keeping the audit trail clear.
+When a workload legitimately needs an exemption, teams create an `Exemption` CR to declare the exemption explicitly, keeping the audit trail clear.
 
 ---
 

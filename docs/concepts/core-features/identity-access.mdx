@@ -6,9 +6,7 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## Identity & Authentication in UDS Core
-
-UDS Core centralizes authentication and authorization using [Keycloak](https://www.keycloak.org/) as the identity provider. When an application supports standard SSO flows — OIDC, OAuth2, or SAML — the UDS Operator automatically registers a Keycloak client for it and delivers credentials to the application namespace. The application handles its own token flow natively, which is the preferred approach.
+UDS Core centralizes authentication and authorization using [Keycloak](https://www.keycloak.org/) as the identity provider. When an application supports standard SSO flows — [OIDC](https://openid.net/developers/how-connect-works/), [OAuth2](https://oauth.net/2/), or [SAML](https://www.oasis-open.org/standard/saml/) — the UDS Operator automatically registers a Keycloak client for it and delivers credentials to the application namespace. The application handles its own token flow natively, which is the preferred approach.
 
 [Authservice](https://github.com/istio-ecosystem/authservice) is also available for applications that have no native SSO support. It intercepts requests and handles the OIDC flow on the application's behalf. This is a useful escape hatch, but not the recommended default — if an application can speak OIDC natively, it should.
 
@@ -47,7 +45,7 @@ From there, how SSO works depends on whether the application supports OIDC nativ
     For applications with no native OIDC support, the operator can additionally configure Authservice to intercept requests before they reach the application and handle the OIDC flow transparently.
 
     **Limitations to be aware of:**
-    - Authservice handles authentication at the proxy layer, but the application itself has no awareness of user identity — without a native OIDC flow, the application cannot map requests to specific users or enforce user-level authorization
+    - Authservice handles authentication at the proxy layer — the token is passed through and applications *can* read claims from it (user identity, groups), but the application is not managing the OIDC flow itself, making the integration less observable and harder to troubleshoot
     - An additional proxy layer to configure and troubleshoot
   </TabItem>
 </Tabs>
@@ -62,12 +60,6 @@ UDS Core pre-configures two Keycloak groups that drive access to platform admin 
 | `/UDS Core/Auditor` | Read-only platform access | Grafana viewer, log browsing |
 
 Application teams can define their own group-based restrictions in their Package CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
-
-## Trust and certificate management
-
-When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that the SSO flow does not break when operating in air-gapped environments with internally-issued certificates.
-
----
 
 > [!TIP]
 > Ready to configure identity for your environment? See the [Identity & Access How-to Guides](/how-to-guides/identity-access/overview/).

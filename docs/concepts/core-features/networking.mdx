@@ -5,8 +5,6 @@ sidebar:
 ---
 
 
-## Networking & Service Mesh in UDS Core
-
 UDS Core uses [Istio](https://istio.io/) as its service mesh to provide secure, observable communication between all workloads. The mesh is not optional infrastructure — it is the security boundary that makes zero-trust networking practical without requiring application teams to manage TLS certificates or write network policies by hand.
 
 ## Why a service mesh?
@@ -108,6 +106,10 @@ This means:
 - A service that is not declared in any Package CR receives no traffic from the mesh
 - Cross-service communication must be declared explicitly in the Package CR
 - Platform components (Prometheus scraping, log collection) have pre-configured allow policies
+
+## Trust and certificate management
+
+When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that TLS-dependent flows — such as SSO and inter-service mTLS — do not break when operating in air-gapped environments with internally-issued certificates.
 
 ---
 
