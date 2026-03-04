@@ -4,12 +4,12 @@
 tasks:
   - name: validate
     actions:
-      - description: "Validate UDS CRDs exist"
+      - description: "Validate Package CRD exist"
         wait:
           cluster:
             kind: CustomResourceDefinition
             name: packages.uds.dev
-      - description: "Validate Exemptions CRD exists"
+      - description: "Validate Exemption CRD exists"
         wait:
           cluster:
             kind: CustomResourceDefinition
