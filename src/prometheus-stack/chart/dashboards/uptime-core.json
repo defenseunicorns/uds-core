@@ -554,7 +554,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "UDS / Monitoring / UDS Core Uptime",
+  "title": "UDS / Monitoring / Core Uptime",
   "uid": "uds-uptime-status",
   "version": 1
 }
