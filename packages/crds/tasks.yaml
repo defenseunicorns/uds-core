@@ -18,4 +18,4 @@ tasks:
         wait:
           cluster:
             kind: CustomResourceDefinition
-            name: clusterconfigs.uds.dev
+            name: clusterconfig.uds.dev
