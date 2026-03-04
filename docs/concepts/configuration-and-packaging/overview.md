@@ -1,5 +1,7 @@
 ---
 title: Overview
+sidebar:
+  order: 4
 ---
 
 ## Configuration & packaging
