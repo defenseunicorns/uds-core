@@ -1,0 +1,37 @@
+---
+title: Overview
+sidebar:
+  order: 3
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+UDS Core turns a Kubernetes cluster into a secure, observable platform. It provides shared services — networking, identity, observability, security, and backup — so application teams can focus on mission logic instead of infrastructure plumbing.
+
+## In This Section
+
+<CardGrid>
+  <Card title="Supported Distributions" icon="approve-check">
+    Kubernetes distributions tested in CI and the current version target for the platform.
+
+    <LinkCard title="Supported Distributions" href="/concepts/platform/supported-distributions/" />
+  </Card>
+
+  <Card title="Environments" icon="setting">
+    How Core adapts its configuration across dev, staging, and production environments.
+
+    <LinkCard title="Environments" href="/concepts/platform/environments/" />
+  </Card>
+
+  <Card title="Platform vs Application Layer" icon="puzzle">
+    The responsibility boundary between the shared platform and the mission workloads that run on it.
+
+    <LinkCard title="Platform vs Application Layer" href="/concepts/platform/platform-vs-app-layer/" />
+  </Card>
+
+  <Card title="Flavors (Core Variants)" icon="list-format">
+    Choosing between the upstream, registry1, and unicorn image variants and their CVE posture.
+
+    <LinkCard title="Flavors (Core Variants)" href="/concepts/platform/flavors/" />
+  </Card>
+</CardGrid>
