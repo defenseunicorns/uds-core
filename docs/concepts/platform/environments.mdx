@@ -23,14 +23,12 @@ UDS Core runs consistently from a developer laptop to a classified production en
 Cluster-level configuration is the primary dimension that changes across environments:
 
 - **Cluster identity** — name and tags
-- **Networking** — API server CIDR, node CIDRs
-- **TLS** — custom CA certificates
-- **Domains** — tenant and admin domains
+- **Domains & TLS** — tenant and admin domains, custom CA certificates
 - **External integrations** — database endpoints for Keycloak/Grafana HA, external object storage for Loki/Velero
 
 ## What Stays the Same
 
-Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (Pepr policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency makes staging-to-production promotion predictable — if it works in staging with production-like config, it will work in production.
+Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (Pepr policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency closes the gap that other platforms leave between dev and production — if it works in dev, it will work in staging and production. The only variables are cluster-level config, not the platform itself.
 
 > [!CAUTION]
 > Don't skip staging. Configuration differences between environments are the most common source of production issues, and local dev won't surface them. A staging cluster with production-parity config catches problems before they reach real users.
