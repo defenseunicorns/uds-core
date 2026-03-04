@@ -1,0 +1,35 @@
+---
+title: Overview
+sidebar:
+  order: 4
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+There are two separate concerns to understand when working with UDS: **delivery** and **platform integration**. Knowing the distinction helps you find where to look when you need to change behavior.
+
+| | Delivery | Integration |
+|---|---|---|
+| **Tool** | [Zarf](https://docs.zarf.dev/) | UDS Operator |
+| **Artifact** | Zarf package (OCI artifact) | Custom resources (Kubernetes objects) |
+| **Solves** | Getting software into disconnected environments | Declaring what applications need from the platform |
+
+In practice, an application's Zarf package typically includes a `Package` CR as one of its Helm charts. When deployed, the CR lands in the cluster and the UDS Operator reconciles it — generating networking, SSO, and monitoring resources automatically. The two systems work together, but they are independent concerns.
+
+## In this section
+
+<CardGrid>
+  <Card title="Bundles" icon="puzzle">
+    How Zarf packages are grouped into a single deployable artifact using the UDS CLI — including bundle structure, overrides, and deploy-time variables.
+    <LinkCard title="Learn about bundles" href="/concepts/configuration-and-packaging/bundles/" />
+  </Card>
+  <Card title="Core CRDs" icon="setting">
+    The three custom resources — **Package**, **Exemption**, and **ClusterConfig** — that declare platform intent at runtime. The operator reconciles them into Kubernetes, Istio, and Keycloak resources.
+    <LinkCard title="Explore CRDs" href="/concepts/configuration-and-packaging/crd-overviews/" />
+  </Card>
+</CardGrid>
+
+---
+
+> [!TIP]
+> Ready to configure your deployment? See the [How-to Guides](/how-to-guides/overview/) or the [Packaging Applications](/how-to-guides/packaging-applications/overview/) section.
