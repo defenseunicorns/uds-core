@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: Use Node.js latest
-      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
       with:
         node-version: 24
 
@@ -33,7 +33,7 @@ runs:
       uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.10.7
+        version: 0.10.8
 
     - name: Install k3d
       shell: bash
@@ -44,7 +44,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.28.3
+        version: v0.28.4
 
     - name: Install helm unittest plugin
       shell: bash

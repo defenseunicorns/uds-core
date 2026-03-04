@@ -1,7 +1,7 @@
 ---
 title: Bundles
 sidebar:
-  order: 2
+  order: 4.1
 ---
 
 ## Bundles in UDS Core

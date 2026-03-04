@@ -1,0 +1,33 @@
+---
+title: Flavors (Core Variants)
+sidebar:
+  order: 3.4
+---
+
+UDS Core is published in multiple **flavors**. A flavor determines the container image source registry and hardening posture for every component in the platform. All flavors contain the same components and expose the same configuration surface — only the images differ.
+
+## Available Flavors
+
+| Flavor | Image Source | Hardening | Availability | Typical Use |
+|--------|-------------|-----------|-------------|-------------|
+| **`upstream`** | Default chart sources (Docker Hub, GHCR, Quay) | Community-maintained | Public | Local development, CI, demos |
+| **`registry1`** | [Iron Bank](https://p1.dso.mil/services/iron-bank) (DoD hardened images) | STIG-hardened, CVE-scanned | Public | Production deployments requiring DoD compliance |
+| **`unicorn`** | Defense Unicorns curated registry | FIPS-validated, near-zero CVE posture | Private | Production deployments with Defense Unicorns support agreement |
+
+> [!NOTE]
+> The `unicorn` flavor is only available in a private container registry. It requires a Defense Unicorns support agreement. [Contact Defense Unicorns](https://www.defenseunicorns.com/contact) for access.
+
+> [!CAUTION]
+> The `upstream` flavor is not recommended for production. Upstream images are community-maintained and may not meet the hardening or CVE-scanning requirements of regulated environments.
+
+> [!TIP]
+> **Compare CVE counts:** You can view current CVE counts for the `upstream` and `registry1` flavors on the [UDS Registry Core Package](https://registry.defenseunicorns.com/repo/public/core/versions). The `unicorn` flavor undergoes additional patching and curation by Defense Unicorns, resulting in significantly fewer CVEs — [contact Defense Unicorns](https://www.defenseunicorns.com/contact) to learn more.
+
+## Flavors and Bundles
+
+You select a flavor when building a UDS Bundle. All Core packages within a bundle should use the **same flavor** to ensure image consistency.
+
+- **Production users** create their own bundles, selecting `registry1` or `unicorn` packages.
+- **Demo bundles** (`k3d-core-demo`, `k3d-core-slim-dev`) are published from `upstream` only.
+
+Switching flavors requires no application-side changes — the same functional layers, CRDs, and configuration surface apply regardless of flavor. Only the bundle references change.
