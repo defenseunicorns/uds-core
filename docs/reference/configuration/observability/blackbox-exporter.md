@@ -1,7 +1,7 @@
 ---
 title: Uptime Monitoring with Blackbox Exporter
 sidebar:
-    order: 4.5
+  order: 4.5
 ---
 
 ## Overview
@@ -165,12 +165,12 @@ spec:
 
 The Blackbox Exporter provides some of the following key metrics (not exhaustive) that can be used for alerting and dashboarding:
 
-| Metric | Description |
-|--------|-------------|
-| `probe_success` | Whether the probe succeeded (1) or failed (0) |
-| `probe_duration_seconds` | Total probe duration |
-| `probe_http_status_code` | HTTP response status code |
-| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp |
+| Metric                           | Description                                   |
+| -------------------------------- | --------------------------------------------- |
+| `probe_success`                  | Whether the probe succeeded (1) or failed (0) |
+| `probe_duration_seconds`         | Total probe duration                          |
+| `probe_http_status_code`         | HTTP response status code                     |
+| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp          |
 
 ### Example Queries
 
@@ -190,4 +190,4 @@ UDS Core includes an uptime monitoring dashboard that displays:
 - Percentage uptime over the selected time period
 - TLS certificate expiration dates
 
-Access it via Grafana under **UDS / Monitoring / Uptime**.
+Access it via Grafana under **UDS / Monitoring / Probe Uptime**.
