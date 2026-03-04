@@ -1,0 +1,69 @@
+---
+title: Overview
+sidebar:
+  order: 3.1
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+You'll deploy UDS Core to a real Kubernetes cluster — cloud, on-premises, or airgapped. Unlike the local demo, you bring your own infrastructure and configure UDS Core for your environment.
+
+This path is for:
+
+- Platform engineers standing up UDS Core for the first time
+- Teams deploying to EKS, AKS, RKE2, K3s, or other on-prem environments
+- Anyone migrating from an existing platform to UDS
+
+---
+
+## What's Different from the Local Demo
+
+| | Local Demo | Production |
+|---|---|---|
+| **DNS** | `*.uds.dev` (automatic) | Wildcard records pointing to your load balancers |
+| **TLS** | TLS certs for `uds.dev` only | Real certificates for your domain |
+| **Log storage** | In-cluster | Object storage (Loki: chunks, admin buckets) |
+| **Backup storage** | In-cluster MinIO (dev only) | External object storage |
+| **Identity DB** | Embedded dev-mode database (not for prod) | External database |
+
+---
+
+## Requirements
+
+- A running [CNCF-conformant](https://www.cncf.io/training/certification/software-conformance/) Kubernetes cluster
+- Wildcard DNS records for your admin and tenant domains
+- TLS certificates
+- Object storage for [Loki](https://grafana.com/oss/loki/) and [Velero](https://velero.io/) (S3, GCS, Azure Blob, or S3-compatible)
+- External database for Keycloak
+- Sufficient cluster capacity (12+ vCPUs, 32+ GiB RAM across worker nodes)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+
+---
+
+## Steps
+
+<Steps>
+
+1. **[Prerequisites](/getting-started/production/prerequisites/)**
+
+   Validate your cluster, confirm node requirements, and verify networking and storage readiness.
+
+2. **[Provision External Services](/getting-started/production/provision-services/)**
+
+   Set up DNS, TLS certificates, object storage buckets, and the Keycloak PostgreSQL database.
+
+3. **[Build Your Bundle](/getting-started/production/build-your-bundle/)**
+
+   Create a `uds-bundle.yaml` for your environment: choose a Core flavor, configure storage, TLS, and Keycloak overrides.
+
+4. **[Deploy](/getting-started/production/deploy/)**
+
+   Deploy your bundle, monitor the rollout, and verify all components are healthy.
+
+</Steps>
+
+> [!NOTE]
+> Production deployments involve coordinating multiple systems — Kubernetes, DNS, certificates, storage, and databases. Expect to spend more time in prerequisites and provisioning than in the deployment itself.
+

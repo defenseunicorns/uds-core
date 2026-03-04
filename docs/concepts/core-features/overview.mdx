@@ -1,0 +1,44 @@
+---
+title: Overview
+sidebar:
+  order: 2
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Core Features
+
+UDS Core's capabilities are organized into functional areas, each addressing a distinct platform concern. Together, they form an integrated security and observability stack that application teams can rely on without needing to assemble and wire up individually.
+
+Each page explains *what* the feature does and *why* it is built the way it is. For configuration steps, see the corresponding [How-to Guides](/how-to-guides/overview/).
+
+<CardGrid>
+  <Card title="Networking & Service Mesh" icon="puzzle">
+    mTLS, traffic management, ingress/egress control via Istio. The security boundary that makes zero-trust networking practical.
+    <LinkCard title="Learn more" href="/concepts/core-features/networking/" />
+  </Card>
+  <Card title="Identity & Authentication" icon="setting">
+    SSO, OIDC, and group-based authorization via Keycloak and Authservice — without requiring each application to implement its own auth flow.
+    <LinkCard title="Learn more" href="/concepts/core-features/identity-access/" />
+  </Card>
+  <Card title="Logging" icon="list-format">
+    Centralized log aggregation, durable storage, and log-based alerting via Vector and Loki.
+    <LinkCard title="Learn more" href="/concepts/core-features/logging/" />
+  </Card>
+  <Card title="Monitoring & Observability" icon="magnifier">
+    Metrics collection, pre-built dashboards, and integrated alerting via Prometheus, Grafana, Alertmanager, and Prometheus Blackbox Exporter.
+    <LinkCard title="Learn more" href="/concepts/core-features/monitoring-observability/" />
+  </Card>
+  <Card title="Runtime Security" icon="warning">
+    Runtime threat detection inside running containers via Falco — identifying malicious behavior that static configuration controls cannot catch.
+    <LinkCard title="Learn more" href="/concepts/core-features/runtime-security/" />
+  </Card>
+  <Card title="Backup & Restore" icon="cloud-download">
+    Scheduled backup and recovery of Kubernetes resources and persistent volume data via Velero.
+    <LinkCard title="Learn more" href="/concepts/core-features/backup-restore/" />
+  </Card>
+  <Card title="Policy & Compliance" icon="approve-check-circle">
+    Admission control and pod security enforcement via Pepr, with explicit exemption management for auditable exceptions.
+    <LinkCard title="Learn more" href="/concepts/core-features/policy-and-compliance/" />
+  </Card>
+</CardGrid>

@@ -1,0 +1,53 @@
+---
+title: Overview
+sidebar:
+  order: 2.1
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+By the end of this demo you'll have a full UDS Core deployment running locally on k3d, including:
+
+- [Keycloak](https://www.keycloak.org/) for identity and SSO
+- [Authservice](https://github.com/istio-ecosystem/authservice) for SSO flows in mission applications
+- [Istio](https://istio.io/) for service mesh networking
+- [Grafana](https://grafana.com/) and [Prometheus](https://prometheus.io/) for observability
+- [Loki](https://grafana.com/oss/loki/) for log storage and [Vector](https://vector.dev/) for log aggregation
+- [Falco](https://falco.org/) for runtime security
+- [Velero](https://velero.io/) for backup
+
+No production infrastructure or cloud account required.
+
+> [!NOTE]
+> The local demo is for evaluation and development only. It is not intended for production use.
+
+---
+
+## Requirements
+
+- **A container runtime:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (macOS/Windows/Linux), [Docker Engine](https://docs.docker.com/engine/install/) (Linux), or [Lima](https://github.com/lima-vm/lima) (macOS/Linux)
+- **4 CPU cores** and **10 GiB RAM** available to your container runtime
+- ~15 minutes and a reliable internet connection
+
+---
+
+## Steps
+
+<Steps>
+
+1. **[Set Up Your Environment](/getting-started/local-demo/basic-requirements/)**
+
+   Install and verify the tools you need: Docker, k3d, and the UDS CLI.
+
+2. **[Install and Deploy UDS](/getting-started/local-demo/install-and-deploy-uds/)**
+
+   Deploy the `k3d-core-demo` bundle and watch UDS Core come up on a local cluster.
+
+3. **[Add Your Own Package](/getting-started/local-demo/integrate-your-package/)** *(optional)*
+
+   Build a UDS package, add it to the demo cluster, and see end-to-end platform integration.
+
+</Steps>
+
