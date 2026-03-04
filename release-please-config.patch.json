@@ -8,6 +8,7 @@
       "skip-changelog": true,
       "extra-files": [
         "packages/checkpoint-dev/zarf.yaml",
+        "packages/crds/zarf.yaml",
         "packages/base/zarf.yaml",
         "packages/identity-authorization/zarf.yaml",
         "packages/logging/zarf.yaml",
