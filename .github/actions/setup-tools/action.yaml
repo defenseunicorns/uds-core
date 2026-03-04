@@ -1,0 +1,26 @@
+# Copyright 2025 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# action.yml
+name: "Setup Tools"
+description: "Installs UDS CLI and basic tooling (Node.js, uv) without registry authentication"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Use Node.js latest
+      uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+      with:
+        node-version: 24
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+      with:
+        # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
+        version: 0.10.7
+
+    - name: Install UDS CLI
+      uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+      with:
+        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+        version: v0.28.3

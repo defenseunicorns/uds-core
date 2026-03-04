@@ -60,13 +60,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+        uses: ./.github/actions/setup-tools
       - name: Check UDS Docs links
         run: uds run uds-docs-validate
 
@@ -76,13 +70,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+        uses: ./.github/actions/setup-tools
       - name: Verify documented k8s version matches CI config
         run: uds run lint:k8s-version-check
 
