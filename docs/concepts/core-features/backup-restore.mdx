@@ -4,9 +4,6 @@ sidebar:
   order: 2.6
 ---
 
-
-## Backup & Restore in UDS Core
-
 UDS Core provides cluster backup and restore capabilities through [Velero](https://velero.io/), an open-source tool for backing up Kubernetes resources and persistent volume data. The backup layer is what enables platform operators to recover from data loss, cluster corruption, or infrastructure failure without losing application state.
 
 ## Why backup is a platform concern
@@ -15,7 +12,7 @@ Application teams should not need to design backup strategies for each service t
 
 - **Consistency** — a cluster-level backup captures all namespaces and volumes in a coordinated way, avoiding split-brain scenarios where application data and Kubernetes state diverge
 - **Recovery testing** — the platform defines and tests restore procedures; application teams rely on the guarantee rather than each maintaining their own
-- **Compliance** — regulated environments require documented, tested backup and recovery capabilities with defined [RPO and RTO](https://velero.io/docs/latest/disaster-case/) targets
+- **Compliance** — regulated environments require documented, tested backup and recovery capabilities with defined RPO (recovery point objective — how much data you can afford to lose) and RTO (recovery time objective — how long you can afford to be down) targets
 
 ## What Velero backs up
 
