@@ -34,13 +34,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+        uses: ./.github/actions/setup-tools
 
       - name: Install script dependencies
         run: npm ci
