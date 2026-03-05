@@ -140,14 +140,7 @@ Istio's control plane manages service discovery, certificate rotation, and confi
                  value: 100
                - path: autoscaling.targetMemoryUtilizationPercentage
                  value: 100
-   ```
-
-   > [!TIP]
-   > Setting `targetCPUUtilizationPercentage: 100` means the HPA targets 100% of CPU *requests* (not limits). Combined with a generous gap between requests and limits, this lets gateways burst during traffic spikes before triggering a scale-up.
-
-   You can also customize the HPA scaling behavior to control how quickly replicas are added or removed:
-
-   ```yaml title="uds-bundle.yaml"
+               # Optional: customize scaling behavior
                - path: autoscaling.autoscaleBehavior
                  value:
                    scaleUp:
@@ -164,8 +157,11 @@ Istio's control plane manages service discovery, certificate rotation, and confi
                          periodSeconds: 60
    ```
 
+   > [!TIP]
+   > Setting `targetCPUUtilizationPercentage: 100` means the HPA targets 100% of CPU *requests* (not limits). Combined with a generous gap between requests and limits, this lets gateways burst during traffic spikes before triggering a scale-up.
+
    > [!NOTE]
-   > The `autoscaleBehavior` example above scales up aggressively (50% increase every 15s after a 30s stabilization window) and scales down conservatively (20% decrease every 60s after a 5-minute stabilization window). Adjust these values based on your traffic patterns.
+   > The `autoscaleBehavior` example scales up aggressively (50% increase every 15s after a 30s stabilization window) and scales down conservatively (20% decrease every 60s after a 5-minute stabilization window). Adjust these values based on your traffic patterns.
 
 5. **Deploy your bundle**
 

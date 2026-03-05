@@ -141,6 +141,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
    | Maximum replicas | 5 |
    | CPU target utilization | 80% |
    | Scale-up stabilization | 600 seconds |
+   | Scale-down stabilization | 300 seconds |
    | Scale-down rate | 1 pod per 300 seconds |
 
    > [!CAUTION]
@@ -194,15 +195,15 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
            keycloak:
              values:
                - path: waypoint.deployment.affinity
-             value:
-               podAntiAffinity:
-                 preferredDuringSchedulingIgnoredDuringExecution:
-                   - weight: 100
-                     podAffinityTerm:
-                       labelSelector:
-                         matchLabels:
-                           gateway.networking.k8s.io/gateway-name: keycloak-waypoint
-                       topologyKey: kubernetes.io/hostname
+                 value:
+                   podAntiAffinity:
+                     preferredDuringSchedulingIgnoredDuringExecution:
+                       - weight: 100
+                         podAffinityTerm:
+                           labelSelector:
+                             matchLabels:
+                               gateway.networking.k8s.io/gateway-name: keycloak-waypoint
+                           topologyKey: kubernetes.io/hostname
    ```
 
    > [!TIP]

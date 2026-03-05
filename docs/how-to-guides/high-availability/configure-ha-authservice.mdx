@@ -107,8 +107,8 @@ uds zarf tools kubectl get hpa -n authservice
 **Session persistence test:** Log in to an Authservice-protected application, then delete one Authservice pod. Refresh the page — your session should survive:
 
 ```bash
-# Delete one pod to simulate failover
-uds zarf tools kubectl delete pod -n authservice -l app.kubernetes.io/name=authservice --field-selector=status.phase=Running --wait=false
+# Delete one pod to simulate failover (replace with an actual pod name)
+uds zarf tools kubectl delete pod -n authservice <pod-name>
 ```
 
 **Success criteria:**
