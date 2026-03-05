@@ -1,0 +1,56 @@
+---
+title: Overview
+sidebar:
+  order: 1.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These guides help platform engineers configure networking and service mesh features in UDS Core. Each guide focuses on a single task and includes step-by-step instructions with verification.
+
+For background on how the service mesh, gateways, and authorization model work, see [Networking & Service Mesh Concepts](/concepts/core-features/networking/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Configure TLS certificates"
+    description="Set up TLS certificates for your ingress gateways."
+    href="/how-to-guides/networking/configure-tls-certificates/"
+  />
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Enable the passthrough gateway"
+    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
+    href="/how-to-guides/networking/enable-passthrough-gateway/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster ingress/egress, Kubernetes API access, and external egress for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+  <LinkCard
+    title="Set up non-HTTP ingress"
+    description="Accept TCP traffic (SSH, database ports, etc.) through a gateway."
+    href="/how-to-guides/networking/configure-non-http-ingress/"
+  />
+  <LinkCard
+    title="Create a custom gateway"
+    description="Deploy a gateway with independent domain, TLS, and security controls."
+    href="/how-to-guides/networking/create-custom-gateways/"
+  />
+  <LinkCard
+    title="Configure an L7 load balancer"
+    description="Run UDS Core behind an ALB, Azure Application Gateway, or similar."
+    href="/how-to-guides/networking/configure-l7-load-balancer/"
+  />
+  <LinkCard
+    title="Allow permissive mesh traffic"
+    description="Relax strict authorization policies for exceptional workloads."
+    href="/how-to-guides/networking/allow-permissive-mesh-traffic/"
+  />
+</CardGrid>

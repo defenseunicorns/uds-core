@@ -1,0 +1,200 @@
+---
+title: Create a custom gateway
+sidebar:
+  order: 1.6
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have a custom Istio gateway running alongside the standard UDS Core gateways. Custom gateways are useful when you need separate domain routing, different TLS settings, specialized security controls, or IP-based access restrictions that don't fit the tenant or admin gateways.
+
+## Prerequisites
+
+- UDS Core deployed to your cluster
+- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and Helm charts
+- Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
+
+## Before you begin
+
+UDS Core requires specific naming conventions for custom gateways. If these are not followed exactly, the UDS Operator will not be able to route traffic through your gateway.
+
+For a gateway named `custom`:
+
+| Resource | Required naming |
+|----------|----------------|
+| Helm release name | `custom-ingressgateway` |
+| Namespace | `istio-custom-gateway` |
+| Config chart `name` value | `custom` |
+
+Two keywords alter gateway behavior when included in the name:
+- **`admin`** (e.g., `custom-admin`): The gateway defaults to the admin domain for all `expose` entries
+- **`passthrough`** (e.g., `custom-passthrough`): An extra SNI host match is added for all `expose` entries
+
+> [!NOTE]
+> UDS Core handles the integration with the Package CR system, but you are responsible for creating, configuring, and managing the gateway itself.
+
+---
+
+## Steps
+
+<Steps>
+
+1. **Create a Zarf package for the gateway**
+
+   Your Zarf package needs two charts: the upstream Istio gateway chart (for the actual deployment and load balancer) and the UDS Core gateway config chart (for the Gateway CR and TLS secrets).
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: custom-gateway
+     description: "Custom gateway for UDS Core"
+   components:
+     - name: istio-custom-gateway
+       required: true
+       charts:
+         - name: gateway
+           url: https://istio-release.storage.googleapis.com/charts
+           version: x.x.x  # Should match the Istio version in UDS Core
+           releaseName: custom-ingressgateway
+           namespace: istio-custom-gateway
+         - name: uds-istio-config
+           version: x.x.x  # Should match the UDS Core version
+           url: https://github.com/defenseunicorns/uds-core.git
+           gitPath: src/istio/charts/uds-istio-config
+           namespace: istio-custom-gateway
+           valuesFiles:
+             - "config-custom.yaml"
+   ```
+
+2. **Configure the gateway values**
+
+   Create the values file with your gateway configuration. At minimum, provide the name, domain, and TLS mode:
+
+   ```yaml title="config-custom.yaml"
+   name: custom
+
+   domain: mydomain.dev
+
+   tls:
+     servers:
+       custom:
+         mode: SIMPLE  # One of: SIMPLE, MUTUAL, OPTIONAL_MUTUAL, PASSTHROUGH
+   ```
+
+   See the [default values file](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/charts/uds-istio-config/values.yaml) for all available configuration options.
+
+3. **Provide TLS certificates**
+
+   For gateways that are not in `PASSTHROUGH` mode, supply a TLS certificate and key. Expose these as variables in your bundle:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: custom-gateway
+       ...
+       overrides:
+         istio-custom-gateway:
+           uds-istio-config:
+             variables:
+               - name: CUSTOM_TLS_CERT
+                 description: "The TLS cert for the custom gateway (must be base64 encoded)"
+                 path: tls.cert
+               - name: CUSTOM_TLS_KEY
+                 description: "The TLS key for the custom gateway (must be base64 encoded)"
+                 path: tls.key
+   ```
+
+   Alternatively, reference an existing Kubernetes secret:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: custom-gateway
+       ...
+       overrides:
+         istio-custom-gateway:
+           uds-istio-config:
+             values:
+               - path: tls.credentialName
+                 value: custom-gateway-tls-secret
+   ```
+
+4. **Expose a service through the custom gateway**
+
+   Use the custom gateway name in your Package CR to route traffic through it:
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       expose:
+         - service: my-app
+           selector:
+             app.kubernetes.io/name: my-app
+           gateway: custom
+           domain: mydomain.dev
+           host: my-app
+           port: 8080
+   ```
+
+   Set `domain` if the custom gateway's domain differs from your environment's default domain. The `gateway` value must match the `name` in your gateway config (`custom` in this example).
+
+5. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+6. **Verify**
+
+   Check that the Package CR was reconciled and shows the expected endpoints:
+
+   ```bash
+   kubectl get package my-app -n my-app
+   ```
+
+   The `ENDPOINTS` column should show your application's URL. Test access:
+
+   ```bash
+   curl -v https://my-app.mydomain.dev
+   ```
+
+</Steps>
+
+---
+
+## Troubleshooting
+
+### Traffic not routing through the custom gateway
+
+**Symptoms:** Package CR reconciles but traffic doesn't reach the service.
+
+**Solution:** Verify naming conventions match exactly:
+- Release name: `<name>-ingressgateway`
+- Namespace: `istio-<name>-gateway`
+- Config `name`: `<name>`
+
+A mismatch in any of these will prevent the Package CR from connecting to your gateway.
+
+### TLS errors on non-passthrough gateway
+
+**Symptoms:** TLS handshake failures when accessing services.
+
+**Solution:** Ensure you have provided TLS certificates for the gateway. Gateways in `SIMPLE`, `MUTUAL`, or `OPTIONAL_MUTUAL` mode require a valid cert and key.
+
+---
+
+## Next steps
+
+- [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) for details on certificate management
+- [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/) if your custom gateway needs TCP support
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
+- [Package CR Reference](/reference/operator-and-crds/package/)

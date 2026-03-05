@@ -1,0 +1,122 @@
+---
+title: Enable and use the passthrough gateway
+sidebar:
+  order: 1.3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have the optional passthrough gateway deployed and an application exposed through it. The passthrough gateway allows mesh ingress without Istio performing TLS termination, which is useful for applications that need to handle their own TLS.
+
+## Prerequisites
+
+- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- An application that manages its own TLS termination
+- Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
+
+---
+
+## Steps
+
+<Steps>
+
+1. **Enable the passthrough gateway in your UDS Core bundle**
+
+   The passthrough gateway is not deployed by default. Enable it by adding `istio-passthrough-gateway` as an optional component in your UDS Core bundle:
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: core-with-passthrough
+     description: UDS Core with the passthrough gateway enabled
+     version: "0.0.1"
+
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       optionalComponents:
+         - istio-passthrough-gateway
+   ```
+
+   Create and deploy the bundle:
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+2. **Expose a service through the passthrough gateway**
+
+   Use `gateway: passthrough` in your Package CR. The application behind this gateway must handle TLS termination itself.
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-tls-app
+     namespace: my-tls-app
+   spec:
+     network:
+       expose:
+         - service: my-tls-app-service
+           selector:
+             app.kubernetes.io/name: my-tls-app
+           host: my-tls-app
+           gateway: passthrough
+           port: 443
+   ```
+
+   Traffic to `https://my-tls-app.yourdomain.com` will be forwarded to your application with the original TLS connection intact.
+
+3. **Build and deploy your application's Zarf package**
+
+   Include the Package CR in your application's Zarf package, then build and deploy:
+
+   ```bash
+   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+4. **Verify**
+
+   Check that the Package CR was reconciled and shows the expected endpoints:
+
+   ```bash
+   kubectl get package my-tls-app -n my-tls-app
+   ```
+
+   The `ENDPOINTS` column should show your application's URL. Test access — the TLS certificate presented should be your application's certificate, not the gateway's:
+
+   ```bash
+   curl -v https://my-tls-app.yourdomain.com
+   ```
+
+</Steps>
+
+---
+
+## Troubleshooting
+
+### Gateway not deploying
+
+**Symptoms:** No pods in the `istio-passthrough-gateway` namespace.
+
+**Solution:** Verify that `istio-passthrough-gateway` is listed under `optionalComponents` in your bundle configuration. The component name must match exactly.
+
+### TLS handshake failures
+
+**Symptoms:** Connection resets or TLS errors when accessing the application.
+
+**Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the Package CR. The passthrough gateway does not perform any TLS termination — the application must handle it.
+
+---
+
+## Next steps
+
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) for standard TLS-terminated ingress
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) if you need more control over gateway configuration
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)

@@ -1,0 +1,150 @@
+---
+title: Allow permissive traffic through the mesh
+sidebar:
+  order: 1.8
+---
+
+## What you'll accomplish
+
+After completing this guide, you will have relaxed Istio's strict authorization policies at the appropriate scope so that specific workloads or namespaces can receive traffic that would otherwise be denied by the mesh's default deny-all model.
+
+## Prerequisites
+
+- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- UDS Core deployed to your cluster
+- Confirmation that [Package CR `expose` and `allow` rules](/reference/operator-and-crds/package/) cannot satisfy your traffic requirements
+
+> [!CAUTION]
+> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements — not to bypass the authorization model.
+
+## Before you begin
+
+### What "permissive" and "outside the mesh" mean
+
+UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your Package CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
+
+Some workloads need traffic that falls outside this model. Common examples include:
+
+- **Applications with unusual TLS handling** — workloads that perform their own mTLS or have TLS configurations that conflict with Istio's automatic mTLS, preventing the mesh from properly identifying the traffic source
+- **Traffic from sources outside the mesh** — requests originating from components that are not part of the Istio service mesh (e.g., infrastructure controllers, legacy services, or external systems routing directly to pods)
+
+
+In these cases, you can layer additional `ALLOW` [authorization policies](https://istio.io/latest/docs/concepts/security/#authorization-policies) on top of the operator-generated ones. Istio evaluates `DENY` policies first, then `ALLOW` policies, so your additional `ALLOW` rules will not override any existing `DENY` policies.
+
+> [!NOTE]
+> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity — traffic must be allowed by both layers. Any explicit `allow` entries in your Package CR are still required for Kubernetes-level network policy access.
+
+> [!NOTE]
+> In most cases, making a workload permissive also requires a permissive `PeerAuthentication` resource for the same scope. Without it, Istio will still enforce strict mTLS and reject connections from sources that cannot present a valid mesh identity. See the [Istio PeerAuthentication documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/) for details.
+
+The options below are ordered from **least permissive** to **most permissive**. Always use the narrowest scope that meets your needs.
+
+---
+
+## Option 1: Allow traffic on a specific port for a workload
+
+This is the most restrictive option. It allows any source to reach a specific port on a specific workload:
+
+```yaml title="authz-policy.yaml"
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: permissive-ap-workload-port
+  namespace: <package-namespace>
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: my-app  # Your workload selector
+  rules:
+    - to:
+        - operation:
+            ports:
+              - "1234"
+```
+
+---
+
+## Option 2: Allow traffic for an entire workload
+
+Allows any source to reach any port on a specific workload:
+
+```yaml title="authz-policy.yaml"
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: permissive-ap-workload
+  namespace: <package-namespace>
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: my-app  # Your workload selector
+  rules:
+    - {}
+```
+
+---
+
+## Option 3: Allow traffic for a namespace
+
+Allows any source to reach any workload in the namespace:
+
+```yaml title="authz-policy.yaml"
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: permissive-ap-namespace
+  namespace: <package-namespace>
+spec:
+  action: ALLOW
+  rules:
+    - {}
+```
+
+---
+
+## Verification
+
+After applying a policy, verify it exists:
+
+```bash
+kubectl get authorizationpolicy -n <namespace>
+```
+
+Test that the previously-blocked traffic now flows as expected.
+
+---
+
+## Troubleshooting
+
+### Policy not taking effect
+
+**Symptoms:** Traffic is still being denied after applying the authorization policy.
+
+**Solution:**
+- Verify the policy is in the correct namespace (must match the workload's namespace)
+- Check the `selector` labels match your workload: `kubectl get pods -n <namespace> --show-labels`
+- Remember that Istio evaluates `DENY` policies before `ALLOW` policies — if a `DENY` policy exists, your `ALLOW` policy will not override it
+- Ensure you have also applied a permissive `PeerAuthentication` if the traffic source cannot present a valid mesh identity
+
+### Scope too broad
+
+**Symptoms:** Unintended services are now receiving traffic they shouldn't.
+
+**Solution:**
+- Narrow the scope: add a `selector` to target specific workloads, or add port restrictions
+- Move from a namespace-scoped policy to a workload-scoped one
+
+---
+
+## Next steps
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) for background on the authorization model
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) to properly configure ingress through Package CRs
+
+## Related documentation
+
+- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)
+- [Istio PeerAuthentication Documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
