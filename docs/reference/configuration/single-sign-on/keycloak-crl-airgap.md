@@ -4,10 +4,10 @@ title: Keycloak Airgap CRLs
 
 ## Overview
 
-In connected environments, Keycloak can use **OCSP (Online Certificate Status Protocol)** to check whether a client certificate has been revoked. In a true air-gap, OCSP responders are unreachable, so you must either:
+In connected environments, Keycloak can use **OCSP (Online Certificate Status Protocol)** to check whether a client certificate has been revoked. In a true airgap, OCSP responders are unreachable, so you must either:
 
 * disable revocation checks (not recommended), or
-* rely on **CRLs (Certificate Revocation Lists)** that you download *before* entering the air-gap and load locally into Keycloak.
+* rely on **CRLs (Certificate Revocation Lists)** that you download *before* entering the airgap and load locally into Keycloak.
 
 This guide documents a repeatable workflow to:
 
@@ -18,6 +18,17 @@ This guide documents a repeatable workflow to:
 5. Configure Keycloak’s X.509 authenticator to read CRLs from the generated CRL path list.
 
 You do **not** need to build a custom Keycloak image.
+
+---
+
+## Kubernetes Version Requirements
+
+Mounting CRL files via **Kubernetes ImageVolume** requires:
+
+* **Kubernetes 1.31–1.34** — supported, but the `ImageVolume` feature gate must be **explicitly enabled** on both the API server and kubelet.
+* **Kubernetes 1.35+** — `ImageVolume` is **enabled by default**; no feature gate configuration needed.
+
+This requirement applies to all Kubernetes distributions (EKS, GKE, RKE2, k3s, etc.). For k3s/k3d-specific configuration see [Enable ImageVolume on k3s/k3d clusters](#enable-imagevolume-on-k3sk3d-clusters) in the bundle configuration section below.
 
 ---
 
@@ -80,7 +91,7 @@ That will:
 
 ### Common options
 
-#### Use a pre-downloaded ZIP (recommended when preparing an air-gap transfer)
+#### Use a pre-downloaded ZIP (recommended when preparing an airgap transfer)
 
 ```bash
 bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh \
@@ -89,7 +100,7 @@ bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh \
 
 This is the usual flow when you:
 1. download the ZIP on a connected machine,
-2. move it into the air-gap (or a build system inside the enclave), then
+2. move it into the airgap (or a build system inside the enclave), then
 3. run the script locally to produce the package.
 
 #### Include DoD Email CRLs
@@ -145,7 +156,7 @@ keycloak:
               optional: true
           - name: keycloak-crls
             image:
-              reference: 127.0.0.1:31999/library/keycloak-crls:local # Common Zarf registry address; adjust for your environment
+              reference: keycloak-crls:local # Common Zarf registry address; adjust for your environment
               pullPolicy: Always
       - path: extraVolumeMounts
         value:
@@ -162,7 +173,7 @@ keycloak:
 :::
 
 :::caution
-Using the `X509_CRL_ABORT_IF_NON_UPDATED` to false means that if the CRL cannot be updated, the connection will be allowed. This is useful for air-gapped environments where the CRL may not be available. If it's set to true, the connection will be denied if the CRL cannot be updated on time.
+Using the `X509_CRL_ABORT_IF_NON_UPDATED` to false means that if the CRL cannot be updated, the connection will be allowed. This is useful for airgapped environments where the CRL may not be available. If it's set to true, the connection will be denied if the CRL cannot be updated on time.
 :::
 
 ### Add CRL package to bundle (deployment order)
@@ -180,9 +191,9 @@ packages:
     ref: x.x.x
 ```
 
-### Configure UDS policy exemptions (if required)
+### Configure UDS policy exemptions
 
-If ImageVolume is denied by policy, add an exemption targeting Keycloak pods:
+ImageVolumes are currently blocked by UDS Policies (future support will be added), so add an exemption targeting Keycloak pods:
 
 ```yaml
 uds-exemptions:
@@ -202,9 +213,9 @@ uds-exemptions:
                 description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
 ```
 
-### Configure ImageVolume feature gates (k3s/k3d only)
+### Enable ImageVolume on k3s/k3d clusters
 
-If using k3s/k3d on a Kubernetes version that requires explicit enablement, create a `uds-config.yaml`:
+If running on k3s/k3d with Kubernetes < 1.35, enable the feature gate via `uds-config.yaml`:
 
 ```yaml
 variables:

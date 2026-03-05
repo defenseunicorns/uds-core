@@ -112,7 +112,7 @@ Copy the Keycloak CRL Path from the generated crl paths text file into the uds-b
                     optional: true
                 - name: keycloak-crls
                   image:
-                    reference: 127.0.0.1:31999/library/keycloak-crls:local
+                    reference: keycloak-crls:local
                     pullPolicy: Always
             - path: extraVolumeMounts
               value:
@@ -124,31 +124,19 @@ Copy the Keycloak CRL Path from the generated crl paths text file into the uds-b
                   readOnly: true
 ```
 
-### 1.2) Create UDS Slim Dev Bundle Config
-
-Create uds-config.yaml:
-```yaml
-variables:
-  uds-k3d-dev:
-    k3d_extra_args: >-
-      --k3s-arg --kube-apiserver-arg=feature-gates=ImageVolume=true@server:0
-      --k3s-arg --kubelet-arg=feature-gates=ImageVolume=true@server:0
-```
-
-Reference that in the deployment of slim-dev bundle:
-```bash
-UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-*.tar.zst --confirm --no-progress
-```
-
-### 1.3) Add keycloak-crls package to bundle
+### 1.2) Add keycloak-crls package to bundle
 ```yaml
   - name: keycloak-crls
-    path: ../../keycloak-crls/zarf-package-keycloak-crls-amd64-20260221.tar.zst
-    ref: 0.61.0
+    path: ../../keycloak-crls/zarf-package-keycloak-crls-amd64-local.tar.zst
+    ref: local
 ```
 
-### 1.4) Add Exemption for ImageVolume
+### 1.3) Add Exemption for ImageVolume
 ```yaml
+  - name: core-base
+    path: ../../build/
+    ref: x.x.x
+    overrides:
       uds-exemptions:
         uds-exemptions:
           values:
@@ -166,40 +154,51 @@ UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/
                       description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed) in slim-dev."
 ```
 
-## 2) Deploy UDS Core with CRL Configuration
+### 1.4) Configure CA trust via bundle and bundle config
 
-> **Note:** Copy and paste the following snippet into a bash shell
+**Add CA cert to bundle**
 
 ```bash
-# Deploy UDS Core with the configured CRL overrides
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CACERT
+              description: "CA cert for mTLS client auth (must be base64 encoded)"
+              path: tls.cacert
+```
+
+**Create `uds-config.yaml`** (run from the repo root — this encodes the CA cert and writes the full config):
+
+```bash
+CA_CERT_B64=$(base64 -w0 < pki-crl-test/ca.crt)
+cat > bundles/k3d-slim-dev/uds-config.yaml << EOF
+variables:
+  uds-k3d-dev:
+    k3d_extra_args: >-
+      --k3s-arg --kube-apiserver-arg=feature-gates=ImageVolume=true@server:0
+      --k3s-arg --kubelet-arg=feature-gates=ImageVolume=true@server:0
+  core-base:
+    CA_BUNDLE_CERTS: "${CA_CERT_B64}"
+    TENANT_TLS_CACERT: "${CA_CERT_B64}"
+EOF
+```
+
+- `CA_BUNDLE_CERTS` is picked up by the UDS Operator, which automatically creates/updates the `uds-trust-bundle` ConfigMap in the `keycloak` namespace.
+- `TENANT_TLS_CACERT` sets the `cacert` field on the `gateway-tls` Secret during deploy.
+
+## 2) Deploy UDS Core with CRL Configuration
+
+```bash
 uds run create:k3d-slim-dev-bundle
 UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-*.tar.zst --confirm --no-progress
 
-# Configure tenant gateway to trust our demo CA and advertise to browsers
-kubectl -n istio-tenant-gateway patch secret gateway-tls \
-  --type merge \
-  -p '{"data": {"cacert": "'"$(base64 < pki-crl-test/ca.crt | tr -d '\n')"'"}}'
-
-# Restart tenant gateway to apply CA trust changes
-kubectl -n istio-tenant-gateway rollout restart deployment tenant-ingressgateway
-kubectl -n istio-tenant-gateway rollout status deployment tenant-ingressgateway
-
-# Configure Keycloak to trust our demo CA for client cert validation
-kubectl -n keycloak create configmap uds-trust-bundle \
-  --from-file=ca-bundle.pem=pki-crl-test/ca.crt \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-# Restart Keycloak to apply trust bundle changes
-kubectl -n keycloak rollout restart statefulset keycloak
-kubectl -n keycloak rollout status statefulset keycloak
-
-# Connect Keycloakd Admin Portal
+# Connect Keycloak Admin Portal
 zarf connect keycloak
 ```
 
 ---
 
-## 8) Manual steps: Import `client.pfx` into Browser and test login
+## 3) Manual steps: Import `client.pfx` into Browser and test login
 
 - Import `$WORKDIR/client.pfx`
 - Export password: empty
@@ -259,7 +258,7 @@ echo "unique_subject = no" > demoCA/index.txt.attr
 openssl ca -batch -config ca.conf -gencrl -out demoCA/demo-ca.crl
 zip -j demo-crls.zip demoCA/demo-ca.crl
 
-cd /home/chance/Unicorn/uds-core
+cd <path-to-uds-core-repo>
 bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh --crl-zip pki-crl-test/demo-crls.zip
 uds zarf package deploy keycloak-crls/zarf-package-keycloak-crls-*.tar.zst --confirm
 kubectl -n keycloak rollout restart statefulset keycloak

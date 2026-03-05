@@ -4,6 +4,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 OUTPUT_DIR="./keycloak-crls"
 PACKAGE_VERSION="local"
 IMAGE_REF="keycloak-crls:local"
@@ -78,28 +80,16 @@ done <<< "$crl_list"
 printf '%s\n' "$CRL_PATH_LIST" > "$paths_file"
 
 # Build data image
-cat > "$tmp/Dockerfile" <<'EOF'
-FROM scratch
-COPY stage/ /
-EOF
-docker build -q -t "$IMAGE_REF" -f "$tmp/Dockerfile" "$tmp"
+docker build -q -t "$IMAGE_REF" -f "$SCRIPT_DIR/Dockerfile" "$tmp"
 
 # Create package from a TEMP package directory so we don't leave zarf.yaml in OUTPUT_DIR
 pkgdir="$tmp/pkg"
 mkdir -p "$pkgdir"
 
-cat > "$pkgdir/zarf.yaml" <<EOF
-kind: ZarfPackageConfig
-metadata:
-  name: keycloak-crls
-  description: "DoD CRLs for Keycloak X.509 (OCI volume)"
-  version: "${PACKAGE_VERSION}"
-components:
-  - name: keycloak-crls
-    required: true
-    images:
-      - ${IMAGE_REF}
-EOF
+sed \
+  -e "s|\${PACKAGE_VERSION}|${PACKAGE_VERSION}|g" \
+  -e "s|\${IMAGE_REF}|${IMAGE_REF}|g" \
+  "$SCRIPT_DIR/zarf.yaml" > "$pkgdir/zarf.yaml"
 
 "${ZARF[@]}" package create "$pkgdir" --confirm --output "$OUTPUT_DIR"
 
