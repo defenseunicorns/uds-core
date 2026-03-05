@@ -18,7 +18,7 @@ We will introduce a new functional layer, **CRDs** (`core-crds`), that contains 
 
 - `Package` (`packages.uds.dev`)
 - `Exemption` (`exemptions.uds.dev`)
-- `ClusterConfig` (`clusterconfigs.uds.dev`)
+- `ClusterConfig` (`clusterconfig.uds.dev`)
 
 This layer has no dependencies on any other UDS Core layer and can be deployed as the very first layer in a bundle. When the Base layer (or full Core package) is subsequently deployed, its CRD installation will be a no-op upgrade since the CRDs are already present.
 
@@ -45,7 +45,7 @@ This is an addendum to [ADR 0002](./0002-uds-core-functional-layers.md), updatin
 
 ### Negative
 
-- Previously installs tightly couple CRDs and the Operator, ensuring these were upgrade synchronously. There is a slight risk that end users upgrade the CRDs without upgrading the operator (or vice-versa).
+- Previously installs tightly coupled CRDs and the Operator, ensuring these were upgraded synchronously. There is a slight risk that end users upgrade the CRDs without upgrading the operator (or vice-versa).
 
 ## Alternatives Considered
 

@@ -4,7 +4,7 @@
 tasks:
   - name: validate
     actions:
-      - description: "Validate Package CRD exist"
+      - description: "Validate Package CRD exists"
         wait:
           cluster:
             kind: CustomResourceDefinition

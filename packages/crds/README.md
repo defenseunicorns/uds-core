@@ -3,7 +3,7 @@
 This layer provides the standalone UDS Core Custom Resource Definitions:
 - Package (`packages.uds.dev`)
 - Exemption (`exemptions.uds.dev`)
-- ClusterConfig (`clusterconfigs.uds.dev`)
+- ClusterConfig (`clusterconfig.uds.dev`)
 
 This layer has no dependencies and can be deployed before any other UDS Core layer.
 
