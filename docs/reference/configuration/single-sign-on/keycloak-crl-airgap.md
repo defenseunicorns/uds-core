@@ -28,7 +28,7 @@ Mounting CRL files via **Kubernetes ImageVolume** requires:
 * **Kubernetes 1.31–1.34** — supported, but the `ImageVolume` feature gate must be **explicitly enabled** on both the API server and kubelet.
 * **Kubernetes 1.35+** — `ImageVolume` is **enabled by default**; no feature gate configuration needed.
 
-This requirement applies to all Kubernetes distributions (EKS, GKE, RKE2, k3s, etc.). For k3s/k3d-specific configuration see [Enable ImageVolume on k3s/k3d clusters](#enable-imagevolume-on-k3sk3d-clusters) in the bundle configuration section below.
+This requirement applies to all Kubernetes distributions (EKS, GKE, RKE2, k3s, etc.). For k3s/k3d-specific configuration see [Enable ImageVolume on uds-k3d](#enable-imagevolume-on-uds-k3d) in the bundle configuration section below.
 
 ---
 
