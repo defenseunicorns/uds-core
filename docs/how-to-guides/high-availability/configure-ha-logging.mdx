@@ -42,9 +42,9 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
                # Storage backend type
                - path: loki.storage.type
                  value: "s3"
-               # Leave empty for AWS; set for MinIO or other S3-compatible providers
-               - path: loki.storage.s3.endpoint
-                 value: ""
+               # Only set for MinIO or other S3-compatible providers (omit for AWS)
+               # - path: loki.storage.s3.endpoint
+               #   value: "https://minio.example.com"
              variables:
                # Object storage bucket for Loki chunks
                - name: LOKI_CHUNKS_BUCKET
@@ -74,7 +74,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
    ```
 
    > [!NOTE]
-   > For EKS deployments, [IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) is preferred over access keys. With IRSA, leave the access key values empty and add the role ARN annotation:
+   > For EKS deployments, [IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) is preferred over access keys. With IRSA, leave the access key values empty and add the following to the existing `loki.loki.variables` list in your bundle:
    > ```yaml
    > variables:
    >   - name: LOKI_S3_ROLE_ARN
