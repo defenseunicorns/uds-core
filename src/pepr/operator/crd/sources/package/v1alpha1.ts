@@ -103,19 +103,25 @@ const allow = {
         enum: ["TLS", "HTTP"],
       },
       port: {
-        description: "The port to allow (protocol is always TCP)",
+        description: "The port to allow",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
       ports: {
-        description: "A list of ports to allow (protocol is always TCP)",
+        description: "A list of ports to allow",
         type: "array",
         items: {
           minimum: 1,
           maximum: 65535,
           type: "number",
         },
+      },
+      networkProtocol: {
+        description: "The network protocol to allow. Defaults to TCP.",
+        type: "string",
+        enum: ["TCP", "UDP", "TCPUDP"],
+        default: "TCP",
       },
       remoteServiceAccount: {
         description:

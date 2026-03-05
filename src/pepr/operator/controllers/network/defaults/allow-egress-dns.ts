@@ -4,10 +4,11 @@
  */
 
 import { Direction } from "../../../crd";
+import { NetworkProtocol } from "../../../crd/generated/package-v1alpha1";
 import { generate } from "../generate";
 
 export const allowEgressDNS = (namespace: string) => {
-  const netPol = generate(namespace, {
+  return generate(namespace, {
     direction: Direction.Egress,
     description: "DNS lookup via CoreDNS",
     remoteNamespace: "kube-system",
@@ -15,10 +16,6 @@ export const allowEgressDNS = (namespace: string) => {
       "k8s-app": "kube-dns",
     },
     port: 53,
+    networkProtocol: NetworkProtocol.UDP,
   });
-
-  // Override the generated policy to use UDP instead of TCP
-  netPol.spec!.egress![0].ports![0].protocol = "UDP";
-
-  return netPol;
 };

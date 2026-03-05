@@ -232,6 +232,10 @@
           },
           "description": "Additional annotations to apply to the generated ConfigMap (default: {})\nAdditional labels to apply to the generated ConfigMap (default: {})\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly). Defaults to `selector` when not specified.\nSelector for Services that expose metrics to scrape\nThe labels to apply to the policy\nDeprecated: use selector\nDeprecated: use remoteSelector\nThe remote pod selector labels to allow traffic to/from\nLabels to match pods in the namespace to apply the policy to. Leave empty to apply to all pods in the namespace\nSelector for Pods targeted by the selected Services (so the NetworkPolicy can be generated correctly).\nSpecifies attributes for the client.\nLabels to match pods to automatically protect with authservice. Leave empty to disable authservice protection\nConfiguration options for the mapper.\nDeprecated: use secretConfig.annotations\nAdditional annotations to apply to the generated secret, can be used for pod reloading with a selector\nAdditional labels to apply to the generated secret, can be used for pod reloading\nA template for the generated secret\nDeprecated: use secretConfig.labels\nDeprecated: use secretConfig.template"
         },
+        "networkProtocol": {
+          "$ref": "#/definitions/NetworkProtocol",
+          "description": "The network protocol to allow. Defaults to TCP."
+        },
         "podLabels": {
           "type": "object",
           "additionalProperties": {
@@ -241,14 +245,14 @@
         },
         "port": {
           "type": "number",
-          "description": "The port to allow (protocol is always TCP)"
+          "description": "The port to allow"
         },
         "ports": {
           "type": "array",
           "items": {
             "type": "number"
           },
-          "description": "A list of ports to allow (protocol is always TCP)"
+          "description": "A list of ports to allow"
         },
         "remoteCidr": {
           "type": "string",
@@ -1294,6 +1298,16 @@
       ],
       "title": "Direction",
       "description": "The direction of the traffic"
+    },
+    "NetworkProtocol": {
+      "type": "string",
+      "enum": [
+        "TCP",
+        "UDP",
+        "TCPUDP"
+      ],
+      "title": "NetworkProtocol",
+      "description": "The network protocol to allow. Defaults to TCP."
     },
     "RemoteGenerated": {
       "type": "string",

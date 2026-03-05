@@ -192,15 +192,19 @@ export interface Allow {
    */
   labels?: { [key: string]: string };
   /**
+   * The network protocol to allow. Defaults to TCP.
+   */
+  networkProtocol?: NetworkProtocol;
+  /**
    * Deprecated: use selector
    */
   podLabels?: { [key: string]: string };
   /**
-   * The port to allow (protocol is always TCP)
+   * The port to allow
    */
   port?: number;
   /**
-   * A list of ports to allow (protocol is always TCP)
+   * A list of ports to allow
    */
   ports?: number[];
   /**
@@ -255,6 +259,15 @@ export interface Allow {
 export enum Direction {
   Egress = "Egress",
   Ingress = "Ingress",
+}
+
+/**
+ * The network protocol to allow. Defaults to TCP.
+ */
+export enum NetworkProtocol {
+  TCP = "TCP",
+  TCPUDP = "TCPUDP",
+  UDP = "UDP",
 }
 
 /**

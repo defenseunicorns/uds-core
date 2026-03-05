@@ -114,14 +114,31 @@ export function generate(namespace: string, policy: Allow, istioMode?: Mode): ki
   // Create the network policy peers
   const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioMode);
 
+  // Determine which protocols to generate port entries for
+  // Default to TCP (omitted in K8s, which defaults to TCP)
+  const protocols: (string | undefined)[] =
+    policy.networkProtocol === "TCPUDP"
+      ? ["TCP", "UDP"]
+      : policy.networkProtocol === "UDP"
+        ? ["UDP"]
+        : [undefined];
+
   // Define the ports to allow from the ports property
-  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));
+  const ports: V1NetworkPolicyPort[] = protocols.flatMap(proto =>
+    (policy.ports ?? []).map(port => ({
+      port,
+      ...(proto && { protocol: proto }),
+    })),
+  );
 
   // Add the individual port if it exists
   if (policy.port) {
-    ports.push({
-      port: policy.port,
-    });
+    for (const proto of protocols) {
+      ports.push({
+        port: policy.port,
+        ...(proto && { protocol: proto }),
+      });
+    }
   }
 
   // Add the ingress or egress rule

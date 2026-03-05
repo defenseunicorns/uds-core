@@ -6,7 +6,7 @@
 import { kind } from "pepr";
 import { describe, expect, it } from "vitest";
 import { Direction } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode, NetworkProtocol } from "../../crd/generated/package-v1alpha1";
 import { generate } from "./generate";
 
 describe("network policy generate", () => {
@@ -288,5 +288,100 @@ describe("network policy generate with remoteHost", () => {
       podSelector: { matchLabels: { app: "test-app" } },
       policyTypes: ["Egress"],
     } as kind.NetworkPolicy["spec"]);
+  });
+});
+
+describe("network policy generate with protocol", () => {
+  it("should set UDP protocol on ports when protocol is UDP", async () => {
+    const policy = generate("test", {
+      description: "udp-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "kube-system",
+      remoteSelector: { "k8s-app": "kube-dns" },
+      port: 53,
+      networkProtocol: NetworkProtocol.UDP,
+    });
+
+    expect(policy.metadata?.name).toEqual("Egress-udp-test");
+    expect(policy.spec!.egress![0].ports).toEqual([{ port: 53, protocol: "UDP" }]);
+  });
+
+  it("should set UDP protocol on multiple ports when protocol is UDP", async () => {
+    const policy = generate("test", {
+      description: "udp-multi-port-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "kube-system",
+      remoteSelector: { "k8s-app": "kube-dns" },
+      ports: [53, 5353],
+      networkProtocol: NetworkProtocol.UDP,
+    });
+
+    expect(policy.spec!.egress![0].ports).toEqual([
+      { port: 53, protocol: "UDP" },
+      { port: 5353, protocol: "UDP" },
+    ]);
+  });
+
+  it("should omit protocol field on ports when protocol is TCP (default)", async () => {
+    const policy = generate("test", {
+      description: "tcp-default-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "foo",
+      port: 443,
+    });
+
+    expect(policy.spec!.egress![0].ports).toEqual([{ port: 443 }]);
+  });
+
+  it("should omit protocol field on ports when protocol is explicitly TCP", async () => {
+    const policy = generate("test", {
+      description: "tcp-explicit-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "foo",
+      port: 443,
+      networkProtocol: NetworkProtocol.TCP,
+    });
+
+    expect(policy.spec!.egress![0].ports).toEqual([{ port: 443 }]);
+  });
+
+  it("should generate both TCP and UDP port entries when protocol is TCP & UDP", async () => {
+    const policy = generate("test", {
+      description: "both-protocols-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "kube-system",
+      remoteSelector: { "k8s-app": "kube-dns" },
+      port: 53,
+      networkProtocol: NetworkProtocol.TCPUDP,
+    });
+
+    expect(policy.spec!.egress![0].ports).toEqual([
+      { port: 53, protocol: "TCP" },
+      { port: 53, protocol: "UDP" },
+    ]);
+  });
+
+  it("should generate both TCP and UDP entries for multiple ports when protocol is TCP & UDP", async () => {
+    const policy = generate("test", {
+      description: "both-protocols-multi-port-test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "kube-system",
+      remoteSelector: { "k8s-app": "kube-dns" },
+      ports: [53, 5353],
+      networkProtocol: NetworkProtocol.TCPUDP,
+    });
+
+    expect(policy.spec!.egress![0].ports).toEqual([
+      { port: 53, protocol: "TCP" },
+      { port: 5353, protocol: "TCP" },
+      { port: 53, protocol: "UDP" },
+      { port: 5353, protocol: "UDP" },
+    ]);
   });
 });
