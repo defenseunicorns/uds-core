@@ -1,5 +1,5 @@
 ---
-title: Configure HA/Resources for Authservice
+title: Authservice HA/Resources
 sidebar:
   order: 4.4
 ---
@@ -141,10 +141,10 @@ Check that `AUTHSERVICE_REDIS_URI` is set correctly and that the Redis instance 
 uds zarf tools kubectl logs -n authservice -l app.kubernetes.io/name=authservice --tail=100
 ```
 
-## References
+## Related Documentation
 
 - [Authservice: Configuration Reference](https://github.com/istio-ecosystem/authservice/blob/main/config/README.md) — session store and OIDC configuration options
-- [Redis: High Availability with Sentinel](https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/) — HA patterns for the backing session store
+- [Redis: Documentation](https://redis.io/docs/latest/) — general Redis documentation for the backing session store
 - [Valkey: Documentation](https://valkey.io/docs/) — Redis-compatible alternative supported by Authservice
 
 ## Next steps

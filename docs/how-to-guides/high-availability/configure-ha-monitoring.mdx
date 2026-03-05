@@ -1,5 +1,5 @@
 ---
-title: Configure HA/Resources for Monitoring
+title: Monitoring HA/Resources
 sidebar:
   order: 4.3
 ---
@@ -157,7 +157,7 @@ Ensure the PostgreSQL instance allows connections from the cluster's CIDR range.
 
 **Solution:** Dashboard definitions are stored in ConfigMaps and will load automatically. If data sources are missing, check that the Grafana PostgreSQL database was initialized correctly — the Grafana migration should run automatically on first startup with the new database.
 
-## References
+## Related Documentation
 
 - [Grafana: High Availability Setup](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/) — configuring Grafana for HA with an external database
 - [Grafana: Configure a PostgreSQL Database](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database) — database backend options for Grafana

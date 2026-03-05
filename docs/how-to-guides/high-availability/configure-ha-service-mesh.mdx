@@ -1,5 +1,5 @@
 ---
-title: Configure HA/Resources for Service Mesh
+title: Service Mesh HA/Resources
 sidebar:
   order: 4.6
 ---
@@ -216,7 +216,7 @@ If nodes have taints preventing istiod scheduling, add appropriate tolerations v
 uds zarf tools kubectl get pods -n kube-system -l k8s-app=metrics-server
 ```
 
-## References
+## Related Documentation
 
 - [Istio istiod Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery) — full list of istiod helm values
 - [Istio Gateway Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) — full list of gateway helm values
