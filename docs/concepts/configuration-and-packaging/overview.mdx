@@ -14,7 +14,7 @@ There are two separate concerns to understand when working with UDS: **delivery*
 | **Artifact** | Zarf package (OCI artifact) | Custom resources (Kubernetes objects) |
 | **Solves** | Getting software into disconnected environments | Declaring what applications need from the platform |
 
-In practice, an application's Zarf package typically includes a `Package` CR as one of its Helm charts. When deployed, the CR lands in the cluster and the UDS Operator reconciles it — generating networking, SSO, and monitoring resources automatically. The two systems work together, but they are independent concerns.
+In practice, an application's Zarf package typically includes a `Package` CR in one of its Helm charts. When deployed, the CR lands in the cluster and the UDS Operator reconciles it — generating networking, SSO, and monitoring resources automatically. The two systems work together, but they are independent concerns.
 
 ## In this section
 

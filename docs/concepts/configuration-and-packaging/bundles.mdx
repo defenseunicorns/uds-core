@@ -6,7 +6,7 @@ sidebar:
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-A UDS Bundle is a collection of [Zarf packages](https://docs.zarf.dev/ref/packages/) defined in a single `uds-bundle.yaml` manifest and managed through the [UDS CLI](https://github.com/defenseunicorns/uds-cli). It is the deployable unit — the artifact that combines platform capabilities with mission applications into a consistent, versioned whole.
+A UDS Bundle combines [Zarf packages](https://docs.zarf.dev/ref/packages/) with environment-specific configuration into a single declarative artifact, defined in a `uds-bundle.yaml` manifest and managed through the [UDS CLI](https://github.com/defenseunicorns/uds-cli). It is the deployable unit — a versioned artifact that pairs what to deploy with how to configure it for a given environment.
 
 ## Why bundles are a platform concern
 
@@ -29,13 +29,13 @@ Without bundles, teams would need to deploy Zarf packages individually, track co
 
 ## What a bundle contains
 
-A bundle manifest lists Zarf packages to deploy, in order. A bundle that includes UDS Core typically looks like this:
+A bundle manifest lists Zarf packages to deploy, in order. A bundle for the core platform layers might look like this:
 
 ```yaml title="uds-bundle.yaml"
 kind: UDSBundle
 metadata:
-  name: my-environment
-  description: Platform and mission apps
+  name: core-platform
+  description: Cluster init and UDS Core platform
   version: "x.x.x"
 
 packages:
@@ -46,13 +46,12 @@ packages:
   - name: core
     repository: ghcr.io/defenseunicorns/packages/uds/core
     ref: x.x.x
-
-  - name: my-app
-    repository: ghcr.io/my-org/packages/my-app
-    ref: x.x.x
 ```
 
 Each entry references a Zarf package by OCI repository and version tag. Deploy order matters — packages are deployed top to bottom, so the platform is ready before applications land.
+
+> [!NOTE]
+> Bundles work best when scoped to related functionality — for example, platform layers, a group of related mission apps, or shared dependencies. Avoid bundling an entire environment into a single artifact; smaller, focused bundles are easier to version, test, and update independently.
 
 ## Overrides and variables
 

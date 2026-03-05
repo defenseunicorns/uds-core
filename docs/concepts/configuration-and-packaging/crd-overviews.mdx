@@ -47,7 +47,7 @@ A Package can declare things like:
 
 The platform enforces a strict security baseline out of the box — no privileged containers, no root execution, restricted volume types. But sometimes a workload genuinely needs to break a rule. A node-level metrics agent, for example, needs host access that would normally be blocked.
 
-An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields — so the reason for the exception can be documented right next to the exception itself.
+An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields — so the reason for the exemption can be documented right next to the exemption itself.
 
 <LinkCard title="Exemption CR Reference" href="/reference/operator-and-crds/exemption/" description="Full schema, fields, and YAML examples." />
 
