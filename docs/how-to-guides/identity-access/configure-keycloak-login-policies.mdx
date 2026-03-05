@@ -26,7 +26,7 @@ UDS Core supports three layers of Keycloak customization:
 | **UDS Identity Config image** | Custom themes, plugins, realm structure changes | Yes |
 | **OpenTofu / IaC** | Managing auth flows, identity providers, groups declaratively post-deploy | No |
 
-This guide covers Helm chart values, which handle the most common operational configuration needs. For custom themes or plugins, see the [UDS Identity Config Customization Guide](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/).
+This guide covers Helm chart values, which handle the most common operational configuration needs. For custom themes or plugins, see the [UDS Identity Config Customization Guide](/reference/uds-core/idam/customization/).
 
 ## Steps
 
@@ -162,12 +162,8 @@ Confirm your session policy changes are applied:
 2. The user should be logged out immediately without a confirmation page
 
 **Check session timeout configuration:**
-```bash
-# View current realm settings in Keycloak (requires admin access)
-uds zarf tools kubectl exec -n keycloak deploy/keycloak -- \
-  /opt/keycloak/bin/kcadm.sh get realms/uds --fields ssoSessionIdleTimeout,ssoSessionMaxLifespan \
-  -H "Authorization: Bearer <token>"
-```
+
+In the Keycloak admin UI, navigate to **Realm Settings** → **Sessions** and confirm the **SSO Session Idle** and **SSO Session Max** values match your intended configuration.
 
 ## Troubleshooting
 
@@ -196,7 +192,7 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 
 ## Related documentation
 
-- [UDS Identity Config Customization Guide](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/) — for theme and plugin customization beyond Helm values
+- [UDS Identity Config Customization Guide](/reference/uds-core/idam/customization/) — for theme and plugin customization beyond Helm values
 - [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
 - [Package CR reference](/reference/operator-and-crds/package/) — full spec for SSO client configuration
 
