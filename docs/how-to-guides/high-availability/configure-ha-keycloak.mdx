@@ -1,0 +1,281 @@
+---
+title: Configure HA/Resources for Keycloak
+sidebar:
+  order: 4.1
+---
+
+import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure [Keycloak](https://www.keycloak.org/) for production high availability: connecting it to an external PostgreSQL database, enabling horizontal pod autoscaling, and scaling the Istio waypoint proxy.
+
+Keycloak is the identity provider for the entire platform — if it becomes unavailable, users cannot authenticate and applications that depend on SSO will reject new sessions. Properly configuring HA ensures login and token issuance remain available during node failures, deployments, and traffic spikes.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed to a **multi-node cluster** (multi-AZ recommended for resilience)
+- An **external PostgreSQL** instance accessible from the cluster
+- Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
+
+## Steps
+
+<Steps>
+
+1. **Connect Keycloak to an external PostgreSQL database**
+
+   All Keycloak replicas must share the same database to maintain consistent realm configuration, user sessions, and client registrations. Choose the credential approach that fits your environment:
+
+   <Tabs>
+     <TabItem label="Direct values">
+       Set known values directly in the bundle and use variables for environment-specific settings (e.g., values from Terraform outputs):
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: oci://registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             keycloak:
+               keycloak:
+                 values:
+                   # Disable embedded dev database
+                   - path: devMode
+                     value: false
+                 variables:
+                   # PostgreSQL hostname
+                   - name: KEYCLOAK_DB_HOST
+                     path: postgresql.host
+                   # Database user
+                   - name: KEYCLOAK_DB_USERNAME
+                     path: postgresql.username
+                   # Database name
+                   - name: KEYCLOAK_DB_DATABASE
+                     path: postgresql.database
+                   # Database password
+                   - name: KEYCLOAK_DB_PASSWORD
+                     path: postgresql.password
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           KEYCLOAK_DB_HOST: "postgres.example.com"
+           KEYCLOAK_DB_USERNAME: "keycloak"
+           KEYCLOAK_DB_DATABASE: "keycloak"
+           KEYCLOAK_DB_PASSWORD: "your-password"
+       ```
+
+       > [!TIP]
+       > You can also set variables as environment variables prefixed with `UDS_` (e.g., `UDS_KEYCLOAK_DB_PASSWORD`) instead of using a config file.
+     </TabItem>
+     <TabItem label="Kubernetes secret references">
+       Reference pre-existing Kubernetes secrets — useful for external secret managers or shared credential stores. Set non-secret values directly in the bundle:
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: oci://registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             keycloak:
+               keycloak:
+                 values:
+                   - path: devMode
+                     value: false
+                   # Database name to connect to
+                   - path: postgresql.database
+                     value: "keycloak"
+                   # Name of the K8s Secret containing the DB host
+                   - path: postgresql.secretRef.host.name
+                     value: "keycloak-db-creds"
+                   # Key within that Secret holding the host value
+                   - path: postgresql.secretRef.host.key
+                     value: "host"
+                   # Name of the K8s Secret containing the DB username
+                   - path: postgresql.secretRef.username.name
+                     value: "keycloak-db-creds"
+                   # Key within that Secret holding the username value
+                   - path: postgresql.secretRef.username.key
+                     value: "username"
+                   # Name of the K8s Secret containing the DB password
+                   - path: postgresql.secretRef.password.name
+                     value: "keycloak-db-creds"
+                   # Key within that Secret holding the password value
+                   - path: postgresql.secretRef.password.key
+                     value: "password"
+       ```
+
+       > [!NOTE]
+       > You can mix secret references and direct values. The `database` and `port` fields are always set as direct values, while `host`, `username`, and `password` can use either approach.
+     </TabItem>
+   </Tabs>
+
+2. **Enable HPA autoscaling**
+
+   With an external database connected, enable the HorizontalPodAutoscaler to automatically scale Keycloak between 2 and 5 replicas based on CPU utilization:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               # Disable embedded dev database
+               - path: devMode
+                 value: false
+               # Enable HorizontalPodAutoscaler
+               - path: autoscaling.enabled
+                 value: true
+   ```
+
+   The default HPA configuration:
+
+   | Setting | Default |
+   |---|---|
+   | Minimum replicas | 2 |
+   | Maximum replicas | 5 |
+   | CPU target utilization | 80% |
+   | Scale-up stabilization | 600 seconds |
+   | Scale-down rate | 1 pod per 300 seconds |
+
+   > [!CAUTION]
+   > **Do not scale Keycloak down rapidly** by modifying the replica count directly in the StatefulSet. This is a [known Keycloak limitation](https://github.com/keycloak/keycloak/issues/44620) that can result in data loss. Let the HPA manage scale-down gradually.
+
+3. **Configure waypoint proxy autoscaling**
+
+   Keycloak's Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) has an HPA enabled by default. For HA deployments, ensure the minimum replica count prevents downtime during pod rescheduling:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               # Minimum waypoint replicas
+               - path: waypoint.horizontalPodAutoscaler.minReplicas
+                 value: 2
+               # Maximum waypoint replicas
+               - path: waypoint.horizontalPodAutoscaler.maxReplicas
+                 value: 5
+               # Scaling metric configuration
+               - path: waypoint.horizontalPodAutoscaler.metrics
+                 value:
+                   - type: Resource
+                     resource:
+                       name: cpu
+                       target:
+                         type: Utilization
+                         averageUtilization: 90
+               # Waypoint proxy CPU request (adjust for your environment)
+               - path: waypoint.deployment.requests.cpu
+                 value: 250m
+               # Waypoint proxy memory request (adjust for your environment)
+               - path: waypoint.deployment.requests.memory
+                 value: 256Mi
+   ```
+
+   To distribute waypoint replicas across nodes, add pod anti-affinity:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: waypoint.deployment.affinity
+             value:
+               podAntiAffinity:
+                 preferredDuringSchedulingIgnoredDuringExecution:
+                   - weight: 100
+                     podAffinityTerm:
+                       labelSelector:
+                         matchLabels:
+                           gateway.networking.k8s.io/gateway-name: keycloak-waypoint
+                       topologyKey: kubernetes.io/hostname
+   ```
+
+   > [!TIP]
+   > For HA deployments running on multiple nodes, set `minReplicas` to at least **2** with the anti-affinity above to ensure waypoint pods are spread across nodes. This prevents downtime when pods are restarted or rescheduled.
+
+4. **Deploy your bundle**
+
+   ```bash
+   uds deploy <your-bundle>
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm Keycloak HA is active:
+
+```bash
+# Check HPA status
+uds zarf tools kubectl get hpa -n keycloak
+
+# Confirm multiple replicas are running
+uds zarf tools kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak
+
+# Check waypoint proxy HPA
+uds zarf tools kubectl get hpa -n keycloak -l gateway.networking.k8s.io/gateway-name
+```
+
+**Success criteria:**
+- HPA shows `MINPODS: 2` and current replicas >= 2
+- All Keycloak pods are `Running` and `Ready`
+- Waypoint HPA shows desired replicas >= configured minimum
+
+## Troubleshooting
+
+### Problem: Keycloak pods crash-looping after disabling devMode
+
+**Symptoms:** Pods in `CrashLoopBackOff`, logs show database connection errors.
+
+**Solution:** Verify that the external PostgreSQL is reachable from the cluster and that credentials are correct. Check the pod logs:
+```bash
+uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
+```
+
+### Problem: HPA not scaling up under load
+
+**Symptoms:** HPA shows `<unknown>` for current metrics.
+
+**Solution:** Ensure `metrics-server` is deployed and healthy. UDS Core includes it as an optional component:
+```bash
+uds zarf tools kubectl get deployment -n kube-system metrics-server
+```
+
+## References
+
+- [Keycloak: Horizontal Scaling](https://www.keycloak.org/getting-started/getting-started-scaling-and-tuning#_horizontal_scaling) — upstream guidance on scaling Keycloak instances
+- [Keycloak: Configuring the Database](https://www.keycloak.org/server/db) — database connection options and tuning
+- [Keycloak: Caching and Cache Configuration](https://www.keycloak.org/server/caching) — distributed cache behavior across replicas
+- [PostgreSQL: High Availability](https://www.postgresql.org/docs/current/high-availability.html) — HA patterns for the backing database
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure HA for Authservice"
+    description="Authservice handles SSO for applications without native OIDC support and also requires HA configuration."
+    href="/how-to-guides/high-availability/configure-ha-authservice/"
+  />
+  <LinkCard
+    title="Identity & Authentication concepts"
+    description="Background on how Keycloak and Authservice work together in UDS Core."
+    href="/concepts/core-features/identity-access/"
+  />
+</CardGrid>

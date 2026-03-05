@@ -1,0 +1,149 @@
+---
+title: Configure HA/Resources for Runtime Security
+sidebar:
+  order: 4.5
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll verify and tune the HA defaults for [Falco](https://falco.org/) and [Falcosidekick](https://github.com/falcosecurity/falcosidekick), ensuring runtime threat detection and alert delivery remain available during node failures or pod rescheduling.
+
+Falco detects runtime threats like unexpected process execution, file access, and network connections. If Falcosidekick — the component responsible for delivering those detections to your SIEM, Alertmanager, or chat integrations — loses a replica, alerts may be delayed or dropped entirely. Ensuring redundancy in the alert delivery path means your security team never misses a detection.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed to a **multi-node cluster**
+
+## Steps
+
+<Steps>
+
+1. **Understand the Falco HA model**
+
+   Falco itself runs as a **DaemonSet** — one pod per node — so it automatically scales with your cluster. No replica configuration is needed for Falco.
+
+   Falcosidekick — the component that fans out alerts to Alertmanager, Loki, SIEM platforms, and chat integrations — runs with **2 replicas by default** for HA.
+
+   > [!NOTE]
+   > Falco **detects** runtime threats — it does not prevent or block them. Falcosidekick is responsible for delivering those detections to your configured destinations.
+
+2. **Tune Falcosidekick replicas and resources**
+
+   To adjust the replica count for environments with higher alert volume or stricter delivery requirements:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         falco:
+           falco:
+             values:
+               # Number of Falcosidekick alert processing replicas
+               - path: falcosidekick.replicaCount
+                 value: 3
+               # Falcosidekick resources (adjust for your environment)
+               - path: falcosidekick.resources
+                 value:
+                   requests:
+                     cpu: 100m
+                     memory: 128Mi
+                   limits:
+                     cpu: 200m
+                     memory: 256Mi
+   ```
+
+   > [!TIP]
+   > For most production deployments, the default of 2 replicas is sufficient. Increase only if you are routing alerts to many external destinations simultaneously and observe delivery latency.
+
+   For the full list of Falcosidekick helm values, see the [Falcosidekick chart documentation](https://github.com/falcosecurity/charts/tree/master/charts/falcosidekick).
+
+3. **Tune Falco resources**
+
+   Falco's resource needs depend on the number of syscall events being processed. For nodes with high workload density, increase the default allocation:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         falco:
+           falco:
+             values:
+               # Falco DaemonSet resources (adjust for your environment)
+               - path: resources
+                 value:
+                   requests:
+                     cpu: 100m
+                     memory: 512Mi
+                   limits:
+                     cpu: 1000m
+                     memory: 1Gi
+   ```
+
+   > [!NOTE]
+   > If you have multiple event sources enabled in Falco, consider increasing the CPU limits. See the [Falco chart documentation](https://github.com/falcosecurity/charts/tree/master/charts/falco) for the full list of helm values.
+
+4. **Deploy your bundle**
+
+   ```bash
+   uds deploy <your-bundle>
+   ```
+
+</Steps>
+
+## Verification
+
+```bash
+# Check Falcosidekick replicas
+uds zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falcosidekick
+
+# Verify Falco DaemonSet coverage (one pod per node)
+uds zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falco -o wide
+```
+
+**Success criteria:**
+- Falcosidekick shows the expected number of replicas (default: 2), all `Running`
+- Falco DaemonSet has one pod per node
+
+## Troubleshooting
+
+### Problem: Falcosidekick alerts not reaching external destinations
+
+**Symptoms:** Alerts appear in Falco logs but do not arrive in Slack, SIEM, or other configured destinations.
+
+**Solution:** Check Falcosidekick logs for delivery errors:
+```bash
+uds zarf tools kubectl logs -n falco -l app.kubernetes.io/name=falcosidekick --tail=50
+```
+Common causes include network policies blocking outbound traffic and incorrect webhook URLs.
+
+## References
+
+- [Falco Helm Chart](https://github.com/falcosecurity/charts/tree/master/charts/falco) — full list of Falco helm values
+- [Falcosidekick Helm Chart](https://github.com/falcosecurity/charts/tree/master/charts/falcosidekick) — full list of Falcosidekick helm values
+- [Falco: Default Rules Reference](https://falco.org/docs/reference/rules/default-rules/) — built-in detection rules
+- [Falco: Outputs and Alerting](https://falco.org/docs/concepts/outputs/) — how Falco delivers alerts to Falcosidekick and other destinations
+- [Falcosidekick: Configuration](https://github.com/falcosecurity/falcosidekick#configuration) — supported output destinations and tuning options
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure HA for Service Mesh"
+    description="Verify Istio control plane resilience and pod distribution across nodes."
+    href="/how-to-guides/high-availability/configure-ha-service-mesh/"
+  />
+  <LinkCard
+    title="Runtime Security concepts"
+    description="Background on how Falco and Falcosidekick work in UDS Core."
+    href="/concepts/core-features/runtime-security/"
+  />
+</CardGrid>

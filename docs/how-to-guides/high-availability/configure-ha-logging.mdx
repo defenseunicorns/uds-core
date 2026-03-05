@@ -1,0 +1,246 @@
+---
+title: Configure HA/Resources for Logging
+sidebar:
+  order: 4.2
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure UDS Core's logging pipeline for production high availability: connecting [Loki](https://grafana.com/oss/loki/) to external S3-compatible storage, tuning replica counts for each Loki tier, and optimizing [Vector](https://vector.dev/)'s resource allocation across your cluster nodes.
+
+Logs are critical for incident investigation, audit compliance, and runtime visibility. If the logging pipeline drops data during an outage or traffic spike, you lose the evidence needed to diagnose what went wrong. Ensuring Loki and Vector are properly sized prevents log loss when it matters most.
+
+> [!NOTE]
+> Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default — it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed
+- An **S3-compatible object storage** endpoint for Loki (AWS S3, MinIO, or equivalent)
+- Storage credentials with read/write access to the target bucket
+
+## Steps
+
+<Steps>
+
+1. **Connect Loki to external object storage**
+
+   Production Loki deployments require external object storage for log chunk and index data. The example below uses access keys, which work with AWS S3, MinIO, and any S3-compatible provider. For Azure and GCP, the override structure differs — see the [Loki cloud deployment guides](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/) for provider-specific examples.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             values:
+               # Storage backend type
+               - path: loki.storage.type
+                 value: "s3"
+               # Leave empty for AWS; set for MinIO or other S3-compatible providers
+               - path: loki.storage.s3.endpoint
+                 value: ""
+             variables:
+               # Object storage bucket for Loki chunks
+               - name: LOKI_CHUNKS_BUCKET
+                 path: loki.storage.bucketNames.chunks
+               # Object storage bucket for Loki admin
+               - name: LOKI_ADMIN_BUCKET
+                 path: loki.storage.bucketNames.admin
+               # Object storage region
+               - name: LOKI_S3_REGION
+                 path: loki.storage.s3.region
+               # Object storage access key ID
+               - name: LOKI_ACCESS_KEY_ID
+                 path: loki.storage.s3.accessKeyId
+               # Object storage secret access key
+               - name: LOKI_SECRET_ACCESS_KEY
+                 path: loki.storage.s3.secretAccessKey
+   ```
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       LOKI_CHUNKS_BUCKET: "your-loki-chunks-bucket"
+       LOKI_ADMIN_BUCKET: "your-loki-admin-bucket"
+       LOKI_S3_REGION: "us-east-1"
+       LOKI_ACCESS_KEY_ID: "your-access-key-id"
+       LOKI_SECRET_ACCESS_KEY: "your-secret-access-key"
+   ```
+
+   > [!NOTE]
+   > For EKS deployments, [IRSA (IAM Roles for Service Accounts)](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) is preferred over access keys. With IRSA, leave the access key values empty and add the role ARN annotation:
+   > ```yaml
+   > variables:
+   >   - name: LOKI_S3_ROLE_ARN
+   >     path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+   > ```
+   > See the [Loki AWS deployment guide](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/aws/) for details.
+
+   > [!TIP]
+   > For the full list of supported storage backends and configuration options, see the [Grafana Loki storage documentation](https://grafana.com/docs/loki/latest/configure/storage/#chunk-storage).
+
+2. **Tune Loki replicas and resources**
+
+   Loki ships in **SimpleScalable** deployment mode with three tiers — write, read, and backend — each defaulting to 3 replicas. Adjust replica counts and resource allocations based on your log volume and query load. See the [Grafana Loki sizing guide](https://grafana.com/docs/loki/latest/setup/size/) for help choosing values.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             values:
+               # Write tier: handles log ingestion from Vector
+               - path: write.replicas
+                 value: 5
+               # Read tier: serves log queries from Grafana
+               - path: read.replicas
+                 value: 5
+               # Backend tier: compaction and index management
+               - path: backend.replicas
+                 value: 3
+               # Write tier resources (adjust for your environment)
+               - path: write.resources
+                 value:
+                   requests:
+                     cpu: 100m
+                     memory: 256Mi
+                   limits:
+                     memory: 512Mi
+               # Read tier resources (adjust for your environment)
+               - path: read.resources
+                 value:
+                   requests:
+                     cpu: 100m
+                     memory: 256Mi
+                   limits:
+                     memory: 512Mi
+               # Backend tier resources (adjust for your environment)
+               - path: backend.resources
+                 value:
+                   requests:
+                     cpu: 100m
+                     memory: 256Mi
+                   limits:
+                     memory: 512Mi
+   ```
+
+   | Tier | Role | Scaling guidance |
+   |---|---|---|
+   | **Write** | Ingests log streams from Vector | Scale up for high log ingestion rates |
+   | **Read** | Serves log queries from Grafana | Scale up for heavy query workloads |
+   | **Backend** | Handles compaction and index management | Typically stable at 3 replicas |
+
+   > [!TIP]
+   > For most deployments, the default of 3 replicas per tier is sufficient — focus on tuning resources rather than adding replicas. Only increase replica counts if your log volume or query load requires it.
+
+   > [!CAUTION]
+   > UDS Core only supports Loki in **SimpleScalable** mode. Other deployment modes (monolithic, microservices) are not tested or directly supported.
+
+3. **Configure Vector resources for production**
+
+   Vector runs as a **DaemonSet** — one pod per node — so it automatically scales as your cluster grows. No replica configuration is needed. For production workloads, increase the default resource allocation:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         vector:
+           vector:
+             values:
+               # Adjust resource values for your environment
+               - path: resources
+                 value:
+                   requests:
+                     memory: "64Mi"
+                     cpu: "500m"
+                   limits:
+                     memory: "1024Mi"
+                     cpu: "6000m"
+   ```
+
+   > [!NOTE]
+   > These are Vector's [recommended production values](https://vector.dev/docs/setup/going-to-prod/sizing/). The wide range between requests and limits allows Vector to burst during log spikes without being OOM-killed during normal operation.
+
+4. **Deploy your bundle**
+
+   ```bash
+   uds deploy <your-bundle>
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the logging pipeline is healthy:
+
+```bash
+# Check Loki tier replica counts
+uds zarf tools kubectl get pods -n loki -l app.kubernetes.io/name=loki
+
+# Confirm Vector is running on every node
+uds zarf tools kubectl get pods -n vector -o wide
+
+# Confirm write path is working (via Grafana)
+# Navigate to Grafana → Explore → Loki data source → run: {namespace="vector"}
+```
+
+**Success criteria:**
+- Loki shows the expected number of write, read, and backend pods (all `Running`)
+- Vector has exactly one pod per cluster node
+- Grafana can query recent logs from the Loki data source
+
+## Troubleshooting
+
+### Problem: Loki pods in CrashLoopBackOff
+
+**Symptoms:** Loki write or backend pods restart repeatedly, logs show S3 connection or authentication errors.
+
+**Solution:** Verify S3 credentials and endpoint reachability from within the cluster:
+```bash
+uds zarf tools kubectl logs -n loki -l app.kubernetes.io/component=write --tail=50
+```
+
+### Problem: Missing logs from specific nodes
+
+**Symptoms:** Logs from some workloads do not appear in Grafana queries.
+
+**Solution:** Check that Vector is running on the affected node:
+```bash
+uds zarf tools kubectl get pods -n vector -o wide | grep <node-name>
+```
+If the pod is not running, check for resource pressure or scheduling issues on that node.
+
+## References
+
+- [Grafana Loki: Sizing](https://grafana.com/docs/loki/latest/setup/size/) — guidance on sizing Loki for your log volume
+- [Grafana Loki: Storage Configuration](https://grafana.com/docs/loki/latest/configure/storage/) — full list of supported storage backends
+- [Grafana Loki: Scalable Deployment](https://grafana.com/docs/loki/latest/get-started/deployment-modes/#simple-scalable) — SimpleScalable mode architecture
+- [Vector: Going to Production](https://vector.dev/docs/setup/going-to-prod/) — Vector production resource and tuning recommendations
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure HA for Monitoring"
+    description="Grafana connects to Loki for log visualization and also requires HA configuration."
+    href="/how-to-guides/high-availability/configure-ha-monitoring/"
+  />
+  <LinkCard
+    title="Logging concepts"
+    description="Background on the Vector → Loki → Grafana pipeline in UDS Core."
+    href="/concepts/core-features/logging/"
+  />
+</CardGrid>

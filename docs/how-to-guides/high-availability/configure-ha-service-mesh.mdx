@@ -1,0 +1,247 @@
+---
+title: Configure HA/Resources for Service Mesh
+sidebar:
+  order: 4.6
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure [Istio](https://istio.io/)'s control plane (`istiod`) and ingress gateways for production high availability by increasing minimum replica counts, tuning resource allocation, and verifying that pod anti-affinity is spreading replicas across nodes.
+
+Istio's control plane manages service discovery, certificate rotation, and configuration distribution for the entire mesh. If istiod becomes unavailable, new connections cannot be established and configuration changes stop propagating. The ingress gateways are the entry point for all external traffic — if a gateway goes down, traffic to the applications it serves is interrupted.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed to a **multi-node cluster** (3+ nodes recommended)
+
+## Steps
+
+<Steps>
+
+1. **Understand the default istiod HA behavior**
+
+   UDS Core configures istiod with two HA mechanisms out of the box:
+
+   - **Horizontal Pod Autoscaler (HPA):** enabled by default, scaling between 1 and 5 replicas based on CPU utilization
+   - **Pod anti-affinity:** UDS Core configures `preferredDuringSchedulingIgnoredDuringExecution` anti-affinity, which tells Kubernetes to *prefer* scheduling istiod replicas on different nodes
+
+   > [!NOTE]
+   > The anti-affinity is a **soft preference**, not a hard requirement. Kubernetes will try to spread istiod pods across nodes, but if insufficient nodes are available (e.g., on a 2-node cluster), it will co-locate replicas rather than leave them unscheduled. On clusters with 3+ nodes, you should see replicas distributed across different nodes.
+
+   With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single replica during low-traffic periods — creating a temporary single point of failure. The next step addresses this.
+
+2. **Increase the minimum replica count for HA**
+
+   Set `autoscaleMin` to 2 (or higher) to ensure at least two istiod replicas are always running:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-controlplane:
+           istiod:
+             values:
+               # Minimum istiod replicas (default: 1)
+               - path: autoscaleMin
+                 value: 2
+               # Maximum istiod replicas (default: 5)
+               - path: autoscaleMax
+                 value: 5
+   ```
+
+   > [!TIP]
+   > For most production deployments, `autoscaleMin: 2` is sufficient. The HPA will scale up to `autoscaleMax` during periods of high traffic or configuration churn.
+
+3. **Tune istiod resources**
+
+   The default istiod resource allocation (500m CPU, 2Gi memory) is sized for moderate clusters. For larger clusters with many services or high configuration complexity, increase the allocation:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-controlplane:
+           istiod:
+             values:
+               # istiod resources (adjust for your environment)
+               - path: resources
+                 value:
+                   requests:
+                     cpu: 500m
+                     memory: 2Gi
+                   limits:
+                     cpu: 1000m
+                     memory: 4Gi
+   ```
+
+   > [!NOTE]
+   > istiod's resource needs scale with the number of services, endpoints, and configuration objects in the mesh — not directly with traffic volume. See the [Istio performance and scalability guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) for benchmarks.
+
+4. **Scale the admin and tenant ingress gateways**
+
+   UDS Core deploys separate ingress gateways for admin and tenant traffic. Both use the upstream [Istio gateway chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) with HPA enabled by default (min 1, max 5). For production, increase the minimum replicas and tune resources for both gateways:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-admin-gateway:
+           gateway:
+             values:
+               # Admin gateway minimum replicas (default: 1)
+               - path: autoscaling.minReplicas
+                 value: 2
+               # Admin gateway maximum replicas (default: 5)
+               - path: autoscaling.maxReplicas
+                 value: 8
+               # Admin gateway resources (adjust for your environment)
+               - path: resources.requests.cpu
+                 value: 750m
+               - path: resources.requests.memory
+                 value: 1024Mi
+               - path: resources.limits.cpu
+                 value: 2000m
+               - path: resources.limits.memory
+                 value: 4Gi
+               # Scale based on CPU and memory request utilization
+               - path: autoscaling.targetCPUUtilizationPercentage
+                 value: 100
+               - path: autoscaling.targetMemoryUtilizationPercentage
+                 value: 100
+         istio-tenant-gateway:
+           gateway:
+             values:
+               # Tenant gateway minimum replicas (default: 1)
+               - path: autoscaling.minReplicas
+                 value: 2
+               # Tenant gateway maximum replicas (default: 5)
+               - path: autoscaling.maxReplicas
+                 value: 8
+               # Tenant gateway resources (adjust for your environment)
+               - path: resources.requests.cpu
+                 value: 750m
+               - path: resources.requests.memory
+                 value: 1024Mi
+               - path: resources.limits.cpu
+                 value: 2000m
+               - path: resources.limits.memory
+                 value: 4Gi
+               # Scale based on CPU and memory request utilization
+               - path: autoscaling.targetCPUUtilizationPercentage
+                 value: 100
+               - path: autoscaling.targetMemoryUtilizationPercentage
+                 value: 100
+   ```
+
+   > [!TIP]
+   > Setting `targetCPUUtilizationPercentage: 100` means the HPA targets 100% of CPU *requests* (not limits). Combined with a generous gap between requests and limits, this lets gateways burst during traffic spikes before triggering a scale-up.
+
+   You can also customize the HPA scaling behavior to control how quickly replicas are added or removed:
+
+   ```yaml title="uds-bundle.yaml"
+               - path: autoscaling.autoscaleBehavior
+                 value:
+                   scaleUp:
+                     stabilizationWindowSeconds: 30
+                     policies:
+                       - type: Percent
+                         value: 50
+                         periodSeconds: 15
+                   scaleDown:
+                     stabilizationWindowSeconds: 300
+                     policies:
+                       - type: Percent
+                         value: 20
+                         periodSeconds: 60
+   ```
+
+   > [!NOTE]
+   > The `autoscaleBehavior` example above scales up aggressively (50% increase every 15s after a 30s stabilization window) and scales down conservatively (20% decrease every 60s after a 5-minute stabilization window). Adjust these values based on your traffic patterns.
+
+5. **Deploy your bundle**
+
+   ```bash
+   uds deploy <your-bundle>
+   ```
+
+</Steps>
+
+## Verification
+
+```bash
+# Confirm istiod pods are on different nodes
+uds zarf tools kubectl get pods -n istio-system -l app=istiod -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase
+
+# Check istiod HPA status
+uds zarf tools kubectl get hpa -n istio-system
+
+# Check admin gateway HPA and pods
+uds zarf tools kubectl get hpa -n istio-admin-gateway
+uds zarf tools kubectl get pods -n istio-admin-gateway -o wide
+
+# Check tenant gateway HPA and pods
+uds zarf tools kubectl get hpa -n istio-tenant-gateway
+uds zarf tools kubectl get pods -n istio-tenant-gateway -o wide
+```
+
+**Success criteria:**
+- istiod has at least 2 replicas `Running`, distributed across different nodes (on 3+ node clusters)
+- Admin and tenant gateways each have at least 2 replicas `Running`
+- All HPAs show the expected min/max replica range
+
+## Troubleshooting
+
+### Problem: istiod pods scheduled on the same node
+
+**Symptoms:** All istiod replicas are on a single node, creating a single point of failure.
+
+**Solution:** The anti-affinity is a soft preference — Kubernetes will co-locate pods when it has no better option. Verify you have at least 3 schedulable nodes:
+```bash
+uds zarf tools kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
+```
+
+If nodes have taints preventing istiod scheduling, add appropriate tolerations via bundle overrides for the `istiod` chart under the `istio-controlplane` component.
+
+### Problem: HPA not scaling istiod
+
+**Symptoms:** HPA shows `<unknown>` for current metrics or replicas stay at minimum.
+
+**Solution:** Ensure the [metrics-server](https://github.com/kubernetes-sigs/metrics-server) is running and healthy:
+```bash
+uds zarf tools kubectl get pods -n kube-system -l k8s-app=metrics-server
+```
+
+## References
+
+- [Istio istiod Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery) — full list of istiod helm values
+- [Istio Gateway Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) — full list of gateway helm values
+- [Istio: Deployment Best Practices](https://istio.io/latest/docs/ops/best-practices/deployment/) — control plane resilience and scaling guidance
+- [Istio: Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) — benchmarks and tuning for large clusters
+- [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) — HPA configuration and scaling behavior
+- [Kubernetes: Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) — affinity, anti-affinity, and topology spread constraints
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure HA for Runtime Security"
+    description="Ensure Falco alert delivery resilience with Falcosidekick replicas."
+    href="/how-to-guides/high-availability/configure-ha-runtime-security/"
+  />
+  <LinkCard
+    title="Networking & Service Mesh concepts"
+    description="Background on Istio's role in UDS Core."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>
