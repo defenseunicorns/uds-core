@@ -32,7 +32,7 @@ This runbook assumes UDS Core defaults:
 
 If your deployment uses non-default names, update the commands accordingly.
 
-## Variables
+## Target Size
 
 Set the target size before running commands:
 
@@ -117,7 +117,7 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
 
 If any target PVC is already larger than `TARGET_SIZE`, stop and reassess.
 
-4. Confirm the size you configured in your uds-bundle and/or uds-config match `TARGET_SIZE`.
+4. Confirm the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches `TARGET_SIZE`.
 
 ## Procedure
 
@@ -131,7 +131,9 @@ Pausing prevents operator reconciliation churn while you patch PVCs and rotate t
 kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type merge --patch '{"spec":{"paused":true}}'
 ```
 
-3. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflows so Prometheus desired storage is updated from code.
+3. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflows.
+
+This applies the desired Prometheus storage size from code before patching existing PVCs.
 
 4. Patch each existing PVC to the new request size:
 
@@ -142,6 +144,12 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
   -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
 | xargs -I{} kubectl patch pvc "{}" -n monitoring --type merge \
   --patch "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"$TARGET_SIZE\"}}}}"
+```
+
+During and after patching, monitor PVC events for resize progress or errors:
+
+```bash
+kubectl describe pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
 5. Delete backing StatefulSet with orphan strategy:
@@ -162,7 +170,7 @@ kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type m
 
 ## Verification
 
-1. Prometheus CR is unpaused:
+1. Confirm Prometheus CR is unpaused:
 
 This confirms operator reconciliation is re-enabled.
 
@@ -172,7 +180,7 @@ kubectl get prometheus kube-prometheus-stack-prometheus -n monitoring -o jsonpat
 
 Expected: `false`
 
-2. PVC requests show the new size:
+2. Confirm PVC requests show the new size:
 
 All listed PVC `REQ` values should match `TARGET_SIZE`.
 
@@ -180,7 +188,7 @@ All listed PVC `REQ` values should match `TARGET_SIZE`.
 kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage
 ```
 
-3. StatefulSet is recreated by operator:
+3. Confirm the StatefulSet is recreated by the operator:
 
 You should see a recreated StatefulSet present for the Prometheus instance.
 
@@ -196,6 +204,16 @@ Pods should be `Running`/`Ready` before closing the operation.
 kubectl get pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
+5. Confirm PVC capacity has reconciled to the new size:
+
+This validates actual resize progress, not only requested size.
+
+```bash
+kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage
+```
+
+Expected: `CAP` matches `REQ` (or converges shortly after).
+
 ## Failure Handling
 
 - If any step fails after pause, ensure unpause is restored:
@@ -205,5 +223,5 @@ kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type m
 ```
 
 - If StorageClass is not expandable, do not continue this runbook.
-
 - If one PVC patch fails, resolve that PVC issue first, then continue from Procedure step 4.
+- If PVCs remain in `ExternalExpanding` without capacity change for an extended period, stop and reassess.
