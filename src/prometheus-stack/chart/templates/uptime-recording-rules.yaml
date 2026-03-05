@@ -34,5 +34,5 @@ spec:
           labels:
             uds_layer: core
             uds_component: core
-          expr: uds:keycloak_endpoint:up * on() uds:keycloak:up * on() uds:keycloak_waypoint:up * on() uds:tenant_ingressgateway:up * on() uds:ztunnel:up
+          expr: uds:keycloak_endpoint:up * on() uds:ztunnel:up
 {{- end }}
