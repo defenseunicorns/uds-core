@@ -140,6 +140,17 @@
                 }
               },
               "type": "value"
+            },
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "color": "gray",
+                  "index": 2,
+                  "text": "No Data"
+                }
+              },
+              "type": "special"
             }
           ],
           "thresholds": {
@@ -185,241 +196,10 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "uds:keycloak:up",
-          "legendFormat": "Keycloak",
+          "expr": "{__name__=~\"uds:.+:up\"}",
+          "legendFormat": "{{uds_component}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:keycloak_waypoint:up",
-          "legendFormat": "Keycloak Waypoint",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:keycloak_endpoint:up",
-          "legendFormat": "Keycloak SSO Endpoint",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:keycloak_admin_endpoint:up",
-          "legendFormat": "Keycloak Admin Endpoint",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:authservice:up",
-          "legendFormat": "AuthService",
-          "range": true,
-          "refId": "E"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:pepr_admission:up",
-          "legendFormat": "Admission Controller",
-          "range": true,
-          "refId": "F"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:pepr_watcher:up",
-          "legendFormat": "Watcher",
-          "range": true,
-          "refId": "G"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:istiod:up",
-          "legendFormat": "Istiod",
-          "range": true,
-          "refId": "H"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:istio_cni:up",
-          "legendFormat": "Istio CNI",
-          "range": true,
-          "refId": "I"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:admin_ingressgateway:up",
-          "legendFormat": "Admin Gateway",
-          "range": true,
-          "refId": "J"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:tenant_ingressgateway:up",
-          "legendFormat": "Tenant Gateway",
-          "range": true,
-          "refId": "K"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:ztunnel:up",
-          "legendFormat": "Ztunnel",
-          "range": true,
-          "refId": "L"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:prometheus:up",
-          "legendFormat": "Prometheus",
-          "range": true,
-          "refId": "M"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:alertmanager:up",
-          "legendFormat": "Alertmanager",
-          "range": true,
-          "refId": "N"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:grafana:up",
-          "legendFormat": "Grafana",
-          "range": true,
-          "refId": "O"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:blackbox_exporter:up",
-          "legendFormat": "Blackbox Exporter",
-          "range": true,
-          "refId": "P"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:loki:up",
-          "legendFormat": "Loki",
-          "range": true,
-          "refId": "Q"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:vector:up",
-          "legendFormat": "Vector",
-          "range": true,
-          "refId": "R"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:falco:up",
-          "legendFormat": "Falco",
-          "range": true,
-          "refId": "S"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:falcosidekick:up",
-          "legendFormat": "Falcosidekick",
-          "range": true,
-          "refId": "T"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:velero:up",
-          "legendFormat": "Velero",
-          "range": true,
-          "refId": "U"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "Prometheus"
-          },
-          "editorMode": "code",
-          "expr": "uds:core:up",
-          "legendFormat": "Core Uptime",
-          "range": true,
-          "refId": "V"
         }
       ],
       "title": "Component Status",
