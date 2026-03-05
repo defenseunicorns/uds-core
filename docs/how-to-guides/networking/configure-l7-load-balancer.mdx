@@ -14,7 +14,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
-- An L7 load balancer (AWS ALB, Azure Application Gateway, or similar) provisioned and routing traffic to your cluster
+- An L7 load balancer (AWS ALB, Azure Application Gateway, or similar) provisioned
 
 ## Before you begin
 
@@ -99,7 +99,25 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
    uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
    ```
 
-4. **Verify**
+4. **Route the load balancer to the Istio gateway**
+
+   Configure your L7 load balancer to forward traffic to the Istio ingress gateway service. The exact steps vary by cloud provider and infrastructure setup:
+
+   - **AWS ALB**: Create a target group pointing at the Network Load Balancer (NLB) or NodePort provisioned by the `tenant-ingressgateway` service in `istio-tenant-gateway`, then attach that target group to the ALB listener.
+   - **Azure Application Gateway**: Configure a backend pool targeting the Istio gateway service's external IP or node ports.
+
+   Verify the gateway service is available:
+
+   ```bash
+   uds zarf tools kubectl get svc -n istio-tenant-gateway tenant-ingressgateway
+   ```
+
+   The `EXTERNAL-IP` or `PORT(S)` shown will be the target for your load balancer's backend configuration.
+
+   > [!NOTE]
+   > This step is infrastructure-specific and typically managed outside of Kubernetes (e.g., via Terraform, cloud console, or your organization's infrastructure tooling). Consult your cloud provider's documentation for detailed instructions.
+
+5. **Verify**
 
    - Access an application through the load balancer URL and confirm it loads without redirect loops
    - Verify Keycloak SSO works end-to-end by logging in through the tenant gateway
