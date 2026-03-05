@@ -1,0 +1,71 @@
+---
+title: Identity & access
+sidebar:
+  order: 1
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These guides walk platform engineers through common identity and access tasks in UDS Core. Each guide covers a single goal with step-by-step instructions.
+
+For background on how Keycloak, Authservice, and SSO work together, see [Identity & Authentication concepts](/concepts/core-features/identity-access/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Protect apps with Authservice"
+    description="Add SSO protection to applications that have no native OIDC support."
+    href="/how-to-guides/identity-access/protect-apps-with-authservice/"
+  />
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable username/password, X.509/CAC, WebAuthn, OTP, and social login via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+  <LinkCard
+    title="Connect Azure AD as an identity provider"
+    description="Configure Azure Entra ID as a SAML IdP so users authenticate via Azure instead of local Keycloak accounts."
+    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+  />
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session timeouts, concurrent session limits, logout behavior, and HTTP retry settings via bundle overrides."
+    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+  />
+  <LinkCard
+    title="Configure the CA truststore"
+    description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
+    href="/how-to-guides/identity-access/configure-truststore/"
+  />
+  <LinkCard
+    title="Configure service account clients"
+    description="Set up machine-to-machine authentication using the OAuth 2.0 Client Credentials Grant."
+    href="/how-to-guides/identity-access/configure-service-accounts/"
+  />
+  <LinkCard
+    title="Configure OAuth 2.0 device flow"
+    description="Enable device authorization for CLI tools and headless apps that cannot use a browser redirect."
+    href="/how-to-guides/identity-access/configure-device-flow/"
+  />
+  <LinkCard
+    title="Configure Keycloak account lockout"
+    description="Set temporary and permanent lockout thresholds for brute-force protection."
+    href="/how-to-guides/identity-access/configure-account-lockout/"
+  />
+  <LinkCard
+    title="Customize Keycloak login page branding"
+    description="Replace the default logos, background, and Terms & Conditions content via bundle overrides and ConfigMaps."
+    href="/how-to-guides/identity-access/customize-branding/"
+  />
+  <LinkCard
+    title="Build a custom Keycloak configuration image"
+    description="Build, publish, and deploy a custom configuration image to UDS Core for theme or truststore changes."
+    href="/how-to-guides/identity-access/build-deploy-custom-image/"
+  />
+</CardGrid>

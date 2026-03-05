@@ -1,0 +1,218 @@
+---
+title: Configure Keycloak login policies
+sidebar:
+  order: 6
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Keycloak login behavior for your UDS Core deployment: setting concurrent session limits, session idle timeouts, logout confirmation behavior, and HTTP retry settings for outgoing requests. All configuration in this guide is applied via bundle overrides — no image rebuild required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
+
+## Before you begin
+
+UDS Core supports three layers of Keycloak customization:
+
+| Approach | Use for | Requires image rebuild? |
+|---|---|---|
+| **Helm chart values** (this guide) | Operational settings, session policies, resources | No |
+| **UDS Identity Config image** | Custom themes, plugins, realm structure changes | Yes |
+| **OpenTofu / IaC** | Managing auth flows, identity providers, groups declaratively post-deploy | No |
+
+This guide covers Helm chart values, which handle the most common operational configuration needs. For custom themes or plugins, see the [UDS Identity Config Customization Guide](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/).
+
+## Steps
+
+<Steps>
+
+1. **Limit concurrent sessions per user**
+
+   By default, Keycloak allows unlimited concurrent sessions per user. To restrict this — for example, to enforce single-session policies or limit login storms — set these values in your bundle:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   # Maximum concurrent active sessions per user (0 = unlimited)
+                   SSO_SESSION_MAX_PER_USER: "3"
+               - path: realmConfig
+                 value:
+                   # Maximum in-flight (ongoing) login attempts per user
+                   maxInFlightLoginsPerUser: 1
+   ```
+
+   | Setting | Default | Description |
+   |---|---|---|
+   | `SSO_SESSION_MAX_PER_USER` | `0` (unlimited) | Max concurrent active sessions per user |
+   | `maxInFlightLoginsPerUser` | `300` | Max concurrent login attempts in progress |
+
+2. **Configure session idle timeouts**
+
+   Keycloak has two session idle timeout layers that interact with each other:
+
+   - **Realm session idle timeout**: Controls the overall user session. When it expires, the user is logged out from all applications.
+   - **Client session idle timeout**: Controls the refresh token expiration for a specific application. Must be set equal to or shorter than the realm timeout.
+
+   > [!CAUTION]
+   > **The client session timeout must not exceed the realm session timeout.** Keycloak 26.5.0+ (UDS Core 0.59.0+) will reject this configuration. Earlier versions accepted it silently but the realm timeout took precedence anyway — so users would still be logged out at the realm timeout interval regardless of the client setting.
+
+   **Configure realm session timeouts in the Keycloak admin UI:**
+   1. Log in to the Keycloak admin UI at `keycloak.<admin_domain>`
+   2. Switch to the **uds** realm using the top-left dropdown
+   3. Go to **Realm Settings** → **Sessions** tab
+   4. Adjust **SSO Session Idle** and **SSO Session Max** as needed
+
+   **Configure per-client session timeouts:**
+   1. Go to **Clients** → select the client → **Advanced** tab → **Advanced Settings**
+   2. Set **Client Session Idle** to a value ≤ the realm's **SSO Session Idle**
+
+   > [!NOTE]
+   > When a client session expires, users are not necessarily forced to log in again immediately. If the realm session is still active, browser-based applications can silently obtain new tokens. However, applications using only bearer tokens (without browser session cookies) will require the user to reauthenticate once the refresh token expires. The realm session timeout is the outer bound — once it expires, all clients are logged out regardless of client session settings.
+
+3. **Disable logout confirmation**
+
+   By default, UDS Core shows a confirmation page when a user logs out. To skip this for specific applications, set the `logout.confirmation.enabled` attribute in the Package CR:
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-package
+     namespace: my-namespace
+   spec:
+     sso:
+       - name: My SSO Client
+         clientId: my-client-id
+         redirectUris:
+           - "https://my-app.uds.dev/login"
+         attributes:
+           logout.confirmation.enabled: "false"
+   ```
+
+   > [!NOTE]
+   > This is a per-client setting in the Package CR, not a global Keycloak setting. To disable it globally, configure the default in Keycloak's realm settings instead.
+
+4. **Configure HTTP retry behavior for outgoing requests**
+
+   Keycloak can automatically retry failed outgoing HTTP requests (to identity providers, databases, or external services). This is disabled by default.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: httpRetry.maxRetries
+                 value: 2
+               - path: httpRetry.initialBackoffMillis
+                 value: 1000
+               - path: httpRetry.backoffMultiplier
+                 value: 2.0
+               - path: httpRetry.applyJitter
+                 value: true
+               - path: httpRetry.jitterFactor
+                 value: 0.5
+   ```
+
+   | Option | Default | Description |
+   |---|---|---|
+   | `maxRetries` | `0` (disabled) | Maximum retry attempts (set > 0 to enable) |
+   | `initialBackoffMillis` | `1000` | Initial backoff delay in milliseconds |
+   | `backoffMultiplier` | `2.0` | Exponential backoff multiplier |
+   | `applyJitter` | `true` | Adds randomness to prevent retry storms |
+   | `jitterFactor` | `0.5` | Jitter factor (0–1) for backoff variation |
+
+   Enable retries when Keycloak communicates with external services over unreliable networks. Keep them disabled in environments where fast failure detection is preferred.
+
+5. **Deploy your bundle**
+
+   ```bash
+   uds deploy <your-bundle>
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm your session policy changes are applied:
+
+**Check concurrent session limits:**
+1. Log in to the same application from two different browser sessions
+2. If `SSO_SESSION_MAX_PER_USER` is set to `1`, the second login should invalidate the first session
+
+**Check logout confirmation:**
+1. Log out from an application where you set `logout.confirmation.enabled: "false"`
+2. The user should be logged out immediately without a confirmation page
+
+**Check session timeout configuration:**
+```bash
+# View current realm settings in Keycloak (requires admin access)
+uds zarf tools kubectl exec -n keycloak deploy/keycloak -- \
+  /opt/keycloak/bin/kcadm.sh get realms/uds --fields ssoSessionIdleTimeout,ssoSessionMaxLifespan \
+  -H "Authorization: Bearer <token>"
+```
+
+## Troubleshooting
+
+### Problem: Session expires unexpectedly early
+
+**Symptoms:** Users are logged out before the configured timeout elapses.
+
+**Solution:** The realm session idle timeout takes precedence over any client session timeout. Verify that the client session idle timeout is ≤ the realm session idle timeout. In Keycloak 26.5+ this is enforced; in earlier versions, a misconfigured client setting would be silently overridden by the realm setting.
+
+### Problem: Bundle deploy fails with a `realmConfig` error
+
+**Symptoms:** `uds deploy` fails with a validation error referencing `realmConfig` fields.
+
+**Solution:** Verify the path and value types match the chart values schema. Common mistakes:
+- Values expected as strings must be quoted: `"3"` not `3` for `SSO_SESSION_MAX_PER_USER`
+- Check the [Keycloak chart values](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/chart/values.yaml) for the correct path syntax
+
+### Problem: Logout confirmation change has no effect
+
+**Symptoms:** Users still see a logout confirmation page after setting `logout.confirmation.enabled: "false"`.
+
+**Solution:** Confirm the Package CR is applied and the UDS Operator has reconciled it. Check the operator logs:
+```bash
+uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep logout
+```
+
+## Related documentation
+
+- [UDS Identity Config Customization Guide](https://uds.defenseunicorns.com/reference/uds-core/idam/customization/) — for theme and plugin customization beyond Helm values
+- [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
+- [Package CR reference](/reference/operator-and-crds/package/) — full spec for SSO client configuration
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Connect Azure AD as an identity provider"
+    description="Federate Keycloak with Azure Entra ID for enterprise SSO."
+    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+  />
+</CardGrid>
