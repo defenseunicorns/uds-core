@@ -4,7 +4,7 @@ sidebar:
   order: 1.3
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -112,11 +112,23 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 ---
 
-## Next steps
-
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) for standard TLS-terminated ingress
-- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) if you need more control over gateway configuration
-
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Create a custom gateway"
+    description="Deploy a gateway with independent domain, TLS, and security controls."
+    href="/how-to-guides/networking/create-custom-gateways/"
+  />
+</CardGrid>

@@ -4,6 +4,8 @@ sidebar:
   order: 1.8
 ---
 
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
 ## What you'll accomplish
 
 After completing this guide, you will have relaxed Istio's strict authorization policies at the appropriate scope so that specific workloads or namespaces can receive traffic that would otherwise be denied by the mesh's default deny-all model.
@@ -138,13 +140,25 @@ Test that the previously-blocked traffic now flows as expected.
 
 ---
 
-## Next steps
-
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) for background on the authorization model
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) to properly configure ingress through Package CRs
-
 ## Related documentation
 
 - [Package CR Reference](/reference/operator-and-crds/package/)
 - [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)
 - [Istio PeerAuthentication Documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Networking & Service Mesh Concepts"
+    description="Learn how the service mesh, gateways, and authorization model work."
+    href="/concepts/core-features/networking/"
+  />
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+</CardGrid>

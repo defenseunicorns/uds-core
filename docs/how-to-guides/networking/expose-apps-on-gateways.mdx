@@ -4,7 +4,7 @@ sidebar:
   order: 1.2
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -209,13 +209,29 @@ By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), whi
 
 ---
 
-## Next steps
-
-- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) for applications that handle their own TLS
-- [Define network access](/how-to-guides/networking/define-network-access/) for intra-cluster traffic and external egress
-- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) for specialized security or domain requirements
-
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enable the passthrough gateway"
+    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
+    href="/how-to-guides/networking/enable-passthrough-gateway/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster and external network access for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+  <LinkCard
+    title="Create a custom gateway"
+    description="Deploy a gateway with independent domain, TLS, and security controls."
+    href="/how-to-guides/networking/create-custom-gateways/"
+  />
+</CardGrid>

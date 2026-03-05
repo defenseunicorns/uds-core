@@ -4,7 +4,7 @@ sidebar:
   order: 1.4
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -311,11 +311,23 @@ kubectl get virtualservice -n istio-egress-gateway
 
 ---
 
-## Next steps
-
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) for ingress from gateways
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) for background on the traffic model
-
 ## Related documentation
 
 - [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Networking & Service Mesh Concepts"
+    description="Learn how the service mesh, gateways, and authorization model work."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>

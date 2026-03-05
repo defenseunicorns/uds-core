@@ -4,7 +4,7 @@ sidebar:
   order: 1.1
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -215,12 +215,24 @@ base64 -i my-cert.pem
 
 ---
 
-## Next steps
-
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) to make applications accessible
-- [Configure an L7 load balancer](/how-to-guides/networking/configure-l7-load-balancer/) if your gateways sit behind an ALB or Azure Application Gateway
-
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Enable the passthrough gateway"
+    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
+    href="/how-to-guides/networking/enable-passthrough-gateway/"
+  />
+</CardGrid>

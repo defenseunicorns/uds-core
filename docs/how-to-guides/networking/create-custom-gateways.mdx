@@ -4,7 +4,7 @@ sidebar:
   order: 1.6
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -189,12 +189,24 @@ A mismatch in any of these will prevent the Package CR from connecting to your g
 
 ---
 
-## Next steps
-
-- [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) for details on certificate management
-- [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/) if your custom gateway needs TCP support
-
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure TLS certificates"
+    description="Set up TLS certificates for your ingress gateways."
+    href="/how-to-guides/networking/configure-tls-certificates/"
+  />
+  <LinkCard
+    title="Set up non-HTTP ingress"
+    description="Accept TCP traffic (SSH, database ports, etc.) through a gateway."
+    href="/how-to-guides/networking/configure-non-http-ingress/"
+  />
+</CardGrid>
