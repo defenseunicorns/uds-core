@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: "Validate Package CRD exists"
+        wait:
+          cluster:
+            kind: CustomResourceDefinition
+            name: packages.uds.dev
+      - description: "Validate Exemption CRD exists"
+        wait:
+          cluster:
+            kind: CustomResourceDefinition
+            name: exemptions.uds.dev
+      - description: "Validate ClusterConfig CRD exists"
+        wait:
+          cluster:
+            kind: CustomResourceDefinition
+            name: clusterconfig.uds.dev
