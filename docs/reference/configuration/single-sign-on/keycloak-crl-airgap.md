@@ -213,9 +213,9 @@ uds-exemptions:
                 description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
 ```
 
-### Enable ImageVolume on k3s/k3d clusters
+### Enable ImageVolume on uds-k3d
 
-If running on k3s/k3d with Kubernetes < 1.35, enable the feature gate via `uds-config.yaml`:
+If running on the dev/demo bundles (uds-k3d) with Kubernetes < 1.35, enable the feature gate via `uds-config.yaml`:
 
 ```yaml
 variables:
