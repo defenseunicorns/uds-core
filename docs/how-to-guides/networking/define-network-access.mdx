@@ -1,7 +1,7 @@
 ---
 title: Define network access for your application
 sidebar:
-  order: 1.4
+  order: 2.4
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,8 +12,8 @@ After completing this guide, your application will have the network access rules
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
-- UDS Core deployed to your cluster
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed
 - Familiarity with the [Package CR](/reference/operator-and-crds/package/)
 
 ## Before you begin
@@ -257,19 +257,19 @@ uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.
 Check that the Package CR was reconciled:
 
 ```bash
-kubectl get package my-app -n my-app
+uds zarf tools kubectl get package my-app -n my-app
 ```
 
 For external egress, check that the routing resources were created:
 
 ```bash
 # For ambient mode
-kubectl get serviceentry -n istio-egress-ambient
-kubectl get authorizationpolicy -n istio-egress-ambient
+uds zarf tools kubectl get serviceentry -n istio-egress-ambient
+uds zarf tools kubectl get authorizationpolicy -n istio-egress-ambient
 
 # For sidecar mode
-kubectl get serviceentry -n my-app
-kubectl get virtualservice -n istio-egress-gateway
+uds zarf tools kubectl get serviceentry -n my-app
+uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 ```
 
 ---

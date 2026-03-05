@@ -1,7 +1,7 @@
 ---
 title: Create a custom gateway
 sidebar:
-  order: 1.6
+  order: 2.6
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,8 +12,8 @@ After completing this guide, you will have a custom Istio gateway running alongs
 
 ## Prerequisites
 
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed to your cluster
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and Helm charts
 - Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
 
@@ -104,6 +104,7 @@ Two keywords alter gateway behavior when included in the name:
                - name: CUSTOM_TLS_KEY
                  description: "The TLS key for the custom gateway (must be base64 encoded)"
                  path: tls.key
+                 sensitive: true
    ```
 
    Alternatively, reference an existing Kubernetes secret:
@@ -155,7 +156,7 @@ Two keywords alter gateway behavior when included in the name:
    Check that the Package CR was reconciled and shows the expected endpoints:
 
    ```bash
-   kubectl get package my-app -n my-app
+   uds zarf tools kubectl get package my-app -n my-app
    ```
 
    The `ENDPOINTS` column should show your application's URL. Test access:

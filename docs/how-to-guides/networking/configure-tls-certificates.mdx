@@ -1,7 +1,7 @@
 ---
 title: Configure TLS certificates for gateways
 sidebar:
-  order: 1.1
+  order: 2.1
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,7 +12,8 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - A wildcard TLS certificate and private key (PEM format) for each gateway domain:
   - Tenant gateway: `*.yourdomain.com`
   - Admin gateway: `*.admin.yourdomain.com` (or your custom admin domain)
@@ -60,6 +61,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
                  - name: ADMIN_TLS_KEY
                    description: "The TLS key for the admin gateway (must be base64 encoded)"
                    path: tls.key
+                   sensitive: true
            istio-tenant-gateway:
              uds-istio-config:
                variables:
@@ -69,6 +71,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
                  - name: TENANT_TLS_KEY
                    description: "The TLS key for the tenant gateway (must be base64 encoded)"
                    path: tls.key
+                   sensitive: true
      ```
 
   2. **Supply the values in your config**
@@ -153,6 +156,7 @@ overrides:
           name: "ROOT_TLS_CERT"
         - path: rootDomain.tls.key
           name: "ROOT_TLS_KEY"
+          sensitive: true
         - path: rootDomain.tls.cacert
           name: "ROOT_TLS_CACERT"
 ```

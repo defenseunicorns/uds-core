@@ -1,7 +1,7 @@
 ---
 title: Set up non-HTTP ingress
 sidebar:
-  order: 1.5
+  order: 2.5
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -18,7 +18,7 @@ After completing this guide, your cluster will accept non-HTTP traffic (such as 
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed to your cluster
 - An application with a service listening on a TCP port
 
@@ -171,8 +171,8 @@ This example configures SSH ingress, but the same process applies to any TCP pro
 **Symptoms:** Client receives "connection refused" immediately.
 
 **Solution:**
-- Verify the load balancer service has the port configured: `kubectl get svc -n istio-tenant-gateway`
-- Check that the Gateway CR exists: `kubectl get gateway -n istio-tenant-gateway`
+- Verify the load balancer service has the port configured: `uds zarf tools kubectl get svc -n istio-tenant-gateway`
+- Check that the Gateway CR exists: `uds zarf tools kubectl get gateway -n istio-tenant-gateway`
 - Confirm `targetPort` in the service matches `port.number` in the Gateway CR
 
 ### Connection timeout
@@ -181,8 +181,8 @@ This example configures SSH ingress, but the same process applies to any TCP pro
 
 **Solution:**
 - Check the VirtualService route matches the Gateway port and host
-- Verify the network policy allows ingress from the gateway namespace: `kubectl get package example -n example`
-- Confirm the destination service and port are correct: `kubectl get svc -n example`
+- Verify the network policy allows ingress from the gateway namespace: `uds zarf tools kubectl get package example -n example`
+- Confirm the destination service and port are correct: `uds zarf tools kubectl get svc -n example`
 
 ---
 

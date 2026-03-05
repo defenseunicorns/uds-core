@@ -1,7 +1,7 @@
 ---
 title: Allow permissive traffic through the mesh
 sidebar:
-  order: 1.8
+  order: 2.8
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,16 +12,14 @@ After completing this guide, you will have relaxed Istio's strict authorization 
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed to your cluster
 - Confirmation that [Package CR `expose` and `allow` rules](/reference/operator-and-crds/package/) cannot satisfy your traffic requirements
 
-> [!CAUTION]
-> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements — not to bypass the authorization model.
-
 ## Before you begin
 
-### What "permissive" and "outside the mesh" mean
+> [!CAUTION]
+> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements — not to bypass the authorization model.
 
 UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your Package CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
 
@@ -111,7 +109,7 @@ spec:
 After applying a policy, verify it exists:
 
 ```bash
-kubectl get authorizationpolicy -n <namespace>
+uds zarf tools kubectl get authorizationpolicy -n <namespace>
 ```
 
 Test that the previously-blocked traffic now flows as expected.
@@ -126,7 +124,7 @@ Test that the previously-blocked traffic now flows as expected.
 
 **Solution:**
 - Verify the policy is in the correct namespace (must match the workload's namespace)
-- Check the `selector` labels match your workload: `kubectl get pods -n <namespace> --show-labels`
+- Check the `selector` labels match your workload: `uds zarf tools kubectl get pods -n <namespace> --show-labels`
 - Remember that Istio evaluates `DENY` policies before `ALLOW` policies — if a `DENY` policy exists, your `ALLOW` policy will not override it
 - Ensure you have also applied a permissive `PeerAuthentication` if the traffic source cannot present a valid mesh identity
 

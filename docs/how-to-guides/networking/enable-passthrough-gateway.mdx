@@ -1,7 +1,7 @@
 ---
 title: Enable and use the passthrough gateway
 sidebar:
-  order: 1.3
+  order: 2.3
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,7 +12,8 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - An application that manages its own TLS termination
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
 
@@ -83,7 +84,7 @@ After completing this guide, you will have the optional passthrough gateway depl
    Check that the Package CR was reconciled and shows the expected endpoints:
 
    ```bash
-   kubectl get package my-tls-app -n my-tls-app
+   uds zarf tools kubectl get package my-tls-app -n my-tls-app
    ```
 
    The `ENDPOINTS` column should show your application's URL. Test access — the TLS certificate presented should be your application's certificate, not the gateway's:

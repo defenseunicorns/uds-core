@@ -1,7 +1,7 @@
 ---
 title: Configure an L7 load balancer
 sidebar:
-  order: 1.7
+  order: 2.7
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -12,9 +12,11 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 
 ## Prerequisites
 
-- Access to a Kubernetes cluster (kubeconfig) locally or in a pipeline
-- UDS Core deployed to your cluster
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - An L7 load balancer (AWS ALB, Azure Application Gateway, or similar) provisioned and routing traffic to your cluster
+
+## Before you begin
 
 > [!CAUTION]
 > **Client certificate forwarding requires hardened infrastructure.** When using an L7 load balancer to forward client certificates (e.g., for DoD CAC authentication), UDS Core trusts the HTTP headers passed through the Istio gateways. You **must** ensure:
