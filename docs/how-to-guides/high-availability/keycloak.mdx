@@ -10,8 +10,6 @@ import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/com
 
 You'll configure [Keycloak](https://www.keycloak.org/) for production high availability: connecting it to an external PostgreSQL database, enabling horizontal pod autoscaling, and scaling the Istio waypoint proxy.
 
-Keycloak is the identity provider for the entire platform — if it becomes unavailable, users cannot authenticate and applications that depend on SSO will reject new sessions. Properly configuring HA ensures login and token issuance remain available during node failures, deployments, and traffic spikes.
-
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
@@ -19,13 +17,20 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
 - An **external PostgreSQL** instance accessible from the cluster
 - Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
 
+## Before you begin
+
+Keycloak is the identity provider for the entire platform — if it becomes unavailable, users cannot authenticate and applications that depend on SSO will reject new sessions.
+
+> [!NOTE]
+> By default, Keycloak runs in **devMode** with a single replica and an embedded H2 database. For production HA, all replicas must share an external PostgreSQL database to maintain consistent realm configuration, user sessions, and client registrations.
+
 ## Steps
 
 <Steps>
 
 1. **Connect Keycloak to an external PostgreSQL database**
 
-   All Keycloak replicas must share the same database to maintain consistent realm configuration, user sessions, and client registrations. Choose the credential approach that fits your environment:
+   Choose the credential approach that fits your environment:
 
    <Tabs>
      <TabItem label="Direct values">

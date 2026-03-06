@@ -10,13 +10,18 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 You'll configure UDS Core's monitoring stack for production high availability: enabling multi-replica [Grafana](https://grafana.com/oss/grafana/) with an external PostgreSQL database and tuning [Prometheus](https://prometheus.io/) resource allocation.
 
-Monitoring is your primary window into cluster health. If Prometheus runs out of memory, you get metric gaps — meaning alerts don't fire and dashboards go blank during the exact moments you need them most. Grafana's default embedded SQLite database does not support multiple replicas and is lost on pod restart — connecting an external PostgreSQL database ensures dashboard configuration and user preferences persist across restarts and enables multi-replica HA.
-
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **external PostgreSQL** instance accessible from the cluster (for Grafana HA)
+
+## Before you begin
+
+Grafana's default embedded SQLite database does not support multiple replicas and is lost on pod restart. Connecting an external PostgreSQL database enables multi-replica HA and persists dashboard configuration across restarts.
+
+> [!CAUTION]
+> Prometheus runs as a **single replica** in UDS Core. Multi-replica Prometheus requires an external TSDB backend (e.g., Thanos, Mimir) and is not tested with UDS Core at this time.
 
 ## Steps
 
@@ -24,7 +29,7 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
 
 1. **Enable HA Grafana with external PostgreSQL**
 
-   By default, Grafana uses an embedded SQLite database that does not support multiple replicas. Enabling HA requires an external PostgreSQL backend. Set the autoscaling toggle and non-secret database settings directly in the bundle, and use variables for credentials:
+   Set the autoscaling toggle and non-secret database settings directly in the bundle, and use variables for credentials:
 
    ```yaml title="uds-bundle.yaml"
    packages:

@@ -10,8 +10,6 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 You'll configure [Authservice](https://github.com/istio-ecosystem/authservice) for production high availability by connecting it to an external Redis or Valkey session store and scaling to multiple replicas. This ensures SSO sessions persist across pod restarts and failovers.
 
-Authservice handles SSO for applications that don't natively support OIDC. Without HA, a single replica failure forces users to re-authenticate, and without a shared session store, scaling to multiple replicas causes session loss on failover as each replica maintains its own in-memory session state.
-
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
@@ -19,13 +17,16 @@ Authservice handles SSO for applications that don't natively support OIDC. Witho
 - A **Redis or Valkey** instance accessible from the cluster
 - Applications using Authservice for SSO (see [Identity & Authentication concepts](/concepts/core-features/identity-access/) for when Authservice is used vs. native SSO)
 
+## Before you begin
+
+> [!CAUTION]
+> By default, Authservice runs as a **single replica** and stores user sessions **in memory**. Without a shared session store, scaling to multiple replicas causes session loss on failover — each replica maintains its own session state independently. You must configure an external session store before scaling.
+
 ## Steps
 
 <Steps>
 
 1. **Configure an external Redis session store**
-
-   By default, Authservice stores user sessions in memory. With multiple replicas, a user whose request lands on a different pod will lose their session. An external session store solves this by sharing state across all replicas.
 
    Add the Redis URI to your `uds-config.yaml`:
 

@@ -10,17 +10,19 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 You'll configure UDS Core's logging pipeline for production high availability: connecting [Loki](https://grafana.com/oss/loki/) to external S3-compatible storage, tuning replica counts for each Loki tier, and optimizing [Vector](https://vector.dev/)'s resource allocation across your cluster nodes.
 
-Logs are critical for incident investigation, audit compliance, and runtime visibility. If the logging pipeline drops data during an outage or traffic spike, you lose the evidence needed to diagnose what went wrong. Ensuring Loki and Vector are properly sized prevents log loss when it matters most.
-
-> [!NOTE]
-> Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default — it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
-
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **S3-compatible object storage** endpoint for Loki (AWS S3, MinIO, or equivalent)
 - Storage credentials with read/write access to the target bucket
+
+## Before you begin
+
+> [!NOTE]
+> Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default — it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
+
+Vector runs as a **DaemonSet** — one pod per node — so it automatically scales with your cluster. No replica configuration is needed for Vector.
 
 ## Steps
 
