@@ -17,7 +17,7 @@ import {
   UDSPackage,
 } from "..";
 import { PackageStore } from "../../controllers/packages/package-store";
-import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
+import { Mode, NetworkProtocol, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 PackageStore.init();
@@ -486,6 +486,112 @@ describe("Test validation of Package CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify UDP networkProtocol with Ingress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          selector: { app: "test" },
+          remoteNamespace: "foo",
+          port: 53,
+          networkProtocol: NetworkProtocol.UDP,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      "UDP and TCPUDP networkProtocol are only supported for Egress rules",
+    );
+  });
+
+  it("denies network policies that specify TCPUDP networkProtocol with Ingress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          selector: { app: "test" },
+          remoteNamespace: "foo",
+          port: 53,
+          networkProtocol: NetworkProtocol.TCPUDP,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      "UDP and TCPUDP networkProtocol are only supported for Egress rules",
+    );
+  });
+
+  it("allows TCP networkProtocol with Ingress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          selector: { app: "test" },
+          remoteNamespace: "foo",
+          port: 443,
+          networkProtocol: NetworkProtocol.TCP,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows UDP networkProtocol with Egress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Egress,
+          selector: { app: "test" },
+          remoteNamespace: "kube-system",
+          port: 53,
+          networkProtocol: NetworkProtocol.UDP,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows TCPUDP networkProtocol with Egress", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Egress,
+          selector: { app: "test" },
+          remoteNamespace: "kube-system",
+          port: 53,
+          networkProtocol: NetworkProtocol.TCPUDP,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
   it("denies network policies that specify remoteHost as a wildcard", async () => {

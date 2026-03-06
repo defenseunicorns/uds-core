@@ -12,7 +12,7 @@ import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { getFqdn } from "../../controllers/domain-utils";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
+import { Kind, Mode, NetworkProtocol } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
@@ -190,6 +190,15 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // The 'remoteHost' and 'remoteProtocol' cannot be used with 'Ingress'.
     if ((policy.remoteHost || policy.remoteProtocol) && policy.direction == "Ingress") {
       return req.Deny("remoteHost and/or remoteProtocol cannot be used with Ingress");
+    }
+
+    // UDP and TCPUDP protocols are only supported for Egress
+    if (
+      policy.networkProtocol &&
+      policy.networkProtocol !== NetworkProtocol.TCP &&
+      policy.direction === "Ingress"
+    ) {
+      return req.Deny("UDP and TCPUDP networkProtocol are only supported for Egress rules");
     }
 
     // The 'remoteHost' does not support wildcard domains.
