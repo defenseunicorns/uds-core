@@ -154,6 +154,8 @@ These guides and concepts may be useful to explore next:
 
 ### General
 - Use an optional "Before you begin" section for context about defaults or architecture — keep steps action-only
+- Do not use `---` horizontal rule dividers between sections — headings provide sufficient visual separation
+- When a step has multiple options (pick-one), use `<Tabs>` and `<TabItem>` components within the step rather than listing options with bold headings
 - Files use `.mdx` extension
 - Page titles are bare topic names — breadcrumbs provide section context
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only

@@ -1,0 +1,230 @@
+---
+title: Configure TLS certificates for gateways
+sidebar:
+  order: 2.1
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, your UDS Core ingress gateways will serve traffic using valid TLS certificates for your domain.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- A wildcard TLS certificate and private key (PEM format) for each gateway domain. If using a private or non-public CA, the root CA must be loaded in your OS trust store for browser and CLI verification to work.
+  - Tenant gateway: `*.yourdomain.com`
+  - Admin gateway: `*.admin.yourdomain.com` (or your custom admin domain)
+  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain)
+
+## Before you begin
+
+> [!WARNING]
+> The certificate value must include your domain certificate **and** any intermediate certificates between it and a trusted root CA (the full certificate chain). The order matters: your server certificate (e.g., `*.yourdomain.com`) must come **first**, followed by intermediates in order, and finally your root CA. Failing to include intermediates can cause unexpected behavior, as some container images may not inherently trust them.
+
+> [!NOTE]
+> If you are using private PKI or self-signed certificates, you will also need to configure the UDS trust bundle. See [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/) for details.
+
+## Provide certificates
+
+<Tabs>
+  <TabItem label="Bundle variables">
+
+  Use this approach when you want to supply certificates at deploy time via environment variables or `uds-config.yaml`. This is the most common approach.
+
+  <Steps>
+
+  1. **Define TLS variables in your bundle**
+
+     ```yaml title="uds-bundle.yaml"
+     kind: UDSBundle
+     metadata:
+       name: my-uds-core
+       description: UDS Core with custom TLS certificates
+       version: "0.0.1"
+
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           istio-admin-gateway:
+             uds-istio-config:
+               variables:
+                 - name: ADMIN_TLS_CERT
+                   description: "The TLS cert for the admin gateway (must be base64 encoded)"
+                   path: tls.cert
+                 - name: ADMIN_TLS_KEY
+                   description: "The TLS key for the admin gateway (must be base64 encoded)"
+                   path: tls.key
+                   sensitive: true
+           istio-tenant-gateway:
+             uds-istio-config:
+               variables:
+                 - name: TENANT_TLS_CERT
+                   description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+                   path: tls.cert
+                 - name: TENANT_TLS_KEY
+                   description: "The TLS key for the tenant gateway (must be base64 encoded)"
+                   path: tls.key
+                   sensitive: true
+     ```
+
+  2. **Supply the values in your config**
+
+     You can set values via `uds-config.yaml`:
+
+     ```yaml title="uds-config.yaml"
+     variables:
+       core:
+         admin_tls_cert: <base64-encoded-cert>
+         admin_tls_key: <base64-encoded-key>
+         tenant_tls_cert: <base64-encoded-cert>
+         tenant_tls_key: <base64-encoded-key>
+     ```
+
+     Or via environment variables at deploy time:
+
+     ```bash
+     UDS_ADMIN_TLS_CERT=<base64-encoded-cert> \
+     UDS_ADMIN_TLS_KEY=<base64-encoded-key> \
+     UDS_TENANT_TLS_CERT=<base64-encoded-cert> \
+     UDS_TENANT_TLS_KEY=<base64-encoded-key> \
+     uds deploy my-bundle.tar.zst --confirm
+     ```
+
+  3. **Create and deploy your bundle**
+
+     ```bash
+     uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+     ```
+
+  </Steps>
+
+  </TabItem>
+  <TabItem label="Existing Kubernetes secret">
+
+  Use this approach when you already have TLS secrets in your cluster (e.g., managed by cert-manager or an external secrets operator). The `tls.credentialName` value overrides `tls.cert`, `tls.key`, and `tls.cacert`.
+
+  Reference the secrets in your bundle:
+
+  ```yaml title="uds-bundle.yaml"
+  packages:
+    - name: core
+      repository: registry.defenseunicorns.com/public/core
+      ref: x.x.x-upstream
+      overrides:
+        istio-admin-gateway:
+          uds-istio-config:
+            values:
+              - path: tls.credentialName
+                value: admin-gateway-tls-secret
+        istio-tenant-gateway:
+          uds-istio-config:
+            values:
+              - path: tls.credentialName
+                value: tenant-gateway-tls-secret
+  ```
+
+  The secret must exist in the same namespace as the gateway resource. See [Istio Gateway ServerTLSSettings](https://istio.io/latest/docs/reference/config/networking/gateway/#ServerTLSSettings) for the required secret keys.
+
+  Create and deploy:
+
+  ```bash
+  uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+  ```
+
+  </TabItem>
+</Tabs>
+
+## Root domain TLS certificates
+
+If you have enabled [root (apex) domain support](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain), provide TLS certificates separately for the root domain:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-tenant-gateway:
+    uds-istio-config:
+      variables:
+        - path: rootDomain.tls.cert
+          name: "ROOT_TLS_CERT"
+        - path: rootDomain.tls.key
+          name: "ROOT_TLS_KEY"
+          sensitive: true
+        - path: rootDomain.tls.cacert
+          name: "ROOT_TLS_CACERT"
+```
+
+> [!TIP]
+> If your SAN certificate covers both `*.yourdomain.com` and `yourdomain.com`, you can set `rootDomain.tls.credentialName` to the same secret used by the wildcard gateway instead of providing separate cert data. The default secret name for the gateway TLS is `gateway-tls`.
+
+## Enable TLS 1.2 support
+
+UDS Core gateways default to TLS 1.3 only. If clients require TLS 1.2, enable it per gateway:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-tenant-gateway:
+    uds-istio-config:
+      values:
+        - path: tls.supportTLSV1_2
+          value: true
+```
+
+## Verification
+
+Test the certificate chain:
+
+```bash
+curl -v https://my-app.yourdomain.com 2>&1 | grep -A 5 "Server certificate"
+```
+
+You should see your domain certificate and the correct certificate chain. You can also inspect the certificate in a browser by clicking the lock icon in the address bar.
+
+## Troubleshooting
+
+### Certificate chain errors
+
+**Symptoms:** Browsers show "certificate not trusted" or curl reports `SSL certificate problem: unable to get local issuer certificate`.
+
+**Solution:** Ensure your certificate bundle includes the full chain in the correct order: server cert first, then intermediates, then root CA.
+
+### Base64 encoding issues
+
+**Symptoms:** Gateway pods fail to start or TLS handshake fails immediately.
+
+**Solution:** Verify your certificate and key values are properly base64 encoded. The values should be the base64 encoding of the PEM file contents:
+
+```bash
+base64 -i my-cert.pem
+```
+
+### TLS 1.2 clients can't connect
+
+**Symptoms:** Older clients or tools fail to connect, newer clients work fine.
+
+**Solution:** Enable TLS 1.2 support as shown above. This is common in environments with legacy systems or specific compliance requirements.
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
+- [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Enable the passthrough gateway"
+    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
+    href="/how-to-guides/networking/enable-passthrough-gateway/"
+  />
+</CardGrid>

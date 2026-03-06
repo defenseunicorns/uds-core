@@ -1,0 +1,210 @@
+---
+title: Set up non-HTTP ingress
+sidebar:
+  order: 2.5
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, your cluster will accept non-HTTP traffic (such as SSH) through an Istio gateway, routed to your application service.
+
+> [!WARNING]
+> UDS Core only exposes HTTP/HTTPS by default to minimize vulnerability surface area. Opening raw TCP protocols (SSH, database ports, etc.) exposes additional attack surface and a broader CVE footprint compared to HTTP-only ingress. Only configure non-HTTP ingress when there is a clear requirement, and ensure you understand the security implications for your environment.
+
+> [!NOTE]
+> UDP ingress is [not currently supported by Istio](https://github.com/istio/istio/issues/1430).
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- An application with a service listening on a TCP port
+
+## Steps
+
+This example configures SSH ingress, but the same process applies to any TCP protocol.
+
+<Steps>
+
+1. **Add the port to the gateway load balancer**
+
+   Configure the gateway's load balancer service in your UDS Core bundle to accept traffic on your custom port:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-tenant-gateway:
+           gateway:
+             values:
+               - path: "service.ports"
+                 value:
+                   # Default ports — you MUST include these
+                   - name: status-port
+                     port: 15021
+                     protocol: TCP
+                     targetPort: 15021
+                   - name: http2
+                     port: 80
+                     protocol: TCP
+                     targetPort: 80
+                   - name: https
+                     port: 443
+                     protocol: TCP
+                     targetPort: 443
+                   # Your custom port
+                   - name: tcp-ssh
+                     port: 2022    # External port exposed on the load balancer
+                     protocol: TCP
+                     targetPort: 22  # Port on the gateway pod
+   ```
+
+   > [!WARNING]
+   > You **must** include the default ports (status-port, http2, https) in the override. Omitting them will break HTTP traffic and liveness checks.
+
+2. **Create and deploy your UDS Core bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+3. **Create an Istio Gateway resource**
+
+   In your application's Zarf package, create a Gateway CR that tells Istio to listen on the new port for your host:
+
+   ```yaml title="gateway.yaml"
+   apiVersion: networking.istio.io/v1beta1
+   kind: Gateway
+   metadata:
+     name: example-ssh-gateway
+     namespace: istio-tenant-gateway  # Must match the gateway's namespace
+   spec:
+     selector:
+       app: tenant-ingressgateway
+     servers:
+       - hosts:
+           - example.uds.dev  # The host to accept connections for
+         port:
+           name: tcp-ssh
+           number: 22  # Must match the targetPort from step 1
+           protocol: TCP
+   ```
+
+4. **Create a VirtualService to route traffic**
+
+   Route incoming TCP traffic from the gateway to your application service:
+
+   ```yaml title="virtualservice.yaml"
+   apiVersion: networking.istio.io/v1beta1
+   kind: VirtualService
+   metadata:
+     name: example-ssh
+     namespace: example  # Your application's namespace
+   spec:
+     gateways:
+       - istio-tenant-gateway/example-ssh-gateway  # namespace/name of the Gateway
+     hosts:
+       - example.uds.dev
+     tcp:
+       - match:
+           - port: 22  # Must match the Gateway port number
+         route:
+           - destination:
+               host: example.example.svc.cluster.local  # Full service address
+               port:
+                 number: 22  # Port on the destination service
+   ```
+
+5. **Add a network policy via the Package CR**
+
+   UDS Core enforces strict network policies by default. Allow ingress from the gateway in your Package CR:
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: example
+     namespace: example
+   spec:
+     network:
+       allow:
+         - direction: Ingress
+           selector:
+             app: example
+           remoteNamespace: istio-tenant-gateway
+           remoteSelector:
+             app: tenant-ingressgateway
+           port: 22
+           description: "SSH Ingress"
+   ```
+
+6. **Build and deploy your application's Zarf package**
+
+   Include the Gateway, VirtualService, and Package CR manifests in your Zarf package, then build and deploy:
+
+   ```bash
+   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Test the connection:
+
+```bash
+ssh -p 2022 user@example.uds.dev
+```
+
+For other protocols, test with the appropriate client on the external port you configured (2022 in this example).
+
+## Troubleshooting
+
+### Connection refused
+
+**Symptoms:** Client receives "connection refused" immediately.
+
+**Solution:**
+- Verify the load balancer service has the port configured: `uds zarf tools kubectl get svc -n istio-tenant-gateway`
+- Check that the Gateway CR exists: `uds zarf tools kubectl get gateway -n istio-tenant-gateway`
+- Confirm `targetPort` in the service matches `port.number` in the Gateway CR
+
+### Connection timeout
+
+**Symptoms:** Client hangs without a response.
+
+**Solution:**
+- Check the VirtualService route matches the Gateway port and host
+- Verify the network policy allows ingress from the gateway namespace: `uds zarf tools kubectl get package example -n example`
+- Confirm the destination service and port are correct: `uds zarf tools kubectl get svc -n example`
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
+- [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Create a custom gateway"
+    description="Deploy a gateway with independent domain, TLS, and security controls."
+    href="/how-to-guides/networking/create-custom-gateways/"
+  />
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster and external network access for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+</CardGrid>
