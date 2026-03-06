@@ -191,7 +191,7 @@ spec:
 - [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on when to use Authservice vs native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
 - [Package CR reference](/reference/operator-and-crds/package/) — full SSO and `enableAuthserviceSelector` field specification
-- [Configure HA for Authservice](/how-to-guides/high-availability/configure-ha-authservice/) — scaling Authservice for production
+- [Configure PDB and affinity](/how-to-guides/high-availability/configure-pdb-and-affinity/) — scaling workloads for production resilience
 
 ## Next steps
 
@@ -204,8 +204,8 @@ These guides and concepts may be useful to explore next:
     href="/how-to-guides/identity-access/enforce-group-based-access/"
   />
   <LinkCard
-    title="Configure HA for Authservice"
-    description="Connect Authservice to an external Redis session store and scale to multiple replicas."
-    href="/how-to-guides/high-availability/configure-ha-authservice/"
+    title="Configure PDB and affinity"
+    description="Set up pod disruption budgets and affinity rules for production resilience."
+    href="/how-to-guides/high-availability/configure-pdb-and-affinity/"
   />
 </CardGrid>
