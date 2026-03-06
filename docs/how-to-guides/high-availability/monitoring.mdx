@@ -1,7 +1,7 @@
 ---
-title: Monitoring HA/Resources
+title: Monitoring
 sidebar:
-  order: 4.3
+  order: 1.3
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,7 +15,7 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **external PostgreSQL** instance accessible from the cluster (for Grafana HA)
 
 ## Steps
@@ -29,7 +29,7 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          grafana:
@@ -56,6 +56,7 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
                # Database password
                - name: GRAFANA_PG_PASSWORD
                  path: postgresql.password
+                 sensitive: true
    ```
 
    ```yaml title="uds-config.yaml"
@@ -71,14 +72,14 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
 
    The default HPA configuration when HA is enabled:
 
-   | Setting | Default |
-   |---|---|
-   | Minimum replicas | 2 |
-   | Maximum replicas | 5 |
-   | CPU target utilization | 70% |
-   | Memory target utilization | 75% |
-   | Scale-down stabilization | 300 seconds |
-   | Scale-down rate | 1 pod per 300 seconds |
+   | Setting | Default | Override Path |
+   |---|---|---|
+   | Minimum replicas | 2 | `autoscaling.minReplicas` |
+   | Maximum replicas | 5 | `autoscaling.maxReplicas` |
+   | CPU target utilization | 70% | `autoscaling.metrics[0].resource.target.averageUtilization` |
+   | Memory target utilization | 75% | `autoscaling.metrics[1].resource.target.averageUtilization` |
+   | Scale-down stabilization | 300 seconds | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` |
+   | Scale-down rate | 1 pod per 300 seconds | `autoscaling.behavior.scaleDown.policies[0]` |
 
 2. **Tune Prometheus resources**
 
@@ -87,7 +88,7 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          kube-prometheus-stack:
@@ -110,10 +111,11 @@ Monitoring is your primary window into cluster health. If Prometheus runs out of
    > [!CAUTION]
    > **Multi-replica Prometheus is not tested or recommended at this time with UDS Core.** Scaling beyond a single replica requires an external TSDB backend (e.g., Thanos, Cortex, Mimir, VictoriaMetrics) to handle deduplication — each replica independently scrapes all targets, producing duplicate data. You would also need to reconfigure Grafana's data source to query the external backend. See the [Prometheus remote storage integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) if you need to pursue this path.
 
-3. **Deploy your bundle**
+3. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -172,7 +174,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Logging"
     description="Loki provides the log data that Grafana visualizes and also requires HA configuration."
-    href="/how-to-guides/high-availability/configure-ha-logging/"
+    href="/how-to-guides/high-availability/logging/"
   />
   <LinkCard
     title="Monitoring & Observability concepts"

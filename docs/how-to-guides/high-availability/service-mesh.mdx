@@ -1,7 +1,7 @@
 ---
-title: Service Mesh HA/Resources
+title: Service Mesh
 sidebar:
-  order: 4.6
+  order: 1.6
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,32 +15,32 @@ Istio's control plane manages service discovery, certificate rotation, and confi
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed to a **multi-node cluster** (3+ nodes recommended)
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
+
+## Before you begin
+
+UDS Core configures istiod with two HA mechanisms out of the box:
+
+- **Horizontal Pod Autoscaler (HPA):** enabled by default, scaling between 1 and 5 replicas based on CPU utilization
+- **Pod anti-affinity:** `preferredDuringSchedulingIgnoredDuringExecution` anti-affinity, which tells Kubernetes to *prefer* scheduling istiod replicas on different nodes
+
+> [!NOTE]
+> The anti-affinity is a **soft preference**, not a hard requirement. Kubernetes will try to spread istiod pods across nodes, but if insufficient nodes are available (e.g., on a 2-node cluster), it will co-locate replicas rather than leave them unscheduled. On clusters with 3+ nodes, you should see replicas distributed across different nodes.
+
+With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single replica during low-traffic periods — creating a temporary single point of failure.
 
 ## Steps
 
 <Steps>
 
-1. **Understand the default istiod HA behavior**
-
-   UDS Core configures istiod with two HA mechanisms out of the box:
-
-   - **Horizontal Pod Autoscaler (HPA):** enabled by default, scaling between 1 and 5 replicas based on CPU utilization
-   - **Pod anti-affinity:** UDS Core configures `preferredDuringSchedulingIgnoredDuringExecution` anti-affinity, which tells Kubernetes to *prefer* scheduling istiod replicas on different nodes
-
-   > [!NOTE]
-   > The anti-affinity is a **soft preference**, not a hard requirement. Kubernetes will try to spread istiod pods across nodes, but if insufficient nodes are available (e.g., on a 2-node cluster), it will co-locate replicas rather than leave them unscheduled. On clusters with 3+ nodes, you should see replicas distributed across different nodes.
-
-   With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single replica during low-traffic periods — creating a temporary single point of failure. The next step addresses this.
-
-2. **Increase the minimum replica count for HA**
+1. **Increase the minimum replica count for HA**
 
    Set `autoscaleMin` to 2 (or higher) to ensure at least two istiod replicas are always running:
 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          istio-controlplane:
@@ -57,14 +57,14 @@ Istio's control plane manages service discovery, certificate rotation, and confi
    > [!TIP]
    > For most production deployments, `autoscaleMin: 2` is sufficient. The HPA will scale up to `autoscaleMax` during periods of high traffic or configuration churn.
 
-3. **Tune istiod resources**
+2. **Tune istiod resources**
 
    The default istiod resource allocation (500m CPU, 2Gi memory) is sized for moderate clusters. For larger clusters with many services or high configuration complexity, increase the allocation:
 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          istio-controlplane:
@@ -84,14 +84,14 @@ Istio's control plane manages service discovery, certificate rotation, and confi
    > [!NOTE]
    > istiod's resource needs scale with the number of services, endpoints, and configuration objects in the mesh — not directly with traffic volume. See the [Istio performance and scalability guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) for benchmarks.
 
-4. **Scale the admin and tenant ingress gateways**
+3. **Scale the admin and tenant ingress gateways**
 
    UDS Core deploys separate ingress gateways for admin and tenant traffic. Both use the upstream [Istio gateway chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) with HPA enabled by default (min 1, max 5). For production, increase the minimum replicas and tune resources for both gateways:
 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          istio-admin-gateway:
@@ -163,10 +163,11 @@ Istio's control plane manages service discovery, certificate rotation, and confi
    > [!NOTE]
    > The `autoscaleBehavior` example scales up aggressively (50% increase every 15s after a 30s stabilization window) and scales down conservatively (20% decrease every 60s after a 5-minute stabilization window). Adjust these values based on your traffic patterns.
 
-5. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -233,7 +234,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Runtime Security"
     description="Ensure Falco alert delivery resilience with Falcosidekick replicas."
-    href="/how-to-guides/high-availability/configure-ha-runtime-security/"
+    href="/how-to-guides/high-availability/runtime-security/"
   />
   <LinkCard
     title="Networking & Service Mesh concepts"

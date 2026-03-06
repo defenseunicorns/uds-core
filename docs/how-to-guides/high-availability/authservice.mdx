@@ -1,7 +1,7 @@
 ---
-title: Authservice HA/Resources
+title: Authservice
 sidebar:
-  order: 4.4
+  order: 1.4
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,7 +15,7 @@ Authservice handles SSO for applications that don't natively support OIDC. Witho
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - A **Redis or Valkey** instance accessible from the cluster
 - Applications using Authservice for SSO (see [Identity & Authentication concepts](/concepts/core-features/identity-access/) for when Authservice is used vs. native SSO)
 
@@ -51,7 +51,7 @@ Authservice handles SSO for applications that don't natively support OIDC. Witho
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          authservice:
@@ -67,7 +67,7 @@ Authservice handles SSO for applications that don't natively support OIDC. Witho
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          authservice:
@@ -84,10 +84,11 @@ Authservice handles SSO for applications that don't natively support OIDC. Witho
    | Maximum replicas | 3 |
    | CPU target utilization | 80% |
 
-3. **Deploy your bundle**
+3. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -155,7 +156,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Keycloak"
     description="Keycloak is the identity provider that Authservice relies on and also requires HA configuration."
-    href="/how-to-guides/high-availability/configure-ha-keycloak/"
+    href="/how-to-guides/high-availability/keycloak/"
   />
   <LinkCard
     title="Identity & Authentication concepts"

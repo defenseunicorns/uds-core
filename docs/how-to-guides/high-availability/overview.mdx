@@ -1,7 +1,7 @@
 ---
 title: Overview
 sidebar:
-  order: 4.0
+  order: 1.0
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -32,6 +32,8 @@ These external resources provide foundational Kubernetes and component-specific 
 - [Kubernetes: Disruptions and PodDisruptionBudgets](https://kubernetes.io/docs/concepts/workloads/pods/disruptions/) — protecting availability during voluntary disruptions
 - [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/) — scaling workloads based on resource utilization
 - [EKS Best Practices: Reliability](https://aws.github.io/aws-eks-best-practices/reliability/docs/application/) — AWS-specific resilience patterns
+- [AKS Best Practices: Reliability](https://learn.microsoft.com/en-us/azure/aks/best-practices-app-cluster-reliability) — Azure-specific resilience patterns
+- [GKE Best Practices: Scalability](https://cloud.google.com/kubernetes-engine/docs/best-practices/scalability) — GCP-specific scaling and HA guidance
 
 ## Component guides
 
@@ -39,32 +41,32 @@ These external resources provide foundational Kubernetes and component-specific 
   <LinkCard
     title="Keycloak"
     description="External PostgreSQL, HPA autoscaling, and waypoint proxy scaling."
-    href="/how-to-guides/high-availability/configure-ha-keycloak/"
+    href="/how-to-guides/high-availability/keycloak/"
   />
   <LinkCard
     title="Logging (Loki & Vector)"
     description="Loki replica tuning with external S3 storage and Vector production resource configuration."
-    href="/how-to-guides/high-availability/configure-ha-logging/"
+    href="/how-to-guides/high-availability/logging/"
   />
   <LinkCard
     title="Monitoring (Grafana & Prometheus)"
     description="HA Grafana with external PostgreSQL and Prometheus resource tuning."
-    href="/how-to-guides/high-availability/configure-ha-monitoring/"
+    href="/how-to-guides/high-availability/monitoring/"
   />
   <LinkCard
     title="Authservice"
     description="External Redis session store and replica scaling for SSO proxy resilience."
-    href="/how-to-guides/high-availability/configure-ha-authservice/"
+    href="/how-to-guides/high-availability/authservice/"
   />
   <LinkCard
     title="Runtime Security"
     description="Falcosidekick replica tuning for resilient alert delivery."
-    href="/how-to-guides/high-availability/configure-ha-runtime-security/"
+    href="/how-to-guides/high-availability/runtime-security/"
   />
   <LinkCard
     title="Service Mesh"
     description="Istio control plane and ingress gateway scaling, resource tuning, and anti-affinity verification."
-    href="/how-to-guides/high-availability/configure-ha-service-mesh/"
+    href="/how-to-guides/high-availability/service-mesh/"
   />
 </CardGrid>
 

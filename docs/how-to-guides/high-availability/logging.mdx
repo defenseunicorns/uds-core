@@ -1,7 +1,7 @@
 ---
-title: Logging HA/Resources
+title: Logging
 sidebar:
-  order: 4.2
+  order: 1.2
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -18,7 +18,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **S3-compatible object storage** endpoint for Loki (AWS S3, MinIO, or equivalent)
 - Storage credentials with read/write access to the target bucket
 
@@ -33,7 +33,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          loki:
@@ -61,6 +61,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
                # Object storage secret access key
                - name: LOKI_SECRET_ACCESS_KEY
                  path: loki.storage.s3.secretAccessKey
+                 sensitive: true
    ```
 
    ```yaml title="uds-config.yaml"
@@ -92,7 +93,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          loki:
@@ -152,7 +153,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          vector:
@@ -172,10 +173,11 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
    > [!NOTE]
    > These are Vector's [recommended production values](https://vector.dev/docs/setup/going-to-prod/sizing/). The wide range between requests and limits allows Vector to burst during log spikes without being OOM-killed during normal operation.
 
-4. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -236,7 +238,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Monitoring"
     description="Grafana connects to Loki for log visualization and also requires HA configuration."
-    href="/how-to-guides/high-availability/configure-ha-monitoring/"
+    href="/how-to-guides/high-availability/monitoring/"
   />
   <LinkCard
     title="Logging concepts"

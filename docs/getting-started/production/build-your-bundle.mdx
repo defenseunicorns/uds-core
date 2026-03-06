@@ -87,9 +87,11 @@ packages:
             - name: LOKI_ACCESS_KEY_ID
               description: "Object storage access key ID"
               path: loki.storage.s3.accessKeyId
+              sensitive: true
             - name: LOKI_SECRET_ACCESS_KEY
               description: "Object storage secret access key"
               path: loki.storage.s3.secretAccessKey
+              sensitive: true
           values:
             - path: loki.storage.type
               value: "s3"
@@ -121,6 +123,7 @@ packages:
             - name: VELERO_CLOUD_CREDENTIALS
               description: "Velero cloud credentials file content"
               path: credentials.secretContents.cloud
+              sensitive: true
           values:
             - path: "configuration.backupStorageLocation"
               value:
@@ -164,6 +167,7 @@ packages:
             - name: ADMIN_TLS_KEY
               description: "Base64-encoded TLS key for admin gateway"
               path: tls.key
+              sensitive: true
       istio-tenant-gateway:
         uds-istio-config:
           variables:
@@ -173,6 +177,7 @@ packages:
             - name: TENANT_TLS_KEY
               description: "Base64-encoded TLS key for tenant gateway"
               path: tls.key
+              sensitive: true
 ```
 
 ```yaml title="uds-config.yaml"
@@ -208,6 +213,7 @@ packages:
               path: postgresql.database
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
+              sensitive: true
 ```
 
 ```yaml title="uds-config.yaml"
@@ -276,9 +282,11 @@ packages:
             - name: LOKI_ACCESS_KEY_ID
               description: "Object storage access key ID"
               path: loki.storage.s3.accessKeyId
+              sensitive: true
             - name: LOKI_SECRET_ACCESS_KEY
               description: "Object storage secret access key"
               path: loki.storage.s3.secretAccessKey
+              sensitive: true
           values:
             - path: loki.storage.type
               value: "s3"
@@ -290,6 +298,7 @@ packages:
             - name: VELERO_CLOUD_CREDENTIALS
               description: "Velero cloud credentials file content"
               path: credentials.secretContents.cloud
+              sensitive: true
           values:
             - path: "configuration.backupStorageLocation"
               value:
@@ -312,6 +321,7 @@ packages:
             - name: ADMIN_TLS_KEY
               description: "Base64-encoded TLS key for admin gateway"
               path: tls.key
+              sensitive: true
       istio-tenant-gateway:
         uds-istio-config:
           variables:
@@ -321,6 +331,7 @@ packages:
             - name: TENANT_TLS_KEY
               description: "Base64-encoded TLS key for tenant gateway"
               path: tls.key
+              sensitive: true
       keycloak:
         keycloak:
           values:
@@ -335,6 +346,7 @@ packages:
               path: postgresql.database
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
+              sensitive: true
 ```
 
 ```yaml title="uds-config.yaml"

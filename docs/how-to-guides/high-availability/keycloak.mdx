@@ -1,7 +1,7 @@
 ---
-title: Keycloak HA/Resources
+title: Keycloak
 sidebar:
-  order: 4.1
+  order: 1.1
 ---
 
 import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,7 +15,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed to a **multi-node cluster** (multi-AZ recommended for resilience)
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **external PostgreSQL** instance accessible from the cluster
 - Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
 
@@ -34,7 +34,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
        ```yaml title="uds-bundle.yaml"
        packages:
          - name: core
-           repository: oci://registry.defenseunicorns.com/public/core
+           repository: registry.defenseunicorns.com/public/core
            ref: x.x.x-upstream
            overrides:
              keycloak:
@@ -56,6 +56,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
                    # Database password
                    - name: KEYCLOAK_DB_PASSWORD
                      path: postgresql.password
+                     sensitive: true
        ```
 
        ```yaml title="uds-config.yaml"
@@ -76,7 +77,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
        ```yaml title="uds-bundle.yaml"
        packages:
          - name: core
-           repository: oci://registry.defenseunicorns.com/public/core
+           repository: registry.defenseunicorns.com/public/core
            ref: x.x.x-upstream
            overrides:
              keycloak:
@@ -119,7 +120,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -135,14 +136,14 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
 
    The default HPA configuration:
 
-   | Setting | Default |
-   |---|---|
-   | Minimum replicas | 2 |
-   | Maximum replicas | 5 |
-   | CPU target utilization | 80% |
-   | Scale-up stabilization | 600 seconds |
-   | Scale-down stabilization | 300 seconds |
-   | Scale-down rate | 1 pod per 300 seconds |
+   | Setting | Default | Override Path |
+   |---|---|---|
+   | Minimum replicas | 2 | `autoscaling.minReplicas` |
+   | Maximum replicas | 5 | `autoscaling.maxReplicas` |
+   | CPU target utilization | 80% | `autoscaling.metrics[0].resource.target.averageUtilization` |
+   | Scale-up stabilization | 600 seconds | `autoscaling.behavior.scaleUp.stabilizationWindowSeconds` |
+   | Scale-down stabilization | 300 seconds | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` |
+   | Scale-down rate | 1 pod per 300 seconds | `autoscaling.behavior.scaleDown.policies[0]` |
 
    > [!CAUTION]
    > **Do not scale Keycloak down rapidly** by modifying the replica count directly in the StatefulSet. This is a [known Keycloak limitation](https://github.com/keycloak/keycloak/issues/44620) that can result in data loss. Let the HPA manage scale-down gradually.
@@ -154,7 +155,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -188,7 +189,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -209,10 +210,11 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
    > [!TIP]
    > For HA deployments running on multiple nodes, set `minReplicas` to at least **2** with the anti-affinity above to ensure waypoint pods are spread across nodes. This prevents downtime when pods are restarted or rescheduled.
 
-4. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -272,7 +274,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Authservice"
     description="Authservice handles SSO for applications without native OIDC support and also requires HA configuration."
-    href="/how-to-guides/high-availability/configure-ha-authservice/"
+    href="/how-to-guides/high-availability/authservice/"
   />
   <LinkCard
     title="Identity & Authentication concepts"

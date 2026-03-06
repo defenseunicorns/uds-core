@@ -1,7 +1,7 @@
 ---
-title: Runtime Security HA/Resources
+title: Runtime Security
 sidebar:
-  order: 4.5
+  order: 1.5
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,29 +15,26 @@ Falco detects runtime threats like unexpected process execution, file access, an
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed to a **multi-node cluster**
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
+
+## Before you begin
+
+Falco runs as a **DaemonSet** — one pod per node — so it automatically scales with your cluster. No replica configuration is needed for Falco itself.
+
+Falcosidekick — the component that fans out alerts to your configured destinations — runs with **2 replicas by default** for HA.
 
 ## Steps
 
 <Steps>
 
-1. **Understand the Falco HA model**
-
-   Falco itself runs as a **DaemonSet** — one pod per node — so it automatically scales with your cluster. No replica configuration is needed for Falco.
-
-   Falcosidekick — the component that fans out alerts to Alertmanager, Loki, SIEM platforms, and chat integrations — runs with **2 replicas by default** for HA.
-
-   > [!NOTE]
-   > Falco **detects** runtime threats — it does not prevent or block them. Falcosidekick is responsible for delivering those detections to your configured destinations.
-
-2. **Tune Falcosidekick replicas and resources**
+1. **Tune Falcosidekick replicas and resources**
 
    To adjust the replica count for environments with higher alert volume or stricter delivery requirements:
 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          falco:
@@ -62,14 +59,14 @@ Falco detects runtime threats like unexpected process execution, file access, an
 
    For the full list of Falcosidekick helm values, see the [Falcosidekick chart documentation](https://github.com/falcosecurity/charts/tree/master/charts/falcosidekick).
 
-3. **Tune Falco resources**
+2. **Tune Falco resources**
 
    Falco's resource needs depend on the number of syscall events being processed. For nodes with high workload density, increase the default allocation:
 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          falco:
@@ -89,10 +86,11 @@ Falco detects runtime threats like unexpected process execution, file access, an
    > [!NOTE]
    > If you have multiple event sources enabled in Falco, consider increasing the CPU limits. See the [Falco chart documentation](https://github.com/falcosecurity/charts/tree/master/charts/falco) for the full list of helm values.
 
-4. **Deploy your bundle**
+3. **Create and deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -139,7 +137,7 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure HA for Service Mesh"
     description="Verify Istio control plane resilience and pod distribution across nodes."
-    href="/how-to-guides/high-availability/configure-ha-service-mesh/"
+    href="/how-to-guides/high-availability/service-mesh/"
   />
   <LinkCard
     title="Runtime Security concepts"
