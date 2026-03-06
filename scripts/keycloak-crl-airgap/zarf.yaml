@@ -1,0 +1,13 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: keycloak-crls
+  description: "DoD CRLs for Keycloak X.509 (OCI volume)"
+  version: "${PACKAGE_VERSION}"
+components:
+  - name: keycloak-crls
+    required: true
+    images:
+      - ${IMAGE_REF}

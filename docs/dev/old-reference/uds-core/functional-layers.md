@@ -6,7 +6,7 @@ title: Functional Layers
 
 Context on the inclusion of "functional layers" can be viewed in our [ADR](https://github.com/defenseunicorns/uds-core/blob/main/adrs/0002-uds-core-functional-layers.md). In short, UDS Core publishes smaller Zarf packages that contain subsets of core's capabilities, grouped by their function (such as monitoring, logging, backup/restore, etc) to allow more flexibility in deployment. This helps to support resource constrained environments (edge deployments) and other situations where an environment has different needs than the default core stack.
 
-Each layer is published as an individual OCI Zarf package. Package sources can be viewed under the [`packages` directory](https://github.com/defenseunicorns/uds-core/tree/main/packages), with each folder containing a readme detailing the contents and any dependencies. All layers assume the requirement of the base layer which provides Istio, the UDS Operator, and UDS Policy Engine.
+Each layer is published as an individual OCI Zarf package. Package sources can be viewed under the [`packages` directory](https://github.com/defenseunicorns/uds-core/tree/main/packages), with each folder containing a readme detailing the contents and any dependencies. All layers (except CRDs) assume the requirement of the base layer which provides Istio, the UDS Operator, and UDS Policy Engine.
 
 :::caution
 By removing pieces of core from your deployment you may affect your security and compliance posture as well as reduce functionality of the stack. Deploying core using these layers should be the exception in most cases and only done after carefully weighing needs for your environment.
@@ -24,27 +24,30 @@ metadata:
   version: "0.1.0"
 
 packages:
+  - name: core-crds
+    repository: ghcr.io/defenseunicorns/packages/uds/core-crds
+    ref: x.x.x-flavor
   - name: core-base
     repository: ghcr.io/defenseunicorns/packages/uds/core-base
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-identity-authorization
     repository: ghcr.io/defenseunicorns/packages/uds/core-identity-authorization
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-metrics-server
     repository: ghcr.io/defenseunicorns/packages/uds/core-metrics-server
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-runtime-security
     repository: ghcr.io/defenseunicorns/packages/uds/core-runtime-security
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-logging
     repository: ghcr.io/defenseunicorns/packages/uds/core-logging
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-monitoring
     repository: ghcr.io/defenseunicorns/packages/uds/core-monitoring
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
   - name: core-backup-restore
     repository: ghcr.io/defenseunicorns/packages/uds/core-backup-restore
-    ref: 0.54.1-upstream
+    ref: x.x.x-flavor
 ```
 
 ## Layer Selection
@@ -60,6 +63,7 @@ Layer selection will always be deployment-specific but below are guidelines for 
 | Logging†                   | Provides backend log storage and log shipping capabilities <br/> *(install if the deployment requires log aggregation and shipping)* |
 | Metrics Server†**          | Provides metrics collection capabilities (req of UDS Runtime) <br/> *(install if the cluster does not provide its own metrics server)* |
 | Base†                      | Provides the base for all other functional layers <br/> *(required for all "UDS" deployments and all other functional layers)* |
+| CRDs                       | Provides standalone UDS Core CRDs (Package, Exemption, ClusterConfig) <br/> *(deploy before base if you need to create exemptions for pre-existing cluster components)* |
 
 :::note
 *The Monitoring and Runtime Security layers provide user login and therefore require the Identity and Authorization layer.
@@ -86,4 +90,8 @@ Layer selection will always be deployment-specific but below are guidelines for 
 
 :::note
 *You may need to deploy pre-requisite packages that are not a part of UDS Core's layers if you are on prem or in an edge scenario - usually cloud deployments will have their own offerings to provide these services which we recommend to use instead.
+:::
+
+:::tip
+If you deploy pre-requisite packages (such as MetalLB or other storage/load balancer controllers) that need UDS policy exemptions, deploy the **CRDs layer** first. This lets you create `Exemption` custom resources alongside those packages, before UDS Core Base and its policy engine are active — preventing policy violations during upgrades or reconciliation.
 :::

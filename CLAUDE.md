@@ -1,0 +1,1 @@
+For all docs work, read all files in `.ai/docs/` for templates, conventions, and guidance. If a convention or pattern changes during docs work, update the relevant file in `.ai/docs/` to reflect the change — these are the source of truth for how docs should be written.

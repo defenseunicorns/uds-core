@@ -1,11 +1,11 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
+import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, MockInstance, vi } from "vitest";
 import * as dod_certs from "./dod-certs";
 
@@ -61,17 +61,78 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     consoleErrorSpy.mockRestore();
   });
 
+  describe("flattenVersionDirectory", () => {
+    let tempDir: string;
+
+    beforeEach(async () => {
+      tempDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "flatten-test-"));
+    });
+
+    afterEach(async () => {
+      if (tempDir) {
+        await fs.promises.rm(tempDir, { recursive: true, force: true });
+      }
+    });
+
+    it("should flatten a versioned directory and write .version file", async () => {
+      const versionDirName = "DoD_Approved_External_PKIs_Trust_Chains_v11.5_20250303";
+      const versionDir = path.join(tempDir, versionDirName);
+      const orgDir = path.join(versionDir, "Boeing");
+      await fs.promises.mkdir(orgDir, { recursive: true });
+      await fs.promises.writeFile(path.join(orgDir, "cert.cer"), "test");
+
+      const result = await dod_certs.flattenVersionDirectory(tempDir);
+
+      expect(result).toBe(versionDirName);
+
+      // Org dir should be at top level now
+      const entries = await fs.promises.readdir(tempDir);
+      expect(entries).toContain("Boeing");
+      expect(entries).toContain(".version");
+      expect(entries).not.toContain(versionDirName);
+
+      // .version file should contain the version dir name
+      const version = await fs.promises.readFile(path.join(tempDir, ".version"), "utf-8");
+      expect(version.trim()).toBe(versionDirName);
+
+      // Cert file should still exist
+      const certExists = fs.existsSync(path.join(tempDir, "Boeing", "cert.cer"));
+      expect(certExists).toBe(true);
+    });
+
+    it("should throw if no versioned directory is found", async () => {
+      await fs.promises.mkdir(path.join(tempDir, "SomeOtherDir"));
+
+      await expect(dod_certs.flattenVersionDirectory(tempDir)).rejects.toThrow(
+        "No versioned directory found",
+      );
+    });
+
+    it("should throw if multiple versioned directories are found", async () => {
+      await fs.promises.mkdir(
+        path.join(tempDir, "DoD_Approved_External_PKIs_Trust_Chains_v11.4_20250101"),
+      );
+      await fs.promises.mkdir(
+        path.join(tempDir, "DoD_Approved_External_PKIs_Trust_Chains_v11.5_20250303"),
+      );
+
+      await expect(dod_certs.flattenVersionDirectory(tempDir)).rejects.toThrow(
+        "Multiple versioned directories found",
+      );
+    });
+  });
+
   describe("diffDoDCerts", () => {
     it("should detect no differences when certificates are identical", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/test/certs/dod/v1.1/DigiCert",
+          filepath: "/test/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2\n-----END CERTIFICATE-----",
           organization: "DigiCert",
@@ -80,13 +141,13 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/tmp/certs/dod/v1.1/Entrust",
+          filepath: "/tmp/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/tmp/certs/dod/v1.1/DigiCert",
+          filepath: "/tmp/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2\n-----END CERTIFICATE-----",
           organization: "DigiCert",
@@ -103,7 +164,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should detect added certificates", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -112,13 +173,13 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/tmp/certs/dod/v1.1/Entrust",
+          filepath: "/tmp/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/tmp/certs/dod/v1.1/DigiCert",
+          filepath: "/tmp/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2\n-----END CERTIFICATE-----",
           organization: "DigiCert",
@@ -137,13 +198,13 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should detect removed certificates", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/test/certs/dod/v1.1/DigiCert",
+          filepath: "/test/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2\n-----END CERTIFICATE-----",
           organization: "DigiCert",
@@ -152,7 +213,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/tmp/certs/dod/v1.1/Entrust",
+          filepath: "/tmp/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -171,7 +232,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should detect modified certificates", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1_old\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -180,7 +241,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/tmp/certs/dod/v1.1/Entrust",
+          filepath: "/tmp/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1_new\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -199,19 +260,19 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should handle complex scenarios with multiple changes", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/test/certs/dod/v1.1/DigiCert",
+          filepath: "/test/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2_old\n-----END CERTIFICATE-----",
           organization: "DigiCert",
         },
         {
-          filepath: "/test/certs/dod/v1.1/VeriSign",
+          filepath: "/test/certs/dod/VeriSign",
           filename: "cert3.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert3\n-----END CERTIFICATE-----",
           organization: "VeriSign",
@@ -220,19 +281,19 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/tmp/certs/dod/v1.1/Entrust",
+          filepath: "/tmp/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
         },
         {
-          filepath: "/tmp/certs/dod/v1.1/DigiCert",
+          filepath: "/tmp/certs/dod/DigiCert",
           filename: "cert2.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert2_new\n-----END CERTIFICATE-----",
           organization: "DigiCert",
         },
         {
-          filepath: "/tmp/certs/dod/v1.1/GlobalSign",
+          filepath: "/tmp/certs/dod/GlobalSign",
           filename: "cert4.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert4\n-----END CERTIFICATE-----",
           organization: "GlobalSign",
@@ -252,7 +313,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should handle certificates with different path formats", () => {
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/some/different/path/certs/dod/v1.2/Entrust/Trust_Chain_1",
+          filepath: "/some/different/path/certs/dod/Entrust/Trust_Chain_1",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -261,7 +322,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const downloaded: dod_certs.DoDCert[] = [
         {
-          filepath: "/completely/different/base/certs/dod/v1.2/Entrust/Trust_Chain_1",
+          filepath: "/completely/different/base/certs/dod/Entrust/Trust_Chain_1",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -284,7 +345,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
       const existing: dod_certs.DoDCert[] = [
         {
-          filepath: "/test/certs/dod/v1.1/Entrust",
+          filepath: "/test/certs/dod/Entrust",
           filename: "cert1.cer",
           content: "-----BEGIN CERTIFICATE-----\nMIIB...cert1\n-----END CERTIFICATE-----",
           organization: "Entrust",
@@ -319,10 +380,9 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     });
 
     it("should throw error for invalid certificate data", async () => {
-      // Create test directory structure: tempDir/test-dod/v1.1/Entrust/cert.cer
+      // Create test directory structure: tempDir/test-dod/Entrust/cert.cer
       const testDodDir = path.join(tempDir, "test-dod");
-      const versionDir = path.join(testDodDir, "v1.1");
-      const entrustDir = path.join(versionDir, "Entrust");
+      const entrustDir = path.join(testDodDir, "Entrust");
 
       const badCertData = "blahhh, not a real cert";
 
@@ -339,9 +399,8 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
     it("should handle multiple organizations and certificates", async () => {
       // Create test directory structure with multiple orgs
       const testDodDir = path.join(tempDir, "test-dod");
-      const versionDir = path.join(testDodDir, "v1.1");
-      const entrustDir = path.join(versionDir, "Entrust");
-      const digicertDir = path.join(versionDir, "DigiCert");
+      const entrustDir = path.join(testDodDir, "Entrust");
+      const digicertDir = path.join(testDodDir, "DigiCert");
 
       await fs.promises.mkdir(entrustDir, { recursive: true });
       await fs.promises.mkdir(digicertDir, { recursive: true });
@@ -364,8 +423,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
     it("should skip non-.cer files", async () => {
       const testDodDir = path.join(tempDir, "test-dod");
-      const versionDir = path.join(testDodDir, "v1.1");
-      const entrustDir = path.join(versionDir, "Entrust");
+      const entrustDir = path.join(testDodDir, "Entrust");
 
       await fs.promises.mkdir(entrustDir, { recursive: true });
 
@@ -383,8 +441,7 @@ VCLAAVBpQ570su9t+Oza8eOx79+Rj1QqCyXBJhnEUhAFZdWCEOrCMc0u
 
     it("should handle nested directory structures", async () => {
       const testDodDir = path.join(tempDir, "test-dod");
-      const versionDir = path.join(testDodDir, "v1.1");
-      const entrustDir = path.join(versionDir, "Entrust");
+      const entrustDir = path.join(testDodDir, "Entrust");
       const trustChainDir = path.join(entrustDir, "Trust_Chain_1");
 
       await fs.promises.mkdir(trustChainDir, { recursive: true });
