@@ -94,13 +94,13 @@
             "uid": "Prometheus"
           },
           "editorMode": "code",
-          "expr": "uds:core:up",
-          "legendFormat": "Core Uptime",
+          "expr": "uds:access:up",
+          "legendFormat": "UDS Access",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "UDS Core Uptime",
+      "title": "UDS Access Uptime",
       "type": "stat"
     },
     {

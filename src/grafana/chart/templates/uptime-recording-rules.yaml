@@ -7,8 +7,6 @@ kind: PrometheusRule
 metadata:
   name: uds-grafana-uptime
   namespace: {{ .Release.Namespace }}
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
 spec:
   groups:
     - name: uds-monitoring-grafana-uptime
@@ -17,5 +15,17 @@ spec:
           labels:
             uds_layer: monitoring
             uds_component: grafana
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}, 1)
+          expr: |
+            (
+              clamp_max(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}, 1)
+              or on()
+              (absent(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+        - record: uds:grafana_endpoint:up
+          labels:
+            uds_layer: monitoring
+            uds_component: grafana-endpoint
+          expr: min(probe_success{job="probe/grafana/uds-grafana-admin-uptime"})
 {{- end }}

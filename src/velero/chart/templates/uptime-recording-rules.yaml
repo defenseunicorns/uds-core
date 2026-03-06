@@ -7,8 +7,6 @@ kind: PrometheusRule
 metadata:
   name: uds-velero-uptime
   namespace: {{ .Release.Namespace }}
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
 spec:
   groups:
     - name: uds-backup-restore-uptime
@@ -17,5 +15,12 @@ spec:
           labels:
             uds_layer: backup-restore
             uds_component: velero
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="velero", namespace="velero"}, 1)
+          expr: |
+            (
+              clamp_max(kube_deployment_status_replicas_available{deployment="velero", namespace="velero"}, 1)
+              or on()
+              (absent(kube_deployment_status_replicas_available{deployment="velero", namespace="velero"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
 {{- end }}

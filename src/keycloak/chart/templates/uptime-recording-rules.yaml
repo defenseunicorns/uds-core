@@ -7,8 +7,6 @@ kind: PrometheusRule
 metadata:
   name: uds-keycloak-uptime
   namespace: {{ .Release.Namespace }}
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
 spec:
   groups:
     - name: uds-identity-uptime
@@ -17,16 +15,32 @@ spec:
           labels:
             uds_layer: identity-authorization
             uds_component: keycloak
-          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}, 1)
+          expr: |
+            (
+              clamp_max(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}, 1)
+              or on()
+              (absent(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:keycloak_waypoint:up
           labels:
             uds_layer: identity-authorization
             uds_component: keycloak_waypoint
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}, 1)
+          expr: |
+            (
+              clamp_max(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}, 1)
+              or on()
+              (absent(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:keycloak_endpoint:up
           labels:
             uds_layer: identity-authorization
-            uds_component: keycloak_endpoint
+            uds_component: keycloak_sso_endpoint
           expr: min(probe_success{job="probe/keycloak/uds-sso-tenant-uptime"})
         - record: uds:keycloak_admin_endpoint:up
           labels:

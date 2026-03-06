@@ -7,8 +7,6 @@ kind: PrometheusRule
 metadata:
   name: uds-istio-uptime
   namespace: {{ .Release.Namespace }}
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
 spec:
   groups:
     - name: uds-base-istio-uptime
@@ -17,25 +15,84 @@ spec:
           labels:
             uds_layer: base
             uds_component: istiod
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="istiod", namespace="istio-system"}, 1)
+          expr: |
+            (
+              (kube_deployment_status_replicas_unavailable{deployment="istiod", namespace="istio-system"} == 0) * 0 + 1
+              or on(deployment, namespace)
+              clamp_max(deployment:replicas:changed_recently{deployment="istiod", namespace="istio-system"}, 1)
+              or on(deployment, namespace)
+              clamp_max(kube_deployment_spec_replicas{deployment="istiod", namespace="istio-system"}, 1) * 0
+              or on()
+              (absent(kube_deployment_spec_replicas{deployment="istiod", namespace="istio-system"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:istio_cni:up
           labels:
             uds_layer: base
             uds_component: istio_cni
-          expr: clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="istio-cni-node", namespace="istio-system"}, 1) * on (daemonset, namespace) (kube_daemonset_status_number_unavailable{daemonset="istio-cni-node", namespace="istio-system"} == bool 0)
+          expr: |
+            (
+              (kube_daemonset_status_number_unavailable{daemonset="istio-cni-node", namespace="istio-system"} == 0) * 0 + 1
+              or on(daemonset, namespace)
+              clamp_max(daemonset:desired_scheduled:changed_recently{daemonset="istio-cni-node", namespace="istio-system"}, 1)
+              or on(daemonset, namespace)
+              clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="istio-cni-node", namespace="istio-system"}, 1) * 0
+              or on()
+              (absent(kube_daemonset_status_desired_number_scheduled{daemonset="istio-cni-node", namespace="istio-system"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:admin_ingressgateway:up
           labels:
             uds_layer: base
             uds_component: admin_ingressgateway
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}, 1)
+          expr: |
+            (
+              (kube_deployment_status_replicas_unavailable{deployment="admin-ingressgateway", namespace="istio-admin-gateway"} == 0) * 0 + 1
+              or on(deployment, namespace)
+              clamp_max(deployment:replicas:changed_recently{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}, 1)
+              or on(deployment, namespace)
+              clamp_max(kube_deployment_spec_replicas{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}, 1) * 0
+              or on()
+              (absent(kube_deployment_spec_replicas{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:ztunnel:up
           labels:
             uds_layer: base
             uds_component: ztunnel
-          expr: clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="ztunnel", namespace="istio-system"}, 1) * on (daemonset, namespace) (kube_daemonset_status_number_unavailable{daemonset="ztunnel", namespace="istio-system"} == bool 0)
+          expr: |
+            (
+              (kube_daemonset_status_number_unavailable{daemonset="ztunnel", namespace="istio-system"} == 0) * 0 + 1
+              or on(daemonset, namespace)
+              clamp_max(daemonset:desired_scheduled:changed_recently{daemonset="ztunnel", namespace="istio-system"}, 1)
+              or on(daemonset, namespace)
+              clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="ztunnel", namespace="istio-system"}, 1) * 0
+              or on()
+              (absent(kube_daemonset_status_desired_number_scheduled{daemonset="ztunnel", namespace="istio-system"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
         - record: uds:tenant_ingressgateway:up
           labels:
             uds_layer: base
             uds_component: tenant_ingressgateway
-          expr: clamp_max(kube_deployment_status_replicas_available{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}, 1)
+          expr: |
+            (
+              (kube_deployment_status_replicas_unavailable{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"} == 0) * 0 + 1
+              or on(deployment, namespace)
+              clamp_max(deployment:replicas:changed_recently{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}, 1)
+              or on(deployment, namespace)
+              clamp_max(kube_deployment_spec_replicas{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}, 1) * 0
+              or on()
+              (absent(kube_deployment_spec_replicas{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
 {{- end }}

@@ -23,30 +23,26 @@ components:
     import:
       path: ../../src/pepr
 
-  - name: uds-operator-config
-    required: true
-    import:
-      path: ../../src/pepr
-
-  # CRDs
   - name: prometheus-operator-crds
     required: true
     import:
       path: ../../src/prometheus-stack
 
-  # Pepr the world
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../../src/pepr
+
   - name: pepr-uds-core
     required: true
     import:
       path: ../../src/pepr
 
-  # UDS Exemptions
   - name: uds-exemptions
     required: true
     import:
       path: ../../src/pepr
 
-  # Istio
   - name: istio-controlplane
     required: true
     import:

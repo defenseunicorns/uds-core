@@ -7,15 +7,59 @@ kind: PrometheusRule
 metadata:
   name: uds-loki-uptime
   namespace: {{ .Release.Namespace }}
-  labels:
-    prometheus: kube-prometheus-stack-prometheus
 spec:
   groups:
     - name: uds-logging-loki-uptime
       rules:
-        - record: uds:loki:up
+        - record: uds:loki-backend:up
           labels:
             uds_layer: logging
-            uds_component: loki
-          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="loki", namespace="loki"}, 1)
+            uds_component: loki-backend
+          expr: |
+            (
+              clamp_max(kube_statefulset_status_replicas_available{statefulset="loki-backend", namespace="loki"}, 1)
+              or on()
+              (absent(kube_statefulset_status_replicas_available{statefulset="loki-backend", namespace="loki"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
+        - record: uds:loki-write:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-write
+          expr: |
+            (
+              clamp_max(kube_statefulset_status_replicas_available{statefulset="loki-write", namespace="loki"}, 1)
+              or on()
+              (absent(kube_statefulset_status_replicas_available{statefulset="loki-write", namespace="loki"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
+        - record: uds:loki-gateway:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-gateway
+          expr: |
+            (
+              clamp_max(kube_deployment_status_replicas_available{deployment="loki-gateway", namespace="loki"}, 1)
+              or on()
+              (absent(kube_deployment_status_replicas_available{deployment="loki-gateway", namespace="loki"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
+
+        - record: uds:loki-read:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-read
+          expr: |
+            (
+              clamp_max(kube_deployment_status_replicas_available{deployment="loki-read", namespace="loki"}, 1)
+              or on()
+              (absent(kube_deployment_status_replicas_available{deployment="loki-read", namespace="loki"}) * 0)
+            )
+            * on() group_left()
+            kube_state_metrics:up
 {{- end }}
