@@ -64,7 +64,7 @@ export function generateCentralAmbientEgressAuthorizationPolicy(
             to: [{ operation: { ports: [String(parsedPort)] } }],
           };
         })
-        .filter((r): r is NonNullable<typeof r> => r != null)
+        .filter((r): r is NonNullable<typeof r> => r !== null)
     : [
         {
           from: [...principalSources, ...namespaceSources],
