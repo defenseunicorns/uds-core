@@ -13,11 +13,9 @@ After completing this guide, you will have the optional passthrough gateway depl
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - An application that manages its own TLS termination
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
-
----
 
 ## Steps
 
@@ -79,23 +77,21 @@ After completing this guide, you will have the optional passthrough gateway depl
    uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-4. **Verify**
-
-   Check that the Package CR was reconciled and shows the expected endpoints:
-
-   ```bash
-   uds zarf tools kubectl get package my-tls-app -n my-tls-app
-   ```
-
-   The `ENDPOINTS` column should show your application's URL. Test access — the TLS certificate presented should be your application's certificate, not the gateway's:
-
-   ```bash
-   curl -v https://my-tls-app.yourdomain.com
-   ```
-
 </Steps>
 
----
+## Verification
+
+Check that the Package CR was reconciled and shows the expected endpoints:
+
+```bash
+uds zarf tools kubectl get package my-tls-app -n my-tls-app
+```
+
+The `ENDPOINTS` column should show your application's URL. Test access — the TLS certificate presented should be your application's certificate, not the gateway's:
+
+```bash
+curl -v https://my-tls-app.yourdomain.com
+```
 
 ## Troubleshooting
 
@@ -110,8 +106,6 @@ After completing this guide, you will have the optional passthrough gateway depl
 **Symptoms:** Connection resets or TLS errors when accessing the application.
 
 **Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the Package CR. The passthrough gateway does not perform any TLS termination — the application must handle it.
-
----
 
 ## Related documentation
 

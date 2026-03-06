@@ -19,10 +19,8 @@ After completing this guide, your cluster will accept non-HTTP traffic (such as 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed to your cluster
+- Access to a Kubernetes cluster with UDS Core deployed
 - An application with a service listening on a TCP port
-
----
 
 ## Steps
 
@@ -152,17 +150,17 @@ This example configures SSH ingress, but the same process applies to any TCP pro
    uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-7. **Verify the connection**
-
-   ```bash
-   ssh -p 2022 user@example.uds.dev
-   ```
-
-   For other protocols, test with the appropriate client on the external port you configured (2022 in this example).
-
 </Steps>
 
----
+## Verification
+
+Test the connection:
+
+```bash
+ssh -p 2022 user@example.uds.dev
+```
+
+For other protocols, test with the appropriate client on the external port you configured (2022 in this example).
 
 ## Troubleshooting
 
@@ -183,8 +181,6 @@ This example configures SSH ingress, but the same process applies to any TCP pro
 - Check the VirtualService route matches the Gateway port and host
 - Verify the network policy allows ingress from the gateway namespace: `uds zarf tools kubectl get package example -n example`
 - Confirm the destination service and port are correct: `uds zarf tools kubectl get svc -n example`
-
----
 
 ## Related documentation
 

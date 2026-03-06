@@ -13,7 +13,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- A Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - An L7 load balancer (AWS ALB, Azure Application Gateway, or similar) provisioned
 
 ## Before you begin
@@ -27,8 +27,6 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 > - **Untrusted workloads in the cluster must not be able to reach the Istio ingressgateway pods directly.** If a workload can bypass the load balancer and send traffic straight to the ingressgateway, it can inject arbitrary headers (including forged client certificates), bypassing all authentication controls.
 >
 > If any of these requirements cannot be met, **do not** make authentication decisions based on the client certificate header. Use other MFA methods instead.
-
----
 
 ## Steps
 
@@ -63,7 +61,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
          #     values:
          #       - path: tls.servers.keycloak.enableHttpsRedirect
          #         value: false
-         #       - path: tls.servers.tenant.enableHttpsRedirect
+         #       - path: tls.servers.admin.enableHttpsRedirect
          #         value: false
          istio-controlplane:
            istiod:
@@ -117,15 +115,13 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
    > [!NOTE]
    > This step is infrastructure-specific and typically managed outside of Kubernetes (e.g., via Terraform, cloud console, or your organization's infrastructure tooling). Consult your cloud provider's documentation for detailed instructions.
 
-5. **Verify**
-
-   - Access an application through the load balancer URL and confirm it loads without redirect loops
-   - Verify Keycloak SSO works end-to-end by logging in through the tenant gateway
-   - If using mTLS, verify client certificate-based authentication works through Keycloak
-
 </Steps>
 
----
+## Verification
+
+- Access an application through the load balancer URL and confirm it loads without redirect loops
+- Verify Keycloak SSO works end-to-end by logging in through the tenant gateway
+- If using mTLS, verify client certificate-based authentication works through Keycloak
 
 ## Troubleshooting
 
@@ -133,7 +129,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 
 **Symptoms:** Browser shows "too many redirects" or ERR_TOO_MANY_REDIRECTS.
 
-**Solution:** Verify that HTTPS redirects are disabled for all gateway servers behind the load balancer. Both `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.tenant.enableHttpsRedirect` must be set to `false`. If the admin gateway is also behind the L7 load balancer, disable redirects there too.
+**Solution:** Verify that HTTPS redirects are disabled for all gateway servers behind the load balancer. For the tenant gateway, both `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.tenant.enableHttpsRedirect` must be set to `false`. For the admin gateway, use `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.admin.enableHttpsRedirect`. If the admin gateway is also behind the L7 load balancer, disable redirects there too.
 
 ### Incorrect client IP or forwarded headers
 
@@ -149,8 +145,6 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 - Verify the `tlsCertificateHeader` matches the header your load balancer uses to forward the certificate
 - Verify the `tlsCertificateFormat` matches your load balancer's format (`AWS` for ALB, `PEM` for others)
 - Ensure the load balancer is configured to forward client certificates
-
----
 
 ## Related documentation
 

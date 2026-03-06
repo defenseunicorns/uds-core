@@ -13,7 +13,7 @@ After completing this guide, your application will be accessible through one of 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed with TLS configured — see [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/)
+- Access to a Kubernetes cluster with UDS Core deployed and TLS configured — see [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/)
 - A domain configured in your `uds-config.yaml`:
   ```yaml title="uds-config.yaml"
   shared:
@@ -22,8 +22,6 @@ After completing this guide, your application will be accessible through one of 
   ```
 - Wildcard DNS records for `*.yourdomain.com` and `*.admin.yourdomain.com` pointing to the tenant and admin gateway load balancer IPs
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/)
-
----
 
 ## Steps
 
@@ -85,23 +83,21 @@ After completing this guide, your application will be accessible through one of 
 
    If your application is part of a [UDS Bundle](/concepts/configuration-and-packaging/bundles/), include the Zarf package in your bundle and deploy it with `uds create` and `uds deploy` instead.
 
-3. **Verify the exposure**
-
-   Check that the Package CR was reconciled and shows the expected endpoints:
-
-   ```bash
-   uds zarf tools kubectl get package my-app -n my-app
-   ```
-
-   The `ENDPOINTS` column should show your application's URL(s). Test access:
-
-   ```bash
-   curl -v https://my-app.yourdomain.com
-   ```
-
 </Steps>
 
----
+## Verification
+
+Check that the Package CR was reconciled and shows the expected endpoints:
+
+```bash
+uds zarf tools kubectl get package my-app -n my-app
+```
+
+The `ENDPOINTS` column should show your application's URL(s). Test access:
+
+```bash
+curl -v https://my-app.yourdomain.com
+```
 
 ## Expose a service on the root (apex) domain
 
@@ -178,8 +174,6 @@ By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), whi
 
 </Steps>
 
----
-
 ## Troubleshooting
 
 ### Service not reachable
@@ -207,8 +201,6 @@ By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), whi
 - Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
 - Verify DNS has an A record for the root domain (not just a wildcard)
 - Check that TLS certificates are provided for the root domain configuration
-
----
 
 ## Related documentation
 

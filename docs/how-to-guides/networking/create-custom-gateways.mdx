@@ -13,7 +13,7 @@ After completing this guide, you will have a custom Istio gateway running alongs
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- UDS Core deployed to your cluster
+- Access to a Kubernetes cluster with UDS Core deployed
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/) and Helm charts
 - Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
 
@@ -35,8 +35,6 @@ Two keywords alter gateway behavior when included in the name:
 
 > [!NOTE]
 > UDS Core handles the integration with the Package CR system, but you are responsible for creating, configuring, and managing the gateway itself.
-
----
 
 ## Steps
 
@@ -83,6 +81,9 @@ Two keywords alter gateway behavior when included in the name:
        custom:
          mode: SIMPLE  # One of: SIMPLE, MUTUAL, OPTIONAL_MUTUAL, PASSTHROUGH
    ```
+
+   > [!NOTE]
+   > `MUTUAL` and `OPTIONAL_MUTUAL` modes require a CA certificate to verify client certificates. See the [Istio secure ingress documentation](https://istio.io/latest/docs/tasks/traffic-management/ingress/secure-ingress/#configure-a-mutual-tls-ingress-gateway) for details on configuring mutual TLS on gateways.
 
    See the [default values file](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/charts/uds-istio-config/values.yaml) for all available configuration options.
 
@@ -151,23 +152,21 @@ Two keywords alter gateway behavior when included in the name:
    uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
    ```
 
-6. **Verify**
-
-   Check that the Package CR was reconciled and shows the expected endpoints:
-
-   ```bash
-   uds zarf tools kubectl get package my-app -n my-app
-   ```
-
-   The `ENDPOINTS` column should show your application's URL. Test access:
-
-   ```bash
-   curl -v https://my-app.mydomain.dev
-   ```
-
 </Steps>
 
----
+## Verification
+
+Check that the Package CR was reconciled and shows the expected endpoints:
+
+```bash
+uds zarf tools kubectl get package my-app -n my-app
+```
+
+The `ENDPOINTS` column should show your application's URL. Test access:
+
+```bash
+curl -v https://my-app.mydomain.dev
+```
 
 ## Troubleshooting
 
@@ -187,8 +186,6 @@ A mismatch in any of these will prevent the Package CR from connecting to your g
 **Symptoms:** TLS handshake failures when accessing services.
 
 **Solution:** Ensure you have provided TLS certificates for the gateway. Gateways in `SIMPLE`, `MUTUAL`, or `OPTIONAL_MUTUAL` mode require a valid cert and key.
-
----
 
 ## Related documentation
 

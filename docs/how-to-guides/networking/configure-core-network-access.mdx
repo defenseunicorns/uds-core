@@ -1,0 +1,200 @@
+---
+title: Configure network access for Core services
+sidebar:
+  order: 2.9
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have extended the network access rules for UDS Core's own services — allowing them to reach additional internal or external destinations that aren't covered by the default configuration.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
+
+## Before you begin
+
+UDS Core's built-in Package CRs define the network rules each component needs out of the box. However, some deployment scenarios require additional network access — for example:
+
+- **Falco** sending alerts to an external SIEM or webhook
+- **Vector** shipping logs to an external Elasticsearch or S3 endpoint
+- **Grafana** querying an external Thanos or additional datasources
+- **Prometheus** scraping targets outside the cluster
+- **Keycloak** reaching an external identity provider or OCSP endpoint
+
+Most Core components support an `additionalNetworkAllow` values field that lets you inject extra `allow` rules into the component's Package CR at deploy time via bundle overrides.
+
+### Supported components
+
+The following Core components support `additionalNetworkAllow`:
+
+| Component | Chart | Common use cases |
+|-----------|-------|------------------|
+| Falco | `falco` | External alert destinations (SIEM, webhook) |
+| Vector | `vector` | External log storage (Elasticsearch, S3) |
+| Loki | `loki` | External object storage access |
+| Prometheus Stack | `kube-prometheus-stack` | External scrape targets |
+| Grafana | `grafana` | External datasources (Thanos, additional Prometheus) |
+| Keycloak | `keycloak` | External IdP, OCSP endpoints |
+
+## Steps
+
+<Steps>
+
+1. **Add network rules via bundle overrides**
+
+   Use the `additionalNetworkAllow` values path in your UDS bundle to inject additional `allow` rules for a Core component. Each entry follows the same schema as a Package CR `allow` rule. Select a component below for an example:
+
+   <Tabs>
+     <TabItem label="Falco">
+
+     Allow Falco Sidekick to send alerts to an external SIEM or webhook:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           falco:
+             falco:
+               values:
+                 - path: additionalNetworkAllow
+                   value:
+                     - direction: Egress
+                       selector:
+                         app.kubernetes.io/name: falcosidekick
+                       remoteHost: siem.example.com
+                       port: 443
+                       description: "Falcosidekick to external SIEM"
+     ```
+
+     </TabItem>
+     <TabItem label="Vector">
+
+     Allow Vector to ship logs to an external Elasticsearch cluster:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           vector:
+             vector:
+               values:
+                 - path: additionalNetworkAllow
+                   value:
+                     - direction: Egress
+                       selector:
+                         app.kubernetes.io/name: vector
+                       remoteNamespace: elastic
+                       remoteSelector:
+                         app.kubernetes.io/name: elasticsearch
+                       port: 9200
+                       description: "Vector to Elasticsearch"
+     ```
+
+     </TabItem>
+     <TabItem label="Grafana">
+
+     Allow Grafana to query an external Thanos instance:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           grafana:
+             grafana:
+               values:
+                 - path: additionalNetworkAllow
+                   value:
+                     - direction: Egress
+                       selector:
+                         app.kubernetes.io/name: grafana
+                       remoteNamespace: thanos
+                       remoteSelector:
+                         app: thanos
+                       port: 9090
+                       description: "Grafana to Thanos Query"
+     ```
+
+     </TabItem>
+   </Tabs>
+
+   > [!TIP]
+   > The same pattern works for any supported component — substitute the appropriate `overrides.<zarf-component>.<chart-name>` path from the table above. Each rule entry supports the same fields as a Package CR `allow` rule. See the [Package CR Reference](/reference/operator-and-crds/package/) for the full schema.
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Verify the Package CR was reconciled with the additional rules:
+
+```bash
+uds zarf tools kubectl get package -n <component-namespace> -o yaml
+```
+
+Look for your custom `allow` entries in the Package CR's `spec.network.allow` list. Then verify the resources were created:
+
+```bash
+# Check network policies
+uds zarf tools kubectl get networkpolicy -n <component-namespace>
+
+# For external egress, check service entries
+uds zarf tools kubectl get serviceentry -n istio-egress-ambient
+```
+
+## Troubleshooting
+
+### Additional rule not taking effect
+
+**Symptoms:** The Core component still cannot reach the external or internal destination.
+
+**Solution:**
+- Verify the Package CR includes your additional rule: `uds zarf tools kubectl get package <name> -n <namespace> -o yaml`
+- Check that `selector` labels match the component's pods: `uds zarf tools kubectl get pods -n <namespace> --show-labels`
+- For external hosts, verify the `remoteHost` matches exactly — no wildcards are supported
+- Ensure the component's Helm chart supports `additionalNetworkAllow` (check the chart's `values.yaml` for the field)
+
+### Override not applied
+
+**Symptoms:** The Package CR doesn't include your custom rules after deployment.
+
+**Solution:**
+- Verify the bundle override path is correct: `overrides.<zarf-component>.<chart-name>.values`
+- Check that `additionalNetworkAllow` is a list (array), not an object
+- Run `uds zarf package inspect` on your deployed package to confirm the override was applied
+
+## Related documentation
+
+- [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Define network access"
+    description="Configure network access rules for your own applications."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+  <LinkCard
+    title="Networking & Service Mesh Concepts"
+    description="Learn how the service mesh, gateways, and authorization model work."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>
