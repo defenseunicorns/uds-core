@@ -58,6 +58,7 @@ Logs are critical for incident investigation, audit compliance, and runtime visi
                # Object storage access key ID
                - name: LOKI_ACCESS_KEY_ID
                  path: loki.storage.s3.accessKeyId
+                 sensitive: true
                # Object storage secret access key
                - name: LOKI_SECRET_ACCESS_KEY
                  path: loki.storage.s3.secretAccessKey

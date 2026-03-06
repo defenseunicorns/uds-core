@@ -30,7 +30,9 @@ sidebar:
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Brief intro paragraph (2-3 sentences) explaining why this configuration matters and what the user will accomplish.
+## What you'll accomplish
+
+Brief intro paragraph (2-3 sentences) explaining what the user will configure and why it matters.
 
 ## Prerequisites
 
