@@ -1,11 +1,11 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import * as fs from "fs";
-import * as path from "path";
 import * as os from "os";
+import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, MockInstance, vi } from "vitest";
 import * as dod_certs from "./dod-certs";
 
