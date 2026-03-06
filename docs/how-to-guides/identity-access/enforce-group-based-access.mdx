@@ -1,0 +1,155 @@
+---
+title: Enforce group-based access controls
+sidebar:
+  order: 3
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll restrict access to a UDS application so that only users in specific Keycloak groups can authenticate. Users who are not in the required group will be denied — even if they have a valid Keycloak account.
+
+## Prerequisites
+
+- UDS Core deployed
+- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect apps with Authservice](/how-to-guides/identity-access/protect-apps-with-authservice/))
+- Relevant Keycloak groups exist — either the built-in platform groups or custom groups you have created
+
+## Before you begin
+
+UDS Core pre-configures two Keycloak groups:
+
+| Group | Purpose |
+|---|---|
+| `/UDS Core/Admin` | Platform administrators — full access to Grafana, Keycloak admin console, Alertmanager |
+| `/UDS Core/Auditor` | Read-only access to Grafana, log browsing |
+
+Application teams can define their own group paths. Group paths follow Keycloak's hierarchy notation:
+- `/ParentGroup/ChildGroup` — nested groups use `/` as separator
+- If a group name itself contains a `/`, escape it with `~` (e.g., a group named `a/b` becomes `a~/b`)
+
+## Steps
+
+<Steps>
+
+1. **Identify the group path**
+
+   In the Keycloak admin UI (uds realm), go to **Groups** and locate the group you want to require. Note the full hierarchical path including any parent groups.
+
+   For the built-in platform groups, the paths are:
+   - `/UDS Core/Admin`
+   - `/UDS Core/Auditor`
+
+   > [!NOTE]
+   > Group paths are case-sensitive. `/UDS Core/Admin` and `/uds core/admin` are different paths.
+
+2. **Add `groups.anyOf` to your Package CR**
+
+   In your application's Package CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access.
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: httpbin
+     namespace: httpbin
+   spec:
+     sso:
+       - name: Demo SSO
+         clientId: uds-core-httpbin
+         redirectUris:
+           - "https://protected.uds.dev/login"
+         enableAuthserviceSelector:
+           app: httpbin
+         groups:
+           anyOf:
+             - "/UDS Core/Admin"
+   ```
+
+   To allow multiple groups (users in any one of the listed groups are granted access):
+
+   ```yaml
+   groups:
+     anyOf:
+       - "/UDS Core/Admin"
+       - "/MyApp/Operators"
+   ```
+
+3. **Apply the Package CR**
+
+   ```bash
+   kubectl apply -f package.yaml
+   ```
+
+   The UDS Operator reconciles the Package CR and updates the Authservice authorization policy to enforce group membership.
+
+</Steps>
+
+## Verification
+
+Confirm group-based access is enforced:
+
+**Test with an authorized user:**
+1. Log in with a user who is a member of the required group
+2. Access should be granted to the application
+
+**Test with an unauthorized user:**
+1. Log in with a user who is NOT a member of the required group
+2. Access should be denied with a `403 Forbidden` response
+
+**Check the Authservice chain configuration:**
+```bash
+uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
+```
+
+## Troubleshooting
+
+### Problem: All users are denied access
+
+**Symptoms:** Even users who should have access receive a 403.
+
+**Solution:** Verify the group path in `groups.anyOf` is exactly correct:
+1. Log in to the Keycloak admin UI (uds realm)
+2. Go to **Groups** and navigate to the intended group
+3. Copy the full path including parent groups and leading `/`
+4. Compare it character-for-character with the value in your Package CR — paths are case-sensitive
+
+### Problem: Group membership does not match what's in Keycloak
+
+**Symptoms:** A user is in the group in Keycloak but is still denied access.
+
+**Solution:** Confirm the user's group membership is included in the token. This can fail if:
+- The user's group claim is not included in the SSO client's default scopes
+- The token was issued before the user was added to the group (the user needs to log out and log back in)
+
+To inspect the token claims, use the Keycloak Account console at `sso.<domain>` to view recent tokens, or use a tool like [jwt.io](https://jwt.io) to decode a token.
+
+### Problem: Group name contains a slash
+
+**Symptoms:** Group path is not matching even though the group exists.
+
+**Solution:** If the group name itself contains a `/` character (not a hierarchy separator), escape it with `~`. For example, a group named `a/b` nested under `ParentGroup` would be written as `/ParentGroup/a~/b`.
+
+## Related documentation
+
+- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on platform groups and the SSO model
+- [Package CR reference](/reference/operator-and-crds/package/) — full `groups` field specification
+- [Protect apps with Authservice](/how-to-guides/identity-access/protect-apps-with-authservice/) — required prerequisite for group-based access on apps without native OIDC
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Protect apps with Authservice"
+    description="Add SSO protection to applications that have no native OIDC support."
+    href="/how-to-guides/identity-access/protect-apps-with-authservice/"
+  />
+  <LinkCard
+    title="Connect Azure AD as an identity provider"
+    description="Map Azure groups to Keycloak groups for enterprise SSO."
+    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+  />
+</CardGrid>
