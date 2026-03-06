@@ -146,7 +146,7 @@ Vector runs as a **DaemonSet** — one pod per node — so it automatically scal
    > [!TIP]
    > For most deployments, the default of 3 replicas per tier is sufficient — focus on tuning resources rather than adding replicas. Only increase replica counts if your log volume or query load requires it.
 
-   > [!CAUTION]
+   > [!IMPORTANT]
    > UDS Core only supports Loki in **SimpleScalable** mode. Other deployment modes (monolithic, microservices) are not tested or directly supported.
 
 3. **Configure Vector resources for production**

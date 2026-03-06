@@ -36,8 +36,8 @@ You'll configure [Authservice](https://github.com/istio-ecosystem/authservice) f
        AUTHSERVICE_REDIS_URI: redis://redis.redis.svc.cluster.local:6379
    ```
 
-   > [!CAUTION]
-   > **Do not scale Authservice to multiple replicas without an external session store.** Without shared state, users will experience random session loss as requests are load-balanced across pods — each login will only be valid on the pod that handled the initial authentication.
+   > [!WARNING]
+   > **Do not scale Authservice to multiple replicas without an external session store.** Without shared state, users will experience random session loss as requests are load-balanced across pods.
 
    > [!TIP]
    > Consider [Valkey](https://valkey.io/) as a Redis-compatible alternative. Following Redis's license change to [RSALv2/SSPLv1](https://redis.io/blog/redis-adopts-dual-source-available-licensing/) in 2024, Valkey was forked as a community-maintained project under the Linux Foundation with a permissive BSD license.

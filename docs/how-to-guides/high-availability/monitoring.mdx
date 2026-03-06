@@ -20,7 +20,7 @@ You'll configure UDS Core's monitoring stack for production high availability: e
 
 Grafana's default embedded SQLite database does not support multiple replicas and is lost on pod restart. Connecting an external PostgreSQL database enables multi-replica HA and persists dashboard configuration across restarts.
 
-> [!CAUTION]
+> [!IMPORTANT]
 > Prometheus runs as a **single replica** in UDS Core. Multi-replica Prometheus requires an external TSDB backend (e.g., Thanos, Mimir) and is not tested with UDS Core at this time.
 
 ## Steps

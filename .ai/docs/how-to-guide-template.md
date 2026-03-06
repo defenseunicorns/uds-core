@@ -100,7 +100,7 @@ Brief context about default behavior, architecture, or how the component works t
    <!-- Optional: include zarf package create only if the guide involves modifying a Zarf package -->
    <!-- If the guide requires rebuilding a Zarf package, add before the uds commands:
    ```bash
-   zarf package create <path-to-package-dir>
+   uds zarf package create <path-to-package-dir>
    ```
    -->
 
@@ -156,7 +156,7 @@ These guides and concepts may be useful to explore next:
 - Use an optional "Before you begin" section for context about defaults or architecture — keep steps action-only
 - Files use `.mdx` extension
 - Page titles are bare topic names — breadcrumbs provide section context
-- Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!CAUTION]` for limitations
+- Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only
 - Code blocks use titles: `` ```yaml title="uds-bundle.yaml" ``
 - No `oci://` prefix on repository references
 - Use `values` for static config, `variables` for secrets/environment-specific
