@@ -1,0 +1,51 @@
+---
+title: Overview
+sidebar:
+  order: 0
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Task-oriented guides for platform engineers who need to configure, customize, and operate UDS Core. Each guide targets a single goal with concrete steps, code examples, and verification commands.
+
+> [!TIP]
+> New to UDS Core? Start with the [Getting Started](/getting-started/overview/) guides first, then visit [Concepts](/concepts/overview/) to understand the architecture before diving into configuration tasks here.
+
+<CardGrid>
+  <Card title="High availability & resilience" icon="rocket">
+    Configure component redundancy, autoscaling, and fault tolerance for production deployments.
+    <LinkCard title="View guides" href="/how-to-guides/high-availability/overview/" />
+  </Card>
+  <Card title="Networking & service mesh" icon="puzzle">
+    Configure ingress gateways, egress policies, and choose between ambient and sidecar data plane modes.
+    <LinkCard title="View guides" href="/how-to-guides/networking/overview/" />
+  </Card>
+  <Card title="Identity & access (SSO)" icon="setting">
+    Connect identity providers, configure Keycloak login policies, and enforce group-based access controls.
+    <LinkCard title="View guides" href="/how-to-guides/identity-access/overview/" />
+  </Card>
+  <Card title="Logging" icon="list-format">
+    Configure log retention, query application logs with Loki, and set up Grafana logging alerts.
+    <LinkCard title="View guides" href="/how-to-guides/logging/overview/" />
+  </Card>
+  <Card title="Monitoring & observability" icon="magnifier">
+    Enable platform metrics and dashboards, configure alerting rules, and onboard application dashboards.
+    <LinkCard title="View guides" href="/how-to-guides/monitoring-observability/overview/" />
+  </Card>
+  <Card title="Runtime security" icon="warning">
+    Tune Falco detections, route runtime alerts to your SIEM, and manage runtime security providers.
+    <LinkCard title="View guides" href="/how-to-guides/runtime-security/overview/" />
+  </Card>
+  <Card title="Backup & restore" icon="cloud-download">
+    Configure Velero cloud backups, validate backup integrity, and run disaster recovery drills.
+    <LinkCard title="View guides" href="/how-to-guides/backup-restore/overview/" />
+  </Card>
+  <Card title="Policy & compliance" icon="approve-check-circle">
+    Request policy exemptions, manage Pepr policy packs, and configure trust bundles.
+    <LinkCard title="View guides" href="/how-to-guides/policy-and-compliance/overview/" />
+  </Card>
+  <Card title="Packaging applications" icon="open-book">
+    Package existing Helm charts for UDS, handle airgap dependencies, and publish bundles to the UDS registry.
+    <LinkCard title="View guides" href="/how-to-guides/packaging-applications/overview/" />
+  </Card>
+</CardGrid>

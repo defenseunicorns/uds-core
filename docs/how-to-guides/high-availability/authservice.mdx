@@ -1,0 +1,167 @@
+---
+title: Authservice
+sidebar:
+  order: 1.4
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure [Authservice](https://github.com/istio-ecosystem/authservice) for production high availability by connecting it to an external Redis or Valkey session store and scaling to multiple replicas. This ensures SSO sessions persist across pod restarts and failovers.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
+- A **Redis or Valkey** instance accessible from the cluster
+- Applications using Authservice for SSO (see [Identity & Authentication concepts](/concepts/core-features/identity-access/) for when Authservice is used vs. native SSO)
+
+## Before you begin
+
+> [!CAUTION]
+> By default, Authservice runs as a **single replica** and stores user sessions **in memory**. Without a shared session store, scaling to multiple replicas causes session loss on failover — each replica maintains its own session state independently. You must configure an external session store before scaling.
+
+## Steps
+
+<Steps>
+
+1. **Configure an external Redis session store**
+
+   Add the Redis URI to your `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       AUTHSERVICE_REDIS_URI: redis://redis.redis.svc.cluster.local:6379
+   ```
+
+   > [!WARNING]
+   > **Do not scale Authservice to multiple replicas without an external session store.** Without shared state, users will experience random session loss as requests are load-balanced across pods.
+
+   > [!TIP]
+   > Consider [Valkey](https://valkey.io/) as a Redis-compatible alternative. Following Redis's license change to [RSALv2/SSPLv1](https://redis.io/blog/redis-adopts-dual-source-available-licensing/) in 2024, Valkey was forked as a community-maintained project under the Linux Foundation with a permissive BSD license.
+
+   > [!NOTE]
+   > The Redis URI format follows the standard `redis://[user:password@]host:port[/db]` convention and works with both Redis and Valkey. For TLS-enabled connections, use `rediss://` (note the double `s`).
+
+2. **Scale Authservice replicas**
+
+   With a session store configured, scale Authservice using a bundle override:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         authservice:
+           authservice:
+             values:
+               # Number of Authservice replicas
+               - path: replicaCount
+                 value: 2
+   ```
+
+   Alternatively, enable the HPA for dynamic scaling based on CPU utilization:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         authservice:
+           authservice:
+             values:
+               # Enable HorizontalPodAutoscaler
+               - path: autoscaling.enabled
+                 value: true
+   ```
+
+   | Setting | Default |
+   |---|---|
+   | Minimum replicas | 1 |
+   | Maximum replicas | 3 |
+   | CPU target utilization | 80% |
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm Authservice HA is working:
+
+```bash
+# Check replica count
+uds zarf tools kubectl get pods -n authservice -l app.kubernetes.io/name=authservice
+
+# Check HPA (if enabled)
+uds zarf tools kubectl get hpa -n authservice
+```
+
+**Session persistence test:** Log in to an Authservice-protected application, then delete one Authservice pod. Refresh the page — your session should survive:
+
+```bash
+# Delete one pod to simulate failover (replace with an actual pod name)
+uds zarf tools kubectl delete pod -n authservice <pod-name>
+```
+
+**Success criteria:**
+- Multiple Authservice pods are `Running` and `Ready`
+- SSO login sessions survive pod deletion
+- No `503` errors during pod failover
+
+## Troubleshooting
+
+### Problem: Session loss after pod restart
+
+**Symptoms:** Users are logged out or see login prompts after a pod restart, even with multiple replicas running.
+
+**Solution:** Verify Redis connectivity from inside the cluster:
+```bash
+uds zarf tools kubectl logs -n authservice -l app.kubernetes.io/name=authservice --tail=50 | grep -i redis
+```
+Check that `AUTHSERVICE_REDIS_URI` is set correctly and that the Redis instance is reachable.
+
+### Problem: 503 errors during SSO login
+
+**Symptoms:** Users see `503 Service Unavailable` when attempting to log in through Authservice.
+
+**Solution:** Check Authservice pod logs for connection errors. Common causes:
+- Redis instance is down or unreachable
+- Incorrect Redis URI format
+- Network policy blocking Authservice → Redis traffic
+
+```bash
+uds zarf tools kubectl logs -n authservice -l app.kubernetes.io/name=authservice --tail=100
+```
+
+## Related Documentation
+
+- [Authservice: Configuration Reference](https://github.com/istio-ecosystem/authservice/blob/main/config/README.md) — session store and OIDC configuration options
+- [Redis: Documentation](https://redis.io/docs/latest/) — general Redis documentation for the backing session store
+- [Valkey: Documentation](https://valkey.io/docs/) — Redis-compatible alternative supported by Authservice
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure HA for Keycloak"
+    description="Keycloak is the identity provider that Authservice relies on and also requires HA configuration."
+    href="/how-to-guides/high-availability/keycloak/"
+  />
+  <LinkCard
+    title="Identity & Authentication concepts"
+    description="Background on how Authservice and Keycloak work together in UDS Core."
+    href="/concepts/core-features/identity-access/"
+  />
+</CardGrid>
