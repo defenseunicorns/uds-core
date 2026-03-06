@@ -48,10 +48,7 @@ export async function flattenVersionDirectory(dodCertPath: string): Promise<stri
   // Move all children up one level
   const children = await fs.promises.readdir(versionDirPath);
   for (const child of children) {
-    await fs.promises.rename(
-      path.join(versionDirPath, child),
-      path.join(dodCertPath, child),
-    );
+    await fs.promises.rename(path.join(versionDirPath, child), path.join(dodCertPath, child));
   }
 
   // Remove the now-empty versioned directory
