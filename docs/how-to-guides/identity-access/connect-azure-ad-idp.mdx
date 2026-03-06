@@ -91,13 +91,13 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
 
    The attribute names below use the prefix `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/` — the **Attribute name** column shows only the suffix. The groups claim uses a different Microsoft namespace and is shown in full.
 
-   | Mapper name       | Mapper type                 | Attribute name                                                                              | User attribute |
-   |-------------------|-----------------------------|----------------------------------------------------------------------------------------------|----------------|
-   | Username Mapper   | Attribute Importer          | `emailaddress`                                                                               | `username`     |
-   | First Name Mapper | Attribute Importer          | `givenname`                                                                                  | `firstName`    |
-   | Last Name Mapper  | Attribute Importer          | `surname`                                                                                    | `lastName`     |
-   | Email Mapper      | Attribute Importer          | `emailaddress`                                                                               | `email`        |
-   | Group Mapper      | Advanced Attribute to Group | `http://schemas.microsoft.com/ws/2008/06/identity/claims/groups` → Entra admin group ID     | `admin-group`  |
+   | Mapper name       | Mapper type                 | Attribute name                      | User attribute |
+   |-------------------|-----------------------------|-------------------------------------|----------------|
+   | Username Mapper   | Attribute Importer          | `emailaddress`                      | `username`     |
+   | First Name Mapper | Attribute Importer          | `givenname`                         | `firstName`    |
+   | Last Name Mapper  | Attribute Importer          | `surname`                           | `lastName`     |
+   | Email Mapper      | Attribute Importer          | `emailaddress`                      | `email`        |
+   | Group Mapper      | Advanced Attribute to Group | `groups` (Entra admin group ID)     | `admin-group`  |
 
    Set **Sync mode override** to `Force` for all mappers.
 
