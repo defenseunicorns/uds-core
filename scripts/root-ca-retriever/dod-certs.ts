@@ -19,10 +19,55 @@ export interface DoDCert {
 const DOD_CERTS_ZIP_NAME = "unclass-dod_approved_external_pkis_trust_chains.zip";
 const DOD_CERTS_URL = `https://dl.dod.cyber.mil/wp-content/uploads/pki-pke/zip/${DOD_CERTS_ZIP_NAME}`;
 const TARGET_DOD_CERT_DIR = "dod"; // subdirectory in certs directory to put DoD certs
+const VERSION_FILE = ".version"; // file to track the version of the DoD cert bundle
+
+/**
+ * Flattens the versioned directory structure created by ZIP extraction.
+ * Moves organization directories up one level and writes the version string to a .version file.
+ * e.g. dod/DoD_Approved_External_PKIs_Trust_Chains_v11.5_20250303/Boeing/... → dod/Boeing/...
+ * @param dodCertPath - The directory containing the extracted versioned directory
+ * @returns Promise that resolves to the version directory name
+ * @throws {Error} When no versioned directory is found or move operations fail
+ */
+export async function flattenVersionDirectory(dodCertPath: string): Promise<string> {
+  const entries = await fs.promises.readdir(dodCertPath, { withFileTypes: true });
+  const versionDirs = entries.filter(
+    e => e.isDirectory() && e.name.startsWith("DoD_Approved_External_PKIs_Trust_Chains_"),
+  );
+
+  if (versionDirs.length === 0) {
+    throw new Error(`No versioned directory found in ${dodCertPath}`);
+  }
+  if (versionDirs.length > 1) {
+    throw new Error(`Multiple versioned directories found in ${dodCertPath}`);
+  }
+
+  const versionDirName = versionDirs[0].name;
+  const versionDirPath = path.join(dodCertPath, versionDirName);
+
+  // Move all children up one level
+  const children = await fs.promises.readdir(versionDirPath);
+  for (const child of children) {
+    await fs.promises.rename(
+      path.join(versionDirPath, child),
+      path.join(dodCertPath, child),
+    );
+  }
+
+  // Remove the now-empty versioned directory
+  await fs.promises.rmdir(versionDirPath);
+
+  // Write version metadata
+  await fs.promises.writeFile(path.join(dodCertPath, VERSION_FILE), versionDirName + "\n");
+  console.log(`Recorded DoD cert bundle version: ${versionDirName}`);
+
+  return versionDirName;
+}
 
 /**
  * Retrieves DoD certificates from the official DoD PKI repository, downloads the ZIP archive,
- * extracts certificates to the specified directory, and cleans up the temporary ZIP file
+ * extracts certificates to the specified directory, flattens the versioned directory structure,
+ * and cleans up the temporary ZIP file
  * @param dirName - The directory path where certificates should be extracted
  * @throws {Error} When download fails, extraction fails, or file operations fail
  * @returns Promise that resolves when download and extraction are complete
@@ -62,8 +107,16 @@ export async function retrieveDoDCertificates(dirName: string) {
             console.log(`Extracted certificates to: ${outputDir}`);
 
             fs.unlinkSync(downloadOutputFilePath);
-            console.log("Certificate retrieval complete");
-            resolve();
+
+            // Flatten the versioned directory structure
+            flattenVersionDirectory(outputDir)
+              .then(() => {
+                console.log("Certificate retrieval complete");
+                resolve();
+              })
+              .catch(err => {
+                reject(new Error(`Failed to flatten version directory: ${err}`));
+              });
           } catch (err) {
             reject(new Error(`Failed to extract DoD certificates: ${err}`));
           }
@@ -119,10 +172,10 @@ export async function inventoryDoDCertificates(
               );
             }
 
-            // Get the organization folder - find the folder directly under the version directory
+            // Get the organization folder - first directory component under the cert dir
             const relativePath = path.relative(certDir, fullPath);
             const pathParts = relativePath.split(path.sep);
-            const organization = pathParts[1] || "Unknown"; // Skip version folder [0], take org folder [1]
+            const organization = pathParts[0] || "Unknown";
 
             const cert: DoDCert = {
               filepath: path.dirname(fullPath),
