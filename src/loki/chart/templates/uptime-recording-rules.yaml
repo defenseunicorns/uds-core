@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-loki-uptime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: uds-logging-loki-uptime
+      rules:
+        - record: uds:loki:up
+          labels:
+            uds_layer: logging
+            uds_component: loki
+          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="loki", namespace="loki"}, 1)
+{{- end }}

@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-vector-uptime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: uds-logging-vector-uptime
+      rules:
+        - record: uds:vector:up
+          labels:
+            uds_layer: logging
+            uds_component: vector
+          expr: clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="vector", namespace="vector"}, 1) * on (daemonset, namespace) (kube_daemonset_status_number_unavailable{daemonset="vector", namespace="vector"} == bool 0)
+{{- end }}

@@ -1,0 +1,36 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-keycloak-uptime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: uds-identity-uptime
+      rules:
+        - record: uds:keycloak:up
+          labels:
+            uds_layer: identity-authorization
+            uds_component: keycloak
+          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}, 1)
+        - record: uds:keycloak_waypoint:up
+          labels:
+            uds_layer: identity-authorization
+            uds_component: keycloak_waypoint
+          expr: clamp_max(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}, 1)
+        - record: uds:keycloak_endpoint:up
+          labels:
+            uds_layer: identity-authorization
+            uds_component: keycloak_endpoint
+          expr: min(probe_success{job="probe/keycloak/uds-sso-tenant-uptime"})
+        - record: uds:keycloak_admin_endpoint:up
+          labels:
+            uds_layer: identity-authorization
+            uds_component: keycloak_admin_endpoint
+          expr: min(probe_success{job="probe/keycloak/uds-keycloak-admin-uptime"})
+{{- end }}

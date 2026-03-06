@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-authservice-uptime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: uds-authservice-uptime
+      rules:
+        - record: uds:authservice:up
+          labels:
+            uds_layer: identity-authorization
+            uds_component: authservice
+          expr: clamp_max(kube_deployment_status_replicas_available{deployment="authservice", namespace="authservice"}, 1)
+{{- end }}

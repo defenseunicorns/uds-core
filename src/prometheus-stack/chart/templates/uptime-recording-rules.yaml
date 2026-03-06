@@ -1,0 +1,38 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-prometheus-stack-uptime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    prometheus: kube-prometheus-stack-prometheus
+spec:
+  groups:
+    - name: uds-monitoring-uptime
+      rules:
+        - record: uds:prometheus:up
+          labels:
+            uds_layer: monitoring
+            uds_component: prometheus
+          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}, 1)
+        - record: uds:alertmanager:up
+          labels:
+            uds_layer: monitoring
+            uds_component: alertmanager
+          expr: clamp_max(kube_statefulset_status_replicas_available{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}, 1)
+        - record: uds:blackbox_exporter:up
+          labels:
+            uds_layer: monitoring
+            uds_component: blackbox_exporter
+          expr: clamp_max(kube_deployment_status_replicas_available{deployment="prometheus-blackbox-exporter", namespace="monitoring"}, 1)
+    - name: uds-core-uptime
+      rules:
+        - record: uds:core:up
+          labels:
+            uds_layer: core
+            uds_component: core
+          expr: uds:keycloak_endpoint:up * on() uds:ztunnel:up
+{{- end }}
