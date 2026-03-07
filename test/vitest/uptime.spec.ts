@@ -46,3 +46,67 @@ describe("Uptime Probes", { timeout: 210000 }, () => {
     expect(result).toBe(1);
   });
 });
+
+describe("Uptime Recording Rules", { timeout: 210000 }, () => {
+  let prometheusProxy: { server: net.Server; url: string };
+
+  beforeAll(async () => {
+    prometheusProxy = await getForward("kube-prometheus-stack-prometheus", "monitoring", 9090);
+  });
+
+  afterAll(async () => {
+    await closeForward(prometheusProxy.server);
+  });
+
+  const expectRecordingRuleUp = (metric: string) =>
+    pollUntilSuccess(
+      () => queryPrometheusMetric(prometheusProxy.url, metric),
+      result => result === 1,
+      `${metric} == 1`,
+      200000,
+    );
+
+  const recordingRules = [
+    // Shared helpers
+    "kube_state_metrics:up",
+    // Monitoring
+    "uds:prometheus:up",
+    "uds:alertmanager:up",
+    "uds:blackbox_exporter:up",
+    "uds:grafana:up",
+    "uds:grafana_endpoint:up",
+    // Base - Istio
+    "uds:istiod:up",
+    "uds:istio_cni:up",
+    "uds:admin_ingressgateway:up",
+    "uds:ztunnel:up",
+    "uds:tenant_ingressgateway:up",
+    // Base - Pepr
+    "uds:pepr_admission:up",
+    "uds:pepr_watcher:up",
+    // Identity & Authorization
+    "uds:keycloak:up",
+    "uds:keycloak_waypoint:up",
+    "uds:keycloak_endpoint:up",
+    "uds:keycloak_admin_endpoint:up",
+    "uds:authservice:up",
+    // Runtime Security
+    "uds:falco:up",
+    "uds:falcosidekick:up",
+    // Logging
+    "uds:loki_backend:up",
+    "uds:loki_write:up",
+    "uds:loki_gateway:up",
+    "uds:loki_read:up",
+    "uds:vector:up",
+    // Backup & Restore
+    "uds:velero:up",
+    // Core Access
+    "uds:access:up",
+  ] as const;
+
+  test.concurrent.each(recordingRules)("recording rule %s should be 1", async metric => {
+    const result = await expectRecordingRuleUp(metric);
+    expect(result).toBe(1);
+  });
+});

@@ -11,7 +11,7 @@ spec:
   groups:
     - name: uds-logging-loki-uptime
       rules:
-        - record: uds:loki-backend:up
+        - record: uds:loki_backend:up
           labels:
             uds_layer: logging
             uds_component: loki-backend
@@ -24,7 +24,7 @@ spec:
             * on() group_left()
             kube_state_metrics:up
 
-        - record: uds:loki-write:up
+        - record: uds:loki_write:up
           labels:
             uds_layer: logging
             uds_component: loki-write
@@ -37,7 +37,7 @@ spec:
             * on() group_left()
             kube_state_metrics:up
 
-        - record: uds:loki-gateway:up
+        - record: uds:loki_gateway:up
           labels:
             uds_layer: logging
             uds_component: loki-gateway
@@ -50,7 +50,7 @@ spec:
             * on() group_left()
             kube_state_metrics:up
 
-        - record: uds:loki-read:up
+        - record: uds:loki_read:up
           labels:
             uds_layer: logging
             uds_component: loki-read
