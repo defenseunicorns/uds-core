@@ -27,7 +27,7 @@ components:
     images:
       - docker.io/grafana/loki:3.6.7
       - docker.io/nginxinc/nginx-unprivileged:1.29-alpine
-      - docker.io/memcached:1.6.40-alpine
+      - docker.io/memcached:1.6.41-alpine
       - ghcr.io/kiwigrid/k8s-sidecar:2.5.0
 
   - name: loki
