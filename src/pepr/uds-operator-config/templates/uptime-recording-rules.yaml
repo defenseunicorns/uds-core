@@ -9,7 +9,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   groups:
-    - name: uds-base-pepr-uptime
+    - name: uds-base-uptime
       rules:
         - record: uds:pepr_admission:up
           labels:

@@ -9,7 +9,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   groups:
-    - name: uds-shared-uptime-helpers
+    - name: uds-uptime-helpers
       rules:
         - record: kube_state_metrics:up
           expr: clamp_max(max(up{job=~".*kube-state-metrics.*"}), 1)
@@ -69,7 +69,7 @@ spec:
             and on()
             (kube_state_metrics:up == 1)
 
-    - name: uds-access-uptime
+    - name: uds-identity-authorization-uptime
       rules:
         - record: uds:access:up
           labels:

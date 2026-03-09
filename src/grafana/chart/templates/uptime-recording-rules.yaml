@@ -9,7 +9,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   groups:
-    - name: uds-monitoring-grafana-uptime
+    - name: uds-monitoring-uptime
       rules:
         - record: uds:grafana:up
           labels:

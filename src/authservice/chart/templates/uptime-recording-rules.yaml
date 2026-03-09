@@ -9,7 +9,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   groups:
-    - name: uds-authservice-uptime
+    - name: uds-identity-authorization-uptime
       rules:
         - record: uds:authservice:up
           labels:
