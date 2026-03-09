@@ -1,0 +1,178 @@
+---
+title: Create metric alerting rules
+sidebar:
+  order: 2.4
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Define alerting conditions based on Prometheus metrics using PrometheusRule CRDs. Alerts are automatically picked up by the Prometheus Operator and routed to Alertmanager.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Familiarity with [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/)
+
+## Before you begin
+
+UDS Core ships default alerting rules from the upstream kube-prometheus-stack chart covering cluster health, node conditions, and platform components. Runbooks for these default rules are available at [runbooks.prometheus-operator.dev](https://runbooks.prometheus-operator.dev/). This guide covers creating custom rules for your applications and optionally tuning the defaults.
+
+## Steps
+
+<Steps>
+
+1. **Create a PrometheusRule**
+
+   Define a `PrometheusRule` custom resource containing one or more alert rules. The Prometheus Operator watches for these CRs and loads them into Prometheus automatically.
+
+   ```yaml title="my-app-alerts.yaml"
+   apiVersion: monitoring.coreos.com/v1
+   kind: PrometheusRule
+   metadata:
+     name: my-app-alerts
+     namespace: my-app
+   spec:
+     groups:
+     - name: my-app
+       rules:
+       - alert: PodRestartingFrequently
+         expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+         for: 5m
+         labels:
+           severity: warning
+         annotations:
+           summary: "Pod {{ $labels.pod }} is restarting frequently"
+           runbook: "https://example.com/runbooks/pod-restart"
+           description: "Pod restarted {{ $value }} times in the last hour"
+
+       - alert: HighMemoryUsage
+         expr: |
+           (container_memory_working_set_bytes / kube_pod_container_resource_limits{resource="memory"}) * 100 > 80
+         for: 15m
+         labels:
+           severity: warning
+         annotations:
+           summary: "High memory usage detected"
+           runbook: "https://example.com/runbooks/high-memory-usage"
+           description: "Container using {{ $value }}% of memory limit"
+   ```
+
+   Key fields in each rule:
+
+   - **`expr`** — PromQL expression that defines the alerting condition. When this expression returns results, the alert becomes active.
+   - **`for`** — How long the condition must be continuously true before the alert fires. Prevents flapping on transient spikes.
+   - **`labels.severity`** — Used by Alertmanager for routing. Common values are `critical`, `warning`, and `info`.
+   - **`annotations`** — Human-readable context attached to the alert. Include a `summary`, `description`, and `runbook` URL to make alerts actionable.
+
+2. **Deploy the rule**
+
+   Apply the PrometheusRule CR to your cluster. The Prometheus Operator picks it up automatically — no bundle rebuild is needed.
+
+   ```bash
+   uds zarf tools kubectl apply -f my-app-alerts.yaml
+   ```
+
+3. **Optional: Disable or tune default alert rules**
+
+   If default kube-prometheus-stack alerts are too noisy or not relevant to your environment, you can disable individual rules or entire rule groups through bundle overrides.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         kube-prometheus-stack:
+           kube-prometheus-stack:
+             values:
+               # Disable specific individual rules by name
+               - path: defaultRules.disabled
+                 value:
+                   KubeControllerManagerDown: true
+                   KubeSchedulerDown: true
+               # Disable entire rule groups with boolean toggles
+               - path: defaultRules.rules.kubeControllerManager
+                 value: false
+               - path: defaultRules.rules.kubeSchedulerAlerting
+                 value: false
+   ```
+
+   Use `defaultRules.disabled` for fine-tuned control over individual rules. Use `defaultRules.rules.*` to disable entire rule groups when broader changes are needed.
+
+   Create and deploy your bundle:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+> [!TIP]
+> **Best practices for PrometheusRule alerts:**
+> - Deploy PrometheusRule CRDs in the same namespace as your application
+> - Ship rules alongside your application code for version control
+> - Use meaningful `severity` labels (`critical`, `warning`, `info`) to drive routing
+> - Add `for` clauses to prevent alert flapping on transient spikes
+> - Include `runbook` URLs in annotations to make alerts actionable
+
+## Verification
+
+Open Grafana and navigate to **Alerting > Alert rules**. Filter by the Prometheus datasource. Confirm your custom rules appear in the list.
+
+Check the rule state to understand its current status:
+- **Inactive** — condition is not met
+- **Pending** — condition is met but the `for` duration has not elapsed
+- **Firing** — active alert being sent to Alertmanager
+
+## Troubleshooting
+
+### Rule not appearing in Grafana
+
+**Symptom:** Custom alert rules do not show up in the Grafana alerting UI.
+
+**Solution:** Verify the PrometheusRule CR was created successfully and check for YAML syntax errors:
+
+```bash
+uds zarf tools kubectl get prometheusrule -A
+uds zarf tools kubectl describe prometheusrule <name> -n <namespace>
+```
+
+### Alert not firing when expected
+
+**Symptom:** The PromQL expression should match, but the alert stays in Inactive state.
+
+**Solution:** Verify the PromQL expression returns results in the Prometheus UI:
+
+```bash
+uds zarf connect prometheus
+```
+
+Navigate to the **Graph** tab and run your `expr` query directly. If it returns results, check that the `for` duration has elapsed — the alert will remain in Pending state until the condition is continuously true for that period.
+
+## Related Documentation
+
+- [Prometheus: Alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) — PromQL alerting rule syntax
+- [Prometheus: Alerting best practices](https://prometheus.io/docs/practices/alerting/) — guidance on alert design
+- [Prometheus Operator: PrometheusRule API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) — full CRD field reference
+- [Default rule runbooks](https://runbooks.prometheus-operator.dev/) — troubleshooting guides for kube-prometheus-stack alerts
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Route alerts to notification channels"
+    description="Configure Alertmanager to deliver your alerts to Slack, PagerDuty, or email."
+    href="/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/"
+  />
+  <LinkCard
+    title="Create log-based alerting and recording rules"
+    description="Complement metric alerts with log pattern detection using Loki Ruler."
+    href="/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/"
+  />
+</CardGrid>

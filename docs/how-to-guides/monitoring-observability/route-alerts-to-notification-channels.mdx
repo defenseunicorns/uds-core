@@ -1,0 +1,177 @@
+---
+title: Route alerts to notification channels
+sidebar:
+  order: 2.6
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Configure Alertmanager to deliver alerts from Prometheus and Loki to notification channels like Slack, PagerDuty, or email. Centralizing alert routing through Alertmanager ensures your team receives consistent, actionable notifications from a single hub rather than managing alerts across multiple systems.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A webhook URL or credentials for your notification service (e.g., Slack incoming webhook)
+
+## Before you begin
+
+Alertmanager is the central hub for all alerts in UDS Core. Both Prometheus metric alerts and Loki log alerts route through it, so configuring Alertmanager receivers is the single point of integration for all notification delivery.
+
+The Alertmanager UI is not directly exposed in UDS Core because it lacks built-in authentication. Use the **Grafana > Alerting** section to view and manage alerts instead. If you need direct access to the Alertmanager UI, use:
+
+```bash
+uds zarf connect alertmanager
+```
+
+## Steps
+
+<Steps>
+
+1. **Configure Alertmanager receivers and routes**
+
+   Define the notification receivers and routing rules that determine which alerts go where. The example below routes critical and warning alerts to a Slack channel while sending the always-firing `Watchdog` alert to an empty receiver to reduce noise.
+
+   > [!NOTE]
+   > This example uses Slack, but Alertmanager supports a [wide range of integrations](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings) including PagerDuty, OpsGenie, email, Microsoft Teams, and generic webhooks. Substitute the `slack_configs` block with the appropriate receiver configuration for your service.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         kube-prometheus-stack:
+           uds-prometheus-config:
+             values:
+               # Allow Alertmanager to reach your notification service
+               - path: additionalNetworkAllow
+                 value:
+                   - direction: Egress
+                     selector:
+                       app.kubernetes.io/name: alertmanager
+                     ports:
+                       - 443
+                     remoteHost: hooks.slack.com
+                     remoteProtocol: TLS
+                     description: "Allow egress Alertmanager to Slack"
+           kube-prometheus-stack:
+             values:
+               # Setup Alertmanager receivers
+               # See: https://prometheus.io/docs/alerting/latest/configuration/#general-receiver-related-settings
+               - path: alertmanager.config.receivers
+                 value:
+                   - name: slack
+                     slack_configs:
+                       - channel: "#alerts"
+                         send_resolved: true
+                   - name: empty
+               # Setup Alertmanager routing
+               # See: https://prometheus.io/docs/alerting/latest/configuration/#route-related-settings
+               - path: alertmanager.config.route
+                 value:
+                   group_by: ["alertname", "job"]
+                   receiver: empty
+                   routes:
+                     # Send always-firing Watchdog alerts to the empty receiver to avoid noise
+                     - matchers:
+                         - alertname = Watchdog
+                       receiver: empty
+                     # Send critical and warning alerts to Slack
+                     - matchers:
+                         - severity =~ "warning|critical"
+                       receiver: slack
+             variables:
+               - name: ALERTMANAGER_SLACK_WEBHOOK_URL
+                 path: alertmanager.config.receivers[0].slack_configs[0].api_url
+                 sensitive: true
+   ```
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       ALERTMANAGER_SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+   ```
+
+   > [!TIP]
+   > You can also set the webhook URL via an environment variable: `UDS_ALERTMANAGER_SLACK_WEBHOOK_URL`.
+
+   > [!NOTE]
+   > If you use a different notification service (e.g., PagerDuty, OpsGenie, or email), update the `remoteHost` and `ports` in the egress policy to match that service's API endpoint.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Silence alerts during maintenance
+
+You can temporarily mute alerts during maintenance windows or investigations by creating a silence through the Grafana UI.
+
+- Navigate to **Alerting > Silences**
+- Ensure **Choose Alertmanager** is set to `Alertmanager` (not `Grafana`)
+- Click **New Silence**
+- Specify matchers for the alerts you want to silence, set a duration, and add a comment
+
+## Verification
+
+Confirm alert routing is working:
+
+```bash
+# Check Alertmanager pods are running
+uds zarf tools kubectl get pods -n monitoring -l app.kubernetes.io/name=alertmanager
+
+# View Alertmanager logs for delivery status
+uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager --tail=50
+```
+
+**Success criteria:**
+- Grafana > **Alerting > Alert rules** shows active alerts
+- The `Watchdog` alert fires continuously by design — if routing is configured correctly, it should **not** appear in your notification channel (it routes to the `empty` receiver)
+- Critical or warning alerts arrive in your configured notification channel with `send_resolved` notifications when they clear
+
+## Troubleshooting
+
+### Alerts not arriving in notification channel
+
+**Symptom:** Alert rules show as firing in Grafana, but no notifications appear in Slack (or your configured channel).
+
+**Solution:** Verify that route matchers match the alert labels — a mismatch causes alerts to fall through to the default `empty` receiver. Check the receiver configuration (webhook URL, channel name). Review Alertmanager logs for delivery errors:
+
+```bash
+uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager --tail=50
+```
+
+### Alertmanager can't reach external service
+
+**Symptom:** Alertmanager logs show connection timeout or DNS resolution errors when sending notifications.
+
+**Solution:** Verify the `additionalNetworkAllow` configuration includes the correct `remoteHost` and port for your notification service. Ensure the egress policy `selector` targets Alertmanager pods (`app.kubernetes.io/name: alertmanager`).
+
+## Related Documentation
+
+- [Prometheus: Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/) — full receiver and route configuration reference
+- [Prometheus: Alertmanager integrations](https://prometheus.io/docs/alerting/latest/integrations/) — supported notification channels (Slack, PagerDuty, OpsGenie, email, webhooks, etc.)
+
+## Next steps
+
+These guides may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Create metric alerting rules"
+    description="Define the alerting conditions that Alertmanager will route."
+    href="/how-to-guides/monitoring-observability/create-metric-alerting-rules/"
+  />
+  <LinkCard
+    title="Create log-based alerting and recording rules"
+    description="Add log pattern detection alerts that also route through Alertmanager."
+    href="/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/"
+  />
+</CardGrid>
