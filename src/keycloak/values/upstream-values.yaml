@@ -6,3 +6,5 @@ podSecurityContext:
 image:
   repository: quay.io/keycloak/keycloak
   tag: "26.5.5"
+migrations:
+  deleteGeneratedTrustStore: true
