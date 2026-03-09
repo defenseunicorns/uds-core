@@ -1,16 +1,9 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+podSecurityContext:
+  fsGroup: 1000
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
   tag: "26.5.5"
-podSecurityContext:
-  fsGroup: 2000
-securityContext:
-  runAsUser: 2000
-  runAsGroup: 2000
-  runAsNonRoot: true
-  capabilities:
-    drop:
-      - ALL
 configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.24.0
