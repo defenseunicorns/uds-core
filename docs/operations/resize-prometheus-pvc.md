@@ -152,6 +152,18 @@ During and after patching, monitor PVC events for resize progress or errors:
 kubectl describe pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
+If controller-side expansion completes but the filesystem resize does not, PVCs may show `FileSystemResizePending` and `CAP` may remain below `REQ`. Check for that condition before proceeding:
+
+```bash
+kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage,CONDITION:.status.conditions[*].type
+```
+
+If any target PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
+
+```bash
+kubectl delete pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+```
+
 5. Delete backing StatefulSet with orphan strategy:
 
 Orphan deletion removes the StatefulSet object but preserves pods/PVCs so Prometheus Operator can recreate the StatefulSet against resized PVCs.
@@ -225,3 +237,4 @@ kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type m
 - If StorageClass is not expandable, do not continue this runbook.
 - If one PVC patch fails, resolve that PVC issue first, then continue from Procedure step 4.
 - If PVCs remain in `ExternalExpanding` without capacity change for an extended period, stop and reassess.
+- If a PVC shows `FileSystemResizePending` or `CAP` does not converge to `REQ` after controller-side expansion, restart the affected Prometheus pod(s), then re-check PVC conditions and capacity.
