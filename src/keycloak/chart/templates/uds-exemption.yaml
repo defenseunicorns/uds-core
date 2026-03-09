@@ -1,0 +1,20 @@
+# Copyright 2024 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if and .Values.migrations.embeddedDatabase.enabled .Values.devMode }}
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: keycloak
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RestrictCapabilities
+      matcher:
+        namespace: {{ .Release.Namespace }}
+        name: "^{{ include "keycloak.fullname" . }}-[0-9]+$"
+        kind: pod
+      title: "Keycloak embedded database permission migration"
+      description: "Exemption for the update-embedded-database-permissions init container which requires CHOWN capability to fix data directory ownership after base image UID changes"
+{{- end }}

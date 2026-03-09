@@ -79,7 +79,7 @@ spec:
             - name: data
               mountPath: /opt/keycloak/data
         {{- end }}
-        {{- if .Values.migrations.embeddedDatabase.enabled }}
+        {{- if and .Values.migrations.embeddedDatabase.enabled .Values.devMode }}
         - name: update-embedded-database-permissions
           image: "{{ .Values.configImage }}"
           command: ["sh", "-c", "chown -R {{ .Values.migrations.embeddedDatabase.updatePermissions.targetUser }}:{{ .Values.migrations.embeddedDatabase.updatePermissions.targetGroup }} /opt/keycloak/data/h2 /opt/keycloak/data/transaction-logs ; ls -la /opt/keycloak/data"]
