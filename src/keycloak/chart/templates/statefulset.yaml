@@ -88,6 +88,8 @@ spec:
             runAsGroup: {{ .Values.migrations.embeddedDatabase.updatePermissions.sourceGroup }}
             runAsNonRoot: true
             capabilities:
+              add:
+                - CHOWN
               drop:
                 - ALL
           resources:
