@@ -7,9 +7,9 @@ securityContext:
   runAsUser: 1000
   runAsGroup: 0
   runAsNonRoot: true
-  capabilities:
-    drop:
-      - ALL
+#  capabilities:
+#    drop:
+#      - ALL
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
   tag: "26.5.5"
