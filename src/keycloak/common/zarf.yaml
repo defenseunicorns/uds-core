@@ -20,7 +20,7 @@ components:
     actions:
       onDeploy:
         before:
-          - description: Re-create Keycloak StatefulSet
+          - description: Re-create Keycloak StatefulSet if required
             # This can be switched to true in subsequent UDS Core versions
             mute: false
             cmd: |
@@ -28,18 +28,38 @@ components:
 
               echo "Checking if Keycloak StatefulSet should be deleted"
               KEYCLOAK_INSTALLED=$(./zarf tools kubectl get sts -n keycloak keycloak > /dev/null 2>&1; echo $?)
-              if [ "${KEYCLOAK_INSTALLED}" -eq 0 ]; then
-                echo "Keycloak has been previously installed. Checking the podManagementPolicy..."
-                POD_MGMT_POLICY=$(./zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
-                echo "Detected podManagementPolicy: ${POD_MGMT_POLICY:-<none>}"
-                if [ -n "${POD_MGMT_POLICY}" ] && [ "${POD_MGMT_POLICY}" != "OrderedReady" ]; then
-                  echo "podManagementPolicy is '${POD_MGMT_POLICY}', deleting StatefulSet (cascade=orphan) to allow re-create with OrderedReady"
-                 ./zarf tools kubectl delete sts -n keycloak keycloak --cascade=orphan
-                else
-                  echo "podManagementPolicy is correct. Skipping..."
-                fi
-              else
+              if [ "${KEYCLOAK_INSTALLED}" -ne 0 ]; then
                 echo "Keycloak has not been installed. Skipping..."
+                exit 0
+              fi
+
+              echo "Keycloak has been previously installed. Running pre-upgrade checks..."
+              DELETE_REASONS=""
+
+              # Check 1: StatefulSet podManagementPolicy must be OrderedReady
+              POD_MGMT_POLICY=$(./zarf tools kubectl get sts -n keycloak keycloak -o jsonpath='{.spec.podManagementPolicy}' 2>/dev/null || true)
+              echo "Detected podManagementPolicy: ${POD_MGMT_POLICY:-<none>}"
+              if [ -n "${POD_MGMT_POLICY}" ] && [ "${POD_MGMT_POLICY}" != "OrderedReady" ]; then
+                DELETE_REASONS="${DELETE_REASONS}podManagementPolicy is '${POD_MGMT_POLICY}' (expected OrderedReady); "
+              fi
+
+              # Check 2: registry1 flavor requires StatefulSet recreation when upgrading from a version older than 26.5.5
+              CURRENT_IMAGE=$(./zarf tools kubectl get sts -n keycloak keycloak -o jsonpath="{.metadata.annotations['zarf\.dev/original-image-keycloak']}" 2>/dev/null || true)
+              echo "Detected current image: ${CURRENT_IMAGE:-<none>}"
+              if echo "${CURRENT_IMAGE}" | grep -q "registry1.dso.mil"; then
+                CURRENT_VERSION=$(echo "${CURRENT_IMAGE}" | sed 's/.*://')
+                BREAKING_CHANGE_VERSION="26.5.5"
+                OLDER_VERSION=$(printf '%s\n%s' "${CURRENT_VERSION}" "${BREAKING_CHANGE_VERSION}" | sort -V | head -n1)
+                if [ "${OLDER_VERSION}" = "${CURRENT_VERSION}" ] && [ "${CURRENT_VERSION}" != "${BREAKING_CHANGE_VERSION}" ]; then
+                  DELETE_REASONS="${DELETE_REASONS}registry1 flavor upgrade from ${CURRENT_VERSION} to ${BREAKING_CHANGE_VERSION}+; "
+                fi
+              fi
+
+              if [ -n "${DELETE_REASONS}" ]; then
+                echo "Deleting StatefulSet (cascade=orphan). Reasons: ${DELETE_REASONS}"
+                ./zarf tools kubectl delete sts -n keycloak keycloak --cascade=orphan
+              else
+                echo "No StatefulSet recreation needed. Skipping..."
               fi
         after:
           - description: Validate Keycloak Pods
