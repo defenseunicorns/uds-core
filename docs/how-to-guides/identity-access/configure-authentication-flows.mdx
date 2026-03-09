@@ -85,7 +85,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 
 4. **(Optional) Enable X.509/CAC with MFA**
 
-   To require MFA after CAC authentication, enable both X.509 and MFA:
+   If you need to require MFA after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then run `uds deploy uds-bundle.yaml`:
 
    ```yaml
    - path: realmAuthFlows

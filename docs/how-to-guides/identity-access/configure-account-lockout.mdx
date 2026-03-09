@@ -8,7 +8,7 @@ import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure Keycloak's brute-force protection to control how accounts are locked after repeated failed login attempts. By default, UDS Core applies a permanent lockout after 3 failures. You can configure temporary lockouts that precede permanent lockout using a bundle override.
+You'll configure Keycloak's brute-force protection to control how accounts are locked after repeated failed login attempts. By default, UDS Core applies a permanent lockout after 3 failures within a 12-hour window. You can configure temporary lockouts that precede permanent lockout using a bundle override.
 
 ## Prerequisites
 
@@ -101,7 +101,7 @@ Confirm brute-force lockout is working:
 1. In a test browser session, attempt to log in with a valid username and incorrect password 3 times
 2. Confirm the account is locked — the login page should display a lockout message
 3. If using temporary lockouts, wait 15 minutes and confirm the account unlocks automatically
-4. Log in to the Keycloak Admin Console → **Users** → select the test user → **Credentials** tab to view the locked status
+4. Log in to the Keycloak Admin Console → **Users** → select the test user → **Details** tab to view the locked status
 
 **Check the lockout configuration:**
 

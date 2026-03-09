@@ -19,9 +19,9 @@ You'll configure a UDS Package to use the [OAuth 2.0 Device Authorization Grant]
 
 The Device Authorization Grant is designed for applications that either have no browser or cannot handle redirect-based authentication (for example, CLI tools, IoT devices, or CI/CD pipelines where a browser redirect is impractical).
 
-This flow creates a **public client** — a client with no secret. Two important constraints follow from this:
+This flow creates a **public client** — a client with no secret. Two important constraints apply to public clients in UDS Core:
 
-- `standardFlowEnabled` must be set to `false` (public clients cannot use the standard redirect flow)
+- `standardFlowEnabled` must be explicitly set to `false` — the UDS operator will reject the Package CR if it is not. Public clients in UDS Core are restricted to device flow only.
 - `publicClient: true` is incompatible with `serviceAccountsEnabled: true`
 
 > [!NOTE]
@@ -76,10 +76,10 @@ Confirm the client was created with the correct configuration:
 
 **Test the device flow:**
 ```bash
-# Initiate device authorization (replace with your domain and client ID)
+# Initiate device authorization (replace <domain> and <client-id> with your values)
 curl -s -X POST \
   "https://sso.<domain>/realms/uds/protocol/openid-connect/auth/device" \
-  -d "client_id=sigstore" \
+  -d "client_id=<client-id>" \
   | jq .
 ```
 

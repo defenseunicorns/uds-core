@@ -22,8 +22,8 @@ UDS Core supports two layers of branding customization:
 
 | Approach | Use for | Requires image rebuild? |
 |---|---|---|
-| **Bundle overrides + ConfigMap** (this guide) | Logo, background, footer, favicon, Terms & Conditions text | No |
-| **Custom theme in uds-identity-config image** | CSS, layout changes, registration form fields, new theme pages | Yes |
+| **Bundle overrides + ConfigMap** (this guide) | Logo, background, footer, favicon, Terms & Conditions text, show/hide registration form fields | No |
+| **Custom theme in uds-identity-config image** | CSS, layout changes, adding or restructuring registration form fields, new theme pages | Yes |
 
 This guide covers the bundle override approach. For CSS or structural theme changes, see [Build and deploy a custom identity config image](/how-to-guides/identity-access/build-deploy-custom-image/).
 
@@ -83,8 +83,8 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    Build and deploy this package prior to deploying or upgrading UDS Core:
 
    ```bash
-   zarf package create .
-   zarf package deploy zarf-package-keycloak-theme-overrides-*.zst
+   uds zarf package create .
+   uds zarf package deploy zarf-package-keycloak-theme-overrides-*.zst
    ```
 
 4. **Add `themeCustomizations` to your bundle override**

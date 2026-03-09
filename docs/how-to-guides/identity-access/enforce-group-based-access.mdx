@@ -120,7 +120,7 @@ uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 **Symptoms:** A user is in the group in Keycloak but is still denied access.
 
 **Solution:** Confirm the user's group membership is included in the token. This can fail if:
-- The user's group claim is not included in the SSO client's default scopes
+- The user's group claim is not included in the SSO client's default scopes — in the Keycloak admin UI, go to **Clients** → your client → **Client Scopes** and confirm the `groups` scope is assigned
 - The token was issued before the user was added to the group (the user needs to log out and log back in)
 
 To inspect the token claims, use the Keycloak Account console at `sso.<domain>` to view recent tokens, or use a tool like [jwt.io](https://jwt.io) to decode a token.

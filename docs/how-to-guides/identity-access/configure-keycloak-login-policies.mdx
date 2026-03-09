@@ -70,13 +70,37 @@ This guide covers Helm chart values, which handle the most common operational co
    > [!CAUTION]
    > **The client session timeout must not exceed the realm session timeout.** Keycloak 26.5.0+ (UDS Core 0.59.0+) will reject this configuration. Earlier versions accepted it silently but the realm timeout took precedence anyway — so users would still be logged out at the realm timeout interval regardless of the client setting.
 
-   **Configure realm session timeouts in the Keycloak admin UI:**
+   **Configure realm session timeouts via bundle override:**
+
+   The realm-level SSO session idle timeout and max lifespan are set during initial realm import and can be configured in your `uds-bundle.yaml`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: oci://registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   # Session idle timeout in seconds (default: 600 = 10 minutes)
+                   SSO_SESSION_IDLE_TIMEOUT: "1800"
+                   # Session max lifespan in seconds (default: 36000 = 10 hours)
+                   SSO_SESSION_MAX_LIFESPAN: "28800"
+   ```
+
+   > [!NOTE]
+   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for these settings to take effect. To change timeouts on a live instance without redeploying, use the admin UI instead (see below).
+
+   **Configure realm session timeouts in the Keycloak admin UI (for live instances):**
    1. Log in to the Keycloak admin UI at `keycloak.<admin_domain>`
    2. Switch to the **uds** realm using the top-left dropdown
    3. Go to **Realm Settings** → **Sessions** tab
    4. Adjust **SSO Session Idle** and **SSO Session Max** as needed
 
-   **Configure per-client session timeouts:**
+   **Configure per-client session timeouts** (admin UI only — not available as a bundle override):
    1. Go to **Clients** → select the client → **Advanced** tab → **Advanced Settings**
    2. Set **Client Session Idle** to a value ≤ the realm's **SSO Session Idle**
 
@@ -144,7 +168,7 @@ This guide covers Helm chart values, which handle the most common operational co
 5. **Deploy your bundle**
 
    ```bash
-   uds deploy <your-bundle>
+   uds deploy uds-bundle.yaml
    ```
 
 </Steps>
@@ -169,9 +193,11 @@ In the Keycloak admin UI, navigate to **Realm Settings** → **Sessions** and co
 
 ### Problem: Session expires unexpectedly early
 
-**Symptoms:** Users are logged out before the configured timeout elapses.
+**Symptoms:** Users are logged out before the configured timeout elapses, or sessions expire after only 10 minutes on a fresh deployment.
 
-**Solution:** The realm session idle timeout takes precedence over any client session timeout. Verify that the client session idle timeout is ≤ the realm session idle timeout. In Keycloak 26.5+ this is enforced; in earlier versions, a misconfigured client setting would be silently overridden by the realm setting.
+**Solution:** The default `SSO_SESSION_IDLE_TIMEOUT` is 600 seconds (10 minutes). If this is too short for your environment, set a longer value in `realmInitEnv` before the first deploy, or update it in the Keycloak admin UI (**Realm Settings** → **Sessions**) on a live instance.
+
+Also verify that the client session idle timeout is ≤ the realm session idle timeout. In Keycloak 26.5+ this is enforced; in earlier versions, a misconfigured client setting would be silently overridden by the realm setting.
 
 ### Problem: Bundle deploy fails with a `realmConfig` error
 
