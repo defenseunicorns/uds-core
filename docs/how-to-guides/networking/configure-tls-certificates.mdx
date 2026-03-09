@@ -198,7 +198,8 @@ You should see your domain certificate and the correct certificate chain. You ca
 **Solution:** Verify your certificate and key values are properly base64 encoded. The values should be the base64 encoding of the PEM file contents:
 
 ```bash
-base64 -i my-cert.pem
+base64 -w0 < my-cert.pem                    # Linux
+base64 -i my-cert.pem | tr -d '\n'          # macOS
 ```
 
 ### TLS 1.2 clients can't connect
