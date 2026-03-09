@@ -14,13 +14,31 @@ spec:
         - record: kube_state_metrics:up
           expr: clamp_max(max(up{job=~".*kube-state-metrics.*"}), 1)
 
-        - record: daemonset:desired_scheduled:changed_recently
+        - record: daemonset:up
           expr: |
             (
-              kube_daemonset_status_desired_number_scheduled
-              !=
-              kube_daemonset_status_desired_number_scheduled offset 5m
+              (max by(daemonset, namespace)(kube_daemonset_status_number_unavailable) == 0) * 0 + 1
+              or on(daemonset, namespace)
+              clamp_max(
+                kube_daemonset_status_desired_number_scheduled
+                !=
+                kube_daemonset_status_desired_number_scheduled offset 2m
+              , 1)
+              or on(daemonset, namespace)
+              clamp_max(max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled), 1) * 0
             )
+
+        - record: deployment:up
+          expr: clamp_max(max by(deployment, namespace)(kube_deployment_status_replicas_available), 1)
+
+        - record: statefulset:up
+          expr: clamp_max(max by(statefulset, namespace)(kube_statefulset_status_replicas_available), 1)
+
+        - record: daemonset:availability_ratio
+          expr: |
+            max by(daemonset, namespace)(kube_daemonset_status_number_ready)
+            /
+            max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled)
 
     - name: uds-monitoring-uptime
       rules:
@@ -29,39 +47,27 @@ spec:
             uds_layer: monitoring
             uds_component: prometheus
           expr: |
-            (
-              clamp_max(kube_statefulset_status_replicas_available{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}, 1)
-              or on()
-              (absent(kube_statefulset_status_replicas_available{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(statefulset:up{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:alertmanager:up
           labels:
             uds_layer: monitoring
             uds_component: alertmanager
           expr: |
-            (
-              clamp_max(kube_statefulset_status_replicas_available{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}, 1)
-              or on()
-              (absent(kube_statefulset_status_replicas_available{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(statefulset:up{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:blackbox_exporter:up
           labels:
             uds_layer: monitoring
             uds_component: blackbox_exporter
           expr: |
-            (
-              clamp_max(kube_deployment_status_replicas_available{deployment="prometheus-blackbox-exporter", namespace="monitoring"}, 1)
-              or on()
-              (absent(kube_deployment_status_replicas_available{deployment="prometheus-blackbox-exporter", namespace="monitoring"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="prometheus-blackbox-exporter", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
     - name: uds-access-uptime
       rules:

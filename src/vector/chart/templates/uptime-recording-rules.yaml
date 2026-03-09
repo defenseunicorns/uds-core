@@ -16,15 +16,7 @@ spec:
             uds_layer: logging
             uds_component: vector
           expr: |
-            (
-              (kube_daemonset_status_number_unavailable{daemonset="vector", namespace="vector"} == 0) * 0 + 1
-              or on(daemonset, namespace)
-              clamp_max(daemonset:desired_scheduled:changed_recently{daemonset="vector", namespace="vector"}, 1)
-              or on(daemonset, namespace)
-              clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="vector", namespace="vector"}, 1) * 0
-              or on()
-              (absent(kube_daemonset_status_desired_number_scheduled{daemonset="vector", namespace="vector"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(daemonset:up{daemonset="vector", namespace="vector"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 {{- end }}

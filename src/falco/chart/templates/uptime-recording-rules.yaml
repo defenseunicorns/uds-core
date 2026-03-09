@@ -16,32 +16,16 @@ spec:
             uds_layer: runtime-security
             uds_component: falco
           expr: |
-            (
-              (kube_daemonset_status_number_unavailable{daemonset="falco", namespace="falco"} == 0) * 0 + 1
-              or on(daemonset, namespace)
-              clamp_max(daemonset:desired_scheduled:changed_recently{daemonset="falco", namespace="falco"}, 1)
-              or on(daemonset, namespace)
-              clamp_max(kube_daemonset_status_desired_number_scheduled{daemonset="falco", namespace="falco"}, 1) * 0
-              or on()
-              (absent(kube_daemonset_status_desired_number_scheduled{daemonset="falco", namespace="falco"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(daemonset:up{daemonset="falco", namespace="falco"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:falcosidekick:up
           labels:
             uds_layer: runtime-security
             uds_component: falco-sidekick
           expr: |
-            (
-              (kube_deployment_status_replicas_unavailable{deployment="falco-falcosidekick", namespace="falco"} == 0) * 0 + 1
-              or on(deployment, namespace)
-              clamp_max(deployment:replicas:changed_recently{deployment="falco-falcosidekick", namespace="falco"}, 1)
-              or on(deployment, namespace)
-              clamp_max(kube_deployment_spec_replicas{deployment="falco-falcosidekick", namespace="falco"}, 1) * 0
-              or on()
-              (absent(kube_deployment_spec_replicas{deployment="falco-falcosidekick", namespace="falco"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="falco-falcosidekick", namespace="falco"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 {{- end }}

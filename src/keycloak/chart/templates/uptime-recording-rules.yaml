@@ -16,26 +16,18 @@ spec:
             uds_layer: identity-authorization
             uds_component: keycloak
           expr: |
-            (
-              clamp_max(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}, 1)
-              or on()
-              (absent(kube_statefulset_status_replicas_available{statefulset="keycloak", namespace="keycloak"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(statefulset:up{statefulset="keycloak", namespace="keycloak"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:keycloak_waypoint:up
           labels:
             uds_layer: identity-authorization
             uds_component: keycloak_waypoint
           expr: |
-            (
-              clamp_max(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}, 1)
-              or on()
-              (absent(kube_deployment_status_replicas_available{deployment="keycloak-waypoint", namespace="keycloak"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="keycloak-waypoint", namespace="keycloak"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:keycloak_endpoint:up
           labels:

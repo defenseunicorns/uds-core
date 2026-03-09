@@ -16,13 +16,9 @@ spec:
             uds_layer: monitoring
             uds_component: grafana
           expr: |
-            (
-              clamp_max(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}, 1)
-              or on()
-              (absent(kube_deployment_status_replicas_available{deployment="grafana", namespace="grafana"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="grafana", namespace="grafana"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
         - record: uds:grafana_endpoint:up
           labels:
             uds_layer: monitoring

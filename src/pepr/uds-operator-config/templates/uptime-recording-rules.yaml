@@ -16,24 +16,16 @@ spec:
             uds_layer: base
             uds_component: pepr_admission
           expr: |
-            (
-              clamp_max(kube_deployment_status_replicas_available{deployment="pepr-uds-core", namespace="pepr-system"}, 1)
-              or on()
-              (absent(kube_deployment_status_replicas_available{deployment="pepr-uds-core", namespace="pepr-system"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="pepr-uds-core", namespace="pepr-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 
         - record: uds:pepr_watcher:up
           labels:
             uds_layer: base
             uds_component: pepr_watcher
           expr: |
-            (
-              clamp_max(kube_deployment_status_replicas_available{deployment="pepr-uds-core-watcher", namespace="pepr-system"}, 1)
-              or on()
-              (absent(kube_deployment_status_replicas_available{deployment="pepr-uds-core-watcher", namespace="pepr-system"}) * 0)
-            )
-            * on() group_left()
-            kube_state_metrics:up
+            (max(deployment:up{deployment="pepr-uds-core-watcher", namespace="pepr-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
 {{- end }}
