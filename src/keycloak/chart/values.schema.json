@@ -647,6 +647,31 @@
       "properties": {
         "deleteGeneratedTrustStore": {
           "type": "boolean"
+        },
+        "embeddedDatabase": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "updatePermissions": {
+              "type": "object",
+              "properties": {
+                "sourceUser": {
+                  "type": ["string", "integer"]
+                },
+                "sourceGroup": {
+                  "type": ["string", "integer"]
+                },
+                "targetUser": {
+                  "type": ["string", "integer"]
+                },
+                "targetGroup": {
+                  "type": ["string", "integer"]
+                }
+              }
+            }
+          }
         }
       }
     },

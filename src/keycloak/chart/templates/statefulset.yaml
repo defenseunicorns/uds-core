@@ -79,6 +79,25 @@ spec:
             - name: data
               mountPath: /opt/keycloak/data
         {{- end }}
+        {{- if .Values.migrations.embeddedDatabase.enabled }}
+        - name: update-embedded-database-permissions
+          image: "{{ .Values.configImage }}"
+          command: ["sh", "-c", "chown -R {{ .Values.migrations.embeddedDatabase.updatePermissions.targetUser }}:{{ .Values.migrations.embeddedDatabase.updatePermissions.targetGroup }} /opt/keycloak/data/h2 /opt/keycloak/data/transaction-logs ; ls -la /opt/keycloak/data"]
+          securityContext:
+            runAsUser: {{ .Values.migrations.embeddedDatabase.updatePermissions.sourceUser }}
+            runAsGroup: {{ .Values.migrations.embeddedDatabase.updatePermissions.sourceGroup }}
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/keycloak/data
+        {{- end }}
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

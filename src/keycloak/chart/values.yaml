@@ -416,6 +416,14 @@ mtlsClientCert: "%DOWNSTREAM_PEER_CERT%"
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
+  # Updates permissions on the embedded H2 database and transaction logs
+  embeddedDatabase:
+    enabled: false
+    updatePermissions:
+      sourceUser: "1000"
+      sourceGroup: "1000"
+      targetUser: "1000"
+      targetGroup: "1000"
 
 # Third-party integration settings, such as L7 Load Balancer support
 thirdPartyIntegration:

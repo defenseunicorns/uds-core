@@ -16,3 +16,10 @@ image:
 configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.24.0
 migrations:
   deleteGeneratedTrustStore: true
+  embeddedDatabase:
+    enabled: true
+    updatePermissions:
+      sourceUser: 2000
+      sourceGroup: 2000
+      targetUser: 1000
+      targetGroup: 0
