@@ -34,6 +34,9 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 > [!NOTE]
 > `realmAuthFlows` values are applied only during initial realm import. To apply changes to an already-deployed Keycloak instance, a full redeploy of the Keycloak package is required.
 
+> [!NOTE]
+> When upgrading UDS Core, realm configuration (`realmAuthFlows` and `realmInitEnv`) does **not** propagate automatically to a running Keycloak instance — a full redeploy of the Keycloak package is required to apply changes. Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on upgrade without a realm redeploy.
+
 ## Steps
 
 <Steps>
@@ -125,10 +128,15 @@ In the Keycloak admin UI, navigate to `keycloak.<admin_domain>` → **uds** real
 uds deploy uds-bundle.yaml
 ```
 
-If redeploying is not possible, the flows can be manually updated in the Keycloak Admin Console:
-- Navigate to **Authentication** → **Flows**
-- Select the relevant UDS auth flow
-- Enable or disable the appropriate steps
+If redeploying is not possible, configure the flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:
+
+| Flow setting | Admin UI path |
+|---|---|
+| Disable username/password | **Authentication** → **Flows** → **UDS Authentication** → disable the **Deny Access** step below **Username Password Form** |
+| Disable credential reset | **Authentication** → **Flows** → **UDS Reset Credentials** → disable the **Reset Password** step |
+| Disable user registration | **Authentication** → **Flows** → **UDS Registration** → disable the **UDS Registration form** step |
+| Enable/disable OTP | **Authentication** → **Required Actions** tab → toggle **Configure OTP** |
+| Enable WebAuthn | 1. **Authentication** → **Required Actions** → toggle on **Webauthn Register Passwordless** under the **Enabled** column<br/>2. **Authentication** → **Flows** → **UDS Authentication** → set the **MFA** sub-flow to **Required**<br/>3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required** |
 
 ### Problem: X.509/CAC login fails with OCSP error in air-gapped environment
 
@@ -173,8 +181,8 @@ If your environment uses CRL-based revocation instead of OCSP, configure the CRL
 
 ## Related documentation
 
-- [Authentication flows reference](/reference/uds-core/idam/authentication-flows/) — detailed explanation of each flow option and manual Keycloak admin UI configuration
 - [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — required for X.509/CAC authentication
+- [Configure Keycloak password policy and account settings](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration
 
 ## Next steps
 
