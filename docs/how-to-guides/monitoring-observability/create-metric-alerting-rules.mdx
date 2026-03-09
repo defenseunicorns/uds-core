@@ -50,7 +50,7 @@ UDS Core ships default alerting rules from the upstream kube-prometheus-stack ch
 
        - alert: HighMemoryUsage
          expr: |
-           (container_memory_working_set_bytes / kube_pod_container_resource_limits{resource="memory"}) * 100 > 80
+           (container_memory_working_set_bytes / on(namespace, pod, container) kube_pod_container_resource_limits{resource="memory"}) * 100 > 80
          for: 15m
          labels:
            severity: warning
