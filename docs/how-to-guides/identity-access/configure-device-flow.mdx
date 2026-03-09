@@ -1,7 +1,7 @@
 ---
 title: Configure OAuth 2.0 device flow
 sidebar:
-  order: 9
+  order: 3.9
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -57,7 +57,7 @@ This flow creates a **public client** — a client with no secret. Two important
 2. **Apply the Package CR**
 
    ```bash
-   kubectl apply -f package.yaml
+   uds zarf tools kubectl apply -f package.yaml
    ```
 
    The UDS Operator creates the Keycloak client in the UDS realm.

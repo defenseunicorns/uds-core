@@ -1,7 +1,7 @@
 ---
 title: Manage Keycloak with OpenTofu
 sidebar:
-  order: 14
+  order: 3.14
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -58,7 +58,8 @@ UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is *
    Deploy the bundle:
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
    #### Enable the client in the Keycloak admin UI

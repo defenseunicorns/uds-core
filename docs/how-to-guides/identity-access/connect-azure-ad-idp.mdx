@@ -1,7 +1,7 @@
 ---
 title: Connect Azure AD as an identity provider
 sidebar:
-  order: 5
+  order: 3.4
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -32,6 +32,9 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
 
 1. **Create the master realm App Registration in Azure**
 
+   > [!NOTE]
+   > The master realm is Keycloak's built-in admin realm. Configuring Azure SSO here lets platform administrators log in to the Keycloak admin console at `keycloak.<admin_domain>` using their enterprise Azure credentials, removing the need to maintain a separate local admin account.
+
    In Azure Entra ID, navigate to **App registrations** → **New registration** and create an application with these settings:
 
    - **Supported account types**: Accounts in this organizational directory only (Single tenant)
@@ -52,6 +55,10 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
       When prompted, enable the Microsoft Graph email and profile permissions.
 
    3. Add a **Groups claim**: select **All groups**, accept the default values, and save.
+
+      > [!NOTE]
+      > Selecting **All groups** means the SAML assertion will include the Object IDs of every Entra group the user belongs to. This is necessary for the group mapper in Keycloak to work — but only the specific group OIDs you configure in the mapper will actually trigger a group assignment. Other group OIDs in the claim are ignored.
+
    4. Go to **Manage** → **Expose an API**, click **Add** next to "Application ID URI", and note the resulting URI (format: `api://<Application Client ID>`). You will need this value when configuring the SAML identity provider in Keycloak.
 
 2. **Create the UDS realm App Registration in Azure**
@@ -100,6 +107,9 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
    | Group Mapper      | Advanced Attribute to Group | `groups` (Entra admin group ID)     | `admin-group`  |
 
    Set **Sync mode override** to `Force` for all mappers.
+
+   > [!NOTE]
+   > The **Advanced Attribute to Group** mapper works by reading the `groups` claim from the SAML assertion and checking each value against the **Attribute value** you configure. When a match is found, Keycloak adds the user to the mapped Keycloak group. The **Attribute value** must be the Entra group's **Object ID** (a GUID like `a1b2c3d4-...`), not the group display name. Find it in Azure under **Groups** → select the group → **Object ID** field.
 
    **Create a browser redirect auth flow:**
    1. Go to **Authentication** → **Create flow**, name it `browser-idp-redirect`

@@ -1,7 +1,7 @@
 ---
 title: Configure Keycloak login policies
 sidebar:
-  order: 6
+  order: 3.5
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -22,9 +22,12 @@ UDS Core supports three layers of Keycloak customization:
 
 | Approach | Use for | Requires image rebuild? |
 |---|---|---|
-| **Helm chart values** (this guide) | Operational settings, session policies, resources | No |
-| **UDS Identity Config image** | Custom themes, plugins, realm structure changes | Yes |
-| **OpenTofu / IaC** | Managing auth flows, identity providers, groups declaratively post-deploy | No |
+| **Helm chart values** (this guide) | Session policies, account settings, auth flow toggles | No |
+| **UDS Identity Config image** | Custom themes, plugins, CA truststore | Yes — themes and plugins apply when the Keycloak pod restarts; no realm re-import needed |
+| **OpenTofu / IaC** | Managing groups, clients, IdPs post-deploy | No |
+
+> [!NOTE]
+> Settings applied via `realmInitEnv` or `realmAuthFlows` bundle overrides (covered in this guide and related guides) are only imported during the initial Keycloak realm setup. On a running instance, these require a full Keycloak teardown and redeploy to take effect — or you can apply them manually in the admin UI. Each relevant step below notes which settings are affected.
 
 This guide covers Helm chart values, which handle the most common operational configuration needs. For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/).
 
@@ -92,7 +95,7 @@ This guide covers Helm chart values, which handle the most common operational co
    ```
 
    > [!NOTE]
-   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for these settings to take effect. To change timeouts on a live instance without redeploying, use the admin UI instead (see below).
+   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full Keycloak teardown and redeploy is required for these settings to take effect. To change timeouts on a live instance without redeploying, use the admin UI instead (see below).
 
    **Configure realm session timeouts in the Keycloak admin UI (for live instances):**
    1. Log in to the Keycloak admin UI at `keycloak.<admin_domain>`
@@ -165,62 +168,15 @@ This guide covers Helm chart values, which handle the most common operational co
 
    Enable retries when Keycloak communicates with external services over unreliable networks. Keep them disabled in environments where fast failure detection is preferred.
 
-5. **(Optional) Enable FIPS 140-2 strict mode**
-
-   UDS Core supports running Keycloak in FIPS 140-2 Strict Mode via a Helm override. When enabled, the UDS Identity Config init container automatically copies the required Bouncy Castle FIPS JAR files into the Keycloak providers directory.
-
-   > [!CAUTION]
-   > **Migrate your password hashing algorithm before enabling FIPS on an existing deployment.** Enabling FIPS mode makes `argon2` unavailable and requires passwords to be at least 14 characters. If your existing admin password uses `argon2` or is shorter than 14 characters, you will be locked out of the Keycloak admin console.
-   >
-   > Complete these steps in the Keycloak Admin Console **before** enabling FIPS:
-   > 1. Switch to the **master** realm
-   > 2. Go to **Authentication** → **Policies** → **Password Policy** → **Add Policy**
-   > 3. Select **Hashing Algorithm** and enter `pbkdf2-sha512` → **Save**
-   > 4. Go to **Users** → select your admin user → **Credentials** tab → **Reset Password**
-   > 5. Enter a new password of at least 14 characters, set **Temporary** to **Off** → **Save**
-   > 6. Confirm the credential now shows `algorithm: pbkdf2-sha512` under **Show data**
-
-   Once the password migration is complete, add the `fips` override to your bundle:
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         keycloak:
-           keycloak:
-             values:
-               - path: fips
-                 value: true
-   ```
-
-   To verify FIPS is active after deploying, enable debug mode temporarily and inspect the Keycloak bootstrap logs:
-
-   ```yaml
-   - path: debugMode
-     value: true
-   ```
+5. **Deploy your bundle**
 
    ```bash
-   uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=100 | grep BCFIPS
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
-
-   Look for:
-   ```
-   KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
-   ```
-
-   `BCFIPS version 2.0 Approved Mode` confirms Keycloak is running in FIPS Strict Mode. `FIPS-JVM: disabled` is expected unless the underlying host OS is also running a FIPS-enabled kernel. Disable `debugMode` after confirming.
 
    > [!NOTE]
-   > For Keycloak FIPS limitations and upstream details, see the [Keycloak FIPS 140-2 support docs](https://www.keycloak.org/server/fips).
-
-6. **Deploy your bundle**
-
-   ```bash
-   uds deploy uds-bundle.yaml
-   ```
+   > To run Keycloak in FIPS 140-2 strict mode, see [Enable FIPS 140-2 strict mode](/how-to-guides/identity-access/enable-fips-mode/).
 
 </Steps>
 
@@ -258,18 +214,6 @@ Also verify that the client session idle timeout is ≤ the realm session idle t
 - Values expected as strings must be quoted: `"3"` not `3` for `SSO_SESSION_MAX_PER_USER`
 - Check the [Keycloak chart values](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/chart/values.yaml) for the correct path syntax
 
-### Problem: Keycloak admin console is inaccessible after enabling FIPS
-
-**Symptoms:** Cannot log in to the Keycloak admin console after enabling `fips: true`. Login fails with a password error or the UI is unreachable.
-
-**Solution:** This occurs when the admin password was hashed with `argon2` (the default before FIPS) or is shorter than 14 characters. FIPS mode rejects both.
-
-If you can still access Keycloak (e.g., via `uds zarf connect keycloak`), migrate the password:
-1. Switch to the **master** realm → **Authentication** → **Policies** → **Password Policy** → add `pbkdf2-sha512` as the hashing algorithm
-2. Reset the admin user's password to a 14+ character value with `Temporary` set to **Off**
-
-If you are fully locked out, you will need to redeploy Keycloak with `fips: false`, migrate the password hashing as described in step 5 above, then re-enable `fips: true`.
-
 ### Problem: Logout confirmation change has no effect
 
 **Symptoms:** Users still see a logout confirmation page after setting `logout.confirmation.enabled: "false"`.
@@ -282,6 +226,7 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 ## Related documentation
 
 - [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/) — for theme and plugin customization beyond Helm values
+- [Enable FIPS 140-2 strict mode](/how-to-guides/identity-access/enable-fips-mode/) — run Keycloak in FIPS-approved mode with Bouncy Castle FIPS JARs
 - [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
 - [Package CR reference](/reference/operator-and-crds/package/) — full spec for SSO client configuration
 

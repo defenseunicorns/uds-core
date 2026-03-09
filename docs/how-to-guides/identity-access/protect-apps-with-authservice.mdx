@@ -1,7 +1,7 @@
 ---
 title: Protect apps with Authservice
 sidebar:
-  order: 2
+  order: 3.1
 ---
 
 import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -13,6 +13,7 @@ You'll add SSO protection to an application that has no native OIDC support. Aut
 ## Prerequisites
 
 - UDS Core deployed (Authservice is included by default)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Application deployed as a UDS Package
 - Application pods labeled with a consistent selector that you control
 
@@ -25,6 +26,9 @@ Authservice works by matching a label selector on your application's pods. When 
 
 > [!CAUTION]
 > **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
+
+> [!NOTE]
+> **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows — double-check both before deploying.
 
 ## Steps
 
@@ -57,7 +61,7 @@ Authservice works by matching a label selector on your application's pods. When 
     2. **Apply the Package CR**
 
        ```bash
-       kubectl apply -f package.yaml
+       uds zarf tools kubectl apply -f package.yaml
        ```
 
        The UDS Operator creates a Keycloak client, configures Authservice, and sets up the Istio `RequestAuthentication` and `AuthorizationPolicy` resources automatically.
@@ -103,7 +107,7 @@ Authservice works by matching a label selector on your application's pods. When 
     2. **Apply the Package CR**
 
        ```bash
-       kubectl apply -f package.yaml
+       uds zarf tools kubectl apply -f package.yaml
        ```
 
        > [!NOTE]

@@ -1,7 +1,7 @@
 ---
 title: Configure Keycloak account lockout
 sidebar:
-  order: 10
+  order: 3.11
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -64,7 +64,7 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
    - `MAX_TEMPORARY_LOCKOUTS: "3"` → fourth lockout is permanent
 
    > [!NOTE]
-   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for this setting to take effect.
+   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for this setting to take effect.
 
 2. **(Optional) Fine-tune brute-force settings in the Keycloak admin UI**
 
@@ -89,7 +89,8 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
 3. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>

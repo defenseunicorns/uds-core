@@ -1,7 +1,7 @@
 ---
 title: Build a custom Keycloak configuration image
 sidebar:
-  order: 12
+  order: 3.6
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -15,7 +15,6 @@ You'll build a custom uds-identity-config image containing your theme, plugin, o
 - Docker installed and running
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - A container registry accessible from your cluster
-- Local clone of the [uds-identity-config](https://github.com/defenseunicorns/uds-identity-config) repository with your changes applied
 
 ## Before you begin
 
@@ -31,9 +30,16 @@ An image rebuild is required when you change:
 
 <Steps>
 
-1. **Make your changes to the uds-identity-config source**
+1. **Clone the uds-identity-config repository**
 
-   Apply your changes to the relevant files in the `src/` directory of the uds-identity-config repository. Common change locations:
+   ```bash
+   git clone https://github.com/defenseunicorns/uds-identity-config.git
+   cd uds-identity-config
+   ```
+
+2. **Make your changes to the source**
+
+   Apply your changes to the relevant files in the `src/` directory. Common change locations:
 
    | Change type | Location |
    |---|---|
@@ -43,7 +49,7 @@ An image rebuild is required when you change:
    | Custom plugin code | `src/plugin/src/main/java/` |
    | CA truststore source | `src/Dockerfile` (`CA_ZIP_URL` arg) and `src/authorized_certs.zip` |
 
-2. **Build the custom image**
+3. **Build the custom image**
 
    ```bash
    uds run dev-build
@@ -57,7 +63,7 @@ An image rebuild is required when you change:
    > uds run build-zarf-pkg
    > ```
 
-3. **Publish the image to a registry**
+4. **Publish the image to a registry**
 
    Tag and push to a registry your cluster can access.
 
@@ -75,7 +81,7 @@ An image rebuild is required when you change:
    docker push registry.example.com/uds/identity-config:v1.0.0
    ```
 
-4. **Set `configImage` in your bundle override**
+5. **Set `configImage` in your bundle override**
 
    In your `uds-bundle.yaml`, override the default identity config image:
 
@@ -92,10 +98,11 @@ An image rebuild is required when you change:
                  value: ttl.sh/<your-unique-id>:1h
    ```
 
-5. **Deploy your bundle**
+6. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>

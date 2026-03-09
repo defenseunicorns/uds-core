@@ -1,7 +1,7 @@
 ---
 title: Enforce group-based access controls
 sidebar:
-  order: 3
+  order: 3.2
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -79,7 +79,7 @@ Application teams can define their own group paths. Group paths follow Keycloak'
 3. **Apply the Package CR**
 
    ```bash
-   kubectl apply -f package.yaml
+   uds zarf tools kubectl apply -f package.yaml
    ```
 
    The UDS Operator reconciles the Package CR and updates the Authservice authorization policy to enforce group membership.

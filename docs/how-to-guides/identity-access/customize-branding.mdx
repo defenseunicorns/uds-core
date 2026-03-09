@@ -1,7 +1,7 @@
 ---
 title: Customize Keycloak login page branding
 sidebar:
-  order: 11
+  order: 3.12
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -190,12 +190,13 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    - Unit, Organization or Company Name
 
    > [!NOTE]
-   > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime and do not require a full redeploy of the Keycloak package to take effect.
+   > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime — Keycloak does not need to be redeployed for them to take effect.
 
 7. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 </Steps>
@@ -240,7 +241,7 @@ Verify each expected key (`background.png`, `logo.png`, etc.) is present in the 
 2. The `termsAndConditions.text.configmap` entry is present in `themeCustomizations`
 
 > [!NOTE]
-> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for these values to take effect.
+> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for these values to take effect.
 
 ### Problem: T&C content appears malformed
 

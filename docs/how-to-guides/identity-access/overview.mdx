@@ -1,7 +1,7 @@
 ---
 title: Identity & access
 sidebar:
-  order: 1
+  order: 3
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -82,5 +82,10 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     title="Manage Keycloak with OpenTofu"
     description="Enable the built-in OpenTofu client and use it to programmatically manage Keycloak resources."
     href="/how-to-guides/identity-access/manage-keycloak-with-opentofu/"
+  />
+  <LinkCard
+    title="Enable FIPS 140-2 strict mode"
+    description="Run Keycloak in FIPS-approved mode using Bouncy Castle FIPS JARs, with pre-migration steps for existing deployments."
+    href="/how-to-guides/identity-access/enable-fips-mode/"
   />
 </CardGrid>

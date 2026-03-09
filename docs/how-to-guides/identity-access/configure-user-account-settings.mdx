@@ -1,7 +1,7 @@
 ---
 title: Configure Keycloak password policy and account settings
 sidebar:
-  order: 13
+  order: 3.13
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -17,7 +17,7 @@ You'll configure user account behavior for your UDS Core Keycloak realm: setting
 
 ## Before you begin
 
-All settings in this guide are applied via `realmInitEnv` in a bundle override. These values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for changes to take effect.
+All settings in this guide are applied via `realmInitEnv` in a bundle override. These values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for changes to take effect.
 
 | Setting | Default | Description |
 |---|---|---|
@@ -127,10 +127,11 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
 4. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   If Keycloak is already running with an existing realm, a full redeploy of the Keycloak package is required for `realmInitEnv` settings to take effect.
+   If Keycloak is already running with an existing realm, Keycloak must be fully torn down and redeployed for `realmInitEnv` settings to take effect.
 
 </Steps>
 

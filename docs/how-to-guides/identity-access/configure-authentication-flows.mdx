@@ -1,7 +1,7 @@
 ---
 title: Configure Keycloak authentication methods
 sidebar:
-  order: 4
+  order: 3.3
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -32,10 +32,10 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 > Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` all at once will result in no authentication options on the login page. Users will not be able to log in or register. Also, disabling both `USERNAME_PASSWORD_AUTH_ENABLED` and `X509_AUTH_ENABLED` disables user self-registration.
 
 > [!NOTE]
-> `realmAuthFlows` values are applied only during initial realm import. To apply changes to an already-deployed Keycloak instance, a full redeploy of the Keycloak package is required.
+> `realmAuthFlows` values are only applied during the initial realm import. To change them on a running Keycloak instance, Keycloak must be fully torn down and redeployed so the realm is re-imported — or you can apply the changes manually in the admin UI (see the troubleshooting section below).
 
 > [!NOTE]
-> When upgrading UDS Core, realm configuration (`realmAuthFlows` and `realmInitEnv`) does **not** propagate automatically to a running Keycloak instance — a full redeploy of the Keycloak package is required to apply changes. Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on upgrade without a realm redeploy.
+> When upgrading UDS Core, realm configuration (`realmAuthFlows` and `realmInitEnv`) does **not** propagate automatically to a running Keycloak instance — Keycloak must be fully torn down and redeployed to pick up updated realm values. Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on upgrade without a realm redeploy.
 
 ## Steps
 
@@ -53,7 +53,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    | CAC + MFA | Enable `X509_MFA_ENABLED` (also requires `OTP_ENABLED` or `WEBAUTHN_ENABLED`) |
 
    > [!NOTE]
-   > For X.509/CAC authentication to work, you must also configure the CA truststore. See [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/).
+   > UDS Core ships with DoD UNCLASSIFIED CA certificates by default, so X.509/CAC authentication works out of the box in DoD environments. If your environment uses a different CA chain, see [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/).
 
 2. **Add `realmAuthFlows` to your bundle override**
 
@@ -83,12 +83,16 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 3. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 4. **(Optional) Enable X.509/CAC with MFA**
 
-   If you need to require MFA after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then run `uds deploy uds-bundle.yaml`:
+   > [!NOTE]
+   > CAC authentication (X.509 certificate + PIN) already satisfies multi-factor requirements in most security frameworks — the certificate is "something you have" and the PIN is "something you know." `X509_MFA_ENABLED` adds a second software factor on top of CAC, which is rarely needed and can be impractical in classified environments where personal devices aren't permitted. Confirm this is an explicit requirement before enabling it.
+
+   If you do need to require an additional factor after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then recreate and deploy the bundle:
 
    ```yaml
    - path: realmAuthFlows
@@ -122,10 +126,11 @@ In the Keycloak admin UI, navigate to `keycloak.<admin_domain>` → **uds** real
 
 **Symptoms:** The login page displays username/password or CAC fields even though they were disabled.
 
-**Solution:** `realmAuthFlows` values are applied during initial realm import only. If Keycloak was already running before the override was applied, a full redeploy of the Keycloak package is required:
+**Solution:** `realmAuthFlows` values are applied during initial realm import only. If Keycloak was already running before the override was applied, Keycloak must be fully torn down and redeployed so the realm is re-imported:
 
 ```bash
-uds deploy uds-bundle.yaml
+uds create <path-to-bundle-dir>
+uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
 ```
 
 If redeploying is not possible, configure the flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:

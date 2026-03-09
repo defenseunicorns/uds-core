@@ -1,7 +1,7 @@
 ---
 title: Configure a social identity provider
 sidebar:
-  order: 15
+  order: 3.15
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
@@ -28,7 +28,7 @@ UDS Core supports two approaches for connecting identity providers:
 Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` override so the social login option appears on the login page. This is the default — only include it explicitly if you have previously disabled it.
 
 > [!NOTE]
-> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, a full redeploy of the Keycloak package is required for these settings to take effect.
+> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for these settings to take effect.
 
 ## Steps
 
@@ -103,7 +103,8 @@ Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` ove
 4. **Deploy your bundle**
 
    ```bash
-   uds deploy uds-bundle.yaml
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
 5. **(Optional) Assign Google Workspace users to the SAML app**
