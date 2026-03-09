@@ -73,6 +73,9 @@ describe("Uptime Recording Rules", { timeout: 210000 }, () => {
     "uds:prometheus:up",
     "uds:alertmanager:up",
     "uds:blackbox_exporter:up",
+    "uds:kube_state_metrics:up",
+    "uds:prometheus_operator:up",
+    "uds:node_exporter:up",
     "uds:grafana:up",
     "uds:grafana_endpoint:up",
     // Base - Istio

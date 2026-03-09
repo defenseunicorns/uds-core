@@ -17,7 +17,11 @@ spec:
         - record: daemonset:up
           expr: |
             (
-              (max by(daemonset, namespace)(kube_daemonset_status_number_unavailable) == 0) * 0 + 1
+              (
+                max by(daemonset, namespace)(kube_daemonset_status_number_unavailable) == 0
+                and on(daemonset, namespace)
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled) > 0
+              ) * 0 + 1
               or on(daemonset, namespace)
               clamp_max(
                 kube_daemonset_status_desired_number_scheduled
@@ -38,7 +42,7 @@ spec:
           expr: |
             max by(daemonset, namespace)(kube_daemonset_status_number_ready)
             /
-            max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled)
+            clamp_min(max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled), 1)
 
     - name: uds-monitoring-uptime
       rules:
@@ -66,6 +70,31 @@ spec:
             uds_component: blackbox_exporter
           expr: |
             (max(deployment:up{deployment="prometheus-blackbox-exporter", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:kube_state_metrics:up
+          labels:
+            uds_layer: monitoring
+            uds_component: kube_state_metrics
+          expr: |
+            (max(deployment:up{deployment="kube-prometheus-stack-kube-state-metrics", namespace="monitoring"}) or on() vector(0))
+
+        - record: uds:prometheus_operator:up
+          labels:
+            uds_layer: monitoring
+            uds_component: prometheus_operator
+          expr: |
+            (max(deployment:up{deployment="kube-prometheus-stack-operator", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:node_exporter:up
+          labels:
+            uds_layer: monitoring
+            uds_component: node_exporter
+          expr: |
+            (max(daemonset:up{daemonset="kube-prometheus-stack-prometheus-node-exporter", namespace="monitoring"}) or on() vector(0))
             and on()
             (kube_state_metrics:up == 1)
 
