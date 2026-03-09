@@ -44,7 +44,7 @@ components:
               fi
 
               # Check 2: registry1 flavor requires StatefulSet recreation when upgrading from a version older than 26.5.5
-              CURRENT_IMAGE=$(./zarf tools kubectl get sts -n keycloak keycloak -o jsonpath="{.metadata.annotations['zarf\.dev/original-image-keycloak']}" 2>/dev/null || true)
+              CURRENT_IMAGE=$(./zarf tools kubectl get pod -n keycloak keycloak-0 -o jsonpath="{.metadata.annotations['zarf\.dev/original-image-keycloak']}" 2>/dev/null || true)
               echo "Detected current image: ${CURRENT_IMAGE:-<none>}"
               if echo "${CURRENT_IMAGE}" | grep -q "registry1.dso.mil"; then
                 CURRENT_VERSION=$(echo "${CURRENT_IMAGE}" | sed 's/.*://')
