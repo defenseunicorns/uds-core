@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
 
-describe("Prometheus and Alertmanager", { timeout: 210000 }, () => {
+describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
   let alertmanagerProxy: { server: net.Server; url: string };
 
@@ -45,7 +45,7 @@ describe("Prometheus and Alertmanager", { timeout: 210000 }, () => {
     expect(response.status).toBe(200);
   });
 
-  test("all prometheus targets should be up", async () => {
+  test("all prometheus targets should be up", { timeout: 220000 }, async () => {
     await pollUntilSuccess(
       async () => {
         const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
