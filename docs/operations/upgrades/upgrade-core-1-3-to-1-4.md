@@ -1,7 +1,7 @@
 ---
-title: Upgrade UDS Core 1.4 to 1.5
+title: Upgrade UDS Core 1.3 to 1.4
 sidebar:
-  order: 7
+  order: 2.1
 ---
 
 ## Operations & maintenance

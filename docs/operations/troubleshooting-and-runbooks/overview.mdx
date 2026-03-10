@@ -1,0 +1,29 @@
+---
+title: Overview
+sidebar:
+  order: 1.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+This section contains runbooks for diagnosing and resolving common issues on a running UDS Core platform. Each runbook covers a specific problem area — what to look for, how to identify the cause, and how to fix it.
+
+If you're setting up UDS Core for the first time, see [How-To Guides](/how-to-guides/overview/) instead.
+
+> [!TIP]
+> **Need help beyond these runbooks?** Search [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues. If your issue isn't covered, open a new issue with relevant information attached.
+
+## Runbooks
+
+<CardGrid>
+  <LinkCard
+    title="Exemptions & Packages Not Updating"
+    description="Exemption or Package CRs not being applied or reflected in the cluster."
+    href="/operations/troubleshooting-and-runbooks/exemptions-and-packages/"
+  />
+  <LinkCard
+    title="Keycloak Credential Recovery"
+    description="Recover lost or forgotten Keycloak admin credentials."
+    href="/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/"
+  />
+</CardGrid>
