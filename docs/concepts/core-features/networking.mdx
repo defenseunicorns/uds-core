@@ -50,7 +50,7 @@ This separation matters: the Tenant and Admin gateways are independently configu
 > [!TIP]
 > A common pattern is to expose the Tenant Gateway publicly (or broadly within a network) while keeping the Admin Gateway accessible only via private/internal networking — behind a VPN, bastion, or restricted subnet. This lets end users reach applications normally — including Keycloak for SSO, which is on the Tenant Gateway — while ensuring that admin interfaces like Grafana and the Keycloak admin console are never reachable from the public internet.
 
-By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration — see [Configure ingress gateways](/how-to-guides/networking/configure-ingress-gateways/).
+By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration — see [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/).
 
 ## How application traffic flows
 
