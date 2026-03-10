@@ -82,7 +82,7 @@ data "local_file" "helm_template" {
 }
 
 data "http" "aws-lb-controller-iam" {
-  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.0.0/docs/install/iam_policy_us-gov.json"
+  url = "https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v3.1.0/docs/install/iam_policy_us-gov.json"
 }
 resource "aws_iam_role_policy" "aws-lb-controller" {
   name = "${local.cluster_name}-lb-controller"
