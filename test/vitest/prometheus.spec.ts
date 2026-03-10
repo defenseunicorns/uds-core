@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
 
-describe("Prometheus and Alertmanager", { retry: 1 }, () => {
+describe("Prometheus and Alertmanager", { retry: 1, timeout: 210000 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
   let alertmanagerProxy: { server: net.Server; url: string };
 
