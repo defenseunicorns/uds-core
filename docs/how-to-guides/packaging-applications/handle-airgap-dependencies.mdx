@@ -1,0 +1,162 @@
+---
+title: Handle Air-Gap Dependencies
+sidebar:
+  order: 2.4
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+Package all container images and artifacts your application needs so it can deploy in the airgap without internet access. Zarf embeds every image in the package tarball at build time and pushes them to an in-cluster registry at deploy time.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- An internet-connected build machine with access to the source container registries
+- A UDS Package with a `zarf.yaml` (see [Package an existing Helm chart](/how-to-guides/packaging-applications/package-existing-helm-chart/))
+
+## Before You Begin
+
+Zarf packages are designed for the airgap by default. When you run `uds zarf package create`, Zarf pulls every container image listed in the `images` section and stores them inside the package tarball. At deploy time, Zarf pushes these images to the in-cluster registry — no external network access required.
+
+The critical step is ensuring your `images` list is complete. A missing image causes `ImagePullBackOff` errors in the airgap because the cluster cannot reach external registries.
+
+## Steps
+
+<Steps>
+
+1. **Discover required images**
+
+   Run `uds zarf dev find-images` against your package directory. This command renders your Helm charts and extracts every image reference:
+
+   ```bash
+   uds zarf dev find-images .
+   ```
+
+   The output lists all discovered images. Compare this list against the `images` section in your `zarf.yaml` and add any missing entries.
+
+   > [!TIP]
+   > Some images are not referenced in Helm chart templates — for example, init containers, sidecar images injected by operators, or images loaded dynamically at runtime. Add these manually.
+
+2. **Declare all images in your Zarf package**
+
+   Ensure every container image appears in the `images` section of the relevant component in your `zarf.yaml`:
+
+   ```yaml title="zarf.yaml"
+   components:
+     - name: podinfo
+       required: true
+       charts:
+         - name: podinfo
+           url: https://stefanprodan.github.io/podinfo
+           version: 6.7.1
+           namespace: podinfo
+       images:
+         - ghcr.io/stefanprodan/podinfo:6.7.1
+       manifests:
+         - name: uds-package
+           files:
+             - package.yaml
+   ```
+
+   > [!IMPORTANT]
+   > Use exact image tags, not `latest`. Zarf needs a deterministic reference to pull and store the image. Floating tags can produce different images on different builds.
+
+3. **Build the package**
+
+   Build the Zarf package on your internet-connected machine. Zarf pulls all declared images and embeds them in the tarball:
+
+   ```bash
+   uds zarf package create . --confirm
+   ```
+
+   To build for a specific architecture (for example, when your build machine is arm64 but your target cluster runs amd64), use the `--architecture` flag:
+
+   ```bash
+   uds zarf package create . --confirm --architecture amd64
+   ```
+
+   The resulting file (`zarf-package-<name>-<arch>-<version>.tar.zst`) contains everything needed for an air-gapped deployment.
+
+4. **Build the bundle**
+
+   Create a bundle that includes UDS Core and your package:
+
+   ```bash
+   uds create .
+   ```
+
+   The bundle tarball (`uds-bundle-<name>-<arch>-<version>.tar.zst`) is the single artifact you transfer to the airgap.
+
+5. **Transfer and deploy in the airgap**
+
+   Move the bundle tarball to the air-gapped environment using your approved transfer mechanism (USB drive, data diode, etc.). Then deploy:
+
+   ```bash
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst --confirm
+   ```
+
+   Zarf pushes all embedded images to the in-cluster registry during deployment. No internet access is required.
+
+</Steps>
+
+## Verification
+
+Confirm your application is running with images served from the in-cluster registry:
+
+```bash
+# Check that pods are running
+uds zarf tools kubectl get pods -n podinfo
+
+# Verify images are pulled from the in-cluster registry
+uds zarf tools kubectl get pods -n podinfo -o jsonpath='{.items[*].spec.containers[*].image}'
+```
+
+Image references should point to the Zarf in-cluster registry rather than external registries.
+
+## Troubleshooting
+
+### Missing Images at Deploy Time
+
+**Symptom:** Pods are stuck in `ImagePullBackOff` in the airgap.
+
+**Solution:** The image was not included in the Zarf package. On your internet-connected build machine, run `uds zarf dev find-images .` and compare the output against your `zarf.yaml` `images` list. Add any missing images, rebuild the package, and redeploy.
+
+### Architecture Mismatch
+
+**Symptom:** Pods crash with `exec format error` or fail to start.
+
+**Solution:** The package was built for the wrong CPU architecture. Rebuild with the correct `--architecture` flag matching your target cluster nodes:
+
+```bash
+uds zarf package create . --confirm --architecture amd64
+```
+
+### Package Too Large
+
+**Symptom:** The bundle tarball is unexpectedly large.
+
+**Solution:** Check for duplicate images across components or images with large layers. Run `uds zarf package inspect <tarball>` to see the image manifest and identify large or unnecessary images. Remove any images that are not required at runtime.
+
+## Related Documentation
+
+- [Zarf Air Gap Documentation](https://docs.zarf.dev/docs/zarf-overview#air-gap) — How Zarf handles air-gapped deployments
+- [Package an existing Helm chart](/how-to-guides/packaging-applications/package-existing-helm-chart/) — Creating the base Zarf package
+
+## Next Steps
+
+These guides cover the next stages of your packaging workflow:
+
+<CardGrid>
+  <LinkCard
+    title="Publish a package to the UDS registry"
+    description="Push your built Zarf package and UDS bundle to an OCI registry."
+    href="/how-to-guides/packaging-applications/publish-to-registry/"
+  />
+  <LinkCard
+    title="Bundles"
+    description="Learn how packages compose into deployable bundles."
+    href="/concepts/configuration-and-packaging/bundles/"
+  />
+</CardGrid>

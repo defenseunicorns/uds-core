@@ -1,0 +1,230 @@
+---
+title: Integrate Networking with the Package CR
+sidebar:
+  order: 2.2
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+Configure how your application communicates with the outside world and other services in the cluster. By the end of this guide, your Package CR will expose your application on a gateway, define network access rules, and optionally configure service mesh mode.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A UDS Package with a Package CR (see [Package an existing Helm chart](/how-to-guides/packaging-applications/package-existing-helm-chart/))
+
+## Before You Begin
+
+The UDS Operator translates the `spec.network` block in your Package CR into Istio VirtualServices, Gateway routes, and Kubernetes NetworkPolicies. You define your application's networking intent in the Package CR, and the operator handles the implementation details.
+
+UDS Core provides three built-in gateways:
+
+| Gateway | Purpose | Typical Use |
+|---|---|---|
+| `tenant` | User-facing applications | Web UIs, APIs |
+| `admin` | Platform administration UIs | Grafana, Keycloak admin |
+| `passthrough` | Applications that terminate their own TLS | Apps with built-in TLS |
+
+## Steps
+
+<Steps>
+
+1. **Expose your application on a gateway**
+
+   Add a `spec.network.expose` entry to your Package CR. The operator creates an Istio VirtualService and the necessary Gateway route:
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: podinfo
+     namespace: podinfo
+   spec:
+     network:
+       expose:
+         - service: podinfo
+           host: podinfo
+           gateway: tenant
+           port: 9898
+   ```
+
+   This makes your application accessible at `https://podinfo.<your-domain>` through the tenant gateway.
+
+   Key fields for each `expose` entry:
+
+   | Field | Description |
+   |---|---|
+   | `service` | Name of the Kubernetes Service to expose |
+   | `host` | Subdomain for the route (combined with the cluster domain) |
+   | `gateway` | Which gateway to attach to: `tenant`, `admin`, or `passthrough` |
+   | `port` | Port on the Kubernetes Service |
+
+   > [!NOTE]
+   > The `targetPort` field is optional and defaults to the `port` value. Set it explicitly when your Service port differs from the container port.
+
+2. **Allow in-cluster egress**
+
+   If your application needs to reach other services in the cluster (for example, a database), add `spec.network.allow` entries:
+
+   ```yaml title="package.yaml"
+   spec:
+     network:
+       allow:
+         - direction: Egress
+           selector:
+             app: podinfo
+           remoteNamespace: database
+           remoteSelector:
+             app: postgresql
+           port: 5432
+           description: "podinfo to PostgreSQL"
+   ```
+
+   The operator creates a NetworkPolicy that permits traffic from pods matching `selector` to pods matching `remoteSelector` in the specified `remoteNamespace`.
+
+   | Field | Description |
+   |---|---|
+   | `direction` | `Ingress` or `Egress` |
+   | `selector` | Labels matching the pods in your namespace |
+   | `remoteNamespace` | Namespace of the target service |
+   | `remoteSelector` | Labels matching the target pods |
+   | `port` | Destination port to allow |
+   | `description` | Human-readable description of the rule |
+
+3. **Allow external egress**
+
+   If your application needs to reach external endpoints (for example, a third-party API), use `remoteHost` instead of `remoteSelector`:
+
+   ```yaml title="package.yaml"
+   spec:
+     network:
+       allow:
+         - direction: Egress
+           selector:
+             app: podinfo
+           remoteHost: api.example.com
+           port: 443
+           description: "podinfo to external API"
+   ```
+
+   > [!IMPORTANT]
+   > When using `remoteHost`, the operator creates an Istio ServiceEntry and a NetworkPolicy. In ambient mode, DNS resolution handles the routing. In sidecar mode, Istio's egress gateway proxies the traffic.
+
+4. **Optional: Select a service mesh mode**
+
+   UDS Core defaults to ambient mesh mode. If your application requires sidecar proxies (for example, for mTLS-level traffic inspection), set the mesh mode explicitly:
+
+   <Tabs>
+     <TabItem label="Ambient (default)">
+       ```yaml title="package.yaml"
+       spec:
+         network:
+           serviceMesh:
+             mode: ambient
+       ```
+
+       In ambient mode, the Istio ztunnel handles L4 encryption. No sidecar container is injected into your pods.
+     </TabItem>
+     <TabItem label="Sidecar">
+       ```yaml title="package.yaml"
+       spec:
+         network:
+           serviceMesh:
+             mode: sidecar
+       ```
+
+       In sidecar mode, Istio injects an Envoy proxy into each pod. This enables L7 traffic policies and per-request telemetry.
+     </TabItem>
+   </Tabs>
+
+   > [!NOTE]
+   > Changing the mesh mode triggers a rolling restart of your application pods as the operator updates namespace labels.
+
+5. **Deploy your updated package**
+
+   Rebuild your Zarf package and bundle with the updated Package CR, then deploy:
+
+   ```bash
+   uds zarf package create . --confirm
+   uds create .
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the networking resources were created:
+
+```bash
+# Check that the VirtualService exists
+uds zarf tools kubectl get virtualservices -n podinfo
+
+# Check that NetworkPolicies were created
+uds zarf tools kubectl get networkpolicies -n podinfo
+
+# Verify the application is reachable through the gateway
+curl -s https://podinfo.<your-domain>
+```
+
+## Troubleshooting
+
+### Application Not Reachable Externally
+
+**Symptom:** Requests to `https://podinfo.<your-domain>` fail or time out.
+
+**Solution:** Verify the VirtualService was created and references the correct gateway:
+
+```bash
+uds zarf tools kubectl describe virtualservice -n podinfo
+```
+
+Check that your DNS resolves to the gateway's external IP and that TLS certificates are configured. See [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) for TLS setup.
+
+### Egress Blocked
+
+**Symptom:** Your application cannot reach an internal service or external API.
+
+**Solution:** List the NetworkPolicies in your namespace and verify the rule exists:
+
+```bash
+uds zarf tools kubectl get networkpolicies -n podinfo -o yaml
+```
+
+Confirm that `selector`, `remoteNamespace`, `remoteSelector` (or `remoteHost`), and `port` match the actual labels and endpoints. Check the UDS Operator logs if the policy was not created:
+
+```bash
+uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=100
+```
+
+### Pods Restarting After Mesh Mode Change
+
+**Symptom:** Pods restart after changing `serviceMesh.mode`.
+
+**Solution:** This is expected behavior. The operator updates namespace labels when you change the mesh mode, which triggers a rolling restart to inject or remove sidecar proxies.
+
+## Related Documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — How gateways, authorization, and the service mesh work in UDS Core
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — Full field reference for `spec.network`
+- [Networking How-To Guides](/how-to-guides/networking/overview/) — Additional networking configuration guides
+
+## Next Steps
+
+These guides build on your networking configuration:
+
+<CardGrid>
+  <LinkCard
+    title="Integrate SSO with the Package CR"
+    description="Add Keycloak single sign-on to your exposed application."
+    href="/how-to-guides/packaging-applications/integrate-sso/"
+  />
+  <LinkCard
+    title="Capture application metrics"
+    description="Configure Prometheus to scrape metrics from your application."
+    href="/how-to-guides/monitoring-observability/capture-application-metrics/"
+  />
+</CardGrid>

@@ -1,0 +1,192 @@
+---
+title: Package an Existing Helm Chart
+sidebar:
+  order: 2.1
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+Wrap an existing Helm chart as a UDS Package and deploy it alongside UDS Core. By the end of this guide, you will have a Zarf package containing your application's Helm chart and a Package CR, bundled with UDS Core and running on your cluster.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A Helm chart to package (this guide uses [podinfo](https://github.com/stefanprodan/podinfo) as the example)
+
+## Before You Begin
+
+A UDS Package builds on two layers. First, a Zarf package bundles your Helm chart and its container images into a single deployable artifact. Second, a Package CR tells the UDS Operator how your application integrates with platform features like networking, SSO, and monitoring.
+
+This guide covers the minimal path: wrap a Helm chart, add a basic Package CR, build a bundle, and deploy. Later guides in this section show how to add networking, SSO, and monitoring to the Package CR.
+
+## Steps
+
+<Steps>
+
+1. **Create the Zarf package definition**
+
+   Create a `zarf.yaml` file that declares your application as a Zarf component with a Helm chart and its container images:
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: podinfo
+     description: "UDS Package for podinfo"
+     version: 0.1.0
+
+   components:
+     - name: podinfo
+       required: true
+       charts:
+         - name: podinfo
+           url: https://stefanprodan.github.io/podinfo
+           version: 6.7.1
+           namespace: podinfo
+           valuesFiles:
+             - values.yaml
+       images:
+         - ghcr.io/stefanprodan/podinfo:6.7.1
+       manifests:
+         - name: uds-package
+           files:
+             - package.yaml
+   ```
+
+   The `charts` section tells Zarf which Helm chart to include. The `images` section lists every container image the chart needs — Zarf pulls these at build time and pushes them to the in-cluster registry at deploy time. The `manifests` section includes the Package CR you will create in the next step.
+
+   > [!TIP]
+   > Run `uds zarf dev find-images` to automatically discover the images your chart needs rather than listing them manually.
+
+2. **Create a Package CR**
+
+   Create a `package.yaml` file with a minimal Package CR. This registers your application with the UDS Operator:
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: podinfo
+     namespace: podinfo
+   spec: {}
+   ```
+
+   An empty `spec` is valid — the operator creates the namespace and applies default network policies. You can add `network`, `sso`, and `monitor` blocks later to integrate with platform features.
+
+3. **Create a Helm values file**
+
+   Create a `values.yaml` file with any overrides for the Helm chart:
+
+   ```yaml title="values.yaml"
+   replicaCount: 1
+   ```
+
+   > [!NOTE]
+   > This file can be empty if you want to use all chart defaults. Zarf requires the file to exist if it is listed in `valuesFiles`.
+
+4. **Build the Zarf package**
+
+   Build the Zarf package from your `zarf.yaml`. Zarf pulls the Helm chart and container images and bundles them into a single tarball:
+
+   ```bash
+   uds zarf package create . --confirm
+   ```
+
+   This produces a file named `zarf-package-podinfo-<arch>-0.1.0.tar.zst`.
+
+5. **Add your package to a bundle**
+
+   Create a `uds-bundle.yaml` that includes UDS Core and your new package:
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: my-bundle
+     description: "UDS Core with podinfo"
+     version: 0.1.0
+
+   packages:
+     - name: core
+       repository: ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo
+       ref: 0.35.0-upstream
+
+     - name: podinfo
+       path: .
+       ref: 0.1.0
+   ```
+
+   The `path` field points to the local directory containing your built Zarf package. For published packages, replace `path` with `repository` pointing to the OCI registry.
+
+6. **Create and deploy your bundle**
+
+   ```bash
+   uds create .
+   uds deploy uds-bundle-my-bundle-<arch>-0.1.0.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm your application is running and the Package CR was reconciled:
+
+```bash
+# Check that pods are running
+uds zarf tools kubectl get pods -n podinfo
+
+# Confirm the Package CR status
+uds zarf tools kubectl get packages -n podinfo
+```
+
+The `PHASE` column for your package should show `Ready`.
+
+## Troubleshooting
+
+### Image Pull Errors
+
+**Symptom:** Pods are stuck in `ImagePullBackOff` or `ErrImagePull`.
+
+**Solution:** The image was not included in the Zarf package. Verify every image is listed in the `images` section of your `zarf.yaml`. Run `uds zarf dev find-images` to discover missing images, then rebuild the package.
+
+### Package CR Not Reconciled
+
+**Symptom:** The Package CR exists but its `PHASE` is not `Ready`, or it does not appear in `kubectl get packages`.
+
+**Solution:** Check the UDS Operator logs for errors:
+
+```bash
+uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=100
+```
+
+Common causes include a mismatched `namespace` field (the Package CR namespace must match the component's deployment namespace) or a syntax error in the CR.
+
+### Namespace Not Created
+
+**Symptom:** The application namespace does not exist after deployment.
+
+**Solution:** The UDS Operator creates namespaces declared in Package CRs. Verify the Package CR was included in the Zarf package by checking the `manifests` section in `zarf.yaml`. Rebuild the package if it was missing.
+
+## Related Documentation
+
+- [Bundles](/concepts/configuration-and-packaging/bundles/) — How packages compose into deployable bundles
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — Full field reference for the Package custom resource
+- [Zarf Package Documentation](https://docs.zarf.dev/docs/create-a-zarf-package/zarf-packages) — Zarf package structure and configuration
+
+## Next Steps
+
+These guides build on what you created here:
+
+<CardGrid>
+  <LinkCard
+    title="Integrate networking with the Package CR"
+    description="Expose your application on a gateway and define network access policies."
+    href="/how-to-guides/packaging-applications/integrate-networking/"
+  />
+  <LinkCard
+    title="Integrate SSO with the Package CR"
+    description="Add Keycloak single sign-on and Authservice protection."
+    href="/how-to-guides/packaging-applications/integrate-sso/"
+  />
+</CardGrid>

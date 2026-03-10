@@ -1,0 +1,92 @@
+---
+title: Common Tasks
+sidebar:
+  order: 0.5
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Find the right guide for your goal. Each link takes you to a step-by-step how-to guide with prerequisites, verification commands, and troubleshooting.
+
+> [!TIP]
+> New to UDS Core? Start with the [Getting Started](/getting-started/overview/) guides, then visit [Concepts](/concepts/overview/) to understand the architecture before diving into tasks here.
+
+## Access and Ingress
+
+These guides cover exposing applications and configuring network access:
+
+| Goal | Guide |
+|------|-------|
+| Enable external access to my application | [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) |
+| Configure TLS for my domain | [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) |
+| Accept non-HTTP traffic (SSH, database ports) | [Configure non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/) |
+| Allow my app to reach external APIs | [Define network access](/how-to-guides/networking/define-network-access/) |
+| Run behind an ALB or cloud load balancer | [Configure an L7 load balancer](/how-to-guides/networking/configure-l7-load-balancer/) |
+| Deploy a gateway with its own domain and TLS | [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) |
+
+## Identity and SSO
+
+These guides cover single sign-on and access controls:
+
+| Goal | Guide |
+|------|-------|
+| Set up single sign-on for my application | [Connect Azure AD as an identity provider](/how-to-guides/identity-access/connect-azure-ad-idp/) |
+| Require group membership to access an app | [Enforce group-based access](/how-to-guides/identity-access/enforce-group-based-access/) |
+| Customize Keycloak login behavior | [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/) |
+
+## Monitoring and Observability
+
+These guides cover metrics, dashboards, alerting, and uptime:
+
+| Goal | Guide |
+|------|-------|
+| See my application's metrics in Grafana | [Capture application metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) |
+| Create a dashboard for my app | [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) |
+| Connect Grafana to an external datasource | [Add Grafana datasources](/how-to-guides/monitoring-observability/add-grafana-datasources/) |
+| Get alerted when something breaks | [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) |
+| Alert on log patterns | [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) |
+| Route alerts to Slack or PagerDuty | [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) |
+| Monitor my app's uptime | [Set up uptime monitoring](/how-to-guides/monitoring-observability/set-up-uptime-monitoring/) |
+
+## Logging
+
+These guides cover log collection, querying, and alerts:
+
+| Goal | Guide |
+|------|-------|
+| Debug why logs aren't appearing | [Query application logs with Loki](/how-to-guides/logging/query-application-logs-with-loki/) |
+| Set log retention periods | [Configure log retention policies](/how-to-guides/logging/configure-log-retention-policies/) |
+| Get alerted on log patterns | [Set up Grafana logging alerts](/how-to-guides/logging/setup-grafana-logging-alerts/) |
+
+## Backup and Restore
+
+These guides cover data protection and disaster recovery:
+
+| Goal | Guide |
+|------|-------|
+| Create a backup schedule | [Configure Velero cloud backups](/how-to-guides/backup-restore/configure-velero-cloud-backups/) |
+| Verify my backups are working | [Validate backup integrity](/how-to-guides/backup-restore/validate-backup-integrity/) |
+| Run a disaster recovery drill | [Run a disaster recovery drill](/how-to-guides/backup-restore/run-disaster-recovery-drill/) |
+
+## Security and Policy
+
+These guides cover runtime security and policy management:
+
+| Goal | Guide |
+|------|-------|
+| Request a policy exemption | [Request policy exemptions](/how-to-guides/policy-and-compliance/request-policy-exemptions/) |
+| Tune runtime detection rules | [Tune Falco detections](/how-to-guides/runtime-security/tune-falco-detections/) |
+| Send runtime alerts to my SIEM | [Route runtime alerts to SIEM](/how-to-guides/runtime-security/route-runtime-alerts-to-siem/) |
+| Manage trust bundles | [Manage trust bundles](/how-to-guides/policy-and-compliance/manage-trust-bundles/) |
+
+## Packaging Applications
+
+These guides cover packaging your applications for UDS:
+
+| Goal | Guide |
+|------|-------|
+| Package my application for UDS | [Package an existing Helm chart](/how-to-guides/packaging-applications/package-existing-helm-chart/) |
+| Add networking to my package | [Integrate networking with the Package CR](/how-to-guides/packaging-applications/integrate-networking/) |
+| Add SSO to my package | [Integrate SSO with the Package CR](/how-to-guides/packaging-applications/integrate-sso/) |
+| Deploy in a disconnected environment | [Handle air-gap dependencies](/how-to-guides/packaging-applications/handle-airgap-dependencies/) |
+| Publish my package to a registry | [Publish a package to the UDS registry](/how-to-guides/packaging-applications/publish-to-registry/) |

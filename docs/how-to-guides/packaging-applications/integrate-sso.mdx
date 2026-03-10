@@ -1,0 +1,218 @@
+---
+title: Integrate SSO with the Package CR
+sidebar:
+  order: 2.3
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+Add Keycloak single sign-on to your application using the Package CR. The UDS Operator registers a Keycloak client, generates credentials, and optionally configures Authservice to protect your application's routes — all from a declarative configuration in the Package CR.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A UDS Package with a Package CR that exposes your application on a gateway (see [Integrate networking](/how-to-guides/packaging-applications/integrate-networking/))
+- Basic familiarity with OAuth2/OIDC concepts (authorization code flow, client ID, redirect URIs)
+
+## Before You Begin
+
+UDS Core includes Keycloak as its identity provider and Authservice as an authentication proxy. When you add an `sso` entry to your Package CR, the UDS Operator performs these actions automatically:
+
+- Creates a Keycloak client with your specified configuration
+- Generates a Kubernetes Secret named `sso-client-<clientId>` in your application's namespace containing the client ID, client secret, and OIDC discovery endpoints
+- If `enableAuthserviceSelector` is set, configures Authservice to intercept unauthenticated requests and redirect users to Keycloak
+
+This means your application does not need to implement OIDC login flows directly — Authservice handles the authentication handshake before requests reach your application.
+
+> [!TIP]
+> If your application already has built-in OIDC support (for example, Grafana or ArgoCD), you can skip Authservice and consume the generated client secret directly. Use Authservice for applications that lack native SSO support.
+
+## Steps
+
+<Steps>
+
+1. **Add a basic SSO client**
+
+   Add a `spec.sso` entry to your Package CR with the minimum required fields:
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: podinfo
+     namespace: podinfo
+   spec:
+     network:
+       expose:
+         - service: podinfo
+           host: podinfo
+           gateway: tenant
+           port: 9898
+     sso:
+       - name: Podinfo Login
+         clientId: uds-package-podinfo
+         redirectUris:
+           - "https://podinfo.uds.dev/login/callback"
+   ```
+
+   The operator creates a Keycloak client and stores the credentials in a Secret named `sso-client-uds-package-podinfo` in the `podinfo` namespace.
+
+   | Field | Description |
+   |---|---|
+   | `name` | Display name shown in Keycloak's admin console |
+   | `clientId` | Unique identifier for the client — use the pattern `uds-package-<app>` |
+   | `redirectUris` | Allowed callback URLs after authentication |
+
+2. **Enable Authservice protection**
+
+   If your application does not handle OIDC natively, add `enableAuthserviceSelector` to have Authservice intercept unauthenticated requests. The selector labels must match your application's pods:
+
+   ```yaml title="package.yaml"
+   spec:
+     sso:
+       - name: Podinfo Login
+         clientId: uds-package-podinfo
+         redirectUris:
+           - "https://podinfo.uds.dev/login/callback"
+         enableAuthserviceSelector:
+           app: podinfo
+   ```
+
+   Authservice intercepts requests to pods matching the label selector, redirects unauthenticated users to Keycloak, and passes authenticated requests through with identity headers.
+
+   > [!NOTE]
+   > Authservice requires your application to be exposed on a gateway (`spec.network.expose`). The authentication flow uses browser redirects that rely on external HTTPS access.
+
+3. **Access the generated client secret**
+
+   The operator automatically creates a Kubernetes Secret with the OIDC credentials your application needs. Retrieve the secret to verify the contents or configure your application:
+
+   ```bash
+   uds zarf tools kubectl get secret sso-client-uds-package-podinfo -n podinfo -o jsonpath='{.data}'
+   ```
+
+   The secret contains these keys:
+
+   | Key | Value |
+   |---|---|
+   | `clientId` | The OIDC client ID |
+   | `secret` | The OIDC client secret |
+   | `issuerUri` | The Keycloak realm issuer URL |
+   | `authorizationEndpoint` | The authorization endpoint URL |
+   | `tokenEndpoint` | The token endpoint URL |
+   | `endSessionEndpoint` | The logout endpoint URL |
+
+   > [!TIP]
+   > Mount this secret as environment variables or a volume in your application's deployment to consume the OIDC credentials. If you use Authservice, your application does not need these values directly — Authservice handles the OIDC flow.
+
+4. **Optional: Add group-based access controls**
+
+   Restrict application access to specific Keycloak groups using the `groups` field. The operator creates group-to-role mappings in Keycloak:
+
+   ```yaml title="package.yaml"
+   spec:
+     sso:
+       - name: Podinfo Login
+         clientId: uds-package-podinfo
+         redirectUris:
+           - "https://podinfo.uds.dev/login/callback"
+         enableAuthserviceSelector:
+           app: podinfo
+         groups:
+           anyOf:
+             - /UDS Core/Podinfo
+   ```
+
+   Only users belonging to the `/UDS Core/Podinfo` group in Keycloak can access the application.
+
+5. **Deploy your updated package**
+
+   Rebuild your Zarf package and bundle with the updated Package CR, then deploy:
+
+   ```bash
+   uds zarf package create . --confirm
+   uds create .
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the SSO integration is working:
+
+```bash
+# Check that the Keycloak client secret was created
+uds zarf tools kubectl get secret sso-client-uds-package-podinfo -n podinfo
+
+# Verify the Package CR shows Ready status
+uds zarf tools kubectl get packages -n podinfo
+```
+
+Open your application in a browser (for example, `https://podinfo.uds.dev`). If Authservice is enabled, the browser redirects to the Keycloak login page. After authenticating, Keycloak redirects back to your application.
+
+## Troubleshooting
+
+### SSO Redirect Loop
+
+**Symptom:** The browser continuously redirects between your application and Keycloak without completing login.
+
+**Solution:** Verify that `redirectUris` in the Package CR matches the actual callback URL your application uses. The URI must match exactly, including the protocol, domain, and path. Check the Keycloak admin console to confirm the client's registered redirect URIs.
+
+### Client Secret Not Found
+
+**Symptom:** The Secret `sso-client-<clientId>` does not exist in your application's namespace.
+
+**Solution:** Verify the Package CR was reconciled successfully:
+
+```bash
+uds zarf tools kubectl get packages -n podinfo -o yaml
+```
+
+Check the UDS Operator logs for SSO-related errors:
+
+```bash
+uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=100
+```
+
+### Authservice Not Intercepting Requests
+
+**Symptom:** Unauthenticated users can access the application without being redirected to Keycloak.
+
+**Solution:** Verify that the `enableAuthserviceSelector` labels match your application's pod labels exactly:
+
+```bash
+uds zarf tools kubectl get pods -n podinfo --show-labels
+```
+
+Also confirm that Authservice is running in the `authservice` namespace:
+
+```bash
+uds zarf tools kubectl get pods -n authservice
+```
+
+## Related Documentation
+
+- [Identity & Access Concepts](/concepts/core-features/identity-access/) — How Keycloak and Authservice work in UDS Core
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — Full field reference for `spec.sso`
+- [Identity & Access How-To Guides](/how-to-guides/identity-access/overview/) — Additional identity and SSO configuration guides
+
+## Next Steps
+
+These guides build on your SSO configuration:
+
+<CardGrid>
+  <LinkCard
+    title="Handle air-gap dependencies"
+    description="Package all container images for deployment in disconnected environments."
+    href="/how-to-guides/packaging-applications/handle-airgap-dependencies/"
+  />
+  <LinkCard
+    title="Capture application metrics"
+    description="Configure Prometheus to scrape metrics from your application."
+    href="/how-to-guides/monitoring-observability/capture-application-metrics/"
+  />
+</CardGrid>

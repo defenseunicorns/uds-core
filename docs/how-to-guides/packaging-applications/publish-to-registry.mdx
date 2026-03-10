@@ -1,0 +1,159 @@
+---
+title: Publish a Package to the UDS Registry
+sidebar:
+  order: 2.5
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What You'll Accomplish
+
+Publish your Zarf package and UDS bundle to an OCI-compliant registry. Once published, other teams can reference your package by its registry path in their `uds-bundle.yaml` instead of needing the local tarball.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A built Zarf package tarball (see [Package an existing Helm chart](/how-to-guides/packaging-applications/package-existing-helm-chart/))
+- Push access to an OCI-compliant container registry (GHCR, ECR, Docker Hub, etc.)
+
+## Steps
+
+<Steps>
+
+1. **Authenticate to your registry**
+
+   Log in to the registry where you want to publish your package:
+
+   <Tabs>
+     <TabItem label="GHCR">
+       ```bash
+       echo "$GITHUB_TOKEN" | uds zarf tools registry login ghcr.io --username <github-username> --password-stdin
+       ```
+
+       > [!TIP]
+       > Use a GitHub personal access token with `write:packages` scope. For CI pipelines, use the `GITHUB_TOKEN` secret provided by GitHub Actions.
+     </TabItem>
+     <TabItem label="ECR">
+       ```bash
+       aws ecr get-login-password --region <region> | uds zarf tools registry login <account-id>.dkr.ecr.<region>.amazonaws.com --username AWS --password-stdin
+       ```
+     </TabItem>
+     <TabItem label="Generic OCI">
+       ```bash
+       uds zarf tools registry login <registry-url> --username <username> --password <password>
+       ```
+     </TabItem>
+   </Tabs>
+
+2. **Publish the Zarf package**
+
+   Push the Zarf package tarball to your registry:
+
+   ```bash
+   uds zarf package publish zarf-package-podinfo-amd64-0.1.0.tar.zst ghcr.io/<org>/packages
+   ```
+
+   Zarf uploads the package as an OCI artifact. The package becomes accessible at `ghcr.io/<org>/packages/podinfo:0.1.0`.
+
+   > [!NOTE]
+   > The registry path is the base path — Zarf appends the package name and version automatically. Publishing `zarf-package-podinfo-amd64-0.1.0.tar.zst` to `ghcr.io/my-org/packages` creates the artifact at `ghcr.io/my-org/packages/podinfo:0.1.0`.
+
+3. **Reference the published package in a bundle**
+
+   Update your `uds-bundle.yaml` to pull the package from the registry instead of a local path:
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: my-bundle
+     description: "UDS Core with podinfo"
+     version: 0.1.0
+
+   packages:
+     - name: core
+       repository: ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo
+       ref: 0.35.0-upstream
+
+     - name: podinfo
+       repository: ghcr.io/<org>/packages/podinfo
+       ref: 0.1.0
+   ```
+
+   The `repository` field replaces the `path` field used for local packages.
+
+4. **Optional: Publish the bundle**
+
+   If you want to distribute the complete bundle (UDS Core + your packages) as a single artifact, publish it to the registry:
+
+   ```bash
+   uds create .
+   uds publish uds-bundle-my-bundle-amd64-0.1.0.tar.zst ghcr.io/<org>/bundles
+   ```
+
+   Consumers can then deploy directly from the registry:
+
+   ```bash
+   uds deploy ghcr.io/<org>/bundles/my-bundle:0.1.0
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the package was published and is accessible:
+
+```bash
+# List tags for the published package
+uds zarf tools registry ls ghcr.io/<org>/packages/podinfo
+
+# Pull and inspect the package to verify contents
+uds zarf package pull ghcr.io/<org>/packages/podinfo:0.1.0
+uds zarf package inspect zarf-package-podinfo-amd64-0.1.0.tar.zst
+```
+
+## Troubleshooting
+
+### Authentication Failure
+
+**Symptom:** `uds zarf package publish` fails with `401 Unauthorized` or `403 Forbidden`.
+
+**Solution:** Verify your credentials have push access to the target registry path. For GHCR, confirm the token has `write:packages` scope and that the target organization allows package uploads from your account.
+
+### Package Not Found After Publishing
+
+**Symptom:** The package was published, but `uds create` fails with a "not found" error when referencing it.
+
+**Solution:** Verify the `repository` and `ref` fields in `uds-bundle.yaml` match the published path and version exactly. Zarf constructs the full OCI reference as `<repository>:<ref>`. List the available tags to confirm:
+
+```bash
+uds zarf tools registry ls ghcr.io/<org>/packages/podinfo
+```
+
+### Version Already Exists
+
+**Symptom:** Publishing fails because the tag already exists in an immutable registry.
+
+**Solution:** OCI registries with tag immutability (common in production) prevent overwriting existing tags. Increment the version in your `zarf.yaml` metadata before rebuilding and republishing.
+
+## Related Documentation
+
+- [Bundles](/concepts/configuration-and-packaging/bundles/) — How packages compose into deployable bundles
+- [Handle air-gap dependencies](/how-to-guides/packaging-applications/handle-airgap-dependencies/) — Building packages for disconnected environments
+- [Zarf Package Publish](https://docs.zarf.dev/docs/the-zarf-cli/cli-commands/zarf_package_publish) — Full CLI reference for `zarf package publish`
+
+## Next Steps
+
+These resources cover related workflows:
+
+<CardGrid>
+  <LinkCard
+    title="Handle air-gap dependencies"
+    description="Package all container images for deployment in disconnected environments."
+    href="/how-to-guides/packaging-applications/handle-airgap-dependencies/"
+  />
+  <LinkCard
+    title="Bundles"
+    description="Learn how packages compose into deployable bundles."
+    href="/concepts/configuration-and-packaging/bundles/"
+  />
+</CardGrid>

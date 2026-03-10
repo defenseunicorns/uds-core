@@ -1,0 +1,50 @@
+---
+title: Overview
+sidebar:
+  order: 2.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+A UDS Package wraps a Helm chart with a UDS Package custom resource (CR) that declares how your application integrates with the platform — networking, SSO, monitoring, and more. The UDS Operator reads the Package CR and configures Istio, Keycloak, Prometheus, and network policies automatically.
+
+These guides walk you through packaging your own application for deployment on UDS Core, from wrapping a Helm chart to publishing the finished artifact.
+
+> [!TIP]
+> New to UDS packaging? Start with the [Bundles](/concepts/configuration-and-packaging/bundles/) and [CRD Overviews](/concepts/configuration-and-packaging/crd-overviews/) concept pages to understand how packages, bundles, and the Package CR fit together.
+
+## Related Documentation
+
+- [Bundles](/concepts/configuration-and-packaging/bundles/) — How packages compose into deployable bundles
+- [CRD Overviews](/concepts/configuration-and-packaging/crd-overviews/) — Package, Exemption, and ClusterConfig CRDs
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — Full field reference for the Package custom resource
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Package an existing Helm chart"
+    description="Wrap a Helm chart as a Zarf package with a Package CR and deploy it alongside UDS Core."
+    href="/how-to-guides/packaging-applications/package-existing-helm-chart/"
+  />
+  <LinkCard
+    title="Integrate networking with the Package CR"
+    description="Expose your application on a gateway and define network access policies."
+    href="/how-to-guides/packaging-applications/integrate-networking/"
+  />
+  <LinkCard
+    title="Integrate SSO with the Package CR"
+    description="Add Keycloak single sign-on and Authservice protection to your application."
+    href="/how-to-guides/packaging-applications/integrate-sso/"
+  />
+  <LinkCard
+    title="Handle air-gap dependencies"
+    description="Package all container images for deployment in disconnected environments."
+    href="/how-to-guides/packaging-applications/handle-airgap-dependencies/"
+  />
+  <LinkCard
+    title="Publish a package to the UDS registry"
+    description="Push your Zarf package and UDS bundle to an OCI registry."
+    href="/how-to-guides/packaging-applications/publish-to-registry/"
+  />
+</CardGrid>
