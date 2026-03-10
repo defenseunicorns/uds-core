@@ -41,7 +41,7 @@ This is typically caused by one of the following:
    For a Package CR, confirm it exists and check its status:
 
    ```bash title="Check Package CR status"
-   uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status}'
+   uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
    ```
 
    **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it.
