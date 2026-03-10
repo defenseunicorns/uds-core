@@ -4,14 +4,14 @@ sidebar:
   order: 3.16
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll verify that FIPS 140-2 Strict Mode is active in your UDS Core Keycloak deployment, understand its constraints, and learn how to disable it if your environment does not require FIPS compliance.
+You'll verify that FIPS 140-2 Strict Mode is active in your UDS Core Keycloak deployment and understand its constraints.
 
 > [!NOTE]
-> **FIPS 140-2 Strict Mode is enabled by default in UDS Core.** The UDS Identity Config init container automatically copies the required Bouncy Castle FIPS JAR files into Keycloak's providers directory. No additional configuration is needed for new deployments.
+> **FIPS 140-2 Strict Mode is always enabled in UDS Core.** The UDS Identity Config init container automatically copies the required Bouncy Castle FIPS JAR files into Keycloak's providers directory. No additional configuration is needed.
 
 ## Prerequisites
 
@@ -25,8 +25,6 @@ FIPS mode changes how Keycloak handles cryptography and passwords:
 - `argon2` (the upstream Keycloak default) is not FIPS-approved and is unavailable — UDS Core uses `pbkdf2-sha256` by default
 - All passwords must be at least 14 characters
 - Only FIPS-approved algorithms are available for signing, encryption, and hashing
-
-If you are upgrading from an older deployment where FIPS was not enabled and user accounts already exist, you may need to migrate password hashing before FIPS can activate cleanly — see [Troubleshooting](#problem-keycloak-admin-console-is-inaccessible-after-upgrade) below.
 
 ## Verification
 
@@ -54,53 +52,23 @@ KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 > [!NOTE]
 > For details on FIPS constraints and limitations in Keycloak, see the [Keycloak FIPS 140-2 support docs](https://www.keycloak.org/server/fips).
 
-## Disable FIPS mode
+## Migrating from non-FIPS deployments
 
-If your environment does not require FIPS compliance and you need to disable it:
+If you are upgrading from an older deployment where FIPS was not enabled and user accounts already exist, you need to migrate password hashing before FIPS can activate cleanly.
 
-<Steps>
-
-1. **Set `fips: false` in your bundle override**
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         keycloak:
-           keycloak:
-             values:
-               - path: fips
-                 value: false
-   ```
-
-2. **Deploy your bundle**
-
-   ```bash
-   uds create <path-to-bundle-dir>
-   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-   ```
-
-</Steps>
-
-> [!CAUTION]
-> Disabling FIPS removes the FIPS-approved cryptographic provider. If your deployment is subject to FedRAMP, CMMC, or STIG requirements, disabling FIPS may put you out of compliance.
+1. Before upgrading, connect to the Keycloak admin console (for example, via `uds zarf connect keycloak`)
+2. Switch to the **master** realm → **Authentication** → **Policies** → **Password Policy** → add `pbkdf2-sha512` as the hashing algorithm
+3. Reset the admin user's password to a 14+ character value with **Temporary** set to **Off**
+4. Repeat for any other local users whose passwords were hashed with `argon2`
+5. Upgrade to the latest UDS Core version
 
 ## Troubleshooting
 
 ### Problem: Keycloak admin console is inaccessible after upgrade
 
-**Symptoms:** Cannot log in to the Keycloak admin console after upgrading to a UDS Core version with FIPS enabled by default. Login fails with a password error.
+**Symptoms:** Cannot log in to the Keycloak admin console after upgrading to a UDS Core version with FIPS enabled. Login fails with a password error.
 
-**Solution:** This happens when the admin password was hashed with `argon2` (the upstream Keycloak default before FIPS) or is shorter than 14 characters — FIPS mode rejects both.
-
-If you can still reach Keycloak (for example, via `uds zarf connect keycloak`), migrate the password:
-
-1. Switch to the **master** realm → **Authentication** → **Policies** → **Password Policy** → add `pbkdf2-sha512` as the hashing algorithm
-2. Reset the admin user's password to a 14+ character value with **Temporary** set to **Off**
-
-If you're fully locked out, temporarily redeploy with `fips: false`, complete the password migration, then re-enable `fips: true`.
+**Solution:** This happens when the admin password was hashed with `argon2` (the upstream Keycloak default before FIPS) or is shorter than 14 characters — FIPS mode rejects both. Follow the [migration steps](#migrating-from-non-fips-deployments) on a pre-upgrade deployment to resolve this before upgrading.
 
 ## Related documentation
 
