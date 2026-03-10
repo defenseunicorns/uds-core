@@ -1,0 +1,287 @@
+---
+title: Configure Velero storage backends
+sidebar:
+  order: 7.1
+---
+
+import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Velero's backup storage destination, provide credentials, and customize the backup schedule and retention to match your environment's requirements.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- An S3-compatible or Azure Blob storage endpoint for backup data
+
+## Before you begin
+
+UDS Core ships with these backup defaults:
+
+| Setting | Default |
+|---|---|
+| Schedule | Daily at 03:00 UTC (`0 3 * * *`) |
+| Retention | 10 days (`240h`) |
+| Excluded namespaces | `kube-system`, `velero` |
+| Cluster resources | Included |
+| Volume snapshots | Disabled |
+
+Velero's storage configuration uses **two Helm charts**:
+
+| Chart | Scope |
+|---|---|
+| `velero` (upstream) | Credentials, backup storage location, schedule, volume snapshot settings |
+| `uds-velero-config` (UDS) | Storage network egress policy |
+
+S3-compatible storage is configured through **Zarf variables** set in your `uds-config.yaml`. Azure Blob Storage is configured through **bundle overrides**.
+
+## Steps
+
+<Tabs>
+  <TabItem label="S3-compatible storage">
+
+<Steps>
+
+1. **Set S3 bucket variables**
+
+   Add the following variables to your `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
+       VELERO_BUCKET: "my-velero-backups"
+       VELERO_BUCKET_REGION: "us-east-1"
+       VELERO_BUCKET_KEY: "<your-access-key>"
+       VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
+   ```
+
+   The full set of available variables:
+
+   | Variable | Description | Default |
+   |---|---|---|
+   | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
+   | `VELERO_BUCKET` | Bucket name | `uds` |
+   | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
+   | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
+   | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
+   | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
+   | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
+
+   > [!NOTE]
+   > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
+
+2. **(Optional) Use an existing credentials Secret**
+
+   If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         velero:
+           velero:
+             values:
+               - path: credentials.existingSecret
+                 value: "velero-bucket-credentials"
+   ```
+
+   The Secret must follow this format:
+
+   ```yaml
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: velero-bucket-credentials
+     namespace: velero
+   type: Opaque
+   stringData:
+     cloud: |
+       [default]
+       aws_access_key_id=<your-access-key>
+       aws_secret_access_key=<your-secret-key>
+   ```
+
+</Steps>
+
+  </TabItem>
+  <TabItem label="Azure Blob Storage">
+
+<Steps>
+
+1. **Configure Azure credentials and backup storage location**
+
+   Override the Velero credentials and backup storage location to use Azure Blob Storage:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         velero:
+           velero:
+             values:
+               - path: credentials.secretContents.cloud
+                 value: |
+                   AZURE_STORAGE_ACCOUNT_ACCESS_KEY=<your-storage-account-access-key>
+                   AZURE_CLOUD_NAME=<your-cloud-name>
+               - path: configuration.backupStorageLocation
+                 value:
+                   - name: default
+                     provider: azure
+                     bucket: <your-container-name>
+                     config:
+                       storageAccount: <your-storage-account>
+                       resourceGroup: <your-resource-group>
+                       storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
+                       subscriptionId: <your-subscription-id>
+   ```
+
+   > [!NOTE]
+   > The `bucket` field corresponds to the Azure Blob container name.
+
+</Steps>
+
+  </TabItem>
+</Tabs>
+
+### (Optional) Configure storage network egress
+
+By default, Velero's network policy allows egress to **any** destination for storage connectivity. To restrict egress to a specific target, add the following overrides to your bundle using the `uds-velero-config` chart:
+
+**Internal storage** (in-cluster MinIO or similar):
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    ref: x.x.x-upstream
+    overrides:
+      velero:
+        uds-velero-config:
+          values:
+            - path: storage.internal.enabled
+              value: true
+            - path: storage.internal.remoteSelector
+              value:
+                app: minio
+            - path: storage.internal.remoteNamespace
+              value: "minio"
+```
+
+**CIDR-restricted** (known IP range):
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    ref: x.x.x-upstream
+    overrides:
+      velero:
+        uds-velero-config:
+          values:
+            - path: storage.egressCidr
+              value: "10.0.0.0/8"
+```
+
+### (Optional) Customize backup schedule and retention
+
+The default backup schedule runs daily at 03:00 UTC with a 10-day retention window. To customize these settings, add the following overrides to your bundle:
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    ref: x.x.x-upstream
+    overrides:
+      velero:
+        velero:
+          values:
+            # Run backups every 6 hours
+            - path: schedules.udsbackup.schedule
+              value: "0 */6 * * *"
+            # Retain backups for 30 days
+            - path: schedules.udsbackup.template.ttl
+              value: "720h"
+```
+
+> [!NOTE]
+> The default schedule excludes `kube-system` and `velero` namespaces and includes cluster-scoped resources. These defaults apply unless explicitly overridden.
+
+### Create and deploy your bundle
+
+Combine all overrides from the steps above into a single bundle configuration, then create and deploy:
+
+```bash
+uds create <path-to-bundle-dir>
+uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+```
+
+## Verification
+
+```bash
+# Velero pod is running
+uds zarf tools kubectl get pods -n velero
+
+# Backup storage location shows "Available"
+uds zarf tools kubectl get backupstoragelocation -n velero
+
+# Backup schedule exists with correct cron expression
+uds zarf tools kubectl get schedule -n velero
+```
+
+**Success criteria:**
+- Velero pod is `Running`
+- BackupStorageLocation phase is `Available`
+- Schedule `velero-udsbackup` exists with the expected cron expression
+
+## Troubleshooting
+
+### Problem: BackupStorageLocation shows "Unavailable"
+
+**Symptoms:** The BSL phase is `Unavailable` and no backups are created.
+
+**Solution:** Check Velero logs for storage connectivity errors:
+```bash
+uds zarf tools kubectl logs -n velero deploy/velero --tail=50
+```
+Common causes include incorrect bucket name or region, invalid credentials, and network policies blocking egress to the storage endpoint.
+
+### Problem: Velero pod crash-loops
+
+**Symptoms:** The Velero pod repeatedly restarts.
+
+**Solution:** Check pod logs for startup errors:
+```bash
+uds zarf tools kubectl logs -n velero deploy/velero --previous --tail=50
+```
+Common causes include malformed credential Secrets and missing required configuration values.
+
+## Related documentation
+
+- [Velero: Supported Storage Providers](https://velero.io/docs/latest/supported-providers/) — full list of available storage plugins
+- [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) — BSL configuration reference
+- [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) — full list of upstream Helm values
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enable volume snapshots"
+    description="Capture persistent volume data using AWS EBS or CSI-compatible storage drivers."
+    href="/how-to-guides/backup-restore/enable-volume-snapshots/"
+  />
+  <LinkCard
+    title="Perform backup and restore"
+    description="Trigger manual backups, restore namespaces, and verify data integrity."
+    href="/how-to-guides/backup-restore/perform-backup-restore/"
+  />
+</CardGrid>
