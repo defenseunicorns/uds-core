@@ -14,7 +14,7 @@ spec:
         - record: uds:pepr_admission:up
           labels:
             uds_layer: base
-            uds_component: pepr_admission
+            uds_component: pepr-admission
           expr: |
             (max(deployment:up{deployment="pepr-uds-core", namespace="pepr-system"}) or on() vector(0))
             and on()
@@ -23,7 +23,7 @@ spec:
         - record: uds:pepr_watcher:up
           labels:
             uds_layer: base
-            uds_component: pepr_watcher
+            uds_component: pepr-watcher
           expr: |
             (max(deployment:up{deployment="pepr-uds-core-watcher", namespace="pepr-system"}) or on() vector(0))
             and on()

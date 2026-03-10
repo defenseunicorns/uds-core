@@ -23,7 +23,7 @@ spec:
         - record: uds:istio_cni:up
           labels:
             uds_layer: base
-            uds_component: istio_cni
+            uds_component: istio-cni
           expr: |
             (max(daemonset:up{daemonset="istio-cni-node", namespace="istio-system"}) or on() vector(0))
             and on()
@@ -32,7 +32,7 @@ spec:
         - record: uds:admin_ingressgateway:up
           labels:
             uds_layer: base
-            uds_component: admin_ingressgateway
+            uds_component: admin-ingressgateway
           expr: |
             (max(deployment:up{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}) or on() vector(0))
             and on()
@@ -50,7 +50,7 @@ spec:
         - record: uds:tenant_ingressgateway:up
           labels:
             uds_layer: base
-            uds_component: tenant_ingressgateway
+            uds_component: tenant-ingressgateway
           expr: |
             (max(deployment:up{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}) or on() vector(0))
             and on()

@@ -23,7 +23,7 @@ spec:
         - record: uds:keycloak_waypoint:up
           labels:
             uds_layer: identity-authorization
-            uds_component: keycloak_waypoint
+            uds_component: keycloak-waypoint
           expr: |
             (max(deployment:up{deployment="keycloak-waypoint", namespace="keycloak"}) or on() vector(0))
             and on()
@@ -32,11 +32,11 @@ spec:
         - record: uds:keycloak_endpoint:up
           labels:
             uds_layer: identity-authorization
-            uds_component: keycloak_sso_endpoint
+            uds_component: keycloak-sso-endpoint
           expr: min(probe_success{job="probe/keycloak/uds-sso-tenant-uptime"})
         - record: uds:keycloak_admin_endpoint:up
           labels:
             uds_layer: identity-authorization
-            uds_component: keycloak_admin_endpoint
+            uds_component: keycloak-admin-endpoint
           expr: min(probe_success{job="probe/keycloak/uds-keycloak-admin-uptime"})
 {{- end }}

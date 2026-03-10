@@ -24,9 +24,9 @@ spec:
               ) * 0 + 1
               or on(daemonset, namespace)
               clamp_max(
-                kube_daemonset_status_desired_number_scheduled
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled)
                 !=
-                kube_daemonset_status_desired_number_scheduled offset 2m
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled offset 2m)
               , 1)
               or on(daemonset, namespace)
               clamp_max(max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled), 1) * 0
@@ -67,7 +67,7 @@ spec:
         - record: uds:blackbox_exporter:up
           labels:
             uds_layer: monitoring
-            uds_component: blackbox_exporter
+            uds_component: blackbox-exporter
           expr: |
             (max(deployment:up{deployment="prometheus-blackbox-exporter", namespace="monitoring"}) or on() vector(0))
             and on()
@@ -76,14 +76,14 @@ spec:
         - record: uds:kube_state_metrics:up
           labels:
             uds_layer: monitoring
-            uds_component: kube_state_metrics
+            uds_component: kube-state-metrics
           expr: |
             (max(deployment:up{deployment="kube-prometheus-stack-kube-state-metrics", namespace="monitoring"}) or on() vector(0))
 
         - record: uds:prometheus_operator:up
           labels:
             uds_layer: monitoring
-            uds_component: prometheus_operator
+            uds_component: prometheus-operator
           expr: |
             (max(deployment:up{deployment="kube-prometheus-stack-operator", namespace="monitoring"}) or on() vector(0))
             and on()
@@ -92,7 +92,7 @@ spec:
         - record: uds:node_exporter:up
           labels:
             uds_layer: monitoring
-            uds_component: node_exporter
+            uds_component: node-exporter
           expr: |
             (max(daemonset:up{daemonset="kube-prometheus-stack-prometheus-node-exporter", namespace="monitoring"}) or on() vector(0))
             and on()
@@ -103,6 +103,6 @@ spec:
         - record: uds:access:up
           labels:
             uds_layer: core
-            uds_component: core_access
+            uds_component: core-access
           expr: uds:keycloak_endpoint:up
 {{- end }}
