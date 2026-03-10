@@ -14,7 +14,7 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
 
 <CardGrid>
   <LinkCard
-    title="Protect apps with Authservice"
+    title="Protect non-OIDC apps with SSO"
     description="Add SSO protection to applications that have no native OIDC support."
     href="/how-to-guides/identity-access/protect-apps-with-authservice/"
   />
@@ -34,8 +34,8 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-access/connect-azure-ad-idp/"
   />
   <LinkCard
-    title="Configure a social identity provider"
-    description="Connect Google SAML or another external IdP using realmInitEnv bundle overrides — no admin UI required."
+    title="Configure Google SAML as an identity provider"
+    description="Connect Google SAML using realmInitEnv bundle overrides — no admin UI required."
     href="/how-to-guides/identity-access/configure-social-idp/"
   />
   <LinkCard
@@ -74,7 +74,7 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-access/build-deploy-custom-image/"
   />
   <LinkCard
-    title="Configure Keycloak password policy and account settings"
+    title="Configure user accounts and security policies"
     description="Set password complexity, enable email verification, and extend security hardening allow lists via bundle overrides."
     href="/how-to-guides/identity-access/configure-user-account-settings/"
   />
@@ -84,8 +84,8 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-access/manage-keycloak-with-opentofu/"
   />
   <LinkCard
-    title="Enable FIPS 140-2 strict mode"
-    description="Run Keycloak in FIPS-approved mode using Bouncy Castle FIPS JARs, with pre-migration steps for existing deployments."
+    title="Manage FIPS 140-2 mode"
+    description="Verify FIPS is active (enabled by default), understand constraints, or disable FIPS if not required."
     href="/how-to-guides/identity-access/enable-fips-mode/"
   />
 </CardGrid>

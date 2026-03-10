@@ -13,7 +13,7 @@ You'll restrict access to a UDS application so that only users in specific Keycl
 ## Prerequisites
 
 - UDS Core deployed
-- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect apps with Authservice](/how-to-guides/identity-access/protect-apps-with-authservice/))
+- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect non-OIDC apps with SSO](/how-to-guides/identity-access/protect-apps-with-authservice/))
 - Relevant Keycloak groups exist — either the built-in platform groups or custom groups you have created
 
 ## Before you begin
@@ -135,7 +135,7 @@ To inspect the token claims, use the Keycloak Account console at `sso.<domain>` 
 
 - [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on platform groups and the SSO model
 - [Package CR reference](/reference/operator-and-crds/package/) — full `groups` field specification
-- [Protect apps with Authservice](/how-to-guides/identity-access/protect-apps-with-authservice/) — required prerequisite for group-based access on apps without native OIDC
+- [Protect non-OIDC apps with SSO](/how-to-guides/identity-access/protect-apps-with-authservice/) — required prerequisite for group-based access on apps without native OIDC
 
 ## Next steps
 
@@ -143,7 +143,7 @@ These guides and concepts may be useful to explore next:
 
 <CardGrid>
   <LinkCard
-    title="Protect apps with Authservice"
+    title="Protect non-OIDC apps with SSO"
     description="Add SSO protection to applications that have no native OIDC support."
     href="/how-to-guides/identity-access/protect-apps-with-authservice/"
   />

@@ -1,5 +1,5 @@
 ---
-title: Protect apps with Authservice
+title: Protect non-OIDC apps with SSO
 sidebar:
   order: 3.1
 ---
@@ -118,7 +118,10 @@ Authservice works by matching a label selector on your application's pods. When 
 </Tabs>
 
 > [!NOTE]
-> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually — the operator handles it. Ensure the `enableAuthserviceSelector` matches both the pod labels and the service's `spec.selector` for proper waypoint association.
+> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually — the operator handles it.
+
+> [!CAUTION]
+> **Selector matching in ambient mode:** The `enableAuthserviceSelector` must match both the pod labels **and** the Kubernetes Service's `spec.selector`. If the selector matches pods but not the service, the pod is mutated to use the waypoint but the service is not properly associated with it — traffic is blocked (503 errors) rather than routed through the SSO flow. Any `network.expose` entries should also use the same selector to ensure proper traffic flow from the gateway through the waypoint.
 
 ## Verification
 
@@ -207,7 +210,7 @@ These guides and concepts may be useful to explore next:
     href="/how-to-guides/identity-access/enforce-group-based-access/"
   />
   <LinkCard
-    title="Configure authentication flows"
+    title="Configure Keycloak authentication methods"
     description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps."
     href="/how-to-guides/identity-access/configure-authentication-flows/"
   />

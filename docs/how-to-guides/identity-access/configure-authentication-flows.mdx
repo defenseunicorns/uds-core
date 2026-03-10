@@ -87,25 +87,6 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-4. **(Optional) Enable X.509/CAC with MFA**
-
-   > [!NOTE]
-   > CAC authentication (X.509 certificate + PIN) already satisfies multi-factor requirements in most security frameworks — the certificate is "something you have" and the PIN is "something you know." `X509_MFA_ENABLED` adds a second software factor on top of CAC, which is rarely needed and can be impractical in classified environments where personal devices aren't permitted. Confirm this is an explicit requirement before enabling it.
-
-   If you do need to require an additional factor after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then recreate and deploy the bundle:
-
-   ```yaml
-   - path: realmAuthFlows
-     value:
-       X509_AUTH_ENABLED: true
-       X509_MFA_ENABLED: true
-       OTP_ENABLED: true       # At least one MFA method must also be enabled
-       WEBAUTHN_ENABLED: false
-   ```
-
-   > [!NOTE]
-   > `X509_MFA_ENABLED: true` has no effect unless at least one of `OTP_ENABLED` or `WEBAUTHN_ENABLED` is also enabled.
-
 </Steps>
 
 ## Verification
@@ -184,10 +165,28 @@ If your environment uses CRL-based revocation instead of OCSP, configure the CRL
 
 **Solution:** Confirm that both the flow toggle and at least one MFA method are enabled. For WebAuthn to work as a required step, `WEBAUTHN_ENABLED: true` must be set; for OTP, `OTP_ENABLED: true`. Verify the realm was redeployed after the override was applied.
 
+## Reference: X.509/CAC with additional MFA
+
+> [!NOTE]
+> CAC authentication (X.509 certificate + PIN) already satisfies multi-factor requirements in most security frameworks — the certificate is "something you have" and the PIN is "something you know." `X509_MFA_ENABLED` adds a second software factor on top of CAC, which is rarely needed and can be impractical in classified environments where personal devices aren't permitted. Confirm this is an explicit requirement before enabling it.
+
+If you do need to require an additional factor after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then recreate and deploy the bundle:
+
+```yaml
+- path: realmAuthFlows
+  value:
+    X509_AUTH_ENABLED: true
+    X509_MFA_ENABLED: true
+    OTP_ENABLED: true       # At least one MFA method must also be enabled
+    WEBAUTHN_ENABLED: false
+```
+
+`X509_MFA_ENABLED: true` has no effect unless at least one of `OTP_ENABLED` or `WEBAUTHN_ENABLED` is also enabled.
+
 ## Related documentation
 
 - [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — required for X.509/CAC authentication
-- [Configure Keycloak password policy and account settings](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration
+- [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration
 
 ## Next steps
 
