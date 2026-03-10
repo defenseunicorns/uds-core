@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
 
-describe("Prometheus and Alertmanager", { retry: 1, timeout: 210000 }, () => {
+describe("Prometheus and Alertmanager", { timeout: 210000 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
   let alertmanagerProxy: { server: net.Server; url: string };
 
@@ -49,7 +49,9 @@ describe("Prometheus and Alertmanager", { retry: 1, timeout: 210000 }, () => {
     await pollUntilSuccess(
       async () => {
         const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
-        expect(response.status).toBe(200);
+        if (!response.ok) {
+          throw new Error(`Prometheus targets API returned ${response.status}`);
+        }
 
         const body = (await response.json()) as {
           data: {
@@ -59,29 +61,19 @@ describe("Prometheus and Alertmanager", { retry: 1, timeout: 210000 }, () => {
             }>;
           };
         };
-        expect(body.data).toBeDefined();
-        expect(body.data.activeTargets.length).toBeGreaterThan(0);
+
+        if (!body.data?.activeTargets?.length) {
+          throw new Error("No active targets returned from Prometheus");
+        }
 
         return body.data.activeTargets;
       },
       targets => {
-        const failedTargets = targets.filter(target => target.health === "down");
-        const unknownTargets = targets.filter(target => target.health === "unknown");
-
-        if (unknownTargets.length > 0) {
-          for (const target of unknownTargets) {
-            console.warn(`Target health is currently unknown: ${target.scrapePool}`);
-          }
+        const unhealthy = targets.filter(target => target.health !== "up");
+        for (const target of unhealthy) {
+          console.warn(`Target ${target.health}: ${target.scrapePool}`);
         }
-
-        if (failedTargets.length > 0) {
-          for (const target of failedTargets) {
-            console.warn(`Target health is down: ${target.scrapePool}`);
-          }
-          return false;
-        }
-
-        return true;
+        return unhealthy.length === 0;
       },
       "all prometheus targets to be up",
       200000,
