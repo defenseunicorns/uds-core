@@ -1,0 +1,31 @@
+---
+title: Overview
+sidebar:
+  order: 2.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These guides help platform engineers configure and use the logging pipeline in UDS Core. Each guide focuses on a single task and includes step-by-step instructions with verification.
+
+For background on how Vector, Loki, and Grafana work together, see [Logging Concepts](/concepts/core-features/logging/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Query application logs"
+    description="Find and filter logs from any workload using Grafana and LogQL."
+    href="/how-to-guides/logging/query-application-logs/"
+  />
+  <LinkCard
+    title="Forward logs to an external system"
+    description="Send logs to S3 or other external destinations in addition to Loki."
+    href="/how-to-guides/logging/forward-logs-to-external-system/"
+  />
+  <LinkCard
+    title="Configure log retention"
+    description="Control how long Loki keeps log data before automatic deletion."
+    href="/how-to-guides/logging/configure-log-retention/"
+  />
+</CardGrid>

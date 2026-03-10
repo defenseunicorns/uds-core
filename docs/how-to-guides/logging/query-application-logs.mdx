@@ -1,0 +1,180 @@
+---
+title: Query application logs
+sidebar:
+  order: 2.1
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide you will be able to find, filter, and analyze logs from any workload in your cluster using Grafana's Explore interface and LogQL — the query language for Loki.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed (logging is enabled by default)
+- Access to the Grafana admin UI (typically at `https://grafana.admin.<your-domain>`)
+
+## Before you begin
+
+UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod and node logs from `/var/log/*`. Vector enriches each log entry with Kubernetes metadata before shipping to Loki. You can use these labels to filter and query logs:
+
+| Label | Source | Example |
+|---|---|---|
+| `namespace` | Pod namespace | `kube-system` |
+| `app` | `app.kubernetes.io/name` label, falls back to `app` pod label, then pod owner, then pod name | `loki` |
+| `component` | `app.kubernetes.io/component` label, falls back to `component` pod label | `write` |
+| `job` | `{namespace}/{app}` | `loki/loki` |
+| `container` | Container name | `loki` |
+| `host` | Node name | `node-1` |
+| `filename` | Log file path | `/var/log/pods/...` |
+| `collector` | Always `vector` | `vector` |
+
+> [!TIP]
+> Node-level logs (host logs) use a different label set: `job`, `host`, and `filename`. Use `{job="varlogs"}` to query host logs collected from `/var/log/*`.
+
+## Steps
+
+<Steps>
+
+1. **Open Grafana Explore**
+
+   Navigate to Grafana (typically `https://grafana.admin.<your-domain>`), then select **Explore** from the left sidebar. In the datasource dropdown at the top, select **Loki**.
+
+2. **Filter logs by label**
+
+   Start with a **stream selector** — a set of label matchers inside curly braces. This is the most efficient way to narrow results because Loki indexes labels, not log content. Switch to **Code** mode (toggle in the top-right of the query editor) to paste LogQL queries directly.
+
+   > [!TIP]
+   > If you're not familiar with LogQL syntax, use the **Builder** mode instead. It provides dropdowns for selecting labels and values without writing queries by hand. You can switch between Builder and Code mode at any time.
+
+   ```logql
+   # All logs from a specific namespace
+   {namespace="my-app"}
+
+   # Logs from a specific application
+   {app="keycloak"}
+
+   # Combine labels to narrow further
+   {namespace="loki", component="write"}
+   ```
+
+   > [!NOTE]
+   > Every LogQL query **must** include at least one stream selector. You cannot search across all logs without specifying at least one label filter.
+
+3. **Search log content**
+
+   After selecting a stream, add **line filters** to search within log messages:
+
+   ```logql
+   # Lines containing "error" (case-sensitive)
+   {namespace="my-app"} |= "error"
+
+   # Exclude health checks
+   {namespace="my-app"} != "healthcheck"
+
+   # Regex match for multiple patterns
+   {namespace="my-app"} |~ "timeout|deadline|connection refused"
+
+   # Case-insensitive search
+   {namespace="my-app"} |~ "(?i)error"
+   ```
+
+   You can chain multiple filters. Each filter narrows the results further:
+
+   ```logql
+   {namespace="my-app"} |= "error" != "healthcheck" != "metrics"
+   ```
+
+4. **Parse and extract fields**
+
+   Use **parser expressions** to extract structured data from log lines:
+
+   ```logql
+   # Parse JSON logs and filter on extracted fields
+   {namespace="my-app"} | json | status_code >= 500
+
+   # Parse key=value formatted logs
+   {namespace="my-app"} | logfmt | level="error"
+   ```
+
+5. **Aggregate with metric queries**
+
+   LogQL can compute metrics from log streams, useful for spotting patterns:
+
+   ```logql
+   # Error rate per namespace over 5-minute windows
+   sum(rate({namespace="my-app"} |= "error" [5m])) by (app)
+
+   # Count of log lines per application in the last hour
+   sum(count_over_time({namespace="my-app"} [1h])) by (app)
+
+   # Top 5 noisiest applications by log volume
+   topk(5, sum(rate({namespace="my-app"} [5m])) by (app))
+   ```
+
+   > [!TIP]
+   > Metric queries are useful for building Grafana dashboard panels. You can copy a working query from Explore directly into a dashboard panel.
+
+6. **Use live tail for real-time debugging**
+
+   In Grafana Explore, click the **Live** button in the top-right corner to stream logs in real time. This is useful when actively debugging a deployment or watching for specific events. Enter a stream selector and optional line filters, then click **Start** to begin tailing.
+
+</Steps>
+
+## Verification
+
+Confirm the queries above return log results in Grafana Explore. If you see log entries, the logging pipeline is working correctly.
+
+## Troubleshooting
+
+### Loki datasource not available in Grafana
+
+**Symptom:** Loki does not appear in the datasource dropdown in Grafana Explore.
+
+**Solution:** Navigate to **Administration → Data sources** in Grafana and confirm a Loki datasource exists. UDS Core provisions this automatically — if it's missing, check that the Loki pods are running and the Grafana deployment has completed successfully:
+
+```bash
+uds zarf tools kubectl get pods -n loki
+uds zarf tools kubectl get pods -n grafana
+```
+
+### No log results returned
+
+**Symptom:** Query returns empty results even for namespaces you know are active.
+
+**Solution:** Check the time range selector in the top-right corner of Grafana Explore — the default may be too narrow. Expand to "Last 1 hour" or "Last 6 hours". If still empty, confirm Vector is running:
+
+```bash
+uds zarf tools kubectl get pods -n vector
+```
+
+### "Too many outstanding requests" error
+
+**Symptom:** Grafana shows an error about too many outstanding requests when running a query.
+
+**Solution:** Narrow your query with more specific label selectors and a shorter time range. Avoid querying across all namespaces with broad time windows. Add label filters to reduce the number of streams Loki needs to scan.
+
+
+## Related Documentation
+
+- [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) — full LogQL query reference
+- [Grafana Loki: Log queries](https://grafana.com/docs/loki/latest/query/log_queries/) — stream selectors, line filters, and parsers
+- [Grafana Loki: Metric queries](https://grafana.com/docs/loki/latest/query/metric_queries/) — aggregation functions and range vectors
+- [Logging Concepts](/concepts/core-features/logging/) — how the Vector → Loki → Grafana pipeline works
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Forward logs to an external system"
+    description="Send logs to S3 or other destinations alongside Loki."
+    href="/how-to-guides/logging/forward-logs-to-external-system/"
+  />
+  <LinkCard
+    title="Configure log retention"
+    description="Control how long Loki keeps log data."
+    href="/how-to-guides/logging/configure-log-retention/"
+  />
+</CardGrid>

@@ -1,0 +1,180 @@
+---
+title: Configure log retention
+sidebar:
+  order: 2.3
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, Loki will automatically delete log data older than your configured retention period, reducing storage costs and helping meet data retention requirements.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Loki connected to external object storage — see [Configure HA logging](/how-to-guides/high-availability/logging/) for S3 setup
+
+## Before you begin
+
+By default, Loki retains logs **indefinitely** — no automatic deletion occurs unless you explicitly configure retention. Retention is handled by Loki's **compactor** component, which runs on the backend tier and periodically marks expired log chunks for deletion from object storage.
+
+Retention settings apply only to data stored in Loki. Logs already forwarded to external systems via Vector (see [Forward logs to an external system](/how-to-guides/logging/forward-logs-to-external-system/)) are not affected.
+
+## Steps
+
+<Steps>
+
+1. **Enable compactor retention and set a global retention period**
+
+   Configure the compactor to enforce retention and set the default period for all log streams:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             values:
+               # Enable retention enforcement in the compactor
+               - path: loki.compactor.retention_enabled
+                 value: true
+               # Which object store holds delete request markers.
+               # Must match your loki.storage.type (s3, gcs, azure, etc.)
+               - path: loki.compactor.delete_request_store
+                 value: "s3"
+               # Directory for marker files that track chunks pending deletion.
+               # Should be on persistent storage so deletes survive compactor restarts.
+               - path: loki.compactor.working_directory
+                 value: "/var/loki/compactor"
+               # How often the compactor runs compaction and retention sweeps (Loki default: 10m)
+               - path: loki.compactor.compaction_interval
+                 value: "10m"
+               # Safety delay before marked chunks are actually deleted from object storage.
+               # Gives time to cancel accidental deletions. (Loki default: 2h)
+               - path: loki.compactor.retention_delete_delay
+                 value: "2h"
+               # Number of parallel workers that delete expired chunks (Loki default: 150)
+               - path: loki.compactor.retention_delete_worker_count
+                 value: 150
+               # Global retention period — logs older than this are deleted
+               - path: loki.limits_config.retention_period
+                 value: "30d"
+   ```
+
+   > [!IMPORTANT]
+   > `delete_request_store` is **required** when retention is enabled — Loki will fail to start without it. Set it to match your storage backend (e.g., `s3`, `gcs`, `azure`).
+
+   > [!NOTE]
+   > The compactor runs on a schedule controlled by `compaction_interval`. After deploying retention settings, allow at least one full cycle plus the `retention_delete_delay` before expecting storage to decrease.
+
+2. **Set per-stream retention rules (optional)**
+
+   If different log streams need different retention periods, use `retention_stream` rules. For example, keep security-related logs longer while shortening retention for noisy infrastructure logs:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             values:
+               - path: loki.compactor.retention_enabled
+                 value: true
+               - path: loki.compactor.delete_request_store
+                 value: "s3"
+               - path: loki.compactor.working_directory
+                 value: "/var/loki/compactor"
+               - path: loki.compactor.compaction_interval
+                 value: "10m"
+               - path: loki.compactor.retention_delete_delay
+                 value: "2h"
+               - path: loki.compactor.retention_delete_worker_count
+                 value: 150
+               - path: loki.limits_config.retention_period
+                 value: "30d"
+               - path: loki.limits_config.retention_stream
+                 value:
+                   - selector: '{namespace="keycloak"}'
+                     priority: 1
+                     period: "90d"
+                   - selector: '{namespace="kube-system"}'
+                     priority: 2
+                     period: "7d"
+   ```
+
+   | Field | Purpose |
+   |---|---|
+   | `selector` | LogQL stream selector matching the logs to apply this rule to |
+   | `priority` | Higher values take precedence when selectors overlap |
+   | `period` | Retention period for matching streams (overrides the global default) |
+
+   > [!NOTE]
+   > Per-stream rules can be **shorter or longer** than the global `retention_period`. The global period is a fallback for streams that don't match any `retention_stream` selector. When selectors overlap, the rule with the highest `priority` wins.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm retention is configured by inspecting the rendered Loki config:
+
+```bash
+uds zarf tools kubectl get secret -n loki loki -o jsonpath='{.data.config\.yaml}' | base64 -d | grep -A 10 compactor
+```
+
+You should see `retention_enabled: true` with your configured `delete_request_store`, `working_directory`, and other compactor settings.
+
+After the retention period elapses plus the `retention_delete_delay`, verify that old chunks are being removed by monitoring your object storage bucket size over time.
+
+## Troubleshooting
+
+### Loki fails to start with "delete-request-store should be configured"
+
+**Symptom:** Loki backend pods crash with: `invalid compactor config: compactor.delete-request-store should be configured when retention is enabled`.
+
+**Solution:** Add the `loki.compactor.delete_request_store` override set to your storage backend type (e.g., `s3`, `gcs`, `azure`). This field is required whenever `retention_enabled` is `true`. See Step 1 above.
+
+### Logs not being deleted after retention period
+
+**Symptom:** Object storage size continues to grow beyond the expected retention window.
+
+**Solution:** Check the backend pod logs for compactor activity or errors:
+
+```bash
+uds zarf tools kubectl logs -n loki -l app.kubernetes.io/component=backend --tail=1000 | grep -i "compactor"
+```
+
+The compactor needs at least one full compaction cycle plus the `retention_delete_delay` (default: 2h) after deployment before chunks are actually removed. If storage size hasn't decreased after several hours, check for errors related to object storage access in the output above.
+
+## Related Documentation
+
+- [Grafana Loki: Retention](https://grafana.com/docs/loki/latest/operations/storage/retention/) — full compactor retention reference
+- [Grafana Loki: Limits Config](https://grafana.com/docs/loki/latest/configure/#limits_config) — all limits_config fields including retention
+- [Configure HA logging](/how-to-guides/high-availability/logging/) — S3 storage setup and Loki scaling
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Query application logs"
+    description="Find and filter logs using Grafana and LogQL."
+    href="/how-to-guides/logging/query-application-logs/"
+  />
+  <LinkCard
+    title="Logging Concepts"
+    description="How the Vector → Loki → Grafana pipeline works in UDS Core."
+    href="/concepts/core-features/logging/"
+  />
+</CardGrid>

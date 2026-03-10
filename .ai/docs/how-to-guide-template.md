@@ -163,7 +163,7 @@ These guides and concepts may be useful to explore next:
 - No `oci://` prefix on repository references
 - Use `values` for static config, `variables` for secrets/environment-specific
 - Add `sensitive: true` to password and secret variables
-- The final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands
+- The final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
 - Only include `zarf package create` if the guide involves modifying a Zarf package — most guides only use bundle overrides and don't need it
 - Related Documentation comes before Next Steps
 - Next Steps uses `<CardGrid>` with `<LinkCard>` components
