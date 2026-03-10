@@ -1,0 +1,58 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-istio-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-base-uptime
+      rules:
+        - record: uds:istiod:up
+          labels:
+            uds_layer: base
+            uds_component: istiod
+          expr: |
+            (max(deployment:up{deployment="istiod", namespace="istio-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:istio_cni:up
+          labels:
+            uds_layer: base
+            uds_component: istio-cni
+          expr: |
+            (max(daemonset:up{daemonset="istio-cni-node", namespace="istio-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:admin_ingressgateway:up
+          labels:
+            uds_layer: base
+            uds_component: admin-ingressgateway
+          expr: |
+            (max(deployment:up{deployment="admin-ingressgateway", namespace="istio-admin-gateway"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:ztunnel:up
+          labels:
+            uds_layer: base
+            uds_component: ztunnel
+          expr: |
+            (max(daemonset:up{daemonset="ztunnel", namespace="istio-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:tenant_ingressgateway:up
+          labels:
+            uds_layer: base
+            uds_component: tenant-ingressgateway
+          expr: |
+            (max(deployment:up{deployment="tenant-ingressgateway", namespace="istio-tenant-gateway"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+{{- end }}

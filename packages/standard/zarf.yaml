@@ -24,30 +24,26 @@ components:
     import:
       path: ../base
 
-  - name: uds-operator-config
-    required: true
-    import:
-      path: ../base
-
-  # CRDs
   - name: prometheus-operator-crds
     required: true
     import:
       path: ../base
 
-  # Pepr the world
+  - name: uds-operator-config
+    required: true
+    import:
+      path: ../base
+
   - name: pepr-uds-core
     required: true
     import:
       path: ../base
 
-  # UDS Exemptions
   - name: uds-exemptions
     required: true
     import:
       path: ../base
 
-  # Istio
   - name: istio-controlplane
     required: true
     import:
@@ -83,61 +79,51 @@ components:
     import:
       path: ../base
 
-  # Metrics Server
   - name: metrics-server
     required: false
     import:
       path: ../metrics-server
 
-  # Keycloak
   - name: keycloak
     required: true
     import:
       path: ../identity-authorization
 
-  # Falco
   - name: falco
     required: true
     import:
       path: ../runtime-security
 
-  # Loki
   - name: loki
     required: true
     import:
       path: ../logging
 
-  # Prometheus
   - name: kube-prometheus-stack
     required: true
     import:
       path: ../monitoring
 
-  # Blackbox Exporter
   - name: prometheus-blackbox-exporter
     required: true
     import:
       path: ../monitoring
 
-  # Vector
   - name: vector
     required: true
     import:
       path: ../logging
 
-  # Grafana
   - name: grafana
     required: true
     import:
       path: ../monitoring
 
-  # Authservice
   - name: authservice
     required: true
     import:
       path: ../identity-authorization
 
-  # Velero
   - name: velero
     required: true
     import:

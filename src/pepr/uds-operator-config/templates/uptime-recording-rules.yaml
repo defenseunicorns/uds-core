@@ -1,0 +1,31 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-pepr-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-base-uptime
+      rules:
+        - record: uds:pepr_admission:up
+          labels:
+            uds_layer: base
+            uds_component: pepr-admission
+          expr: |
+            (max(deployment:up{deployment="pepr-uds-core", namespace="pepr-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:pepr_watcher:up
+          labels:
+            uds_layer: base
+            uds_component: pepr-watcher
+          expr: |
+            (max(deployment:up{deployment="pepr-uds-core-watcher", namespace="pepr-system"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+{{- end }}
