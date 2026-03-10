@@ -1,0 +1,169 @@
+---
+title: Migrate from NeuVector to Falco
+sidebar:
+  order: 6.4
+---
+
+import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll transition your UDS Core deployment from the legacy NeuVector runtime security provider to Falco, with options for cleaning up NeuVector entirely, running both side by side, or keeping NeuVector without Falco.
+
+## Prerequisites
+
+- UDS Core deployed (upgrading from a version that included NeuVector)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+
+## Before you begin
+
+UDS Core now includes Falco by default in the `core-runtime-security` package layer and no longer manages NeuVector. If your cluster was previously running NeuVector as part of UDS Core, you have three options:
+
+| Scenario | What happens |
+|---|---|
+| **Falco only** (recommended) | Deploy the runtime-security layer with NeuVector cleanup enabled — removes the `neuvector` namespace and CRDs. This is the simplest path and avoids maintaining two runtime security solutions. |
+| **Falco + NeuVector** | Deploy UDS Core normally and manage NeuVector separately as a standalone package. |
+| **NeuVector only** | Skip the `core-runtime-security` layer entirely and deploy NeuVector standalone. |
+
+> [!NOTE]
+> NeuVector cleanup is a one-time upgrade task. If your cluster has never had NeuVector deployed, you can skip this guide entirely.
+
+## Steps
+
+<Tabs>
+  <TabItem label="Falco only (remove NeuVector)">
+    <Steps>
+
+    1. **Enable the NeuVector cleanup gate**
+
+       In your `uds-config.yaml`, set the cleanup variable:
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           CLEANUP_LEGACY_NEUVECTOR: "true"
+       ```
+
+       > [!CAUTION]
+       > This permanently deletes the `neuvector` namespace and all NeuVector CRDs from your cluster. Only enable this if you are certain you no longer need NeuVector.
+
+    2. **Deploy your bundle**
+
+       ```bash
+       uds create <path-to-bundle-dir>
+       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+       ```
+
+       The runtime-security layer will deploy Falco and clean up any legacy NeuVector resources.
+
+    </Steps>
+  </TabItem>
+  <TabItem label="Falco + NeuVector (keep both)">
+    <Steps>
+
+    1. **Deploy UDS Core normally**
+
+       Do **not** set `CLEANUP_LEGACY_NEUVECTOR`. Deploy your bundle as usual:
+
+       ```bash
+       uds create <path-to-bundle-dir>
+       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+       ```
+
+       Falco deploys as part of the runtime-security layer. Your existing NeuVector resources remain untouched.
+
+    2. **Manage NeuVector separately**
+
+       Since UDS Core no longer manages NeuVector, deploy and upgrade it as a standalone package. See the [Standalone NeuVector guide](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) for instructions.
+
+    </Steps>
+  </TabItem>
+  <TabItem label="NeuVector only (no Falco)">
+    <Steps>
+
+    1. **Skip the runtime-security layer**
+
+       Omit the `core-runtime-security` layer from your bundle. This prevents Falco from being deployed.
+
+       > [!CAUTION]
+       > Without the runtime-security layer, you will not have Falco's eBPF-based runtime threat detection. NeuVector provides container runtime security through a different mechanism — ensure this meets your compliance and security requirements.
+
+    2. **Deploy NeuVector standalone**
+
+       Follow the [Standalone NeuVector guide](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) to deploy and manage NeuVector independently of UDS Core.
+
+    </Steps>
+  </TabItem>
+</Tabs>
+
+## Verification
+
+Confirm the expected state after migration:
+
+**Check Falco is running (Falco only or Falco + NeuVector scenarios):**
+
+```bash
+uds zarf tools kubectl get pods -n falco
+```
+
+**Check NeuVector namespace was removed (Falco only scenario):**
+
+```bash
+# Should return "not found" if cleanup succeeded
+uds zarf tools kubectl get ns neuvector
+```
+
+**Check NeuVector CRDs were removed (Falco only scenario):**
+
+```bash
+# Should return empty or no matches
+uds zarf tools kubectl get crds | grep neuvector
+```
+
+## Troubleshooting
+
+### Problem: NeuVector resources remain after cleanup
+
+**Symptoms:** The `neuvector` namespace or CRDs still exist after deploying with `CLEANUP_LEGACY_NEUVECTOR: "true"`.
+
+**Solution:** Verify the variable was set correctly — it must be the string `"true"` (quoted), not a boolean. Check your `uds-config.yaml`:
+
+```yaml
+variables:
+  core:
+    CLEANUP_LEGACY_NEUVECTOR: "true"  # Must be quoted string
+```
+
+Redeploy the bundle after confirming the variable is set correctly.
+
+### Problem: NeuVector CRDs not removed but namespace is gone
+
+**Symptoms:** The `neuvector` namespace was deleted but NeuVector CRDs still appear in the cluster.
+
+**Solution:** CRD cleanup targets CRDs whose names contain `neuvector`. If the CRDs were renamed or are from a different NeuVector installation, they may not match. Remove them manually:
+
+```bash
+uds zarf tools kubectl get crds | grep neuvector | awk '{print $1}' | xargs uds zarf tools kubectl delete crd
+```
+
+## Related documentation
+
+- [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) — deploy and manage NeuVector independently
+- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and runtime threat detection work in UDS Core
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Tune Falco runtime detections"
+    description="Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules."
+    href="/how-to-guides/runtime-security/tune-falco-detections/"
+  />
+  <LinkCard
+    title="Route runtime alerts to external destinations"
+    description="Forward Falco detections to Slack, Mattermost, or Microsoft Teams."
+    href="/how-to-guides/runtime-security/route-runtime-alerts/"
+  />
+</CardGrid>
