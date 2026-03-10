@@ -45,7 +45,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak:26.5.5
+      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.5.5-fips
       - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.24.0
 
   - name: keycloak

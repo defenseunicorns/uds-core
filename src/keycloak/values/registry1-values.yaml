@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak
-  tag: "26.5.5"
+  repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips
+  tag: "26.5.5-fips"
 podSecurityContext:
   fsGroup: 2000
 securityContext:
