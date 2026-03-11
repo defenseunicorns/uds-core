@@ -50,8 +50,8 @@ If your deployment uses non-default names, update the commands accordingly.
 
     Use this output to verify each target PVC has a StorageClass and that class supports expansion.
 
-    > [!CAUTION]
-    > If expansion is not supported, stop and reassess.
+> [!CAUTION]
+> If expansion is not supported, stop and reassess.
 
     ```bash
     # Determine the storage class in use
@@ -69,8 +69,8 @@ If your deployment uses non-default names, update the commands accordingly.
     kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.resources.requests.storage}{"\n"}{end}'
     ```
 
-    > [!CAUTION]
-    > If any target PVC is already larger than your desired volume size, **stop and reassess**. PVC shrinking is not supported.
+> [!CAUTION]
+> If any target PVC is already larger than your desired volume size, **stop and reassess**. PVC shrinking is not supported.
 
 5. Confirm the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches your desired volume size.
 
@@ -146,8 +146,8 @@ If your deployment uses non-default names, update the commands accordingly.
     kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage,CONDITION:.status.conditions[*].type
     ```
 
-    > [!NOTE]
-    > If any target PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
+> [!NOTE]
+> If any target PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
 
     ```bash
     kubectl delete pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
