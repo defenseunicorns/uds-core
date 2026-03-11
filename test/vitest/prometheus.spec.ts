@@ -46,7 +46,7 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   });
 
   test("all prometheus targets should be up", { timeout: 220000 }, async () => {
-    await pollUntilSuccess(
+    const targets = await pollUntilSuccess(
       async () => {
         const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
         if (!response.ok) {
@@ -71,7 +71,7 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
       targets => {
         const unhealthy = targets.filter(target => target.health !== "up");
         for (const target of unhealthy) {
-          console.warn(`Target ${target.health}: ${target.scrapePool}`);
+          console.warn(`Target ${target.scrapePool} is ${target.health}`);
         }
         return unhealthy.length === 0;
       },
@@ -79,5 +79,7 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
       200000,
       10000,
     );
+
+    expect(targets.every(target => target.health === "up")).toBe(true);
   });
 });
