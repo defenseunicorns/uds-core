@@ -30,7 +30,7 @@ This is typically caused by one of the following:
 
 1. **Check pepr-system pod health**
 
-   ```bash title="Check controller pods"
+   ```bash
    uds zarf tools kubectl get pods -n pepr-system
    ```
 
@@ -40,7 +40,7 @@ This is typically caused by one of the following:
 
    For a Package CR, confirm it exists and check its status:
 
-   ```bash title="Check Package CR status"
+   ```bash
    uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
    ```
 
@@ -48,7 +48,7 @@ This is typically caused by one of the following:
 
    For an Exemption CR, confirm it exists in the correct namespace:
 
-   ```bash title="Check Exemption CR"
+   ```bash
    uds zarf tools kubectl get exemptions -n uds-policy-exemptions <exemption-name>
    ```
 
@@ -57,13 +57,13 @@ This is typically caused by one of the following:
 
 3. **Check exemption processing logs**
 
-   ```bash title="Grep for exemption processing"
+   ```bash
    uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core | grep "Processing exemption"
    ```
 
    **Look for:** log entries similar to:
 
-   ```json title="Expected exemption log entry"
+   ```json
    {"...":"...", "msg":"Processing exemption nvidia-gpu-operator, watch phase: MODIFIED"}
    ```
 
@@ -71,13 +71,13 @@ This is typically caused by one of the following:
 
 4. **Check Package processing logs**
 
-   ```bash title="Grep for Package processing"
+   ```bash
    uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher | grep "Processing Package"
    ```
 
    **Look for:** log entries similar to:
 
-   ```json title="Expected Package log entries"
+   ```json
    {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Pending, observedGeneration: undefined, retryAttempt: undefined"}
    {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Ready, observedGeneration: 1, retryAttempt: 0"}
    ```
@@ -96,13 +96,13 @@ If diagnostics show the controller pods are running but no processing log entrie
 
 1. **Restart the watcher deployment**
 
-   ```bash title="Restart the watcher to re-establish the Watch connection"
+   ```bash
    uds zarf tools kubectl rollout restart deploy/pepr-uds-core-watcher -n pepr-system
    ```
 
 2. **Wait for the rollout to complete**
 
-   ```bash title="Wait for rollout"
+   ```bash
    uds zarf tools kubectl rollout status deploy/pepr-uds-core-watcher -n pepr-system
    ```
 
@@ -139,21 +139,26 @@ If the `pepr-system` pods are not healthy:
 
 1. **Check pod events for failure reasons**
 
-   ```bash title="Describe failing pods"
+   ```bash
    uds zarf tools kubectl describe pods -n pepr-system
    ```
 
    **Look for:** OOMKilled, image pull errors, node resource pressure, or scheduling failures.
 
-2. **Restart the controller deployments**
+2. **Address the underlying issue before restarting**
 
-   ```bash title="Restart all pepr-system deployments"
+   > [!TIP]
+   > Before restarting, fix the root cause identified in step 1. For example, if pods are OOMKilled, increase Pepr resource limits. If pods are pending due to scheduling failures, scale the node or free resources.
+
+3. **Restart the controller deployments**
+
+   ```bash
    uds zarf tools kubectl rollout restart deploy -n pepr-system
    ```
 
-3. **Verify pods recover**
+4. **Verify pods recover**
 
-   ```bash title="Watch pod recovery"
+   ```bash
    uds zarf tools kubectl get pods -n pepr-system -w
    ```
 
@@ -163,11 +168,11 @@ If the `pepr-system` pods are not healthy:
 
 After applying a fix, confirm the issue is resolved:
 
-```bash title="Verify exemption processing"
+```bash
 uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core --tail=50 | grep "Processing exemption"
 ```
 
-```bash title="Verify Package processing"
+```bash
 uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher --tail=50 | grep "Processing Package"
 ```
 
@@ -182,19 +187,19 @@ uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher --tail=5
 If this runbook doesn't resolve your issue:
 
 1. Collect diagnostic output from the steps above
-2. **Collect metrics from the watcher:**
+2. Collect metrics from the watcher:
 
-   ```bash title="Collect watcher metrics"
+   ```bash
    uds zarf tools kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
    ```
 
-3. **Collect watcher and controller logs:**
+3. Collect watcher and controller logs:
 
-   ```bash title="Save watcher logs"
+   ```bash
    uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher > watcher.log
    ```
 
-   ```bash title="Save controller logs"
+   ```bash
    uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core > admission.log
    ```
 

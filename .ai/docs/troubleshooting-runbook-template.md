@@ -45,7 +45,7 @@ Use this runbook when:
 
 **Example error:**
 
-\`\`\`plaintext title="Example error output"
+\`\`\`plaintext
 Exact error message or log line the user would see
 \`\`\`
 
@@ -63,7 +63,7 @@ This is typically caused by one of the following:
 
 1. **Check the first thing**
 
-   \`\`\`bash title="Check pod status"
+   \`\`\`bash
    uds zarf tools kubectl get pods -n namespace
    \`\`\`
 
@@ -71,7 +71,7 @@ This is typically caused by one of the following:
 
 2. **Verify the second thing**
 
-   \`\`\`bash title="Check logs"
+   \`\`\`bash
    uds zarf tools kubectl logs -n namespace deploy/component --tail=50
    \`\`\`
 
@@ -93,7 +93,7 @@ If diagnostics indicate this cause:
 
 1. **First fix step**
 
-   \`\`\`bash title="Apply the fix"
+   \`\`\`bash
    command to fix
    \`\`\`
 
@@ -117,7 +117,7 @@ If diagnostics indicate this cause:
 
 After applying a fix, confirm the issue is resolved:
 
-\`\`\`bash title="Verify fix"
+\`\`\`bash
 uds zarf tools kubectl get pods -n namespace
 \`\`\`
 
@@ -162,8 +162,8 @@ If this runbook doesn't resolve your issue:
 - Files use `.mdx` extension
 - Don't duplicate the frontmatter `title` as a top-level heading — Starlight renders it as the page `<h1>`
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!CAUTION]` for data loss or breaking changes only
-- Code blocks use titles: `` ```bash title="Check pod status" `` or `` ```plaintext title="Example error output" ``
-- Error message examples use `plaintext` language with a descriptive title
+- Code blocks do not use `title` attributes — keep them clean (e.g., `` ```bash ``)
+- Error message examples use `plaintext` language
 - Use `uds zarf tools kubectl` instead of bare `kubectl` for consistency with UDS tooling
 
 ### Content guidance
