@@ -49,39 +49,38 @@ An image rebuild is required when you change:
    | Custom plugin code | `src/plugin/src/main/java/` |
    | CA truststore source | `src/Dockerfile` (`CA_ZIP_URL` arg) and `src/authorized_certs.zip` |
 
-3. **Build the custom image**
+3. **Build the custom image and Zarf package**
+
+   Set `IMAGE_NAME` to your registry path and `VERSION` to your desired tag, then run:
 
    ```bash
-   uds run dev-build
+   IMAGE_NAME=registry.example.com/uds/identity-config VERSION=1.0.0 uds run build-zarf-pkg
    ```
 
-   This builds the image using the `src/` directory and tags it locally as `uds-core-config:keycloak`.
+   This builds the Docker image tagged as `registry.example.com/uds/identity-config:1.0.0` and creates `zarf-package-keycloak-identity-config-<arch>-dev.zst` for airgap transport.
 
-   > [!TIP]
-   > For air-gapped environments, you can also build a Zarf package that bundles the custom image for transport:
+   > [!NOTE]
+   > For local development and testing only, you can build just the image without creating a Zarf package:
    > ```bash
-   > uds run build-zarf-pkg
+   > uds run dev-build
    > ```
+   > This tags the image locally as `uds-core-config:keycloak` for use with a local k3d cluster (`uds run dev-update-image` imports it directly).
 
-4. **Publish the image to a registry**
-
-   Tag and push to a registry your cluster can access.
+4. **Publish the image or Zarf package**
 
    > [!CAUTION]
    > `ttl.sh` is a public, ephemeral registry — images are accessible to anyone and expire after the specified duration. Only use it for local testing. For any shared or production environment, push to a private registry your cluster can access securely.
 
-   **For local testing only:**
+   **Push the image to your registry:**
 
    ```bash
-   docker tag uds-core-config:keycloak ttl.sh/<your-unique-id>:1h
-   docker push ttl.sh/<your-unique-id>:1h
+   docker push registry.example.com/uds/identity-config:1.0.0
    ```
 
-   **For production**, use your organization's registry:
+   **For air-gapped environments**, publish the Zarf package to an OCI registry instead:
 
    ```bash
-   docker tag uds-core-config:keycloak registry.example.com/uds/identity-config:v1.0.0
-   docker push registry.example.com/uds/identity-config:v1.0.0
+   uds zarf package publish zarf-package-keycloak-identity-config-<arch>-dev.zst oci://registry.example.com
    ```
 
 5. **Set `configImage` in your bundle override**
@@ -98,7 +97,7 @@ An image rebuild is required when you change:
            keycloak:
              values:
                - path: configImage
-                 value: registry.example.com/uds/identity-config:v1.0.0
+                 value: registry.example.com/uds/identity-config:1.0.0
    ```
 
 6. **Create and deploy your bundle**
@@ -115,11 +114,11 @@ An image rebuild is required when you change:
 Confirm the custom image was used:
 
 ```bash
-# Check the init container image on the Keycloak pod
-uds zarf tools kubectl describe pod -n keycloak -l app.kubernetes.io/name=keycloak | grep -A 5 "Init Containers"
+uds zarf tools kubectl get pod -n keycloak -l app.kubernetes.io/name=keycloak \
+  -o jsonpath='{.items[0].spec.initContainers[0].image}'
 ```
 
-The init container image reference should match your custom image tag.
+The output should match your custom image tag.
 
 **For theme changes**, navigate to `sso.<domain>` and confirm your CSS or template changes are visible on the login page.
 
@@ -162,7 +161,7 @@ uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak
 
 **Symptoms:** Custom plugin behavior is not visible after deploy.
 
-**Solution:** Check `uds run dev-build` output for Maven build errors. Verify the JAR was copied into the image:
+**Solution:** Check `uds run build-zarf-pkg` output for Maven build errors. Verify the JAR was copied into the image:
 
 ```bash
 uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/

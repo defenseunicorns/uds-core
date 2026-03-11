@@ -24,12 +24,6 @@ You'll add SSO protection to an application that has no native OIDC support. Aut
 
 Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The first `redirectUris` entry you configure is used to populate the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
-> [!CAUTION]
-> **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
-
-> [!NOTE]
-> **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows — double-check both before deploying.
-
 ## Steps
 
 <Tabs>
@@ -57,6 +51,12 @@ Authservice works by matching a label selector on your application's pods. When 
        ```
 
        Authservice will protect all pods labeled `app: httpbin` in the `httpbin` namespace.
+
+       > [!CAUTION]
+       > **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
+
+       > [!NOTE]
+       > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows — double-check both before deploying.
 
     2. **Apply the Package CR**
 

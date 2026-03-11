@@ -75,7 +75,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
                    X509_MFA_ENABLED: false
    ```
 
-   You only need to include the settings you want to change from default. However, for clarity and auditability, specifying all values explicitly is recommended.
+   For clarity and auditability, specifying all settings explicitly is recommended — even settings you are leaving at their defaults.
 
    > [!NOTE]
    > If you are disabling `X509_AUTH_ENABLED`, also update your Istio gateway configuration to stop requesting client certificates from browsers. With X.509 auth disabled, the gateway should not present mutual TLS to users — set the `tls.cacert` override on `istio-tenant-gateway` (and `istio-admin-gateway` if applicable) to an empty string or remove it. See [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) for the gateway override structure.
@@ -124,7 +124,7 @@ If redeploying is not possible, configure the flows manually in the Keycloak Adm
 | Enable/disable OTP | **Authentication** → **Required Actions** tab → toggle **Configure OTP** |
 | Enable WebAuthn | 1. **Authentication** → **Required Actions** → toggle on **Webauthn Register Passwordless** under the **Enabled** column<br/>2. **Authentication** → **Flows** → **UDS Authentication** → set the **MFA** sub-flow to **Required**<br/>3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required** |
 
-### Problem: X.509/CAC login fails with OCSP error in air-gapped environment
+### Problem: X.509/CAC login fails with OCSP error in airgapped environment
 
 **Symptoms:** Certificate authentication fails with an OCSP revocation check error. Logs show the OCSP responder is unreachable.
 
@@ -185,9 +185,8 @@ If you do need to require an additional factor after CAC authentication, use thi
 
 ## Related Documentation
 
-- [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — required for X.509/CAC authentication
 - [Keycloak CRL airgap configuration](/reference/configuration/single-sign-on/keycloak-crl-airgap/) — configure CRL-based certificate revocation checking in air-gapped environments
-- [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration
+- [Keycloak: Authentication](https://www.keycloak.org/docs/latest/server_admin/#configuring-authentication) — upstream reference for Keycloak authentication flow configuration
 
 ## Next steps
 
@@ -200,8 +199,8 @@ These guides and concepts may be useful to explore next:
     href="/how-to-guides/identity-access/configure-truststore/"
   />
   <LinkCard
-    title="Configure account lockout"
-    description="Set temporary and permanent lockout thresholds for brute-force protection."
-    href="/how-to-guides/identity-access/configure-account-lockout/"
+    title="Configure user accounts and security policies"
+    description="Set password complexity and email verification alongside auth flow configuration."
+    href="/how-to-guides/identity-access/configure-user-account-settings/"
   />
 </CardGrid>

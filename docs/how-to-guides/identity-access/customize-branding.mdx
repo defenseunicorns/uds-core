@@ -136,8 +136,7 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    Convert to a single line (newlines replaced with `\n`):
 
    ```bash
-   # Linux / macOS (requires perl, available by default on both)
-   perl -pe 's/\n/\\n/' terms.html > single-line.html
+   cat terms.html | sed ':a;N;$!ba;s/\n/\\n/g' > single-line.html
    ```
 
    Create a ConfigMap from the single-line file:
@@ -258,7 +257,7 @@ The output should be a single line with no literal newlines.
 
 ## Related Documentation
 
-- [Build and deploy a custom identity config image](/how-to-guides/identity-access/build-deploy-custom-image/) — for CSS and structural theme changes that require an image rebuild
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with theme assets and FreeMarker templates for deeper customization
 
 ## Next steps
 

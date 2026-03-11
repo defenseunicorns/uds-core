@@ -50,8 +50,6 @@ Existing accounts hashed with `argon2` or with passwords shorter than 14 charact
    2. Add a new policy: select **Hashing Algorithm** and set the value to `pbkdf2-sha512`
    3. Save
 
-   Repeat this step for the **uds** realm if it contains local user accounts.
-
 3. **Reset all local user passwords to FIPS-compliant values**
 
    For the admin user and any other local accounts:
@@ -118,7 +116,6 @@ KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 ## Related Documentation
 
 - [Keycloak FIPS 140-2 support](https://www.keycloak.org/server/fips) — upstream details on FIPS constraints and limitations
-- [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — password hashing algorithm and complexity settings
 
 ## Next steps
 
