@@ -49,7 +49,10 @@ Use this runbook when:
 Exact error message or log line the user would see
 \`\`\`
 
-## Common causes
+## Background
+
+<!-- For troubleshooting docs: list the common root causes -->
+<!-- For procedural runbooks: explain why this procedure is needed -->
 
 This is typically caused by one of the following:
 
@@ -57,7 +60,7 @@ This is typically caused by one of the following:
 2. **Cause B** — brief explanation
 3. **Cause C** — brief explanation
 
-## Diagnostic steps
+## Before you begin
 
 <Steps>
 
@@ -83,7 +86,7 @@ This is typically caused by one of the following:
 
 </Steps>
 
-## Solutions
+## Steps
 
 ### Cause A: description
 
@@ -138,9 +141,9 @@ To avoid this issue in the future:
 
 If this runbook doesn't resolve your issue:
 
-1. Collect diagnostic output from the steps above
+1. Collect relevant details from the steps above
 2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
-3. Open a new issue with your diagnostic output attached
+3. Open a new issue with your relevant details attached
 
 ## Related documentation
 
@@ -152,11 +155,12 @@ If this runbook doesn't resolve your issue:
 ## Conventions
 
 ### Structure
-- Every runbook follows the same section order: When to use this runbook → Common causes → Diagnostic steps → Solutions → Verification → Prevention (optional) → Additional help → Related documentation
+- Every runbook follows the same section order: When to use this runbook → Background → Before you begin → Steps → Verification → Prevention (optional) → Additional help → Related documentation
 - **Prevention is optional** — only include it when there is a specific, non-obvious configuration or practice that prevents the issue. If the solution itself is the prevention, skip the section entirely.
-- Diagnostic steps and per-cause solutions use the `<Steps>` component
-- Solutions are organized per-cause, matching the "Common causes" list
-- Keep sections focused — if a solution requires extensive configuration, link to the relevant how-to guide instead of duplicating it
+- "Before you begin" and "Steps" use the `<Steps>` component
+- For troubleshooting runbooks, the Steps section is organized per-cause with subsections matching the "Background" list
+- For procedural runbooks, Background explains why the procedure is needed, "Before you begin" covers prechecks/preconditions, and Steps is a single set of steps
+- Keep sections focused — if a section requires extensive configuration, link to the relevant how-to guide instead of duplicating it
 
 ### Formatting
 - Files use `.mdx` extension

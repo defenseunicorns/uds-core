@@ -16,7 +16,7 @@ Use this runbook when:
 
 **What you'll notice:** After applying or updating a specific `Exemption` or `Package` CR, no corresponding `Processing exemption` or `Processing Package` log entry appears in the `pepr-system` controller logs for that CR.
 
-## Common causes
+## Background
 
 This is typically caused by one of the following:
 
@@ -24,7 +24,7 @@ This is typically caused by one of the following:
 2. **Incorrect CR definition** — the `Exemption` or `Package` manifest doesn't match the expected schema, so the controller silently ignores it
 3. **Controller pods not running** — the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
 
-## Diagnostic steps
+## Before you begin
 
 <Steps>
 
@@ -86,7 +86,7 @@ This is typically caused by one of the following:
 
 </Steps>
 
-## Solutions
+## Steps
 
 ### Cause 1: Kubernetes Watch missed event
 
@@ -186,7 +186,7 @@ uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher --tail=5
 
 If this runbook doesn't resolve your issue:
 
-1. Collect diagnostic output from the steps above
+1. Collect relevant details from the steps above
 2. Collect metrics from the watcher:
 
    ```bash

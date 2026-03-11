@@ -1,0 +1,241 @@
+---
+title: "Resize Prometheus PVCs"
+sidebar:
+  order: 1.3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## When to use this runbook
+
+Use this runbook when you need to increase the size of Prometheus PVCs managed by Prometheus Operator. This applies to UDS Core deployments using `kube-prometheus-stack`.
+
+- Prometheus storage is running low or has filled up
+- You need to proactively increase capacity before running out of space
+- Volume size increase only — PVC shrinking is not supported
+
+> [!NOTE]
+> This runbook assumes UDS Core defaults: namespace `monitoring` and Prometheus CR name `kube-prometheus-stack-prometheus`. If your deployment uses non-default names, update the commands accordingly.
+
+This procedure follows upstream guidance from [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes).
+
+## Background
+
+Prometheus storage may need to grow for one or more of the following reasons:
+
+1. **Increased data retention** — retention settings were raised, requiring more disk space for historical data
+2. **Higher metrics cardinality** — new workloads, labels, or scrape targets increased the volume of stored time series
+3. **Additional scrape targets** — more services were added to the cluster, increasing the total metrics ingestion rate
+
+## Before you begin
+
+<Steps>
+
+1. **Confirm the target Prometheus CR exists**
+
+   ```bash
+   uds zarf tools kubectl get prometheus -n monitoring kube-prometheus-stack-prometheus
+   ```
+
+2. **List the PVCs that will be resized**
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+   ```
+
+3. **Confirm the StorageClass supports volume expansion**
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,SC:.spec.storageClassName,REQ:.spec.resources.requests.storage
+   ```
+
+   ```bash
+   uds zarf tools kubectl get storageclass -o custom-columns=NAME:.metadata.name,ALLOWVOLUMEEXPANSION:.allowVolumeExpansion
+   ```
+
+   > [!CAUTION]
+   > If the StorageClass does not have `allowVolumeExpansion: true`, stop and reassess. This procedure cannot proceed without expansion support.
+
+4. **Confirm this is a size increase**
+
+   Compare current PVC request sizes to your desired volume size. Continue only if the new size is larger.
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.resources.requests.storage}{"\n"}{end}'
+   ```
+
+   > [!CAUTION]
+   > If any target PVC is already larger than your desired volume size, stop and reassess. PVC shrinking is not supported.
+
+5. **Confirm your bundle configuration matches the desired volume size**
+
+   Verify the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches your desired volume size.
+
+</Steps>
+
+## Steps
+
+<Steps>
+
+1. **Set the target size variable**
+
+   This variable is used throughout the remaining steps:
+
+   ```bash
+   export TARGET_SIZE=60Gi
+   ```
+
+2. **Update your bundle configuration**
+
+   Set the desired volume size in your bundle. You can either override the value directly in `uds-bundle.yaml`:
+
+   ```yaml
+   # uds-bundle.yaml
+   packages:
+     - name: core
+       overrides:
+         kube-prometheus-stack:
+           kube-prometheus-stack:
+             values:
+               - path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
+                 value: "60Gi"
+   ```
+
+   Or create a variable in `uds-bundle.yaml` and set it in `uds-config.yaml`:
+
+   ```yaml
+   # uds-bundle.yaml
+   packages:
+     - name: core
+       overrides:
+         kube-prometheus-stack:
+           kube-prometheus-stack:
+             variables:
+               - name: PROMETHEUS_STORAGE_SIZE
+                 description: Prometheus PVC requested storage size
+                 path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
+   ```
+
+   ```yaml
+   # uds-config.yaml
+   variables:
+     core:
+       PROMETHEUS_STORAGE_SIZE: "60Gi"
+   ```
+
+3. **Pause Prometheus reconciliation**
+
+   Prevent churn while you patch PVCs and rotate the StatefulSet:
+
+   ```bash
+   uds zarf tools kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type merge --patch '{"spec":{"paused":true}}'
+   ```
+
+   > [!CAUTION]
+   > From this point on, if any step fails, ensure you unpause the Prometheus CR (step 8) to restore operator reconciliation before troubleshooting.
+
+4. **Deploy the updated bundle**
+
+   Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflow(s).
+
+5. **Patch existing PVCs to the new size**
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" \
+     -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' \
+   | xargs -I{} uds zarf tools kubectl patch pvc "{}" -n monitoring --type merge \
+     --patch "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"$TARGET_SIZE\"}}}}"
+   ```
+
+   > [!NOTE]
+   > If a single PVC patch fails, resolve that PVC issue first, then re-run the patch command for that PVC before continuing.
+
+6. **Monitor PVC resize events**
+
+   ```bash
+   uds zarf tools kubectl describe pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+   ```
+
+   Check whether filesystem resize is pending:
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage,CONDITION:.status.conditions[*].type
+   ```
+
+   > [!NOTE]
+   > If any PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
+
+   ```bash
+   uds zarf tools kubectl delete pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+   ```
+
+7. **Delete the backing StatefulSet with orphan strategy**
+
+   Orphan deletion removes the StatefulSet object but preserves pods and PVCs so Prometheus Operator can recreate the StatefulSet against the resized PVCs:
+
+   ```bash
+   uds zarf tools kubectl delete statefulset -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" --cascade=orphan
+   ```
+
+8. **Unpause Prometheus reconciliation**
+
+   ```bash
+   uds zarf tools kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type merge --patch '{"spec":{"paused":false}}'
+   ```
+
+</Steps>
+
+## Verification
+
+<Steps>
+
+1. **Confirm Prometheus CR is unpaused**
+
+   Expected: `false`
+
+   ```bash
+   uds zarf tools kubectl get prometheus kube-prometheus-stack-prometheus -n monitoring -o jsonpath='{.spec.paused}{"\n"}'
+   ```
+
+2. **Confirm PVC requests show the new size**
+
+   Expected: All `REQ` values match `TARGET_SIZE`.
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage
+   ```
+
+3. **Confirm the StatefulSet is recreated**
+
+   ```bash
+   uds zarf tools kubectl get statefulset -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+   ```
+
+4. **Confirm Prometheus pods are Running/Ready**
+
+   ```bash
+   uds zarf tools kubectl get pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
+   ```
+
+5. **Confirm PVC capacity has reconciled**
+
+   Expected: `CAP` matches `REQ` (or converges shortly after).
+
+   ```bash
+   uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage
+   ```
+
+</Steps>
+
+## Additional help
+
+If this runbook doesn't resolve your issue:
+
+1. Collect relevant details from the steps above
+2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
+3. Open a new issue with your relevant details attached
+
+## Related documentation
+
+- [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes) — upstream guidance for PVC resize
+- [Monitoring](/concepts/core-features/monitoring/) — how Prometheus fits into UDS Core's monitoring stack
