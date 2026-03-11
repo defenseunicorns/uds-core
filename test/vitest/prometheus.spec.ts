@@ -5,6 +5,7 @@
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { pollUntilSuccess } from "./helpers/polling";
 
 describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   let prometheusProxy: { server: net.Server; url: string };
@@ -44,30 +45,41 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
     expect(response.status).toBe(200);
   });
 
-  test("all prometheus targets should be up", async () => {
-    const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
-    expect(response.status).toBe(200);
+  test("all prometheus targets should be up", { timeout: 220000 }, async () => {
+    const targets = await pollUntilSuccess(
+      async () => {
+        const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
+        if (!response.ok) {
+          throw new Error(`Prometheus targets API returned ${response.status}`);
+        }
 
-    const body = (await response.json()) as {
-      data: {
-        activeTargets: Array<{
-          scrapePool: string;
-          health: string;
-        }>;
-      };
-    };
-    expect(body.data).toBeDefined();
-    expect(body.data.activeTargets.length).toBeGreaterThan(0);
+        const body = (await response.json()) as {
+          data: {
+            activeTargets: Array<{
+              scrapePool: string;
+              health: string;
+            }>;
+          };
+        };
 
-    const failedTargets = body.data.activeTargets.filter(target => target.health === "down");
-    const unknownTargets = body.data.activeTargets.filter(target => target.health === "unknown");
+        if (!body.data?.activeTargets?.length) {
+          throw new Error("No active targets returned from Prometheus");
+        }
 
-    if (unknownTargets.length > 0) {
-      for (const target of unknownTargets) {
-        console.warn(`Target health is currently unknown: ${target.scrapePool}`);
-      }
-    }
+        return body.data.activeTargets;
+      },
+      targets => {
+        const unhealthy = targets.filter(target => target.health !== "up");
+        for (const target of unhealthy) {
+          console.warn(`Target ${target.scrapePool} is ${target.health}`);
+        }
+        return unhealthy.length === 0;
+      },
+      "all prometheus targets to be up",
+      200000,
+      10000,
+    );
 
-    expect(failedTargets).toEqual([]);
+    expect(targets.every(target => target.health === "up")).toBe(true);
   });
 });
