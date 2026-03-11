@@ -18,18 +18,10 @@ You'll configure Keycloak login behavior for your UDS Core deployment: setting c
 
 ## Before you begin
 
-UDS Core supports three layers of Keycloak customization:
-
-| Approach | Use for | Requires image rebuild? |
-|---|---|---|
-| **Helm chart values** (this guide) | Session policies, account settings, auth flow toggles | No |
-| **UDS Identity Config image** | Custom themes, plugins, CA truststore | Yes — themes and plugins apply when the Keycloak pod restarts; no realm re-import needed |
-| **OpenTofu / IaC** | Managing groups, clients, IdPs post-deploy | No |
+This guide configures Keycloak via Helm chart values — the fastest path to operational changes with no image rebuild required. If you're unsure which approach fits your need, see [Keycloak configuration layers](/concepts/core-features/identity-access/#keycloak-configuration-layers). For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/).
 
 > [!NOTE]
 > Settings applied via `realmInitEnv` or `realmAuthFlows` bundle overrides (covered in this guide and related guides) are only imported during the initial Keycloak realm setup. On a running instance, these require a full Keycloak teardown and redeploy to take effect — or you can apply them manually in the admin UI. Each relevant step below notes which settings are affected.
-
-This guide covers Helm chart values, which handle the most common operational configuration needs. For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/).
 
 ## Steps
 
