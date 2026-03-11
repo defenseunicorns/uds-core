@@ -1,0 +1,27 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-grafana-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-monitoring-uptime
+      rules:
+        - record: uds:grafana:up
+          labels:
+            uds_layer: monitoring
+            uds_component: grafana
+          expr: |
+            (max(deployment:up{deployment="grafana", namespace="grafana"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+        - record: uds:grafana_endpoint:up
+          labels:
+            uds_layer: monitoring
+            uds_component: grafana-endpoint
+          expr: min(probe_success{job="probe/grafana/uds-grafana-admin-uptime"})
+{{- end }}

@@ -1,0 +1,360 @@
+---
+title: Define network access for your application
+sidebar:
+  order: 2.4
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, your application will have the network access rules it needs — whether that's receiving traffic from other in-cluster services, reaching services in other namespaces, communicating with the Kubernetes API, or connecting to external hosts.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Familiarity with the [Package CR](/reference/operator-and-crds/package/)
+
+## Before you begin
+
+UDS Core enforces strict network policies by default. All intra-cluster and external traffic must be explicitly declared in your Package CR's `allow` block. The UDS Operator translates these declarations into Kubernetes `NetworkPolicy` resources, Istio `AuthorizationPolicy` resources, and for external egress, into Istio `ServiceEntry` and routing resources.
+
+Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/package/) for the full list of fields.
+
+> [!NOTE]
+> The `expose` block handles ingress from gateways — see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/). The `allow` block covers everything else: intra-cluster traffic between namespaces, egress to external services, and access to infrastructure endpoints like the Kubernetes API.
+
+## Steps
+
+<Steps>
+
+1. **Allow ingress from other namespaces**
+
+   To accept traffic from a service in a different namespace, add an `Ingress` rule with `remoteNamespace` and `remoteSelector`:
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       allow:
+         - description: "Allow queries from Grafana"
+           direction: Ingress
+           selector:
+             app.kubernetes.io/name: my-app
+           remoteNamespace: grafana
+           remoteSelector:
+             app.kubernetes.io/name: grafana
+           port: 8080
+   ```
+
+   This allows pods labeled `app.kubernetes.io/name: grafana` in the `grafana` namespace to reach port 8080 on your application.
+
+   > [!TIP]
+   > For intra-namespace communication (pods talking within the same namespace), use `remoteGenerated: IntraNamespace` instead of specifying `remoteNamespace` and `remoteSelector`.
+
+2. **Allow in-cluster egress**
+
+   To send traffic to destinations inside the cluster, add an `Egress` rule. Choose the pattern that matches your target:
+
+   <Tabs>
+     <TabItem label="Another namespace">
+
+     To reach a service in a different namespace, specify `remoteNamespace` and `remoteSelector`:
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         allow:
+           - description: "Query Prometheus metrics"
+             direction: Egress
+             selector:
+               app.kubernetes.io/name: my-app
+             remoteNamespace: monitoring
+             remoteSelector:
+               app.kubernetes.io/name: prometheus
+             port: 9090
+     ```
+
+     </TabItem>
+     <TabItem label="Infrastructure endpoints">
+
+     Operators, controllers, and other workloads that interact with the Kubernetes API or infrastructure endpoints use `remoteGenerated` targets. The UDS Operator automatically resolves these to the correct CIDRs:
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-operator
+       namespace: my-operator
+     spec:
+       network:
+         allow:
+           - description: "Kubernetes API access"
+             direction: Egress
+             selector:
+               app.kubernetes.io/name: my-operator
+             remoteGenerated: KubeAPI
+     ```
+
+     Available `remoteGenerated` values for in-cluster targets:
+
+     | Value | Description |
+     |---|---|
+     | `KubeAPI` | Kubernetes API server |
+     | `KubeNodes` | All cluster nodes (e.g., for DaemonSet communication) |
+     | `CloudMetadata` | Cloud provider metadata endpoints (e.g., `169.254.169.254`) |
+     | `IntraNamespace` | All pods in the same namespace |
+
+     </TabItem>
+   </Tabs>
+
+3. **Allow external egress**
+
+   By default, workloads in the mesh cannot reach the internet. Choose the approach that fits your use case:
+
+   > [!NOTE]
+   > The egress protocol defaults to TLS if not specified. Only HTTP and TLS protocols are currently supported.
+
+   > [!NOTE]
+   > Wildcards in host names are **not** supported. You must specify the exact hostname (e.g., `www.google.com`, not `*.google.com`).
+
+   <Tabs>
+     <TabItem label="Specific host (ambient)">
+
+     In ambient mode, the dedicated egress waypoint is automatically included in UDS Core. No additional components need to be enabled.
+
+     Add an `allow` entry with `direction: Egress` and `remoteHost` to your Package CR:
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         serviceMesh:
+           mode: ambient
+         allow:
+           - description: "Allow HTTPS to external API"
+             direction: Egress
+             port: 443
+             remoteHost: api.example.com
+             remoteProtocol: TLS
+             selector:
+               app: my-app
+             serviceAccount: my-app
+     ```
+
+     The `serviceAccount` field is optional but strongly recommended for ambient egress rules with `remoteHost` or `remoteGenerated: Anywhere`. It scopes egress access to specific workload identities, enforcing least privilege.
+
+     > [!WARNING]
+     > In ambient mode, adding any `remoteHost` routes traffic through the shared egress waypoint in `istio-egress-ambient`. The operator creates a per-host `ServiceEntry` and `AuthorizationPolicy` there. If two packages specify the same host and port but with different protocols, the second package will fail to reconcile. Coordinate between package authors or consolidate egress rules when sharing host:port combinations.
+
+     When applied, the UDS Operator creates:
+     - A shared `ServiceEntry` in the `istio-egress-ambient` namespace, registering the external host
+     - A centralized `AuthorizationPolicy` that allows only the specified service accounts to reach that host
+
+     </TabItem>
+     <TabItem label="Specific host (sidecar)">
+
+     For workloads running in sidecar mode, you first need to enable the optional sidecar egress gateway in your UDS Core bundle, then define the egress rule in your application's Package CR.
+
+     <Steps>
+
+     1. **Enable the egress gateway in your UDS Core bundle**
+
+        ```yaml title="uds-bundle.yaml"
+        kind: UDSBundle
+        metadata:
+          name: uds-core-bundle
+          description: UDS Core with sidecar egress gateway
+          version: "0.1.0"
+
+        packages:
+          - name: core
+            repository: registry.defenseunicorns.com/public/core
+            ref: x.x.x-upstream
+            optionalComponents:
+              - istio-egress-gateway
+        ```
+
+        If your egress requires a port other than 80 or 443, add it to the gateway's service ports in the same bundle:
+
+        ```yaml title="uds-bundle.yaml"
+        overrides:
+          istio-egress-gateway:
+            gateway:
+              values:
+                - path: "service.ports"
+                  value:
+                    - name: status-port
+                      port: 15021
+                      protocol: TCP
+                      targetPort: 15021
+                    - name: http2
+                      port: 80
+                      protocol: TCP
+                      targetPort: 80
+                    - name: https
+                      port: 443
+                      protocol: TCP
+                      targetPort: 443
+                    - name: custom-port
+                      port: 9200
+                      protocol: TCP
+                      targetPort: 9200
+        ```
+
+        > [!WARNING]
+        > You must include the default ports (status-port, http2, https) when overriding `service.ports`, otherwise those ports will stop working.
+
+     2. **Create and deploy your UDS Core bundle**
+
+        ```bash
+        uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+        ```
+
+     3. **Define the egress rule in your Package CR**
+
+        ```yaml title="uds-package.yaml"
+        apiVersion: uds.dev/v1alpha1
+        kind: Package
+        metadata:
+          name: my-app
+          namespace: my-app
+        spec:
+          network:
+            serviceMesh:
+              mode: sidecar
+            allow:
+              - description: "Allow HTTPS to external API"
+                direction: Egress
+                port: 443
+                remoteHost: api.example.com
+                remoteProtocol: TLS
+                selector:
+                  app: my-app
+        ```
+
+     </Steps>
+
+     </TabItem>
+     <TabItem label="Unrestricted">
+
+     > [!CAUTION]
+     > `remoteGenerated: Anywhere` bypasses host-based egress restrictions. Use this only when host-based rules don't fit your use case — for example, when your application needs to reach a large or unpredictable set of external hosts (e.g., wildcard domain requirements).
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         allow:
+           - description: "Allow all external egress"
+             direction: Egress
+             selector:
+               app: my-app
+             remoteGenerated: Anywhere
+             serviceAccount: my-app
+     ```
+
+     </TabItem>
+   </Tabs>
+
+4. **Build and deploy**
+
+   Include the Package CR in your application's Zarf package, then build and deploy:
+
+   ```bash
+   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Check that the Package CR was reconciled:
+
+```bash
+uds zarf tools kubectl get package my-app -n my-app
+```
+
+For external egress, check that the routing resources were created:
+
+```bash
+# For ambient mode
+uds zarf tools kubectl get serviceentry -n istio-egress-ambient
+uds zarf tools kubectl get authorizationpolicy -n istio-egress-ambient
+
+# For sidecar mode
+uds zarf tools kubectl get serviceentry -n my-app
+uds zarf tools kubectl get virtualservice -n istio-egress-gateway
+```
+
+## Troubleshooting
+
+### Intra-cluster traffic blocked
+
+**Symptoms:** Application cannot reach a service in another namespace; connection timeouts or resets.
+
+**Solution:**
+- Verify the `remoteNamespace` and `remoteSelector` match the target pods exactly
+- Check that the `port` matches the port the remote service is listening on
+- Ensure both sides have the necessary rules — if app A needs to talk to app B, app A needs an `Egress` rule and app B needs an `Ingress` rule
+
+### External egress blocked
+
+**Symptoms:** Application cannot reach an external service; connection timeouts or resets.
+
+**Solution:**
+- Verify the `remoteHost` matches exactly — `google.com` is not the same as `www.google.com`
+- Check that your `selector` and `serviceAccount` match the workloads you expect
+- For sidecar mode, run `istioctl proxy-config listeners <egress-pod> -n <egress-namespace>` to verify expected routes
+
+### Port not exposed (sidecar egress)
+
+**Symptoms:** Operator logs a warning; traffic on custom ports does not egress.
+
+**Solution:** The port is not exposed on the egress gateway service. Add it to `service.ports` in the gateway overrides as shown in the sidecar mode tab.
+
+## Security considerations
+
+- **TLS passthrough**: External egress uses TLS passthrough mode, meaning traffic exits the mesh as-is. Without TLS origination, HTTP paths cannot be inspected, restricted, or logged.
+- **Domain fronting**: TLS passthrough only verifies the SNI header, not the actual destination. This is only safe for trusted hosts. See [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) for background.
+- **DNS exfiltration**: UDS Core does not currently block DNS-based data exfiltration.
+- **Audit all egress entries**: Platform engineers should review all `Package` custom resources to verify that every `Egress` entry is scoped appropriately — each one represents a traffic path that will be opened. Ensure all declared egress is either intra-cluster communication or intentional external access.
+
+## Related documentation
+
+- [Package CR Reference](/reference/operator-and-crds/package/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Allow permissive mesh traffic"
+    description="Relax strict authorization policies when standard network rules aren't sufficient."
+    href="/how-to-guides/networking/allow-permissive-mesh-traffic/"
+  />
+  <LinkCard
+    title="Networking & Service Mesh Concepts"
+    description="Learn how the service mesh, gateways, and authorization model work."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>

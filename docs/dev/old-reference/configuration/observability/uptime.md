@@ -1,20 +1,25 @@
 ---
-title: Uptime Monitoring with Blackbox Exporter
+title: Uptime Monitoring
 sidebar:
-    order: 4.5
+  order: 4.5
 ---
 
 ## Overview
 
-UDS Core includes Blackbox Exporter for HTTP/HTTPS probing of endpoints to monitor uptime and availability. Uptime checks can be configured through the UDS Package CR, and Prometheus [Probes](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources are automatically created based on your configuration.
+UDS Core provides uptime monitoring at two levels:
+
+- **Endpoint probes** — HTTP/HTTPS probing of application endpoints via Blackbox Exporter, configured through the UDS Package CR
+- **Core component uptime** — recording rules that track the availability of UDS Core's own infrastructure components (Prometheus, Alertmanager, Keycloak, Loki, etc.)
+
+Endpoint probes are user-configurable. Core component uptime is included out of the box and requires no configuration.
+
+## Endpoint Probes
+
+To enable uptime monitoring for an exposed service, configure the `uptime.checks` section within your Package CR's `expose` entries. Prometheus [Probes](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) are automatically created based on your configuration.
 
 :::caution
 The UDS Core Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically based on Package CR configurations — custom modules cannot be added and this secret should not be manually overridden, as the operator will reconcile any changes.
 :::
-
-## Uptime Monitoring
-
-To enable uptime monitoring for an exposed service, configure the `uptime.checks` section within your Package CR's `expose` entries.
 
 :::note
 Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client for each Authservice-protected expose entry and configures the Blackbox Exporter with OAuth2 client credentials, allowing probes to authenticate and reach the application directly.
@@ -161,16 +166,18 @@ spec:
         # no uptime configuration (not monitored)
 ```
 
-## Metrics
+## Included Metrics and Recording Rules
 
-The Blackbox Exporter provides some of the following key metrics (not exhaustive) that can be used for alerting and dashboarding:
+UDS Core ships recording rules that track the availability of core infrastructure components. These produce `uds:<component>:up` metrics (1 = available, 0 = unavailable) for components including Prometheus, Alertmanager, Blackbox Exporter, Keycloak, Loki, Grafana, Istio, and others. The `uds:access:up` metric represents Keycloak endpoint reachability, serving as the overall access health indicator. No user configuration is needed.
 
-| Metric | Description |
-|--------|-------------|
-| `probe_success` | Whether the probe succeeded (1) or failed (0) |
-| `probe_duration_seconds` | Total probe duration |
-| `probe_http_status_code` | HTTP response status code |
-| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp |
+Endpoint probes produce standard Blackbox Exporter metrics:
+
+| Metric                           | Description                                   |
+| -------------------------------- | --------------------------------------------- |
+| `probe_success`                  | Whether the probe succeeded (1) or failed (0) |
+| `probe_duration_seconds`         | Total probe duration                          |
+| `probe_http_status_code`         | HTTP response status code                     |
+| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp          |
 
 ### Example Queries
 
@@ -180,14 +187,14 @@ probe_success
 
 # Check if a specific endpoint is up
 probe_success{instance="https://myapp.uds.dev/health"}
+
+# Check core component availability
+uds:keycloak:up
 ```
 
-## Grafana Dashboard
+## Grafana Dashboards
 
-UDS Core includes an uptime monitoring dashboard that displays:
+UDS Core includes two uptime dashboards:
 
-- Uptime status timeline for all monitored endpoints
-- Percentage uptime over the selected time period
-- TLS certificate expiration dates
-
-Access it via Grafana under **UDS / Monitoring / Uptime**.
+- **UDS / Monitoring / Core Uptime** — displays the availability status, uptime percentage, and component status for UDS Core infrastructure components
+- **UDS / Monitoring / Probe Uptime** — displays probe uptime status timeline, percentage uptime, and TLS certificate expiration dates for all monitored endpoints

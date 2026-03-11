@@ -18,5 +18,5 @@ Relevant existing docs to draw from:
 - `src/content/docs-old/reference/configuration/observability/monitoring-metrics.md`
 - `src/content/docs-old/reference/configuration/observability/metrics-alerting.md`
 - `src/content/docs-old/reference/configuration/observability/dashboards.md`
-- `src/content/docs-old/reference/configuration/observability/blackbox-exporter.md`
+- `src/content/docs-old/reference/configuration/observability/uptime.md`
 - `src/content/docs-old/reference/configuration/observability/alert-management.md`

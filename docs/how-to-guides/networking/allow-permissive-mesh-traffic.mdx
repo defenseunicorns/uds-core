@@ -1,0 +1,235 @@
+---
+title: Allow permissive traffic through the mesh
+sidebar:
+  order: 2.8
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have relaxed Istio's strict authorization policies at the appropriate scope so that specific workloads or namespaces can receive traffic that would otherwise be denied by the mesh's default deny-all model.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Confirmation that [Package CR `expose` and `allow` rules](/reference/operator-and-crds/package/) cannot satisfy your traffic requirements
+
+## Before you begin
+
+> [!CAUTION]
+> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements — not to bypass the authorization model.
+
+UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your Package CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
+
+Some workloads need traffic that falls outside this model. Common examples include:
+
+- **Applications with unusual TLS handling** — workloads that perform their own mTLS or have TLS configurations that conflict with Istio's automatic mTLS, preventing the mesh from properly identifying the traffic source
+- **Traffic from sources outside the mesh** — requests originating from components that are not part of the Istio service mesh (e.g., infrastructure controllers, legacy services, or external systems routing directly to pods)
+
+In these cases, you can layer additional `ALLOW` [authorization policies](https://istio.io/latest/docs/concepts/security/#authorization-policies) on top of the operator-generated ones. Istio evaluates `DENY` policies first, then `ALLOW` policies, so your additional `ALLOW` rules will not override any existing `DENY` policies.
+
+> [!NOTE]
+> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity — traffic must be allowed by both layers. Any explicit `allow` entries in your Package CR are still required for Kubernetes-level network policy access.
+
+## Steps
+
+<Steps>
+
+1. **Choose and apply your AuthorizationPolicy**
+
+   The options below are ordered from **least permissive** to **most permissive**. Always use the narrowest scope that meets your needs.
+
+   <Tabs>
+     <TabItem label="Specific port">
+
+     This is the most restrictive option. It allows any source to reach a specific port on a specific workload:
+
+     ```yaml title="authz-policy.yaml"
+     apiVersion: security.istio.io/v1
+     kind: AuthorizationPolicy
+     metadata:
+       name: permissive-ap-workload-port
+       namespace: <package-namespace>
+     spec:
+       action: ALLOW
+       selector:
+         matchLabels:
+           app: my-app  # Your workload selector
+       rules:
+         - to:
+             - operation:
+                 ports:
+                   - "1234"
+     ```
+
+     </TabItem>
+     <TabItem label="Entire workload">
+
+     Allows any source to reach any port on a specific workload:
+
+     ```yaml title="authz-policy.yaml"
+     apiVersion: security.istio.io/v1
+     kind: AuthorizationPolicy
+     metadata:
+       name: permissive-ap-workload
+       namespace: <package-namespace>
+     spec:
+       action: ALLOW
+       selector:
+         matchLabels:
+           app: my-app  # Your workload selector
+       rules:
+         - {}
+     ```
+
+     </TabItem>
+     <TabItem label="Entire namespace">
+
+     Allows any source to reach any workload in the namespace:
+
+     ```yaml title="authz-policy.yaml"
+     apiVersion: security.istio.io/v1
+     kind: AuthorizationPolicy
+     metadata:
+       name: permissive-ap-namespace
+       namespace: <package-namespace>
+     spec:
+       action: ALLOW
+       rules:
+         - {}
+     ```
+
+     </TabItem>
+   </Tabs>
+
+2. **Apply a PeerAuthentication policy**
+
+   Without a permissive `PeerAuthentication`, Istio will still enforce strict mTLS and reject connections from sources that cannot present a valid mesh identity — even if the `AuthorizationPolicy` allows them. Match the scope of your `PeerAuthentication` to the `AuthorizationPolicy` you chose in step 1.
+
+   <Tabs>
+     <TabItem label="Specific port">
+
+     Use `portLevelMtls` to relax mTLS on only the specific port, keeping strict mTLS on all other ports:
+
+     ```yaml title="peer-auth.yaml"
+     apiVersion: security.istio.io/v1
+     kind: PeerAuthentication
+     metadata:
+       name: permissive-pa
+       namespace: <package-namespace>
+     spec:
+       selector:
+         matchLabels:
+           app: my-app  # Match the same workload as your AuthorizationPolicy
+       mtls:
+         mode: STRICT  # Keep strict mTLS as the default
+       portLevelMtls:
+         1234:  # Only this port accepts non-mTLS traffic
+           mode: PERMISSIVE
+     ```
+
+     </TabItem>
+     <TabItem label="Entire workload">
+
+     Set the workload-level mode to `PERMISSIVE` for all ports on the selected workload:
+
+     ```yaml title="peer-auth.yaml"
+     apiVersion: security.istio.io/v1
+     kind: PeerAuthentication
+     metadata:
+       name: permissive-pa
+       namespace: <package-namespace>
+     spec:
+       selector:
+         matchLabels:
+           app: my-app  # Match the same workload as your AuthorizationPolicy
+       mtls:
+         mode: PERMISSIVE
+     ```
+
+     </TabItem>
+     <TabItem label="Entire namespace">
+
+     Omit the `selector` to apply permissive mTLS to all workloads in the namespace:
+
+     ```yaml title="peer-auth.yaml"
+     apiVersion: security.istio.io/v1
+     kind: PeerAuthentication
+     metadata:
+       name: permissive-pa
+       namespace: <package-namespace>
+     spec:
+       mtls:
+         mode: PERMISSIVE
+     ```
+
+     </TabItem>
+   </Tabs>
+
+   See the [Istio PeerAuthentication documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/) for details on scoping options.
+
+3. **Include manifests in your Zarf package and deploy**
+
+   Add the `AuthorizationPolicy` and `PeerAuthentication` manifests to your application's Zarf package, then build and deploy:
+
+   ```bash
+   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+After applying the policies, verify they exist:
+
+```bash
+uds zarf tools kubectl get authorizationpolicy -n <namespace>
+uds zarf tools kubectl get peerauthentication -n <namespace>
+```
+
+Test that the previously-blocked traffic now flows as expected.
+
+## Troubleshooting
+
+### Policy not taking effect
+
+**Symptoms:** Traffic is still being denied after applying the authorization policy.
+
+**Solution:**
+- Verify the policy is in the correct namespace (must match the workload's namespace)
+- Check the `selector` labels match your workload: `uds zarf tools kubectl get pods -n <namespace> --show-labels`
+- Remember that Istio evaluates `DENY` policies before `ALLOW` policies — if a `DENY` policy exists, your `ALLOW` policy will not override it
+- Ensure you have also applied a permissive `PeerAuthentication` if the traffic source cannot present a valid mesh identity
+
+### Scope too broad
+
+**Symptoms:** Unintended services are now receiving traffic they shouldn't.
+
+**Solution:**
+- Narrow the scope: add a `selector` to target specific workloads, or add port restrictions
+- Move from a namespace-scoped policy to a workload-scoped one
+
+## Related documentation
+
+- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)
+- [Istio PeerAuthentication Documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Networking & Service Mesh Concepts"
+    description="Learn how the service mesh, gateways, and authorization model work."
+    href="/concepts/core-features/networking/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster and external network access for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+</CardGrid>

@@ -1,0 +1,22 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-vector-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-logging-uptime
+      rules:
+        - record: uds:vector:up
+          labels:
+            uds_layer: logging
+            uds_component: vector
+          expr: |
+            (max(daemonset:up{daemonset="vector", namespace="vector"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+{{- end }}
