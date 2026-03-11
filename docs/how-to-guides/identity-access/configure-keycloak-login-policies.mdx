@@ -1,14 +1,14 @@
 ---
 title: Configure Keycloak login policies
 sidebar:
-  order: 3.5
+  order: 3.05
 ---
 
 import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure Keycloak login behavior for your UDS Core deployment: setting concurrent session limits, session idle timeouts, logout confirmation behavior, and HTTP retry settings for outgoing requests. All configuration in this guide is applied via bundle overrides — no image rebuild required.
+You'll configure Keycloak login behavior for your UDS Core deployment: setting concurrent session limits, session idle timeouts, and logout confirmation behavior. All configuration in this guide is applied via bundle overrides — no image rebuild required.
 
 ## Prerequisites
 
@@ -133,42 +133,7 @@ This guide covers Helm chart values, which handle the most common operational co
    > [!NOTE]
    > This is a per-client setting in the Package CR, not a global Keycloak setting. To disable it globally, configure the default in Keycloak's realm settings instead.
 
-4. **Configure HTTP retry behavior for outgoing requests**
-
-   Keycloak can automatically retry failed outgoing HTTP requests (to identity providers, databases, or external services). This is disabled by default.
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         keycloak:
-           keycloak:
-             values:
-               - path: httpRetry.maxRetries
-                 value: 2
-               - path: httpRetry.initialBackoffMillis
-                 value: 1000
-               - path: httpRetry.backoffMultiplier
-                 value: 2.0
-               - path: httpRetry.applyJitter
-                 value: true
-               - path: httpRetry.jitterFactor
-                 value: 0.5
-   ```
-
-   | Option | Default | Description |
-   |---|---|---|
-   | `maxRetries` | `0` (disabled) | Maximum retry attempts (set > 0 to enable) |
-   | `initialBackoffMillis` | `1000` | Initial backoff delay in milliseconds |
-   | `backoffMultiplier` | `2.0` | Exponential backoff multiplier |
-   | `applyJitter` | `true` | Adds randomness to prevent retry storms |
-   | `jitterFactor` | `0.5` | Jitter factor (0–1) for backoff variation |
-
-   Enable retries when Keycloak communicates with external services over unreliable networks. Keep them disabled in environments where fast failure detection is preferred.
-
-5. **Deploy your bundle**
+4. **Deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
