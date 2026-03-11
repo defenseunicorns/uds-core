@@ -148,25 +148,28 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
   --patch "{\"spec\":{\"resources\":{\"requests\":{\"storage\":\"$TARGET_SIZE\"}}}}"
 ```
 
-During and after patching, monitor PVC events for resize progress or errors:
+6. Monitor PVC resize progress:
+
+After patching, monitor PVC events for resize progress or errors:
 
 ```bash
 kubectl describe pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
-If controller-side expansion completes but the filesystem resize does not, PVCs may show `FileSystemResizePending` and `CAP` may remain below `REQ`. Check for that condition before proceeding:
+Check whether filesystem resize is pending before proceeding:
 
 ```bash
 kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage,CONDITION:.status.conditions[*].type
 ```
 
-If any target PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
+> [!NOTE]
+> If any target PVC shows `FileSystemResizePending`, restart the affected Prometheus pod(s), then confirm `CAP` converges to `REQ` before continuing:
 
 ```bash
 kubectl delete pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
-6. Delete backing StatefulSet with orphan strategy:
+7. Delete backing StatefulSet with orphan strategy:
 
 Orphan deletion removes the StatefulSet object but preserves pods/PVCs so Prometheus Operator can recreate the StatefulSet against resized PVCs.
 
@@ -174,7 +177,7 @@ Orphan deletion removes the StatefulSet object but preserves pods/PVCs so Promet
 kubectl delete statefulset -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" --cascade=orphan
 ```
 
-7. Unpause Prometheus reconciliation:
+8. Unpause Prometheus reconciliation:
 
 Unpausing allows Prometheus Operator to reconcile resources back to normal managed state.
 
