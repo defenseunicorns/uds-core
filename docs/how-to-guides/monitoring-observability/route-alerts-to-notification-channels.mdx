@@ -152,7 +152,7 @@ uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 
 **Symptom:** Alertmanager logs show connection timeout or DNS resolution errors when sending notifications.
 
-**Solution:** Verify the `additionalNetworkAllow` configuration includes the correct `remoteHost` and port for your notification service. Ensure the egress policy `selector` targets Alertmanager pods (`app.kubernetes.io/name: alertmanager`).
+**Solution:** Verify the `additionalNetworkAllow` configuration includes the correct `remoteHost` and port for your notification service. Ensure the egress policy `selector` targets Alertmanager pods (`app.kubernetes.io/name: alertmanager`). See [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) for details on configuring egress policies.
 
 ## Related Documentation
 
