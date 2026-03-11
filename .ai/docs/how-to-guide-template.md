@@ -167,4 +167,5 @@ These guides and concepts may be useful to explore next:
 - Only include `zarf package create` if the guide involves modifying a Zarf package — most guides only use bundle overrides and don't need it
 - Related Documentation comes before Next Steps
 - Next Steps uses `<CardGrid>` with `<LinkCard>` components
+- For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing

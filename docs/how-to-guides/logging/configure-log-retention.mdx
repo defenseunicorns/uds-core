@@ -71,7 +71,7 @@ Retention settings apply only to data stored in Loki. Logs already forwarded to 
    > [!NOTE]
    > The compactor runs on a schedule controlled by `compaction_interval`. After deploying retention settings, allow at least one full cycle plus the `retention_delete_delay` before expecting storage to decrease.
 
-2. **Set per-stream retention rules (optional)**
+2. **(Optional) Set per-stream retention rules**
 
    If different log streams need different retention periods, use `retention_stream` rules. For example, keep security-related logs longer while shortening retention for noisy infrastructure logs:
 
