@@ -8,7 +8,7 @@ import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/com
 
 ## What you'll accomplish
 
-You'll transition your UDS Core deployment from the legacy NeuVector runtime security provider to Falco, with options for cleaning up NeuVector entirely, running both side by side, or keeping NeuVector without Falco.
+You'll upgrade your UDS Core deployment from the legacy NeuVector runtime security provider to Falco, removing NeuVector cleanly as part of the upgrade.
 
 ## Prerequisites
 
@@ -18,87 +18,41 @@ You'll transition your UDS Core deployment from the legacy NeuVector runtime sec
 
 ## Before you begin
 
-UDS Core now includes Falco by default in the `core-runtime-security` package layer and no longer manages NeuVector. If your cluster was previously running NeuVector as part of UDS Core, you have three options:
-
-| Scenario | What happens |
-|---|---|
-| **Falco only** (recommended) | Deploy the runtime-security layer with NeuVector cleanup enabled — removes the `neuvector` namespace and CRDs. This is the simplest path and avoids maintaining two runtime security solutions. |
-| **Falco + NeuVector** | Deploy UDS Core normally, then deploy NeuVector separately as a standalone package. |
-| **NeuVector only** | Omit the `core-runtime-security` layer (Falco will not deploy) and deploy NeuVector as a standalone package. |
-
-> [!NOTE]
-> UDS Core no longer manages NeuVector. If you need to keep running it (alone or alongside Falco), deploy and upgrade it separately using the [standalone NeuVector package](https://github.com/uds-packages/neuvector).
+UDS Core now includes Falco by default in the `core-runtime-security` package layer and no longer manages NeuVector. This guide covers the recommended upgrade path: deploy Falco and remove NeuVector in a single operation.
 
 > [!NOTE]
 > NeuVector cleanup is a one-time upgrade task. If your cluster has never had NeuVector deployed, you can skip this guide entirely.
 
+> [!NOTE]
+> If you need to keep NeuVector running alongside Falco, deploy your bundle normally (without `CLEANUP_LEGACY_NEUVECTOR`) — your existing NeuVector resources will remain untouched. Manage NeuVector separately using the [standalone NeuVector package](https://github.com/uds-packages/neuvector). To run NeuVector without Falco, omit the `core-runtime-security` layer from your bundle entirely.
+
 ## Steps
 
-<Tabs>
-  <TabItem label="Falco only (remove NeuVector)">
-    <Steps>
+<Steps>
 
-    1. **Enable the NeuVector cleanup gate**
+1. **Enable the NeuVector cleanup gate**
 
-       In your `uds-config.yaml`, set the cleanup variable:
+   In your `uds-config.yaml`, set the cleanup variable:
 
-       ```yaml title="uds-config.yaml"
-       variables:
-         core:
-           CLEANUP_LEGACY_NEUVECTOR: "true"
-       ```
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       CLEANUP_LEGACY_NEUVECTOR: "true"
+   ```
 
-       > [!CAUTION]
-       > This permanently deletes the `neuvector` namespace and all NeuVector CRDs from your cluster. Only enable this if you are certain you no longer need NeuVector.
+   > [!CAUTION]
+   > This permanently deletes the `neuvector` namespace and all NeuVector CRDs from your cluster. Only enable this if you are certain you no longer need NeuVector.
 
-    2. **Create and deploy your bundle**
+2. **Create and deploy your bundle**
 
-       ```bash
-       uds create <path-to-bundle-dir>
-       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-       ```
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
 
-       The runtime-security layer will deploy Falco and clean up any legacy NeuVector resources.
+   The runtime-security layer will deploy Falco and clean up all legacy NeuVector resources.
 
-    </Steps>
-  </TabItem>
-  <TabItem label="Falco + NeuVector (keep both)">
-    <Steps>
-
-    1. **Deploy UDS Core normally**
-
-       Do **not** set `CLEANUP_LEGACY_NEUVECTOR`. Deploy your bundle as usual:
-
-       ```bash
-       uds create <path-to-bundle-dir>
-       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-       ```
-
-       Falco deploys as part of the runtime-security layer. Your existing NeuVector resources remain untouched.
-
-    2. **Manage NeuVector separately**
-
-       Since UDS Core no longer manages NeuVector, deploy and upgrade it as a standalone package. See the [Standalone NeuVector guide](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) for instructions.
-
-    </Steps>
-  </TabItem>
-  <TabItem label="NeuVector only (no Falco)">
-    <Steps>
-
-    1. **Skip the runtime-security layer**
-
-       Omit the `core-runtime-security` layer from your bundle. This prevents Falco from being deployed.
-
-       > [!CAUTION]
-       > Without the runtime-security layer, you will not have Falco's eBPF-based runtime threat detection. NeuVector provides container runtime security through a different mechanism — ensure this meets your compliance and security requirements.
-
-    2. **Deploy NeuVector standalone**
-
-       Follow the [Standalone NeuVector guide](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) to deploy and manage NeuVector independently of UDS Core.
-
-    </Steps>
-  </TabItem>
-</Tabs>
+</Steps>
 
 ## Verification
 

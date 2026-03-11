@@ -80,13 +80,11 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
 
    **How to find rule names:**
 
-   | Source | Where to look |
-   |---|---|
-   | Falco documentation | [List of Falco rules](https://falco.org/docs/reference/rules/default-rules/) |
-   | UDS Core stable rules | [`src/falco/chart/rules/stable-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml) |
-   | UDS Core incubating rules | [`src/falco/chart/rules/incubating-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml) |
-   | UDS Core sandbox rules | [`src/falco/chart/rules/sandbox-rules.yaml`](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml) |
-   | Falco logs | Query Loki with `{rule=~".+"}` to see rule names from live detections |
+   - [Falco rules reference](https://falco.org/docs/reference/rules/default-rules/) — complete list of stable, incubating, and sandbox rules
+   - [UDS Core stable rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml) — `src/falco/chart/rules/stable-rules.yaml`
+   - [UDS Core incubating rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml) — `src/falco/chart/rules/incubating-rules.yaml`
+   - [UDS Core sandbox rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml) — `src/falco/chart/rules/sandbox-rules.yaml`
+   - Falco logs — query Loki with `{rule=~".+"}` to see rule names from live detections
 
    Look for entries that start with `- rule:` in the rule files to find exact rule names.
 
@@ -137,6 +135,33 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
    > [!NOTE]
    > **Exception structure rules:** `fields` and `comps` must have the same length. When using multiple fields, each element in `values` must be an array (tuple) whose length matches the number of fields. When using a single field, `values` can be a simple array of scalar values.
 
+   > [!TIP]
+   > **AWS EKS:** CSI drivers (EFS, EBS) launch privileged containers for storage operations and commonly trigger `Mount Launched in Privileged Container`. These alerts are expected and safe to suppress:
+   >
+   > ```yaml title="uds-bundle.yaml"
+   > overrides:
+   >   falco:
+   >     uds-falco-config:
+   >       values:
+   >         - path: overrides
+   >           value:
+   >             rules:
+   >               "Mount Launched in Privileged Container":
+   >                 exceptions:
+   >                   action: append
+   >                   items:
+   >                     - name: allow_csi_efs_node_mounts
+   >                       fields: [k8s.ns.name, k8s.pod.name, proc.name]
+   >                       comps: [=, startswith, =]
+   >                       values:
+   >                         - [kube-system, efs-csi-node-, mount]
+   >                     - name: allow_csi_ebs_node_mounts
+   >                       fields: [k8s.ns.name, k8s.pod.name, proc.name]
+   >                       comps: [=, startswith, =]
+   >                       values:
+   >                         - [kube-system, ebs-csi-node, mount]
+   > ```
+
 4. **Add custom rules**
 
    To define entirely new Falco rules, use the `extraRules` value:
@@ -156,36 +181,7 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
                  tags: ["local"]
    ```
 
-5. **(Optional) Suppress common false positives**
-
-   > [!TIP]
-   > In AWS EKS environments, Falco commonly alerts on CSI (Container Storage Interface) drivers like EFS and EBS because they launch privileged containers for storage operations. These alerts are expected and safe to suppress.
-
-   ```yaml title="uds-bundle.yaml"
-   overrides:
-     falco:
-       uds-falco-config:
-         values:
-           - path: overrides
-             value:
-               rules:
-                 "Mount Launched in Privileged Container":
-                   exceptions:
-                     action: append
-                     items:
-                       - name: allow_csi_efs_node_mounts
-                         fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                         comps: [=, startswith, =]
-                         values:
-                           - [kube-system, efs-csi-node-, mount]
-                       - name: allow_csi_ebs_node_mounts
-                         fields: [k8s.ns.name, k8s.pod.name, proc.name]
-                         comps: [=, startswith, =]
-                         values:
-                           - [kube-system, ebs-csi-node, mount]
-   ```
-
-6. **Create and deploy your bundle**
+5. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>

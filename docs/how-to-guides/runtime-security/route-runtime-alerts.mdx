@@ -21,28 +21,22 @@ You'll configure Falcosidekick to forward runtime security alerts to Slack, Matt
 
 By default, Falco events are shipped to Loki for centralized log aggregation and are queryable in Grafana. This guide adds external alert forwarding on top of Loki — it does not replace the default Loki integration.
 
-Configuring external alert routing requires two overrides in your `uds-bundle.yaml`:
-
-| Setting | Chart | Purpose |
-|---|---|---|
-| `falcosidekick.config.*` | `falco` (upstream) | Webhook URL, channel, priority filtering |
-| `additionalNetworkAllow` | `uds-falco-config` (UDS) | Network egress policy to allow Falcosidekick to reach external endpoints |
-
-> [!CAUTION]
-> By default, the Falco UDS Package locks down all network egress. If you configure a webhook output without also adding a corresponding `additionalNetworkAllow` entry, Falcosidekick will not be able to reach the external endpoint and alerts will silently fail.
-
-> [!NOTE]
-> Falcosidekick supports [many additional outputs](https://github.com/falcosecurity/falcosidekick#outputs) beyond the three shown here, including Alertmanager, Elasticsearch, and PagerDuty. The configuration pattern is the same for each: add the output config under `falcosidekick.config.*` in the `falco` chart and allow egress in `uds-falco-config`.
-
 ## Steps
 
-<Tabs>
-  <TabItem label="Slack">
-    <Steps>
+<Steps>
 
-    1. **Configure the Slack webhook and network egress**
+1. **Configure your output destination and network egress**
 
-       In your `uds-bundle.yaml`, add the Falcosidekick Slack output configuration (`falco` chart) and the network egress allow (`uds-falco-config` chart):
+   Each destination requires two overrides: the webhook config in the `falco` chart, and a network egress allow in the `uds-falco-config` chart.
+
+   > [!CAUTION]
+   > The Falco UDS Package locks down all network egress by default. If you configure a webhook output without also adding a corresponding `additionalNetworkAllow` entry, Falcosidekick will not be able to reach the external endpoint and alerts will silently fail.
+
+   > [!NOTE]
+   > Falcosidekick supports [many additional outputs](https://github.com/falcosecurity/falcosidekick#outputs) beyond the three shown here, including Alertmanager, Elasticsearch, and PagerDuty. The configuration pattern is the same for each.
+
+   <Tabs>
+     <TabItem label="Slack">
 
        ```yaml title="uds-bundle.yaml"
        packages:
@@ -80,21 +74,8 @@ Configuring external alert routing requires two overrides in your `uds-bundle.ya
        | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
        | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
 
-    2. **Create and deploy your bundle**
-
-       ```bash
-       uds create <path-to-bundle-dir>
-       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-       ```
-
-    </Steps>
-  </TabItem>
-  <TabItem label="Mattermost">
-    <Steps>
-
-    1. **Configure the Mattermost webhook and network egress**
-
-       In your `uds-bundle.yaml`, add the Falcosidekick Mattermost output configuration (`falco` chart) and the network egress allow (`uds-falco-config` chart):
+     </TabItem>
+     <TabItem label="Mattermost">
 
        ```yaml title="uds-bundle.yaml"
        packages:
@@ -130,21 +111,8 @@ Configuring external alert routing requires two overrides in your `uds-bundle.ya
        | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
        | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
 
-    2. **Create and deploy your bundle**
-
-       ```bash
-       uds create <path-to-bundle-dir>
-       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-       ```
-
-    </Steps>
-  </TabItem>
-  <TabItem label="Microsoft Teams">
-    <Steps>
-
-    1. **Configure the Microsoft Teams webhook and network egress**
-
-       In your `uds-bundle.yaml`, add the Falcosidekick Teams output configuration (`falco` chart) and the network egress allow (`uds-falco-config` chart):
+     </TabItem>
+     <TabItem label="Microsoft Teams">
 
        ```yaml title="uds-bundle.yaml"
        packages:
@@ -180,16 +148,17 @@ Configuring external alert routing requires two overrides in your `uds-bundle.ya
        | `outputformat` | `all` (default), `text` (text only), or `facts` (facts only) |
        | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
 
-    2. **Create and deploy your bundle**
+     </TabItem>
+   </Tabs>
 
-       ```bash
-       uds create <path-to-bundle-dir>
-       uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-       ```
+2. **Create and deploy your bundle**
 
-    </Steps>
-  </TabItem>
-</Tabs>
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
 
 ## Verification
 
