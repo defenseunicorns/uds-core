@@ -145,13 +145,6 @@ By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots ar
    > [!CAUTION]
    > Replace `<YOUR_EBS_KMS_KEY_ARN>` with the ARN of your EBS volume encryption KMS key and `<YOUR_CLUSTER_NAME>` with your EKS cluster name. This policy scopes snapshot permissions to volumes tagged by the EBS CSI driver, following AWS best practices.
 
-3. **Create and deploy your bundle**
-
-   ```bash
-   uds create <path-to-bundle-dir>
-   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-   ```
-
 </Steps>
 
   </TabItem>
@@ -287,17 +280,17 @@ By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots ar
                  value: true
    ```
 
-5. **Create and deploy your bundle**
-
-   ```bash
-   uds create <path-to-bundle-dir>
-   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-   ```
-
 </Steps>
 
   </TabItem>
 </Tabs>
+
+**Create and deploy your bundle:**
+
+```bash
+uds create <path-to-bundle-dir>
+uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+```
 
 ## Verification
 
