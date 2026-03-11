@@ -1,7 +1,7 @@
 ---
 title: Create metric alerting rules
 sidebar:
-  order: 2.4
+  order: 5.4
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -69,11 +69,20 @@ UDS Core ships default alerting rules from the upstream kube-prometheus-stack ch
 
 2. **Deploy the rule**
 
-   Apply the PrometheusRule CR to your cluster. The Prometheus Operator picks it up automatically — no bundle rebuild is needed.
+   **(Recommended)** Include the PrometheusRule in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the PrometheusRule directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f my-app-alerts.yaml
    ```
+
+   The Prometheus Operator picks up PrometheusRule CRs automatically.
 
 3. **Optional: Disable or tune default alert rules**
 

@@ -1,7 +1,7 @@
 ---
 title: Set up uptime monitoring
 sidebar:
-  order: 2.7
+  order: 5.7
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -148,7 +148,14 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 5. **Deploy your Package**
 
-   Apply the Package CR to your cluster:
+   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
@@ -159,7 +166,15 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 > [!CAUTION]
 > If you have multiple expose entries for the same FQDN, only one can have uptime checks configured. The operator will block the Package CR if you attempt to configure uptime checks on more than one expose entry for the same FQDN.
 
-## Available metrics
+## Verification
+
+Confirm uptime monitoring is working:
+
+- Open Grafana and navigate to **Dashboards** then **UDS / Monitoring / Probe Uptime** to see the uptime dashboard
+- The dashboard displays uptime status timeline, percentage uptime, and TLS certificate expiration dates
+- Query `probe_success` in **Grafana Explore** to check individual probe status
+
+### Available metrics
 
 Blackbox Exporter provides the following key metrics for alerting and dashboarding:
 
@@ -179,14 +194,6 @@ probe_success
 # Check if a specific endpoint is up
 probe_success{instance="https://myapp.uds.dev/health"}
 ```
-
-## Verification
-
-Confirm uptime monitoring is working:
-
-- Open Grafana and navigate to **Dashboards** then **UDS / Monitoring / Uptime** to see the uptime dashboard
-- The dashboard displays uptime status timeline, percentage uptime, and TLS certificate expiration dates
-- Query `probe_success` in **Grafana Explore** to check individual probe status
 
 ## Troubleshooting
 

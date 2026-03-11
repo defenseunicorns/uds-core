@@ -1,7 +1,7 @@
 ---
 title: Add custom dashboards to Grafana
 sidebar:
-  order: 2.2
+  order: 5.2
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -117,7 +117,14 @@ Grafana in UDS Core uses a sidecar that watches for ConfigMaps labeled `grafana_
 
 3. **Deploy your dashboard**
 
-   For a basic dashboard without folder configuration, apply the ConfigMap directly (or include it in a Zarf package):
+   **(Recommended)** Include the dashboard ConfigMap in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the ConfigMap directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f dashboard-configmap.yaml

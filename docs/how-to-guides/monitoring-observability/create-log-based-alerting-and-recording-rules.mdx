@@ -1,7 +1,7 @@
 ---
 title: Create log-based alerting and recording rules
 sidebar:
-  order: 2.5
+  order: 5.5
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -76,18 +76,7 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
    - **`labels`** — Attached to the alert and used by Alertmanager for routing and grouping (e.g., `severity`, `service`).
    - **`annotations`** — Human-readable metadata like `summary` and `runbook_url` that appear in alert notifications.
 
-2. **Deploy the rules**
-
-   Apply the ConfigMap to your cluster. The Loki sidecar detects the `loki_rule: "1"` label and loads the rules automatically.
-
-   ```bash
-   uds zarf tools kubectl apply -f loki-alerting-rules.yaml
-   ```
-
-   > [!NOTE]
-   > The sidecar watches for ConfigMap changes continuously. Updates to existing ConfigMaps are picked up without any manual reload.
-
-3. **Optional: Create recording rules**
+2. **Optional: Create recording rules**
 
    Recording rules evaluate LogQL queries on a schedule and store the results as Prometheus metrics. This is useful when you want to build dashboards from log data or create metric-based alerts that are more efficient than repeated log queries.
 
@@ -124,11 +113,7 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
 
    Each `record` entry defines a Prometheus metric name (e.g., `my_app:error_rate`) and a LogQL expression that produces its value. The `interval` field controls how often the rules are evaluated — `30s` is a good starting point.
 
-   ```bash
-   uds zarf tools kubectl apply -f loki-recording-rules.yaml
-   ```
-
-4. **Optional: Alert on recorded metrics**
+3. **Optional: Alert on recorded metrics**
 
    Once recording rules produce Prometheus metrics, you can create standard Prometheus alerting rules against them using a `PrometheusRule` CR. This combines log-derived data with the full power of PromQL alerting.
 
@@ -155,12 +140,28 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
                runbook_url: "https://wiki.company.com/runbooks/my-app-high-errors"
    ```
 
-   ```bash
-   uds zarf tools kubectl apply -f prometheus-rule-from-logs.yaml
-   ```
-
    > [!TIP]
    > For more details on PrometheusRule CRs, see [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/).
+
+4. **Deploy your rules**
+
+   **(Recommended)** Include your rule ConfigMaps and any PrometheusRule CRs in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the manifests directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f loki-alerting-rules.yaml
+   uds zarf tools kubectl apply -f loki-recording-rules.yaml        # if using recording rules
+   uds zarf tools kubectl apply -f prometheus-rule-from-logs.yaml    # if alerting on recorded metrics
+   ```
+
+   > [!NOTE]
+   > The Loki sidecar watches for ConfigMap changes continuously. Updates to existing ConfigMaps are picked up without any manual reload.
 
 </Steps>
 

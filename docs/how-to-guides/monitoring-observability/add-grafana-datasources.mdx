@@ -1,7 +1,7 @@
 ---
 title: Add Grafana datasources
 sidebar:
-  order: 2.3
+  order: 5.3
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -49,6 +49,9 @@ The `extraDatasources` value injects entries into the existing `grafana-datasour
 
    > [!TIP]
    > You can add multiple datasources in a single override by appending entries to the `value` list. Each entry needs at minimum a `name`, `type`, and `url`.
+
+   > [!NOTE]
+   > Most external datasources require network egress from the `grafana` namespace. Use `additionalNetworkAllow` in your bundle overrides to permit this traffic. See [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) for details.
 
 2. **Create and deploy your bundle**
 

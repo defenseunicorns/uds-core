@@ -1,7 +1,7 @@
 ---
 title: Capture application metrics
 sidebar:
-  order: 2.1
+  order: 5.1
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -112,7 +112,14 @@ The Package CR `monitor` block is the UDS-native approach for defining metrics t
 
 4. **Deploy your Package**
 
-   Apply the Package CR to your cluster:
+   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
