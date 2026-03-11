@@ -20,7 +20,7 @@ This procedure follows upstream guidance from Prometheus Operator:
 
 ## Prerequisites
 
-- `kubectl` access with permissions to patch Prometheus CRs and PVCs and delete StatefulSets.
+- `kubectl` access with permissions to patch Prometheus CRs and PVCs, delete StatefulSets and Prometheus pods, and list/describe PVCs and StorageClasses.
 - Correct kube context selected.
 - Target Prometheus instance identified.
 - StorageClass for target PVCs supports expansion (`allowVolumeExpansion=true`).
