@@ -94,7 +94,7 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -192,7 +192,7 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    > [!NOTE]
    > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime — Keycloak does not need to be redeployed for them to take effect.
 
-7. **Deploy your bundle**
+7. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -256,7 +256,7 @@ uds zarf tools kubectl get configmap keycloak-tc-overrides -n keycloak \
 
 The output should be a single line with no literal newlines.
 
-## Related documentation
+## Related Documentation
 
 - [Build and deploy a custom identity config image](/how-to-guides/identity-access/build-deploy-custom-image/) — for CSS and structural theme changes that require an image rebuild
 

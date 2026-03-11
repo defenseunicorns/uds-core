@@ -70,7 +70,7 @@ If you are upgrading from an older deployment where FIPS was not enabled and use
 
 **Solution:** This happens when the admin password was hashed with `argon2` (the upstream Keycloak default before FIPS) or is shorter than 14 characters — FIPS mode rejects both. Follow the [migration steps](#migrating-from-non-fips-deployments) on a pre-upgrade deployment to resolve this before upgrading.
 
-## Related documentation
+## Related Documentation
 
 - [Keycloak FIPS 140-2 support](https://www.keycloak.org/server/fips) — upstream details on FIPS constraints and limitations
 - [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — password hashing algorithm and complexity settings

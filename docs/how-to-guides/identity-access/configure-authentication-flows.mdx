@@ -62,7 +62,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -80,7 +80,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 
    You only need to include the settings you want to change from default. However, for clarity and auditability, specifying all values explicitly is recommended.
 
-3. **Deploy your bundle**
+3. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -183,7 +183,7 @@ If you do need to require an additional factor after CAC authentication, use thi
 
 `X509_MFA_ENABLED: true` has no effect unless at least one of `OTP_ENABLED` or `WEBAUTHN_ENABLED` is also enabled.
 
-## Related documentation
+## Related Documentation
 
 - [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — required for X.509/CAC authentication
 - [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration

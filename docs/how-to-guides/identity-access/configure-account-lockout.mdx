@@ -38,7 +38,7 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -86,7 +86,7 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
 
    After configuring, save and test with a non-production account.
 
-3. **Deploy your bundle**
+3. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -133,7 +133,7 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Security Def
 
 **Solution:** `realmInitEnv` settings are applied only during initial realm import. The bundle must be deployed on a fresh Keycloak instance (or the realm must be re-imported) for the override to take effect. For an already-running instance, configure the settings manually in the Keycloak Admin Console as described in Step 2.
 
-## Related documentation
+## Related Documentation
 
 - [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable authentication flows alongside lockout settings
 

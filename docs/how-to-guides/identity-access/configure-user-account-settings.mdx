@@ -41,7 +41,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -84,7 +84,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -107,7 +107,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -124,7 +124,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
    > [!CAUTION]
    > Only add protocol mappers and client scopes that your applications explicitly require. Each addition expands the set of capabilities packages in the realm are permitted to use.
 
-4. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -173,7 +173,7 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Client Polic
 
 **Solution:** Confirm the mapper or scope name is spelled correctly. Also confirm Keycloak was fully redeployed after the `realmInitEnv` change was applied — these settings only take effect on initial realm import.
 
-## Related documentation
+## Related Documentation
 
 - [Keycloak password policies](https://www.keycloak.org/docs/latest/server_admin/#_password-policies) — full list of Keycloak password policy types
 - [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable authentication flows alongside password and account settings

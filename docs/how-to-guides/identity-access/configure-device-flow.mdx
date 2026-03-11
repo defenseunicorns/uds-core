@@ -123,7 +123,7 @@ spec:
 
 **Solution:** Authservice validates tokens against a specific client. A device flow token issued to a public client will not have the correct `aud` claim for an Authservice-protected application unless you configure an audience mapper. See [Configure service account clients](/how-to-guides/identity-access/configure-service-accounts/) for an example of adding audience mappers — the same approach applies here.
 
-## Related documentation
+## Related Documentation
 
 - [OAuth 2.0 Device Authorization Grant (RFC 8628)](https://datatracker.ietf.org/doc/html/rfc8628) — specification for the device flow
 - [Package CR reference](/reference/operator-and-crds/package/) — full SSO client field specification

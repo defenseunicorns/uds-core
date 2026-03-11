@@ -36,7 +36,7 @@ UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is *
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -196,7 +196,7 @@ After running `tofu apply`, confirm resources created by OpenTofu appear in the 
 2. Confirm `realm-management: realm-admin` is listed
 3. If missing, click **Assign role**, filter by **Client Roles**, find `realm-management: realm-admin`, and assign it
 
-## Related documentation
+## Related Documentation
 
 - [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) — full provider resource reference
 - [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement

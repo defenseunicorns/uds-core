@@ -78,7 +78,7 @@ Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` ove
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -100,7 +100,7 @@ Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` ove
 
    `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` are optional — omit them if you are not using group-based access control or managing group membership another way.
 
-4. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -160,7 +160,7 @@ After a user authenticates via Google, go to **Users** in the Keycloak Admin Con
 
 **Solution:** Confirm the group names in `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` exactly match the group names or emails in Google Workspace. Also confirm the user is a member of the correct Google Workspace group and that the SAML app includes the Groups attribute mapping.
 
-## Related documentation
+## Related Documentation
 
 - [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable the `SOCIAL_AUTH_ENABLED` toggle alongside IdP configuration
 - [Enforce group-based access controls](/how-to-guides/identity-access/enforce-group-based-access/) — restrict application access to users in specific Keycloak groups

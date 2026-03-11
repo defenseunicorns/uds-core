@@ -33,7 +33,7 @@ Retries can improve resilience in environments with intermittent network issues,
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -59,7 +59,7 @@ Retries can improve resilience in environments with intermittent network issues,
    | `applyJitter` | `true` | Adds randomness to prevent retry storms |
    | `jitterFactor` | `0.5` | Jitter factor (0–1) for backoff variation |
 
-2. **Deploy your bundle**
+2. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -75,11 +75,9 @@ Confirm the bundle override applied successfully:
 1. Review your `uds deploy` output for the Keycloak release upgrade
 2. Confirm Keycloak is healthy and login flows that depend on external services (such as external IdPs) behave as expected during transient network failures
 
-## Related documentation
+## Related Documentation
 
-- [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/) — session and logout behavior
-- [Connect Azure AD as an identity provider](/how-to-guides/identity-access/connect-azure-ad-idp/) — upstream IdP configuration
-- [Configure Google SAML as an identity provider](/how-to-guides/identity-access/configure-social-idp/) — upstream IdP configuration
+- [Configure Keycloak outgoing HTTP requests](https://www.keycloak.org/server/outgoinghttp) — upstream Keycloak docs for outgoing HTTP requests
 
 ## Next steps
 

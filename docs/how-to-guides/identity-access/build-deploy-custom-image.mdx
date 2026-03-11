@@ -88,7 +88,7 @@ An image rebuild is required when you change:
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -98,7 +98,7 @@ An image rebuild is required when you change:
                  value: registry.example.com/uds/identity-config:v1.0.0
    ```
 
-6. **Deploy your bundle**
+6. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -135,7 +135,7 @@ openssl s_client -connect sso.<domain>:443
 | Theme/truststore/plugin changes not reflected | Login page shows old branding, certificate auth fails, or plugin behavior unchanged despite new image | Themes, truststore, and plugins apply when the init container runs at pod start. Confirm the pod restarted: `uds zarf tools kubectl rollout status statefulset/keycloak -n keycloak`. If not, trigger a rollout: `uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak` |
 | Plugin JAR missing from providers | Custom plugin behavior not visible after deploy | Check `uds run dev-build` output for Maven errors. Verify the JAR exists: `uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/` |
 
-## Related documentation
+## Related Documentation
 
 - [Customize login page branding](/how-to-guides/identity-access/customize-branding/) — logo and T&C changes that do not require an image rebuild
 - [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — truststore-specific build and deploy steps

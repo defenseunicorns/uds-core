@@ -42,7 +42,7 @@ This guide covers Helm chart values, which handle the most common operational co
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -80,7 +80,7 @@ This guide covers Helm chart values, which handle the most common operational co
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          keycloak:
@@ -133,7 +133,7 @@ This guide covers Helm chart values, which handle the most common operational co
    > [!NOTE]
    > This is a per-client setting in the Package CR, not a global Keycloak setting. To disable it globally, configure the default in Keycloak's realm settings instead.
 
-4. **Deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -188,7 +188,7 @@ Also verify that the client session idle timeout is ≤ the realm session idle t
 uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep logout
 ```
 
-## Related documentation
+## Related Documentation
 
 - [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/) — for theme and plugin customization beyond Helm values
 - [Manage FIPS 140-2 mode](/how-to-guides/identity-access/enable-fips-mode/) — verify FIPS status and understand constraints
