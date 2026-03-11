@@ -39,43 +39,112 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
 
 ## Steps
 
-<Tabs>
-  <TabItem label="S3-compatible storage">
-
 <Steps>
 
-1. **Set S3 bucket variables**
+1. **Configure your storage destination**
 
-   Add the following variables to your `uds-config.yaml`:
+   <Tabs>
+     <TabItem label="S3-compatible storage">
 
-   ```yaml title="uds-config.yaml"
-   variables:
-     core:
-       VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
-       VELERO_BUCKET: "my-velero-backups"
-       VELERO_BUCKET_REGION: "us-east-1"
-       VELERO_BUCKET_KEY: "<your-access-key>"
-       VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
-   ```
+       Add the following variables to your `uds-config.yaml`:
 
-   The full set of available variables:
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
+           VELERO_BUCKET: "my-velero-backups"
+           VELERO_BUCKET_REGION: "us-east-1"
+           VELERO_BUCKET_KEY: "<your-access-key>"
+           VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
+       ```
 
-   | Variable | Description | Default |
-   |---|---|---|
-   | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
-   | `VELERO_BUCKET` | Bucket name | `uds` |
-   | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
-   | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
-   | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
-   | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
-   | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
+       The full set of available variables:
 
-   > [!NOTE]
-   > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
+       | Variable | Description | Default |
+       |---|---|---|
+       | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
+       | `VELERO_BUCKET` | Bucket name | `uds` |
+       | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
+       | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
+       | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
+       | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
+       | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
 
-2. **(Optional) Use an existing credentials Secret**
+       > [!NOTE]
+       > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
 
-   If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+       **(Optional) Use an existing credentials Secret** — If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             velero:
+               velero:
+                 values:
+                   - path: credentials.existingSecret
+                     value: "velero-bucket-credentials"
+       ```
+
+       The Secret must follow this format:
+
+       ```yaml
+       apiVersion: v1
+       kind: Secret
+       metadata:
+         name: velero-bucket-credentials
+         namespace: velero
+       type: Opaque
+       stringData:
+         cloud: |
+           [default]
+           aws_access_key_id=<your-access-key>
+           aws_secret_access_key=<your-secret-key>
+       ```
+
+     </TabItem>
+     <TabItem label="Azure Blob Storage">
+
+       Override the Velero credentials and backup storage location to use Azure Blob Storage:
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             velero:
+               velero:
+                 values:
+                   - path: credentials.secretContents.cloud
+                     value: |
+                       AZURE_STORAGE_ACCOUNT_ACCESS_KEY=<your-storage-account-access-key>
+                       AZURE_CLOUD_NAME=<your-cloud-name>
+                   - path: configuration.backupStorageLocation
+                     value:
+                       - name: default
+                         provider: azure
+                         bucket: <your-container-name>
+                         config:
+                           storageAccount: <your-storage-account>
+                           resourceGroup: <your-resource-group>
+                           storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
+                           subscriptionId: <your-subscription-id>
+       ```
+
+       > [!NOTE]
+       > The `bucket` field corresponds to the Azure Blob container name.
+
+     </TabItem>
+   </Tabs>
+
+2. **(Optional) Configure storage network egress**
+
+   By default, Velero's network policy allows egress to **any** destination for storage connectivity. To restrict egress to a specific target, add the following overrides to your bundle using the `uds-velero-config` chart:
+
+   **Internal storage** (in-cluster MinIO or similar):
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -84,143 +153,66 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
        ref: x.x.x-upstream
        overrides:
          velero:
-           velero:
+           uds-velero-config:
              values:
-               - path: credentials.existingSecret
-                 value: "velero-bucket-credentials"
-   ```
-
-   The Secret must follow this format:
-
-   ```yaml
-   apiVersion: v1
-   kind: Secret
-   metadata:
-     name: velero-bucket-credentials
-     namespace: velero
-   type: Opaque
-   stringData:
-     cloud: |
-       [default]
-       aws_access_key_id=<your-access-key>
-       aws_secret_access_key=<your-secret-key>
-   ```
-
-</Steps>
-
-  </TabItem>
-  <TabItem label="Azure Blob Storage">
-
-<Steps>
-
-1. **Configure Azure credentials and backup storage location**
-
-   Override the Velero credentials and backup storage location to use Azure Blob Storage:
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         velero:
-           velero:
-             values:
-               - path: credentials.secretContents.cloud
-                 value: |
-                   AZURE_STORAGE_ACCOUNT_ACCESS_KEY=<your-storage-account-access-key>
-                   AZURE_CLOUD_NAME=<your-cloud-name>
-               - path: configuration.backupStorageLocation
+               - path: storage.internal.enabled
+                 value: true
+               - path: storage.internal.remoteSelector
                  value:
-                   - name: default
-                     provider: azure
-                     bucket: <your-container-name>
-                     config:
-                       storageAccount: <your-storage-account>
-                       resourceGroup: <your-resource-group>
-                       storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
-                       subscriptionId: <your-subscription-id>
+                   app: minio
+               - path: storage.internal.remoteNamespace
+                 value: "minio"
+   ```
+
+   **CIDR-restricted** (known IP range):
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         velero:
+           uds-velero-config:
+             values:
+               - path: storage.egressCidr
+                 value: "10.0.0.0/8"
+   ```
+
+3. **(Optional) Customize backup schedule and retention**
+
+   The default backup schedule runs daily at 03:00 UTC with a 10-day retention window. To customize these settings, add the following overrides to your bundle:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         velero:
+           velero:
+             values:
+               # Run backups every 6 hours
+               - path: schedules.udsbackup.schedule
+                 value: "0 */6 * * *"
+               # Retain backups for 30 days
+               - path: schedules.udsbackup.template.ttl
+                 value: "720h"
    ```
 
    > [!NOTE]
-   > The `bucket` field corresponds to the Azure Blob container name.
+   > The default schedule excludes `kube-system` and `velero` namespaces and includes cluster-scoped resources. These defaults apply unless explicitly overridden.
+
+4. **Create and deploy your bundle**
+
+   Combine all overrides from the steps above into a single bundle configuration, then create and deploy:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
 
 </Steps>
-
-  </TabItem>
-</Tabs>
-
-### (Optional) Configure storage network egress
-
-By default, Velero's network policy allows egress to **any** destination for storage connectivity. To restrict egress to a specific target, add the following overrides to your bundle using the `uds-velero-config` chart:
-
-**Internal storage** (in-cluster MinIO or similar):
-
-```yaml title="uds-bundle.yaml"
-packages:
-  - name: core
-    repository: registry.defenseunicorns.com/public/core
-    ref: x.x.x-upstream
-    overrides:
-      velero:
-        uds-velero-config:
-          values:
-            - path: storage.internal.enabled
-              value: true
-            - path: storage.internal.remoteSelector
-              value:
-                app: minio
-            - path: storage.internal.remoteNamespace
-              value: "minio"
-```
-
-**CIDR-restricted** (known IP range):
-
-```yaml title="uds-bundle.yaml"
-packages:
-  - name: core
-    repository: registry.defenseunicorns.com/public/core
-    ref: x.x.x-upstream
-    overrides:
-      velero:
-        uds-velero-config:
-          values:
-            - path: storage.egressCidr
-              value: "10.0.0.0/8"
-```
-
-### (Optional) Customize backup schedule and retention
-
-The default backup schedule runs daily at 03:00 UTC with a 10-day retention window. To customize these settings, add the following overrides to your bundle:
-
-```yaml title="uds-bundle.yaml"
-packages:
-  - name: core
-    repository: registry.defenseunicorns.com/public/core
-    ref: x.x.x-upstream
-    overrides:
-      velero:
-        velero:
-          values:
-            # Run backups every 6 hours
-            - path: schedules.udsbackup.schedule
-              value: "0 */6 * * *"
-            # Retain backups for 30 days
-            - path: schedules.udsbackup.template.ttl
-              value: "720h"
-```
-
-> [!NOTE]
-> The default schedule excludes `kube-system` and `velero` namespaces and includes cluster-scoped resources. These defaults apply unless explicitly overridden.
-
-### Create and deploy your bundle
-
-Combine all overrides from the steps above into a single bundle configuration, then create and deploy:
-
-```bash
-uds create <path-to-bundle-dir>
-uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-```
 
 ## Verification
 
@@ -239,6 +231,8 @@ uds zarf tools kubectl get schedule -n velero
 - Velero pod is `Running`
 - BackupStorageLocation phase is `Available`
 - Schedule `velero-udsbackup` exists with the expected cron expression
+
+To confirm storage is working end-to-end, trigger a manual backup and verify it completes. See [Perform backup and restore](/how-to-guides/backup-restore/perform-backup-restore/).
 
 ## Troubleshooting
 
