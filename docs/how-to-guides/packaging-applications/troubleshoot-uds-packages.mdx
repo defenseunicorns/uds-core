@@ -1,0 +1,144 @@
+---
+title: Troubleshoot UDS Package Deployments
+sidebar:
+  order: 2.3
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll learn how to diagnose and resolve common issues that arise when deploying UDS Packages, including stalled Helm installs, Pepr policy violations, and general debugging techniques.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A UDS Package deployed or in the process of deploying
+
+## Deployment stuck in Helm "pending-install" state
+
+**Symptom:** A package deployment appears stalled — the terminal shows "performing Helm install" for several minutes without progressing.
+
+Check the Helm release status:
+
+```sh
+helm status <package-name> -n <namespace>
+```
+
+```sh title="Example output"
+NAME: reference-package
+LAST DEPLOYED: Wed Feb 18 15:03:51 2026
+NAMESPACE: reference-package
+STATUS: pending-install
+REVISION: 1
+DESCRIPTION: Initial install underway
+RESOURCES:
+==> v1/Deployment
+NAME                READY   UP-TO-DATE   AVAILABLE   AGE
+reference-package   0/1     0            0           109s
+```
+
+A `pending-install` status means Helm is waiting for resources to become ready. Inspecting Pods or Deployments may not reveal enough detail — check namespace Events instead:
+
+```sh
+uds zarf tools kubectl get events -n <namespace>
+```
+
+```sh title="Example output"
+LAST SEEN   TYPE      REASON              OBJECT                                    MESSAGE
+8m26s       Warning   FailedCreate        replicaset/reference-package-674cc4c88b   Error creating: admission webhook "pepr-uds-core.pepr.dev" denied the request: Pod level securityContext does not meet the non-root user requirement.
+```
+
+**Solution:** The Pepr admission webhook rejected the pod because it's configured to run as root. Update the security context in the appropriate values file for the chart that deploys the affected image. When multiple values files are used, each image flavor may define its own security context, so apply the change in the file corresponding to the specific image being deployed:
+
+```yaml title="values/common-values.yaml"
+podSecurityContext:
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+```
+
+> [!TIP]
+> If you prefer a UI-based workflow, you can inspect events using K9s or `uds zarf tools monitor`.
+
+## Identify Pepr policy violations
+
+Use [`uds monitor pepr`](https://uds.defenseunicorns.com/reference/cli/commands/uds_monitor_pepr/) to watch for policy violations in real time:
+
+```sh
+uds monitor pepr denied
+```
+
+```sh title="Example output"
+ ✗ DENIED    reference-package/reference-package-67dd4655d7-jq9xk
+             Pod level securityContext does not meet the non-root user requirement.
+```
+
+Any package that violates Pepr policies will appear with the reason for denial. Common violations include missing security contexts, privileged containers, and restricted volume types.
+
+**Solution:** Fix the underlying configuration in your Helm values, or if the workload legitimately requires an exemption, see [Request Policy Exemptions](/how-to-guides/policy-and-compliance/request-policy-exemptions/).
+
+## Remove a package from the cluster
+
+List installed packages and remove the one you need to redeploy:
+
+```sh
+# List all installed packages
+uds zarf package list
+
+# Remove a specific package
+uds zarf package remove <package-name>
+```
+
+See the Zarf docs for [`zarf package list`](https://docs.zarf.dev/commands/zarf_package_list/) and [`zarf package remove`](https://docs.zarf.dev/commands/zarf_package_remove/) for additional options.
+
+## Useful debugging commands
+
+### Inspect upstream Helm chart values
+
+When you need to verify what values an upstream chart accepts, pull them locally:
+
+```sh
+helm show values oci://ghcr.io/uds-packages/reference-package/helm/reference-package
+```
+
+### Render Helm templates locally
+
+If you suspect a template isn't producing the expected output:
+
+```sh
+helm template <release-name> <chart-path> -f values.yaml
+```
+
+See the Helm docs for [`helm template`](https://helm.sh/docs/helm/helm_template/) and [`helm show values`](https://helm.sh/docs/helm/helm_show_values/).
+
+## Related documentation
+
+- [Kubernetes: Troubleshooting Clusters](https://kubernetes.io/docs/tasks/debug/debug-cluster/)
+- [Kubernetes: Troubleshooting Applications](https://kubernetes.io/docs/tasks/debug/debug-application/)
+- [Helm: Troubleshooting](https://helm.sh/docs/v3/faq/troubleshooting/)
+- [Pepr Policy Engine](/reference/policy-engine/) — full list of enforced policies
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Validate package requirements"
+    description="Check your package against production-readiness standards."
+    href="/how-to-guides/packaging-applications/validate-package-requirements/"
+  />
+  <LinkCard
+    title="Package testing"
+    description="Set up journey and upgrade tests to catch issues before deployment."
+    href="/how-to-guides/packaging-applications/package-testing/"
+  />
+</CardGrid>

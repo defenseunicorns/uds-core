@@ -1,0 +1,463 @@
+---
+title: Package an Existing Helm Chart
+sidebar:
+  order: 2.1
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll take an existing Helm chart and package it as a UDS Package — complete with network policies, SSO integration, and monitoring — ready to deploy on UDS Core. This guide uses the [UDS Package Template](https://github.com/uds-packages/template) as the starting point, which uses a standard format for UDS Packages.
+
+All examples reference the [Reference Package](https://github.com/uds-packages/reference-package), a working UDS Package that demonstrates every integration point covered here.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- The Helm chart you want to package (repository URL, chart name, and version)
+- Familiarity with [Helm values](https://helm.sh/docs/chart_template_guide/values_files/) and [Zarf packages](https://docs.zarf.dev/ref/packages/)
+
+## Before you begin
+
+A UDS Package wraps a Helm chart with platform integration — networking, SSO, monitoring, and security policies — declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, and network policies.
+
+The template repository provides the standard directory structure:
+
+| File / Directory | Purpose |
+|---|---|
+| `bundle/` | Dev/test bundle for local development and CI |
+| `chart/` | Helm chart containing the UDS Package CR and integration templates |
+| `common/` | Base `zarf.yaml` shared across all flavors |
+| `tasks/` | Package-specific task definitions included by `tasks.yaml` |
+| `tests/` | Integration tests (Playwright, Jest, or custom scripts) |
+| `values/` | Helm values files — `common-values.yaml` for shared config, `<flavor>-values.yaml` per flavor |
+| `tasks.yaml` | Root [UDS Runner](https://github.com/defenseunicorns/uds-common/tree/main/tasks) task file — entry point for `uds run` commands |
+| `zarf.yaml` | Root package definition — metadata, flavors, images, and variable declarations |
+
+## Steps
+
+<Steps>
+
+1. **Create your repository from the template**
+
+   Clone the template locally:
+   ```bash 
+   git clone https://github.com/uds-packages/template.git
+   ```
+
+   Find & Replace all template placeholders throughout the repository. These are the values you'll substitute:
+
+   | Placeholder | Replace with | Example |
+   |---|---|---|
+   | `#TEMPLATE_APPLICATION_NAME#` | Lowercase app identifier (used in filenames, namespaces, resource names) | `reference-package` |
+   | `#TEMPLATE_APPLICATION_DISPLAY_NAME#` | Human-readable name | `Reference Package` |
+   | `#TEMPLATE_CHART_REPO#` | Helm chart OCI or HTTPS repository URL | `oci://ghcr.io/uds-packages/reference-package/helm/reference-package` |
+   | `#UDS_PACKAGE_REPO#` | Your package's GitHub repository URL | `https://github.com/uds-packages/reference-package` |
+
+
+   Update `CODEOWNERS` following the guidance in `CODEOWNERS-template.md`, then remove `CODEOWNERS-template.md`.
+
+2. **Configure the common Zarf package definition**
+
+   The `common/zarf.yaml` defines what's shared across all flavors — the config chart, the upstream Helm chart reference, and shared values. Update it to point to your application's upstream chart:
+
+   ```yaml title="common/zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: reference-package-common
+     description: "UDS Reference Package Common Package"
+
+   components:
+     - name: reference-package
+       required: true
+       charts:
+         - name: uds-reference-package-config
+           namespace: reference-package
+           version: 0.1.0
+           localPath: ../chart
+         - name: reference-package
+           namespace: reference-package
+           version: 0.1.0
+           url: oci://ghcr.io/uds-packages/reference-package/helm/reference-package
+           valuesFiles:
+             - ../values/common-values.yaml
+   ```
+
+   > [!NOTE]
+   > The first chart (`uds-reference-package-config`) is the local config chart that deploys the UDS Package CR and any supplemental templates (secrets, dashboards, etc.). The second is the upstream application chart. Both deploy to the same namespace.
+
+3. **Configure the root Zarf package definition**
+
+   The root `zarf.yaml` defines package metadata and per-flavor components. Each flavor imports from `common/zarf.yaml` and adds its own values file and container images:
+
+   The `variables` block declares Zarf package variables that deployers can set at deploy time via `uds-config.yaml` or `--set` flags. They are injected into Helm values using the `###ZARF_VAR_<NAME>###` syntax — you can see this in `chart/values.yaml` where `domain: "###ZARF_VAR_DOMAIN###"` picks up the deployer-supplied domain at deploy time. Use `sensitive: true` on variables that contain secrets so their values are never logged. See the [Zarf variables reference](https://docs.zarf.dev/ref/packages/#variables) for all available options.
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: reference-package
+     description: "UDS Reference Package package"
+     version: "dev"
+
+   variables:
+     - name: DOMAIN
+       default: "uds.dev"
+
+   components:
+     - name: reference-package
+       required: true
+       description: "Deploy Upstream Reference Package"
+       import:
+         path: common
+       only:
+         flavor: upstream
+       charts:
+         - name: reference-package
+           valuesFiles:
+             - values/upstream-values.yaml
+       images:
+         - ghcr.io/uds-packages/reference-package/container/reference-package:v0.1.0
+   ```
+
+   The `images` list must include every container image the application needs. Zarf pulls these images during package creation and pushes them to the in-cluster registry during deployment.
+
+   > [!TIP]
+   > Start with a single `upstream` flavor. Add other flavors later, such as `registry` or `unicorn`. Each flavor uses different image references and may need its own values overrides.
+
+   > [!TIP]
+   > Not sure which images your Helm chart uses? Run `uds zarf dev find-images` from your package directory. It renders the chart and extracts every image reference:
+   > ```yaml
+   > components:
+   >   - name: reference-package
+   >     images:
+   >       - reference-package:v0.1.0
+   > ```
+   > Use this list to populate the `images` field in your `zarf.yaml`.
+
+4. **Update the flavor values**
+
+   Create `values/upstream-values.yaml` for flavor-specific overrides (primarily image references). The structure here must match your upstream chart's `values.yaml` — check the chart's documentation or inspect its `values.yaml` to find the correct keys for the image repository, tag, and pull policy:
+
+   ```yaml title="values/upstream-values.yaml"
+   image:
+     repository: ghcr.io/uds-packages/reference-package/container/reference-package
+     tag: v0.1.0
+     pullPolicy: Always
+   ```
+
+5. **Define the UDS Package CR**
+
+   The Package CR in `chart/templates/uds-package.yaml` tells the UDS Operator what your application needs from the platform. Configure the three main integration sections:
+
+   **Networking** — expose services through Istio gateways and declare allowed traffic.
+
+   The `expose` block creates an Istio VirtualService that routes external traffic through a gateway to your service. The `selector` must match the labels on your application's pods — if it doesn't, traffic won't reach the right pods. The `host` becomes the subdomain (e.g., `reference-package.uds.dev`). See the [Package CR expose reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for all available fields.
+
+   ```yaml title="chart/templates/uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: reference-package
+     namespace: {{ .Release.Namespace }}
+   spec:
+     network:
+       serviceMesh:
+         mode: ambient
+       expose:
+         - service: reference-package
+           selector:
+             app: reference-package   # must match your pod labels
+           gateway: tenant
+           host: reference-package
+           port: 8080
+   ```
+
+   The `allow` block creates NetworkPolicies following the principle of least privilege — only permit traffic your application actually needs:
+
+   ```yaml title="chart/templates/uds-package.yaml (continued)"
+       allow:
+         - direction: Ingress
+           remoteGenerated: IntraNamespace
+
+         - direction: Egress
+           remoteGenerated: IntraNamespace
+
+         - direction: Egress
+           selector:
+             app: reference-package
+           {{- if .Values.postgres.internal }}
+           remoteNamespace: {{ .Values.postgres.namespace | quote }}
+           remoteSelector:
+             {{ .Values.postgres.selector | toYaml | nindent 10 }}
+           port: {{ .Values.postgres.port }}
+           {{- else }}
+           remoteGenerated: Anywhere
+           {{- end }}
+           description: "Reference Package Postgres"
+
+         - direction: Egress
+           remoteNamespace: keycloak
+           remoteSelector:
+             app.kubernetes.io/name: keycloak
+           selector:
+             app: reference-package
+           port: 8080
+           description: "SSO Internal"
+
+         - direction: Egress
+           remoteNamespace: istio-tenant-gateway
+           remoteSelector:
+             app: tenant-ingressgateway
+           selector:
+             app: reference-package
+           port: 443
+           description: "SSO External"
+
+         # Custom rules for unanticipated scenarios
+         {{- with .Values.additionalNetworkAllow }}
+         {{ toYaml . | nindent 6 }}
+         {{- end }}
+   ```
+
+   The reference package declares exactly what it needs:
+   - Intra-namespace traffic for pod-to-pod communication
+   - Egress to the PostgreSQL database (templated for internal vs. external)
+   - Egress to Keycloak for SSO token validation (both internal service and external gateway)
+   - An escape hatch (`additionalNetworkAllow`) for deployers to add custom rules via bundle overrides
+
+   > [!IMPORTANT]
+   > Network `allow` rules must follow the principle of least privilege — only permit traffic your application actually needs. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for all available fields.
+
+   **SSO** — register a Keycloak client if your app has a user login. If your application has no native OIDC/SSO support, [Authservice](/concepts/core-features/identity-access/) is available as an alternative.
+
+   ```yaml title="chart/templates/uds-package.yaml (continued)"
+     {{- if .Values.sso.enabled }}
+     sso:
+       - name: Reference Package Login
+         protocol: openid-connect
+         clientId: uds-reference-package
+         secretName: {{ .Values.sso.secretName }}
+         redirectUris:
+           - "https://reference-package.{{ .Values.domain }}/callback"
+           - "https://reference-package.{{ .Values.domain }}"
+         secretTemplate:
+           KEYCLOAK_URL: "https://sso.{{ .Values.domain }}/realms/uds"
+           KEYCLOAK_CLIENT_ID: "clientField(clientId)"
+           KEYCLOAK_CLIENT_SECRET: "clientField(secret)"
+           APP_CALLBACK_URL: "https://reference-package.{{ .Values.domain }}/callback"
+     {{- end }}
+   ```
+
+   The `secretTemplate` generates a Kubernetes secret with the exact fields your application expects for its SSO configuration. The keys and values vary by application — check your upstream chart's documentation or `values.yaml` for the environment variables it uses to configure its OIDC/Keycloak connection. See the [Package CR SSO reference](/reference/operator-and-crds/packages-v1alpha1-cr/).
+
+   **Monitoring** — declare metrics endpoints for Prometheus to scrape, if your app supports metrics:
+
+   ```yaml title="chart/templates/uds-package.yaml (continued)"
+     monitor:
+       - selector:
+           app: reference-package
+         targetPort: 8080
+         portName: http
+         path: /metrics
+         kind: ServiceMonitor
+         description: Metrics scraping for Reference Package
+   ```
+
+6. **Configure the chart values**
+
+   The config chart's `chart/values.yaml` defines the inputs consumed by your Package CR templates. Bundle deployers can override them via `overrides` in `uds-bundle.yaml`:
+
+   ```yaml title="chart/values.yaml"
+   domain: "###ZARF_VAR_DOMAIN###"
+
+   sso:
+     enabled: true
+     secretName: reference-package-sso
+
+   postgres:
+     username: "reference"
+     password: ""
+     existingSecret:
+       name: "reference-package.reference-package.pg-cluster.credentials.postgresql.acid.zalan.do"
+       passwordKey: password
+       usernameKey: username
+     host: "pg-cluster.postgres.svc.cluster.local"
+     dbName: "reference"
+     connectionOptions: "?sslmode=disable"
+     internal: true
+     selector:
+       cluster-name: pg-cluster
+     namespace: postgres
+     port: 5432
+
+   additionalNetworkAllow: []
+
+   monitoring:
+     enabled: true
+   ```
+
+   `values/common-values.yaml` contains Helm values passed to the **upstream application chart** across all flavors — use it for security hardening and shared defaults that every deployment should have. Use bundle `overrides` for anything deployment-specific:
+
+   ```yaml title="values/common-values.yaml"
+   # Pod-level security
+   podSecurityContext:
+     runAsUser: 1000
+     runAsGroup: 1000
+     fsGroup: 1000
+
+   # Container-level security
+   securityContext:
+     capabilities:
+       drop:
+         - ALL
+     readOnlyRootFilesystem: true
+     runAsNonRoot: true
+     allowPrivilegeEscalation: false
+   ```
+
+   > [!IMPORTANT]
+   > The security context is critical — UDS Core enforces non-root execution by default via Pepr policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
+
+
+
+   > [!NOTE]
+   > Use `values` (Helm value overrides in `uds-bundle.yaml`) for static configuration and `variables` (set at deploy time via `uds-config.yaml`) for secrets and environment-specific settings. Add `sensitive: true` to password and secret variables.
+
+7. **Set up the dev/test bundle**
+
+   A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) composes multiple Zarf packages into a single deployable unit. The dev bundle in `bundle/uds-bundle.yaml` wires your package together with its dependencies — like a database — so you can develop and test locally without needing a full environment. It also serves as the bundle used in CI to validate your package end-to-end.
+
+   The reference package includes a PostgreSQL operator as a dependency:
+
+   ```yaml title="bundle/uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: reference-package-test
+     description: A UDS bundle for deploying Reference Package and its dependencies on a development cluster
+     version: dev
+
+   packages:
+     - name: postgres-operator
+       repository: ghcr.io/uds-packages/postgres-operator
+       ref: 1.14.0-uds.13-upstream
+       overrides:
+         postgres-operator:
+           uds-postgres-config:
+             values:
+               - path: postgresql
+                 value:
+                   enabled: true
+                   teamId: "uds"
+                   volume:
+                     size: "10Gi"
+                   numberOfInstances: 2
+                   users:
+                     reference-package.reference-package: []
+                   databases:
+                     reference: reference-package.reference-package
+                   version: "15"
+                   ingress:
+                     - remoteNamespace: reference-package
+
+     - name: reference-package
+       path: ../
+       ref: dev
+       overrides:
+         reference-package:
+           reference-package:
+             values:
+               - path: database
+                 value:
+                   secretName: "reference-package-postgres"
+                   secretKey: "PASSWORD"
+               - path: sso
+                 value:
+                   enabled: true
+                   secretName: reference-package-sso
+               - path: monitoring
+                 value:
+                   enabled: true
+   ```
+
+   The bundle uses `overrides` to wire up dependencies — connecting the database secret, enabling SSO, and enabling monitoring. This is how deployers configure packages without modifying the package itself.
+
+8. **Build and deploy your package**
+
+   The template ships with a UDS Runner task file that handles the full workflow. Use these tasks rather than running Zarf and UDS commands manually:
+
+   ```bash
+   # Spin up a local k3d cluster, build, deploy
+   uds run default
+
+   # Iterate on an existing cluster (skips cluster & SBOM creation  — faster inner loop)
+   uds run dev
+   ```
+
+   > [!TIP]
+   > Run `uds run --list` to see all available tasks and what each one does.
+
+</Steps>
+
+## Verification
+
+Confirm the UDS Operator processed your Package CR:
+
+```bash
+uds zarf tools kubectl get package -n reference-package
+```
+
+You can also monitor resource status interactively with [K9s](https://k9scli.io/) or `uds zarf tools monitor`.
+
+```text title="Expected output"
+NAME                STATUS   SSO CLIENTS                ENDPOINTS                        MONITORS                  NETWORK POLICIES   AGE
+reference-package   Ready    ["uds-reference-package"]  ["reference-package.uds.dev"]    ["reference-package-..."] 7                  2m
+```
+
+`Ready` confirms all platform integrations were provisioned. Then verify the individual resources:
+
+```bash
+# Verify network policies were created
+uds zarf tools kubectl get networkpolicies -n reference-package
+
+# Verify the VirtualService was created for ingress routing
+uds zarf tools kubectl get virtualservices -n reference-package
+
+# Verify the service is accessible through the gateway
+curl -sI https://reference-package.uds.dev | head -1
+
+# Verify monitors were created
+uds zarf tools kubectl get servicemonitors,podmonitors -n reference-package
+```
+
+For web applications, you can also navigate directly to `https://reference-package.uds.dev` in your browser to verify the application is accessible and SSO login works.
+
+## Troubleshooting
+
+See [Troubleshoot UDS Package Deployments](/how-to-guides/packaging-applications/troubleshoot-uds-packages/) for detailed walkthroughs of common issues.
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Package testing"
+    description="Set up journey and upgrade tests for your package."
+    href="/how-to-guides/packaging-applications/package-testing/"
+  />
+  <LinkCard
+    title="Validate package requirements"
+    description="Check your package against production-readiness standards before publishing."
+    href="/how-to-guides/packaging-applications/validate-package-requirements/"
+  />
+  <LinkCard
+    title="Publish to the UDS registry"
+    description="Build and publish your validated package."
+    href="/how-to-guides/packaging-applications/publish-bundle-to-uds-registry/"
+  />
+  <LinkCard
+    title="Package CR reference"
+    description="Full schema and field documentation for the UDS Package CR."
+    href="/reference/operator-and-crds/packages-v1alpha1-cr/"
+  />
+</CardGrid>

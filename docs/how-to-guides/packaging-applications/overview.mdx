@@ -1,0 +1,45 @@
+---
+title: Overview
+sidebar:
+  order: 2
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These guides help application developers and platform engineers package their applications for deployment with UDS Core. Each guide focuses on a single task with step-by-step instructions and examples.
+
+A UDS Package is a [Zarf Package](https://docs.zarf.dev/ref/packages/) that deploys on top of UDS Core and includes the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). Packages contain the OCI images, Helm charts, and supplemental Kubernetes manifests required for an application to integrate with UDS Core services like SSO, networking, and monitoring.
+
+## Resources
+
+- [UDS Common](https://github.com/defenseunicorns/uds-common) — shared framework with common configurations and tasks
+- [UDS Package Template](https://github.com/uds-packages/template) — repository template for bootstrapping a new package
+- [Reference UDS Package](https://github.com/uds-packages/reference-package) — example package demonstrating structure and UDS Core integration
+- [UDS PK](https://github.com/defenseunicorns/uds-pk) — CLI tool for developing, maintaining, and publishing packages
+- [Maru Runner](https://github.com/defenseunicorns/maru-runner) — the UDS task runner behind uds run, useful if someone wants to understand how task files work or write custom tasks
+- [Zarf docs](https://docs.zarf.dev) — foundational since UDS Packages are Zarf packages; already linked inline but worth surfacing at the top level
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Package an existing Helm chart"
+    description="Take an existing Helm chart and package it as a UDS Package with network policies, SSO, and monitoring."
+    href="/how-to-guides/packaging-applications/package-existing-helm-chart/"
+  />
+  <LinkCard
+    title="Package testing"
+    description="Set up journey and upgrade tests to validate deployment correctness and UDS Core integration."
+    href="/how-to-guides/packaging-applications/package-testing/"
+  />
+  <LinkCard
+    title="Validate package requirements"
+    description="Check your package against production-readiness standards before publishing."
+    href="/how-to-guides/packaging-applications/validate-package-requirements/"
+  />
+  <LinkCard
+    title="Troubleshoot UDS Package deployments"
+    description="Diagnose stalled installs, Pepr policy violations, and common deployment issues."
+    href="/how-to-guides/packaging-applications/troubleshoot-uds-packages/"
+  />
+</CardGrid>
