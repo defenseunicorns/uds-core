@@ -1,0 +1,31 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-falco-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-runtime-security-uptime
+      rules:
+        - record: uds:falco:up
+          labels:
+            uds_layer: runtime-security
+            uds_component: falco
+          expr: |
+            (max(daemonset:up{daemonset="falco", namespace="falco"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:falcosidekick:up
+          labels:
+            uds_layer: runtime-security
+            uds_component: falco-sidekick
+          expr: |
+            (max(deployment:up{deployment="falco-falcosidekick", namespace="falco"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+{{- end }}

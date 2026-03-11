@@ -1,0 +1,49 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-loki-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-logging-uptime
+      rules:
+        - record: uds:loki_backend:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-backend
+          expr: |
+            (max(statefulset:up{statefulset="loki-backend", namespace="loki"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:loki_write:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-write
+          expr: |
+            (max(statefulset:up{statefulset="loki-write", namespace="loki"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:loki_gateway:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-gateway
+          expr: |
+            (max(deployment:up{deployment="loki-gateway", namespace="loki"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:loki_read:up
+          labels:
+            uds_layer: logging
+            uds_component: loki-read
+          expr: |
+            (max(deployment:up{deployment="loki-read", namespace="loki"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+{{- end }}

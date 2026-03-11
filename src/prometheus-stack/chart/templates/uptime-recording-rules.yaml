@@ -1,0 +1,108 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-prometheus-stack-uptime
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-uptime-helpers
+      rules:
+        - record: kube_state_metrics:up
+          expr: clamp_max(max(up{job=~".*kube-state-metrics.*"}), 1)
+
+        - record: daemonset:up
+          expr: |
+            (
+              (
+                max by(daemonset, namespace)(kube_daemonset_status_number_unavailable) == 0
+                and on(daemonset, namespace)
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled) > 0
+              ) * 0 + 1
+              or on(daemonset, namespace)
+              clamp_max(
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled)
+                !=
+                max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled offset 2m)
+              , 1)
+              or on(daemonset, namespace)
+              clamp_max(max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled), 1) * 0
+            )
+
+        - record: deployment:up
+          expr: clamp_max(max by(deployment, namespace)(kube_deployment_status_replicas_available), 1)
+
+        - record: statefulset:up
+          expr: clamp_max(max by(statefulset, namespace)(kube_statefulset_status_replicas_available), 1)
+
+        - record: daemonset:availability_ratio
+          expr: |
+            max by(daemonset, namespace)(kube_daemonset_status_number_ready)
+            /
+            clamp_min(max by(daemonset, namespace)(kube_daemonset_status_desired_number_scheduled), 1)
+
+    - name: uds-monitoring-uptime
+      rules:
+        - record: uds:prometheus:up
+          labels:
+            uds_layer: monitoring
+            uds_component: prometheus
+          expr: |
+            (max(statefulset:up{statefulset="prometheus-kube-prometheus-stack-prometheus", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:alertmanager:up
+          labels:
+            uds_layer: monitoring
+            uds_component: alertmanager
+          expr: |
+            (max(statefulset:up{statefulset="alertmanager-kube-prometheus-stack-alertmanager", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:blackbox_exporter:up
+          labels:
+            uds_layer: monitoring
+            uds_component: blackbox-exporter
+          expr: |
+            (max(deployment:up{deployment="prometheus-blackbox-exporter", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:kube_state_metrics:up
+          labels:
+            uds_layer: monitoring
+            uds_component: kube-state-metrics
+          expr: |
+            (max(deployment:up{deployment="kube-prometheus-stack-kube-state-metrics", namespace="monitoring"}) or on() vector(0))
+
+        - record: uds:prometheus_operator:up
+          labels:
+            uds_layer: monitoring
+            uds_component: prometheus-operator
+          expr: |
+            (max(deployment:up{deployment="kube-prometheus-stack-operator", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+        - record: uds:node_exporter:up
+          labels:
+            uds_layer: monitoring
+            uds_component: node-exporter
+          expr: |
+            (max(daemonset:up{daemonset="kube-prometheus-stack-prometheus-node-exporter", namespace="monitoring"}) or on() vector(0))
+            and on()
+            (kube_state_metrics:up == 1)
+
+    - name: uds-identity-authorization-uptime
+      rules:
+        - record: uds:access:up
+          labels:
+            uds_layer: core
+            uds_component: core-access
+          expr: uds:keycloak_endpoint:up
+{{- end }}

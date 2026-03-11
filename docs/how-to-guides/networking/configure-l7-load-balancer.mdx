@@ -1,0 +1,169 @@
+---
+title: Configure an L7 load balancer
+sidebar:
+  order: 2.7
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, UDS Core will work correctly behind an L7 load balancer such as AWS Application Load Balancer (ALB) or Azure Application Gateway. This involves configuring external TLS termination, trusted proxy settings, and optionally client certificate forwarding.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- An L7 load balancer (AWS ALB, Azure Application Gateway, or similar) provisioned
+
+## Before you begin
+
+> [!CAUTION]
+> **Client certificate forwarding requires hardened infrastructure.** When using an L7 load balancer to forward client certificates (e.g., for DoD CAC authentication), UDS Core trusts the HTTP headers passed through the Istio gateways. You **must** ensure:
+>
+> - All network components between the public internet and the Istio gateways are hardened against HTTP header injection and spoofing attacks
+> - The client certificate header is always sanitized — a client application must not be able to forge it from inside or outside the cluster
+> - All traffic between the edge load balancer and Istio gateways is secured and not reachable from inside or outside the cluster without going through the load balancer
+> - **Untrusted workloads in the cluster must not be able to reach the Istio ingressgateway pods directly.** If a workload can bypass the load balancer and send traffic straight to the ingressgateway, it can inject arbitrary headers (including forged client certificates), bypassing all authentication controls.
+>
+> If any of these requirements cannot be met, **do not** make authentication decisions based on the client certificate header. Use other MFA methods instead.
+
+## Steps
+
+<Steps>
+
+1. **Configure your UDS Bundle with L7 overrides**
+
+   Add the necessary overrides to your UDS Core bundle configuration. This disables HTTPS redirects (since the L7 load balancer terminates TLS before traffic reaches Istio) and sets the trusted proxy count:
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: my-uds-core
+     description: UDS Core behind an L7 load balancer
+     version: "0.1.0"
+
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-tenant-gateway:
+           uds-istio-config:
+             values:
+               - path: tls.servers.keycloak.enableHttpsRedirect
+                 value: false
+               - path: tls.servers.tenant.enableHttpsRedirect
+                 value: false
+         # Uncomment if admin gateway is also behind the L7 load balancer:
+         # istio-admin-gateway:
+         #   uds-istio-config:
+         #     values:
+         #       - path: tls.servers.keycloak.enableHttpsRedirect
+         #         value: false
+         #       - path: tls.servers.admin.enableHttpsRedirect
+         #         value: false
+         istio-controlplane:
+           istiod:
+             values:
+               # Set to the number of proxies in front of Istio (e.g., 1 for a single ALB)
+               - path: meshConfig.defaultConfig.gatewayTopology.numTrustedProxies
+                 value: 1
+   ```
+
+   > [!NOTE]
+   > If you have multiple proxy layers (e.g., CDN + ALB), set `numTrustedProxies` to the total number of hops between the client and Istio. Changing this setting at runtime triggers the UDS Operator to automatically restart Istio gateway pods.
+
+2. **Configure client certificate forwarding** *(if using mTLS)*
+
+   If your L7 load balancer performs mutual TLS and forwards client certificates to Keycloak (e.g., for DoD CAC authentication), configure Keycloak to read the certificate from the correct header:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           - path: thirdPartyIntegration.tls.tlsCertificateHeader
+             # AWS ALB uses this header for client certificates
+             value: "x-amzn-mtls-clientcert"
+           - path: thirdPartyIntegration.tls.tlsCertificateFormat
+             # "AWS" for ALB, "PEM" for load balancers that forward standard PEM
+             value: "AWS"
+   ```
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+4. **Route the load balancer to the Istio gateway**
+
+   Configure your L7 load balancer to forward traffic to the Istio ingress gateway service. The exact steps vary by cloud provider and infrastructure setup:
+
+   - **AWS ALB**: Create a target group pointing at the Network Load Balancer (NLB) or NodePort provisioned by the `tenant-ingressgateway` service in `istio-tenant-gateway`, then attach that target group to the ALB listener.
+   - **Azure Application Gateway**: Configure a backend pool targeting the Istio gateway service's external IP or node ports.
+
+   Verify the gateway service is available:
+
+   ```bash
+   uds zarf tools kubectl get svc -n istio-tenant-gateway tenant-ingressgateway
+   ```
+
+   The `EXTERNAL-IP` or `PORT(S)` shown will be the target for your load balancer's backend configuration.
+
+   > [!NOTE]
+   > This step is infrastructure-specific and typically managed outside of Kubernetes (e.g., via Terraform, cloud console, or your organization's infrastructure tooling). Consult your cloud provider's documentation for detailed instructions.
+
+</Steps>
+
+## Verification
+
+- Access an application through the load balancer URL and confirm it loads without redirect loops
+- Verify Keycloak SSO works end-to-end by logging in through the tenant gateway
+- If using mTLS, verify client certificate-based authentication works through Keycloak
+
+## Troubleshooting
+
+### Redirect loop
+
+**Symptoms:** Browser shows "too many redirects" or ERR_TOO_MANY_REDIRECTS.
+
+**Solution:** Verify that HTTPS redirects are disabled for all gateway servers behind the load balancer. For the tenant gateway, both `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.tenant.enableHttpsRedirect` must be set to `false`. For the admin gateway, use `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.admin.enableHttpsRedirect`. If the admin gateway is also behind the L7 load balancer, disable redirects there too.
+
+### Incorrect client IP or forwarded headers
+
+**Symptoms:** Applications see the load balancer's IP instead of the client's IP; rate limiting or IP-based access control doesn't work correctly.
+
+**Solution:** Verify `numTrustedProxies` is set to the correct number of proxy hops between the client and Istio. If too low, Istio doesn't trust the `X-Forwarded-For` header; if too high, clients could spoof their IP.
+
+### Keycloak mTLS not working
+
+**Symptoms:** Client certificate authentication fails through the load balancer but works when connecting directly to Istio.
+
+**Solution:**
+- Verify the `tlsCertificateHeader` matches the header your load balancer uses to forward the certificate
+- Verify the `tlsCertificateFormat` matches your load balancer's format (`AWS` for ALB, `PEM` for others)
+- Ensure the load balancer is configured to forward client certificates
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
+- [Istio Network Topology Documentation](https://istio.io/latest/docs/ops/configuration/traffic-management/network-topologies/)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster and external network access for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Make applications accessible through the tenant or admin gateway."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+</CardGrid>
