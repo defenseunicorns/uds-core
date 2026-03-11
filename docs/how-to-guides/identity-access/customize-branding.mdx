@@ -136,8 +136,8 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    Convert to a single line (newlines replaced with `\n`):
 
    ```bash
-   # Requires GNU sed
-   cat terms.html | sed ':a;N;$!ba;s/\n/\\n/g' > single-line.html
+   # Linux / macOS (requires perl, available by default on both)
+   perl -pe 's/\n/\\n/' terms.html > single-line.html
    ```
 
    Create a ConfigMap from the single-line file:

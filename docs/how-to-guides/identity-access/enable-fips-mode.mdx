@@ -1,34 +1,84 @@
 ---
-title: Manage FIPS 140-2 mode
+title: Upgrade to FIPS 140-2 mode
 sidebar:
   order: 3.16
 ---
 
-import { LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll verify that FIPS 140-2 Strict Mode is active in your UDS Core Keycloak deployment and understand its constraints.
+You'll prepare an existing Keycloak deployment for upgrade to a UDS Core version with FIPS 140-2 Strict Mode enabled — migrating password hashing algorithms and resetting credentials that are incompatible with FIPS before the upgrade runs.
 
 > [!NOTE]
-> **FIPS 140-2 Strict Mode is always enabled in UDS Core.** The UDS Identity Config init container automatically copies the required Bouncy Castle FIPS JAR files into Keycloak's providers directory. No additional configuration is needed.
+> **FIPS 140-2 Strict Mode is always enabled in UDS Core.** If you are deploying UDS Core for the first time, no action is required — FIPS is active by default. This guide applies only when upgrading an existing non-FIPS deployment.
 
 ## Prerequisites
 
-- UDS Core deployed
+- Access to the Keycloak admin console on the pre-upgrade deployment
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 
 ## Before you begin
 
 FIPS mode changes how Keycloak handles cryptography and passwords:
 
-- `argon2` (the upstream Keycloak default) is not FIPS-approved and is unavailable — UDS Core uses `pbkdf2-sha256` by default
-- All passwords must be at least 14 characters
-- Only FIPS-approved algorithms are available for signing, encryption, and hashing
+| Constraint | Detail |
+|---|---|
+| Password hashing | `argon2` (upstream Keycloak default) is not FIPS-approved — UDS Core uses `pbkdf2-sha256` |
+| Minimum password length | 14 characters |
+| Algorithms | Only FIPS-approved algorithms are available for signing, encryption, and hashing |
+
+Existing accounts hashed with `argon2` or with passwords shorter than 14 characters will fail to authenticate after FIPS is enabled. Complete the steps below **before** upgrading to the FIPS-enabled version.
+
+## Steps
+
+<Steps>
+
+1. **Connect to the Keycloak admin console on your pre-upgrade deployment**
+
+   ```bash
+   uds zarf connect keycloak
+   ```
+
+   Alternatively, navigate directly to `keycloak.<admin_domain>` if your admin domain is accessible.
+
+2. **Add `pbkdf2-sha512` as the password hashing policy**
+
+   In the **master** realm:
+
+   1. Go to **Authentication** → **Policies** → **Password Policy**
+   2. Add a new policy: select **Hashing Algorithm** and set the value to `pbkdf2-sha512`
+   3. Save
+
+   Repeat this step for the **uds** realm if it contains local user accounts.
+
+3. **Reset all local user passwords to FIPS-compliant values**
+
+   For the admin user and any other local accounts:
+
+   1. Go to **Users** → select the user
+   2. Go to the **Credentials** tab → **Reset Password**
+   3. Set a new password of at least 14 characters
+   4. Set **Temporary** to **Off**
+   5. Save
+
+   > [!CAUTION]
+   > Do not upgrade UDS Core until all local users have new FIPS-compliant passwords. If the admin password is not migrated, you will be locked out of the admin console after the upgrade.
+
+4. **Upgrade UDS Core**
+
+   With all passwords migrated, proceed with the upgrade:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
 
 ## Verification
 
-Temporarily enable debug mode to confirm FIPS is active:
+Confirm FIPS is active after the upgrade by temporarily enabling debug mode in your bundle:
 
 ```yaml title="uds-bundle.yaml"
 - path: debugMode
@@ -47,28 +97,23 @@ Look for:
 KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 ```
 
-`BCFIPS version 2.0 Approved Mode` confirms Keycloak is running in FIPS Strict Mode. `FIPS-JVM: disabled` is expected unless the underlying host OS is also running a FIPS-enabled kernel. Disable `debugMode` once you've confirmed FIPS is active.
-
-> [!NOTE]
-> For details on FIPS constraints and limitations in Keycloak, see the [Keycloak FIPS 140-2 support docs](https://www.keycloak.org/server/fips).
-
-## Migrating from non-FIPS deployments
-
-If you are upgrading from an older deployment where FIPS was not enabled and user accounts already exist, you need to migrate password hashing before FIPS can activate cleanly.
-
-1. Before upgrading, connect to the Keycloak admin console (for example, via `uds zarf connect keycloak`)
-2. Switch to the **master** realm → **Authentication** → **Policies** → **Password Policy** → add `pbkdf2-sha512` as the hashing algorithm
-3. Reset the admin user's password to a 14+ character value with **Temporary** set to **Off**
-4. Repeat for any other local users whose passwords were hashed with `argon2`
-5. Upgrade to the latest UDS Core version
+`BCFIPS version 2.0 Approved Mode` confirms Keycloak is running in FIPS Strict Mode. `FIPS-JVM: disabled` is expected unless the underlying host OS is also running a FIPS-enabled kernel. Disable `debugMode` once confirmed.
 
 ## Troubleshooting
 
 ### Problem: Keycloak admin console is inaccessible after upgrade
 
-**Symptoms:** Cannot log in to the Keycloak admin console after upgrading to a UDS Core version with FIPS enabled. Login fails with a password error.
+**Symptoms:** Cannot log in to the Keycloak admin console after upgrading. Login fails with a password error.
 
-**Solution:** This happens when the admin password was hashed with `argon2` (the upstream Keycloak default before FIPS) or is shorter than 14 characters — FIPS mode rejects both. Follow the [migration steps](#migrating-from-non-fips-deployments) on a pre-upgrade deployment to resolve this before upgrading.
+**Solution:** The admin password was hashed with `argon2` or is shorter than 14 characters — FIPS rejects both. To recover:
+
+1. Access the Keycloak pod directly:
+   ```bash
+   uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- /opt/keycloak/bin/kcadm.sh \
+     set-password --username admin --new-password <new-14+-char-password> \
+     --server http://localhost:8080 --realm master --user admin --password <old-password>
+   ```
+2. Once logged in, follow step 3 above to reset all remaining accounts.
 
 ## Related Documentation
 

@@ -67,7 +67,10 @@ An image rebuild is required when you change:
 
    Tag and push to a registry your cluster can access.
 
-   **For quick testing** (image expires after 1 hour):
+   > [!CAUTION]
+   > `ttl.sh` is a public, ephemeral registry — images are accessible to anyone and expire after the specified duration. Only use it for local testing. For any shared or production environment, push to a private registry your cluster can access securely.
+
+   **For local testing only:**
 
    ```bash
    docker tag uds-core-config:keycloak ttl.sh/<your-unique-id>:1h
@@ -129,16 +132,46 @@ openssl s_client -connect sso.<domain>:443
 
 ## Troubleshooting
 
-| Problem | Symptoms | Solution |
-|---|---|---|
-| Init container fails to pull image | `ImagePullBackOff` or `ErrImagePull` on the Keycloak pod init container | Confirm the registry is reachable and the `configImage` value has no typos. For private registries, verify image pull secrets exist in the `keycloak` namespace. Debug with `uds zarf tools kubectl describe pod -n keycloak -l app.kubernetes.io/name=keycloak` |
-| Theme/truststore/plugin changes not reflected | Login page shows old branding, certificate auth fails, or plugin behavior unchanged despite new image | Themes, truststore, and plugins apply when the init container runs at pod start. Confirm the pod restarted: `uds zarf tools kubectl rollout status statefulset/keycloak -n keycloak`. If not, trigger a rollout: `uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak` |
-| Plugin JAR missing from providers | Custom plugin behavior not visible after deploy | Check `uds run dev-build` output for Maven errors. Verify the JAR exists: `uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/` |
+### Problem: Init container fails to pull image
+
+**Symptoms:** `ImagePullBackOff` or `ErrImagePull` on the Keycloak pod init container.
+
+**Solution:** Confirm the registry is reachable and the `configImage` value has no typos. For private registries, verify image pull secrets exist in the `keycloak` namespace:
+
+```bash
+uds zarf tools kubectl describe pod -n keycloak -l app.kubernetes.io/name=keycloak
+```
+
+### Problem: Theme, truststore, or plugin changes not reflected after deploy
+
+**Symptoms:** Login page shows old branding, certificate auth fails, or plugin behavior is unchanged despite deploying a new image.
+
+**Solution:** Themes, truststore, and plugins apply when the init container runs at pod start. Confirm the pod restarted after the image update:
+
+```bash
+uds zarf tools kubectl rollout status statefulset/keycloak -n keycloak
+```
+
+If the pod did not restart, trigger a rollout:
+
+```bash
+uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak
+```
+
+### Problem: Plugin JAR missing from providers directory
+
+**Symptoms:** Custom plugin behavior is not visible after deploy.
+
+**Solution:** Check `uds run dev-build` output for Maven build errors. Verify the JAR was copied into the image:
+
+```bash
+uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/
+```
 
 ## Related Documentation
 
-- [Customize login page branding](/how-to-guides/identity-access/customize-branding/) — logo and T&C changes that do not require an image rebuild
-- [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — truststore-specific build and deploy steps
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with task definitions and Dockerfile
+- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — how the identity config image fits into the UDS Core identity layer
 
 ## Next steps
 

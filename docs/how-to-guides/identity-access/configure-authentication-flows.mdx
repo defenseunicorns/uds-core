@@ -32,10 +32,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 > Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` all at once will result in no authentication options on the login page. Users will not be able to log in or register. Also, disabling both `USERNAME_PASSWORD_AUTH_ENABLED` and `X509_AUTH_ENABLED` disables user self-registration.
 
 > [!NOTE]
-> `realmAuthFlows` values are only applied during the initial realm import. To change them on a running Keycloak instance, Keycloak must be fully torn down and redeployed so the realm is re-imported — or you can apply the changes manually in the admin UI (see the troubleshooting section below).
-
-> [!NOTE]
-> When upgrading UDS Core, realm configuration (`realmAuthFlows` and `realmInitEnv`) does **not** propagate automatically to a running Keycloak instance — Keycloak must be fully torn down and redeployed to pick up updated realm values. Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on upgrade without a realm redeploy.
+> `realmAuthFlows` values are applied only during initial realm import. Changes to a running Keycloak instance require a full teardown and redeploy to re-import the realm — or you can apply them manually in the admin UI (see the troubleshooting section below). Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on pod restart without a realm redeploy.
 
 ## Steps
 
@@ -79,6 +76,9 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    ```
 
    You only need to include the settings you want to change from default. However, for clarity and auditability, specifying all values explicitly is recommended.
+
+   > [!NOTE]
+   > If you are disabling `X509_AUTH_ENABLED`, also update your Istio gateway configuration to stop requesting client certificates from browsers. With X.509 auth disabled, the gateway should not present mutual TLS to users — set the `tls.cacert` override on `istio-tenant-gateway` (and `istio-admin-gateway` if applicable) to an empty string or remove it. See [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) for the gateway override structure.
 
 3. **Create and deploy your bundle**
 
@@ -186,6 +186,7 @@ If you do need to require an additional factor after CAC authentication, use thi
 ## Related Documentation
 
 - [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) — required for X.509/CAC authentication
+- [Keycloak CRL airgap configuration](/reference/configuration/single-sign-on/keycloak-crl-airgap/) — configure CRL-based certificate revocation checking in air-gapped environments
 - [Configure user accounts and security policies](/how-to-guides/identity-access/configure-user-account-settings/) — set password complexity and email verification alongside auth flow configuration
 
 ## Next steps

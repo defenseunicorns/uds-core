@@ -100,9 +100,12 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
 Confirm brute-force lockout is working:
 
 1. In a test browser session, attempt to log in with a valid username and incorrect password 3 times
-2. Confirm the account is locked — the login page should display a lockout message
-3. If using temporary lockouts, wait 15 minutes and confirm the account unlocks automatically
-4. Log in to the Keycloak Admin Console → **Users** → select the test user → **Details** tab to view the locked status
+2. Log in to the Keycloak Admin Console → **Users** → select the test user → **Details** tab and confirm the **Locked** status is shown
+3. If using temporary lockouts, wait 15 minutes and confirm the **Locked** status clears automatically
+4. Attempt to log in again after the temporary lockout period to confirm the account is accessible
+
+> [!NOTE]
+> UDS Core hides specific lockout error messages on the login page to prevent user enumeration. Use the Keycloak Admin Console to confirm lockout status rather than relying on the login page message.
 
 **Check the lockout configuration:**
 
@@ -135,7 +138,8 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Security Def
 
 ## Related Documentation
 
-- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable authentication flows alongside lockout settings
+- [Keycloak: Brute Force Detection](https://www.keycloak.org/docs/latest/server_admin/#_brute-force) — upstream reference for all brute-force protection settings
+- [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/) — session limits and timeout settings that complement lockout configuration
 
 ## Next steps
 
