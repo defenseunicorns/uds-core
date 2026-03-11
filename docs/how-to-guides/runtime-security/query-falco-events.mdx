@@ -14,6 +14,7 @@ You'll query and visualize Falco runtime security events in Grafana using Loki, 
 
 - UDS Core deployed (Loki and Grafana are included by default)
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
 
 ## Before you begin
 
@@ -100,7 +101,7 @@ After a few seconds, query Loki with `{rule="Terminal shell in container"}` and 
 
 **Solution:** Adjust the time range in Grafana to cover a period when Falco events were generated. If no events have been generated yet, trigger a test detection (see Verification above). Also confirm the Loki data source is configured correctly under **Configuration** → **Data sources** in Grafana.
 
-## Related documentation
+## Related Documentation
 
 - [Loki LogQL documentation](https://grafana.com/docs/loki/latest/query/) — full reference for Loki query syntax
 - [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — rule names and priorities for filtering queries

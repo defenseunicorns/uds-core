@@ -14,6 +14,7 @@ You'll customize which threats Falco detects by enabling additional rulesets, di
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
 
 ## Before you begin
 
@@ -47,7 +48,7 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
    ```yaml title="uds-bundle.yaml"
    packages:
      - name: core
-       repository: oci://registry.defenseunicorns.com/public/core
+       repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
          falco:
@@ -119,7 +120,7 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
                          fields: ["proc.name", "fd.l4proto"]
                          comps: ["=", "="]
                          values:
-                           - ["iptables-restor", "udp"]
+                           - ["iptables-restore", "udp"]
    ```
 
    **Override reference:**
@@ -184,7 +185,7 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
                            - [kube-system, ebs-csi-node, mount]
    ```
 
-6. **Deploy your bundle**
+6. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -232,7 +233,7 @@ uds zarf tools kubectl logs -n falco -l app.kubernetes.io/name=falco --previous
 
 Common issues: missing quotes around rule names with special characters, mismatched `fields`/`comps` array lengths in exceptions, or invalid `condition` syntax in macros.
 
-## Related documentation
+## Related Documentation
 
 - [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — complete list of stable, incubating, and sandbox rules
 - [Falco rules syntax](https://falco.org/docs/reference/rules/basic-elements/) — upstream reference for writing Falco rules, macros, and lists

@@ -14,6 +14,7 @@ You'll transition your UDS Core deployment from the legacy NeuVector runtime sec
 
 - UDS Core deployed (upgrading from a version that included NeuVector)
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
 
 ## Before you begin
 
@@ -47,7 +48,7 @@ UDS Core now includes Falco by default in the `core-runtime-security` package la
        > [!CAUTION]
        > This permanently deletes the `neuvector` namespace and all NeuVector CRDs from your cluster. Only enable this if you are certain you no longer need NeuVector.
 
-    2. **Deploy your bundle**
+    2. **Create and deploy your bundle**
 
        ```bash
        uds create <path-to-bundle-dir>
@@ -146,7 +147,7 @@ Redeploy the bundle after confirming the variable is set correctly.
 uds zarf tools kubectl get crds | grep neuvector | awk '{print $1}' | xargs uds zarf tools kubectl delete crd
 ```
 
-## Related documentation
+## Related Documentation
 
 - [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) — deploy and manage NeuVector independently
 - [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and runtime threat detection work in UDS Core
