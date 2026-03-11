@@ -1,7 +1,7 @@
 ---
 title: Forward logs to an external system
 sidebar:
-  order: 2.2
+  order: 4.2
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -52,55 +52,49 @@ Vector supports many destination types beyond S3. This guide uses S3 as a concre
                    type: "kubernetes_logs"
                    extra_namespace_label_selector: "kubernetes.io/metadata.name in (keycloak,pepr-system)"
                    oldest_first: true
-             variables:
-               # The sink configuration is passed as a variable so it can be
-               # set per-environment in uds-config.yaml (bucket names, regions, etc.)
+               # Static sink configuration — structure that stays the same across environments.
+               # Only bucket, region, and credentials change per environment (set via variables below).
                - path: customConfig.sinks.siem_logs
-                 name: VECTOR_SINKS_SIEM_LOGS
+                 value:
+                   type: "aws_s3"
+                   inputs: ["filtered_logs"]
+                   compression: "gzip"
+                   encoding:
+                     codec: "json"
+                   framing:
+                     method: "newline_delimited"
+                   key_prefix: "vector_logs/{{ kubernetes.pod_namespace }}/"
+                   buffer:
+                     type: "disk"
+                     max_size: 1073741824 # 1 GiB
+                   acknowledgements:
+                     enabled: false
+             variables:
+               # Environment-specific values — set in uds-config.yaml per deployment
+               - path: customConfig.sinks.siem_logs.bucket
+                 name: VECTOR_S3_BUCKET
+               - path: customConfig.sinks.siem_logs.region
+                 name: VECTOR_S3_REGION
                # IRSA role annotation for S3 access — allows Vector's service account
                # to assume an IAM role instead of using static credentials
                - path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
                  name: VECTOR_IRSA_ROLE_ARN
+                 sensitive: true
    ```
 
    ```yaml title="uds-config.yaml"
    variables:
      core:
-       # IAM role ARN that Vector's service account will assume for S3 access
+       VECTOR_S3_BUCKET: "my-siem-logs-bucket"
+       VECTOR_S3_REGION: "us-east-1"
        VECTOR_IRSA_ROLE_ARN: "arn:aws:iam::123456789012:role/vector-s3-role"
-       # Vector sink configuration — defines where and how logs are shipped
-       VECTOR_SINKS_SIEM_LOGS:
-         # Sink type — aws_s3 writes log files to an S3-compatible bucket
-         type: "aws_s3"
-         # Which Vector source to read from — matches the custom source defined above
-         inputs: ["filtered_logs"]
-         # Target S3 bucket and region
-         bucket: "my-siem-logs-bucket"
-         region: "us-east-1"
-         # Compress log files with GZIP to reduce storage costs
-         compression: "gzip"
-         # Encode each log entry as JSON
-         encoding:
-           codec: "json"
-         # One JSON object per line — standard for SIEM ingestion
-         framing:
-           method: "newline_delimited"
-         # Organize objects by namespace (e.g., vector_logs/keycloak/, vector_logs/pepr-system/)
-         key_prefix: "vector_logs/{{ kubernetes.pod_namespace }}/"
-         # Buffer logs to disk before shipping — prevents data loss during S3 outages
-         buffer:
-           type: "disk"
-           max_size: 1073741824 # 1 GiB
-         # Disable acknowledgements — kubernetes_logs source doesn't support them
-         acknowledgements:
-           enabled: false
    ```
 
    > [!TIP]
    > To forward **all** cluster logs instead of specific namespaces, change `inputs` to `["pod_logs_labelled"]` and remove the custom `filtered_logs` source. The `pod_logs_labelled` input includes all pod logs with Kubernetes metadata labels already attached.
 
    > [!NOTE]
-   > For non-AWS environments or static credentials, replace the IRSA annotation with `auth.access_key_id` and `auth.secret_access_key` fields in the sink config. See the [Vector AWS S3 sink docs](https://vector.dev/docs/reference/configuration/sinks/aws_s3/) for all authentication options.
+   > For non-AWS environments or static credentials, replace the IRSA annotation with `auth.access_key_id` and `auth.secret_access_key` fields in the sink `values` config. See the [Vector AWS S3 sink docs](https://vector.dev/docs/reference/configuration/sinks/aws_s3/) for all authentication options.
 
 2. **Allow network egress for Vector**
 

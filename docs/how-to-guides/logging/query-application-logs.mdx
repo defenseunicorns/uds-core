@@ -1,7 +1,7 @@
 ---
 title: Query application logs
 sidebar:
-  order: 2.1
+  order: 4.1
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -14,7 +14,7 @@ After completing this guide you will be able to find, filter, and analyze logs f
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed (logging is enabled by default)
-- Access to the Grafana admin UI (typically at `https://grafana.admin.<your-domain>`)
+- Access to the Grafana admin UI (`https://grafana.<admin_domain>`)
 
 ## Before you begin
 
@@ -40,7 +40,10 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
 
 1. **Open Grafana Explore**
 
-   Navigate to Grafana (typically `https://grafana.admin.<your-domain>`), then select **Explore** from the left sidebar. In the datasource dropdown at the top, select **Loki**.
+   Navigate to Grafana (`https://grafana.<admin_domain>`), then select **Explore** from the left sidebar. In the datasource dropdown at the top, select **Loki**. Adjust the **time range picker** in the top-right corner to cover the period you want to search.
+
+   > [!TIP]
+   > For quick namespace and pod filtering without writing LogQL, try the **Loki Dashboard quick search** included with UDS Core — find it under **Dashboards** in Grafana. The steps below cover Grafana Explore for more advanced querying.
 
 2. **Filter logs by label**
 
