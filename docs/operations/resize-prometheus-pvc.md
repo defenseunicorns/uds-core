@@ -82,7 +82,7 @@ packages:
 ```yaml title="uds-config.yaml"
 variables:
   core:
-    prometheus_storage_size: "60Gi"
+    PROMETHEUS_STORAGE_SIZE: "60Gi"
 ```
 
 ## Prechecks
