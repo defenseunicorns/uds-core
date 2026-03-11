@@ -53,7 +53,7 @@ export default defineConfig([
       "@typescript-eslint/no-floating-promises": ["error"],
       "class-methods-use-this": "error",
       "consistent-this": "error",
-      eqeqeq: "error",
+      eqeqeq: ["error", "smart"]
     },
   },
 ]);
