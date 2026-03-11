@@ -1,30 +1,17 @@
 ---
-title: Validate Package Requirements
+title: UDS Package Requirements
 sidebar:
-  order: 3
+  order: 4.3
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## What you'll accomplish
+UDS Packages must meet a set of standards to ensure they are secure, maintainable, and compatible with UDS Core. This page defines those standards using [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology — **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice.
 
-You'll validate that your UDS Package meets the production-readiness standards required for confident integration and operation. Use this checklist during development and before publishing to ensure your package is complete.
+These requirements are mandatory for Defense Unicorns engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security across the UDS ecosystem.
 
-## Prerequisites
-
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- Access to a Kubernetes cluster with UDS Core deployed
-- A UDS Package ready for validation
-- Familiarity with the [UDS Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/) and [bundle overrides](/concepts/configuration-and-packaging/bundles/)
-
-## Before you begin
-
-This page follows [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) for requirement levels — **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice. Work through each section and check off items as your package meets them.
-
-For the conceptual rationale behind these standards, see [Package Requirements](/concepts/configuration-and-packaging/package-requirements/).
-
-> [!NOTE]
-> This document follows [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) for definitions of requirement levels (e.g. MUST, SHOULD and MAY).
+> [!TIP]
+> Use this page as a pre-publish checklist. For step-by-step guidance on building a package that meets these requirements, see [Package an Existing Helm Chart](/how-to-guides/packaging-applications/package-existing-helm-chart/).
 
 ## UDS Operator Integration
 
@@ -76,28 +63,20 @@ For the conceptual rationale behind these standards, see [Package Requirements](
 - [ ] **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
 - [ ] **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
 
-## Recommended Practices for UDS Package Maintainers
+## Package Maintenance
 
-These practices are mandatory for Defense Unicorn engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security.
-
-- [ ] **MUST** be actively maintained by the package maintainers identified in CODEOWNERS [see #CODEOWNERS section for more information](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#codeowners)
+- [ ] **MUST** be actively maintained by the package maintainers identified in CODEOWNERS. [See CODEOWNERS guidance](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#codeowners)
 - [ ] **MUST** have a dependency management bot (such as renovate) configured to open PRs to update the core package and support dependencies.
-- [ ] **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., ghcr.io/uds-packages/neuvector).
+- [ ] **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - [ ] **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - [ ] **SHOULD** lint their configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
-
----
-
-> [!TIP]
-> For step-by-step guidance on building a package that meets these requirements, see the [Packaging Applications](/how-to-guides/packaging-applications/overview/) how-to guides.
-
 
 ## Next steps
 
 <CardGrid>
   <LinkCard
-    title="Publish to the UDS registry"
-    description="Build and publish your validated package."
-    href="/how-to-guides/packaging-applications/publish-bundle-to-uds-registry/"
+    title="Package an existing Helm chart"
+    description="Step-by-step guide to building a package that meets these requirements."
+    href="/how-to-guides/packaging-applications/package-existing-helm-chart/"
   />
 </CardGrid>
