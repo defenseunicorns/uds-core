@@ -1,0 +1,36 @@
+---
+title: Runtime security
+sidebar:
+  order: 6.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+UDS Core provides runtime threat detection using Falco and Falcosidekick. This section covers tuning what Falco detects, querying and visualizing events, routing alerts to external destinations, and migrating from NeuVector.
+
+For background on how Falco, Falcosidekick, and runtime threat detection work, see [Runtime security concepts](/concepts/core-features/runtime-security/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Tune Falco runtime detections"
+    description="Enable additional rulesets, disable noisy rules, override built-in logic, and write custom rules via bundle overrides."
+    href="/how-to-guides/runtime-security/tune-falco-detections/"
+  />
+  <LinkCard
+    title="Query Falco events in Grafana"
+    description="Query and visualize runtime security events using Loki and the built-in Falcosidekick dashboard."
+    href="/how-to-guides/runtime-security/query-falco-events/"
+  />
+  <LinkCard
+    title="Route runtime alerts to external destinations"
+    description="Configure Falcosidekick to forward alerts to Slack, Mattermost, or Microsoft Teams for real-time notifications."
+    href="/how-to-guides/runtime-security/route-runtime-alerts/"
+  />
+  <LinkCard
+    title="Migrate from NeuVector to Falco"
+    description="Transition from the legacy NeuVector runtime security provider to Falco during a UDS Core upgrade."
+    href="/how-to-guides/runtime-security/migrate-from-neuvector/"
+  />
+</CardGrid>
