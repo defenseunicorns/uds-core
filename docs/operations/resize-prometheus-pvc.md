@@ -32,43 +32,6 @@ This runbook assumes UDS Core defaults:
 
 If your deployment uses non-default names, update the commands accordingly.
 
-## Update Bundle Configuration
-
-Set the target size in your UDS bundle so desired Prometheus storage is captured in code before running manual resize steps.
-
-### Option A: Direct override value in `uds-bundle.yaml`
-
-```yaml title="uds-bundle.yaml"
-packages:
-  - name: core
-    overrides:
-      kube-prometheus-stack:
-        kube-prometheus-stack:
-          values:
-            - path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
-              value: "60Gi"
-```
-
-### Option B: Bundle variable with value in `uds-config.yaml`
-
-```yaml title="uds-bundle.yaml"
-packages:
-  - name: core
-    overrides:
-      kube-prometheus-stack:
-        kube-prometheus-stack:
-          variables:
-            - name: PROMETHEUS_STORAGE_SIZE
-              description: Prometheus PVC requested storage size
-              path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
-```
-
-```yaml title="uds-config.yaml"
-variables:
-  core:
-    PROMETHEUS_STORAGE_SIZE: "60Gi"
-```
-
 ## Prechecks
 
 1. Confirm the target Prometheus CR exists:
@@ -123,7 +86,40 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
 export TARGET_SIZE=60Gi
 ```
 
-2. Update bundle configuration to the target size (see examples above).
+2. Update your bundle configuration by setting the desired volume size using one of the methods below.
+
+Option A: Directly override the value in `uds-bundle.yaml`:
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      kube-prometheus-stack:
+        kube-prometheus-stack:
+          values:
+            - path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
+              value: "60Gi"
+```
+
+Option B: Create a variable in `uds-bundle.yaml` and set the desired value in `uds-config.yaml`:
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      kube-prometheus-stack:
+        kube-prometheus-stack:
+          variables:
+            - name: PROMETHEUS_STORAGE_SIZE
+              description: Prometheus PVC requested storage size
+              path: prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage
+```
+
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    PROMETHEUS_STORAGE_SIZE: "60Gi"
+```
 
 3. Pause Prometheus reconciliation:
 
@@ -133,7 +129,7 @@ Pausing prevents operator reconciliation churn while you patch PVCs and rotate t
 kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type merge --patch '{"spec":{"paused":true}}'
 ```
 
-4. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflows.
+4. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflow(s).
 
 This applies the desired Prometheus storage size from code before patching existing PVCs.
 
