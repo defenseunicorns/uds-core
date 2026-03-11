@@ -1,0 +1,197 @@
+---
+title: Add custom dashboards to Grafana
+sidebar:
+  order: 5.2
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Deploy application-specific Grafana dashboards as code using Kubernetes ConfigMaps. UDS Core ships with default dashboards for platform components like Istio, Keycloak, and Loki. This guide shows you how to add your own dashboards alongside those defaults and optionally organize them into folders.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A Grafana dashboard exported as JSON (or a JSON dashboard definition)
+
+## Before you begin
+
+Grafana in UDS Core uses a sidecar that watches for ConfigMaps labeled `grafana_dashboard: "1"` and loads them automatically. Default dashboards for platform components (Istio, Keycloak, Loki, etc.) are included out of the box.
+
+> [!TIP]
+> You can build dashboards interactively in the Grafana UI first, then [export them as JSON](https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json) to capture in code.
+
+## Steps
+
+<Steps>
+
+1. **Create a dashboard ConfigMap**
+
+   Create a ConfigMap with the `grafana_dashboard: "1"` label and a data key ending in `.json` containing your dashboard definition:
+
+   ```yaml title="dashboard-configmap.yaml"
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: my-app-dashboards
+     namespace: my-app
+     labels:
+       grafana_dashboard: "1"
+   data:
+     # The value for this key should be your full JSON dashboard
+     my-dashboard.json: |
+       {
+         "annotations": {
+           "list": [
+             {
+               "builtIn": 1,
+       ...
+     # Helm's Files functions can also be useful if deploying in a helm chart: https://helm.sh/docs/chart_template_guide/accessing_files/
+     my-dashboard-from-file.json: |
+       {{ .Files.Get "dashboards/my-dashboard-from-file.json" | nindent 4 }}
+   ```
+
+   > [!TIP]
+   > If you are deploying dashboards via a Helm chart, you can use `{{ .Files.Get }}` to load the JSON from a file in your chart rather than inlining it in the ConfigMap manifest.
+
+2. **Optional: Organize dashboards into folders**
+
+   Grafana supports folders for better dashboard organization. UDS Core does not use folders by default, but the sidecar supports simple configuration to dynamically create and populate them.
+
+   First, add a `grafana_folder` annotation to your dashboard ConfigMap to place it in a specific folder:
+
+   ```yaml title="dashboard-configmap.yaml"
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: my-app-dashboards
+     namespace: my-app
+     labels:
+       grafana_dashboard: "1"
+     annotations:
+       # The value of this annotation determines the folder for your dashboard
+       grafana_folder: "my-app"
+   data:
+     # Your dashboard data here
+   ```
+
+   Then enable folder support and group the default UDS Core dashboards into a `uds-core` folder using bundle overrides:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         grafana:
+           grafana:
+             values:
+               # This value allows us to specify a grafana_folder annotation to indicate the file folder to place a given dashboard into
+               - path: sidecar.dashboards.folderAnnotation
+                 value: grafana_folder
+
+               # This value configures the sidecar to build out folders based upon where dashboard files are
+               - path: sidecar.dashboards.provider.foldersFromFilesStructure
+                 value: true
+         kube-prometheus-stack:
+           kube-prometheus-stack:
+             values:
+               # Add a folder annotation to the default platform dashboards created by kube-prometheus-stack
+               # (these ConfigMaps are created even though the Grafana subchart is disabled)
+               - path: grafana.sidecar.dashboards.annotations
+                 value:
+                   grafana_folder: "uds-core"
+         loki:
+           uds-loki-config:
+             values:
+               # This value adds an annotation to the loki dashboards to specify that they should be grouped under a `uds-core` folder
+               - path: dashboardAnnotations
+                 value:
+                   grafana_folder: "uds-core"
+   ```
+
+   > [!NOTE]
+   > Dashboards without a `grafana_folder` annotation will still load in Grafana but will appear at the top level outside of any folders.
+
+3. **Deploy your dashboard**
+
+   **(Recommended)** Include the dashboard ConfigMap in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the ConfigMap directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f dashboard-configmap.yaml
+   ```
+
+   If you configured folder support via bundle overrides, create and deploy your bundle:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm your dashboard is loaded:
+
+```bash
+# List all dashboard ConfigMaps across namespaces
+uds zarf tools kubectl get configmap -A -l grafana_dashboard=1
+```
+
+Then verify in the Grafana UI:
+
+- Navigate to **Dashboards** in the side menu
+- Confirm your dashboard appears (in the correct folder if configured)
+- Open the dashboard and verify data renders on the panels
+
+## Troubleshooting
+
+### Dashboard not appearing in Grafana
+
+**Symptom:** Your ConfigMap is deployed but the dashboard does not show up in the Grafana UI.
+
+**Solution:** Verify the ConfigMap has the `grafana_dashboard: "1"` label. The sidecar only watches for ConfigMaps with this exact label.
+
+```bash
+uds zarf tools kubectl get configmap -A -l grafana_dashboard=1
+```
+
+If your ConfigMap is missing from the output, re-apply it with the correct label.
+
+### Dashboard appears but in wrong folder or at top level
+
+**Symptom:** The dashboard loads but is not in the expected folder.
+
+**Solution:** Verify the `grafana_folder` annotation is present and its value matches your desired folder name. Also confirm the folder support overrides (`sidecar.dashboards.folderAnnotation` and `sidecar.dashboards.provider.foldersFromFilesStructure`) are applied in your bundle.
+
+## Related Documentation
+
+- [Grafana: Build your first dashboard](https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/) — interactive dashboard creation
+- [Grafana: Export a dashboard as JSON](https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json) — exporting for use as code
+
+## Next steps
+
+These guides may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Add Grafana datasources"
+    description="Connect Grafana to additional data sources for your dashboards."
+    href="/how-to-guides/monitoring-observability/add-grafana-datasources/"
+  />
+  <LinkCard
+    title="Capture application metrics"
+    description="Get your application's metrics into Prometheus so dashboards have data to display."
+    href="/how-to-guides/monitoring-observability/capture-application-metrics/"
+  />
+</CardGrid>
