@@ -97,7 +97,10 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
 
 2. Confirm StorageClass and expansion support:
 
-Use this output to verify each target PVC has a StorageClass and that class supports expansion. If expansion is not supported, stop and reassess.
+Use this output to verify each target PVC has a StorageClass and that class supports expansion.
+
+> [!CAUTION]
+> If expansion is not supported, stop and reassess.
 
 ```bash
 # Determine the storage class in use
@@ -115,7 +118,8 @@ Compare current PVC request sizes to `TARGET_SIZE`; continue only for a size inc
 kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.resources.requests.storage}{"\n"}{end}'
 ```
 
-If any target PVC is already larger than `TARGET_SIZE`, stop and reassess.
+> [!CAUTION]
+> If any target PVC is already larger than `TARGET_SIZE`, **stop and reassess**. PVC shrinking is not supported.
 
 4. Confirm the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches `TARGET_SIZE`.
 
