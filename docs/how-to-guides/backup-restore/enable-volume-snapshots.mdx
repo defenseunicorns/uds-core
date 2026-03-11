@@ -31,11 +31,7 @@ By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots ar
 
 ## Steps
 
-<Steps>
-
-1. **Configure your snapshot provider**
-
-   <Tabs>
+<Tabs>
   <TabItem label="AWS EBS">
 
 <Steps>
@@ -287,9 +283,11 @@ By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots ar
 </Steps>
 
   </TabItem>
-   </Tabs>
+</Tabs>
 
-2. **Create and deploy your bundle**
+<Steps>
+
+1. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
