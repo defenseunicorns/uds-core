@@ -32,22 +32,6 @@ This runbook assumes UDS Core defaults:
 
 If your deployment uses non-default names, update the commands accordingly.
 
-## Target Size
-
-Set the target size before running commands:
-
-```bash
-export TARGET_SIZE=60Gi
-```
-
-Confirm the defaults exist in your cluster:
-
-This confirms the expected Prometheus CR exists before continuing.
-
-```bash
-kubectl get prometheus -n monitoring kube-prometheus-stack-prometheus
-```
-
 ## Update Bundle Configuration
 
 Set the target size in your UDS bundle so desired Prometheus storage is captured in code before running manual resize steps.
@@ -87,7 +71,15 @@ variables:
 
 ## Prechecks
 
-1. Confirm matching PVCs:
+1. Confirm the target Prometheus CR exists:
+
+This confirms the expected Prometheus CR exists before continuing.
+
+```bash
+kubectl get prometheus -n monitoring kube-prometheus-stack-prometheus
+```
+
+2. Confirm matching PVCs:
 
 This lists the PVCs that will be resized and verifies label selection is correct.
 
@@ -95,7 +87,7 @@ This lists the PVCs that will be resized and verifies label selection is correct
 kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
-2. Confirm StorageClass and expansion support:
+3. Confirm StorageClass and expansion support:
 
 Use this output to verify each target PVC has a StorageClass and that class supports expansion.
 
@@ -110,24 +102,30 @@ kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-st
 kubectl get storageclass -o custom-columns=NAME:.metadata.name,ALLOWVOLUMEEXPANSION:.allowVolumeExpansion
 ```
 
-3. Confirm this is a size increase (never shrink):
+4. Confirm this is a size increase (never shrink):
 
-Compare current PVC request sizes to `TARGET_SIZE`; continue only for a size increase.
+Compare current PVC request sizes to your desired volume size; continue only if size will increase.
 
 ```bash
 kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.resources.requests.storage}{"\n"}{end}'
 ```
 
 > [!CAUTION]
-> If any target PVC is already larger than `TARGET_SIZE`, **stop and reassess**. PVC shrinking is not supported.
+> If any target PVC is already larger than your desired volume size, **stop and reassess**. PVC shrinking is not supported.
 
-4. Confirm the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches `TARGET_SIZE`.
+5. Confirm the size configured in your `uds-bundle.yaml` and/or `uds-config.yaml` matches your desired volume size.
 
 ## Procedure
 
-1. Update bundle configuration to the target size (see examples above).
+1. Set the `TARGET_SIZE` variable to your desired volume size. The `TARGET_SIZE` variable is used throughout this procedure:
 
-2. Pause Prometheus reconciliation:
+```bash
+export TARGET_SIZE=60Gi
+```
+
+2. Update bundle configuration to the target size (see examples above).
+
+3. Pause Prometheus reconciliation:
 
 Pausing prevents operator reconciliation churn while you patch PVCs and rotate the StatefulSet.
 
@@ -135,11 +133,11 @@ Pausing prevents operator reconciliation churn while you patch PVCs and rotate t
 kubectl patch prometheus kube-prometheus-stack-prometheus -n monitoring --type merge --patch '{"spec":{"paused":true}}'
 ```
 
-3. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflows.
+4. Create and deploy the updated bundle using your established UDS Core bundle creation and deployment workflows.
 
 This applies the desired Prometheus storage size from code before patching existing PVCs.
 
-4. Patch each existing PVC to the new request size:
+5. Patch each existing PVC to the new request size:
 
 This updates the requested storage on all existing Prometheus PVCs to match bundle desired state.
 
@@ -168,7 +166,7 @@ If any target PVC shows `FileSystemResizePending`, restart the affected Promethe
 kubectl delete pod -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus"
 ```
 
-5. Delete backing StatefulSet with orphan strategy:
+6. Delete backing StatefulSet with orphan strategy:
 
 Orphan deletion removes the StatefulSet object but preserves pods/PVCs so Prometheus Operator can recreate the StatefulSet against resized PVCs.
 
@@ -176,7 +174,7 @@ Orphan deletion removes the StatefulSet object but preserves pods/PVCs so Promet
 kubectl delete statefulset -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" --cascade=orphan
 ```
 
-6. Unpause Prometheus reconciliation:
+7. Unpause Prometheus reconciliation:
 
 Unpausing allows Prometheus Operator to reconcile resources back to normal managed state.
 
