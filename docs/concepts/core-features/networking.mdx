@@ -109,9 +109,7 @@ This means:
 
 ## Trust and certificate management
 
-When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that TLS-dependent flows — such as SSO and inter-service mTLS — do not break when operating in air-gapped environments with internally-issued certificates.
-
----
+When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that TLS-dependent flows — such as SSO and inter-service mTLS — do not break when operating in air-gapped environments with internally-issued certificates. See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for configuration steps.
 
 > [!TIP]
 > Ready to configure networking for your environment? See the [Networking How-to Guides](/how-to-guides/networking/overview/).

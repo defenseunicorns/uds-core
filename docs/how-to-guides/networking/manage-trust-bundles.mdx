@@ -1,0 +1,224 @@
+---
+title: Manage trust bundles
+sidebar:
+  order: 2.10
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure UDS Core to distribute custom CA certificates across your cluster, enabling platform components and your applications to trust private PKI, DoD CAs, or a curated set of public CAs.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- Your CA certificate bundle in **PEM format**
+
+## Before you begin
+
+UDS Core provides a centralized trust bundle system that automatically builds and distributes certificate trust bundles. When configured, UDS Core:
+
+- Creates `uds-trust-bundle` ConfigMaps in every namespace that contains a UDS Package CR
+- Syncs the bundle to `istio-system` for JWKS fetching
+- Injects the bundle into Authservice for OIDC TLS verification
+- Auto-mounts the bundle into platform components (Keycloak, Grafana, Loki, Vector, Velero, Prometheus, Alertmanager, Falcosidekick)
+
+> [!TIP]
+> If your environment uses only certificates from public, trusted CAs (e.g., Let's Encrypt, DigiCert), you do **not** need to configure trust bundles. This guide is for environments with self-signed certificates or certificates issued by a private CA.
+
+## Steps
+
+<Steps>
+
+1. **Configure the cluster trust bundle**
+
+   Set the trust bundle variables in your `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       CA_BUNDLE_CERTS: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0t..."  # Base64-encoded PEM bundle
+       CA_BUNDLE_INCLUDE_DOD_CERTS: "true"    # Include DoD CA certificates (default: false)
+       CA_BUNDLE_INCLUDE_PUBLIC_CERTS: "true"  # Include curated public CAs (default: false)
+   ```
+
+   > [!NOTE]
+   > `CA_BUNDLE_CERTS` must be **base64-encoded**. Encode your PEM bundle with: `cat ca-bundle.pem | base64 -w 0`
+
+   The three sources are concatenated into a single PEM bundle:
+
+   | Variable | Source | When to use |
+   |---|---|---|
+   | `CA_BUNDLE_CERTS` | Your custom CA certificates | If using private PKI (include domain CA at a minimum) |
+   | `CA_BUNDLE_INCLUDE_DOD_CERTS` | DoD CA certificates packaged with UDS Core | When using DoD PKI or external services |
+   | `CA_BUNDLE_INCLUDE_PUBLIC_CERTS` | Curated US-based public CAs from the Mozilla CA store | When applications need to reach public HTTPS endpoints in addition to the above |
+
+   > [!TIP]
+   > You can also set variables as environment variables prefixed with `UDS_` (e.g., `UDS_CA_BUNDLE_CERTS`) instead of using a config file.
+
+   Create and deploy your UDS Core bundle to apply the trust bundle configuration:
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+2. **Customize trust bundle distribution for a package**
+
+   Trust bundle ConfigMaps are automatically created in all namespaces with a UDS Package CR. To customize the ConfigMap for a specific package, use the `caBundle` field:
+
+   ```yaml
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     namespace: my-package
+   spec:
+     caBundle:
+       configMap:
+         name: uds-trust-bundle        # default: uds-trust-bundle
+         key: ca-bundle.pem            # default: ca-bundle.pem
+         labels:
+           uds.dev/pod-reload: "true"  # enable pod reloads when the bundle changes
+         annotations:
+           uds.dev/pod-reload-selector: "app=my-app"  # only reload pods matching this selector
+   ```
+
+   > [!TIP]
+   > The `uds.dev/pod-reload: "true"` label triggers automatic pod restarts when the trust bundle ConfigMap is updated. Use `uds.dev/pod-reload-selector` to scope restarts to specific pods.
+
+3. **Mount the trust bundle in your application**
+
+   Platform components (Keycloak, Grafana, Loki, etc.) automatically mount the trust bundle — no manual configuration needed. For your own applications, mount the `uds-trust-bundle` ConfigMap as a volume.
+
+   Choose the mount approach based on your needs:
+
+   <Tabs>
+     <TabItem label="Additional CA (Go apps)">
+       Many Go-based applications check `/etc/ssl/certs/ca.pem` for additional CAs alongside the system bundle. This adds your private CAs without replacing the system CAs:
+
+       ```yaml
+       spec:
+         containers:
+           - name: my-app
+             volumeMounts:
+               - name: ca-certs
+                 mountPath: /etc/ssl/certs/ca.pem
+                 subPath: ca-bundle.pem
+                 readOnly: true
+         volumes:
+           - name: ca-certs
+             configMap:
+               name: uds-trust-bundle
+       ```
+     </TabItem>
+     <TabItem label="System CA replacement">
+       Replaces the entire system CA bundle. Your bundle must include both your private CAs and any public CAs the application needs:
+
+       ```yaml
+       spec:
+         containers:
+           - name: my-app
+             volumeMounts:
+               - name: ca-certs
+                 # Debian/Ubuntu:
+                 mountPath: /etc/ssl/certs/ca-certificates.crt
+                 # RedHat/CentOS:
+                 # mountPath: /etc/pki/tls/certs/ca-bundle.crt
+                 subPath: ca-bundle.pem
+                 readOnly: true
+         volumes:
+           - name: ca-certs
+             configMap:
+               name: uds-trust-bundle
+       ```
+     </TabItem>
+   </Tabs>
+
+   > [!CAUTION]
+   > Replacing the system CA bundle removes all default trusted CAs. Ensure your bundle includes all CAs your application needs. Also note that some programming languages and crypto libraries use their own embedded trust stores rather than the system trust store — consult your application's documentation.
+
+4. **Deploy your application**
+
+   **(Recommended)** Include the volume mount configuration and Package CR in your application's [Zarf package](https://docs.zarf.dev/ref/create/) alongside your Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing (along with your updated application with mount):
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm trust bundles are distributed:
+
+```bash
+# Check that the trust bundle ConfigMap exists in your namespace
+uds zarf tools kubectl get configmap uds-trust-bundle -n <namespace>
+
+# View the ConfigMap contents (should show PEM-formatted certificates)
+uds zarf tools kubectl get configmap uds-trust-bundle -n <namespace> -o jsonpath='{.data.ca-bundle\.pem}' | head -5
+```
+
+Verify that the ConfigMap contains PEM-formatted certificate data starting with `-----BEGIN CERTIFICATE-----`.
+
+To confirm that platform components are using the trust bundle, check that services like Keycloak (`https://sso.<domain>`) and Grafana (`https://grafana.<admin_domain>`) can be accessed without TLS errors.
+
+## Troubleshooting
+
+### Problem: Trust bundle ConfigMap not appearing in namespace
+
+**Symptom:** The `uds-trust-bundle` ConfigMap does not exist in your application's namespace.
+
+**Solution:** The ConfigMap is only created in namespaces that contain a UDS Package CR. Verify a Package CR exists:
+
+```bash
+uds zarf tools kubectl get packages -n <namespace>
+```
+
+If no Package CR exists, create one for your application. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for details.
+
+### Problem: Application still rejects TLS connections
+
+**Symptom:** Your application returns certificate verification errors despite the trust bundle being mounted.
+
+**Solution:**
+1. Verify the mount path is correct for your container's base image (Debian vs RedHat)
+2. Check if your application uses a language-specific trust store (Java `cacerts`, Python `certifi`, Node.js `NODE_EXTRA_CA_CERTS`)
+3. Confirm the CA bundle contains the full certificate chain (including intermediate CAs)
+4. Verify the volume mount exists on the pod:
+
+```bash
+uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].volumeMounts}' | jq .
+```
+
+## Related Documentation
+
+- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including `caBundle` fields
+- [Java Keytool documentation](https://docs.oracle.com/en/java/javase/17/docs/specs/man/keytool.html) — managing Java `cacerts` trust stores
+- [Python certifi](https://pypi.org/project/certifi/) — Python's default CA bundle and how to override it
+- [Node.js `NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) — adding extra CAs for Node.js applications
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure TLS certificates"
+    description="Set up TLS certificates for your ingress gateways — often paired with trust bundle configuration."
+    href="/how-to-guides/networking/configure-tls-certificates/"
+  />
+  <LinkCard
+    title="Identity & access how-to guides"
+    description="Configure SSO with Keycloak, which may need trust bundle configuration for private PKI."
+    href="/how-to-guides/identity-access/overview/"
+  />
+</CardGrid>

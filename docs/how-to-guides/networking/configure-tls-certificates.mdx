@@ -1,7 +1,7 @@
 ---
 title: Configure TLS certificates for gateways
 sidebar:
-  order: 2.1
+  order: 2.01
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -25,9 +25,9 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 > The certificate value must include your domain certificate **and** any intermediate certificates between it and a trusted root CA (the full certificate chain). The order matters: your server certificate (e.g., `*.yourdomain.com`) must come **first**, followed by intermediates in order, and finally your root CA. Failing to include intermediates can cause unexpected behavior, as some container images may not inherently trust them.
 
 > [!NOTE]
-> If you are using private PKI or self-signed certificates, you will also need to configure the UDS trust bundle. See [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/) for details.
+> If you are using private PKI or self-signed certificates, you will also need to configure the UDS trust bundle. See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for details.
 
-## Provide certificates
+## Steps
 
 <Tabs>
   <TabItem label="Bundle variables">
@@ -185,13 +185,13 @@ You should see your domain certificate and the correct certificate chain. You ca
 
 ## Troubleshooting
 
-### Certificate chain errors
+### Problem: Certificate chain errors
 
 **Symptoms:** Browsers show "certificate not trusted" or curl reports `SSL certificate problem: unable to get local issuer certificate`.
 
 **Solution:** Ensure your certificate bundle includes the full chain in the correct order: server cert first, then intermediates, then root CA.
 
-### Base64 encoding issues
+### Problem: Base64 encoding issues
 
 **Symptoms:** Gateway pods fail to start or TLS handshake fails immediately.
 
@@ -202,16 +202,16 @@ base64 -w0 < my-cert.pem                    # Linux
 base64 -i my-cert.pem | tr -d '\n'          # macOS
 ```
 
-### TLS 1.2 clients can't connect
+### Problem: TLS 1.2 clients can't connect
 
 **Symptoms:** Older clients or tools fail to connect, newer clients work fine.
 
 **Solution:** Enable TLS 1.2 support as shown above. This is common in environments with legacy systems or specific compliance requirements.
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/)
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/)
 
 ## Next steps
 
