@@ -17,7 +17,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 - A wildcard TLS certificate and private key (PEM format) for each gateway domain. If using a private or non-public CA, the root CA must be loaded in your OS trust store for browser and CLI verification to work.
   - Tenant gateway: `*.yourdomain.com`
   - Admin gateway: `*.admin.yourdomain.com` (or your custom admin domain)
-  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain)
+  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/)
 
 ## Before you begin
 
@@ -141,7 +141,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 
 ## Root domain TLS certificates
 
-If you have enabled [root (apex) domain support](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain), provide TLS certificates separately for the root domain:
+If you are planning to [expose an app on the root (apex) domain](/how-to-guides/networking/expose-apps-on-gateways/), provide TLS certificates separately for the root domain:
 
 ```yaml title="uds-bundle.yaml"
 overrides:
