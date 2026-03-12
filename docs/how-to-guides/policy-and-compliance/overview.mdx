@@ -1,0 +1,29 @@
+---
+title: Overview
+sidebar:
+  order: 8.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+UDS Core enforces secure workload behavior through [Pepr](https://docs.pepr.dev/) admission policies. Every resource submitted to the cluster passes through Pepr before being persisted, where mutations auto-correct common misconfigurations and validations block non-compliant resources.
+
+These guides help you resolve policy violations, create exemptions when needed, and audit your cluster's security posture. For background on how policies and exemptions work, see the [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Handle policy violations"
+    description="Identify why deployments are blocked or modified, fix common violations, and create exemptions when a fix isn't possible."
+    href="/how-to-guides/policy-and-compliance/handle-policy-violations/"
+  />
+  <LinkCard
+    title="Audit security posture"
+    description="Review exemptions for scope and justification, and inspect Package CR network rules for overly permissive configurations."
+    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
+  />
+</CardGrid>
+
+> [!TIP]
+> New to UDS Core policies? Start with the [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/) to understand how mutations, validations, and exemptions work before configuring them.
