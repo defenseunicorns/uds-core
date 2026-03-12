@@ -52,7 +52,7 @@ These requirements are mandatory for Defense Unicorns engineers. For external ma
 
 ## Identity and Access Management
 
-- [ ] **MUST** use and create a Keycloak client through the `sso` key for any UDS Package providing an end User Login. [SSO Resource](https://uds.defenseunicorns.com/tutorials/create-uds-package/#integrate-with-single-sign-on)
+- [ ] **MUST** use and create a Keycloak client through the `sso` key for any UDS Package providing an end-user login. [SSO Resource](https://uds.defenseunicorns.com/tutorials/create-uds-package/#integrate-with-single-sign-on)
 - [ ] **SHOULD** name the Keycloak client `<App> Login` (i.e. `Mattermost Login`) to provide login UX consistency.
 - [ ] **SHOULD** clearly mark the Keycloak client id with the group and app name `uds-<group>-<application>` (i.e. `uds-swf-mattermost`) to provide consistency in the Keycloak UI.
 - [ ] **MAY** end any generated Keycloak client secrets with `sso` to easily locate them when querying the cluster.
@@ -71,32 +71,7 @@ These requirements are mandatory for Defense Unicorns engineers. For external ma
 - [ ] **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - [ ] **SHOULD** lint their configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
 
-## Next steps
+---
 
-<CardGrid>
-  <LinkCard
-    title="Package an existing Helm chart"
-    description="Step-by-step guide to building a package that meets these requirements."
-    href="/how-to-guides/packaging-applications/package-existing-helm-chart/"
-  />
-  <LinkCard
-    title="Package testing"
-    description="Set up the journey and upgrade tests required by these standards."
-    href="/how-to-guides/packaging-applications/package-testing/"
-  />
-  <LinkCard
-    title="Networking & service mesh"
-    description="How UDS Core enforces network policies and service mesh rules your package must declare."
-    href="/concepts/core-features/networking/"
-  />
-  <LinkCard
-    title="Identity & authentication"
-    description="How Keycloak client registration and SSO integration work — required for any package with user login."
-    href="/concepts/core-features/identity-access/"
-  />
-  <LinkCard
-    title="Policy & compliance"
-    description="How Pepr validates and mutates workloads — what gets blocked and how exemptions work."
-    href="/concepts/core-features/policy-and-compliance/"
-  />
-</CardGrid>
+> [!TIP]
+> Ready to create your own package? See the [Packaging Applications](/how-to-guides/packaging-applications/overview/) how-to guides for step-by-step guidance.

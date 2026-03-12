@@ -1,7 +1,7 @@
 ---
 title: Troubleshoot UDS Package Deployments
 sidebar:
-  order: 2.3
+  order: 9.3
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -22,11 +22,11 @@ You'll learn how to diagnose and resolve common issues that arise when deploying
 
 Check the Helm release status:
 
-```sh
+```bash
 helm status <package-name> -n <namespace>
 ```
 
-```sh title="Example output"
+```bash title="Example output"
 NAME: reference-package
 LAST DEPLOYED: Wed Feb 18 15:03:51 2026
 NAMESPACE: reference-package
@@ -41,11 +41,11 @@ reference-package   0/1     0            0           109s
 
 A `pending-install` status means Helm is waiting for resources to become ready. Inspecting Pods or Deployments may not reveal enough detail — check namespace Events instead:
 
-```sh
+```bash
 uds zarf tools kubectl get events -n <namespace>
 ```
 
-```sh title="Example output"
+```bash title="Example output"
 LAST SEEN   TYPE      REASON              OBJECT                                    MESSAGE
 8m26s       Warning   FailedCreate        replicaset/reference-package-674cc4c88b   Error creating: admission webhook "pepr-uds-core.pepr.dev" denied the request: Pod level securityContext does not meet the non-root user requirement.
 ```
@@ -74,11 +74,11 @@ securityContext:
 
 Use [`uds monitor pepr`](https://uds.defenseunicorns.com/reference/cli/commands/uds_monitor_pepr/) to watch for policy violations in real time:
 
-```sh
+```bash
 uds monitor pepr denied
 ```
 
-```sh title="Example output"
+```bash title="Example output"
  ✗ DENIED    reference-package/reference-package-67dd4655d7-jq9xk
              Pod level securityContext does not meet the non-root user requirement.
 ```
@@ -91,7 +91,7 @@ Any package that violates Pepr policies will appear with the reason for denial. 
 
 List installed packages and remove the one you need to redeploy:
 
-```sh
+```bash
 # List all installed packages
 uds zarf package list
 
@@ -107,7 +107,7 @@ See the Zarf docs for [`zarf package list`](https://docs.zarf.dev/commands/zarf_
 
 When you need to verify what values an upstream chart accepts, pull them locally:
 
-```sh
+```bash
 helm show values oci://ghcr.io/uds-packages/reference-package/helm/reference-package
 ```
 
@@ -115,7 +115,7 @@ helm show values oci://ghcr.io/uds-packages/reference-package/helm/reference-pac
 
 If you suspect a template isn't producing the expected output:
 
-```sh
+```bash
 helm template <release-name> <chart-path> -f values.yaml
 ```
 
@@ -126,7 +126,7 @@ See the Helm docs for [`helm template`](https://helm.sh/docs/helm/helm_template/
 - [Kubernetes: Troubleshooting Clusters](https://kubernetes.io/docs/tasks/debug/debug-cluster/)
 - [Kubernetes: Troubleshooting Applications](https://kubernetes.io/docs/tasks/debug/debug-application/)
 - [Helm: Troubleshooting](https://helm.sh/docs/v3/faq/troubleshooting/)
-- [Pepr Policy Engine](/reference/policy-engine/) — full list of enforced policies
+- [Policy & Compliance](/concepts/core-features/policy-and-compliance/)
 
 ## Next steps
 
@@ -140,10 +140,5 @@ See the Helm docs for [`helm template`](https://helm.sh/docs/helm/helm_template/
     title="Define network access"
     description="Configure intra-cluster and external egress rules — the most common source of package deployment failures."
     href="/how-to-guides/networking/define-network-access/"
-  />
-  <LinkCard
-    title="Policy & Compliance"
-    description="Understand how Pepr enforces policies, what gets blocked vs. auto-corrected, and how to use exemptions for legitimate exceptions."
-    href="/concepts/core-features/policy-and-compliance/"
   />
 </CardGrid>
