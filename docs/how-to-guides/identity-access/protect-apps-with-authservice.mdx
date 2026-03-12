@@ -1,0 +1,217 @@
+---
+title: Protect non-OIDC apps with SSO
+sidebar:
+  order: 3.01
+---
+
+import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll add SSO protection to an application that has no native OIDC support. Authservice intercepts requests before they reach the application and handles the authentication flow on the application's behalf — requiring users to log in via Keycloak before they can access the app.
+
+## Prerequisites
+
+- UDS Core deployed (Authservice is included by default)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Application deployed as a UDS Package
+- Application pods labeled with a consistent selector that you control
+
+## Before you begin
+
+> [!TIP]
+> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity & Authentication concepts](/concepts/core-features/identity-access/) for details.
+
+Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The first `redirectUris` entry you configure is used to populate the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
+
+## Steps
+
+<Tabs>
+  <TabItem label="Single service">
+    <Steps>
+
+    1. **Add `enableAuthserviceSelector` to the Package CR**
+
+       Set the selector to match the labels on your application pods:
+
+       ```yaml title="package.yaml"
+       apiVersion: uds.dev/v1alpha1
+       kind: Package
+       metadata:
+         name: httpbin
+         namespace: httpbin
+       spec:
+         sso:
+           - name: Demo SSO httpbin
+             clientId: uds-core-httpbin
+             redirectUris:
+               - "https://httpbin.uds.dev/login"
+             enableAuthserviceSelector:
+               app: httpbin
+       ```
+
+       Authservice will protect all pods labeled `app: httpbin` in the `httpbin` namespace.
+
+       > [!CAUTION]
+       > **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
+
+       > [!NOTE]
+       > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows — double-check both before deploying.
+
+    2. **Apply the Package CR**
+
+       ```bash
+       uds zarf tools kubectl apply -f package.yaml
+       ```
+
+       The UDS Operator creates a Keycloak client, configures Authservice, and sets up the Istio `RequestAuthentication` and `AuthorizationPolicy` resources automatically.
+
+    </Steps>
+  </TabItem>
+  <TabItem label="Multiple services">
+    <Steps>
+
+    1. **Use separate SSO clients for different auth rules**
+
+       If you need different group restrictions or different redirect URIs per service, define multiple SSO clients — one per logical access boundary:
+
+       ```yaml title="package.yaml"
+       apiVersion: uds.dev/v1alpha1
+       kind: Package
+       metadata:
+         name: my-app
+         namespace: my-app
+       spec:
+         sso:
+           - name: Admin Services
+             clientId: my-app-admin
+             redirectUris:
+               - "https://admin.example.com/login"
+             enableAuthserviceSelector:
+               app: admin
+             groups:
+               anyOf:
+                 - "/UDS Core/Admin"
+
+           - name: User Services
+             clientId: my-app-users
+             redirectUris:
+               - "https://app.example.com/login"
+             enableAuthserviceSelector:
+               app: user
+             groups:
+               anyOf:
+                 - "/MyApp/Users"
+       ```
+
+    2. **Apply the Package CR**
+
+       ```bash
+       uds zarf tools kubectl apply -f package.yaml
+       ```
+
+       > [!NOTE]
+       > When using `network.expose` with Authservice-protected services, each expose entry must map to exactly one SSO client. Multiple services behind the same expose entry must share the same SSO configuration.
+
+    </Steps>
+  </TabItem>
+</Tabs>
+
+> [!NOTE]
+> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually — the operator handles it.
+
+> [!CAUTION]
+> **Selector matching in ambient mode:** The `enableAuthserviceSelector` must match both the pod labels **and** the Kubernetes Service's `spec.selector`. If the selector matches pods but not the service, the pod is mutated to use the waypoint but the service is not properly associated with it — traffic is blocked (503 errors) rather than routed through the SSO flow. Any `network.expose` entries should also use the same selector to ensure proper traffic flow from the gateway through the waypoint.
+
+## Verification
+
+Confirm Authservice protection is active:
+
+```bash
+# Check that Authservice pods are running
+uds zarf tools kubectl get pods -n authservice -l app.kubernetes.io/name=authservice
+
+# Check that the Authservice chain for your app was created
+uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
+```
+
+**End-to-end test:**
+1. Open the application URL in a browser
+2. You should be redirected to the Keycloak login page
+3. Log in with valid credentials
+4. You should be redirected back to the application and see the content
+
+## Troubleshooting
+
+### Problem: Package CR is rejected with a redirect URI error
+
+**Symptoms:** `kubectl apply` fails with an error about invalid redirect URIs.
+
+**Solution:** The redirect URI must not be a root path. Replace root-path URIs with a specific path:
+
+```yaml
+# Invalid — root path not allowed for Authservice clients
+redirectUris:
+  - "https://myapp.example.com/"
+
+# Valid
+redirectUris:
+  - "https://myapp.example.com/login"
+```
+
+### Problem: Traffic is blocked with 503 errors in ambient mode
+
+**Symptoms:** After applying the Package CR with ambient mode, requests to the application return 503.
+
+**Solution:** Verify that the `enableAuthserviceSelector` matches both the pod labels AND the `spec.selector` of the Kubernetes Service for those pods. If the selector matches pod labels but not the service selector, the waypoint proxy is associated with the pods but not the service — traffic through the service is blocked rather than routed through the SSO flow.
+
+```bash
+# Compare pod labels with service selector
+uds zarf tools kubectl get pods -n <app-namespace> --show-labels
+uds zarf tools kubectl get service -n <app-namespace> -o yaml | grep -A5 selector
+```
+
+### Problem: Prometheus cannot scrape metrics from a protected pod
+
+**Symptoms:** Prometheus shows scrape errors for a workload that uses `enableAuthserviceSelector`.
+
+**Solution:** The `monitor[].podSelector` (or `monitor[].selector`) in the Package CR must exactly match the `sso[].enableAuthserviceSelector` for the protected workload. When these match, the operator creates an authorization exception that allows Prometheus to scrape metrics directly without going through the SSO flow.
+
+```yaml
+spec:
+  monitor:
+    - selector:
+        app: httpbin  # Must match enableAuthserviceSelector exactly
+      portName: metrics
+      targetPort: 9090
+  sso:
+    - name: Demo SSO
+      clientId: uds-core-httpbin
+      redirectUris:
+        - "https://httpbin.uds.dev/login"
+      enableAuthserviceSelector:
+        app: httpbin  # Must match monitor selector exactly
+```
+
+## Related Documentation
+
+- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on when to use Authservice vs native SSO
+- [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
+- [Package CR reference](/reference/operator-and-crds/package/) — full SSO and `enableAuthserviceSelector` field specification
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict which Keycloak groups can access your Authservice-protected application."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+</CardGrid>

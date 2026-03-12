@@ -1,0 +1,208 @@
+---
+title: Configure Keycloak authentication methods
+sidebar:
+  order: 3.03
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll enable or disable the authentication methods available on the UDS Core login page — including username/password, X.509/CAC certificates, WebAuthn, OTP, and social login — using bundle overrides. No image rebuild is required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+
+## Before you begin
+
+UDS Core ships with all major authentication flows enabled by default. Use `realmAuthFlows` bundle overrides to selectively enable or disable them for your environment.
+
+| Setting | Default | Description |
+|---|---|---|
+| `USERNAME_PASSWORD_AUTH_ENABLED` | `true` | Username/password login, password reset, and registration |
+| `X509_AUTH_ENABLED` | `true` | X.509 certificate (CAC/PIV) authentication |
+| `SOCIAL_AUTH_ENABLED` | `true` | Social/SSO login (Google, Azure AD, etc.) — requires an IdP to also be configured |
+| `OTP_ENABLED` | `true` | One-time password (TOTP) as a required MFA step for username/password login |
+| `WEBAUTHN_ENABLED` | `false` | WebAuthn/passkey as a required MFA step for username/password login |
+| `X509_MFA_ENABLED` | `false` | Require additional MFA (OTP or WebAuthn) after X.509 authentication |
+
+> [!CAUTION]
+> Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` all at once will result in no authentication options on the login page. Users will not be able to log in or register. Also, disabling both `USERNAME_PASSWORD_AUTH_ENABLED` and `X509_AUTH_ENABLED` disables user self-registration.
+
+> [!NOTE]
+> `realmAuthFlows` values are applied only during initial realm import. Changes to a running Keycloak instance require a full teardown and redeploy to re-import the realm — or you can apply them manually in the admin UI (see the troubleshooting section below). Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on pod restart without a realm redeploy.
+
+## Steps
+
+<Steps>
+
+1. **Determine which flows to enable**
+
+   Identify which authentication methods your environment requires. Common configurations:
+
+   | Environment | Recommended configuration |
+   |---|---|
+   | CAC-only (no username/password) | Disable `USERNAME_PASSWORD_AUTH_ENABLED`, keep `X509_AUTH_ENABLED` |
+   | Username/password + OTP only | Keep defaults, disable `X509_AUTH_ENABLED` and `SOCIAL_AUTH_ENABLED` |
+   | Username/password + WebAuthn | Enable `WEBAUTHN_ENABLED`, disable `OTP_ENABLED` if desired |
+   | CAC + MFA | Enable `X509_MFA_ENABLED` (also requires `OTP_ENABLED` or `WEBAUTHN_ENABLED`) |
+
+   > [!NOTE]
+   > UDS Core ships with DoD UNCLASSIFIED CA certificates by default, so X.509/CAC authentication works out of the box in DoD environments. If your environment uses a different CA chain, see [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/).
+
+2. **Add `realmAuthFlows` to your bundle override**
+
+   In your `uds-bundle.yaml`, set the desired authentication flow values:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmAuthFlows
+                 value:
+                   USERNAME_PASSWORD_AUTH_ENABLED: true
+                   X509_AUTH_ENABLED: false
+                   SOCIAL_AUTH_ENABLED: false
+                   OTP_ENABLED: true
+                   WEBAUTHN_ENABLED: false
+                   X509_MFA_ENABLED: false
+   ```
+
+   For clarity and auditability, specifying all settings explicitly is recommended — even settings you are leaving at their defaults.
+
+   > [!NOTE]
+   > If you are disabling `X509_AUTH_ENABLED`, also update your Istio gateway configuration to stop requesting client certificates from browsers. With X.509 auth disabled, the gateway should not present mutual TLS to users — set the `tls.cacert` override on `istio-tenant-gateway` (and `istio-admin-gateway` if applicable) to an empty string or remove it. See [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) for the gateway override structure.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm authentication flow changes are applied:
+
+1. Navigate to `sso.<domain>`
+2. Confirm only the expected login options appear on the login page
+3. For X.509/CAC: confirm the browser prompts for a client certificate (requires truststore to be configured and a valid certificate installed)
+
+**Check Keycloak authentication flow configuration:**
+
+In the Keycloak admin UI, navigate to `keycloak.<admin_domain>` → **uds** realm → **Authentication** → **Flows** and confirm the expected flow steps are enabled or disabled.
+
+## Troubleshooting
+
+### Problem: Login page still shows disabled authentication options after deploy
+
+**Symptoms:** The login page displays username/password or CAC fields even though they were disabled.
+
+**Solution:** `realmAuthFlows` values are applied during initial realm import only. If Keycloak was already running before the override was applied, Keycloak must be fully torn down and redeployed so the realm is re-imported:
+
+```bash
+uds create <path-to-bundle-dir>
+uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+```
+
+If redeploying is not possible, configure the flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:
+
+| Flow setting | Admin UI path |
+|---|---|
+| Disable username/password | **Authentication** → **Flows** → **UDS Authentication** → disable the **Deny Access** step below **Username Password Form** |
+| Disable credential reset | **Authentication** → **Flows** → **UDS Reset Credentials** → disable the **Reset Password** step |
+| Disable user registration | **Authentication** → **Flows** → **UDS Registration** → disable the **UDS Registration form** step |
+| Enable/disable OTP | **Authentication** → **Required Actions** tab → toggle **Configure OTP** |
+| Enable WebAuthn | 1. **Authentication** → **Required Actions** → toggle on **Webauthn Register Passwordless** under the **Enabled** column<br/>2. **Authentication** → **Flows** → **UDS Authentication** → set the **MFA** sub-flow to **Required**<br/>3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required** |
+
+### Problem: X.509/CAC login fails with OCSP error in airgapped environment
+
+**Symptoms:** Certificate authentication fails with an OCSP revocation check error. Logs show the OCSP responder is unreachable.
+
+**Solution:** Configure OCSP fail-open behavior or disable OCSP checking via `realmInitEnv`.
+
+To allow authentication when the OCSP responder is unreachable (fail-open):
+
+```yaml
+- path: realmInitEnv
+  value:
+    X509_OCSP_FAIL_OPEN: "true"
+```
+
+To disable OCSP checking entirely:
+
+```yaml
+- path: realmInitEnv
+  value:
+    X509_OCSP_CHECKING_ENABLED: "false"
+```
+
+> [!CAUTION]
+> Disabling OCSP checking means revoked certificates will not be rejected. Understand your organization's compliance requirements before using this setting.
+
+If your environment uses CRL-based revocation instead of OCSP, configure the CRL path:
+
+```yaml
+- path: realmInitEnv
+  value:
+    X509_CRL_CHECKING_ENABLED: "true"
+    X509_CRL_RELATIVE_PATH: "crls/DODROOTCA3.crl##crls/DODIDCA_81.crl"  # Relative to /opt/keycloak/conf; use ## between multiple paths
+    X509_CRL_ABORT_IF_NON_UPDATED: "false"  # Set true to fail authentication if CRL is expired
+```
+
+> [!NOTE]
+> CRL files must be present on the Keycloak pod at the path specified in `X509_CRL_RELATIVE_PATH`, relative to `/opt/keycloak/conf`. To include CRL files in a custom image, see the [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config).
+
+### Problem: MFA is not required after enabling WebAuthn or OTP
+
+**Symptoms:** Users can log in without completing an MFA step.
+
+**Solution:** Confirm that both the flow toggle and at least one MFA method are enabled. For WebAuthn to work as a required step, `WEBAUTHN_ENABLED: true` must be set; for OTP, `OTP_ENABLED: true`. Verify the realm was redeployed after the override was applied.
+
+## Reference: X.509/CAC with additional MFA
+
+> [!NOTE]
+> CAC authentication (X.509 certificate + PIN) already satisfies multi-factor requirements in most security frameworks — the certificate is "something you have" and the PIN is "something you know." `X509_MFA_ENABLED` adds a second software factor on top of CAC, which is rarely needed and can be impractical in classified environments where personal devices aren't permitted. Confirm this is an explicit requirement before enabling it.
+
+If you do need to require an additional factor after CAC authentication, use this configuration in the `realmAuthFlows` block from step 2 in place of the values shown there, then recreate and deploy the bundle:
+
+```yaml
+- path: realmAuthFlows
+  value:
+    X509_AUTH_ENABLED: true
+    X509_MFA_ENABLED: true
+    OTP_ENABLED: true       # At least one MFA method must also be enabled
+    WEBAUTHN_ENABLED: false
+```
+
+`X509_MFA_ENABLED: true` has no effect unless at least one of `OTP_ENABLED` or `WEBAUTHN_ENABLED` is also enabled.
+
+## Related Documentation
+
+- [Keycloak: Authentication](https://www.keycloak.org/docs/latest/server_admin/#configuring-authentication) — upstream reference for Keycloak authentication flow configuration
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure the CA truststore"
+    description="Configure the CA certificate bundle required for X.509/CAC authentication."
+    href="/how-to-guides/identity-access/configure-truststore/"
+  />
+  <LinkCard
+    title="Configure user accounts and security policies"
+    description="Set password complexity and email verification alongside auth flow configuration."
+    href="/how-to-guides/identity-access/configure-user-account-settings/"
+  />
+</CardGrid>

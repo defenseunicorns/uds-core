@@ -1,0 +1,220 @@
+---
+title: Manage Keycloak with OpenTofu
+sidebar:
+  order: 3.14
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll enable the built-in `uds-opentofu-client` in UDS Core's Keycloak realm and use it with the [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) to programmatically manage Keycloak resources — groups, clients, identity providers, and more.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [OpenTofu](https://opentofu.org/docs/intro/install/) installed
+
+## Before you begin
+
+UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is **disabled by default** — it carries `realm-admin` permissions and should only be enabled when you intend to actively use it.
+
+> [!CAUTION]
+> **Plan your authentication flows before deploying UDS Core with the OpenTofu client enabled.** `realmInitEnv` values (including `OPENTOFU_CLIENT_ENABLED`) are applied only during initial realm import. If you need to enable the client on an already-running deployment, use the [admin UI method](#enable-the-client-in-the-keycloak-admin-ui) instead of redeploying.
+>
+> Before enabling OpenTofu access, decide which authentication flows you want and set `realmAuthFlows` in the same deployment to avoid an extra redeploy. See [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) for details.
+
+## Steps
+
+<Steps>
+
+1. **Enable the OpenTofu client via bundle override**
+
+   Add `OPENTOFU_CLIENT_ENABLED: "true"` to your `realmInitEnv` in `uds-bundle.yaml`. Set your desired authentication flows in the same deployment:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   OPENTOFU_CLIENT_ENABLED: "true"
+               - path: realmAuthFlows
+                 value:
+                   USERNAME_PASSWORD_AUTH_ENABLED: true
+                   X509_AUTH_ENABLED: false
+                   SOCIAL_AUTH_ENABLED: false
+                   OTP_ENABLED: true
+                   WEBAUTHN_ENABLED: false
+                   X509_MFA_ENABLED: false
+   ```
+
+   Deploy the bundle:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+   #### Enable the client in the Keycloak admin UI
+
+   For already-running deployments where a full redeploy is not possible, enable the client directly in the Keycloak Admin Console:
+
+   1. Navigate to `keycloak.<admin_domain>` and log in with admin credentials
+   2. Switch to the **uds** realm using the top-left dropdown
+   3. Go to **Clients** → select `uds-opentofu-client`
+   4. Toggle **Enabled** to **On** in the top-right of the settings page
+   5. Click **Save**
+
+2. **Retrieve the client secret**
+
+   After the client is enabled, retrieve its secret from the Keycloak Admin Console:
+
+   1. Go to **Clients** → `uds-opentofu-client`
+   2. Click the **Credentials** tab
+   3. Copy the **Client Secret** value
+
+   > [!CAUTION]
+   > Never commit the client secret to source control. Store it in a secrets manager, inject it as an environment variable, or use a `.tfvars` file excluded from version control.
+
+3. **Configure the OpenTofu Keycloak provider**
+
+   Create your OpenTofu configuration pointing at your UDS Core Keycloak instance:
+
+   ```hcl title="main.tf"
+   terraform {
+     required_providers {
+       keycloak = {
+         source  = "keycloak/keycloak"
+         version = "5.5.0"
+       }
+     }
+     required_version = ">= 1.0.0"
+   }
+
+   variable "keycloak_client_secret" {
+     type        = string
+     description = "Client secret for the uds-opentofu-client"
+     sensitive   = true
+   }
+
+   provider "keycloak" {
+     client_id     = "uds-opentofu-client"
+     client_secret = var.keycloak_client_secret
+     url           = "https://keycloak.<admin_domain>"
+     realm         = "uds"
+   }
+   ```
+
+   Store the client secret in a `.tfvars` file and add it to `.gitignore`:
+
+   ```hcl title="secrets.auto.tfvars"
+   keycloak_client_secret = "your-client-secret-here"
+   ```
+
+4. **Manage Keycloak resources with OpenTofu**
+
+   With the provider configured, manage resources in the `uds` realm declaratively. For example, to create a group hierarchy:
+
+   ```hcl title="groups.tf"
+   resource "keycloak_group" "example_group" {
+     realm_id = "uds"
+     name     = "example-group"
+
+     attributes = {
+       description = "Example group created via OpenTofu"
+       created_by  = "opentofu"
+     }
+   }
+
+   resource "keycloak_group" "nested_group" {
+     realm_id  = "uds"
+     name      = "nested-example-group"
+     parent_id = keycloak_group.example_group.id
+
+     attributes = {
+       description = "Nested group under example-group"
+     }
+   }
+   ```
+
+   Apply your configuration:
+
+   ```bash
+   tofu plan
+   tofu apply -auto-approve
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the OpenTofu client is enabled and your provider connectivity works:
+
+1. In the Keycloak Admin Console, go to **Clients** → `uds-opentofu-client` and confirm the **Enabled** toggle is **On**
+2. Run `tofu plan` — if the provider authenticates successfully, the plan output shows your resources without any authentication error
+
+After running `tofu apply`, confirm resources created by OpenTofu appear in the Keycloak Admin Console (for example, check **Groups** after creating groups).
+
+## Troubleshooting
+
+### Problem: `uds-opentofu-client` is disabled after deploying with `OPENTOFU_CLIENT_ENABLED: "true"`
+
+**Symptoms:** The client exists in Keycloak but shows as disabled, or OpenTofu authentication fails with a 401 error.
+
+**Solution:** `realmInitEnv` values apply only during initial realm import. If Keycloak was already running when the bundle was deployed, the setting had no effect. Enable the client manually in the admin UI:
+
+1. Go to **Clients** → `uds-opentofu-client`
+2. Toggle **Enabled** to **On**
+3. Click **Save**
+
+### Problem: OpenTofu provider returns "Malformed version" error
+
+**Symptoms:** `tofu plan` fails with a `Malformed version` error (see [Keycloak Terraform Provider #1342](https://github.com/keycloak/terraform-provider-keycloak/issues/1342)).
+
+**Solution:** This is a known issue with Keycloak 26.4.0+. Add the `view-system` role to `realm-admin`:
+
+1. In the Keycloak Admin Console, go to **Clients** → `realm-management` → **Client Roles** → click **Create Role**
+2. Set **Role Name** to `view-system` with description `Enables displaying SystemInfo through the ServerInfo endpoint` and click **Save**
+3. Navigate back to **Client Roles**, find `realm-admin`, and open it
+4. Go to the **Associated roles** tab → **Assign role** → **Client Roles**
+5. Find and assign `view-system`
+
+### Problem: OpenTofu fails with a permissions error when managing resources
+
+**Symptoms:** `tofu apply` fails with an authorization error when creating or modifying Keycloak resources.
+
+**Solution:** Confirm the `uds-opentofu-client` service account has the `realm-management: realm-admin` role:
+
+1. Go to **Clients** → `uds-opentofu-client` → **Service account roles** tab
+2. Confirm `realm-management: realm-admin` is listed
+3. If missing, click **Assign role**, filter by **Client Roles**, find `realm-management: realm-admin`, and assign it
+
+## Related Documentation
+
+- [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) — full provider resource reference
+- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement
+- [Upgrade Keycloak realm configuration](/operations/upgrade-keycloak-realm/) — manual upgrade steps when re-importing the realm with new config
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+</CardGrid>
