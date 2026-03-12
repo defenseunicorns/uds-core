@@ -1,7 +1,7 @@
 ---
-title: Troubleshoot bundle deployment failures
+title: Upgrade UDS Core 1.4 to 1.5
 sidebar:
-  order: 2
+  order: 2.2
 ---
 
 ## Operations & maintenance

@@ -1,0 +1,213 @@
+---
+title: "Exemptions & Packages Not Updating"
+sidebar:
+  order: 1.1
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## When to use this runbook
+
+Use this runbook when:
+
+- Changes to `Exemption` or `Package` CRs are not reflected in the cluster
+- Expected workload behavior remains unaffected after applying CR updates
+- Logs in `pepr-system` indicate potential Kubernetes Watch failures
+
+**What you'll notice:** After applying or updating a specific `Exemption` or `Package` CR, no corresponding `Processing exemption` or `Processing Package` log entry appears in the `pepr-system` controller logs for that CR.
+
+## Overview
+
+This is typically caused by one of the following:
+
+1. **Controller pods not running** — the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
+2. **Incorrect CR definition** — the `Exemption` or `Package` manifest doesn't match the expected schema, so the controller silently ignores it
+3. **Kubernetes Watch missed event** — the Watch connection between the Pepr controller and the API server dropped or timed out, causing CR change events to be lost
+
+## Pre-checks
+
+<Steps>
+
+1. **Check pepr-system pod health**
+
+   ```bash
+   uds zarf tools kubectl get pods -n pepr-system
+   ```
+
+   **What to look for:** all pods should be in `Running` state with all containers ready. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem with the controller itself — skip to [Cause 1: Controller pods not running](#cause-1-controller-pods-not-running).
+
+2. **Verify the CR exists and check its status**
+
+   For a Package CR, confirm it exists and check its status:
+
+   ```bash
+   uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
+   ```
+
+   **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it — see [Cause 2: Incorrect CR definition](#cause-2-incorrect-cr-definition).
+
+   For an Exemption CR, confirm it exists in the correct namespace:
+
+   ```bash
+   uds zarf tools kubectl get exemptions -n uds-policy-exemptions <exemption-name>
+   ```
+
+   > [!NOTE]
+   > `Exemption` CRs must be created in the `uds-policy-exemptions` namespace unless you have configured a [namespace override](/reference/operator-and-crds/exemption/).
+
+3. **Check exemption processing logs**
+
+   ```bash
+   uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core | grep "Processing exemption"
+   ```
+
+   **Look for:** log entries similar to:
+
+   ```json
+   {"...":"...", "msg":"Processing exemption nvidia-gpu-operator, watch phase: MODIFIED"}
+   ```
+
+   If no entries appear after applying your `Exemption` CR, the Watch likely missed the event — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
+
+4. **Check Package processing logs**
+
+   ```bash
+   uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher | grep "Processing Package"
+   ```
+
+   **Look for:** log entries similar to:
+
+   ```json
+   {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Pending, observedGeneration: undefined, retryAttempt: undefined"}
+   {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Ready, observedGeneration: 1, retryAttempt: 0"}
+   ```
+
+   If no entries appear, the watcher is not picking up Package changes — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
+
+</Steps>
+
+## Procedure
+
+### Cause 1: Controller pods not running
+
+If the `pepr-system` pods are not healthy:
+
+<Steps>
+
+1. **Check pod events for failure reasons**
+
+   ```bash
+   uds zarf tools kubectl describe pods -n pepr-system
+   ```
+
+   **Look for:** OOMKilled, image pull errors, node resource pressure, or scheduling failures.
+
+2. **Address the underlying issue before restarting**
+
+   > [!TIP]
+   > Before restarting, fix the root cause identified in step 1. For example, if pods are OOMKilled, increase Pepr resource limits. If pods are pending due to scheduling failures, scale the node or free resources.
+
+3. **Restart the controller deployments**
+
+   ```bash
+   uds zarf tools kubectl rollout restart deploy -n pepr-system
+   ```
+
+4. **Verify pods recover**
+
+   ```bash
+   uds zarf tools kubectl get pods -n pepr-system -w
+   ```
+
+</Steps>
+
+### Cause 2: Incorrect CR definition
+
+If the CR exists in the cluster but the controller is not processing it:
+
+<Steps>
+
+1. **Validate against the spec**
+
+   Compare your CR against the specification to ensure all required fields are present and correctly formatted:
+
+   - [Packages specification](/reference/operator-and-crds/package/)
+   - [Exemptions specification](/reference/operator-and-crds/exemption/)
+
+2. **Fix and re-apply the CR**
+
+   Correct any schema issues in your manifest and re-apply it.
+
+</Steps>
+
+### Cause 3: Kubernetes Watch missed event
+
+If diagnostics show the controller pods are running but no processing log entries appear for your CR:
+
+<Steps>
+
+1. **Restart the watcher deployment**
+
+   ```bash
+   uds zarf tools kubectl rollout restart deploy/pepr-uds-core-watcher -n pepr-system
+   ```
+
+2. **Wait for the rollout to complete**
+
+   ```bash
+   uds zarf tools kubectl rollout status deploy/pepr-uds-core-watcher -n pepr-system
+   ```
+
+   The watcher reprocesses all Exemptions and Packages on startup, so no need to re-apply your CRs.
+
+</Steps>
+
+If the Watch failure persists, see the [Additional help](#additional-help) section to file an issue with the UDS Core team.
+
+## Verification
+
+After applying a fix, confirm the issue is resolved:
+
+```bash
+uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core --tail=50 | grep "Processing exemption"
+```
+
+```bash
+uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher --tail=50 | grep "Processing Package"
+```
+
+**Success indicators:**
+
+- Log entries show `Processing exemption` or `Processing Package` with the correct CR name
+- The `status.phase` progresses to `Ready` for Package CRs
+- Workloads reflect the expected exemption or package behavior
+
+## Additional help
+
+If this runbook doesn't resolve your issue:
+
+1. Collect relevant details from the steps above
+2. Collect metrics from the watcher:
+
+   ```bash
+   uds zarf tools kubectl exec -it -n pepr-system deploy/pepr-uds-core-watcher -- node -e "process.env.NODE_TLS_REJECT_UNAUTHORIZED = \"0\"; fetch(\"https://pepr-uds-core-watcher/metrics\").then(res => res.text()).then(body => console.log(body)).catch(err => console.error(err))"
+   ```
+
+3. Collect watcher and controller logs:
+
+   ```bash
+   uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher > watcher.log
+   ```
+
+   ```bash
+   uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core > admission.log
+   ```
+
+4. Open an issue on [UDS Core GitHub](https://github.com/defenseunicorns/uds-core/issues) with the metrics and logs attached
+
+## Related documentation
+
+- [Packages specification](/reference/operator-and-crds/package/) — CR schema and field reference
+- [Exemptions specification](/reference/operator-and-crds/exemption/) — CR schema, field reference, and namespace override options
+- [Kubernetes Watch](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes) — upstream documentation on Watch mechanics
+
