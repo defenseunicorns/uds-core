@@ -1,0 +1,146 @@
+---
+title: Configure automatic pod reload
+sidebar:
+  order: 10.1
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, pods that consume specific Secrets or ConfigMaps will automatically restart when those resources change. This eliminates manual rollout restarts when rotating credentials, updating certificates, or changing configuration data.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+
+## Before you begin
+
+The UDS Operator watches for changes to Secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When a labeled resource is updated, the operator identifies affected pods and restarts them automatically.
+
+There are two targeting modes:
+
+- **Auto-discovery (default)** — the operator scans all pods in the namespace and restarts those that reference the changed resource through volume mounts, environment variables (`env` or `envFrom`), or projected volumes.
+- **Explicit selector** — you specify a label selector via annotation, and the operator restarts all pods matching those labels.
+
+For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the operator triggers a rolling restart by patching the pod template annotations. Standalone pods are evicted to trigger recreation.
+
+> [!TIP]
+> Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/) — so pods automatically pick up rotated credentials and updated trust bundles.
+
+## Steps
+
+<Steps>
+
+1. **Label the Secret or ConfigMap for pod reload**
+
+   Add the `uds.dev/pod-reload: "true"` label to the resource that changes — the Secret or ConfigMap, not the pods that consume it.
+
+   ```yaml title="secret.yaml"
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: my-database-credentials
+     namespace: my-app
+     labels:
+       uds.dev/pod-reload: "true"
+   type: Opaque
+   data:
+     username: YWRtaW4=
+     password: cGFzc3dvcmQxMjM=
+   ```
+
+   > [!IMPORTANT]
+   > The label goes on the resource being changed (Secret or ConfigMap), not on the pods being restarted.
+
+2. **(Optional) Add an explicit pod selector**
+
+   By default, the operator uses auto-discovery to find pods that consume the resource. If you need to target specific pods regardless of how they reference the resource, add the `uds.dev/pod-reload-selector` annotation:
+
+   ```yaml title="secret.yaml"
+   metadata:
+     labels:
+       uds.dev/pod-reload: "true"
+     annotations:
+       uds.dev/pod-reload-selector: "app=my-app,component=database"
+   ```
+
+   When this annotation is present, the operator restarts all pods matching the specified labels instead of using auto-discovery.
+
+   > [!TIP]
+   > Auto-discovery works well for most cases. Use an explicit selector when pods reference the resource indirectly or when you want to restart additional pods that don't directly mount the resource.
+
+3. **Deploy the resource**
+
+   **(Recommended)** Include the Secret or ConfigMap in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the resource directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f secret.yaml
+   ```
+
+</Steps>
+
+## Verification
+
+When a labeled resource is updated, the operator generates Kubernetes events. Check for restart events:
+
+```bash
+uds zarf tools kubectl get events -n <namespace> --field-selector reason=SecretChanged
+uds zarf tools kubectl get events -n <namespace> --field-selector reason=ConfigMapChanged
+```
+
+You can also verify the last restart time by checking the annotation on affected deployments:
+
+```bash
+uds zarf tools kubectl get deployment <name> -n <namespace> -o jsonpath='{.spec.template.metadata.annotations.uds\.dev/restartedAt}'
+```
+
+## Troubleshooting
+
+### Pods not restarting after resource update
+
+**Symptom:** You update a Secret or ConfigMap but the pods consuming it are not restarted.
+
+**Solution:** Verify the `uds.dev/pod-reload: "true"` label is on the Secret or ConfigMap (not the pod). Check with:
+
+```bash
+uds zarf tools kubectl get secret <name> -n <namespace> --show-labels
+```
+
+### Wrong pods restarting (or none at all) with explicit selector
+
+**Symptom:** Pods that should restart don't, or unrelated pods restart.
+
+**Solution:** Verify the `uds.dev/pod-reload-selector` annotation value matches the target pods' labels exactly. Check pod labels with:
+
+```bash
+uds zarf tools kubectl get pods -n <namespace> --show-labels
+```
+
+## Related Documentation
+
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — pod reload can be enabled for SSO client secrets via `secretConfig.labels`
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) — pod reload can be enabled for CA certificate ConfigMaps via `caBundle.configMap.labels`
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Enable the classification banner"
+    description="Another cross-cutting platform feature: inject classification markings into web UIs."
+    href="/how-to-guides/platform-features/enable-classification-banner/"
+  />
+  <LinkCard
+    title="Networking concepts"
+    description="Understand how UDS Core manages service mesh and network policies."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>
