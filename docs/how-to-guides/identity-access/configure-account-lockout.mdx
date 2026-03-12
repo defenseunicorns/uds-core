@@ -1,0 +1,158 @@
+---
+title: Configure Keycloak account lockout
+sidebar:
+  order: 3.11
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Keycloak's brute-force protection to control how accounts are locked after repeated failed login attempts. By default, UDS Core applies a permanent lockout after 3 failures within a 12-hour window. You can configure temporary lockouts that precede permanent lockout using a bundle override.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+
+## Before you begin
+
+UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_TEMPORARY_LOCKOUTS`.
+
+| Value | Behavior |
+|---|---|
+| `0` (default) | **Permanent lockout only** — 3 failed attempts within 12 hours locks the account permanently until an admin unlocks it |
+| `> 0` | **Temporary then permanent** — each group of 3 failures triggers a 15-minute temporary lockout; after `MAX_TEMPORARY_LOCKOUTS` temporary lockouts, the account is permanently locked |
+
+> [!CAUTION]
+> Modifying lockout behavior may have compliance implications. Check your organization's NIST controls or STIG requirements for brute-force protection before changing these settings.
+
+## Steps
+
+<Steps>
+
+1. **Set `MAX_TEMPORARY_LOCKOUTS` in your bundle override**
+
+   Add the override to your `uds-bundle.yaml`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   MAX_TEMPORARY_LOCKOUTS: "3"
+   ```
+
+   With `MAX_TEMPORARY_LOCKOUTS: "3"`, the lockout sequence for a user is:
+
+   | Event | Result |
+   |---|---|
+   | 3 failed logins | Temporary lockout (15 minutes) |
+   | 3 more failed logins | Second temporary lockout |
+   | 3 more failed logins | Third temporary lockout |
+   | 3 more failed logins | **Permanent lockout** |
+
+   The number of temporary lockouts allowed before escalation to permanent:
+   - `MAX_TEMPORARY_LOCKOUTS: "1"` → second lockout is permanent
+   - `MAX_TEMPORARY_LOCKOUTS: "2"` → third lockout is permanent
+   - `MAX_TEMPORARY_LOCKOUTS: "3"` → fourth lockout is permanent
+
+   > [!NOTE]
+   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for this setting to take effect.
+
+2. **(Optional) Fine-tune brute-force settings in the Keycloak admin UI**
+
+   For additional control over lockout timing and thresholds, configure them directly in the Keycloak Admin Console. Log in to `keycloak.<admin_domain>`, switch to the **uds** realm, and navigate to **Realm Settings** → **Security Defenses** → **Brute Force Detection**.
+
+   Key settings:
+
+   | Setting | Recommended value | Description |
+   |---|---|---|
+   | Brute Force Mode | `Lockout permanently after temporary lockout` | Enables the temporary-then-permanent mode |
+   | Failure Factor | `3` | Failed login attempts within the window before a lockout triggers |
+   | Quick Login Check (ms) | `1000` | Treat rapid repeated failures as an attack |
+   | Max Delta Time (s) | `43200` | 12-hour rolling window for counting failures |
+   | Wait Increment (s) | `900` | Duration of a temporary lockout (15 minutes) |
+   | Max Failure Wait (s) | `86400` | Maximum temporary lockout duration (24 hours) |
+   | Failure Reset Time (s) | `43200` | When to reset failure counters |
+   | Permanent Lockout | `ON` | Enable escalation to permanent lockout |
+   | Max Temporary Lockouts | Match your `MAX_TEMPORARY_LOCKOUTS` value | |
+
+   After configuring, save and test with a non-production account.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm brute-force lockout is working:
+
+1. In a test browser session, attempt to log in with a valid username and incorrect password 3 times
+2. Log in to the Keycloak Admin Console → **Users** → select the test user → **Details** tab and confirm the **Locked** status is shown
+3. If using temporary lockouts, wait 15 minutes and confirm the **Locked** status clears automatically
+4. Attempt to log in again after the temporary lockout period to confirm the account is accessible
+
+> [!NOTE]
+> UDS Core hides specific lockout error messages on the login page to prevent user enumeration. Use the Keycloak Admin Console to confirm lockout status rather than relying on the login page message.
+
+**Check the lockout configuration:**
+
+In the Keycloak Admin Console, navigate to **Realm Settings** → **Security Defenses** → **Brute Force Detection** and confirm the settings match your intended configuration.
+
+## Troubleshooting
+
+### Problem: Account does not lock after repeated failed login attempts
+
+**Symptoms:** A user can keep attempting login indefinitely without being locked out.
+
+**Solution:** Confirm brute-force detection is enabled. In the Keycloak Admin Console, go to **Realm Settings** → **Security Defenses** → **Brute Force Detection** and verify it is **Enabled**. Also confirm the `MAX_TEMPORARY_LOCKOUTS` bundle override was applied and that Keycloak was redeployed afterward.
+
+### Problem: Permanently locked account needs to be unlocked
+
+**Symptoms:** A user is permanently locked and cannot regain access.
+
+**Solution:** An administrator must manually unlock the account in the Keycloak Admin Console:
+
+1. Navigate to **Users** and find the affected user
+2. Click the user to open their profile
+3. On the **Details** tab, toggle **Enabled** to **On**
+4. Save
+
+### Problem: Lockout settings applied via bundle override are not reflected in the admin UI
+
+**Symptoms:** `MAX_TEMPORARY_LOCKOUTS` was set in the bundle but the Keycloak admin UI still shows default values.
+
+**Solution:** `realmInitEnv` settings are applied only during initial realm import. The bundle must be deployed on a fresh Keycloak instance (or the realm must be re-imported) for the override to take effect. For an already-running instance, configure the settings manually in the Keycloak Admin Console as described in Step 2.
+
+## Related Documentation
+
+- [Keycloak: Brute Force Detection](https://www.keycloak.org/docs/latest/server_admin/#_brute-force) — upstream reference for all brute-force protection settings
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session limits and timeout settings that complement lockout configuration."
+    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+  />
+</CardGrid>

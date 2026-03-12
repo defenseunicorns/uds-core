@@ -1,0 +1,204 @@
+---
+title: Capture application metrics
+sidebar:
+  order: 5.1
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Configure Prometheus to scrape metrics from your application using the UDS Package CR's `monitor` block. Once configured, your application's metrics will appear alongside the built-in platform metrics in Prometheus, making them available for dashboards and alerting.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A deployed application that exposes a metrics endpoint (e.g., `/metrics`)
+
+## Before you begin
+
+UDS Core's Prometheus instance automatically scrapes metrics from all platform components out of the box. This guide shows how to add **your application's** metrics to that collection.
+
+The Package CR `monitor` block is the UDS-native approach for defining metrics targets. When you specify a `monitor` entry, the UDS Operator automatically creates the underlying `ServiceMonitor` or `PodMonitor` resources and configures the necessary network policies for Prometheus to reach your application's metrics endpoint.
+
+> [!TIP]
+> If your application's Helm chart already supports creating `ServiceMonitor` or `PodMonitor` resources directly, you can use those instead. The Package CR approach is useful when the chart does not support monitors natively or when you want a simplified, consistent configuration method.
+
+## Steps
+
+<Steps>
+
+1. **Add a ServiceMonitor via the Package CR**
+
+   Define a `monitor` entry in your Package CR's `spec` block. The `selector` labels must match the Kubernetes Service that fronts your application, and `portName` must match a named port on that Service.
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     monitor:
+       - selector:
+           app: my-app
+         portName: metrics
+         targetPort: 8080
+   ```
+
+   | Field | Description |
+   |---|---|
+   | `selector` | Label selector matching the Kubernetes Service to monitor |
+   | `portName` | Named port on the Service where metrics are exposed |
+   | `targetPort` | Numeric port on the pod/container (used for network policy) |
+
+   > [!NOTE]
+   > If your pod labels differ from the Service selector labels, add a `podSelector` field so the operator creates the correct network policy. For example: `podSelector: { app: my-app-pod }`.
+
+2. **Optional: Use a PodMonitor instead**
+
+   If your application does not have a Kubernetes Service (e.g., a DaemonSet or standalone pod), use a `PodMonitor` by setting `kind: PodMonitor`. The `selector` labels must match the pod labels directly.
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     monitor:
+       - selector:
+           app: my-app
+         portName: metrics
+         targetPort: 8080
+         kind: PodMonitor
+   ```
+
+   > [!TIP]
+   > For PodMonitors, both `selector` and `podSelector` behave the same way -- either can be used to match pod labels.
+
+3. **Optional: Customize the metrics path or add authorization**
+
+   By default, Prometheus scrapes the `/metrics` path. If your application exposes metrics on a different path, or if the endpoint requires authentication, add the `path` and `authorization` fields.
+
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     monitor:
+       - selector:
+           app: my-app
+         portName: metrics
+         targetPort: 8080
+         path: "/custom/metrics"
+         description: "My App Metrics"
+         authorization:
+           credentials:
+             key: "token"
+             name: "metrics-auth-secret"
+             optional: false
+           type: "Bearer"
+   ```
+
+   | Field | Description |
+   |---|---|
+   | `path` | Custom metrics endpoint path (defaults to `/metrics`) |
+   | `description` | Optional label to customize the monitor resource name |
+   | `authorization` | Bearer token auth using a Kubernetes Secret reference |
+
+4. **Deploy your Package**
+
+   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f package.yaml
+   ```
+
+   The UDS Operator will reconcile the Package CR and create the corresponding `ServiceMonitor` or `PodMonitor` resource along with the required network policies.
+
+</Steps>
+
+## Verification
+
+Connect to the Prometheus UI to confirm your application target is being scraped:
+
+```bash
+uds zarf connect prometheus
+```
+
+In the Prometheus UI, navigate to **Status > Targets**. Your application's target should appear in the list and show a status of **UP**.
+
+**Success criteria:**
+- Your application appears as a target in Prometheus
+- Target status shows **UP**
+- Metrics from your application are queryable in the Prometheus expression browser
+
+## Troubleshooting
+
+### Problem: Target not appearing in Prometheus
+
+**Symptom:** Your application does not show up in the Prometheus targets list.
+
+**Solution:** Verify that the `selector` labels and `portName` in your Package CR match the actual Service (or pod) labels and port names. Check that the ServiceMonitor was created:
+
+```bash
+uds zarf tools kubectl get servicemonitor -A
+```
+
+If using a PodMonitor:
+
+```bash
+uds zarf tools kubectl get podmonitor -A
+```
+
+Also confirm the Package CR was reconciled successfully:
+
+```bash
+uds zarf tools kubectl describe package my-app -n my-app
+```
+
+### Problem: Target shows as DOWN
+
+**Symptom:** The target appears in Prometheus but the status is **DOWN** or shows scrape errors.
+
+**Solution:** The metrics endpoint is not responding correctly. Verify the port is correct and the application is serving metrics:
+
+```bash
+uds zarf tools kubectl port-forward -n my-app svc/my-app 8080:8080
+curl http://localhost:8080/metrics
+```
+
+Check that `targetPort` matches the actual container port and that `path` matches the endpoint your application exposes.
+
+## Related Documentation
+
+- [Prometheus Operator: ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor) — full ServiceMonitor field reference
+- [Prometheus Operator: PodMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor) — full PodMonitor field reference
+
+## Next steps
+
+These guides may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Add custom dashboards to Grafana"
+    description="Build Grafana dashboards to visualize the metrics you're now collecting."
+    href="/how-to-guides/monitoring-observability/add-custom-dashboards/"
+  />
+  <LinkCard
+    title="Create metric alerting rules"
+    description="Define alerting conditions based on the metrics Prometheus is scraping."
+    href="/how-to-guides/monitoring-observability/create-metric-alerting-rules/"
+  />
+</CardGrid>

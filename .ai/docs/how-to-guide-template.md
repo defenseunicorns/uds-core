@@ -90,19 +90,29 @@ Brief context about default behavior, architecture, or how the component works t
    |---|---|---|
    | Setting name | Default value | `helm.path` |
 
-3. **Create and deploy your bundle**
+3. **Deploy your application**
 
+   <!-- Use ONE of the patterns below depending on the guide type -->
+
+   <!-- Pattern A: Guide only modifies Core via bundle overrides -->
    ```bash
    uds create <path-to-bundle-dir>
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   <!-- Optional: include zarf package create only if the guide involves modifying a Zarf package -->
-   <!-- If the guide requires rebuilding a Zarf package, add before the uds commands:
+   <!-- Pattern B: Guide creates application resources (Package CRs, ConfigMaps, PrometheusRules, etc.) -->
+   **(Recommended)** Include the [resource] in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
    ```bash
-   uds zarf package create <path-to-package-dir>
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
-   -->
+
+   **Or** apply the [resource] directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f manifest.yaml
+   ```
 
 </Steps>
 
@@ -163,8 +173,25 @@ These guides and concepts may be useful to explore next:
 - No `oci://` prefix on repository references
 - Use `values` for static config, `variables` for secrets/environment-specific
 - Add `sensitive: true` to password and secret variables
-- The final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
-- Only include `zarf package create` if the guide involves modifying a Zarf package — most guides only use bundle overrides and don't need it
+- For guides that only modify Core via bundle overrides: the final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
+- For guides where the user creates application resources (Package CRs, ConfigMaps, PrometheusRules, etc.): the deploy step should show Zarf package create/deploy as the **(Recommended)** approach first, with `kubectl apply` as a secondary **Or** option for quick testing. Include a link to [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance. Follow this pattern:
+
+  ```markdown
+  X. **Deploy step title**
+
+     **(Recommended)** Include the [resource] in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+     ```bash
+     uds zarf package create --confirm
+     uds zarf package deploy zarf-package-*.tar.zst --confirm
+     ```
+
+     **Or** apply the [resource] directly for quick testing:
+
+     ```bash
+     uds zarf tools kubectl apply -f manifest.yaml
+     ```
+  ```
 - Related Documentation comes before Next Steps
 - Next Steps uses `<CardGrid>` with `<LinkCard>` components
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)

@@ -1,0 +1,125 @@
+---
+title: Query Falco events in Grafana
+sidebar:
+  order: 6.2
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll query and visualize Falco runtime security events in Grafana using Loki, and use the built-in Falcosidekick dashboard to monitor detection activity across your cluster.
+
+## Prerequisites
+
+- UDS Core deployed (Loki and Grafana are included by default)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
+
+## Before you begin
+
+Falco events are shipped to Loki by default via Falcosidekick — no additional configuration is needed. Events are labeled with `priority` and `rule` fields, which you can use to filter queries.
+
+## Steps
+
+<Steps>
+
+1. **Access Grafana**
+
+   Navigate to Grafana via the UDS Core admin interface at `grafana.<admin_domain>`.
+
+2. **Query events in Loki Explore**
+
+   In Grafana, go to **Explore** and select the **Loki** data source. Use the following LogQL queries to find Falco events:
+
+   **All events:**
+
+   ```
+   {priority=~".+"}
+   ```
+
+   **Filter by priority level:**
+
+   ```
+   {priority="Warning"}
+   ```
+
+   ```
+   {priority="Error"}
+   ```
+
+   **Filter by specific rule:**
+
+   ```
+   {rule="Search Private Keys or Passwords"}
+   ```
+
+   ```
+   {rule="Terminal shell in container"}
+   ```
+
+   You can combine filters:
+
+   ```
+   {priority="Warning", rule=~".*Privilege.*"}
+   ```
+
+3. **Use the built-in Falcosidekick dashboard**
+
+   The upstream Falco Helm chart includes a Grafana dashboard for visualizing security event logs. Navigate to **Dashboards** in Grafana and search for **Falco Logs**. This dashboard provides an overview of detection activity including event counts by priority, rule, and time.
+
+</Steps>
+
+## Verification
+
+Trigger a known rule to confirm events appear in Loki:
+
+```bash
+# Exec into a pod to trigger "Terminal shell in container"
+uds zarf tools kubectl exec -it -n <any-namespace> <any-pod> -- /bin/sh
+```
+
+After a few seconds, query Loki with `{rule="Terminal shell in container"}` and confirm the event appears.
+
+## Troubleshooting
+
+### Problem: No events appear in Loki
+
+**Symptoms:** Loki queries return no results for Falco events.
+
+**Solution:**
+1. Verify Falco pods are running: `uds zarf tools kubectl get pods -n falco`
+2. Verify Falcosidekick pods are running: `uds zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falcosidekick`
+3. Check Falcosidekick logs for Loki delivery errors:
+   ```bash
+   uds zarf tools kubectl logs -n falco -l app.kubernetes.io/name=falcosidekick --tail=30
+   ```
+
+### Problem: Grafana dashboard shows "No data"
+
+**Symptoms:** The Falco Logs dashboard loads but all panels show "No data."
+
+**Solution:** Adjust the time range in Grafana to cover a period when Falco events were generated. If no events have been generated yet, trigger a test detection (see Verification above). Also confirm the Loki data source is configured correctly under **Configuration** → **Data sources** in Grafana.
+
+## Related Documentation
+
+- [Loki LogQL documentation](https://grafana.com/docs/loki/latest/query/) — full reference for Loki query syntax
+- [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — rule names and priorities for filtering queries
+- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Tune Falco runtime detections"
+    description="Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules."
+    href="/how-to-guides/runtime-security/tune-falco-detections/"
+  />
+  <LinkCard
+    title="Route runtime alerts to external destinations"
+    description="Forward Falco detections to Slack, Mattermost, or Microsoft Teams."
+    href="/how-to-guides/runtime-security/route-runtime-alerts/"
+  />
+</CardGrid>

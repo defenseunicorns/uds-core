@@ -213,7 +213,7 @@ export function updateEgressMocks(egressMocks: EgressMocks) {
     }
 
     // For core K8s resources, determine by string match
-    if (typeof model == "string") {
+    if (typeof model === "string") {
       return k8sImplementations[model] ?? baseImplementation;
     }
 

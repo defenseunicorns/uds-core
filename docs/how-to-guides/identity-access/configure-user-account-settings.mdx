@@ -1,0 +1,197 @@
+---
+title: Configure user accounts and security policies
+sidebar:
+  order: 3.13
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure user account behavior for your UDS Core Keycloak realm: setting password complexity policy, enabling email verification, using email as the username, and extending the UDS security hardening allow lists for protocol mappers and client scopes. All settings in this guide use `realmInitEnv` bundle overrides — no image rebuild required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+
+## Before you begin
+
+All settings in this guide are applied via `realmInitEnv` in a bundle override. These values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for changes to take effect.
+
+| Setting | Default | Description |
+|---|---|---|
+| `EMAIL_AS_USERNAME` | `false` | Use the user's email address as their Keycloak username |
+| `EMAIL_VERIFICATION_ENABLED` | `false` | Require users to verify their email before accessing the realm |
+| `PASSWORD_POLICY` | See [default](#default-password-policy) | Keycloak password policy string |
+| `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | unset | Additional protocol mappers to allow beyond the UDS defaults |
+| `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | unset | Additional client scopes to allow beyond the UDS defaults |
+
+> [!NOTE]
+> Settings for session timeouts, concurrent session limits, and logout behavior are covered in [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/). Settings for authentication methods (password, CAC, WebAuthn) are covered in [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/). Account lockout thresholds are covered in [Configure Keycloak account lockout](/how-to-guides/identity-access/configure-account-lockout/).
+
+## Steps
+
+<Steps>
+
+1. **Configure email settings**
+
+   By default, Keycloak uses a separate username field for login. Set `EMAIL_AS_USERNAME: "true"` if your users authenticate with their email address instead of a distinct username:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   EMAIL_AS_USERNAME: "true"
+                   EMAIL_VERIFICATION_ENABLED: "true"
+   ```
+
+   | Setting | Effect when `true` |
+   |---|---|
+   | `EMAIL_AS_USERNAME` | The username field on the login and registration form is replaced by an email field; email becomes the unique identifier |
+   | `EMAIL_VERIFICATION_ENABLED` | Users receive a verification email after registration and must click the link before they can log in |
+
+   > [!NOTE]
+   > `EMAIL_VERIFICATION_ENABLED` requires that Keycloak is configured with a valid SMTP server. Configure SMTP in the Keycloak Admin Console under **Realm Settings** → **Email**.
+
+2. **Set a custom password policy**
+
+   #### Default password policy
+
+   UDS Core ships with a default password policy aligned with STIG requirements:
+
+   ```
+   hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(60) and specialChars(2) and digits(1) and lowerCase(1) and upperCase(1) and passwordHistory(5) and length(15) and notUsername(undefined)
+   ```
+
+   This default enforces:
+   - Password hashing with PBKDF2-SHA256
+   - Passwords expire every 60 days
+   - At least 2 special characters, 1 digit, 1 lowercase, 1 uppercase
+   - Last 5 passwords cannot be reused
+   - Minimum length of 15 characters
+   - Password cannot contain the username
+
+   To override, set `PASSWORD_POLICY` to a Keycloak policy string:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   PASSWORD_POLICY: "hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(90) and specialChars(1) and digits(1) and lowerCase(1) and upperCase(1) and length(12) and notUsername(undefined)"
+   ```
+
+   See the [Keycloak password policy documentation](https://www.keycloak.org/docs/latest/server_admin/#_password-policies) for the full list of available policy types.
+
+   > [!CAUTION]
+   > Relaxing the default password policy may have compliance implications. Review your organization's NIST controls or STIG requirements before reducing password complexity or expiration requirements.
+
+3. **(Optional) Extend security hardening allow lists**
+
+   UDS Core enforces a default allow list of protocol mappers and client scopes for all packages managed by the UDS Operator. If your packages require additional mappers or scopes beyond the defaults, add them here:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS: "oidc-hardcoded-claim-mapper, saml-hardcode-attribute-mapper"
+                   SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES: "role_list"
+   ```
+
+   Multiple values are comma-separated. These are appended to the UDS defaults — they do not replace them.
+
+   > [!CAUTION]
+   > Only add protocol mappers and client scopes that your applications explicitly require. Each addition expands the set of capabilities packages in the realm are permitted to use.
+
+4. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+   If Keycloak is already running with an existing realm, Keycloak must be fully torn down and redeployed for `realmInitEnv` settings to take effect.
+
+</Steps>
+
+## Verification
+
+**Verify password policy:**
+
+In the Keycloak Admin Console (`keycloak.<admin_domain>`), switch to the **uds** realm and navigate to **Realm Settings** → **Security Defenses** → **Password Policy**. Confirm the policy entries match your configuration.
+
+**Verify email-as-username:**
+
+Navigate to `sso.<domain>` and confirm the login form shows an email field rather than a username field.
+
+**Verify email verification:**
+
+Register a new test user and confirm a verification email is dispatched before the account can be used to log in.
+
+**Verify security hardening allow lists:**
+
+In the Keycloak Admin Console, navigate to **Realm Settings** → **Client Policies** → **Profiles** → **UDS Client Profile** → **uds-operator-permissions** executor. Confirm your additional mappers and scopes appear in the configuration.
+
+## Troubleshooting
+
+### Problem: Password policy changes are not reflected in the admin UI
+
+**Symptoms:** The Keycloak admin UI shows the old password policy after redeploy.
+
+**Solution:** `realmInitEnv` settings are applied only during initial realm import. To update the policy on a live instance without redeploying, configure it manually in the Keycloak Admin Console under **Realm Settings** → **Security Defenses** → **Password Policy**.
+
+### Problem: `EMAIL_VERIFICATION_ENABLED` has no effect (users are not receiving emails)
+
+**Symptoms:** Users register but do not receive a verification email.
+
+**Solution:** Confirm SMTP is configured in the Keycloak Admin Console under **Realm Settings** → **Email**. Without a valid SMTP server, Keycloak cannot send verification emails regardless of the `EMAIL_VERIFICATION_ENABLED` setting.
+
+### Problem: Package deployment fails after adding security hardening entries
+
+**Symptoms:** The UDS Operator rejects a Package CR that includes a protocol mapper or client scope.
+
+**Solution:** Confirm the mapper or scope name is spelled correctly. Also confirm Keycloak was fully redeployed after the `realmInitEnv` change was applied — these settings only take effect on initial realm import.
+
+## Related Documentation
+
+- [Keycloak password policies](https://www.keycloak.org/docs/latest/server_admin/#_password-policies) — full list of Keycloak password policy types
+- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable authentication flows alongside password and account settings
+- [Custom Keycloak plugin](/concepts/core-features/keycloak-plugin/) — how the UDS plugin enforces protocol mapper and client scope restrictions
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session timeouts, concurrent session limits, and logout confirmation behavior."
+    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+  />
+  <LinkCard
+    title="Manage Keycloak with OpenTofu"
+    description="Use the built-in OpenTofu client to programmatically manage Keycloak resources."
+    href="/how-to-guides/identity-access/manage-keycloak-with-opentofu/"
+  />
+</CardGrid>

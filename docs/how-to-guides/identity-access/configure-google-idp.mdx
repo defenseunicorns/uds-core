@@ -1,0 +1,185 @@
+---
+title: Configure Google SAML as an identity provider
+sidebar:
+  order: 3.15
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll connect an external social or enterprise identity provider to UDS Core's Keycloak realm so that users can authenticate using their organization's existing credentials instead of local Keycloak accounts. UDS Core includes a pre-built Google SAML integration configurable entirely via bundle overrides — no Keycloak admin UI clickops required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to your identity provider's admin console to collect the required SAML values
+
+## Before you begin
+
+UDS Core supports two approaches for connecting identity providers:
+
+| Approach | When to use |
+|---|---|
+| **`realmInitEnv` bundle overrides** (this guide) | Google SAML — a pre-built integration is included in the UDS realm; all configuration is declarative |
+| **Keycloak admin UI or OpenTofu** | Other SAML providers (Azure Entra, Okta, etc.) — requires manual configuration in the Keycloak admin console or via the OpenTofu client |
+
+Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` override so the social login option appears on the login page. This is the default — only include it explicitly if you have previously disabled it.
+
+> [!NOTE]
+> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for these settings to take effect.
+
+## Steps
+
+<Steps>
+
+1. **Create a Custom SAML App in Google Workspace Admin Console**
+
+   Log in to the [Google Workspace Admin Console](https://admin.google.com) and navigate to **Apps** → **Web and mobile apps** → **Add app** → **Add custom SAML app**.
+
+   In the app configuration:
+   - Give the app a name (e.g., `UDS Core`)
+   - On the **Google Identity Provider details** page, collect:
+     - **SSO URL** (the SAML endpoint — this becomes part of your entity ID)
+     - **Entity ID** (the Google IdP entity ID, format: `https://accounts.google.com/o/saml2?idpid=XXXXX`)
+     - **Certificate** — download and base64-encode the signing certificate
+
+   On the **Service Provider details** page, set:
+   - **ACS URL**: `https://sso.<domain>/realms/uds/broker/google-saml/endpoint`
+   - **Entity ID**: `https://sso.<domain>/realms/uds` (this is your `GOOGLE_IDP_CORE_ENTITY_ID`)
+   - **Name ID format**: Email
+   - **Name ID**: Basic Information → Primary email
+
+   Under **Attribute mapping**, add:
+   - `Primary email` → `email`
+   - `First name` → `firstName`
+   - `Last name` → `lastName`
+
+   If you want group-based access control, also configure a Groups attribute mapping and note the group names you want to map to the UDS Core Admin and Auditor roles.
+
+2. **Collect the required values**
+
+   After saving the SAML app, gather the values needed for the bundle override:
+
+   | Setting | Where to find it |
+   |---|---|
+   | `GOOGLE_IDP_ID` | Google IdP entity ID from the SAML app's Identity Provider details |
+   | `GOOGLE_IDP_SIGNING_CERT` | Certificate from the SAML app's Identity Provider details, base64-encoded, with header/footer lines removed |
+   | `GOOGLE_IDP_NAME_ID_FORMAT` | Set to `urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress` |
+   | `GOOGLE_IDP_CORE_ENTITY_ID` | The ACS Entity ID you set in the Service Provider details |
+   | `GOOGLE_IDP_ADMIN_GROUP` | Google group name or email that maps to the UDS Core Admin role (optional) |
+   | `GOOGLE_IDP_AUDITOR_GROUP` | Google group name or email that maps to the UDS Core Auditor role (optional) |
+
+3. **Add the Google IDP settings to your bundle override**
+
+   In your `uds-bundle.yaml`, add the collected values to `realmInitEnv`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   GOOGLE_IDP_ENABLED: "true"
+                   GOOGLE_IDP_ID: "https://accounts.google.com/o/saml2?idpid=XXXXX"
+                   GOOGLE_IDP_SIGNING_CERT: "<base64-encoded-cert-without-header-footer>"
+                   GOOGLE_IDP_NAME_ID_FORMAT: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+                   GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.<domain>/realms/uds"
+                   GOOGLE_IDP_ADMIN_GROUP: "uds-admins@example.com"
+                   GOOGLE_IDP_AUDITOR_GROUP: "uds-auditors@example.com"
+               - path: realmAuthFlows
+                 value:
+                   SOCIAL_AUTH_ENABLED: true
+   ```
+
+   `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` are optional — omit them if you are not using group-based access control or managing group membership another way.
+
+4. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+5. **(Optional) Assign Google Workspace users to the SAML app**
+
+   In the Google Workspace Admin Console, go to the SAML app you created and set **User access** to **On for everyone** (or for specific organizational units). Users who are not assigned to the app will receive an error when attempting to authenticate.
+
+</Steps>
+
+## Verification
+
+Confirm the Google IdP is configured and working:
+
+1. Navigate to `sso.<domain>`
+2. Confirm a **Google** or **Sign in with Google** option appears on the login page
+3. Click it and complete the Google authentication flow
+4. Confirm you are redirected back to the UDS Core application
+
+**Check the IdP configuration in Keycloak:**
+
+In the Keycloak Admin Console, go to the **uds** realm → **Identity Providers** → confirm `google-saml` is listed and enabled.
+
+**Check group membership (if configured):**
+
+After a user authenticates via Google, go to **Users** in the Keycloak Admin Console, find the user, and confirm they have the expected group membership under the **Groups** tab.
+
+## Troubleshooting
+
+### Problem: Google login option does not appear on the login page
+
+**Symptoms:** The UDS Core login page only shows username/password or X.509 options.
+
+**Solution:** Confirm `SOCIAL_AUTH_ENABLED: true` is set in `realmAuthFlows` and that Keycloak was redeployed after the override was applied. Also verify `GOOGLE_IDP_ENABLED: "true"` is set in `realmInitEnv`.
+
+### Problem: Users receive a SAML error after authenticating with Google
+
+**Symptoms:** Google authentication completes but Keycloak returns an error page.
+
+**Solution:** The most common cause is a mismatch between the **Entity ID** values. Verify:
+- `GOOGLE_IDP_CORE_ENTITY_ID` in the bundle override matches the **Entity ID** set in the Google SAML app's Service Provider details
+- The **ACS URL** in the Google SAML app is set to `https://sso.<domain>/realms/uds/broker/google-saml/endpoint`
+
+### Problem: Certificate validation fails
+
+**Symptoms:** SAML assertion is rejected with a signature or certificate error in Keycloak logs.
+
+**Solution:** Confirm the certificate in `GOOGLE_IDP_SIGNING_CERT` is:
+- The current active certificate from the Google IdP details page (not an expired one)
+- Base64-encoded as a single string with the `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` header/footer lines removed
+
+### Problem: Users authenticate but are missing expected group membership
+
+**Symptoms:** Users can log in via Google but do not have Admin or Auditor role access.
+
+**Solution:** Confirm the group names in `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` exactly match the group names or emails in Google Workspace. Also confirm the user is a member of the correct Google Workspace group and that the SAML app includes the Groups attribute mapping.
+
+## Related Documentation
+
+- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable the `SOCIAL_AUTH_ENABLED` toggle alongside IdP configuration
+- [Enforce group-based access controls](/how-to-guides/identity-access/enforce-group-based-access/) — restrict application access to users in specific Keycloak groups
+- [Connect Azure AD as an identity provider](/how-to-guides/identity-access/connect-azure-ad-idp/) — admin UI-based approach for Azure Entra ID
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-access/manage-keycloak-with-opentofu/) — configure other SAML providers programmatically post-deploy
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable social login, X.509/CAC, OTP, and WebAuthn via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+</CardGrid>
