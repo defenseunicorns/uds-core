@@ -91,6 +91,9 @@ UDS Core provides a centralized trust bundle system that automatically builds an
 
    Platform components (Keycloak, Grafana, Loki, etc.) automatically mount the trust bundle — no manual configuration needed. For your own applications, mount the `uds-trust-bundle` ConfigMap as a volume.
 
+   > [!WARNING]
+   > If you override Helm `volumeMounts` or `volumes` values for a Core component (e.g., via bundle overrides), the automatic trust bundle mount will be replaced. You must include the trust bundle mount in your override to preserve it.
+
    Choose the mount approach based on your needs:
 
    <Tabs>
