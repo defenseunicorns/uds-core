@@ -127,7 +127,7 @@ uds zarf tools kubectl get pods -n namespace
 
 ## Troubleshooting
 
-### Problem description
+### Problem: Short description of the issue
 
 **Symptom:** What the user sees.
 
@@ -194,5 +194,7 @@ These guides and concepts may be useful to explore next:
   ```
 - Related Documentation comes before Next Steps
 - Next Steps uses `<CardGrid>` with `<LinkCard>` components
+- Related Documentation and Next Steps should not overlap: Related Documentation links to reference pages, external docs, and concepts; Next Steps links to actionable how-to guides or concepts as a natural follow-up
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
+- Troubleshooting headings use the `### Problem: Description` format, with `**Symptom:**` (singular) or `**Symptoms:**` (plural) and `**Solution:**` sub-headings
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing

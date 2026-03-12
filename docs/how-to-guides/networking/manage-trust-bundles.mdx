@@ -68,10 +68,11 @@ UDS Core provides a centralized trust bundle system that automatically builds an
 
    Trust bundle ConfigMaps are automatically created in all namespaces with a UDS Package CR. To customize the ConfigMap for a specific package, use the `caBundle` field:
 
-   ```yaml
+   ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
    kind: Package
    metadata:
+     name: my-package
      namespace: my-package
    spec:
      caBundle:
