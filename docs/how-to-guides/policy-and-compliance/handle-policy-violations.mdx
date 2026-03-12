@@ -1,14 +1,14 @@
 ---
 title: Handle policy violations
 sidebar:
-  order: 8.1
+  order: 8.01
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll learn how to identify why a workload is blocked or modified by UDS Core's Pepr policies, fix common violations, and — when a fix isn't possible — create an exemption to allow the workload through.
+You'll learn how to identify why a workload is blocked or modified by UDS Core's Pepr policies, fix common violations, and create an exemption when a fix isn't possible.
 
 ## Prerequisites
 
@@ -20,8 +20,11 @@ You'll learn how to identify why a workload is blocked or modified by UDS Core's
 
 UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on every resource submitted to the cluster:
 
-- **Mutations** run first and silently correct common misconfigurations — your workloads may be adjusted without any error.
+- **Mutations** run first and silently correct common misconfigurations. Your workloads may be adjusted without any error.
 - **Validations** run after mutations and reject resources that cannot be automatically corrected, returning a clear error message.
+
+> [!TIP]
+> Use `uds monitor pepr` to stream Pepr events in real time. This shows both mutations and admission denials as they happen, making it easier to identify what's being changed or blocked.
 
 > [!NOTE]
 > For the full list of enforced policies (including severity, affected fields, and exemption names), see the [Policy Engine](/reference/policy-engine/) reference. For conceptual background, see [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/).
@@ -65,7 +68,8 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    uds zarf tools kubectl get events -n <namespace> --field-selector reason=FailedCreate
 
    # Check ReplicaSet events for webhook rejections (validation errors appear here, not on the Deployment)
-   uds zarf tools kubectl describe replicaset -n <namespace> -l app=<app-label>
+   uds zarf tools kubectl get replicaset -n <namespace>
+   uds zarf tools kubectl describe replicaset -n <namespace> <replicaset-name>
    ```
 
    A typical validation error looks like:
@@ -74,6 +78,8 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    Error creating: admission webhook "pepr-uds-core.pepr.dev" denied the request:
    Privileged containers are not allowed
    ```
+
+   You can also use `uds monitor pepr` to watch for denials in real time.
 
 3. **Fix the violation**
 
@@ -89,13 +95,13 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    | Restricted capabilities | Remove capabilities beyond the allowed set from `securityContext.capabilities.add` |
 
    > [!NOTE]
-   > Some violations relate to Istio service mesh policies (sidecar configuration overrides, traffic interception overrides, ambient mesh overrides). These block annotations that could bypass mesh security. If you see these violations, review whether the annotation is truly needed — most applications should not override Istio defaults. See the [Policy Engine](/reference/policy-engine/) reference for the full list of blocked annotations.
+   > Some violations relate to Istio service mesh policies (sidecar configuration overrides, traffic interception overrides, ambient mesh overrides). These block annotations that could bypass mesh security. If you see these violations, review whether the annotation is truly needed. Most applications should not override Istio defaults. See the [Policy Engine](/reference/policy-engine/) reference for the full list of blocked annotations.
 
 4. **Create an exemption when a fix isn't possible**
 
-   If your workload legitimately requires behavior that policy blocks — for example, a privileged DaemonSet for node-level monitoring — create an Exemption CR via bundle overrides.
+   If your workload legitimately requires behavior that policy blocks (for example, a privileged DaemonSet for node-level monitoring), create an Exemption CR via bundle overrides.
 
-   Each exemption specifies which policies to bypass and a matcher that targets specific resources:
+   Each exemption specifies which policies to bypass (see the [Policy Engine](/reference/policy-engine/) reference for exemption names) and a matcher that targets specific resources:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -127,36 +133,10 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
    |---|---|---|
    | `namespace` | Namespace of the target resource | Yes |
    | `name` | Resource name (supports regex, e.g., `"^my-pod.*"`) | Yes |
-   | `kind` | Resource kind: `pod` or `service` | No |
+   | `kind` | Resource kind: `pod` or `service` (defaults to `pod`) | No |
 
    > [!IMPORTANT]
-   > Exemptions should be used sparingly and with justification. Each exemption reduces the cluster's security posture. Always document the reason in the `title` and `description` fields — these are visible in audits.
-
-   By default, Exemption CRs are only allowed in the `uds-policy-exemptions` namespace. To allow them in any namespace:
-
-   ```yaml title="uds-config.yaml"
-   variables:
-     core:
-       ALLOW_ALL_NS_EXEMPTIONS: "true"
-   ```
-
-   > [!WARNING]
-   > Allowing exemptions in all namespaces increases the risk that misconfigured RBAC permits unintended exemptions. Only enable this if you have robust RBAC controls across all namespaces.
-
-   UDS Core also provides a built-in exemption for Istio gateway NodePort services:
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         pepr:
-           uds-exemptions:
-             values:
-               - path: exemptions.istioGatewayNodeport.enabled
-                 value: true
-   ```
+   > Exemptions should be used sparingly and with justification. Each exemption reduces the cluster's security posture. Always document the reason in the `title` and `description` fields, as these are visible in audits.
 
 5. **Create and deploy your bundle**
 
@@ -182,7 +162,8 @@ uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.con
 uds zarf tools kubectl get exemptions -n uds-policy-exemptions
 
 # Check that the target pod has the exemption annotation
-uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.metadata.annotations}' | grep uds-core
+uds zarf tools kubectl get pod <pod-name> -n <namespace> -o yaml | \
+  uds zarf tools yq '.metadata.annotations | to_entries[] | select(.value == "exempted")'
 ```
 
 **Success criteria:**
@@ -196,10 +177,10 @@ uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.metadata
 
 **Symptom:** A Deployment shows 0 available replicas but no pod-level errors.
 
-**Solution:** Check the ReplicaSet events — validation rejections appear there, not on the Deployment itself:
+**Solution:** Check the ReplicaSet events. Validation rejections appear there, not on the Deployment itself:
 
 ```bash
-uds zarf tools kubectl describe replicaset -n <namespace> -l app=<app-label>
+uds zarf tools kubectl describe replicaset -n <namespace> <deployment-name>
 ```
 
 ### Problem: Exemption not taking effect
@@ -210,31 +191,29 @@ uds zarf tools kubectl describe replicaset -n <namespace> -l app=<app-label>
 
 1. The Exemption CR is in the `uds-policy-exemptions` namespace (or all-namespace exemptions are enabled)
 2. The `matcher.namespace` matches the workload's namespace exactly
-3. The `matcher.name` regex matches the resource name — test your regex against the actual pod/service name
+3. The `matcher.name` regex matches the resource name. Test your regex against the actual pod/service name.
 4. The `matcher.kind` is correct (`pod` for pods, `service` for services)
 
-```bash
-# Check if Pepr processed the exemption
-uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core | grep "Processing exemption"
-```
+If the exemption exists but still isn't being applied, see the [Exemptions & Packages Not Updating](/operations/troubleshooting-and-runbooks/exemptions-and-packages/) runbook for detailed diagnostics.
 
 ### Problem: Mutation not applied as expected
 
 **Symptom:** Pod runs as root despite the Require Non-root User mutation.
 
-**Solution:** Verify the pod is not exempted. Check for the exemption annotation:
+**Solution:** Verify the pod is not exempted. Check for exemption annotations:
 
 ```bash
-uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.metadata.annotations}' | grep uds-core
+uds zarf tools kubectl get pod <pod-name> -n <namespace> -o yaml | \
+  uds zarf tools yq '.metadata.annotations | to_entries[] | select(.value == "exempted")'
 ```
 
-If the pod shows `uds-core.pepr.dev/uds-core-policies.RequireNonRootUser: exempted`, an Exemption CR is overriding the mutation.
+If the output includes `uds-core.pepr.dev/uds-core-policies.RequireNonRootUser: exempted`, an Exemption CR is overriding the mutation.
 
 ## Related Documentation
 
-- [Policy Engine](/reference/policy-engine/) — full reference of all enforced policies, severity levels, and blocked annotations
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Pepr Documentation](https://docs.pepr.dev/) — the Kubernetes controller framework powering UDS Core policies
+- [Policy Engine](/reference/policy-engine/) - full reference of all enforced policies, severity levels, and blocked annotations
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Pepr Documentation](https://docs.pepr.dev/) - the Kubernetes controller framework powering UDS Core policies
 
 ## Next steps
 
@@ -242,13 +221,18 @@ These guides and concepts may be useful to explore next:
 
 <CardGrid>
   <LinkCard
-    title="Audit security posture"
-    description="Review exemptions, Package CR network rules, and overall policy compliance across your cluster."
-    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
+    title="Allow exemptions in all namespaces"
+    description="Enable namespace-flexible exemptions with appropriate RBAC safeguards."
+    href="/how-to-guides/policy-and-compliance/allow-exemptions-all-namespaces/"
   />
   <LinkCard
-    title="Policy & Compliance concepts"
-    description="Background on how mutations, validations, and exemptions work in UDS Core."
-    href="/concepts/core-features/policy-and-compliance/"
+    title="Configure infrastructure exemptions"
+    description="Set up exemptions for Core components and infrastructure workloads that require elevated privileges."
+    href="/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/"
+  />
+  <LinkCard
+    title="Audit security posture"
+    description="Review exemptions and Package CR network rules across your cluster."
+    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
   />
 </CardGrid>

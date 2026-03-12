@@ -1,27 +1,30 @@
 ---
 title: Audit security posture
 sidebar:
-  order: 8.2
+  order: 8.05
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting Package CR network rules for overly permissive ingress or egress configurations.
+You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting Package CR network rules for overly permissive configurations.
 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- `kubectl` access with permissions to view pods, exemptions, packages, network policies, and authorization policies across namespaces
+- `kubectl` access with permissions to view pods, exemptions, and packages across namespaces
 
 ## Before you begin
 
 UDS Core provides two layers of auditable security configuration:
 
-- **Policy exemptions** — Exemption CRs that allow specific workloads to bypass Pepr policies. Each exempted resource is annotated, creating a built-in audit trail.
-- **Package CR network rules** — The `allow`, `expose`, and `monitor` fields in Package CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
+- **Policy exemptions** - Exemption CRs that allow specific workloads to bypass Pepr policies. Each exempted resource is annotated, creating a built-in audit trail.
+- **Package CR network rules** - The `allow` fields in Package CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
+
+> [!IMPORTANT]
+> Your organization should include review of Package CRs and Exemption CRs as part of the normal deployment process. Catching overly permissive configurations during code review is more effective than auditing after the fact.
 
 ## Steps
 
@@ -41,31 +44,37 @@ UDS Core provides two layers of auditable security configuration:
 
    For each exemption, verify:
 
-   - **Justification** — Does the `title` and `description` explain why the exemption is needed?
-   - **Scope** — Is the `matcher.name` regex as narrow as possible? A regex like `".*"` exempts every resource in the namespace.
-   - **Policies** — Are only the minimum required policies listed? An exemption for `DisallowPrivileged` shouldn't also include `DropAllCapabilities` unless both are genuinely needed.
-   - **Staleness** — Does the target workload still exist? Exemptions are not automatically cleaned up when workloads are removed.
+   - **Justification** - Does the `title` and `description` explain why the exemption is needed?
+   - **Scope** - Is the `matcher.name` regex as narrow as possible? A regex like `".*"` exempts every resource in the namespace.
+   - **Policies** - Are only the minimum required policies listed? For example, an exemption for `DisallowPrivileged` should not also include `DropAllCapabilities` unless both are genuinely needed.
+   - **Staleness** - Does the target workload still exist? Exemptions are not automatically cleaned up when workloads are removed.
 
    > [!TIP]
    > Pipe exemption output to a file for compliance documentation: `uds zarf tools kubectl get exemptions -n uds-policy-exemptions -o yaml > exemptions-audit.yaml`
 
 2. **Find all exempted resources in the cluster**
 
-   Query pod annotations to build a cluster-wide view of every exempted resource:
+   Query pod and service annotations to build a cluster-wide view of every exempted resource:
 
    ```bash
-   uds zarf tools kubectl get pods -A -o json | \
-     jq -r '.items[] | select(.metadata.annotations // {} | to_entries[] | select(.value == "exempted")) | "\(.metadata.namespace)/\(.metadata.name): \(.metadata.annotations | to_entries[] | select(.value == "exempted") | .key)"'
+   # Exempted pods
+   uds zarf tools kubectl get pods -A -o yaml | \
+     uds zarf tools yq '.items[] | select(.metadata.annotations | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + (.metadata.annotations | to_entries[] | select(.value == "exempted") | .key)' | sort -u
+
+   # Exempted services
+   uds zarf tools kubectl get services -A -o yaml | \
+     uds zarf tools yq '.items[] | select(.metadata.annotations | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + (.metadata.annotations | to_entries[] | select(.value == "exempted") | .key)' | sort -u
    ```
 
    This produces output like:
 
    ```
-   monitoring/node-exporter-abc12: uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces
-   monitoring/node-exporter-abc12: uds-core.pepr.dev/uds-core-policies.RequireNonRootUser
+   monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces
+   monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.RequireNonRootUser
+   istio-admin-gateway/admin-ingressgateway: uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices
    ```
 
-   Cross-reference this list against your exemption CRs. Every exempted resource should map back to a documented, justified exemption.
+   Cross-reference this list against your Exemption CRs. Every exempted resource should map back to a documented, justified exemption.
 
 3. **Audit Package CR network allow rules**
 
@@ -76,7 +85,7 @@ UDS Core provides two layers of auditable security configuration:
    uds zarf tools kubectl get packages -A
 
    # Inspect a specific package's network rules
-   uds zarf tools kubectl get package <name> -n <namespace> -o jsonpath='{.spec.network}' | jq .
+   uds zarf tools kubectl get package <name> -n <namespace> -o yaml | uds zarf tools yq '.spec.network.allow'
    ```
 
    Flag these patterns in `allow` rules:
@@ -90,49 +99,15 @@ UDS Core provides two layers of auditable security configuration:
    | `remoteHost` egress without justification | Opens egress to a specific external hostname | Is the hostname documented and expected? |
 
    > [!IMPORTANT]
-   > The UDS operator does not warn about or block permissive configurations — it generates whatever NetworkPolicies and AuthorizationPolicies the Package CR requests. Audit is the only mechanism to catch overly broad rules.
+   > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the Package CR requests. Audit is the only mechanism to catch overly broad rules.
 
-4. **Audit Package CR expose rules**
-
-   Inspect exposed services for each package:
-
-   ```bash
-   uds zarf tools kubectl get package <name> -n <namespace> -o jsonpath='{.spec.network.expose}' | jq .
-   ```
-
-   Check for:
-
-   - **Gateway selection** — Is the service on the right gateway (`tenant` for user-facing, `admin` for platform)? Admin services should not be on the tenant gateway.
-   - **Selector scope** — Does the `selector` target the correct pods? An empty or missing selector exposes all pods in the namespace to the gateway.
-   - **Port exposure** — Are only the necessary ports exposed?
-
-5. **Review generated network and authorization policies**
-
-   Verify that the policies generated from Package CRs match your expectations:
-
-   ```bash
-   # List NetworkPolicies in a namespace
-   uds zarf tools kubectl get networkpolicies -n <namespace>
-
-   # List AuthorizationPolicies in a namespace
-   uds zarf tools kubectl get authorizationpolicies -n <namespace>
-
-   # Inspect a specific policy
-   uds zarf tools kubectl get networkpolicy <name> -n <namespace> -o yaml
-   ```
-
-   Look for policies with broad `ipBlock` CIDRs (especially `0.0.0.0/0`), empty `podSelector` fields, or missing port restrictions.
-
-6. **Verify Pepr controller health**
+4. **Verify Pepr controller health**
 
    Confirm the policy controller is running and processing resources:
 
    ```bash
    # Check Pepr system pods
    uds zarf tools kubectl get pods -n pepr-system
-
-   # Verify the admission controller is healthy
-   uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core --tail=20
 
    # Verify admission webhooks are registered
    uds zarf tools kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations | grep pepr
@@ -142,43 +117,18 @@ UDS Core provides two layers of auditable security configuration:
 
 ## Verification
 
-A healthy, well-audited cluster shows:
+A well-audited cluster shows:
 
 - All `pepr-system` pods are `Running` and `Ready`
 - Every Exemption CR has a `title` and `description` with clear justification
 - No exemptions target removed workloads
 - No Package CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
-- No Package CR `expose` rules have empty selectors or expose admin services on the tenant gateway
-- Generated NetworkPolicies and AuthorizationPolicies match the intended access patterns
-
-## Troubleshooting
-
-### Problem: Policy annotations missing from resources
-
-**Symptom:** Pods exist but have no `uds-core.pepr.dev` annotations.
-
-**Solution:** Pepr only annotates resources during admission. Resources created before UDS Core was deployed will not have annotations. Restart the workload to trigger re-evaluation:
-
-```bash
-uds zarf tools kubectl rollout restart deployment <name> -n <namespace>
-```
-
-### Problem: Stale exemptions for removed workloads
-
-**Symptom:** Exemption CRs exist for workloads that are no longer deployed.
-
-**Solution:** Exemption CRs are not automatically cleaned up. If exemptions are deployed via bundle overrides, remove them from your `uds-bundle.yaml` and redeploy:
-
-```bash
-# List exemptions and cross-reference with running workloads
-uds zarf tools kubectl get exemptions -n uds-policy-exemptions -o yaml
-```
 
 ## Related Documentation
 
-- [Policy Engine](/reference/policy-engine/) — full reference of all enforced policies
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including network fields
+- [Policy Engine](/reference/policy-engine/) - full reference of all enforced policies
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full Package CR schema including network fields
 
 ## Next steps
 
