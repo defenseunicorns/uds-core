@@ -12,7 +12,6 @@ Runbooks live under `docs/operations/troubleshooting-and-runbooks/` and are `.md
 - Diagnostic commands to identify root cause (kubectl, istioctl, log queries)
 - Step-by-step solutions for each common cause
 - Verification that the fix worked
-- Prevention guidance to avoid recurrence
 
 ### What does NOT belong
 
@@ -34,8 +33,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## When to use this runbook
 
-<!-- For troubleshooting docs: describe observable symptoms and example errors -->
-<!-- For procedural runbooks: describe the scenario that triggers this procedure -->
+<!-- Trigger conditions and observable symptoms only. No context or background here. -->
 
 Use this runbook when:
 
@@ -49,10 +47,11 @@ Use this runbook when:
 Exact error message or log line the user would see
 \`\`\`
 
-## Background
+## Overview
 
-<!-- For troubleshooting docs: list the common root causes -->
-<!-- For procedural runbooks: explain why this procedure is needed -->
+<!-- For troubleshooting docs: root cause summary and relevant architecture context -->
+<!-- For procedural runbooks: why this procedure is needed and how the remediation works -->
+<!-- Keep short and operationally relevant — avoid deep theory -->
 
 This is typically caused by one of the following:
 
@@ -60,7 +59,11 @@ This is typically caused by one of the following:
 2. **Cause B** — brief explanation
 3. **Cause C** — brief explanation
 
-## Before you begin
+## Pre-checks
+
+<!-- Things to verify before executing the procedure -->
+<!-- For troubleshooting: log checks, metrics queries, confirming the problem exists -->
+<!-- For procedural: permissions, cluster access, preconditions -->
 
 <Steps>
 
@@ -86,7 +89,7 @@ This is typically caused by one of the following:
 
 </Steps>
 
-## Steps
+## Procedure
 
 ### Cause A: description
 
@@ -128,15 +131,6 @@ uds zarf tools kubectl get pods -n namespace
 - Indicator 1
 - Indicator 2
 
-## Prevention
-
-<!-- OPTIONAL: Only include this section if there is a specific, non-obvious configuration
-     or practice that prevents this issue. If the solution itself is the prevention, skip this section. -->
-
-To avoid this issue in the future:
-
-- Specific, actionable preventive measure
-
 ## Additional help
 
 If this runbook doesn't resolve your issue:
@@ -155,12 +149,12 @@ If this runbook doesn't resolve your issue:
 ## Conventions
 
 ### Structure
-- Every runbook follows the same section order: When to use this runbook → Background → Before you begin → Steps → Verification → Prevention (optional) → Additional help → Related documentation
-- **Prevention is optional** — only include it when there is a specific, non-obvious configuration or practice that prevents the issue. If the solution itself is the prevention, skip the section entirely.
-- "Before you begin" and "Steps" use the `<Steps>` component
-- For troubleshooting runbooks, the Steps section is organized per-cause with subsections matching the "Background" list
-- For procedural runbooks, Background explains why the procedure is needed, "Before you begin" covers prechecks/preconditions, and Steps is a single set of steps
+- Every runbook follows the same section order: When to use this runbook → Overview → Pre-checks → Procedure → Verification → Additional help → Related documentation
+- "Pre-checks" and "Procedure" use the `<Steps>` component
+- For troubleshooting runbooks, the Procedure section is organized per-cause with subsections matching the "Overview" list
+- For procedural runbooks, Overview explains why the procedure is needed, "Pre-checks" covers preconditions, and Procedure is a single set of steps
 - Keep sections focused — if a section requires extensive configuration, link to the relevant how-to guide instead of duplicating it
+- Prevention tips should be `> [!TIP]` callouts inline within Procedure or Verification — do not create a separate Prevention section
 
 ### Formatting
 - Files use `.mdx` extension
@@ -172,11 +166,13 @@ If this runbook doesn't resolve your issue:
 
 ### Content guidance
 - Write for operators running a live platform, not first-time installers
-- Lead with **when** the operator needs this runbook — for troubleshooting docs, describe observable symptoms and example errors; for procedural runbooks, describe the scenario that triggers the procedure
+- **When to use this runbook**: trigger conditions and observable symptoms only — no context, background, or notes about defaults
+- **Overview**: root cause summary, relevant architecture context, why the remediation works — keep short and operationally relevant, avoid deep theory
+- **Pre-checks**: things to verify before executing — permissions, cluster access, diagnostics, confirming the symptom. For troubleshooting runbooks this includes log checks, metrics queries, and confirming the problem exists
+- **Procedure**: the actual actions — numbered steps, copy-paste friendly, avoid explanation unless necessary
 - Diagnostic steps should be copy-pasteable commands that produce useful output
 - Explain what to look for in command output — don't just say "check the logs"
 - Solutions should be specific and actionable, not "contact support"
-- Prevention section should include concrete configuration or monitoring recommendations
 - Link to Reference for exact settings, Concepts only when understanding is needed
 
 ### Sidebar ordering
