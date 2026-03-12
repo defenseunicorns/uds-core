@@ -59,17 +59,6 @@ This flow creates a **public client** — a client with no secret. Two important
 
    **(Recommended)** Include `package.yaml` as a manifest in your application's Zarf package. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
-   ```yaml title="zarf.yaml"
-   components:
-     - name: my-app
-       required: true
-       manifests:
-         - name: uds-package
-           namespace: <app-namespace>
-           files:
-             - package.yaml
-   ```
-
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
