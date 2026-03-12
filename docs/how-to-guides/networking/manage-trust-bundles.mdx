@@ -99,7 +99,7 @@ UDS Core provides a centralized trust bundle system that automatically builds an
 
    <Tabs>
      <TabItem label="Additional CA (Go apps)">
-       Many Go-based applications check `/etc/ssl/certs/ca.pem` for additional CAs alongside the system bundle. This adds your private CAs without replacing the system CAs:
+       Many Go-based applications check the `/etc/ssl/certs/` directory for additional CAs alongside the system bundle. This adds your private CAs without replacing the system CAs:
 
        ```yaml
        spec:
