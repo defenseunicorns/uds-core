@@ -1,7 +1,7 @@
 ---
 title: Enable and use the passthrough gateway
 sidebar:
-  order: 2.3
+  order: 2.03
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -69,12 +69,19 @@ After completing this guide, you will have the optional passthrough gateway depl
 
    Traffic to `https://my-tls-app.yourdomain.com` will be forwarded to your application with the original TLS connection intact.
 
-3. **Build and deploy your application's Zarf package**
+3. **Deploy your application**
 
-   Include the Package CR in your application's Zarf package, then build and deploy:
+   **(Recommended)** Include the Package CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
    ```
 
 </Steps>
@@ -95,19 +102,19 @@ curl -v https://my-tls-app.yourdomain.com
 
 ## Troubleshooting
 
-### Gateway not deploying
+### Problem: Gateway not deploying
 
-**Symptoms:** No pods in the `istio-passthrough-gateway` namespace.
+**Symptom:** No pods in the `istio-passthrough-gateway` namespace.
 
 **Solution:** Verify that `istio-passthrough-gateway` is listed under `optionalComponents` in your bundle configuration. The component name must match exactly.
 
-### TLS handshake failures
+### Problem: TLS handshake failures
 
 **Symptoms:** Connection resets or TLS errors when accessing the application.
 
 **Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the Package CR. The passthrough gateway does not perform any TLS termination — the application must handle it.
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 

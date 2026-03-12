@@ -1,7 +1,7 @@
 ---
 title: Allow permissive traffic through the mesh
 sidebar:
-  order: 2.8
+  order: 2.08
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -170,12 +170,19 @@ In these cases, you can layer additional `ALLOW` [authorization policies](https:
 
    See the [Istio PeerAuthentication documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/) for details on scoping options.
 
-3. **Include manifests in your Zarf package and deploy**
+3. **Deploy your application**
 
-   Add the `AuthorizationPolicy` and `PeerAuthentication` manifests to your application's Zarf package, then build and deploy:
+   **(Recommended)** Include the `AuthorizationPolicy` and `PeerAuthentication` manifests in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the manifests directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f authz-policy.yaml -f peer-auth.yaml
    ```
 
 </Steps>
@@ -193,7 +200,7 @@ Test that the previously-blocked traffic now flows as expected.
 
 ## Troubleshooting
 
-### Policy not taking effect
+### Problem: Policy not taking effect
 
 **Symptoms:** Traffic is still being denied after applying the authorization policy.
 
@@ -203,7 +210,7 @@ Test that the previously-blocked traffic now flows as expected.
 - Remember that Istio evaluates `DENY` policies before `ALLOW` policies — if a `DENY` policy exists, your `ALLOW` policy will not override it
 - Ensure you have also applied a permissive `PeerAuthentication` if the traffic source cannot present a valid mesh identity
 
-### Scope too broad
+### Problem: Scope too broad
 
 **Symptoms:** Unintended services are now receiving traffic they shouldn't.
 
@@ -211,7 +218,7 @@ Test that the previously-blocked traffic now flows as expected.
 - Narrow the scope: add a `selector` to target specific workloads, or add port restrictions
 - Move from a namespace-scoped policy to a workload-scoped one
 
-## Related documentation
+## Related Documentation
 
 - [Package CR Reference](/reference/operator-and-crds/package/)
 - [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)

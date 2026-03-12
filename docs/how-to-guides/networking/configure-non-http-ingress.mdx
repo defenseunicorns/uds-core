@@ -1,7 +1,7 @@
 ---
 title: Set up non-HTTP ingress
 sidebar:
-  order: 2.5
+  order: 2.05
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -142,12 +142,19 @@ This example configures SSH ingress, but the same process applies to any TCP pro
            description: "SSH Ingress"
    ```
 
-6. **Build and deploy your application's Zarf package**
+6. **Deploy your application**
 
-   Include the Gateway, VirtualService, and Package CR manifests in your Zarf package, then build and deploy:
+   **(Recommended)** Include the Gateway, VirtualService, and Package CR manifests in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the manifests directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f gateway.yaml -f virtualservice.yaml -f uds-package.yaml
    ```
 
 </Steps>
@@ -164,7 +171,7 @@ For other protocols, test with the appropriate client on the external port you c
 
 ## Troubleshooting
 
-### Connection refused
+### Problem: Connection refused
 
 **Symptoms:** Client receives "connection refused" immediately.
 
@@ -173,7 +180,7 @@ For other protocols, test with the appropriate client on the external port you c
 - Check that the Gateway CR exists: `uds zarf tools kubectl get gateway -n istio-tenant-gateway`
 - Confirm `targetPort` in the service matches `port.number` in the Gateway CR
 
-### Connection timeout
+### Problem: Connection timeout
 
 **Symptoms:** Client hangs without a response.
 
@@ -182,7 +189,7 @@ For other protocols, test with the appropriate client on the external port you c
 - Verify the network policy allows ingress from the gateway namespace: `uds zarf tools kubectl get package example -n example`
 - Confirm the destination service and port are correct: `uds zarf tools kubectl get svc -n example`
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Package CR Reference](/reference/operator-and-crds/package/)

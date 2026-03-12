@@ -1,7 +1,7 @@
 ---
 title: Configure TLS certificates for gateways
 sidebar:
-  order: 2.1
+  order: 2.01
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -17,7 +17,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 - A wildcard TLS certificate and private key (PEM format) for each gateway domain. If using a private or non-public CA, the root CA must be loaded in your OS trust store for browser and CLI verification to work.
   - Tenant gateway: `*.yourdomain.com`
   - Admin gateway: `*.admin.yourdomain.com` (or your custom admin domain)
-  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain)
+  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/)
 
 ## Before you begin
 
@@ -25,9 +25,9 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 > The certificate value must include your domain certificate **and** any intermediate certificates between it and a trusted root CA (the full certificate chain). The order matters: your server certificate (e.g., `*.yourdomain.com`) must come **first**, followed by intermediates in order, and finally your root CA. Failing to include intermediates can cause unexpected behavior, as some container images may not inherently trust them.
 
 > [!NOTE]
-> If you are using private PKI or self-signed certificates, you will also need to configure the UDS trust bundle. See [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/) for details.
+> If you are using private PKI or self-signed certificates, you will also need to configure the UDS trust bundle. See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for details.
 
-## Provide certificates
+## Steps
 
 <Tabs>
   <TabItem label="Bundle variables">
@@ -141,7 +141,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 
 ## Root domain TLS certificates
 
-If you have enabled [root (apex) domain support](/how-to-guides/networking/expose-apps-on-gateways/#expose-a-service-on-the-root-apex-domain), provide TLS certificates separately for the root domain:
+If you are planning to [expose an app on the root (apex) domain](/how-to-guides/networking/expose-apps-on-gateways/), provide TLS certificates separately for the root domain:
 
 ```yaml title="uds-bundle.yaml"
 overrides:
@@ -185,13 +185,13 @@ You should see your domain certificate and the correct certificate chain. You ca
 
 ## Troubleshooting
 
-### Certificate chain errors
+### Problem: Certificate chain errors
 
 **Symptoms:** Browsers show "certificate not trusted" or curl reports `SSL certificate problem: unable to get local issuer certificate`.
 
 **Solution:** Ensure your certificate bundle includes the full chain in the correct order: server cert first, then intermediates, then root CA.
 
-### Base64 encoding issues
+### Problem: Base64 encoding issues
 
 **Symptoms:** Gateway pods fail to start or TLS handshake fails immediately.
 
@@ -202,16 +202,16 @@ base64 -w0 < my-cert.pem                    # Linux
 base64 -i my-cert.pem | tr -d '\n'          # macOS
 ```
 
-### TLS 1.2 clients can't connect
+### Problem: TLS 1.2 clients can't connect
 
 **Symptoms:** Older clients or tools fail to connect, newer clients work fine.
 
 **Solution:** Enable TLS 1.2 support as shown above. This is common in environments with legacy systems or specific compliance requirements.
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Manage trust bundles and private PKI](/how-to-guides/policy-and-compliance/manage-trust-bundles/)
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/)
 
 ## Next steps
 
