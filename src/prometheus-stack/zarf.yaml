@@ -38,7 +38,7 @@ components:
       - "quay.io/prometheus/alertmanager:v0.31.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.89.0"
       - "quay.io/prometheus/prometheus:v3.10.0"
-      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.7"
+      - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.8"
 
   - name: kube-prometheus-stack
     required: true
@@ -58,7 +58,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.31.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.89.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.10.0"
-      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.7"
+      - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.8"
 
   - name: kube-prometheus-stack
     required: true
@@ -78,7 +78,7 @@ components:
       - "quay.io/rfcurated/prometheus/alertmanager:0.31.1-jammy-fips-rfcurated-rfhardened"
       - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.89.0-jammy-scratch-fips-rfcurated"
       - "quay.io/rfcurated/prometheus:3.10.0-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.7-jammy-fips-rfcurated-rfhardened"
+      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.8-jammy-fips-rfcurated-rfhardened"
 
   - name: prometheus-blackbox-exporter
     required: true
