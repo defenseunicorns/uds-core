@@ -1,7 +1,7 @@
 ---
 title: Configure an L7 load balancer
 sidebar:
-  order: 2.7
+  order: 2.07
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -74,7 +74,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
    > [!NOTE]
    > If you have multiple proxy layers (e.g., CDN + ALB), set `numTrustedProxies` to the total number of hops between the client and Istio. Changing this setting at runtime triggers the UDS Operator to automatically restart Istio gateway pods.
 
-2. **Configure client certificate forwarding** *(if using mTLS)*
+2. **(Optional) Configure client certificate forwarding**
 
    If your L7 load balancer performs mutual TLS and forwards client certificates to Keycloak (e.g., for DoD CAC authentication), configure Keycloak to read the certificate from the correct header:
 
@@ -125,19 +125,19 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 
 ## Troubleshooting
 
-### Redirect loop
+### Problem: Redirect loop
 
 **Symptoms:** Browser shows "too many redirects" or ERR_TOO_MANY_REDIRECTS.
 
 **Solution:** Verify that HTTPS redirects are disabled for all gateway servers behind the load balancer. For the tenant gateway, both `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.tenant.enableHttpsRedirect` must be set to `false`. For the admin gateway, use `tls.servers.keycloak.enableHttpsRedirect` and `tls.servers.admin.enableHttpsRedirect`. If the admin gateway is also behind the L7 load balancer, disable redirects there too.
 
-### Incorrect client IP or forwarded headers
+### Problem: Incorrect client IP or forwarded headers
 
 **Symptoms:** Applications see the load balancer's IP instead of the client's IP; rate limiting or IP-based access control doesn't work correctly.
 
 **Solution:** Verify `numTrustedProxies` is set to the correct number of proxy hops between the client and Istio. If too low, Istio doesn't trust the `X-Forwarded-For` header; if too high, clients could spoof their IP.
 
-### Keycloak mTLS not working
+### Problem: Keycloak mTLS not working
 
 **Symptoms:** Client certificate authentication fails through the load balancer but works when connecting directly to Istio.
 
@@ -146,7 +146,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 - Verify the `tlsCertificateFormat` matches your load balancer's format (`AWS` for ALB, `PEM` for others)
 - Ensure the load balancer is configured to forward client certificates
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Istio Network Topology Documentation](https://istio.io/latest/docs/ops/configuration/traffic-management/network-topologies/)
