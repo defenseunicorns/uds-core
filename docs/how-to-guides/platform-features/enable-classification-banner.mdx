@@ -108,7 +108,7 @@ Open one of the configured hosts in a browser. You should see a colored banner a
 **Solution:** Verify the hostname is included in the `enabledHosts` array. The host must match exactly, including any subdomain prefixes. Check the deployed EnvoyFilter:
 
 ```bash
-uds zarf tools kubectl get envoyfilter -n istio-system -o yaml | grep -A 20 classificationBanner
+uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o yaml
 ```
 
 ### Banner breaks page layout or doesn't render correctly
