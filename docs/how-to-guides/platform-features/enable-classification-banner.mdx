@@ -40,8 +40,6 @@ For custom-built applications, implementing the banner natively within the appli
              values:
                - path: classificationBanner.text
                  value: "UNCLASSIFIED"
-               - path: classificationBanner.addFooter
-                 value: true
    ```
 
    Supported classification levels:
@@ -78,13 +76,13 @@ For custom-built applications, implementing the banner natively within the appli
                  value: true
                - path: classificationBanner.enabledHosts
                  value:
-                   - keycloak.admin.{{ .Values.domain }}
+                   - keycloak.{{ .Values.adminDomain }}
                    - sso.{{ .Values.domain }}
-                   - grafana.admin.{{ .Values.domain }}
+                   - grafana.{{ .Values.adminDomain }}
    ```
 
    > [!TIP]
-   > Host values support Helm templating. Use `{{ .Values.domain }}` to reference your configured domain rather than hardcoding hostnames.
+   > Host values support Helm templating. Use `{{ .Values.adminDomain }}` for hosts on the admin gateway and `{{ .Values.domain }}` for tenant-facing applications.
 
 3. **Create and deploy your bundle**
 
