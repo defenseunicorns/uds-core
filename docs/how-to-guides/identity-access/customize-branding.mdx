@@ -147,6 +147,19 @@ This guide covers the bundle override approach. For CSS or structural theme chan
      -n keycloak --dry-run=client -o yaml > terms-cm.yaml
    ```
 
+   **(Recommended)** Add `terms-cm.yaml` to the `manifests` list in the `zarf.yaml` from step 3 and rebuild the Zarf package:
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the ConfigMap directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f terms-cm.yaml
+   ```
+
    Add the `termsAndConditions` key to your `themeCustomizations` override and enable T&C in `realmInitEnv`:
 
    ```yaml title="uds-bundle.yaml"

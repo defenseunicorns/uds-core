@@ -159,6 +159,9 @@ If your environment uses CRL-based revocation instead of OCSP, configure the CRL
     X509_CRL_ABORT_IF_NON_UPDATED: "false"  # Set true to fail authentication if CRL is expired
 ```
 
+> [!NOTE]
+> CRL files must be present on the Keycloak pod at the path specified in `X509_CRL_RELATIVE_PATH`, relative to `/opt/keycloak/conf`. To include CRL files in a custom image, see the [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config).
+
 ### Problem: MFA is not required after enabling WebAuthn or OTP
 
 **Symptoms:** Users can log in without completing an MFA step.

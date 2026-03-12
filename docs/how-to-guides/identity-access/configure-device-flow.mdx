@@ -55,9 +55,9 @@ This flow creates a **public client** — a client with no secret. Two important
    > [!NOTE]
    > No Kubernetes secret is created for public clients — there is no client secret to store. Your application initiates device flow by calling the Keycloak device authorization endpoint directly.
 
-2. **Include the Package CR in your application's Zarf package**
+2. **Apply the Package CR to the cluster**
 
-   Add the `package.yaml` as a manifest in your application's `zarf.yaml`:
+   **(Recommended)** Include `package.yaml` as a manifest in your application's Zarf package. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```yaml title="zarf.yaml"
    components:
@@ -70,20 +70,18 @@ This flow creates a **public client** — a client with no secret. Two important
              - package.yaml
    ```
 
-   Build and deploy the updated Zarf package through your UDS bundle as usual:
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
 
    ```bash
-   uds create <path-to-bundle-dir>
-   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   uds zarf tools kubectl apply -f package.yaml
    ```
 
    The UDS Operator creates the Keycloak client in the UDS realm when the Package CR is applied.
-
-   > [!TIP]
-   > For quick testing against an already-running cluster, you can apply the Package CR directly:
-   > ```bash
-   > uds zarf tools kubectl apply -f package.yaml
-   > ```
 
 </Steps>
 
