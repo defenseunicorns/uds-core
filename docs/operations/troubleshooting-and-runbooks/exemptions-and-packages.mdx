@@ -16,15 +16,15 @@ Use this runbook when:
 
 **What you'll notice:** After applying or updating a specific `Exemption` or `Package` CR, no corresponding `Processing exemption` or `Processing Package` log entry appears in the `pepr-system` controller logs for that CR.
 
-## Background
+## Overview
 
 This is typically caused by one of the following:
 
-1. **Kubernetes Watch missed event** — the Watch connection between the Pepr controller and the API server dropped or timed out, causing CR change events to be lost
+1. **Controller pods not running** — the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
 2. **Incorrect CR definition** — the `Exemption` or `Package` manifest doesn't match the expected schema, so the controller silently ignores it
-3. **Controller pods not running** — the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
+3. **Kubernetes Watch missed event** — the Watch connection between the Pepr controller and the API server dropped or timed out, causing CR change events to be lost
 
-## Before you begin
+## Pre-checks
 
 <Steps>
 
@@ -34,7 +34,7 @@ This is typically caused by one of the following:
    uds zarf tools kubectl get pods -n pepr-system
    ```
 
-   **What to look for:** all pods should be in `Running` state with all containers ready. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem with the controller itself.
+   **What to look for:** all pods should be in `Running` state with all containers ready. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem with the controller itself — skip to [Cause 1: Controller pods not running](#cause-1-controller-pods-not-running).
 
 2. **Verify the CR exists and check its status**
 
@@ -44,7 +44,7 @@ This is typically caused by one of the following:
    uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
    ```
 
-   **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it.
+   **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it — see [Cause 2: Incorrect CR definition](#cause-2-incorrect-cr-definition).
 
    For an Exemption CR, confirm it exists in the correct namespace:
 
@@ -67,7 +67,7 @@ This is typically caused by one of the following:
    {"...":"...", "msg":"Processing exemption nvidia-gpu-operator, watch phase: MODIFIED"}
    ```
 
-   If no entries appear after applying your `Exemption` CR, the Watch likely missed the event.
+   If no entries appear after applying your `Exemption` CR, the Watch likely missed the event — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
 
 4. **Check Package processing logs**
 
@@ -82,56 +82,13 @@ This is typically caused by one of the following:
    {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Ready, observedGeneration: 1, retryAttempt: 0"}
    ```
 
-   If no entries appear, the watcher is not picking up Package changes.
+   If no entries appear, the watcher is not picking up Package changes — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
 
 </Steps>
 
-## Steps
+## Procedure
 
-### Cause 1: Kubernetes Watch missed event
-
-If diagnostics show the controller pods are running but no processing log entries appear for your CR:
-
-<Steps>
-
-1. **Restart the watcher deployment**
-
-   ```bash
-   uds zarf tools kubectl rollout restart deploy/pepr-uds-core-watcher -n pepr-system
-   ```
-
-2. **Wait for the rollout to complete**
-
-   ```bash
-   uds zarf tools kubectl rollout status deploy/pepr-uds-core-watcher -n pepr-system
-   ```
-
-   The watcher reprocesses all Exemptions and Packages on startup, so no need to re-apply your CRs.
-
-</Steps>
-
-If the Watch failure persists, see the [Additional help](#additional-help) section to file an issue with the UDS Core team.
-
-### Cause 2: Incorrect CR definition
-
-If the CR exists in the cluster but the controller is not processing it:
-
-<Steps>
-
-1. **Validate against the spec**
-
-   Compare your CR against the specification to ensure all required fields are present and correctly formatted:
-
-   - [Packages specification](/reference/operator-and-crds/package/)
-   - [Exemptions specification](/reference/operator-and-crds/exemption/)
-
-2. **Fix and re-apply the CR**
-
-   Correct any schema issues in your manifest and re-apply it.
-
-</Steps>
-
-### Cause 3: Controller pods not running
+### Cause 1: Controller pods not running
 
 If the `pepr-system` pods are not healthy:
 
@@ -163,6 +120,49 @@ If the `pepr-system` pods are not healthy:
    ```
 
 </Steps>
+
+### Cause 2: Incorrect CR definition
+
+If the CR exists in the cluster but the controller is not processing it:
+
+<Steps>
+
+1. **Validate against the spec**
+
+   Compare your CR against the specification to ensure all required fields are present and correctly formatted:
+
+   - [Packages specification](/reference/operator-and-crds/package/)
+   - [Exemptions specification](/reference/operator-and-crds/exemption/)
+
+2. **Fix and re-apply the CR**
+
+   Correct any schema issues in your manifest and re-apply it.
+
+</Steps>
+
+### Cause 3: Kubernetes Watch missed event
+
+If diagnostics show the controller pods are running but no processing log entries appear for your CR:
+
+<Steps>
+
+1. **Restart the watcher deployment**
+
+   ```bash
+   uds zarf tools kubectl rollout restart deploy/pepr-uds-core-watcher -n pepr-system
+   ```
+
+2. **Wait for the rollout to complete**
+
+   ```bash
+   uds zarf tools kubectl rollout status deploy/pepr-uds-core-watcher -n pepr-system
+   ```
+
+   The watcher reprocesses all Exemptions and Packages on startup, so no need to re-apply your CRs.
+
+</Steps>
+
+If the Watch failure persists, see the [Additional help](#additional-help) section to file an issue with the UDS Core team.
 
 ## Verification
 

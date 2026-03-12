@@ -14,12 +14,7 @@ Use this runbook when you need to increase the size of Prometheus PVCs managed b
 - You need to proactively increase capacity before running out of space
 - Volume size increase only — PVC shrinking is not supported
 
-> [!NOTE]
-> This runbook assumes UDS Core defaults: namespace `monitoring` and Prometheus CR name `kube-prometheus-stack-prometheus`. If your deployment uses non-default names, update the commands accordingly.
-
-This procedure follows upstream guidance from [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes).
-
-## Background
+## Overview
 
 Prometheus storage may need to grow for one or more of the following reasons:
 
@@ -27,7 +22,12 @@ Prometheus storage may need to grow for one or more of the following reasons:
 2. **Higher metrics cardinality** — new workloads, labels, or scrape targets increased the volume of stored time series
 3. **Additional scrape targets** — more services were added to the cluster, increasing the total metrics ingestion rate
 
-## Before you begin
+This procedure follows upstream guidance from [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes).
+
+> [!NOTE]
+> This runbook assumes UDS Core defaults: namespace `monitoring` and Prometheus CR name `kube-prometheus-stack-prometheus`. If your deployment uses non-default names, update the commands accordingly.
+
+## Pre-checks
 
 <Steps>
 
@@ -69,7 +69,7 @@ Prometheus storage may need to grow for one or more of the following reasons:
 
 </Steps>
 
-## Steps
+## Procedure
 
 <Steps>
 
