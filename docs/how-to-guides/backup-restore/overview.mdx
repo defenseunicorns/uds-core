@@ -19,13 +19,23 @@ For background on how Velero works and what it backs up, see [Backup & restore c
     href="/how-to-guides/backup-restore/configure-storage-backends/"
   />
   <LinkCard
-    title="Enable volume snapshots"
-    description="Capture persistent volume data using AWS EBS or CSI-compatible storage drivers."
-    href="/how-to-guides/backup-restore/enable-volume-snapshots/"
+    title="Enable volume snapshots (AWS EBS)"
+    description="Capture persistent volume data using AWS EBS snapshots on EKS clusters."
+    href="/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/"
   />
   <LinkCard
-    title="Perform backup and restore"
-    description="Trigger manual backups, restore namespaces, and verify data integrity."
-    href="/how-to-guides/backup-restore/perform-backup-restore/"
+    title="Enable volume snapshots (vSphere CSI)"
+    description="Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters."
+    href="/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/"
+  />
+  <LinkCard
+    title="Perform a manual backup"
+    description="Verify your scheduled backups are running and trigger a manual backup on demand."
+    href="/how-to-guides/backup-restore/perform-backup/"
+  />
+  <LinkCard
+    title="Restore from a backup"
+    description="Restore specific namespaces from a completed backup and verify data integrity."
+    href="/how-to-guides/backup-restore/perform-restore/"
   />
 </CardGrid>
