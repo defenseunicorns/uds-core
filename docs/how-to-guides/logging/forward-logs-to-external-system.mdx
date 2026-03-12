@@ -1,0 +1,204 @@
+---
+title: Forward logs to an external system
+sidebar:
+  order: 4.2
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, Vector will forward logs to an external S3-compatible destination for SIEM ingestion or long-term archival, while continuing to send all logs to Loki.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- An S3-compatible bucket with write access (AWS S3, MinIO, or equivalent)
+- For AWS: an IAM role for [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) with `s3:PutObject` permission on the target bucket
+
+## Before you begin
+
+Vector ships all pod and node logs to Loki by default through two pre-configured sinks (`loki_pod` and `loki_host`). Adding a new sink sends logs to an **additional** destination — it does not replace Loki.
+
+You can choose what to forward:
+- **All pod logs** — reference the `pod_logs_labelled` transform in your sink's `inputs` field (includes all pods with Kubernetes metadata)
+- **Specific namespaces only** — add a custom source with a namespace label selector
+
+Vector supports many destination types beyond S3. This guide uses S3 as a concrete example. For other destinations (Elasticsearch, Splunk HEC, Kafka, etc.), see the [Vector sinks reference](https://vector.dev/docs/reference/configuration/sinks/) and adapt the sink configuration accordingly.
+
+## Steps
+
+<Steps>
+
+1. **Add a Vector sink via bundle overrides**
+
+   The example below forwards only Keycloak and Pepr logs to an S3 bucket. It adds a custom source that collects logs from just the `keycloak` and `pepr-system` namespaces, then ships them to S3 using IRSA authentication with GZIP compression.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         vector:
+           vector:
+             values:
+               # Add a separate log source that only collects from the keycloak and pepr-system namespaces.
+               # This lets you forward just these logs to your external system instead of everything.
+               # The "extra_namespace_label_selector" filters by Kubernetes namespace labels.
+               - path: customConfig.sources.filtered_logs
+                 value:
+                   type: "kubernetes_logs"
+                   extra_namespace_label_selector: "kubernetes.io/metadata.name in (keycloak,pepr-system)"
+                   oldest_first: true
+               # Static sink configuration — structure that stays the same across environments.
+               # Only bucket, region, and credentials change per environment (set via variables below).
+               - path: customConfig.sinks.siem_logs
+                 value:
+                   type: "aws_s3"
+                   inputs: ["filtered_logs"]
+                   compression: "gzip"
+                   encoding:
+                     codec: "json"
+                   framing:
+                     method: "newline_delimited"
+                   key_prefix: "vector_logs/{{ kubernetes.pod_namespace }}/"
+                   buffer:
+                     type: "disk"
+                     max_size: 1073741824 # 1 GiB
+                   acknowledgements:
+                     enabled: false
+             variables:
+               # Environment-specific values — set in uds-config.yaml per deployment
+               - path: customConfig.sinks.siem_logs.bucket
+                 name: VECTOR_S3_BUCKET
+               - path: customConfig.sinks.siem_logs.region
+                 name: VECTOR_S3_REGION
+               # IRSA role annotation for S3 access — allows Vector's service account
+               # to assume an IAM role instead of using static credentials
+               - path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+                 name: VECTOR_IRSA_ROLE_ARN
+                 sensitive: true
+   ```
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       VECTOR_S3_BUCKET: "my-siem-logs-bucket"
+       VECTOR_S3_REGION: "us-east-1"
+       VECTOR_IRSA_ROLE_ARN: "arn:aws:iam::123456789012:role/vector-s3-role"
+   ```
+
+   > [!TIP]
+   > To forward **all** cluster logs instead of specific namespaces, change `inputs` to `["pod_logs_labelled"]` and remove the custom `filtered_logs` source. The `pod_logs_labelled` input includes all pod logs with Kubernetes metadata labels already attached.
+
+   > [!NOTE]
+   > For non-AWS environments or static credentials, replace the IRSA annotation with `auth.access_key_id` and `auth.secret_access_key` fields in the sink `values` config. See the [Vector AWS S3 sink docs](https://vector.dev/docs/reference/configuration/sinks/aws_s3/) for all authentication options.
+
+2. **Allow network egress for Vector**
+
+   Vector needs network access to reach your external endpoint. Add an egress allow rule to the same `uds-bundle.yaml`, under the existing `core` package overrides:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         vector:
+           uds-vector-config:
+             values:
+               - path: additionalNetworkAllow
+                 value:
+                   - direction: Egress
+                     selector:
+                       app.kubernetes.io/name: vector
+                     remoteHost: s3.us-east-1.amazonaws.com
+                     port: 443
+                     description: "S3 Storage"
+   ```
+
+   > [!IMPORTANT]
+   > Always scope egress to a specific `remoteHost`, CIDR block, or in-cluster destination rather than using `remoteGenerated: Anywhere`. The example above restricts Vector to your S3 endpoint only.
+
+   For the full set of egress control options, see [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/).
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm Vector is running and the new sink is active:
+
+```bash
+# Check Vector pods for errors
+uds zarf tools kubectl logs -n vector -l app.kubernetes.io/name=vector --tail=20
+```
+
+Verify data is arriving at your S3 bucket:
+
+```bash
+# AWS CLI example
+aws s3 ls s3://my-siem-logs-bucket/vector_logs/ --recursive | head
+```
+
+## Troubleshooting
+
+### S3 write failures
+
+**Symptom:** Vector logs show `PutObject` errors or access denied messages.
+
+**Solution:** Verify the IAM role has `s3:PutObject` permission on the target bucket and prefix. Confirm the IRSA annotation is correct and the service account is bound to the role:
+
+```bash
+uds zarf tools kubectl get sa -n vector vector -o yaml | grep eks.amazonaws.com
+```
+
+### No logs arriving in S3
+
+**Symptom:** Vector is running without errors but no objects appear in the bucket.
+
+**Solution:** Confirm the `inputs` field references an existing source. If using a custom source like `filtered_logs`, verify the namespace label selector matches your target namespaces:
+
+```bash
+uds zarf tools kubectl get ns --show-labels | grep "kubernetes.io/metadata.name"
+```
+
+### Connection timeout
+
+**Symptom:** Vector logs show connection timeout errors to the S3 endpoint.
+
+**Solution:** Check that the network egress allow rule is deployed. Verify the `additionalNetworkAllow` value is under the `uds-vector-config` chart (not the `vector` chart):
+
+```bash
+uds zarf tools kubectl get netpol -n vector
+```
+
+## Related Documentation
+
+- [Vector sinks reference](https://vector.dev/docs/reference/configuration/sinks/) — full list of supported destinations
+- [Vector AWS S3 sink](https://vector.dev/docs/reference/configuration/sinks/aws_s3/) — all S3 sink configuration options
+- [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) — network egress for Core components
+- [Logging Concepts](/concepts/core-features/logging/) — how the Vector → Loki → Grafana pipeline works
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Query application logs"
+    description="Find and filter logs using Grafana and LogQL."
+    href="/how-to-guides/logging/query-application-logs/"
+  />
+  <LinkCard
+    title="Configure log retention"
+    description="Control how long Loki keeps log data."
+    href="/how-to-guides/logging/configure-log-retention/"
+  />
+</CardGrid>
