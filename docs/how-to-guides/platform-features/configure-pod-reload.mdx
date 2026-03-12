@@ -112,7 +112,11 @@ uds zarf tools kubectl get deployment <name> -n <namespace> -o jsonpath='{.spec.
 **Solution:** Verify the `uds.dev/pod-reload: "true"` label is on the Secret or ConfigMap (not the pod). Check with:
 
 ```bash
+# For a Secret:
 uds zarf tools kubectl get secret <name> -n <namespace> --show-labels
+
+# For a ConfigMap:
+uds zarf tools kubectl get configmap <name> -n <namespace> --show-labels
 ```
 
 ### Wrong pods restarting (or none at all) with explicit selector
