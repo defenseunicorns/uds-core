@@ -99,7 +99,7 @@ Open one of the configured hosts in a browser. You should see a colored banner a
 
 ## Troubleshooting
 
-### Banner not appearing on a host
+### Problem: Banner not appearing on a host
 
 **Symptom:** A configured host loads normally but no classification banner is displayed.
 
@@ -109,7 +109,7 @@ Open one of the configured hosts in a browser. You should see a colored banner a
 uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o yaml
 ```
 
-### Banner breaks page layout or doesn't render correctly
+### Problem: Banner breaks page layout or doesn't render correctly
 
 **Symptom:** The banner HTML is injected but the page layout is disrupted or the banner is invisible.
 
@@ -125,7 +125,7 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 <CardGrid>
   <LinkCard
     title="Configure automatic pod reload"
-    description="Another cross-cutting platform feature: restart pods automatically when Secrets or ConfigMaps change."
+    description="Automatically restart pods when their Secrets or ConfigMaps change."
     href="/how-to-guides/platform-features/configure-pod-reload/"
   />
   <LinkCard

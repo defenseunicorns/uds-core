@@ -105,7 +105,7 @@ uds zarf tools kubectl get deployment <name> -n <namespace> -o jsonpath='{.spec.
 
 ## Troubleshooting
 
-### Pods not restarting after resource update
+### Problem: Pods not restarting after resource update
 
 **Symptom:** You update a Secret or ConfigMap but the pods consuming it are not restarted.
 
@@ -119,7 +119,7 @@ uds zarf tools kubectl get secret <name> -n <namespace> --show-labels
 uds zarf tools kubectl get configmap <name> -n <namespace> --show-labels
 ```
 
-### Wrong pods restarting (or none at all) with explicit selector
+### Problem: Wrong pods restarting (or none at all) with explicit selector
 
 **Symptom:** Pods that should restart don't, or unrelated pods restart.
 
@@ -139,7 +139,7 @@ uds zarf tools kubectl get pods -n <namespace> --show-labels
 <CardGrid>
   <LinkCard
     title="Enable the classification banner"
-    description="Another cross-cutting platform feature: inject classification markings into web UIs."
+    description="Inject security classification markings into web UIs via Istio EnvoyFilter."
     href="/how-to-guides/platform-features/enable-classification-banner/"
   />
   <LinkCard
