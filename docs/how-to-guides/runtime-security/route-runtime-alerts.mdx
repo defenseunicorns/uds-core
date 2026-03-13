@@ -47,12 +47,16 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
              falco:
                falco:
                  values:
-                   - path: falcosidekick.config.slack
-                     value:
-                       webhookurl: "<YOUR_SLACK_WEBHOOK_URL>"
-                       channel: "#<YOUR_SLACK_CHANNEL>"
-                       outputformat: "all"
-                       minimumpriority: "notice"
+                   - path: falcosidekick.config.slack.channel
+                     value: "#<YOUR_SLACK_CHANNEL>"
+                   - path: falcosidekick.config.slack.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.slack.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_SLACK_WEBHOOK_URL
+                     path: falcosidekick.config.slack.webhookurl
+                     sensitive: true
                uds-falco-config:
                  values:
                    - path: additionalNetworkAllow
@@ -65,6 +69,12 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
                          remoteHost: hooks.slack.com
                          remoteProtocol: TLS
                          description: "Allow Falcosidekick egress to Slack API"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
        ```
 
        | Setting | Description |
@@ -86,11 +96,14 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
              falco:
                falco:
                  values:
-                   - path: falcosidekick.config.mattermost
-                     value:
-                       webhookurl: "<YOUR_MATTERMOST_WEBHOOK_URL>"
-                       outputformat: "all"
-                       minimumpriority: "notice"
+                   - path: falcosidekick.config.mattermost.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.mattermost.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_MATTERMOST_WEBHOOK_URL
+                     path: falcosidekick.config.mattermost.webhookurl
+                     sensitive: true
                uds-falco-config:
                  values:
                    - path: additionalNetworkAllow
@@ -103,6 +116,12 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
                          remoteHost: <your-mattermost-hostname>
                          remoteProtocol: TLS
                          description: "Allow Falcosidekick egress to Mattermost"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_MATTERMOST_WEBHOOK_URL: "https://your.mattermost.instance/hooks/YYYY"
        ```
 
        | Setting | Description |
@@ -123,11 +142,14 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
              falco:
                falco:
                  values:
-                   - path: falcosidekick.config.teams
-                     value:
-                       webhookurl: "<YOUR_TEAMS_WEBHOOK_URL>"
-                       outputformat: "all"
-                       minimumpriority: "notice"
+                   - path: falcosidekick.config.teams.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.teams.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_TEAMS_WEBHOOK_URL
+                     path: falcosidekick.config.teams.webhookurl
+                     sensitive: true
                uds-falco-config:
                  values:
                    - path: additionalNetworkAllow
@@ -140,6 +162,12 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
                          remoteHost: outlook.office.com
                          remoteProtocol: TLS
                          description: "Allow Falcosidekick egress to Microsoft Teams"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_TEAMS_WEBHOOK_URL: "https://outlook.office.com/webhook/XXXXXX/IncomingWebhook/YYYYYY"
        ```
 
        | Setting | Description |
