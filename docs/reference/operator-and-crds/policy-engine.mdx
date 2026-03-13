@@ -57,6 +57,15 @@ UDS Core policies were partially inspired by [Big Bang Kyverno policies](https:/
 <details>
 <summary>Full policy comparison</summary>
 
+#### Policies in UDS Core only
+
+| UDS Core Policy | Notes |
+| --- | --- |
+| `RestrictIstioUser` | Istio-specific — prevents non-Istio pods from running as UID/GID 1337 |
+| `RestrictIstioSidecarOverrides` | Istio-specific — blocks dangerous sidecar configuration annotations |
+| `RestrictIstioTrafficOverrides` | Istio-specific — blocks traffic interception bypass annotations/labels |
+| `RestrictIstioAmbientOverrides` | Istio-specific — blocks ambient mesh bypass annotations |
+
 #### Policies in both Big Bang and UDS Core
 
 | UDS Core Policy | Big Bang Policy | Notes |
@@ -76,15 +85,6 @@ UDS Core policies were partially inspired by [Big Bang Kyverno policies](https:/
 | `RestrictSeccomp` | [restrict-seccomp](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-seccomp.yaml) | |
 | `RestrictSELinuxType` | [restrict-selinux-type](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml) | |
 | `RestrictVolumeTypes` | [restrict-volume-types](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml) | |
-
-#### Policies in UDS Core only
-
-| UDS Core Policy | Notes |
-| --- | --- |
-| `RestrictIstioUser` | Istio-specific — prevents non-Istio pods from running as UID/GID 1337 |
-| `RestrictIstioSidecarOverrides` | Istio-specific — blocks dangerous sidecar configuration annotations |
-| `RestrictIstioTrafficOverrides` | Istio-specific — blocks traffic interception bypass annotations/labels |
-| `RestrictIstioAmbientOverrides` | Istio-specific — blocks ambient mesh bypass annotations |
 
 #### Policies in Big Bang only
 
