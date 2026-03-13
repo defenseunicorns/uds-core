@@ -59,23 +59,23 @@ UDS Core policies were partially inspired by [Big Bang Kyverno policies](https:/
 
 #### Policies in both Big Bang and UDS Core
 
-| Big Bang Policy | UDS Core Policy | Notes |
+| UDS Core Policy | Big Bang Policy | Notes |
 | --- | --- | --- |
-| [disallow-host-namespaces](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-host-namespaces.yaml) | `DisallowHostNamespaces` | |
-| [disallow-nodeport-services](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-nodeport-services.yaml) | `DisallowNodePortServices` | |
-| [disallow-privilege-escalation](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privilege-escalation.yaml) | `DisallowPrivileged` | Combined with privileged containers check |
-| [disallow-privileged-containers](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privileged-containers.yaml) | `DisallowPrivileged` | Combined with privilege escalation check |
-| [disallow-selinux-options](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-selinux-options.yaml) | `DisallowSELinuxOptions` | |
-| [require-drop-all-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-drop-all-capabilities.yaml) | `DropAllCapabilities` | Enforced as both mutation and validation |
-| [require-non-root-user](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-user.yaml) | `RequireNonRootUser` | Enforced as both mutation and validation |
-| [restrict-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-capabilities.yaml) | `RestrictCapabilities` | |
-| [restrict-external-names](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-external-names.yaml) | `RestrictExternalNames` | |
-| [restrict-host-path-write](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-write.yaml) | `RestrictHostPathWrite` | |
-| [restrict-host-ports](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-ports.yaml) | `RestrictHostPorts` | |
-| [restrict-proc-mount](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-proc-mount.yaml) | `RestrictProcMount` | |
-| [restrict-seccomp](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-seccomp.yaml) | `RestrictSeccomp` | |
-| [restrict-selinux-type](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml) | `RestrictSELinuxType` | |
-| [restrict-volume-types](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml) | `RestrictVolumeTypes` | |
+| `DisallowHostNamespaces` | [disallow-host-namespaces](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-host-namespaces.yaml) | |
+| `DisallowNodePortServices` | [disallow-nodeport-services](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-nodeport-services.yaml) | |
+| `DisallowPrivileged` | [disallow-privilege-escalation](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privilege-escalation.yaml) | Combined with privileged containers check |
+| `DisallowPrivileged` | [disallow-privileged-containers](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privileged-containers.yaml) | Combined with privilege escalation check |
+| `DisallowSELinuxOptions` | [disallow-selinux-options](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-selinux-options.yaml) | |
+| `DropAllCapabilities` | [require-drop-all-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-drop-all-capabilities.yaml) | Enforced as both mutation and validation |
+| `RequireNonRootUser` | [require-non-root-user](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-user.yaml) | Enforced as both mutation and validation |
+| `RestrictCapabilities` | [restrict-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-capabilities.yaml) | |
+| `RestrictExternalNames` | [restrict-external-names](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-external-names.yaml) | |
+| `RestrictHostPathWrite` | [restrict-host-path-write](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-write.yaml) | |
+| `RestrictHostPorts` | [restrict-host-ports](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-ports.yaml) | |
+| `RestrictProcMount` | [restrict-proc-mount](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-proc-mount.yaml) | |
+| `RestrictSeccomp` | [restrict-seccomp](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-seccomp.yaml) | |
+| `RestrictSELinuxType` | [restrict-selinux-type](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml) | |
+| `RestrictVolumeTypes` | [restrict-volume-types](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml) | |
 
 #### Policies in UDS Core only
 
