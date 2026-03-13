@@ -14,7 +14,7 @@ UDS Core maintains a defense-in-depth baseline, providing real security across t
 - **Airgap ready** with Zarf packages for predictable, offline deployments in disconnected environments.
 - **Zero-trust networking** with default-deny Kubernetes `NetworkPolicy`, Istio STRICT mTLS, and ALLOW-based `AuthorizationPolicy`.
 - **Identity & SSO** via Keycloak and Authservice so apps can be protected consistently, whether they natively support authentication or not.
-- **Admission control** enforced by Pepr policies (non-root, drop capabilities, block privileged/host access, etc.).
+- **Admission control** enforced by UDS policies via [Pepr](https://docs.pepr.dev/) (non-root, drop capabilities, block privileged/host access, etc.).
 - **Runtime security** with real-time detection and alerting on malicious behavior.
 - **Observability & audit**: centralized log collection and shipping, plus metrics and dashboards.
 

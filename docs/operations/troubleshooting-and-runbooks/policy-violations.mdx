@@ -1,0 +1,169 @@
+---
+title: "Policy Violations"
+sidebar:
+  order: 1.4
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## When to use this runbook
+
+Use this runbook when:
+
+- A pod is rejected by an admission webhook with a Pepr denial message
+- A workload's security context or configuration was unexpectedly modified after deployment
+- A Deployment, DaemonSet, or StatefulSet shows 0 available replicas with no obvious pod-level errors
+
+**Example error:**
+
+```plaintext
+admission webhook "pepr-uds-core.pepr.dev" denied the request: Privilege escalation is disallowed. Authorized: [allowPrivilegeEscalation = false | privileged = false] Found: {"name":"test","ctx":{"capabilities":{"drop":["ALL"]},"privileged":true}}
+```
+
+> [!NOTE]
+> Policies also apply to Services (e.g., `DisallowNodePortServices`, `RestrictExternalNames`). Service denials are surfaced immediately when applying the manifest and are usually self-explanatory. This runbook focuses on pod-level issues, which are harder to diagnose since denials appear on the owning controller rather than the pod itself. See the [Policy Engine](/reference/policy-engine/) reference for the full list of policies and exemption names.
+
+## Overview
+
+UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on every resource submitted to the cluster:
+
+1. **Mutations** — run first and silently correct common misconfigurations. Your workloads may be adjusted without any error.
+2. **Validations** — run after mutations and reject resources that cannot be automatically corrected, returning a clear error message.
+
+## Pre-checks
+
+<Steps>
+
+1. **Check for a validation denial**
+
+   Stream denial events to see if your workload is being rejected:
+
+   ```bash
+   uds monitor pepr denied -f
+   ```
+
+   If denials aren't streaming in real time, you can also check controller events directly. Denials appear on the owning controller — not the pod itself:
+
+   ```bash
+   # For Deployments — check the ReplicaSet
+   uds zarf tools kubectl get replicaset -n <namespace>
+   uds zarf tools kubectl describe replicaset -n <namespace> <replicaset-name>
+
+   # For DaemonSets or StatefulSets — check the controller directly
+   uds zarf tools kubectl describe daemonset -n <namespace> <name>
+   uds zarf tools kubectl describe statefulset -n <namespace> <name>
+   ```
+
+   **What to look for:** denial events in the monitor output, or admission webhook denial messages in the controller Events section. If found, skip to [Cause 1: Validation rejected your resource](#cause-1-validation-rejected-your-resource).
+
+2. **Check whether a mutation adjusted your workload**
+
+   If there's no denial but your workload behaves unexpectedly, check for mutation events:
+
+   ```bash
+   uds monitor pepr mutated -f
+   ```
+
+   You can also compare the running pod's security context against your original spec:
+
+   ```bash
+   uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].securityContext}'
+   ```
+
+   **What to look for:** mutation events for your workload in the monitor output, or security context values that differ from your spec. If found, skip to [Cause 2: Mutation adjusted your workload](#cause-2-mutation-adjusted-your-workload).
+
+   > [!TIP]
+   > Use `uds monitor pepr policies -f` to see all policy events (allow, deny, mutate) in a single stream, or run `uds monitor pepr --help` for all available filters.
+
+</Steps>
+
+## Procedure
+
+### Cause 1: Validation rejected your resource
+
+The error message format varies by policy — some include `Authorized: [...] Found: {...}` details, while others are simple messages. Common fixes:
+
+| Error message | Fix |
+|---|---|
+| `Privilege escalation is disallowed. Authorized: [...]` | Remove `privileged: true` and set `allowPrivilegeEscalation: false` in `securityContext` |
+| `Sharing the host namespaces is disallowed` | Remove `hostNetwork`, `hostPID`, and `hostIPC` from the pod spec |
+| `NodePort services are not allowed` | Change service type to `ClusterIP` and use the [service mesh gateway](/how-to-guides/networking/expose-apps-on-gateways/) for external access |
+| `Volume <name> has a disallowed volume type` | Use only allowed volume types (`configMap`, `csi`, `downwardAPI`, `emptyDir`, `ephemeral`, `persistentVolumeClaim`, `projected`, `secret`) |
+| `Host ports are not allowed` | Remove `hostPort` from container port definitions |
+| `Unauthorized container capabilities in securityContext.capabilities.add` | Remove capabilities beyond `NET_BIND_SERVICE` from `securityContext.capabilities.add` |
+| `Unauthorized container DROP capabilities` | Ensure `securityContext.capabilities.drop` includes `ALL` |
+| `Containers must not run as root` | Set `runAsNonRoot: true` and `runAsUser` to a non-zero value in `securityContext` |
+| `hostPath volume '<name>' must be mounted as readOnly` | Set `readOnly: true` on the volume mount |
+
+> [!NOTE]
+> Some violations relate to Istio service mesh policies (sidecar configuration overrides, traffic interception overrides, ambient mesh overrides). These block annotations that could bypass mesh security. If you see these violations, review whether the annotation is truly needed. Most applications should not override Istio defaults. See the [Policy Engine](/reference/policy-engine/) reference for the full list of blocked annotations.
+
+If the fix isn't possible, see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/).
+
+### Cause 2: Mutation adjusted your workload
+
+UDS Core applies three mutations to all pods:
+
+| Mutation | What it does |
+|---|---|
+| Disallow Privilege Escalation | Sets `allowPrivilegeEscalation` to `false` unless the container is privileged or has `CAP_SYS_ADMIN` |
+| Require Non-root User | Sets `runAsNonRoot: true` and defaults `runAsUser`/`runAsGroup` to `1000` if not specified |
+| Drop All Capabilities | Sets `capabilities.drop` to `["ALL"]` for all containers |
+
+<Steps>
+
+1. **Control user/group IDs via pod labels**
+
+   To set specific user/group IDs, add labels to the pod rather than fighting the mutation:
+
+   ```yaml
+   metadata:
+     labels:
+       uds/user: "65534"    # sets runAsUser
+       uds/group: "65534"   # sets runAsGroup
+       uds/fsgroup: "65534" # sets fsGroup
+   ```
+
+2. **Add specific capabilities when needed**
+
+   The `DropAllCapabilities` mutation drops all capabilities, but your workload may need specific ones. You can still `add` capabilities alongside the `drop: ["ALL"]` — for example, `NET_BIND_SERVICE` is allowed by default. If your workload needs additional capabilities beyond the allowed set, [create an exemption](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for `RestrictCapabilities`.
+
+   > [!TIP]
+   > Keeping `drop: ["ALL"]` and selectively adding only what's needed is the best practice. Avoid exempting `DropAllCapabilities` unless absolutely necessary.
+
+3. **If the mutation is not acceptable, create an exemption**
+
+   See [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) to bypass specific mutations for your workload.
+
+</Steps>
+
+## Verification
+
+After applying a fix or creating an exemption, confirm the issue is resolved:
+
+```bash
+# Verify pods are running
+uds zarf tools kubectl get pods -n <namespace>
+
+# Check that security context matches expectations
+uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].securityContext}'
+```
+
+**Success indicators:**
+- All pods are `Running` and `Ready`
+- No denial events in `uds monitor pepr denied -f` output
+- Security context fields match expected values
+
+## Additional help
+
+If this runbook doesn't resolve your issue:
+
+1. Collect relevant details from the steps above
+2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
+3. Open a new issue with your relevant details attached
+
+## Related documentation
+
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — create exemptions when a code-level fix isn't possible
+- [Policy Engine](/reference/policy-engine/) — full reference of all enforced policies, severity levels, and exemption names
+- [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/) — background on how mutations, validations, and exemptions work

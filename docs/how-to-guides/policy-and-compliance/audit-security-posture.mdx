@@ -14,13 +14,12 @@ You'll review your cluster's security posture by auditing policy exemptions for 
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- `kubectl` access with permissions to view pods, exemptions, and packages across namespaces
 
 ## Before you begin
 
 UDS Core provides two layers of auditable security configuration:
 
-- **Policy exemptions** - Exemption CRs that allow specific workloads to bypass Pepr policies. Each exempted resource is annotated, creating a built-in audit trail.
+- **Policy exemptions** - Exemption CRs that allow specific workloads to bypass UDS policies. Each exempted resource is annotated, creating a built-in audit trail.
 - **Package CR network rules** - The `allow` fields in Package CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
 
 > [!IMPORTANT]
@@ -136,9 +135,9 @@ These guides and concepts may be useful to explore next:
 
 <CardGrid>
   <LinkCard
-    title="Handle policy violations"
-    description="Identify and fix policy violations, or create exemptions when a fix isn't possible."
-    href="/how-to-guides/policy-and-compliance/handle-policy-violations/"
+    title="Create UDS policy exemptions"
+    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
+    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
   />
   <LinkCard
     title="Define network access"

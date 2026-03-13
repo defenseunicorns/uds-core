@@ -21,7 +21,7 @@ You'll configure UDS Core to accept Exemption CRs in any namespace instead of on
 By default, Exemption CRs are only accepted in the `uds-policy-exemptions` namespace. This provides a single, controlled location where platform engineers manage all policy exemptions. Enabling all-namespace exemptions allows teams to manage their own exemptions in their application namespaces.
 
 > [!WARNING]
-> Enabling all-namespace exemptions means any user with permission to create Exemption CRs in any namespace can bypass Pepr policies. Before enabling this, ensure your RBAC configuration restricts who can create, update, and delete Exemption resources. Without proper RBAC controls, this setting significantly increases the risk of unintended or unauthorized policy bypasses.
+> Enabling all-namespace exemptions means any user with permission to create Exemption CRs in any namespace can bypass UDS policies. Before enabling this, ensure your RBAC configuration restricts who can create, update, and delete Exemption resources. Without proper RBAC controls, this setting significantly increases the risk of unintended or unauthorized policy bypasses.
 
 ## Steps
 
