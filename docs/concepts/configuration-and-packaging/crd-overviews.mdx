@@ -33,7 +33,7 @@ A Package can declare things like:
 - **Monitoring** — metrics endpoints for Prometheus to scrape
 - **Service mesh** — ambient or sidecar mode
 
-<LinkCard title="Package CR Reference" href="/reference/operator-and-crds/package/" description="Full schema, fields, and YAML examples." />
+<LinkCard title="Package CR Reference" href="/reference/operator-and-crds/packages-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
 > Only one Package CR can exist per namespace. This constraint enables workload isolation and simplifies policy generation.
@@ -49,7 +49,7 @@ The platform enforces a strict security baseline out of the box — no privilege
 
 An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields — so the reason for the exemption can be documented right next to the exemption itself.
 
-<LinkCard title="Exemption CR Reference" href="/reference/operator-and-crds/exemption/" description="Full schema, fields, and YAML examples." />
+<LinkCard title="Exemption CR Reference" href="/reference/operator-and-crds/exemptions-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
 > Exemptions are restricted to the `uds-policy-exemptions` namespace by default. Centralizing them in one place makes them easier to audit and control with RBAC. This can be relaxed via ClusterConfig if needed.
@@ -68,7 +68,7 @@ While Package and Exemption are scoped to individual applications, ClusterConfig
 
 Unlike the other two CRDs, application teams don't touch ClusterConfig — it is managed by platform operators.
 
-<LinkCard title="ClusterConfig CR Reference" href="/reference/operator-and-crds/clusterconfig/" description="Full schema, fields, and YAML examples." />
+<LinkCard title="ClusterConfig CR Reference" href="/reference/operator-and-crds/clusterconfig-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
 > ClusterConfig is a singleton — there is exactly one per cluster.
