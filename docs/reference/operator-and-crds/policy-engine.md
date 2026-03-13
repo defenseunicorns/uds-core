@@ -12,7 +12,7 @@ These policies implement industry best practices from multiple sources:
 - [Big Bang Kyverno policies](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies) (originally created for the DoD [Big Bang](https://p1.dso.mil/services/big-bang) platform)
 - [Istio service mesh security controls](https://istio.io/latest/docs/reference/config/annotations/) (preventing bypass of sidecar injection, traffic interception, and ambient mesh protections)
 
-Policy names below link to the source policy or reference documentation. For how-to guidance on handling violations and creating exemptions, see [Handle policy violations](/how-to-guides/policy-and-compliance/handle-policy-violations/).
+Policy names below link to the source policy or reference documentation. For how-to guidance on creating exemptions, see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/). For troubleshooting denied or mutated resources, see the [Policy Violations](/operations/troubleshooting-and-runbooks/policy-violations/) runbook.
 
 ### Pepr Policy Exemptions
 

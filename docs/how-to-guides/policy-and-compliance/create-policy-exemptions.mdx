@@ -14,7 +14,7 @@ You'll create a UDS Exemption CR to allow a workload to bypass specific UDS poli
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- The exemption policy names for your workload (see [Policy Engine](/reference/policy-engine/) reference)
+- The exemption policy names for your workload (see [Policy Engine](/reference/operator-and-crds/policy-engine/) reference)
 
 ## Before you begin
 
@@ -32,7 +32,7 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resour
 
 1. **Create the Exemption CR manifest**
 
-   Each exemption specifies which policies to bypass (see the [Policy Engine](/reference/policy-engine/) reference for exemption names) and a matcher that targets specific resources:
+   Each exemption specifies which policies to bypass (see the [Policy Engine](/reference/operator-and-crds/policy-engine/) reference for exemption names) and a matcher that targets specific resources:
 
    ```yaml title="exemption.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -149,7 +149,7 @@ If the exemption exists but still isn't being applied, see the [Exemptions & Pac
 
 ## Related Documentation
 
-- [Policy Engine](/reference/policy-engine/) - full reference of all enforced policies, severity levels, and blocked annotations
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies, severity levels, and blocked annotations
 - [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
 - [Policy Violations runbook](/operations/troubleshooting-and-runbooks/policy-violations/) - diagnose and fix admission failures and unexpected mutations
 

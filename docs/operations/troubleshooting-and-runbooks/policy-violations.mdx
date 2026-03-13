@@ -21,7 +21,7 @@ admission webhook "pepr-uds-core.pepr.dev" denied the request: Privilege escalat
 ```
 
 > [!NOTE]
-> Policies also apply to Services (e.g., `DisallowNodePortServices`, `RestrictExternalNames`). Service denials are surfaced immediately when applying the manifest and are usually self-explanatory. This runbook focuses on pod-level issues, which are harder to diagnose since denials appear on the owning controller rather than the pod itself. See the [Policy Engine](/reference/policy-engine/) reference for the full list of policies and exemption names.
+> Policies also apply to Services (e.g., `DisallowNodePortServices`, `RestrictExternalNames`). Service denials are surfaced immediately when applying the manifest and are usually self-explanatory. This runbook focuses on pod-level issues, which are harder to diagnose since denials appear on the owning controller rather than the pod itself. See the [Policy Engine](/reference/operator-and-crds/policy-engine/) reference for the full list of policies and exemption names.
 
 ## Overview
 
@@ -96,7 +96,7 @@ The error message format varies by policy — some include `Authorized: [...] Fo
 | `hostPath volume '<name>' must be mounted as readOnly` | Set `readOnly: true` on the volume mount |
 
 > [!NOTE]
-> Some violations relate to Istio service mesh policies (sidecar configuration overrides, traffic interception overrides, ambient mesh overrides). These block annotations that could bypass mesh security. If you see these violations, review whether the annotation is truly needed. Most applications should not override Istio defaults. See the [Policy Engine](/reference/policy-engine/) reference for the full list of blocked annotations.
+> Some violations relate to Istio service mesh policies (sidecar configuration overrides, traffic interception overrides, ambient mesh overrides). These block annotations that could bypass mesh security. If you see these violations, review whether the annotation is truly needed. Most applications should not override Istio defaults. See the [Policy Engine](/reference/operator-and-crds/policy-engine/) reference for the full list of blocked annotations.
 
 If the fix isn't possible, see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/).
 
@@ -165,5 +165,5 @@ If this runbook doesn't resolve your issue:
 ## Related documentation
 
 - [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — create exemptions when a code-level fix isn't possible
-- [Policy Engine](/reference/policy-engine/) — full reference of all enforced policies, severity levels, and exemption names
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies, severity levels, and exemption names
 - [Policy & Compliance concepts](/concepts/core-features/policy-and-compliance/) — background on how mutations, validations, and exemptions work
