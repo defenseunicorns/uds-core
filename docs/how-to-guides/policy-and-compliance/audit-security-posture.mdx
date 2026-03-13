@@ -59,11 +59,11 @@ UDS Core provides two layers of auditable security configuration:
    ```bash
    # Exempted pods
    uds zarf tools kubectl get pods -A -o yaml | \
-     uds zarf tools yq '.items[] | select(.metadata.annotations | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + (.metadata.annotations | to_entries[] | select(.value == "exempted") | .key)' | sort -u
+     uds zarf tools yq '.items[] | select((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + ((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted") | .key)' | sort -u
 
    # Exempted services
    uds zarf tools kubectl get services -A -o yaml | \
-     uds zarf tools yq '.items[] | select(.metadata.annotations | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + (.metadata.annotations | to_entries[] | select(.value == "exempted") | .key)' | sort -u
+     uds zarf tools yq '.items[] | select((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + ((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted") | .key)' | sort -u
    ```
 
    This produces output like:

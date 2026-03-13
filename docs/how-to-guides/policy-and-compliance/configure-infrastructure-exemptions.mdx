@@ -47,7 +47,7 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
          overrides:
-           pepr:
+           uds-exemptions:
              uds-exemptions:
                values:
                  - path: exemptions.istioGatewayNodeport.enabled
@@ -57,17 +57,21 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
      This creates `DisallowNodePortServices` exemptions for the `admin` and `tenant` gateway services. To also include the passthrough gateway, override the gateways list:
 
      ```yaml title="uds-bundle.yaml"
-     overrides:
-       pepr:
-         uds-exemptions:
-           values:
-             - path: exemptions.istioGatewayNodeport.enabled
-               value: true
-             - path: exemptions.istioGatewayNodeport.gateways
-               value:
-                 - admin
-                 - tenant
-                 - passthrough
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           uds-exemptions:
+             uds-exemptions:
+               values:
+                 - path: exemptions.istioGatewayNodeport.enabled
+                   value: true
+                 - path: exemptions.istioGatewayNodeport.gateways
+                   value:
+                     - admin
+                     - tenant
+                     - passthrough
      ```
 
      </TabItem>
@@ -81,7 +85,7 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
          overrides:
-           pepr:
+           uds-exemptions:
              uds-exemptions:
                values:
                  - path: exemptions.custom

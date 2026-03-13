@@ -109,7 +109,7 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce two types of policies on
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        overrides:
-         pepr:
+         uds-exemptions:
            uds-exemptions:
              values:
                - path: exemptions.custom
@@ -163,7 +163,7 @@ uds zarf tools kubectl get exemptions -n uds-policy-exemptions
 
 # Check that the target pod has the exemption annotation
 uds zarf tools kubectl get pod <pod-name> -n <namespace> -o yaml | \
-  uds zarf tools yq '.metadata.annotations | to_entries[] | select(.value == "exempted")'
+  uds zarf tools yq '(.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")'
 ```
 
 **Success criteria:**
@@ -204,7 +204,7 @@ If the exemption exists but still isn't being applied, see the [Exemptions & Pac
 
 ```bash
 uds zarf tools kubectl get pod <pod-name> -n <namespace> -o yaml | \
-  uds zarf tools yq '.metadata.annotations | to_entries[] | select(.value == "exempted")'
+  uds zarf tools yq '(.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")'
 ```
 
 If the output includes `uds-core.pepr.dev/uds-core-policies.RequireNonRootUser: exempted`, an Exemption CR is overriding the mutation.
