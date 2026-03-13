@@ -103,7 +103,7 @@ For the full `allow` entry schema, see [Packages CR reference — Allow](/refere
 
 ## Related documentation
 
-- [Networking & service mesh reference](/reference/networking/) — Package CR `allow` field schema used by `additionalNetworkAllow`
+- [Networking & service mesh reference](/reference/configuration/networking/) — Package CR `allow` field schema used by `additionalNetworkAllow`
 - [Packages CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full schema for network allow rules
 - [Loki configuration reference](https://grafana.com/docs/loki/latest/configure/) — upstream Loki configuration documentation
 - [Vector configuration reference](https://vector.dev/docs/reference/configuration/) — upstream Vector configuration documentation
