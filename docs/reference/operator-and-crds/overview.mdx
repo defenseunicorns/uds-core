@@ -1,0 +1,38 @@
+---
+title: Overview
+sidebar:
+  order: 1.0
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+The UDS Operator manages the lifecycle of UDS custom resources and their associated Kubernetes resources. It uses [Pepr](https://github.com/defenseunicorns/pepr) to watch for changes and reconcile desired state.
+
+## Custom Resource Schemas
+
+<CardGrid>
+  <Card title="Package CR" icon="document">
+    Defines networking, SSO, and monitoring for workloads in a namespace. One Package per namespace.
+    <LinkCard title="View schema" href="/reference/operator-and-crds/packages-v1alpha1-cr/" />
+  </Card>
+  <Card title="Exemption CR" icon="warning">
+    Grants policy exemptions for specific workloads by namespace and pod matcher.
+    <LinkCard title="View schema" href="/reference/operator-and-crds/exemptions-v1alpha1-cr/" />
+  </Card>
+  <Card title="ClusterConfig CR" icon="setting">
+    Cluster-wide operator configuration.
+    <LinkCard title="View schema" href="/reference/operator-and-crds/clusterconfig-v1alpha1-cr/" />
+  </Card>
+  <Card title="Policy Engine" icon="approve-check-circle">
+    Pepr policies enforced by UDS Core — validating, mutating, and what each policy enforces.
+    <LinkCard title="View reference" href="/reference/operator-and-crds/policy-engine/" />
+  </Card>
+</CardGrid>
+
+## JSON Schemas
+
+For IDE validation, use the published JSON schemas:
+
+- [package-v1alpha1.schema.json](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/package-v1alpha1.schema.json)
+- [exemption-v1alpha1.schema.json](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/exemption-v1alpha1.schema.json)
+- [clusterconfig-v1alpha1.schema.json](https://raw.githubusercontent.com/defenseunicorns/uds-core/refs/heads/main/schemas/clusterconfig-v1alpha1.schema.json)

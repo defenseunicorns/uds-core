@@ -10,6 +10,13 @@ const MAX_DEPTH = 10;
 const OUTPUT_DIR = "./docs/reference/operator-and-crds/";
 const TABLE_STYLE = 'style="width: 100%; table-layout: fixed;"';
 
+// Sidebar ordering for generated CRD docs (decimal format matches subfolder convention)
+const SIDEBAR_ORDER: Record<string, string> = {
+  packages: "1.1",
+  exemptions: "1.2",
+  clusterconfig: "1.3",
+};
+
 // Utility to capitalize the first letter of a string
 const capitalizeFirstLetter = (text: string): string =>
   text.charAt(0).toUpperCase() + text.slice(1);
@@ -142,12 +149,13 @@ async function generateMarkdown(jsonSchema: JsonSchema, version: string, schemaF
   // Start generating markdown from the root `properties`
   if (!jsonSchema.properties) throw new Error("The schema does not contain a 'properties' object.");
 
+  const sidebarOrder = SIDEBAR_ORDER[title.toLowerCase()] ?? "20";
   const markdownContent = `---
 title: ${title} CR (${version})
 tableOfContents:
   maxHeadingLevel: 6
 sidebar:
-  order: 20
+  order: ${sidebarOrder}
 ---
 ${generateMarkdownFromSchema(jsonSchema.properties, `${title}`, 1).trim()}`;
 

@@ -1,7 +1,7 @@
 ---
 title: Policy Engine
 sidebar:
-  order: 6
+  order: 1.5
 ---
 
 ## Policy Engine
