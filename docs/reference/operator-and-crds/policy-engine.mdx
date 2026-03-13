@@ -6,7 +6,7 @@ sidebar:
 
 ## UDS Policies
 
-UDS Core enforces security policies via [Pepr](https://docs.pepr.dev/) admission webhooks. These policies align with the [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) (restricted profile) and add [Istio service mesh security controls](https://istio.io/latest/docs/reference/config/annotations/) to prevent bypass of sidecar injection, traffic interception, and ambient mesh protections.
+UDS Core enforces security policies via [Pepr](https://docs.pepr.dev/) admission webhooks. These policies align with the [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) (restricted profile) and add Istio-specific controls to prevent unauthorized overrides to service mesh behavior.
 
 Policy names below link to the upstream standard or reference documentation. For how-to guidance on creating exemptions, see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/). For troubleshooting denied or mutated resources, see the [Policy Violations](/operations/troubleshooting-and-runbooks/policy-violations/) runbook.
 
@@ -52,12 +52,12 @@ If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-p
 
 ## Big Bang Kyverno Policy Comparison
 
-UDS Core policies were partially inspired by [Big Bang Kyverno policies](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies) created for the DoD [Big Bang](https://p1.dso.mil/services/big-bang) platform. UDS Core also enforces additional policies (such as some of the Istio-specific policies) that have no Big Bang Kyverno equivalent.
-
-The tables below map each Big Bang policy to its UDS Core status:
+UDS Core policies were partially inspired by [Big Bang Kyverno policies](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies) created for the DoD [Big Bang](https://p1.dso.mil/services/big-bang) platform. The table below maps each policy between the two platforms.
 
 <details>
-<summary>Implemented policies</summary>
+<summary>Full policy comparison</summary>
+
+#### Policies in both Big Bang and UDS Core
 
 | Big Bang Policy | UDS Core Policy | Notes |
 | --- | --- | --- |
@@ -77,10 +77,16 @@ The tables below map each Big Bang policy to its UDS Core status:
 | [restrict-selinux-type](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml) | `RestrictSELinuxType` | |
 | [restrict-volume-types](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml) | `RestrictVolumeTypes` | |
 
-</details>
+#### Policies in UDS Core only
 
-<details>
-<summary>Not yet implemented policies</summary>
+| UDS Core Policy | Notes |
+| --- | --- |
+| `RestrictIstioUser` | Istio-specific — prevents non-Istio pods from running as UID/GID 1337 |
+| `RestrictIstioSidecarOverrides` | Istio-specific — blocks dangerous sidecar configuration annotations |
+| `RestrictIstioTrafficOverrides` | Istio-specific — blocks traffic interception bypass annotations/labels |
+| `RestrictIstioAmbientOverrides` | Istio-specific — blocks ambient mesh bypass annotations |
+
+#### Policies in Big Bang only
 
 The following Big Bang Kyverno policies are not yet implemented in UDS Core and will be evaluated for future inclusion.
 
