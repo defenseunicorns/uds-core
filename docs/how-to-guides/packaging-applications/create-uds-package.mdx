@@ -23,6 +23,8 @@ All examples reference the [Reference Package](https://github.com/uds-packages/r
 
 A UDS Package wraps a Helm chart with platform integration — networking, SSO, monitoring, and security policies — declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
 
+The template repository provides the standard directory structure:
+
 | File / Directory | Purpose |
 |---|---|
 | `bundle/` | Dev/test bundle for local development and CI |
