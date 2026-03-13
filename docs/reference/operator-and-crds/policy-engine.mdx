@@ -24,7 +24,7 @@ If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-p
 | Mutation | Mutated Fields | Mutation Logic |
 | --- | --- | --- |
 | [Disallow Privilege Escalation](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `containers[].securityContext.allowPrivilegeEscalation` | Mutates `allowPrivilegeEscalation` to `false` if undefined, unless the container is privileged or `CAP_SYS_ADMIN` is added. |
-| [Require Non-root User](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `securityContext.runAsUser`, `runAsGroup`, `fsGroup`, `runAsNonRoot` | Pods are mutated to ensure workloads do not run as root, mutating `runAsNonRoot: true`. Users can define user, group, and fsGroup IDs to run the pod as by using the `uds/user`, `uds/group`, `uds/fsgroup` pod labels. If not provided these default to `runAsUser: 1000` and `runAsGroup: 1000`. |
+| [Require Non-root User](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `securityContext.runAsUser`, `runAsGroup`, `fsGroup`, `runAsNonRoot` | Sets `runAsNonRoot: true` if undefined. Also defaults `runAsUser`, `runAsGroup`, and `fsGroup` to `1000` if undefined. These defaults can be overridden with the `uds/user`, `uds/group`, and `uds/fsgroup` pod labels. |
 | [Drop All Capabilities](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `containers[].securityContext.capabilities.drop` | Ensures all capabilities are dropped by setting `capabilities.drop` to `["ALL"]` for all containers. |
 
 ### Validations
