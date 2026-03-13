@@ -1,0 +1,99 @@
+---
+title: Policy Engine
+sidebar:
+  order: 6
+---
+
+## UDS Policies
+
+UDS Core enforces security policies via [Pepr](https://docs.pepr.dev/) admission webhooks. These policies align with the [Kubernetes Pod Security Standards](https://kubernetes.io/docs/concepts/security/pod-security-standards/) (restricted profile) and add [Istio service mesh security controls](https://istio.io/latest/docs/reference/config/annotations/) to prevent bypass of sidecar injection, traffic interception, and ambient mesh protections.
+
+Policy names below link to the upstream standard or reference documentation. For how-to guidance on creating exemptions, see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/). For troubleshooting denied or mutated resources, see the [Policy Violations](/operations/troubleshooting-and-runbooks/policy-violations/) runbook.
+
+### Exemptions
+
+Exemptions can be specified by an [Exemption CR](/reference/operator-and-crds/exemptions-v1alpha1-cr/).
+
+If a resource is exempted, it will be annotated as `uds-core.pepr.dev/uds-core-policies.<POLICY>: exempted`
+
+### Mutations
+
+> [!NOTE]
+> Mutations can be exempted using the same [Exemptions](#exemptions) references as the validations.
+
+| Mutation | Mutated Fields | Mutation Logic |
+| --- | --- | --- |
+| [Disallow Privilege Escalation](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `containers[].securityContext.allowPrivilegeEscalation` | Mutates `allowPrivilegeEscalation` to `false` if undefined, unless the container is privileged or `CAP_SYS_ADMIN` is added. |
+| [Require Non-root User](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `securityContext.runAsUser`, `runAsGroup`, `fsGroup`, `runAsNonRoot` | Pods are mutated to ensure workloads do not run as root, mutating `runAsNonRoot: true`. Users can define user, group, and fsGroup IDs to run the pod as by using the `uds/user`, `uds/group`, `uds/fsgroup` pod labels. If not provided these default to `runAsUser: 1000` and `runAsGroup: 1000`. |
+| [Drop All Capabilities](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `containers[].securityContext.capabilities.drop` | Ensures all capabilities are dropped by setting `capabilities.drop` to `["ALL"]` for all containers. |
+
+### Validations
+
+| Policy Name | Exemption Name | Policy Description |
+| --- | :---: | --- |
+| [Disallow Host Namespaces](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `DisallowHostNamespaces` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Host namespaces (Process ID namespace, Inter-Process Communication namespace, and network namespace) allow access to shared information and can be used to elevate privileges. Pods should not be allowed access to host namespaces. This policy ensures fields which make use of these host namespaces are set to `false`. |
+| [Disallow NodePort Services](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport) | `DisallowNodePortServices` | Subject: **Service** <br/> Severity: **medium** <br/><br/> A Kubernetes Service of type NodePort uses a host port to receive traffic from any source. A NetworkPolicy cannot be used to control traffic to host ports. Although NodePort Services can be useful, their use must be limited to Services with additional upstream security checks. This policy validates that any new Services do not use the `NodePort` type. |
+| Disallow Privileged [Escalation](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) and [Pods](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `DisallowPrivileged` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Privilege escalation, such as via set-user-ID or set-group-ID file mode, should not be allowed. Privileged mode also disables most security mechanisms and must not be allowed. This policy ensures the `allowPrivilegeEscalation` field is set to false and `privileged` is set to false or undefined. |
+| [Disallow SELinux Options](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `DisallowSELinuxOptions` | Subject: **Pod** <br/> Severity: **high** <br/><br/> SELinux options can be used to escalate privileges. This policy ensures that the `seLinuxOptions` specified are not used. |
+| [Drop All Capabilities](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `DropAllCapabilities` | Subject: **Pod** <br/> Severity: **medium** <br/><br/> Capabilities permit privileged actions without giving full root access. All capabilities should be dropped from a Pod, with only those required added back. This policy ensures that all containers explicitly specify `drop: ["ALL"]`. |
+| [Require Non-root User](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `RequireNonRootUser` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Following the least privilege principle, containers should not be run as root. This policy ensures containers either have `runAsNonRoot` set to `true` or `runAsUser` > 0. |
+| [Restrict Capabilities](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `RestrictCapabilities` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Capabilities permit privileged actions without giving full root access. Adding capabilities beyond the default set must not be allowed. This policy ensures users cannot add additional capabilities beyond the allowed list to a Pod. |
+| [Restrict External Names](https://kubernetes.io/docs/concepts/services-networking/service/#externalname) | `RestrictExternalNames` | Subject: **Service** <br/> Severity: **medium** <br/><br/> ExternalName services resolve to a DNS CNAME record, which can be used to redirect traffic to malicious endpoints. An attacker can point back to localhost or internal IP addresses for exploitation. This policy restricts services using external names to a specified list. |
+| [Restrict hostPath Volume Writable Paths](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `RestrictHostPathWrite` | Subject: **Pod** <br/> Severity: **medium** <br/><br/> hostPath volumes consume the underlying node's file system. If hostPath volumes are not universally disabled, they should be required to be read-only. Pods which are allowed to mount hostPath volumes in read/write mode pose a security risk even if confined to a "safe" file system on the host and may escape those confines. This policy checks containers for hostPath volumes and validates they are explicitly mounted in readOnly mode. |
+| [Restrict Host Ports](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `RestrictHostPorts` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Access to host ports allows potential snooping of network traffic and should not be allowed, or at minimum restricted to a known list. This policy ensures only approved ports are defined in container's `hostPort` field. |
+| [Restrict Proc Mount](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `RestrictProcMount` | Subject: **Pod** <br/> Severity: **high** <br/><br/> The default /proc masks are set up to reduce the attack surface. This policy ensures nothing but the specified procMount can be used. By default only "Default" is allowed. |
+| [Restrict Seccomp](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `RestrictSeccomp` | Subject: **Pod** <br/> Severity: **high** <br/><br/> The SecComp profile should not be explicitly set to Unconfined. This policy, requiring Kubernetes v1.19 or later, ensures that the `seccompProfile.Type` is undefined or restricted to the values in the allowed list. By default, this is `RuntimeDefault` or `Localhost`. |
+| [Restrict SELinux Type](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline) | `RestrictSELinuxType` | Subject: **Pod** <br/> Severity: **high** <br/><br/> SELinux options can be used to escalate privileges. This policy ensures that the `seLinuxOptions` type field is undefined or restricted to the allowed list. |
+| [Restrict Istio User](https://istio.io/latest/docs/ops/deployment/application-requirements/#pod-requirements) | `RestrictIstioUser` | Subject: **Pod** <br/> Severity: **high** <br/><br/> The Istio proxy user/group (1337) should only be used by trusted Istio components. This policy enforces that only Istio waypoint pods, Istio gateways, or Istio proxies (sidecars) can run as UID/GID 1337. This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls. |
+| [Restrict Istio Sidecar Configuration Overrides](https://istio.io/latest/docs/reference/config/annotations/) | `RestrictIstioSidecarOverrides` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Certain Istio sidecar configuration annotations can be used to override secure defaults, potentially introducing security risks. This policy prevents the usage of dangerous Istio annotations that can modify secure sidecar configuration, such as custom proxy images or bootstrap configurations. <br/><br/> **Blocked annotations:** `sidecar.istio.io/bootstrapOverride`, `sidecar.istio.io/discoveryAddress`, `sidecar.istio.io/proxyImage`, `proxy.istio.io/config`, `sidecar.istio.io/userVolume`, `sidecar.istio.io/userVolumeMount`. |
+| [Restrict Istio Traffic Interception Overrides](https://istio.io/latest/docs/reference/config/annotations/) | `RestrictIstioTrafficOverrides` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Istio traffic annotations or labels can be used to modify how traffic is intercepted and routed, which can lead to security bypasses or unintended network paths. This policy prevents the usage of annotations or labels that can potentially bypass secure networking controls, including disabling sidecar injection via label or annotation. <br/><br/> **Blocked annotations:** `sidecar.istio.io/inject`, `traffic.sidecar.istio.io/excludeInboundPorts`, `traffic.sidecar.istio.io/excludeInterfaces`, `traffic.sidecar.istio.io/excludeOutboundIPRanges`, `traffic.sidecar.istio.io/excludeOutboundPorts`, `traffic.sidecar.istio.io/includeInboundPorts`, `traffic.sidecar.istio.io/includeOutboundIPRanges`, `traffic.sidecar.istio.io/includeOutboundPorts`, `sidecar.istio.io/interceptionMode`, `traffic.sidecar.istio.io/kubevirtInterfaces`, `istio.io/redirect-virtual-interfaces`. <br/><br/> **Blocked labels:** `sidecar.istio.io/inject`. |
+| [Restrict Istio Ambient Mesh Overrides](https://istio.io/latest/docs/reference/config/annotations/) | `RestrictIstioAmbientOverrides` | Subject: **Pod** <br/> Severity: **high** <br/><br/> Istio ambient mesh annotations can be used to modify secure mesh behavior. This policy prevents the usage of annotations that could potentially bypass secure ambient mesh controls. <br/><br/> **Blocked annotations:** `ambient.istio.io/bypass-inbound-capture`. |
+| [Restrict Volume Types](https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted) | `RestrictVolumeTypes` | Subject: **Pod** <br/> Severity: **medium** <br/><br/> Volume types, beyond the core set, should be restricted to limit exposure to potential vulnerabilities in Container Storage Interface (CSI) drivers. In addition, HostPath volumes should not be allowed. Allowed types: `configMap`, `emptyDir`, `persistentVolumeClaim`, `secret`, `projected`, `downwardAPI`, `csi`. |
+
+## Big Bang Kyverno Policy Comparison
+
+UDS Core policies were partially inspired by [Big Bang Kyverno policies](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies) created for the DoD [Big Bang](https://p1.dso.mil/services/big-bang) platform. UDS Core also enforces additional policies (such as some of the Istio-specific policies) that have no Big Bang Kyverno equivalent.
+
+The tables below map each Big Bang policy to its UDS Core status:
+
+<details>
+<summary>Implemented policies</summary>
+
+| Big Bang Policy | UDS Core Policy | Notes |
+| --- | --- | --- |
+| [disallow-host-namespaces](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-host-namespaces.yaml) | `DisallowHostNamespaces` | |
+| [disallow-nodeport-services](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-nodeport-services.yaml) | `DisallowNodePortServices` | |
+| [disallow-privilege-escalation](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privilege-escalation.yaml) | `DisallowPrivileged` | Combined with privileged containers check |
+| [disallow-privileged-containers](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-privileged-containers.yaml) | `DisallowPrivileged` | Combined with privilege escalation check |
+| [disallow-selinux-options](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-selinux-options.yaml) | `DisallowSELinuxOptions` | |
+| [require-drop-all-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-drop-all-capabilities.yaml) | `DropAllCapabilities` | Enforced as both mutation and validation |
+| [require-non-root-user](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-user.yaml) | `RequireNonRootUser` | Enforced as both mutation and validation |
+| [restrict-capabilities](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-capabilities.yaml) | `RestrictCapabilities` | |
+| [restrict-external-names](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-external-names.yaml) | `RestrictExternalNames` | |
+| [restrict-host-path-write](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-write.yaml) | `RestrictHostPathWrite` | |
+| [restrict-host-ports](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-ports.yaml) | `RestrictHostPorts` | |
+| [restrict-proc-mount](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-proc-mount.yaml) | `RestrictProcMount` | |
+| [restrict-seccomp](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-seccomp.yaml) | `RestrictSeccomp` | |
+| [restrict-selinux-type](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-selinux-type.yaml) | `RestrictSELinuxType` | |
+| [restrict-volume-types](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-volume-types.yaml) | `RestrictVolumeTypes` | |
+
+</details>
+
+<details>
+<summary>Not yet implemented policies</summary>
+
+The following Big Bang Kyverno policies are not yet implemented in UDS Core and will be evaluated for future inclusion.
+
+| Big Bang Policy | Notes |
+| --- | --- |
+| [restrict-sysctls](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-sysctls.yaml) | [PSS Baseline](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline). |
+| [restrict-apparmor](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-apparmor.yaml) | [PSS Baseline](https://kubernetes.io/docs/concepts/security/pod-security-standards/#baseline). |
+| [restrict-host-path-mount-pv](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-mount-pv.yaml) | |
+| [restrict-host-path-mount](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-host-path-mount.yaml) | |
+| [restrict-image-registries](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-image-registries.yaml) | In UDS, Zarf handles registry control at the packaging layer. |
+| [require-image-signature](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-image-signature.yaml) | Disabled in Big Bang by default. |
+| [restrict-external-ips](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/restrict-external-ips.yaml) | |
+| [require-non-root-group](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-group.yaml) | Partially mitigated — `RequireNonRootUser` mutation defaults `runAsGroup` to `1000`. |
+| [disallow-auto-mount-service-account-token](https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/disallow-auto-mount-service-account-token.yaml) | Audit-only in Big Bang. |
+
+</details>
