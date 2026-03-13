@@ -218,7 +218,7 @@ Ensure the PostgreSQL instance allows connections from the cluster's CIDR range.
 
 **Symptoms:** Pod in `CrashLoopBackOff`, logs show `no space left on device` or TSDB compaction errors.
 
-**Solution:** Check PVC usage and Prometheus logs:
+**Solution:** Check Prometheus logs and PVC capacity:
 ```bash
 uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus --tail=50
 uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kube-prometheus-stack-prometheus" -o custom-columns=NAME:.metadata.name,REQ:.spec.resources.requests.storage,CAP:.status.capacity.storage
