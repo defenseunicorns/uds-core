@@ -4,22 +4,184 @@ sidebar:
   order: 2.0
 ---
 
-import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-This section contains version-specific upgrade guides for UDS Core. Each guide covers breaking changes, pre-upgrade checks, upgrade procedures, and rollback steps for a specific version transition.
+This guide covers the general procedures, checklists, and strategies for upgrading UDS Core. For version-specific breaking changes and migration steps, see the version-specific guides linked at the bottom of this page.
 
-> [!TIP]
-> Always test upgrades in a staging environment before applying to production. Review the release notes and breaking changes for every version between your current and target version.
+## Why upgrades matter
+
+Regularly upgrading UDS Core is essential for:
+
+- **Security patches:** CVE fixes for UDS Core components and underlying open source tooling
+- **Bug fixes:** resolving issues in UDS Core and integrated components
+- **New features:** access to new capabilities and improvements
+- **Compatibility:** continued compatibility with the broader UDS ecosystem
+
+## Release cadence and versioning
+
+UDS Core follows [Semantic Versioning 2.0.0](https://semver.org/) with new versions published every two weeks (typically on Tuesdays). Patch releases for critical issues ship outside this cycle as needed.
+
+**Version support:** UDS Core provides patch support for the latest three minor versions (the current minor and the two previous minors).
+
+**Breaking changes** are documented in the [CHANGELOG](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) under the `⚠ BREAKING CHANGES` header and in [GitHub release notes](https://github.com/defenseunicorns/uds-core/releases). Each breaking change includes required upgrade steps.
+
+**Deprecation policy:** deprecated features remain functional for at least three subsequent minor releases and may only be removed in a major release. All active deprecations are tracked in [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md).
+
+> [!IMPORTANT]
+> As a security-first platform, UDS Core reserves the right to release security-related breaking changes in minor versions when the security benefit outweighs the disruption. These are still clearly advertised as breaking changes. Review release notes carefully for every upgrade.
+
+For the full versioning policy, see [VERSIONING.md](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md).
+
+## Upgrade strategies
+
+### Sequential minor version upgrades (recommended)
+
+UDS Core is designed and tested for sequential minor version upgrades (e.g., 0.61.0 → 0.62.0 → 0.63.0). This approach:
+
+- Follows the tested upgrade path
+- Allows incremental validation at each step
+- Reduces complexity during troubleshooting
+
+### Direct version jumps
+
+Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly tested** and requires additional caution:
+
+- May encounter unforeseen compatibility issues
+- Complicates troubleshooting since multiple changes are applied at once
+- Requires more extensive testing in staging
+
+> [!CAUTION]
+> If you must jump multiple versions, thoroughly review all release notes for intermediate versions and perform comprehensive testing in a staging environment before upgrading production.
+
+## Pre-upgrade checklist
+
+<Steps>
+
+1. **Review release notes**
+
+   Read the [GitHub release notes](https://github.com/defenseunicorns/uds-core/releases) for all versions between your current and target version. Pay special attention to:
+
+   - Breaking changes
+   - Deprecated features
+   - Configuration changes
+   - New security policies and restrictions
+
+2. **Check for deprecations**
+
+   Review [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md) and resolve any deprecation warnings before upgrading, especially before major version upgrades.
+
+3. **Review Keycloak upgrade steps**
+
+   Check for Keycloak-specific migration steps in the release notes. Some UDS Core upgrades require manual Keycloak realm configuration changes. See [Upgrade Keycloak realm configuration](/operations/upgrade-keycloak-realm/) for details.
+
+4. **Test in staging**
+
+   Perform the upgrade in a staging environment that mirrors production. Validate all functionality before proceeding to production. Document any issues encountered and their resolutions.
+
+5. **Verify high availability**
+
+   If you require minimal downtime during upgrades:
+
+   - Confirm your applications are deployed with proper HA configurations
+   - Identify which UDS Core components may experience brief unavailability
+   - Plan maintenance windows accordingly
+
+6. **Create a backup**
+
+   Back up your deployment before upgrading. See [Backup & Restore](/how-to-guides/backup-restore/overview/) for guidance.
+
+</Steps>
+
+## Upgrade process
+
+<Steps>
+
+1. **Update the UDS Core bundle reference**
+
+   Update the version reference in your `uds-bundle.yaml`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+   ```
+
+   > [!TIP]
+   > Avoid other concurrent package upgrades (e.g., zarf init or other UDS packages) or larger changes like switching flavors. Perform upgrades independently to simplify troubleshooting.
+
+2. **Update configurations**
+
+   Before creating the new bundle, update configuration as needed:
+
+   - **UDS Core configuration changes:** review any changes required for UDS Core custom resources, Helm chart values, and Zarf variables
+   - **Upstream tool configuration changes:** review release notes for upstream tools, especially if major version updates are included, and update bundle overrides accordingly
+
+3. **Build and deploy the bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+   Depending on your configuration and process, this may include additional steps with variables or dynamic environment configuration.
+
+</Steps>
+
+## Post-upgrade verification
+
+After the bundle deployment completes, verify the health and functionality of your environment:
+
+<Steps>
+
+1. **Verify UDS Core components**
+
+   The deployment performs basic health checks automatically. Additionally, confirm all UDS Core components are accessible at their endpoints with SSO login working.
+
+   ```bash
+   uds zarf tools kubectl get pods -A | grep -v Running
+   ```
+
+   All pods should be in `Running` or `Completed` state.
+
+2. **Verify mission applications**
+
+   Check that your applications are still running and healthy. Validate endpoint accessibility and confirm monitoring and SSO are working as expected.
+
+</Steps>
+
+## Rollback guidance
+
+> [!IMPORTANT]
+> UDS Core does not officially test or support rollback procedures. Individual open source applications included in UDS Core may not behave well during a rollback.
+
+Rather than attempting a rollback, use the following approaches:
+
+1. **Roll forward:** address issues by applying fixes or configuration changes to the current version
+2. **Manual intervention:** where necessary, perform manual one-time fixes to restore access. Report persistent issues as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address
+3. **Restore from backup:** in critical situations, restore from backups rather than attempting a version rollback. See [Backup & Restore](/how-to-guides/backup-restore/overview/) for guidance
+
+## Additional resources
 
 <CardGrid>
   <LinkCard
-    title="Upgrade Core 1.3 to 1.4"
-    description="Version-specific guidance for the 1.3 → 1.4 upgrade."
-    href="/operations/upgrades/upgrade-core-1-3-to-1-4/"
+    title="Configuration Changes"
+    description="Apply config changes, manage pod reloads, and rotate secrets on a running platform."
+    href="/operations/upgrades/configuration-changes/"
   />
   <LinkCard
-    title="Upgrade Core 1.4 to 1.5"
-    description="Version-specific guidance for the 1.4 → 1.5 upgrade."
-    href="/operations/upgrades/upgrade-core-1-4-to-1-5/"
+    title="Keycloak Realm Upgrades"
+    description="Version-specific steps for Keycloak realm configuration changes."
+    href="/operations/upgrade-keycloak-realm/"
+  />
+  <LinkCard
+    title="GitHub Release Notes"
+    description="Full changelog and breaking change details for every release."
+    href="https://github.com/defenseunicorns/uds-core/releases"
+  />
+  <LinkCard
+    title="Troubleshooting & Runbooks"
+    description="Diagnose and resolve common issues on a running platform."
+    href="/operations/troubleshooting-and-runbooks/overview/"
   />
 </CardGrid>
