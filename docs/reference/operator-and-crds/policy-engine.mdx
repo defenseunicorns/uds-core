@@ -61,10 +61,10 @@ UDS Core policies were partially inspired by [Big Bang Kyverno policies](https:/
 
 | UDS Core Policy | Notes |
 | --- | --- |
-| `RestrictIstioUser` | Istio-specific — prevents non-Istio pods from running as UID/GID 1337 |
-| `RestrictIstioSidecarOverrides` | Istio-specific — blocks dangerous sidecar configuration annotations |
-| `RestrictIstioTrafficOverrides` | Istio-specific — blocks traffic interception bypass annotations/labels |
-| `RestrictIstioAmbientOverrides` | Istio-specific — blocks ambient mesh bypass annotations |
+| `RestrictIstioUser` | Blocks non-Istio pods from running as UID/GID 1337 |
+| `RestrictIstioSidecarOverrides` | Blocks dangerous sidecar configuration annotations |
+| `RestrictIstioTrafficOverrides` | Blocks traffic interception bypass annotations/labels |
+| `RestrictIstioAmbientOverrides` | Blocks ambient mesh bypass annotations |
 
 #### Policies in both Big Bang and UDS Core
 
