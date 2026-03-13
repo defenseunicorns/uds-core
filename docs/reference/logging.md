@@ -76,7 +76,7 @@ Bundle override path: `overrides.loki.uds-loki-config.values[].path: dashboardAn
 |---|---|---|---|
 | `dashboardAnnotations` | map | `{}` | Map of annotation key-value pairs applied to Loki's Grafana dashboards for folder grouping |
 
-See the [monitoring & observability how-to guides](/how-to-guides/monitoring-observability/) for guidance on configuring Grafana dashboard organization.
+See the [monitoring & observability how-to guides](/how-to-guides/monitoring-observability/overview/) for guidance on configuring Grafana dashboard organization.
 
 ## Additional network allow rules
 

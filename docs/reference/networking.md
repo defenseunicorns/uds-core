@@ -86,6 +86,6 @@ The `spec.network.serviceMesh.mode` field sets the Istio data-plane mode for the
 
 - [Packages CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full field-level schema for all Package CR networking fields
 - [Packages CR overview](/reference/operator-and-crds/package/) — how the UDS Operator processes Package CRs
-- [Networking & service mesh how-to guides](/how-to-guides/networking/) — task-oriented guides for configuring ingress, egress, gateways, and more
+- [Networking & service mesh how-to guides](/how-to-guides/networking/overview/) — task-oriented guides for configuring ingress, egress, gateways, and more
 - [Istio VirtualService documentation](https://istio.io/latest/docs/reference/config/networking/virtual-service/) — upstream Istio reference for VirtualService behavior
 - [Istio Gateway documentation](https://istio.io/latest/docs/reference/config/networking/gateway/) — upstream Istio reference for Gateway configuration
