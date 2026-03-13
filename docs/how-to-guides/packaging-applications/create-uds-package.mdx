@@ -1,5 +1,5 @@
 ---
-title: Package an Existing Helm Chart
+title: Create a UDS Package
 sidebar:
   order: 9.1
 ---
@@ -21,9 +21,7 @@ All examples reference the [Reference Package](https://github.com/uds-packages/r
 
 ## Before you begin
 
-A UDS Package wraps a Helm chart with platform integration — networking, SSO, monitoring, and security policies — declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, and network policies.
-
-The template repository provides the standard directory structure:
+A UDS Package wraps a Helm chart with platform integration — networking, SSO, monitoring, and security policies — declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
 
 | File / Directory | Purpose |
 |---|---|
@@ -80,7 +78,7 @@ The template repository provides the standard directory structure:
          - name: reference-package
            namespace: reference-package
            version: 0.1.0
-           url: oci://ghcr.io/uds-packages/reference-package/helm/reference-package
+           url: oci://ghcr.io/uds-packages/reference-package/helm/reference-package # upstream application helm chart
            valuesFiles:
              - ../values/common-values.yaml
    ```
@@ -124,7 +122,7 @@ The template repository provides the standard directory structure:
    The `images` list must include every container image the application needs. Zarf pulls these images during package creation and pushes them to the in-cluster registry during deployment.
 
    > [!TIP]
-   > Start with a single `upstream` flavor. Add other flavors later, such as `registry` or `unicorn`. Each flavor uses different image references and may need its own values overrides.
+   > If you only need one flavor, `upstream` is sufficient. You can later add `registry1` or `unicorn` when needed.
 
    > [!TIP]
    > Not sure which images your Helm chart uses? Run `uds zarf dev find-images` from your package directory. It renders the chart and extracts every image reference:
@@ -320,8 +318,6 @@ The template repository provides the standard directory structure:
    > [!IMPORTANT]
    > The security context is critical — UDS Core enforces non-root execution by default via Pepr policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
 
-
-
    > [!NOTE]
    > Use `values` (Helm value overrides in `uds-bundle.yaml`) for static configuration and `variables` (set at deploy time via `uds-config.yaml`) for secrets and environment-specific settings. Add `sensitive: true` to password and secret variables.
 
@@ -437,6 +433,13 @@ For web applications, you can also navigate directly to `https://reference-packa
 
 See [Troubleshoot UDS Package Deployments](/how-to-guides/packaging-applications/troubleshoot-uds-packages/) for detailed walkthroughs of common issues.
 
+## Related documentation
+
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [Define Network Access](/how-to-guides/networking/define-network-access/)
+- [Identity & Access](/concepts/core-features/identity-access/)
+- [Bundles](/concepts/configuration-and-packaging/bundles/)
+
 ## Next steps
 
 <CardGrid>
@@ -449,10 +452,5 @@ See [Troubleshoot UDS Package Deployments](/how-to-guides/packaging-applications
     title="UDS Package Requirements"
     description="The standards your package must meet before publishing to the UDS registry."
     href="/concepts/configuration-and-packaging/package-requirements/"
-  />
-  <LinkCard
-    title="Package CR reference"
-    description="Full schema and field documentation for the UDS Package CR."
-    href="/reference/operator-and-crds/packages-v1alpha1-cr/"
   />
 </CardGrid>

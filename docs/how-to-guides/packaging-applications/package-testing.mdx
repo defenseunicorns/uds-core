@@ -14,7 +14,7 @@ You'll set up a testing strategy for your UDS Package that validates deployment 
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- A UDS Package ready for testing
+- A [UDS Package](/how-to-guides/packaging-applications/create-uds-package/) ready for testing
 - [Node.js](https://nodejs.org/) installed (for Playwright and Jest)
 - [Shellcheck](https://www.shellcheck.net/) installed (for linting bash scripts)
 
@@ -54,7 +54,7 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
 
    ```bash
    # Lint Zarf package definitions
-   uds zarf dev lint
+   uds zarf dev lint # https://docs.zarf.dev/commands/zarf_dev_lint/
 
    # Lint YAML files
    yamllint .
