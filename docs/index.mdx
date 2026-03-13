@@ -1,0 +1,81 @@
+---
+title: UDS Core
+description: UDS Core is the foundational runtime layer for secure Kubernetes deployments -a curated set of platform capabilities pre-configured for DoD and IC security requirements.
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<style>{`
+  .main-pane .content-panel:has(h1#_top) { display: none; }
+  .main-pane .content-panel:has(h1#_top) + .content-panel { border-top: none; }
+  .custom-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0 0.5rem;
+  }
+  .custom-hero .hero-logo {
+    max-width: 36rem !important;
+    width: 100%;
+    height: auto;
+  }
+`}</style>
+
+<div class="custom-hero">
+  <img src="/assets/UDS_Core_Logo_White.svg" alt="UDS Core" class="hero-logo hero-logo-dark" data-zoom-off />
+  <img src="/assets/UDS_Core_Logo_Dark.svg" alt="UDS Core" class="hero-logo hero-logo-light" data-zoom-off />
+</div>
+
+UDS Core is the foundational runtime layer for the Unicorn Delivery Service platform. It delivers a curated,
+pre-integrated set of Kubernetes capabilities that enforce DoD and IC security requirements out of the box —
+so mission teams can focus on deploying applications rather than hardening infrastructure.
+
+## Key Capabilities
+
+<CardGrid>
+  <Card title="Security Enforcement">
+    Istio service mesh, Kyverno policy engine, NeuVector runtime security, and Keycloak-based identity
+    and access management -all pre-configured and integrated.
+  </Card>
+  <Card title="Observability">
+    Grafana, Prometheus, Loki, and Tempo provide metrics, logs, and traces across the cluster with
+    minimal operator configuration.
+  </Card>
+  <Card title="Package Management">
+    Deploy applications as UDS Packages -self-describing bundles that declare their own network
+    policies, SSO configuration, and resource requirements.
+  </Card>
+  <Card title="Mission-Ready Defaults">
+    Hardened baseline policies, encrypted communications, and audit logging enabled from first boot —
+    no post-install hardening playbooks required.
+  </Card>
+</CardGrid>
+
+## Security Posture
+
+UDS Core is built to satisfy strict security baselines:
+
+- **Zero-trust networking** -Istio mTLS encrypts all in-cluster traffic by default
+- **Policy enforcement** -Kyverno blocks non-compliant workloads at admission time
+- **Runtime protection** -NeuVector monitors and can block anomalous container behavior
+- **Identity-first access** -Keycloak enforces SSO and MFA for all platform-level services
+- **Audit trail** -All policy violations and platform events are captured in structured logs
+
+## Where to Go Next
+
+<CardGrid>
+  <Card title="Getting Started" icon="rocket">
+    [Local demo (quickstart)](/getting-started/local-demo/overview/) -spin up a full UDS Core environment on your laptop in minutes.
+
+    [Production deployments](/getting-started/production/overview/) -guidance for real-world, multi-node deployments.
+  </Card>
+  <Card title="Concepts" icon="open-book">
+    [Concepts overview](/concepts/overview/) -understand the architecture, components, and design decisions behind UDS Core.
+  </Card>
+  <Card title="How-to Guides" icon="document">
+    [How-to Guides overview](/how-to-guides/overview/) -task-focused guides for common operational scenarios.
+  </Card>
+  <Card title="Reference" icon="information">
+    [Reference overview](/reference/overview/) -complete configuration details, CRD schemas, and CLI flags.
+  </Card>
+</CardGrid>
