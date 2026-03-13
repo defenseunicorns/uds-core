@@ -117,11 +117,11 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
            overrides:
              velero:
                velero:
+                 variables:
+                   - name: VELERO_AZURE_CLOUD_CREDENTIALS
+                     path: credentials.secretContents.cloud
+                     sensitive: true
                  values:
-                   - path: credentials.secretContents.cloud
-                     value: |
-                       AZURE_STORAGE_ACCOUNT_ACCESS_KEY=<your-storage-account-access-key>
-                       AZURE_CLOUD_NAME=<your-cloud-name>
                    - path: configuration.backupStorageLocation
                      value:
                        - name: default
@@ -132,6 +132,14 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
                            resourceGroup: <your-resource-group>
                            storageAccountKeyEnvVar: AZURE_STORAGE_ACCOUNT_ACCESS_KEY
                            subscriptionId: <your-subscription-id>
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           VELERO_AZURE_CLOUD_CREDENTIALS: |
+             AZURE_STORAGE_ACCOUNT_ACCESS_KEY=<your-storage-account-access-key>
+             AZURE_CLOUD_NAME=<your-cloud-name>
        ```
 
        > [!NOTE]

@@ -34,11 +34,11 @@ The following Core components support `additionalNetworkAllow`:
 
 | Component | Chart | Common use cases |
 |-----------|-------|------------------|
-| Falco | `falco` | External alert destinations (SIEM, webhook) |
-| Vector | `vector` | External log storage (Elasticsearch, S3) |
-| Loki | `loki` | External object storage access |
-| Prometheus Stack | `kube-prometheus-stack` | External scrape targets |
-| Grafana | `grafana` | External datasources (Thanos, additional Prometheus) |
+| Falco | `uds-falco-config` | External alert destinations (SIEM, webhook) |
+| Vector | `uds-vector-config` | External log storage (Elasticsearch, S3) |
+| Loki | `uds-loki-config` | External object storage access |
+| Prometheus Stack | `uds-prometheus-config` | External scrape targets |
+| Grafana | `uds-grafana-config` | External datasources (Thanos, additional Prometheus) |
 | Keycloak | `keycloak` | External IdP, OCSP endpoints |
 
 ## Steps
@@ -61,7 +61,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            falco:
-             falco:
+             uds-falco-config:
                values:
                  - path: additionalNetworkAllow
                    value:
@@ -85,7 +85,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            vector:
-             vector:
+             uds-vector-config:
                values:
                  - path: additionalNetworkAllow
                    value:
@@ -111,7 +111,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            grafana:
-             grafana:
+             uds-grafana-config:
                values:
                  - path: additionalNetworkAllow
                    value:
