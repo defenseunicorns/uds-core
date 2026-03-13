@@ -53,7 +53,7 @@ This is typically caused by one of the following:
    ```
 
    > [!NOTE]
-   > `Exemption` CRs must be created in the `uds-policy-exemptions` namespace unless you have configured a [namespace override](/reference/operator-and-crds/exemptions-v1alpha1-cr/).
+   > `Exemption` CRs must be created in the `uds-policy-exemptions` namespace unless your cluster operator has configured a different exemptions namespace in the Pepr operator settings.
 
 3. **Check exemption processing logs**
 
@@ -208,6 +208,6 @@ If this runbook doesn't resolve your issue:
 ## Related documentation
 
 - [Packages specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — CR schema and field reference
-- [Exemptions specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — CR schema, field reference, and namespace override options
+- [Exemptions specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — CR schema and field reference
 - [Kubernetes Watch](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes) — upstream documentation on Watch mechanics
 
