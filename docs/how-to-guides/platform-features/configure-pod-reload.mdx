@@ -24,7 +24,7 @@ There are two targeting modes:
 - **Auto-discovery (default)** — the operator scans all pods in the namespace and restarts those that reference the changed resource through volume mounts, environment variables (`env` or `envFrom`), or projected volumes.
 - **Explicit selector** — you specify a label selector via annotation, and the operator restarts all pods matching those labels.
 
-For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the operator triggers a rolling restart by patching the pod template annotations. Standalone pods are evicted to trigger recreation.
+For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the operator triggers a rolling restart by patching the pod template annotations. For standalone pods without a restartable controller, the operator evicts or deletes the pod; it will only be recreated if some other controller or process creates it again.
 
 > [!TIP]
 > Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/) — so pods automatically pick up rotated credentials and updated trust bundles.
