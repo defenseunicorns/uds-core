@@ -28,7 +28,7 @@ Cluster-level configuration is the primary dimension that changes across environ
 
 ## What Stays the Same
 
-Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (Pepr policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency closes the gap that other platforms leave between dev and production — if it works in dev, it will work in staging and production. The only variables are cluster-level config, not the platform itself.
+Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (UDS policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency closes the gap that other platforms leave between dev and production — if it works in dev, it will work in staging and production. The only variables are cluster-level config, not the platform itself.
 
 > [!CAUTION]
 > Don't skip staging. Configuration differences between environments are the most common source of production issues, and local dev won't surface them. A staging cluster with production-parity config catches problems before they reach real users.
