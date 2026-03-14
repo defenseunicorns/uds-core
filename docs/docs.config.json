@@ -3,7 +3,6 @@
   "label": "Core",
   "contentDir": "core",
   "sidebarOrder": [
-    "overview",
     "getting-started",
     "concepts",
     { "dir": "how-to-guides", "label": "How-to Guides" },
