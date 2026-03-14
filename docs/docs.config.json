@@ -1,0 +1,12 @@
+{
+  "id": "core",
+  "label": "Core",
+  "contentDir": "core",
+  "sidebarOrder": [
+    "getting-started",
+    "concepts",
+    { "dir": "how-to-guides", "label": "How-to Guides" },
+    "reference",
+    { "dir": "operations", "label": "Operations & Maintenance" }
+  ]
+}
