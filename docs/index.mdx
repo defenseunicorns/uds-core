@@ -1,13 +1,30 @@
 ---
 title: UDS Core
-slug: uds-core
-sidebar:
-  order: 2
+description: UDS Core is the foundational runtime layer for secure Kubernetes deployments - a curated set of platform capabilities pre-configured for DoD and IC security requirements.
 ---
 
-import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-## What is UDS Core?
+<style>{`
+  .main-pane .content-panel:has(h1#_top) { display: none; }
+  .main-pane .content-panel:has(h1#_top) + .content-panel { border-top: none; }
+  .custom-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0 0.5rem;
+  }
+  .custom-hero .hero-logo {
+    max-width: 36rem !important;
+    width: 100%;
+    height: auto;
+  }
+`}</style>
+
+<div class="custom-hero">
+  <img src="/assets/UDS_Core_Logo_White.svg" alt="UDS Core" class="hero-logo hero-logo-dark" data-zoom-off />
+  <img src="/assets/UDS_Core_Logo_Dark.svg" alt="UDS Core" class="hero-logo hero-logo-light" data-zoom-off />
+</div>
 
 UDS Core is the runtime platform layer of the UDS ecosystem. It gives every application deployed on top of it a consistent, secure, and compliance-ready operating environment—so platform engineers do not have to rebuild those concerns for each project.
 
@@ -71,7 +88,7 @@ Security is built into UDS Core by default, not bolted on. The platform provides
 - Runtime detection and alerting for malicious behavior.
 - Centralized logging and metrics for audit and incident response.
 
-For the full security overview, see [Security &rarr;](/security/).
+For the full security overview, see [Security &rarr;](/concepts/platform/security/).
 
 ---
 
