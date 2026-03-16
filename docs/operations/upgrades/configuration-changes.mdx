@@ -1,12 +1,12 @@
 ---
 title: Configuration Changes
 sidebar:
-  order: 2.05
+  order: 2.5
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
-This guide covers how to apply configuration changes to a running UDS Core deployment, including bundle override updates, the pod reload mechanism, and secret rotation.
+This guide covers how to apply configuration changes to a running UDS Core deployment by updating bundle overrides and redeploying.
 
 > [!TIP]
 > If you are configuring a feature for the first time, see the [How-To Guides](/how-to-guides/overview/). This page covers changing configuration on an already-running platform.
@@ -19,7 +19,7 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
 
 1. **Update your bundle configuration**
 
-   Modify the relevant values in your `uds-bundle.yaml` or `uds-config.yaml`.
+   Modify the relevant values in your `uds-bundle.yaml` or `uds-config.yaml`:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -30,6 +30,7 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
          component-name:
            chart-name:
              values:
+               # Set the config path to the new value
                - path: config.path
                  value: "new-value"
    ```
@@ -41,7 +42,7 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart. See [Pod reload mechanism](#pod-reload-mechanism) below.
+   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart. See [Pod Reload](/reference/configuration/pod-reload/) for details on automatic restart behavior.
 
 3. **Verify the change**
 
@@ -56,110 +57,10 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
 > [!IMPORTANT]
 > Avoid making large configuration changes and version upgrades in the same deployment. Apply configuration changes and upgrades independently to simplify troubleshooting.
 
-## Pod reload mechanism
-
-UDS Core includes a pod reload controller that automatically restarts pods when Secrets or ConfigMaps are updated. This is useful for credential rotation, certificate updates, and configuration data that applications need to refresh without manual intervention.
-
-### How it works
-
-The controller watches for changes to Kubernetes Secrets and ConfigMaps labeled with `uds.dev/pod-reload: "true"`. When a labeled resource is updated, the controller:
-
-1. Identifies which pods consume the changed resource
-2. For pods managed by Deployments, ReplicaSets, StatefulSets, or DaemonSets: patches the controller's pod template annotations to trigger a rolling restart
-3. For standalone pods: uses pod eviction to trigger recreation
-4. Generates Kubernetes events to track the restart
-
-> [!NOTE]
-> The `uds.dev/pod-reload: "true"` label goes on the **Secret or ConfigMap** that is changing, not on the pod being reloaded.
-
-### Enabling pod reload
-
-Add the reload label to any Secret or ConfigMap that should trigger automatic pod restarts when updated:
-
-```yaml
-metadata:
-  labels:
-    uds.dev/pod-reload: "true"
-```
-
-### Targeting specific pods
-
-By default, the controller auto-discovers pods that consume the changed resource through volume mounts, environment variables, or projected volumes. Only pods actually using the resource are restarted.
-
-To target specific pods instead, add an explicit selector annotation to the Secret or ConfigMap:
-
-```yaml
-metadata:
-  labels:
-    uds.dev/pod-reload: "true"
-  annotations:
-    uds.dev/pod-reload-selector: 'app=my-app,component=backend'
-```
-
-This restarts all pods matching the label selector when the resource changes, regardless of whether they mount the resource directly.
-
-## Secret rotation
-
-UDS Core's pod reload mechanism integrates with SSO client secrets and CA certificates, making secret rotation straightforward.
-
-### Rotating SSO client secrets
-
-SSO client secrets managed by UDS Package CRs can opt into automatic pod reload. Add the `uds.dev/pod-reload: "true"` label through the `secretConfig.labels` field in your Package CR:
-
-```yaml
-spec:
-  sso:
-    - name: my-app
-      secretConfig:
-        labels:
-          uds.dev/pod-reload: "true"
-```
-
-When the SSO client secret is rotated, pods consuming it are automatically restarted.
-
-For full details on SSO secret configuration, see [SSO Secret Templating](/reference/configuration/single-sign-on/sso-templating#secret-pod-reload).
-
-### Rotating CA certificates
-
-CA certificate ConfigMaps managed through [Central Trust Management](/reference/configuration/trust-management/central-trust-bundle-management/) can use the same mechanism. Add the reload label through the `caBundle.configMap.labels` field in your Package CR:
-
-```yaml
-spec:
-  caBundle:
-    configMap:
-      labels:
-        uds.dev/pod-reload: "true"
-```
-
-When the CA bundle is updated, pods consuming the ConfigMap are automatically restarted.
-
-For full details, see [ConfigMap Templating for CA Bundles](/reference/configuration/trust-management/central-trust-bundle-management/#uds-package-configuration).
-
-### Rotating other secrets
-
-For any Secret or ConfigMap not managed by UDS Package CRs, add the `uds.dev/pod-reload: "true"` label directly to the resource. When you update the resource data, the controller restarts all consuming pods automatically.
-
-## Monitoring configuration changes
-
-When a resource triggers a pod restart, the controller generates Kubernetes events. Use these to confirm that restarts occurred:
-
-```bash
-uds zarf tools kubectl get events -n <namespace> --field-selector reason=SecretChanged
-```
-
-```bash
-uds zarf tools kubectl get events -n <namespace> --field-selector reason=ConfigMapChanged
-```
-
-Deployments also emit `ScalingReplicaSet` events during restarts. The controller adds a `uds.dev/restartedAt` annotation to pod templates, which you can inspect to confirm the last restart time:
-
-```bash
-uds zarf tools kubectl get deployment <name> -n <namespace> -o jsonpath='{.spec.template.metadata.annotations.uds\.dev/restartedAt}'
-```
-
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures
-- [SSO Secret Templating](/reference/configuration/single-sign-on/sso-templating) - SSO client secret configuration
-- [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management/) - CA certificate management
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Pod Reload](/reference/configuration/pod-reload/) - automatic pod restart on Secret and ConfigMap changes
+- [SSO Secret Templating](/reference/configuration/single-sign-on/sso-templating) - SSO client secret configuration and rotation
+- [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management/) - CA certificate management and rotation
 - [How-To Guides](/how-to-guides/overview/) - first-time configuration guides

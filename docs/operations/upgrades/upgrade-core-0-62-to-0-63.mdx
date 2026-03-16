@@ -1,0 +1,120 @@
+---
+title: Upgrade UDS Core 0.62 to 0.63
+sidebar:
+  order: 2.4
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!CAUTION]
+> This guide covers specific changes for the 0.62 to 0.63 upgrade. For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+## What changed
+
+UDS Core 0.63 introduces built-in uptime observability with recording rules and a Core Uptime dashboard, and adds a standalone CRDs functional layer that allows installing UDS CRDs before `core-base`. No breaking changes are included in this release.
+
+### Breaking changes
+
+There are no UDS Core breaking changes in this release. However, two upstream dependency changes may affect operators with custom overrides:
+
+| Change | Impact | Action required |
+|--------|--------|-----------------|
+| Grafana Helm chart upgraded from 10.x to 11.x | Chart now requires Kubernetes 1.25+; chart source moved to `grafana-community` repository | Verify your cluster meets the minimum Kubernetes version; review and update any custom Grafana chart overrides for 11.x compatibility |
+| Keycloak image renamed from `keycloak` to `keycloak-fips` | Custom overrides referencing the old image name will pull the wrong image | Update any bundle overrides that reference the Keycloak image name |
+
+### Notable features
+
+- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration
+- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure
+
+## Prerequisites
+
+- Running UDS Core v0.62.x
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a staging environment that mirrors production
+- Recent backup of your deployment (see [Backup & Restore](/how-to-guides/backup-restore/overview/))
+
+## Pre-upgrade checklist
+
+<Steps>
+
+1. **Review the full release notes**
+
+   Read the [0.63.0 release notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.63.0) for the complete list of changes.
+
+2. **Check for deprecated features**
+
+   Review [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md) for features deprecated in this or earlier versions. Resolve any deprecation warnings before upgrading.
+
+3. **Review Grafana overrides**
+
+   If you have custom Grafana Helm chart overrides in your bundle, review them for compatibility with chart 11.x. The chart source has moved to the `grafana-community` repository, and the minimum Kubernetes version is now 1.25.
+
+4. **Review Keycloak image references**
+
+   If you have bundle overrides that reference the Keycloak image name, update them from `keycloak` to `keycloak-fips`.
+
+5. **Test in staging**
+
+   Perform the upgrade in a staging environment before applying to production.
+
+</Steps>
+
+## Upgrade procedure
+
+<Steps>
+
+1. **Update your bundle reference**
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       # Upgrade from 0.62.x to 0.63.0
+       ref: 0.63.0-upstream
+   ```
+
+2. **Update overrides if needed**
+
+   Update any custom Grafana chart overrides for chart 11.x compatibility. Update any Keycloak image references from `keycloak` to `keycloak-fips`.
+
+3. **Build and deploy**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Post-upgrade verification
+
+<Steps>
+
+1. **Verify UDS Core components**
+
+   ```bash
+   uds zarf tools kubectl get pods -A | grep -v Running
+   ```
+
+   All pods should be in `Running` or `Completed` state.
+
+2. **Confirm uptime dashboard**
+
+   Open Grafana and verify the new Core Uptime dashboard is available and displaying data.
+
+3. **Validate SSO and endpoint access**
+
+   Confirm all UDS Core UIs are accessible and SSO login works.
+
+4. **Verify mission applications**
+
+   Confirm your applications are running and healthy.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes on a running platform
+- [UDS Core 0.63.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.63.0) - full changelog

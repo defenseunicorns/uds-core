@@ -161,12 +161,39 @@ Rather than attempting a rollback, use the following approaches:
 2. **Manual intervention:** where necessary, perform manual one-time fixes to restore access. Report persistent issues as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address
 3. **Restore from backup:** in critical situations, restore from backups rather than attempting a version rollback. See [Backup & Restore](/how-to-guides/backup-restore/overview/) for guidance
 
+## Version-specific guides
+
+These guides cover breaking changes, migration steps, and verification for specific version upgrades:
+
+<CardGrid>
+  <LinkCard
+    title="0.59 to 0.60"
+    description="Istio ambient mode default, SSO secret field changes, Keycloak logout confirmation."
+    href="/operations/upgrades/upgrade-core-0-59-to-0-60/"
+  />
+  <LinkCard
+    title="0.60 to 0.61"
+    description="Blackbox Exporter, Keycloak HA, trust bundle on external apps. Skip v0.61.0, upgrade to v0.61.1."
+    href="/operations/upgrades/upgrade-core-0-60-to-0-61/"
+  />
+  <LinkCard
+    title="0.61 to 0.62"
+    description="Falco chart 8.x upgrade, uptime probes for Authservice apps, Falco rule overrides."
+    href="/operations/upgrades/upgrade-core-0-61-to-0-62/"
+  />
+  <LinkCard
+    title="0.62 to 0.63"
+    description="Core uptime observability, CRDs functional layer. Grafana chart 11.x, Keycloak FIPS image rename."
+    href="/operations/upgrades/upgrade-core-0-62-to-0-63/"
+  />
+</CardGrid>
+
 ## Additional resources
 
 <CardGrid>
   <LinkCard
     title="Configuration Changes"
-    description="Apply config changes, manage pod reloads, and rotate secrets on a running platform."
+    description="Apply config changes to bundle overrides on a running platform."
     href="/operations/upgrades/configuration-changes/"
   />
   <LinkCard
