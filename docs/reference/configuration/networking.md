@@ -31,24 +31,11 @@ Each entry in `spec.network.allow` generates a Kubernetes NetworkPolicy. Namespa
 
 ### remoteGenerated values
 
-The `remoteGenerated` field provides named selectors for common traffic destinations, avoiding the need to specify CIDRs or selectors manually.
-
-| Value | Allows traffic to or from |
-|---|---|
-| `KubeAPI` | The Kubernetes API server |
-| `KubeNodes` | All cluster nodes |
-| `IntraNamespace` | All pods within the same namespace |
-| `CloudMetadata` | Cloud instance metadata endpoint (e.g., 169.254.169.254) |
-| `Anywhere` | All destinations (0.0.0.0/0) |
+The `remoteGenerated` field provides named selectors for common traffic destinations, avoiding the need to specify CIDRs or selectors manually. For the full list of values, see [Packages CR reference — Allow](/reference/operator-and-crds/packages-v1alpha1-cr/#Allow).
 
 ## Service mesh mode
 
-The `spec.network.serviceMesh.mode` field sets the Istio data-plane mode for the package's namespace.
-
-| Value | Description |
-|---|---|
-| `ambient` | Default. Uses Istio ambient mode; no sidecars are injected into the namespace |
-| `sidecar` | Uses sidecar injection; an Envoy proxy is injected into each pod |
+The `spec.network.serviceMesh.mode` field sets the Istio data-plane mode for the package's namespace. For the full field-level schema, see [Packages CR reference — ServiceMesh](/reference/operator-and-crds/packages-v1alpha1-cr/#ServiceMesh).
 
 ## Related documentation
 

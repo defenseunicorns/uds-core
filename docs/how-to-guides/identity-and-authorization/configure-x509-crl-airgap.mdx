@@ -1,0 +1,256 @@
+---
+title: Configure Keycloak Airgap CRLs
+sidebar:
+  order: 3.17
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Keycloak to validate X.509/CAC certificates against locally loaded Certificate Revocation Lists (CRLs) in an airgapped environment where OCSP responders are unreachable. This involves building an OCI data image containing the CRL files, wrapping it in a Zarf package, and configuring the bundle to mount those files into the Keycloak pod at deploy time.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Docker installed (on the machine where you run the packaging script)
+- `bash`, `curl`, `unzip`, `find`, and `sort` available on the machine running the script
+- Access to a Kubernetes cluster running Kubernetes 1.31+
+- X.509/CAC authentication enabled in UDS Core — see [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) and [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/)
+
+## Before you begin
+
+In connected environments, Keycloak uses OCSP to check whether a client certificate has been revoked. In a true airgap, OCSP responders are unreachable. The supported alternative is to load CRL files directly into the Keycloak pod so revocation checks can run locally.
+
+This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing the CRL files into the Keycloak pod. No custom Keycloak image is required.
+
+**Kubernetes version requirements:**
+
+| Kubernetes version | ImageVolume support |
+|---|---|
+| 1.31–1.34 | Supported, but the `ImageVolume` feature gate must be explicitly enabled on the API server and kubelet |
+| 1.35+ | Enabled by default; no feature gate configuration needed |
+
+> [!NOTE]
+> ImageVolumes are currently blocked by UDS policies. You will need to add a policy exemption as part of this guide.
+
+## Steps
+
+<Steps>
+
+1. **Build the CRL Zarf package**
+
+   Run the packaging script from the UDS Core repo root on a connected machine (or inside the enclave if you are supplying a pre-downloaded ZIP). The script fetches or accepts CRL files, builds an OCI data image from them, generates the Keycloak CRL path string, and creates a Zarf package.
+
+   **Download CRLs from DISA and build the package (default):**
+
+   ```bash
+   bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh
+   ```
+
+   **Use a pre-downloaded ZIP (recommended for airgap transfer):**
+
+   ```bash
+   bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh \
+     --crl-zip /path/to/crls.zip
+   ```
+
+   Download the ZIP on a connected machine, transfer it into the airgap or build system, then run the script locally to produce the package.
+
+   The script excludes DoD Email (`DODEMAIL*`) and Software (`DODSW*`) CRLs by default. To include them:
+
+   ```bash
+   # Include DoD Email CRLs
+   bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh --include-email
+
+   # Include DoD Software CRLs
+   bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh --include-sw
+   ```
+
+   When the script completes, you will have two outputs under `./keycloak-crls/`:
+
+   - `keycloak-crl-paths.txt` — the `##`-delimited CRL path string to paste into your bundle config
+   - `zarf-package-keycloak-crls-<arch>-<tag>.tar.zst` — the Zarf package to add to your bundle
+
+2. **Configure Keycloak overrides in your bundle**
+
+   Add the following to your `uds-bundle.yaml` under the Keycloak package overrides. Paste the contents of `keycloak-crl-paths.txt` as the value for `X509_CRL_RELATIVE_PATH`.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmInitEnv
+                 value:
+                   X509_OCSP_CHECKING_ENABLED: "false"
+                   X509_OCSP_FAIL_OPEN: "false"
+                   X509_CRL_CHECKING_ENABLED: "true"
+                   X509_CRL_ABORT_IF_NON_UPDATED: "false"
+                   X509_CRL_RELATIVE_PATH: "<paste keycloak-crl-paths.txt contents here>"
+               - path: extraVolumes
+                 value:
+                   - name: ca-certs
+                     configMap:
+                       name: uds-trust-bundle
+                       optional: true
+                   - name: keycloak-crls
+                     image:
+                       reference: keycloak-crls:local
+                       pullPolicy: Always
+               - path: extraVolumeMounts
+                 value:
+                   - name: ca-certs
+                     mountPath: /tmp/ca-certs
+                     readOnly: true
+                   - name: keycloak-crls
+                     mountPath: /tmp/keycloak-crls
+                     readOnly: true
+   ```
+
+   > [!NOTE]
+   > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running when you apply these overrides, you must fully tear down and redeploy Keycloak for them to take effect.
+
+   > [!CAUTION]
+   > Setting `X509_CRL_ABORT_IF_NON_UPDATED: "false"` allows authentication to proceed if the CRL has passed its `nextUpdate` time. This is appropriate for airgapped environments where refreshing the CRL on a fixed schedule may not be possible, but means expired CRLs will not block authentication. Set to `"true"` if your environment requires strict CRL freshness enforcement.
+
+3. **Add the CRL package to your bundle and set deployment order**
+
+   The CRL Zarf package must deploy **before** the Keycloak package so the CRL image is available in the cluster registry when Keycloak starts.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core-base
+       ref: x.x.x
+     - name: keycloak-crls
+       path: ./keycloak-crls/zarf-package-keycloak-crls-<arch>-<tag>.tar.zst
+       ref: x.x.x
+     - name: core-identity-authorization
+       ref: x.x.x
+   ```
+
+4. **Add a policy exemption for ImageVolumes**
+
+   UDS policies currently block `ImageVolume` volume types. Add an exemption targeting Keycloak pods:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         uds-exemptions:
+           uds-exemptions:
+             values:
+               - path: exemptions.custom
+                 value:
+                   - name: keycloak-imagevolume-exemption
+                     exemptions:
+                       - policies:
+                           - RestrictVolumeTypes
+                         matcher:
+                           namespace: keycloak
+                           name: "^keycloak-.*"
+                           kind: pod
+                         title: "Allow Keycloak ImageVolume for CRLs"
+                         description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
+   ```
+
+5. **(Optional) Enable ImageVolume on k3d for Kubernetes < 1.35**
+
+   If you are running on `uds-k3d` with Kubernetes < 1.35, enable the `ImageVolume` feature gate via `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     uds-k3d-dev:
+       k3d_extra_args: >-
+         --k3s-arg --kube-apiserver-arg=feature-gates=ImageVolume=true@server:0
+         --k3s-arg --kubelet-arg=feature-gates=ImageVolume=true@server:0
+   ```
+
+6. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+**Confirm the CRL Zarf package was deployed:**
+
+```bash
+uds zarf package list | grep keycloak-crls
+```
+
+**Confirm CRL files are mounted in the Keycloak pod:**
+
+```bash
+uds zarf tools kubectl exec -n keycloak keycloak-0 -c keycloak -- ls -la /tmp/keycloak-crls
+```
+
+The listed files should match the CRL filenames from `keycloak-crl-paths.txt`.
+
+**Confirm the CRL path configuration:**
+
+In the Keycloak admin console at `keycloak.<admin_domain>` → **uds** realm → **Authentication** → **Policies** → **X.509 authenticator settings**, verify the CRL Distribution Points value matches the contents of `keycloak-crl-paths.txt`.
+
+**Test X.509 authentication:**
+
+Use your normal mTLS or browser client certificate flow and confirm Keycloak validates the certificate without CRL-related errors in the logs.
+
+> [!NOTE]
+> CRLs expire based on their `nextUpdate` field. To refresh CRLs, re-run the packaging script on a connected machine to get updated CRL files, rebuild the Zarf package, redeploy it, and restart the Keycloak pod to clear any cached revocation state.
+
+## Troubleshooting
+
+### Problem: "Volume has a disallowed volume type of 'image'"
+
+**Symptom:** The Keycloak pod fails to start with a policy violation error referencing `image` volume type.
+
+**Solution:** The UDS policy exemption was not applied or did not match the pod. Verify:
+- The exemption is included in the deployed bundle
+- The namespace is `keycloak` and the pod matcher `^keycloak-.*` matches the Keycloak pod name
+
+### Problem: "Failed to pull image … not found"
+
+**Symptom:** The Keycloak pod fails to start because the CRL image cannot be pulled.
+
+**Solution:** The CRL Zarf package is missing or the image reference is incorrect. Verify:
+- The `keycloak-crls` package is listed **before** `core-identity-authorization` in the bundle and was deployed successfully (`uds zarf package list | grep keycloak-crls`)
+- The `extraVolumes.image.reference` value (`keycloak-crls:local`) matches the image reference available in the cluster's Zarf registry
+
+### Problem: Keycloak logs show "Unable to load CRL from …"
+
+**Symptom:** X.509 authentication fails and Keycloak logs contain CRL loading errors.
+
+**Solution:** Verify:
+- CRL files exist in the Keycloak container at `/tmp/keycloak-crls` (see verification step above)
+- The value of `X509_CRL_RELATIVE_PATH` exactly matches the contents of `keycloak-crl-paths.txt`, including the `##` delimiters between paths
+- The CRLs are not expired — check each file's `nextUpdate` field with `openssl crl -inform DER -in <file.crl> -noout -nextupdate`
+
+## Related Documentation
+
+- [Keycloak: X.509 client certificate user authentication](https://www.keycloak.org/docs/latest/server_admin/#_x509) — upstream Keycloak reference for X.509 authenticator configuration
+- [Kubernetes ImageVolume documentation](https://kubernetes.io/docs/concepts/storage/volumes/#image) — upstream reference for OCI image-backed volumes
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable X.509/CAC, OCSP, and CRL revocation checking via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+  <LinkCard
+    title="Configure the CA truststore"
+    description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
+    href="/how-to-guides/identity-access/configure-truststore/"
+  />
+</CardGrid>
