@@ -27,7 +27,7 @@ Reference pages live under `docs/reference/<section>/` and use the `.md` extensi
 ---
 title: Section Name
 sidebar:
-  order: N
+  order: X.X
 ---
 
 One or two sentences describing what UDS Core configures in this area and why it matters to bundle operators. Keep it narrow — only UDS Core-specific surfaces, not a general introduction to the underlying technology.
@@ -102,4 +102,4 @@ overrides:
 - List external upstream docs (e.g., Keycloak, Istio) with brief descriptions
 - List related how-to guides (task-oriented usage of the fields documented here)
 - List related concepts pages (background reading)
-- Do not list other reference pages in the same subsection — use inline links instead
+- You may link to reference pages in other subsections (e.g., `operator-and-crds`) when they are the most relevant pointer; prefer inline links for reference pages within the same subsection
