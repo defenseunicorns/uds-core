@@ -189,8 +189,6 @@ tasks:
           jq '. + {repo: "defenseunicorns/uds-core"}' docs/docs.config.json \
             > uds-docs/.product-configs/uds-core.json
 
-          echo '{}' > uds-docs/.versions
-
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
