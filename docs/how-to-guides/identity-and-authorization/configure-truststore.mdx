@@ -173,7 +173,7 @@ unzip -t src/authorized_certs.zip
 
 **Solution:** Two checks:
 1. Confirm the `tls.cacert` override was applied to `istio-tenant-gateway` and that the bundle was redeployed
-2. Confirm `X509_AUTH_ENABLED: true` is set in `realmAuthFlows` — if X.509 auth is disabled, the gateway will not request client certs even if the truststore is configured. See [Configure authentication flows](/how-to-guides/identity-access/configure-authentication-flows/).
+2. Confirm `X509_AUTH_ENABLED: true` is set in `realmAuthFlows` — if X.509 auth is disabled, the gateway will not request client certs even if the truststore is configured. See [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/).
 
 ### Problem: Certificate authentication succeeds but OCSP errors appear in logs
 
@@ -203,11 +203,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure Keycloak authentication methods"
     description="Enable X.509/CAC authentication after the truststore is configured."
-    href="/how-to-guides/identity-access/configure-authentication-flows/"
+    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
   />
   <LinkCard
     title="Build a custom Keycloak configuration image"
     description="End-to-end workflow for building, publishing, and deploying a custom image."
-    href="/how-to-guides/identity-access/build-deploy-custom-image/"
+    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
   />
 </CardGrid>

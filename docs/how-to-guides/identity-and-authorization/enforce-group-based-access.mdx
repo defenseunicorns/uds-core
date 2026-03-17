@@ -13,7 +13,7 @@ You'll restrict access to a UDS application so that only users in specific Keycl
 ## Prerequisites
 
 - UDS Core deployed
-- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect non-OIDC apps with SSO](/how-to-guides/identity-access/protect-apps-with-authservice/))
+- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/))
 - Relevant Keycloak groups exist — either the built-in platform groups or custom groups you have created
 
 ## Before you begin
@@ -133,9 +133,9 @@ To inspect the token claims, use the Keycloak Account console at `sso.<domain>` 
 
 ## Related Documentation
 
-- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on platform groups and the SSO model
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on platform groups and the SSO model
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full `groups` field specification
-- [Protect non-OIDC apps with SSO](/how-to-guides/identity-access/protect-apps-with-authservice/) — required prerequisite for group-based access on apps without native OIDC
+- [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) — required prerequisite for group-based access on apps without native OIDC
 
 ## Next steps
 
@@ -145,11 +145,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Protect non-OIDC apps with SSO"
     description="Add SSO protection to applications that have no native OIDC support."
-    href="/how-to-guides/identity-access/protect-apps-with-authservice/"
+    href="/how-to-guides/identity-and-authorization/protect-apps-with-authservice/"
   />
   <LinkCard
     title="Connect Azure AD as an identity provider"
     description="Map Azure groups to Keycloak groups for enterprise SSO."
-    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+    href="/how-to-guides/identity-and-authorization/connect-azure-ad-idp/"
   />
 </CardGrid>
