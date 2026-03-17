@@ -1,10 +1,10 @@
 ---
-title: Identity & Access
+title: Identity - Authorization
 sidebar:
   order: 4
 ---
 
-## Identity & access reference
+## Identity - Authorization reference
 
 This is one of the main places where UDS Core needs detailed, Core-specific technical reference.
 
@@ -14,7 +14,7 @@ Include here:
 - Supported identity provider integration details at a reference level (what is supported, which fields matter).
 - Stable behavior notes: sessions, group mapping, claims, templates, and defaults.
 
-Task-focused guides ("connect Azure AD", "recover credentials", "rotate certificates") should be in **How-to Guides → Identity & access**, with this section linked for exact settings and behavior.
+Task-focused guides ("connect Azure AD", "recover credentials", "rotate certificates") should be in **How-to Guides → Identity - Authorization**, with this section linked for exact settings and behavior.
 
 ### Source material from previous docs
 

@@ -23,7 +23,7 @@ UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is *
 > [!CAUTION]
 > **Plan your authentication flows before deploying UDS Core with the OpenTofu client enabled.** `realmInitEnv` values (including `OPENTOFU_CLIENT_ENABLED`) are applied only during initial realm import. If you need to enable the client on an already-running deployment, use the [admin UI method](#enable-the-client-in-the-keycloak-admin-ui) instead of redeploying.
 >
-> Before enabling OpenTofu access, decide which authentication flows you want and set `realmAuthFlows` in the same deployment to avoid an extra redeploy. See [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) for details.
+> Before enabling OpenTofu access, decide which authentication flows you want and set `realmAuthFlows` in the same deployment to avoid an extra redeploy. See [Configure Keycloak authentication methods](/how-to-guides/identity-authorization/configure-authentication-flows/) for details.
 
 ## Steps
 
@@ -199,7 +199,7 @@ After running `tofu apply`, confirm resources created by OpenTofu appear in the 
 ## Related Documentation
 
 - [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) — full provider resource reference
-- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement
+- [Configure Keycloak authentication methods](/how-to-guides/identity-authorization/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement
 - [Upgrade Keycloak realm configuration](/operations/upgrade-keycloak-realm/) — manual upgrade steps when re-importing the realm with new config
 
 ## Next steps
@@ -210,11 +210,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Enforce group-based access controls"
     description="Restrict application access to users in specific Keycloak groups using the Package CR."
-    href="/how-to-guides/identity-access/enforce-group-based-access/"
+    href="/how-to-guides/identity-authorization/enforce-group-based-access/"
   />
   <LinkCard
     title="Configure Keycloak authentication methods"
     description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
-    href="/how-to-guides/identity-access/configure-authentication-flows/"
+    href="/how-to-guides/identity-authorization/configure-authentication-flows/"
   />
 </CardGrid>
