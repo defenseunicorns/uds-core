@@ -1,7 +1,7 @@
 ---
 title: Configure network access for Core services
 sidebar:
-  order: 2.9
+  order: 2.09
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -34,11 +34,11 @@ The following Core components support `additionalNetworkAllow`:
 
 | Component | Chart | Common use cases |
 |-----------|-------|------------------|
-| Falco | `falco` | External alert destinations (SIEM, webhook) |
-| Vector | `vector` | External log storage (Elasticsearch, S3) |
-| Loki | `loki` | External object storage access |
-| Prometheus Stack | `kube-prometheus-stack` | External scrape targets |
-| Grafana | `grafana` | External datasources (Thanos, additional Prometheus) |
+| Falco | `uds-falco-config` | External alert destinations (SIEM, webhook) |
+| Vector | `uds-vector-config` | External log storage (Elasticsearch, S3) |
+| Loki | `uds-loki-config` | External object storage access |
+| Prometheus Stack | `uds-prometheus-config` | External scrape targets |
+| Grafana | `uds-grafana-config` | External datasources (Thanos, additional Prometheus) |
 | Keycloak | `keycloak` | External IdP, OCSP endpoints |
 
 ## Steps
@@ -61,7 +61,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            falco:
-             falco:
+             uds-falco-config:
                values:
                  - path: additionalNetworkAllow
                    value:
@@ -85,7 +85,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            vector:
-             vector:
+             uds-vector-config:
                values:
                  - path: additionalNetworkAllow
                    value:
@@ -111,7 +111,7 @@ The following Core components support `additionalNetworkAllow`:
          ref: x.x.x-upstream
          overrides:
            grafana:
-             grafana:
+             uds-grafana-config:
                values:
                  - path: additionalNetworkAllow
                    value:
@@ -129,7 +129,7 @@ The following Core components support `additionalNetworkAllow`:
    </Tabs>
 
    > [!TIP]
-   > The same pattern works for any supported component — substitute the appropriate `overrides.<zarf-component>.<chart-name>` path from the table above. Each rule entry supports the same fields as a Package CR `allow` rule. See the [Package CR Reference](/reference/operator-and-crds/package/) for the full schema.
+   > The same pattern works for any supported component — substitute the appropriate `overrides.<zarf-component>.<chart-name>` path from the table above. Each rule entry supports the same fields as a Package CR `allow` rule. See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full schema.
 
 2. **Create and deploy your bundle**
 
@@ -159,7 +159,7 @@ uds zarf tools kubectl get serviceentry -n istio-egress-ambient
 
 ## Troubleshooting
 
-### Additional rule not taking effect
+### Problem: Additional rule not taking effect
 
 **Symptoms:** The Core component still cannot reach the external or internal destination.
 
@@ -169,7 +169,7 @@ uds zarf tools kubectl get serviceentry -n istio-egress-ambient
 - For external hosts, verify the `remoteHost` matches exactly — no wildcards are supported
 - Ensure the component's Helm chart supports `additionalNetworkAllow` (check the chart's `values.yaml` for the field)
 
-### Override not applied
+### Problem: Override not applied
 
 **Symptoms:** The Package CR doesn't include your custom rules after deployment.
 
@@ -178,9 +178,9 @@ uds zarf tools kubectl get serviceentry -n istio-egress-ambient
 - Check that `additionalNetworkAllow` is a list (array), not an object
 - Run `uds zarf package inspect` on your deployed package to confirm the override was applied
 
-## Related documentation
+## Related Documentation
 
-- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Next steps
 

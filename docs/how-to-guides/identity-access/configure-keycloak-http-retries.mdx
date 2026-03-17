@@ -1,0 +1,97 @@
+---
+title: Configure Keycloak HTTP retries
+sidebar:
+  order: 3.06
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll enable and tune Keycloak's outbound HTTP retry behavior for requests to external services such as upstream identity providers. This configuration is applied via bundle overrides — no image rebuild required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
+
+## Before you begin
+
+HTTP retries are disabled by default. To enable them, set `httpRetry.maxRetries` above `0`.
+
+Retries can improve resilience in environments with intermittent network issues, but they can also delay failure detection when an upstream service is down.
+
+## Steps
+
+<Steps>
+
+1. **Configure HTTP retry behavior for outgoing requests**
+
+   In your `uds-bundle.yaml`, set the retry options using Keycloak chart values:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: httpRetry.maxRetries
+                 value: 2
+               - path: httpRetry.initialBackoffMillis
+                 value: 1000
+               - path: httpRetry.backoffMultiplier
+                 value: 2.0
+               - path: httpRetry.applyJitter
+                 value: true
+               - path: httpRetry.jitterFactor
+                 value: 0.5
+   ```
+
+   | Option | Default | Description |
+   |---|---|---|
+   | `maxRetries` | `0` (disabled) | Maximum retry attempts (set > 0 to enable) |
+   | `initialBackoffMillis` | `1000` | Initial backoff delay in milliseconds |
+   | `backoffMultiplier` | `2.0` | Exponential backoff multiplier |
+   | `applyJitter` | `true` | Adds randomness to prevent retry storms |
+   | `jitterFactor` | `0.5` | Jitter factor (0–1) for backoff variation |
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the bundle override applied successfully:
+
+1. Review your `uds deploy` output for the Keycloak release upgrade
+2. Confirm Keycloak is healthy and login flows that depend on external services (such as external IdPs) behave as expected during transient network failures
+
+## Related Documentation
+
+- [Configure Keycloak outgoing HTTP requests](https://www.keycloak.org/server/outgoinghttp) — upstream Keycloak docs for outgoing HTTP requests
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session timeouts, concurrent session limits, and logout behavior via bundle overrides."
+    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+  />
+  <LinkCard
+    title="Connect Azure AD as an identity provider"
+    description="Federate Keycloak with Azure Entra ID for enterprise SSO."
+    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+  />
+</CardGrid>

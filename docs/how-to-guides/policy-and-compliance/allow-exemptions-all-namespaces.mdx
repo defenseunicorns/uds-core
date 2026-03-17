@@ -1,0 +1,121 @@
+---
+title: Allow exemptions in all namespaces
+sidebar:
+  order: 8.03
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure UDS Core to accept Exemption CRs in any namespace instead of only the default `uds-policy-exemptions` namespace, and verify the configuration works.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- Familiarity with [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+
+## Before you begin
+
+By default, Exemption CRs are only accepted in the `uds-policy-exemptions` namespace. This provides a single, controlled location where platform engineers manage all policy exemptions. Enabling all-namespace exemptions allows teams to manage their own exemptions in their application namespaces.
+
+> [!WARNING]
+> Enabling all-namespace exemptions means any user with permission to create Exemption CRs in any namespace can bypass UDS policies. Before enabling this, ensure your RBAC configuration restricts who can create, update, and delete Exemption resources. Without proper RBAC controls, this setting significantly increases the risk of unintended or unauthorized policy bypasses.
+
+## Steps
+
+<Steps>
+
+1. **Enable all-namespace exemptions**
+
+   Set the `ALLOW_ALL_NS_EXEMPTIONS` variable in your `uds-config.yaml`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       ALLOW_ALL_NS_EXEMPTIONS: "true"
+   ```
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Create a test Exemption CR in an application namespace to confirm the configuration is working:
+
+```yaml title="test-exemption.yaml"
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: test-exemption
+  namespace: my-app
+spec:
+  exemptions:
+    - policies:
+        - RequireNonRootUser
+      matcher:
+        namespace: my-app
+        name: "^test-pod.*"
+      title: "Test exemption"
+      description: "Verifying all-namespace exemptions are working"
+```
+
+```bash
+uds zarf tools kubectl apply -f test-exemption.yaml
+```
+
+Confirm the exemption was created and processed:
+
+```bash
+# Verify the Exemption CR exists in the application namespace
+uds zarf tools kubectl get exemptions -n my-app
+
+# Check Pepr logs for processing
+uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core --tail=50 | grep "Processing exemption"
+```
+
+Clean up the test exemption:
+
+```bash
+uds zarf tools kubectl delete exemption test-exemption -n my-app
+```
+
+## Troubleshooting
+
+### Problem: Exemption rejected in application namespace
+
+**Symptom:** Creating an Exemption CR outside `uds-policy-exemptions` returns a validation error.
+
+**Solution:** Verify that `ALLOW_ALL_NS_EXEMPTIONS` is set to `"true"` and that the Core bundle was redeployed after the change. Check the UDS Operator config:
+
+```bash
+uds zarf tools kubectl get clusterconfig uds-cluster-config -o jsonpath='{.spec.policy}'
+```
+
+## Related Documentation
+
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) - securing who can create Exemption resources
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Audit security posture"
+    description="Review exemptions across all namespaces for scope and justification."
+    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
+  />
+  <LinkCard
+    title="Create UDS policy exemptions"
+    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
+    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
+  />
+</CardGrid>

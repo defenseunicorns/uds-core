@@ -137,7 +137,10 @@ export async function purgeOrphans<T extends GenericClass>(
   for (const resource of resources.items) {
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
 
-    const shouldDelete = resourceGenLabel == null || resourceGenLabel !== generation;
+    const shouldDelete =
+      resourceGenLabel === null ||
+      resourceGenLabel === undefined ||
+      resourceGenLabel !== generation;
 
     if (shouldDelete) {
       log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
@@ -264,7 +267,7 @@ export async function validateNamespace(
   try {
     return await K8s(kind.Namespace).Get(namespace);
   } catch (e) {
-    if (e?.status == 404) {
+    if (e?.status === 404) {
       if (missingAllowed) {
         return null;
       } else {
@@ -282,7 +285,9 @@ export async function validateNamespace(
  */
 export function getAuthserviceClients(pkg: UDSPackage) {
   const list = pkg.spec?.sso || [];
-  return list.filter(sso => sso?.enableAuthserviceSelector != null);
+  return list.filter(
+    sso => sso?.enableAuthserviceSelector !== null && sso?.enableAuthserviceSelector !== undefined,
+  );
 }
 
 /**

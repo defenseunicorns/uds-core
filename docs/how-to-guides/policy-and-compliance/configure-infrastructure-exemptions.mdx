@@ -1,0 +1,180 @@
+---
+title: Configure infrastructure exemptions
+sidebar:
+  order: 8.04
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure policy exemptions for infrastructure workloads that legitimately require elevated privileges, such as Istio gateway NodePort services or third-party storage and networking components.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed (or ready to deploy Core to)
+- Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
+- The exemption policy names for your workload (see [Policy Engine](/reference/operator-and-crds/policy-engine/) reference)
+
+## Before you begin
+
+Infrastructure exemptions are typically applied during or before Core installation to resolve infrastructure-specific issues that would otherwise block deployment. Application-level exemptions should be deployed as manifests alongside their applications instead — see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/).
+
+Some infrastructure workloads require privileges that UDS Core policies normally block. For example:
+
+- Istio gateways may use NodePort services when an external load balancer handles traffic routing
+- Storage drivers (e.g., OpenEBS) require privileged containers and host path access
+- CNI plugins need host networking and elevated privileges
+
+UDS Core provides a built-in exemption for Istio gateway NodePorts (a common configuration change when external load balancers handle traffic routing) and supports custom exemptions for everything else. All exemptions are deployed via bundle overrides.
+
+> [!TIP]
+> UDS Core already handles exemptions for its own components internally. You generally only need custom exemptions for third-party infrastructure or when you configure Core components beyond their defaults.
+
+## Steps
+
+<Steps>
+
+1. **Choose the exemption type**
+
+   <Tabs>
+     <TabItem label="Istio gateway NodePort">
+
+     UDS Core includes a ready-to-use exemption for Istio gateway NodePort services. Enable it in your bundle:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           uds-exemptions:
+             uds-exemptions:
+               values:
+                 - path: exemptions.istioGatewayNodeport.enabled
+                   value: true
+     ```
+
+     This creates `DisallowNodePortServices` exemptions for the `admin` and `tenant` gateway services. To also include the passthrough gateway, override the gateways list:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           uds-exemptions:
+             uds-exemptions:
+               values:
+                 - path: exemptions.istioGatewayNodeport.enabled
+                   value: true
+                 - path: exemptions.istioGatewayNodeport.gateways
+                   value:
+                     - admin
+                     - tenant
+                     - passthrough
+     ```
+
+     </TabItem>
+     <TabItem label="Custom infrastructure exemption">
+
+     For third-party infrastructure workloads, use the `exemptions.custom` path. This example exempts a storage driver that needs privileged access and host paths:
+
+     ```yaml title="uds-bundle.yaml"
+     packages:
+       - name: core
+         repository: registry.defenseunicorns.com/public/core
+         ref: x.x.x-upstream
+         overrides:
+           uds-exemptions:
+             uds-exemptions:
+               values:
+                 - path: exemptions.custom
+                   value:
+                     - name: openebs-exemptions
+                       exemptions:
+                         - policies:
+                             - DisallowPrivileged
+                             - RestrictVolumeTypes
+                             - RestrictHostPathWrite
+                           matcher:
+                             namespace: openebs
+                             name: "^openebs.*"
+                           title: "OpenEBS storage driver"
+                           description: "Requires privileged access and hostPath volumes for local PV provisioning"
+     ```
+
+     > [!IMPORTANT]
+     > Scope each exemption as narrowly as possible. Use specific namespace and name regexes, and only list the policies that are genuinely required. Document the reason in the `title` and `description` fields for audit purposes.
+
+     </TabItem>
+   </Tabs>
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the exemptions were created:
+
+```bash
+# List all exemptions
+uds zarf tools kubectl get exemptions -n uds-policy-exemptions
+```
+
+Verify that the target workload is running without admission denials:
+
+```bash
+# For NodePort exemptions, check gateway services
+uds zarf tools kubectl get svc -n istio-admin-gateway
+uds zarf tools kubectl get svc -n istio-tenant-gateway
+
+# For custom exemptions, check pods/services are running
+uds zarf tools kubectl get pods -n <namespace>
+```
+
+## Troubleshooting
+
+### Problem: NodePort exemption not created
+
+**Symptom:** Gateway services are still blocked after enabling the NodePort exemption.
+
+**Solution:** Verify the `exemptions.istioGatewayNodeport.enabled` value is set to `true` in your bundle and that you redeployed Core after the change. Check that the Exemption CR exists:
+
+```bash
+uds zarf tools kubectl get exemptions -n uds-policy-exemptions | grep nodeport
+```
+
+### Problem: Custom exemption not taking effect
+
+**Symptom:** The infrastructure workload is still blocked despite the custom exemption.
+
+**Solution:** Verify the matcher fields match your workload exactly. The `namespace` must match the workload's namespace and the `name` regex must match the pod or service name. If the exemption CR exists but pods still aren't being exempted, see the [Exemptions & Packages Not Updating](/operations/troubleshooting-and-runbooks/exemptions-and-packages/) runbook for detailed diagnostics.
+
+## Related Documentation
+
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies and exemption names
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Create UDS policy exemptions"
+    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
+    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
+  />
+  <LinkCard
+    title="Audit security posture"
+    description="Review exemptions and Package CR network rules across your cluster."
+    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
+  />
+</CardGrid>

@@ -1,5 +1,5 @@
 ---
-title: Identity & authentication
+title: Identity & Authentication
 sidebar:
   order: 2.2
 ---
@@ -60,6 +60,18 @@ UDS Core pre-configures two Keycloak groups that drive access to platform admin 
 | `/UDS Core/Auditor` | Read-only platform access | Grafana viewer, log browsing |
 
 Application teams can define their own group-based restrictions in their Package CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
+
+## Keycloak configuration layers
+
+UDS Core supports three layers of Keycloak customization, each suited to different use cases:
+
+| Approach | Use for | Requires image rebuild? |
+|---|---|---|
+| **Helm chart values** | Session policies, account settings, auth flow toggles | No |
+| **UDS Identity Config image** | Custom themes, plugins, CA truststore | Yes — themes and plugins apply when the Keycloak pod restarts; no realm re-import needed |
+| **OpenTofu / IaC** | Managing groups, clients, IdPs post-deploy | No |
+
+Most operational configuration — session timeouts, lockout policies, authentication flows — is handled via Helm chart values without rebuilding anything. Custom themes, plugins, and truststore changes require building and deploying a custom UDS Identity Config image. Post-deploy management of Keycloak resources (groups, clients, IdPs) can be automated with OpenTofu.
 
 > [!TIP]
 > Ready to configure identity for your environment? See the [Identity & Access How-to Guides](/how-to-guides/identity-access/overview/).

@@ -1,7 +1,7 @@
 ---
 title: Create a custom gateway
 sidebar:
-  order: 2.6
+  order: 2.06
 ---
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -170,7 +170,7 @@ curl -v https://my-app.mydomain.dev
 
 ## Troubleshooting
 
-### Traffic not routing through the custom gateway
+### Problem: Traffic not routing through the custom gateway
 
 **Symptoms:** Package CR reconciles but traffic doesn't reach the service.
 
@@ -181,16 +181,16 @@ curl -v https://my-app.mydomain.dev
 
 A mismatch in any of these will prevent the Package CR from connecting to your gateway.
 
-### TLS errors on non-passthrough gateway
+### Problem: TLS errors on non-passthrough gateway
 
 **Symptoms:** TLS handshake failures when accessing services.
 
 **Solution:** Ensure you have provided TLS certificates for the gateway. Gateways in `SIMPLE`, `MUTUAL`, or `OPTIONAL_MUTUAL` mode require a valid cert and key.
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Next steps
 

@@ -188,7 +188,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     }
 
     // The 'remoteHost' and 'remoteProtocol' cannot be used with 'Ingress'.
-    if ((policy.remoteHost || policy.remoteProtocol) && policy.direction == "Ingress") {
+    if ((policy.remoteHost || policy.remoteProtocol) && policy.direction === "Ingress") {
       return req.Deny("remoteHost and/or remoteProtocol cannot be used with Ingress");
     }
 

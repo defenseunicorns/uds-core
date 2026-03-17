@@ -1,0 +1,147 @@
+---
+title: Audit security posture
+sidebar:
+  order: 8.05
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting Package CR network rules for overly permissive configurations.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+
+## Before you begin
+
+UDS Core provides two layers of auditable security configuration:
+
+- **Policy exemptions** - Exemption CRs that allow specific workloads to bypass UDS policies. Each exempted resource is annotated, creating a built-in audit trail.
+- **Package CR network rules** - The `allow` fields in Package CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
+
+> [!IMPORTANT]
+> Your organization should include review of Package CRs and Exemption CRs as part of the normal deployment process. Catching overly permissive configurations during code review is more effective than auditing after the fact.
+
+## Steps
+
+<Steps>
+
+1. **Review active exemptions**
+
+   List all Exemption CRs and check their scope:
+
+   ```bash
+   # List exemptions in the default namespace
+   uds zarf tools kubectl get exemptions -n uds-policy-exemptions -o yaml
+
+   # If all-namespace exemptions are enabled, check everywhere
+   uds zarf tools kubectl get exemptions -A -o yaml
+   ```
+
+   For each exemption, verify:
+
+   - **Justification** - Does the `title` and `description` explain why the exemption is needed?
+   - **Scope** - Is the `matcher.name` regex as narrow as possible? A regex like `".*"` exempts every resource in the namespace.
+   - **Policies** - Are only the minimum required policies listed? For example, an exemption for `DisallowPrivileged` should not also include `DropAllCapabilities` unless both are genuinely needed.
+   - **Staleness** - Does the target workload still exist? Exemptions are not automatically cleaned up when workloads are removed.
+
+   > [!TIP]
+   > Pipe exemption output to a file for compliance documentation: `uds zarf tools kubectl get exemptions -n uds-policy-exemptions -o yaml > exemptions-audit.yaml`
+
+2. **Find all exempted resources in the cluster**
+
+   Query pod and service annotations to build a cluster-wide view of every exempted resource:
+
+   ```bash
+   # Exempted pods
+   uds zarf tools kubectl get pods -A -o yaml | \
+     uds zarf tools yq '.items[] | select((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + ((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted") | .key)' | sort -u
+
+   # Exempted services
+   uds zarf tools kubectl get services -A -o yaml | \
+     uds zarf tools yq '.items[] | select((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted")) | .metadata.namespace + "/" + .metadata.name + ": " + ((.metadata.annotations // {}) | to_entries[] | select(.value == "exempted") | .key)' | sort -u
+   ```
+
+   This produces output like:
+
+   ```
+   monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces
+   monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.RequireNonRootUser
+   istio-admin-gateway/admin-ingressgateway: uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices
+   ```
+
+   Cross-reference this list against your Exemption CRs. Every exempted resource should map back to a documented, justified exemption.
+
+3. **Audit Package CR network allow rules**
+
+   List all Package CRs and inspect their network rules:
+
+   ```bash
+   # List all packages across namespaces
+   uds zarf tools kubectl get packages -A
+
+   # Inspect a specific package's network rules
+   uds zarf tools kubectl get package <name> -n <namespace> -o yaml | uds zarf tools yq '.spec.network.allow'
+   ```
+
+   Flag these patterns in `allow` rules:
+
+   | Pattern | Risk | What to check |
+   |---|---|---|
+   | `remoteGenerated: Anywhere` | Allows traffic to/from any external IP | Is this egress rule scoped to specific ports? Does the app genuinely need arbitrary external access? |
+   | Empty `selector: {}` | Rule applies to all pods in the namespace | Should this target specific pods instead? |
+   | Broad `remoteNamespace` without `remoteSelector` | Allows traffic from all pods in the remote namespace | Can this be narrowed to specific pods or a service account? |
+   | Missing `port` on an allow rule | Allows traffic on all ports | Should specific ports be listed? |
+   | `remoteHost` egress without justification | Opens egress to a specific external hostname | Is the hostname documented and expected? |
+
+   > [!IMPORTANT]
+   > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the Package CR requests. Audit is the only mechanism to catch overly broad rules.
+
+4. **Verify Pepr controller health**
+
+   Confirm the policy controller is running and processing resources:
+
+   ```bash
+   # Check Pepr system pods
+   uds zarf tools kubectl get pods -n pepr-system
+
+   # Verify admission webhooks are registered
+   uds zarf tools kubectl get mutatingwebhookconfigurations,validatingwebhookconfigurations | grep pepr
+   ```
+
+</Steps>
+
+## Verification
+
+A well-audited cluster shows:
+
+- All `pepr-system` pods are `Running` and `Ready`
+- Every Exemption CR has a `title` and `description` with clear justification
+- No exemptions target removed workloads
+- No Package CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
+
+## Related Documentation
+
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full Package CR schema including network fields
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Create UDS policy exemptions"
+    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
+    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure Package CR allow rules for intra-cluster and external network access."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+</CardGrid>

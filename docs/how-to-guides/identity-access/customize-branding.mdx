@@ -1,0 +1,290 @@
+---
+title: Customize Keycloak login page branding
+sidebar:
+  order: 3.12
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll replace the default Keycloak login page images (logo, background, footer, favicon) and Terms & Conditions content with custom versions using bundle overrides and Kubernetes ConfigMaps — no image rebuild required.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Custom image files (PNG format) for whichever assets you want to replace
+
+## Before you begin
+
+UDS Core supports two layers of branding customization:
+
+| Approach | Use for | Requires image rebuild? |
+|---|---|---|
+| **Bundle overrides + ConfigMap** (this guide) | Logo, background, footer, favicon, Terms & Conditions text, show/hide registration form fields | No |
+| **Custom theme in uds-identity-config image** | CSS, layout changes, adding or restructuring registration form fields, new theme pages | Yes |
+
+This guide covers the bundle override approach. For CSS or structural theme changes, see [Build and deploy a custom identity config image](/how-to-guides/identity-access/build-deploy-custom-image/).
+
+> [!NOTE]
+> The Terms & Conditions screen is only displayed if `TERMS_AND_CONDITIONS_ENABLED: "true"` is set in your `realmInitEnv` bundle override. The T&C content itself is configured via `themeCustomizations` as shown in this guide.
+
+## Steps
+
+<Steps>
+
+1. **Prepare your image files**
+
+   Create or obtain PNG files for whichever assets you want to replace. Supported asset names:
+
+   | Key | Description |
+   |-----|-------------|
+   | `background.png` | Login page background image |
+   | `logo.png` | Organization logo displayed on the login form |
+   | `footer.png` | Footer image |
+   | `favicon.png` | Browser tab icon |
+
+   You do not need to replace all four — include only the keys you are customizing.
+
+2. **Create a ConfigMap with your image assets**
+
+   Generate a ConfigMap manifest using `uds zarf tools kubectl`. Adjust the file paths and include only the images you want to override:
+
+   ```bash
+   uds zarf tools kubectl create configmap keycloak-theme-overrides \
+     --from-file=background.png=./background.png \
+     --from-file=logo.png=./logo.png \
+     --from-file=footer.png=./footer.png \
+     --from-file=favicon.png=./favicon.png \
+     -n keycloak --dry-run=client -o yaml > theme-image-cm.yaml
+   ```
+
+3. **Deploy the ConfigMap before deploying UDS Core**
+
+   The ConfigMap must exist in the `keycloak` namespace before UDS Core/Keycloak is deployed or upgraded. The simplest way to package and deploy it is with a small Zarf package:
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: keycloak-theme-overrides
+     version: 0.1.0
+
+   components:
+     - name: keycloak-theme-overrides
+       required: true
+       manifests:
+         - name: configmap
+           namespace: keycloak
+           files:
+             - theme-image-cm.yaml
+   ```
+
+   Build and deploy this package prior to deploying or upgrading UDS Core:
+
+   ```bash
+   uds zarf package create .
+   uds zarf package deploy zarf-package-keycloak-theme-overrides-*.zst
+   ```
+
+4. **Add `themeCustomizations` to your bundle override**
+
+   In your `uds-bundle.yaml`, add the `themeCustomizations` override referencing your ConfigMap:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: themeCustomizations
+                 value:
+                   resources:
+                     images:
+                       - name: background.png
+                         configmap:
+                           name: keycloak-theme-overrides
+                       - name: logo.png
+                         configmap:
+                           name: keycloak-theme-overrides
+                       - name: footer.png
+                         configmap:
+                           name: keycloak-theme-overrides
+                       - name: favicon.png
+                         configmap:
+                           name: keycloak-theme-overrides
+   ```
+
+   > [!NOTE]
+   > Each image entry references the ConfigMap by name. The `name` under `images` must exactly match a key in the ConfigMap. Different images can reference different ConfigMaps if needed.
+
+5. **(Optional) Configure custom Terms & Conditions content**
+
+   If you want to display a custom Terms & Conditions overlay, prepare your T&C content as a single-line HTML string. First, write your HTML:
+
+   ```html title="terms.html"
+   <h4>By logging in you agree to the following:</h4>
+   <ul>
+     <li>Authorized use only</li>
+     <li>Activity may be monitored</li>
+   </ul>
+   ```
+
+   Convert to a single line (newlines replaced with `\n`):
+
+   ```bash
+   cat terms.html | sed ':a;N;$!ba;s/\n/\\n/g' > single-line.html
+   ```
+
+   Create a ConfigMap from the single-line file:
+
+   ```bash
+   uds zarf tools kubectl create configmap keycloak-tc-overrides \
+     --from-file=text=./single-line.html \
+     -n keycloak --dry-run=client -o yaml > terms-cm.yaml
+   ```
+
+   **(Recommended)** Add `terms-cm.yaml` to the `manifests` list in the `zarf.yaml` from step 3 and rebuild the Zarf package:
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the ConfigMap directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f terms-cm.yaml
+   ```
+
+   Add the `termsAndConditions` key to your `themeCustomizations` override and enable T&C in `realmInitEnv`:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           - path: realmInitEnv
+             value:
+               TERMS_AND_CONDITIONS_ENABLED: "true"
+           - path: themeCustomizations
+             value:
+               termsAndConditions:
+                 text:
+                   configmap:
+                     key: text
+                     name: keycloak-tc-overrides
+   ```
+
+   > [!NOTE]
+   > The default T&C content is the standard DoD Notice and Consent Banner. You can find the source HTML in the [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config/blob/main/src/theme/login/terms.ftl) as a reference starting point.
+
+6. **(Optional) Disable registration form fields**
+
+   By default, the user registration form includes fields for Affiliation, Pay Grade, and Unit/Organization. To minimize the steps required to register, disable these fields:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           - path: themeCustomizations.settings
+             value:
+               enableRegistrationFields: false
+   ```
+
+   When `enableRegistrationFields` is `false`, the following fields are hidden from the registration form:
+   - Affiliation
+   - Pay Grade
+   - Unit, Organization or Company Name
+
+   > [!NOTE]
+   > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime — Keycloak does not need to be redeployed for them to take effect.
+
+7. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm branding changes are applied:
+
+1. Navigate to `sso.<domain>` in a browser
+2. Verify the login page shows your custom logo, background, and footer
+3. Attempt to log in — if T&C is enabled, confirm the overlay appears before access is granted
+
+**Iterate quickly during development:**
+
+You can update the ConfigMap in-place and cycle the Keycloak pod to preview changes without a full redeploy:
+
+```bash
+uds zarf tools kubectl apply -f theme-image-cm.yaml -n keycloak
+uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak
+```
+
+## Troubleshooting
+
+### Problem: Custom images do not appear after deploy
+
+**Symptoms:** Login page still shows default branding.
+
+**Solution:** Confirm the ConfigMap exists in the `keycloak` namespace before UDS Core is deployed or upgraded. Check that the ConfigMap keys exactly match the `name` values in the `themeCustomizations` override:
+
+```bash
+uds zarf tools kubectl get configmap keycloak-theme-overrides -n keycloak -o yaml
+```
+
+Verify each expected key (`background.png`, `logo.png`, etc.) is present in the output.
+
+### Problem: Terms & Conditions overlay does not appear
+
+**Symptoms:** Users are not prompted to accept T&C on login.
+
+**Solution:** Confirm two things:
+1. `TERMS_AND_CONDITIONS_ENABLED: "true"` is set in `realmInitEnv`
+2. The `termsAndConditions.text.configmap` entry is present in `themeCustomizations`
+
+> [!NOTE]
+> `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for these values to take effect.
+
+### Problem: T&C content appears malformed
+
+**Symptoms:** HTML tags appear as raw text, or layout is broken.
+
+**Solution:** Verify the T&C file is properly converted to a single-line HTML string — all newlines replaced with the literal `\n` sequence. Check the ConfigMap data key:
+
+```bash
+uds zarf tools kubectl get configmap keycloak-tc-overrides -n keycloak \
+  -o jsonpath='{.data.text}' | head -c 200
+```
+
+The output should be a single line with no literal newlines.
+
+## Related Documentation
+
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with theme assets and FreeMarker templates for deeper customization
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
+    href="/how-to-guides/identity-access/configure-authentication-flows/"
+  />
+  <LinkCard
+    title="Build a custom Keycloak configuration image"
+    description="Build and deploy a custom image for CSS or structural theme changes."
+    href="/how-to-guides/identity-access/build-deploy-custom-image/"
+  />
+</CardGrid>

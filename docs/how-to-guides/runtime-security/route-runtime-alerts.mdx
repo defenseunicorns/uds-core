@@ -1,0 +1,259 @@
+---
+title: Route runtime alerts to external destinations
+sidebar:
+  order: 6.3
+---
+
+import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Falcosidekick to forward runtime security alerts to Slack, Mattermost, or Microsoft Teams so your security operations team receives real-time notifications when Falco detects suspicious activity.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster
+- Webhook URL for your target platform (Slack, Mattermost, or Teams)
+
+## Before you begin
+
+By default, Falco events are shipped to Loki for centralized log aggregation and are queryable in Grafana. This guide adds external alert forwarding on top of Loki — it does not replace the default Loki integration.
+
+## Steps
+
+<Steps>
+
+1. **Configure your output destination and network egress**
+
+   Each destination requires two overrides: the webhook config in the `falco` chart, and a network egress allow in the `uds-falco-config` chart.
+
+   > [!CAUTION]
+   > The Falco UDS Package locks down all network egress by default. If you configure a webhook output without also adding a corresponding `additionalNetworkAllow` entry, Falcosidekick will not be able to reach the external endpoint and alerts will silently fail.
+
+   > [!NOTE]
+   > Falcosidekick supports [many additional outputs](https://github.com/falcosecurity/falcosidekick#outputs) beyond the three shown here, including Alertmanager, Elasticsearch, and PagerDuty. The configuration pattern is the same for each.
+
+   <Tabs>
+     <TabItem label="Slack">
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             falco:
+               falco:
+                 values:
+                   - path: falcosidekick.config.slack.channel
+                     value: "#<YOUR_SLACK_CHANNEL>"
+                   - path: falcosidekick.config.slack.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.slack.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_SLACK_WEBHOOK_URL
+                     path: falcosidekick.config.slack.webhookurl
+                     sensitive: true
+               uds-falco-config:
+                 values:
+                   - path: additionalNetworkAllow
+                     value:
+                       - direction: Egress
+                         selector:
+                           app.kubernetes.io/name: falcosidekick
+                         ports:
+                           - 443
+                         remoteHost: hooks.slack.com
+                         remoteProtocol: TLS
+                         description: "Allow Falcosidekick egress to Slack API"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_SLACK_WEBHOOK_URL: "https://hooks.slack.com/services/XXXX/YYYY/ZZZZ"
+       ```
+
+       | Setting | Description |
+       |---|---|
+       | `webhookurl` | Slack incoming webhook URL (format: `https://hooks.slack.com/services/XXXX/YYYY/ZZZZ`) |
+       | `channel` | Slack channel to post to (optional — defaults to the webhook's configured channel) |
+       | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
+       | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
+
+     </TabItem>
+     <TabItem label="Mattermost">
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             falco:
+               falco:
+                 values:
+                   - path: falcosidekick.config.mattermost.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.mattermost.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_MATTERMOST_WEBHOOK_URL
+                     path: falcosidekick.config.mattermost.webhookurl
+                     sensitive: true
+               uds-falco-config:
+                 values:
+                   - path: additionalNetworkAllow
+                     value:
+                       - direction: Egress
+                         selector:
+                           app.kubernetes.io/name: falcosidekick
+                         ports:
+                           - 443
+                         remoteHost: <your-mattermost-hostname>
+                         remoteProtocol: TLS
+                         description: "Allow Falcosidekick egress to Mattermost"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_MATTERMOST_WEBHOOK_URL: "https://your.mattermost.instance/hooks/YYYY"
+       ```
+
+       | Setting | Description |
+       |---|---|
+       | `webhookurl` | Mattermost incoming webhook URL (format: `https://your.mattermost.instance/hooks/YYYY`) |
+       | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
+       | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
+
+     </TabItem>
+     <TabItem label="Microsoft Teams">
+
+       ```yaml title="uds-bundle.yaml"
+       packages:
+         - name: core
+           repository: registry.defenseunicorns.com/public/core
+           ref: x.x.x-upstream
+           overrides:
+             falco:
+               falco:
+                 values:
+                   - path: falcosidekick.config.teams.outputformat
+                     value: "all"
+                   - path: falcosidekick.config.teams.minimumpriority
+                     value: "notice"
+                 variables:
+                   - name: FALCOSIDEKICK_TEAMS_WEBHOOK_URL
+                     path: falcosidekick.config.teams.webhookurl
+                     sensitive: true
+               uds-falco-config:
+                 values:
+                   - path: additionalNetworkAllow
+                     value:
+                       - direction: Egress
+                         selector:
+                           app.kubernetes.io/name: falcosidekick
+                         ports:
+                           - 443
+                         remoteHost: outlook.office.com
+                         remoteProtocol: TLS
+                         description: "Allow Falcosidekick egress to Microsoft Teams"
+       ```
+
+       ```yaml title="uds-config.yaml"
+       variables:
+         core:
+           FALCOSIDEKICK_TEAMS_WEBHOOK_URL: "https://outlook.office.com/webhook/XXXXXX/IncomingWebhook/YYYYYY"
+       ```
+
+       | Setting | Description |
+       |---|---|
+       | `webhookurl` | Teams incoming webhook URL (format: `https://outlook.office.com/webhook/XXXXXX/IncomingWebhook/YYYYYY`) |
+       | `outputformat` | `all` (default), `text` (text only), or `facts` (facts only) |
+       | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
+
+     </TabItem>
+   </Tabs>
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm Falcosidekick is running and delivering alerts:
+
+```bash
+# Check Falcosidekick pods are running
+uds zarf tools kubectl get pods -n falco -l app.kubernetes.io/name=falcosidekick
+
+# Check Falcosidekick logs for output delivery
+uds zarf tools kubectl logs -n falco -l app.kubernetes.io/name=falcosidekick --tail=20
+```
+
+**Trigger a test detection:**
+
+```bash
+# Exec into any running pod to trigger the "Terminal shell in container" rule
+uds zarf tools kubectl exec -it -n <any-namespace> <any-pod> -- /bin/sh
+```
+
+After a few seconds, confirm the alert appears in your configured destination (Slack channel, Mattermost channel, or Teams channel).
+
+> [!TIP]
+> If you set `minimumpriority` to a high value like `error` or `critical`, the "Terminal shell in container" test (priority: `Notice`) will not be forwarded. Temporarily set `minimumpriority` to `debug` for testing, then raise it back to your desired threshold.
+
+## Troubleshooting
+
+### Problem: Alerts are not reaching the external destination
+
+**Symptoms:** Falcosidekick logs show connection errors or timeouts when trying to deliver alerts.
+
+**Solution:** Verify the `additionalNetworkAllow` entry is correct:
+
+1. Confirm `remoteHost` matches the actual hostname being contacted (e.g., `hooks.slack.com` for Slack)
+2. Confirm the `selector` matches `app.kubernetes.io/name: falcosidekick`
+3. Check that the port matches (typically `443` for HTTPS webhooks)
+
+```bash
+# Check if the network policy was created
+uds zarf tools kubectl get networkpolicy -n falco
+```
+
+### Problem: Falcosidekick logs show "webhook returned non-200"
+
+**Symptoms:** Falcosidekick reaches the endpoint but gets an error response.
+
+**Solution:** Verify the webhook URL is correct and active. For Slack, confirm the app is still installed in the workspace. For Mattermost, confirm the incoming webhook is enabled. For Teams, confirm the connector is still active.
+
+## Related Documentation
+
+- [Falcosidekick outputs](https://github.com/falcosecurity/falcosidekick#outputs) — full list of supported output destinations
+- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
+- [High availability: Runtime security](/how-to-guides/high-availability/runtime-security/) — tune Falcosidekick replica count for resilient alert delivery
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Tune Falco runtime detections"
+    description="Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules."
+    href="/how-to-guides/runtime-security/tune-falco-detections/"
+  />
+  <LinkCard
+    title="Query Falco events in Grafana"
+    description="Query and visualize runtime security events using Loki."
+    href="/how-to-guides/runtime-security/query-falco-events/"
+  />
+</CardGrid>

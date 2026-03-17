@@ -1,0 +1,141 @@
+---
+title: Restore from a backup
+sidebar:
+  order: 7.5
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll restore specific namespaces from a completed Velero backup and confirm the restored state matches expectations.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- A completed Velero backup to restore from (see [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/))
+
+## Before you begin
+
+Before restoring, identify the backup you want to restore from:
+
+```bash
+uds zarf tools kubectl get backup -n velero --sort-by=.status.startTimestamp
+```
+
+Only backups with a `Completed` phase can be used for a restore.
+
+## Steps
+
+<Steps>
+
+1. **Restore a namespace**
+
+   > [!CAUTION]
+   > Velero will not overwrite existing resources. If restoring PersistentVolume data, delete the target PVC (and the PV, if the reclaim policy is `Retain`) before running the restore. Be cautious when deleting backups that have been used for restores — this may attempt to delete VolumeSnapshotContents that are still in use by restored volumes.
+
+   Create a restore for specific namespace(s) from a completed backup:
+
+   ```bash
+   uds zarf tools kubectl apply -f - <<EOF
+   apiVersion: velero.io/v1
+   kind: Restore
+   metadata:
+     name: uds-restore-$(date +%s)
+     namespace: velero
+   spec:
+     backupName: <backup-name>
+     includedNamespaces:
+       - <namespace>
+   EOF
+   ```
+
+   Alternatively, if you have the [Velero CLI](https://velero.io/docs/latest/basic-install/#install-the-cli) installed:
+
+   ```bash
+   velero restore create uds-restore-$(date +%s) \
+     --from-backup <backup-name> \
+     --include-namespaces <namespace> --wait
+   ```
+
+2. **Verify the restore**
+
+   Check the restore status:
+
+   ```bash
+   uds zarf tools kubectl get restore -n velero
+   ```
+
+   Inspect the restored namespace to confirm resources are present:
+
+   ```bash
+   uds zarf tools kubectl get pods -n <namespace>
+   uds zarf tools kubectl get pvc -n <namespace>
+   ```
+
+</Steps>
+
+## Verification
+
+To run a full end-to-end disaster recovery drill:
+
+1. Create a test namespace with a deployment and ConfigMap.
+2. Trigger a manual backup (see [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/)).
+3. Delete the test namespace.
+4. Restore from the backup (step 1 above).
+5. Verify the namespace, deployment, and ConfigMap are restored.
+
+**Success criteria:**
+- Restore phase is `Completed`
+- All expected resources exist in the restored namespace
+- If volume snapshots were included, PVC data matches the pre-backup state
+
+## Troubleshooting
+
+### Problem: Restore completed but resources are missing
+
+**Symptoms:** The restore phase shows `Completed` but expected resources are not present.
+
+**Solution:** Verify the `--include-namespaces` scope matches the namespace you want to restore. Check that the backup actually captured the target namespace by inspecting the backup details:
+
+```bash
+uds zarf tools kubectl describe backup -n velero <backup-name>
+```
+
+Look at the `Included Namespaces` and `Excluded Namespaces` fields to confirm scope, and check `Items Backed Up` to verify the resource count. Also confirm the backup was taken after the resources were created.
+
+### Problem: Volume restore fails
+
+**Symptoms:** PersistentVolumeClaims are recreated but contain no data.
+
+**Solution:** Ensure the original PVC was deleted before running the restore. Verify that VolumeSnapshotContent resources exist for the backup:
+
+```bash
+uds zarf tools kubectl get volumesnapshotcontent
+```
+
+If VolumeSnapshotContents are missing, the backup may not have included volume snapshots. See [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) or [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) to configure snapshot support.
+
+## Related documentation
+
+- [Velero: Restore Reference](https://velero.io/docs/latest/restore-reference/) — restore configuration and behavior
+- [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) — backup lifecycle and garbage collection
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Perform a manual backup"
+    description="Verify your scheduled backups are running and trigger a manual backup on demand."
+    href="/how-to-guides/backup-restore/perform-backup/"
+  />
+  <LinkCard
+    title="Configure Velero storage backends"
+    description="Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule."
+    href="/how-to-guides/backup-restore/configure-storage-backends/"
+  />
+</CardGrid>

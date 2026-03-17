@@ -1,5 +1,9 @@
 # Copilot Instructions
 
+## Code Reviews
+
+When reviewing code changes, read all files in `.ai/code/` for guidance. These files describe things to keep in mind when specific source files change.
+
 ## Documentation
 
 When reviewing changes to docs (`docs/` directory), read all files in `.ai/docs/` for templates, conventions, and guidance. Flag any deviations from these conventions in review comments.

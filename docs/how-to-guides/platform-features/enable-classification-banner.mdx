@@ -1,0 +1,136 @@
+---
+title: Enable the classification banner
+sidebar:
+  order: 10.2
+---
+
+import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, web applications exposed through the Istio service mesh will display a security classification banner at the top (and optionally the bottom) of the page. The banner color automatically corresponds to the [standard classification markings](https://www.astrouxds.com/components/classification-markings/).
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+
+## Before you begin
+
+The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. Because it modifies the HTML response body, it works best with standard server-rendered web applications. Single-page applications or apps with non-standard content delivery may not render the banner correctly — validate in a staging environment before adopting.
+
+For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
+
+## Steps
+
+<Steps>
+
+1. **Configure the banner text and footer**
+
+   Set the classification level via bundle overrides. The footer banner is enabled by default (`addFooter: true`) — include it in your overrides only if you need to disable it.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-controlplane:
+           uds-global-istio-config:
+             values:
+               - path: classificationBanner.text
+                 value: "UNCLASSIFIED"
+   ```
+
+   Supported classification levels:
+
+   | Value | Banner color |
+   |---|---|
+   | `UNCLASSIFIED` | Green |
+   | `CUI` | Purple |
+   | `CONFIDENTIAL` | Blue |
+   | `SECRET` | Red |
+   | `TOP SECRET` | Orange |
+   | `TOP SECRET//SCI` | Yellow |
+   | `UNKNOWN` | Black (default) |
+
+   > [!TIP]
+   > The `text` field also supports additional markings appended with `//` (e.g., `SECRET//NOFORN`). The banner color is determined by the base classification level.
+
+2. **Specify which hosts display the banner**
+
+   The banner is opt-in per host. Add each hostname to the `enabledHosts` array:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-controlplane:
+           uds-global-istio-config:
+             values:
+               - path: classificationBanner.text
+                 value: "UNCLASSIFIED"
+               - path: classificationBanner.addFooter
+                 value: true
+               - path: classificationBanner.enabledHosts
+                 value:
+                   - keycloak.{{ .Values.adminDomain }}
+                   - sso.{{ .Values.domain }}
+                   - grafana.{{ .Values.adminDomain }}
+   ```
+
+   > [!TIP]
+   > Host values support Helm templating. Use `{{ .Values.adminDomain }}` for hosts on the admin gateway and `{{ .Values.domain }}` for tenant-facing applications.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Open one of the configured hosts in a browser. You should see a colored banner at the top of the page displaying the classification text. If `addFooter` is enabled, the same banner appears at the bottom.
+
+## Troubleshooting
+
+### Problem: Banner not appearing on a host
+
+**Symptom:** A configured host loads normally but no classification banner is displayed.
+
+**Solution:** Verify the hostname is included in the `enabledHosts` array. The host must match exactly, including any subdomain prefixes. Check the deployed EnvoyFilter:
+
+```bash
+uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o yaml
+```
+
+### Problem: Banner breaks page layout or doesn't render correctly
+
+**Symptom:** The banner HTML is injected but the page layout is disrupted or the banner is invisible.
+
+**Solution:** This can happen with single-page applications or apps that manipulate the DOM after initial load. For these applications, consider implementing the classification banner natively within the application instead of relying on EnvoyFilter injection.
+
+## Related Documentation
+
+- [Astro UXDS Classification Markings](https://www.astrouxds.com/components/classification-markings/) — standard color and formatting reference
+- [Istio EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) — how Istio modifies HTTP responses at the gateway
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Configure automatic pod reload"
+    description="Automatically restart pods when their Secrets or ConfigMaps change."
+    href="/how-to-guides/platform-features/configure-pod-reload/"
+  />
+  <LinkCard
+    title="Networking concepts"
+    description="Understand how UDS Core manages the Istio service mesh and gateways."
+    href="/concepts/core-features/networking/"
+  />
+</CardGrid>

@@ -1,0 +1,190 @@
+---
+title: Build a custom Keycloak configuration image
+sidebar:
+  order: 3.07
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll build a custom uds-identity-config image containing your theme, plugin, or truststore changes, publish it to a container registry, and deploy it to UDS Core using the `configImage` Helm override. This guide covers the full workflow for any customization that requires an image rebuild.
+
+## Prerequisites
+
+- Docker installed and running
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A container registry accessible from your cluster
+
+## Before you begin
+
+Most branding changes (logos, T&C content) do not require an image rebuild — they use `themeCustomizations` bundle overrides. See [Customize login page branding](/how-to-guides/identity-access/customize-branding/) for that approach.
+
+An image rebuild is required when you change:
+- CSS or FreeMarker templates in `src/theme/`
+- Custom Keycloak plugins in `src/plugin/`
+- The CA truststore (CA zip source in the Dockerfile)
+- Any file directly in the `src/` build context
+
+## Steps
+
+<Steps>
+
+1. **Clone the uds-identity-config repository**
+
+   ```bash
+   git clone https://github.com/defenseunicorns/uds-identity-config.git
+   cd uds-identity-config
+   ```
+
+2. **Make your changes to the source**
+
+   Apply your changes to the relevant files in the `src/` directory. Common change locations:
+
+   | Change type | Location |
+   |---|---|
+   | Login page CSS | `src/theme/login/resources/css/` |
+   | Login page templates | `src/theme/login/` (FreeMarker `.ftl` files) |
+   | Account theme | `src/theme/account/` |
+   | Custom plugin code | `src/plugin/src/main/java/` |
+   | CA truststore source | `src/Dockerfile` (`CA_ZIP_URL` arg) and `src/authorized_certs.zip` |
+
+3. **Build the custom image and Zarf package**
+
+   Set `IMAGE_NAME` to your registry path and `VERSION` to your desired tag, then run:
+
+   ```bash
+   IMAGE_NAME=registry.example.com/uds/identity-config VERSION=1.0.0 uds run build-zarf-pkg
+   ```
+
+   This builds the Docker image tagged as `registry.example.com/uds/identity-config:1.0.0` and creates `zarf-package-keycloak-identity-config-<arch>-dev.zst` for airgap transport.
+
+   > [!NOTE]
+   > For local development and testing only, you can build just the image without creating a Zarf package:
+   > ```bash
+   > uds run dev-build
+   > ```
+   > This tags the image locally as `uds-core-config:keycloak` for use with a local k3d cluster (`uds run dev-update-image` imports it directly).
+
+4. **Publish the image or Zarf package**
+
+   > [!CAUTION]
+   > `ttl.sh` is a public, ephemeral registry — images are accessible to anyone and expire after the specified duration. Only use it for local testing. For any shared or production environment, push to a private registry your cluster can access securely.
+
+   **Push the image to your registry:**
+
+   ```bash
+   docker push registry.example.com/uds/identity-config:1.0.0
+   ```
+
+   **For airgapped environments**, publish the Zarf package to an OCI registry instead:
+
+   ```bash
+   uds zarf package publish zarf-package-keycloak-identity-config-<arch>-dev.zst oci://registry.example.com
+   ```
+
+5. **Set `configImage` in your bundle override**
+
+   In your `uds-bundle.yaml`, override the default identity config image:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: configImage
+                 value: registry.example.com/uds/identity-config:1.0.0
+   ```
+
+6. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the custom image was used:
+
+```bash
+uds zarf tools kubectl get pod -n keycloak -l app.kubernetes.io/name=keycloak \
+  -o jsonpath='{.items[0].spec.initContainers[0].image}'
+```
+
+The output should match your custom image tag.
+
+**For theme changes**, navigate to `sso.<domain>` and confirm your CSS or template changes are visible on the login page.
+
+**For truststore changes**, verify the gateway is requesting client certificates:
+
+```bash
+openssl s_client -connect sso.<domain>:443
+# Look for your CA in "Acceptable client certificate CA names"
+```
+
+## Troubleshooting
+
+### Problem: Init container fails to pull image
+
+**Symptoms:** `ImagePullBackOff` or `ErrImagePull` on the Keycloak pod init container.
+
+**Solution:** Confirm the registry is reachable and the `configImage` value has no typos. For private registries, verify image pull secrets exist in the `keycloak` namespace:
+
+```bash
+uds zarf tools kubectl describe pod -n keycloak -l app.kubernetes.io/name=keycloak
+```
+
+### Problem: Theme, truststore, or plugin changes not reflected after deploy
+
+**Symptoms:** Login page shows old branding, certificate auth fails, or plugin behavior is unchanged despite deploying a new image.
+
+**Solution:** Themes, truststore, and plugins apply when the init container runs at pod start. Confirm the pod restarted after the image update:
+
+```bash
+uds zarf tools kubectl rollout status statefulset/keycloak -n keycloak
+```
+
+If the pod did not restart, trigger a rollout:
+
+```bash
+uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak
+```
+
+### Problem: Plugin JAR missing from providers directory
+
+**Symptoms:** Custom plugin behavior is not visible after deploy.
+
+**Solution:** Check `uds run build-zarf-pkg` output for Maven build errors. Verify the JAR was copied into the image:
+
+```bash
+uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/
+```
+
+## Related Documentation
+
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with task definitions and Dockerfile
+- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — how the identity config image fits into the UDS Core identity layer
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Customize login page branding"
+    description="Replace logos and Terms & Conditions content via bundle overrides — no image rebuild needed."
+    href="/how-to-guides/identity-access/customize-branding/"
+  />
+  <LinkCard
+    title="Configure the CA truststore"
+    description="Build a custom image with your organization's CA certificates for X.509/CAC authentication."
+    href="/how-to-guides/identity-access/configure-truststore/"
+  />
+</CardGrid>

@@ -1,0 +1,218 @@
+---
+title: Connect Azure AD as an identity provider
+sidebar:
+  order: 3.04
+---
+
+import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Azure Entra ID as a SAML identity provider in Keycloak for both the master and UDS realms so that users authenticate via Azure instead of local Keycloak accounts. Once complete, users will be redirected to Azure when they log in to any UDS Core application.
+
+## Prerequisites
+
+- UDS Core deployed
+- Azure Entra ID tenant with at least [Cloud Application Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#cloud-application-administrator) privileges
+- Existing Entra ID groups designated for Admin and Auditor roles in UDS Core
+- All users in Entra must have an email address defined — Keycloak requires this to create the user account
+
+## Before you begin
+
+UDS Core deploys Keycloak with two preconfigured user groups: `/UDS Core/Admin` (platform administrators) and `/UDS Core/Auditor` (read-only access). This guide maps existing Azure groups to those groups using [Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers).
+
+You will configure two App Registrations in Azure (one per Keycloak realm) and then set up SAML identity providers in both the master and UDS realms.
+
+> [!CAUTION]
+> **Do not disable the local admin user until you have verified Azure login works.** If Azure SSO is misconfigured and you have already removed the local admin user, you will be locked out of Keycloak. Complete the testing step before finalizing.
+
+## Steps
+
+<Steps>
+
+1. **Create the master realm App Registration in Azure**
+
+   > [!NOTE]
+   > The master realm is Keycloak's built-in admin realm. Configuring Azure SSO here lets platform administrators log in to the Keycloak admin console at `keycloak.<admin_domain>` using their enterprise Azure credentials, removing the need to maintain a separate local admin account.
+
+   In Azure Entra ID, navigate to **App registrations** → **New registration** and create an application with these settings:
+
+   - **Supported account types**: Accounts in this organizational directory only (Single tenant)
+   - **Redirect URI**: `https://keycloak.<admin_domain>/realms/master/broker/azure-saml/endpoint`
+
+   After creating the registration, configure token claims:
+
+   1. Go to **Manage** → **Token configuration**
+   2. Add the following optional claims:
+
+      | Claim    | Token type |
+      |----------|------------|
+      | `acct`   | SAML       |
+      | `email`  | SAML       |
+      | `ipaddr` | ID         |
+      | `upn`    | SAML       |
+
+      When prompted, enable the Microsoft Graph email and profile permissions.
+
+   3. Add a **Groups claim**: select **All groups**, accept the default values, and save.
+
+      > [!NOTE]
+      > Selecting **All groups** means the SAML assertion will include the Object IDs of every Entra group the user belongs to. This is necessary for the group mapper in Keycloak to work — but only the specific group OIDs you configure in the mapper will actually trigger a group assignment. Other group OIDs in the claim are ignored.
+
+   4. Go to **Manage** → **Expose an API**, click **Add** next to "Application ID URI", and note the resulting URI (format: `api://<Application Client ID>`). You will need this value when configuring the SAML identity provider in Keycloak.
+
+2. **Create the UDS realm App Registration in Azure**
+
+   Repeat step 1 to create a second App Registration with these differences:
+
+   - Provide a unique name
+   - **Redirect URI**: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
+
+3. **Configure the master realm in Keycloak**
+
+   Log in to the Keycloak admin UI at `keycloak.<admin_domain>`.
+
+   > [!NOTE]
+   > If UDS Core was deployed with `INSECURE_ADMIN_PASSWORD_GENERATION`, the username is `admin` and the password is in the `keycloak-admin-password` Kubernetes secret. Otherwise, register an admin user via `zarf connect keycloak`.
+
+   **Disable required actions** so Azure-federated users are not prompted to configure local credentials:
+   1. Go to **Authentication** → **Required actions**
+   2. Disable all required actions
+
+   **Create an admin group with realm admin role:**
+   1. Go to **Groups** → **Create Group**, name it `admin-group`
+   2. Open the group → **Role mapping** → **Assign role**
+   3. Switch to "Filter by realm roles" and assign the `admin` role
+
+   **Add the Azure SAML identity provider:**
+   1. Go to **Identity Providers** → select **SAML v2.0**
+   2. Set `Alias` to `azure-saml` and `Display name` to `Azure SSO`
+   3. For **Service provider entity ID**: copy the Application ID URI from the master realm App Registration
+   4. For **SAML entity descriptor**: paste the Federation metadata document URL from the App Registration's **Endpoints** tab; wait for the green checkmark
+   5. Toggle **Backchannel logout** to **On**
+   6. Toggle **Trust Email** to **On** (under Advanced settings)
+   7. Set **First login flow override** to `first broker login`
+   8. Save
+
+   **Add attribute mappers** (go to the provider's **Mappers** tab → **Add mapper** for each):
+
+   The attribute names below use the prefix `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/` — the **Attribute name** column shows only the suffix. The groups claim uses a different Microsoft namespace and is shown in full.
+
+   | Mapper name       | Mapper type                 | Attribute name                      | User attribute |
+   |-------------------|-----------------------------|-------------------------------------|----------------|
+   | Username Mapper   | Attribute Importer          | `emailaddress`                      | `username`     |
+   | First Name Mapper | Attribute Importer          | `givenname`                         | `firstName`    |
+   | Last Name Mapper  | Attribute Importer          | `surname`                           | `lastName`     |
+   | Email Mapper      | Attribute Importer          | `emailaddress`                      | `email`        |
+   | Group Mapper      | Advanced Attribute to Group | `groups` (Entra admin group ID)     | `admin-group`  |
+
+   Set **Sync mode override** to `Force` for all mappers.
+
+   > [!NOTE]
+   > The **Advanced Attribute to Group** mapper works by reading the `groups` claim from the SAML assertion and checking each value against the **Attribute value** you configure. When a match is found, Keycloak adds the user to the mapped Keycloak group. The **Attribute value** must be the Entra group's **Object ID** (a GUID like `a1b2c3d4-...`), not the group display name. Find it in Azure under **Groups** → select the group → **Object ID** field.
+
+   **Create a browser redirect auth flow:**
+   1. Go to **Authentication** → **Create flow**, name it `browser-idp-redirect`
+   2. Add an execution → search for `Identity Provider Redirector` → Add
+   3. Set requirement to **REQUIRED**
+   4. Click the gear icon → set `Alias` to `Browser IDP` and `Default Identity Provider` to `azure-saml`
+
+4. **Configure the UDS realm in Keycloak**
+
+   Switch to the **uds** realm using the top-left dropdown.
+
+   **Add the Azure SAML identity provider** (same process as step 3, using the UDS realm App Registration values).
+
+   **Add attribute mappers**, including group mappers for both UDS Core groups:
+
+   | Mapper name         | Entra group                          | Keycloak group        |
+   |---------------------|--------------------------------------|-----------------------|
+   | Admin Group Mapper  | Your Entra admin group's Object ID   | `/UDS Core/Admin`     |
+   | Auditor Group Mapper | Your Entra auditor group's Object ID | `/UDS Core/Auditor`   |
+
+5. **Test the configuration**
+
+   > [!CAUTION]
+   > **Test before disabling local login.** If you lock yourself out, you will need to restart this process.
+
+   1. In the master realm, sign out from the top-right user menu
+   2. On the login page, select **Azure SSO**
+   3. Complete the Entra login flow
+   4. Confirm you are redirected back to Keycloak admin UI with full admin permissions
+
+6. **Finalize: bind the redirect flow and remove the initial admin user**
+
+   Once Azure login is confirmed working:
+
+   1. Go to **Authentication** → find `browser-idp-redirect` → click the three-dot menu → **Bind flow** → select **Browser flow** → **Save**
+   2. Go to **Users** → find the initial admin user → click the three-dot menu → **Delete**
+
+   > [!NOTE]
+   > The initial admin user is a superuser created during first-time setup. Removing it prevents credential compromise. After binding the redirect flow, all logins route through Azure.
+
+</Steps>
+
+## Verification
+
+Confirm Azure identity provider setup is working end-to-end:
+
+1. Navigate to `sso.<domain>`
+2. Select **Azure SSO**
+3. Complete the Entra login flow
+4. Confirm you can access the Keycloak Account UI
+
+In the Keycloak admin UI, check the UDS realm:
+- **Identity Providers** shows `azure-saml` is configured
+- **Users** shows federated users appearing after first login
+
+## Troubleshooting
+
+### Problem: Login fails after Azure redirect
+
+**Symptoms:** Error page after completing Entra authentication, or user is not created in Keycloak.
+
+**Solution:** Confirm all users in Entra have an email address defined. Keycloak requires this field to create a user account — logins for users without an email will fail silently at the federation step.
+
+### Problem: Users log in successfully but have wrong group membership
+
+**Symptoms:** Users can authenticate but cannot access applications or have unexpected permissions.
+
+**Solution:** In the Keycloak admin UI, check the group mapper for the affected realm:
+
+1. Go to **Identity Providers** → `azure-saml` → **Mappers**
+2. Verify the **Attribute value** in each group mapper matches the exact Entra group Object ID
+3. In Azure, confirm the user is in the expected Entra group
+
+> [!NOTE]
+> Group Object IDs are GUIDs (e.g., `a1b2c3d4-...`). They are found in Entra under **Groups** → select the group → the **Object ID** field.
+
+### Problem: "Invalid redirect URI" error in Azure
+
+**Symptoms:** Error after selecting Azure SSO, before reaching the Entra login page.
+
+**Solution:** Verify the Redirect URI in the Azure App Registration exactly matches the Keycloak broker endpoint for that realm:
+- Master realm: `https://keycloak.<admin_domain>/realms/master/broker/azure-saml/endpoint`
+- UDS realm: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
+
+## Related Documentation
+
+- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — background on how Keycloak and identity federation work in UDS Core
+- [Keycloak: Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers) — reference for SAML attribute mapper types
+- [Azure: Quickstart — Register an application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    href="/how-to-guides/identity-access/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session timeouts, concurrent session limits, and other login behavior via bundle overrides."
+    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+  />
+</CardGrid>

@@ -1,0 +1,24 @@
+---
+title: Overview
+sidebar:
+  order: 10.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Platform-wide UDS Core capabilities that aren't tied to a single component. These guides cover automatic pod restarts and UI-level classification markings.
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Configure automatic pod reload"
+    description="Automatically restart pods when their Secrets or ConfigMaps change."
+    href="/how-to-guides/platform-features/configure-pod-reload/"
+  />
+  <LinkCard
+    title="Enable the classification banner"
+    description="Inject a security classification banner into web UIs via Istio EnvoyFilter."
+    href="/how-to-guides/platform-features/enable-classification-banner/"
+  />
+</CardGrid>

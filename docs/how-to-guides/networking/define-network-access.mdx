@@ -1,7 +1,7 @@
 ---
 title: Define network access for your application
 sidebar:
-  order: 2.4
+  order: 2.04
 ---
 
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -14,13 +14,13 @@ After completing this guide, your application will have the network access rules
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- Familiarity with the [Package CR](/reference/operator-and-crds/package/)
+- Familiarity with the [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Before you begin
 
 UDS Core enforces strict network policies by default. All intra-cluster and external traffic must be explicitly declared in your Package CR's `allow` block. The UDS Operator translates these declarations into Kubernetes `NetworkPolicy` resources, Istio `AuthorizationPolicy` resources, and for external egress, into Istio `ServiceEntry` and routing resources.
 
-Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/package/) for the full list of fields.
+Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of fields.
 
 > [!NOTE]
 > The `expose` block handles ingress from gateways — see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/). The `allow` block covers everything else: intra-cluster traffic between namespaces, egress to external services, and access to infrastructure endpoints like the Kubernetes API.
@@ -275,12 +275,26 @@ Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector`
      </TabItem>
    </Tabs>
 
-4. **Build and deploy**
+   > [!WARNING]
+   > **Security implications of external egress:**
+   > - **TLS passthrough**: External egress uses TLS passthrough mode, meaning traffic exits the mesh as-is. Without TLS origination, HTTP paths cannot be inspected, restricted, or logged.
+   > - **Domain fronting**: TLS passthrough only verifies the SNI header, not the actual destination. This is only safe for trusted hosts. See [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) for background.
+   > - **DNS exfiltration**: UDS Core does not currently block DNS-based data exfiltration.
+   > - **Audit all egress entries**: Platform engineers should review all `Package` custom resources to verify that every `Egress` entry is scoped appropriately — each one represents a traffic path that will be opened.
 
-   Include the Package CR in your application's Zarf package, then build and deploy:
+4. **Deploy your application**
+
+   **(Recommended)** Include the Package CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
    ```
 
 </Steps>
@@ -307,7 +321,7 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 
 ## Troubleshooting
 
-### Intra-cluster traffic blocked
+### Problem: Intra-cluster traffic blocked
 
 **Symptoms:** Application cannot reach a service in another namespace; connection timeouts or resets.
 
@@ -316,7 +330,7 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 - Check that the `port` matches the port the remote service is listening on
 - Ensure both sides have the necessary rules — if app A needs to talk to app B, app A needs an `Egress` rule and app B needs an `Ingress` rule
 
-### External egress blocked
+### Problem: External egress blocked
 
 **Symptoms:** Application cannot reach an external service; connection timeouts or resets.
 
@@ -325,22 +339,15 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 - Check that your `selector` and `serviceAccount` match the workloads you expect
 - For sidecar mode, run `istioctl proxy-config listeners <egress-pod> -n <egress-namespace>` to verify expected routes
 
-### Port not exposed (sidecar egress)
+### Problem: Port not exposed (sidecar egress)
 
 **Symptoms:** Operator logs a warning; traffic on custom ports does not egress.
 
 **Solution:** The port is not exposed on the egress gateway service. Add it to `service.ports` in the gateway overrides as shown in the sidecar mode tab.
 
-## Security considerations
+## Related Documentation
 
-- **TLS passthrough**: External egress uses TLS passthrough mode, meaning traffic exits the mesh as-is. Without TLS origination, HTTP paths cannot be inspected, restricted, or logged.
-- **Domain fronting**: TLS passthrough only verifies the SNI header, not the actual destination. This is only safe for trusted hosts. See [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) for background.
-- **DNS exfiltration**: UDS Core does not currently block DNS-based data exfiltration.
-- **Audit all egress entries**: Platform engineers should review all `Package` custom resources to verify that every `Egress` entry is scoped appropriately — each one represents a traffic path that will be opened. Ensure all declared egress is either intra-cluster communication or intentional external access.
-
-## Related documentation
-
-- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Next steps
 

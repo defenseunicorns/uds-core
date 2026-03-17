@@ -127,7 +127,7 @@ uds zarf tools kubectl get pods -n namespace
 
 ## Troubleshooting
 
-### Problem description
+### Problem: Short description of the issue
 
 **Symptom:** What the user sees.
 
@@ -173,7 +173,7 @@ These guides and concepts may be useful to explore next:
 - No `oci://` prefix on repository references
 - Use `values` for static config, `variables` for secrets/environment-specific
 - Add `sensitive: true` to password and secret variables
-- For guides that only modify Core via bundle overrides: the final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands
+- For guides that only modify Core via bundle overrides: the final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
 - For guides where the user creates application resources (Package CRs, ConfigMaps, PrometheusRules, etc.): the deploy step should show Zarf package create/deploy as the **(Recommended)** approach first, with `kubectl apply` as a secondary **Or** option for quick testing. Include a link to [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance. Follow this pattern:
 
   ```markdown
@@ -194,4 +194,21 @@ These guides and concepts may be useful to explore next:
   ```
 - Related Documentation comes before Next Steps
 - Next Steps uses `<CardGrid>` with `<LinkCard>` components
+- Related Documentation and Next Steps should not overlap: Related Documentation links to reference pages, external docs, and concepts; Next Steps links to actionable how-to guides or concepts as a natural follow-up
+- For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
+- Troubleshooting headings use the `### Problem: Description` format, with `**Symptom:**` (singular) or `**Symptoms:**` (plural) and `**Solution:**` sub-headings
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing
+
+### Bundle override verification checklist
+
+When writing or reviewing bundle override examples, verify each of these before publishing:
+
+1. **Component name:** Must match a named component in `packages/standard/zarf.yaml`. Check the `name:` fields under `components:` in that file.
+
+2. **Chart name:** Must match the `name:` field of a chart entry in the component's `zarf.yaml` or `common/zarf.yaml` under `src/`. Note that the `src/` directory name doesn't always match the component name (e.g., component `kube-prometheus-stack` lives in `src/prometheus-stack/`). The chart name is often NOT the same as the component name — for example, the `falco` component has charts named `falco` and `uds-falco-config`.
+
+3. **Value path:** Must be a valid Helm value path for the referenced chart. For UDS config charts, verify against `src/<component>/chart/values.yaml`. For upstream charts, verify against `src/<component>/values/values.yaml` (local customizations) or the upstream chart's default values.
+
+4. **Secrets identification:** Webhook URLs, API tokens, storage access keys, and any credential-like values are secrets — not just passwords. If a value would grant access to a system if leaked, treat it as a secret.
+
+5. **Values vs variables:** If a value is environment-specific AND contains credentials, tokens, or keys, always use a `variable` with `sensitive: true` and include a `uds-config.yaml` example showing how to pass it at deploy time. Only use `values` for configuration that is safe to embed in the bundle artifact.

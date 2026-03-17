@@ -1,10 +1,10 @@
 ---
 title: Expose applications on gateways
 sidebar:
-  order: 2.2
+  order: 2.02
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -27,85 +27,9 @@ After completing this guide, your application will be accessible through one of 
 
 <Steps>
 
-1. **Define a Package CR for your application**
+1. **(Optional) Enable root domain support**
 
-   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically.
-
-   To expose on the **tenant gateway** (end-user traffic):
-
-   ```yaml title="uds-package.yaml"
-   apiVersion: uds.dev/v1alpha1
-   kind: Package
-   metadata:
-     name: my-app
-     namespace: my-app
-   spec:
-     network:
-       expose:
-         - service: my-app-service
-           selector:
-             app.kubernetes.io/name: my-app
-           host: my-app
-           gateway: tenant
-           port: 8080
-   ```
-
-   This exposes the application at `https://my-app.yourdomain.com`, routing traffic to port 8080 on pods matching the selector.
-
-   To expose on the **admin gateway** (admin-facing interfaces), use `gateway: admin`:
-
-   ```yaml title="uds-package.yaml"
-   apiVersion: uds.dev/v1alpha1
-   kind: Package
-   metadata:
-     name: my-app
-     namespace: my-app
-   spec:
-     network:
-       expose:
-         - service: my-app-admin
-           selector:
-             app.kubernetes.io/name: my-app
-           host: my-app
-           gateway: admin
-           port: 9090
-   ```
-
-   This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.).
-
-2. **Build and deploy your Zarf package**
-
-   Include the `Package` CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart. Then build and deploy:
-
-   ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
-   ```
-
-   If your application is part of a [UDS Bundle](/concepts/configuration-and-packaging/bundles/), include the Zarf package in your bundle and deploy it with `uds create` and `uds deploy` instead.
-
-</Steps>
-
-## Verification
-
-Check that the Package CR was reconciled and shows the expected endpoints:
-
-```bash
-uds zarf tools kubectl get package my-app -n my-app
-```
-
-The `ENDPOINTS` column should show your application's URL(s). Test access:
-
-```bash
-curl -v https://my-app.yourdomain.com
-```
-
-## Expose a service on the root (apex) domain
-
-By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. To serve traffic at `https://yourdomain.com`, enable root domain support.
-
-<Steps>
-
-1. **Enable the root domain in your bundle**
+   By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. If you need to serve traffic at `https://yourdomain.com`, enable root domain support in your UDS Core bundle:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -137,75 +61,158 @@ By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), whi
    > [!NOTE]
    > If you provide a non-empty value for `credentialName`, UDS Core assumes you have pre-created the Kubernetes secret and will not auto-generate it. If your SAN certificate covers both subdomains and the root, you can point `credentialName` to that existing secret (the default gateway TLS secret name is `gateway-tls`).
 
-2. **Expose your service using the `.` host**
-
-   ```yaml title="uds-package.yaml"
-   apiVersion: uds.dev/v1alpha1
-   kind: Package
-   metadata:
-     name: my-app
-     namespace: my-namespace
-   spec:
-     network:
-       expose:
-         - service: my-app-service
-           selector:
-             app.kubernetes.io/name: my-app
-           host: "."
-           gateway: tenant
-           port: 80
-   ```
-
-   Ensure your DNS has an A record for the root domain pointing to your ingress gateway.
-
-3. **Create and deploy your bundle and application**
-
-   Deploy the UDS Core bundle with the root domain overrides:
+   Create and deploy the bundle:
 
    ```bash
    uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
    ```
 
-   Then build and deploy your application's Zarf package (which includes the Package CR):
+   Ensure your DNS has an A record for the root domain pointing to your ingress gateway.
+
+2. **Define a Package CR for your application**
+
+   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically.
+
+   <Tabs>
+     <TabItem label="Tenant gateway">
+
+     Expose on the **tenant gateway** for end-user traffic:
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         expose:
+           - service: my-app-service
+             selector:
+               app.kubernetes.io/name: my-app
+             host: my-app
+             gateway: tenant
+             port: 8080
+     ```
+
+     This exposes the application at `https://my-app.yourdomain.com`, routing traffic to port 8080 on pods matching the selector.
+
+     </TabItem>
+     <TabItem label="Admin gateway">
+
+     Expose on the **admin gateway** for admin-facing interfaces:
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         expose:
+           - service: my-app-admin
+             selector:
+               app.kubernetes.io/name: my-app
+             host: my-app
+             gateway: admin
+             port: 9090
+     ```
+
+     This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.).
+
+     </TabItem>
+     <TabItem label="Root domain">
+
+     Expose on the **root (apex) domain** (requires step 1):
+
+     ```yaml title="uds-package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       network:
+         expose:
+           - service: my-app-service
+             selector:
+               app.kubernetes.io/name: my-app
+             host: "."
+             gateway: tenant
+             port: 80
+     ```
+
+     The special `host: "."` value routes traffic from `https://yourdomain.com` to your application.
+
+     </TabItem>
+   </Tabs>
+
+3. **Deploy your application**
+
+   **(Recommended)** Include the Package CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
-   uds zarf package create --confirm && uds zarf package deploy zarf-package-*.tar.zst --confirm
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
+   ```
+
+   If your application is part of a [UDS Bundle](/concepts/configuration-and-packaging/bundles/), include the Zarf package in your bundle and deploy it with `uds create` and `uds deploy` instead.
 
 </Steps>
 
+## Verification
+
+Check that the Package CR was reconciled and shows the expected endpoints:
+
+```bash
+uds zarf tools kubectl get package my-app -n my-app
+```
+
+The `ENDPOINTS` column should show your application's URL(s). Test access:
+
+```bash
+curl -v https://my-app.yourdomain.com
+```
+
 ## Troubleshooting
 
-### Service not reachable
+### Problem: Service not reachable
 
-**Symptoms:** Browser or curl returns connection refused or timeout.
+**Symptom:** Browser or curl returns connection refused or timeout.
 
 **Solution:**
 - Verify the Package CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` — check the `STATUS` column
 - Ensure your DNS resolves the hostname to the gateway load balancer IP
 
-### Wrong gateway or domain
+### Problem: Wrong gateway or domain
 
-**Symptoms:** Application accessible on an unexpected URL or not at all.
+**Symptom:** Application accessible on an unexpected URL or not at all.
 
 **Solution:**
 - Check the `gateway` field in your Package CR matches your intent (`tenant` or `admin`)
 - Verify the `host` field — it becomes the subdomain prefix (e.g., `host: my-app` → `my-app.yourdomain.com`)
 - Check `shared.domain` in your `uds-config.yaml`
 
-### Root domain not working
+### Problem: Root domain not working
 
-**Symptoms:** Subdomains work but `https://yourdomain.com` does not.
+**Symptom:** Subdomains work but `https://yourdomain.com` does not.
 
 **Solution:**
 - Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
 - Verify DNS has an A record for the root domain (not just a wildcard)
 - Check that TLS certificates are provided for the root domain configuration
 
-## Related documentation
+## Related Documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Package CR Reference](/reference/operator-and-crds/package/)
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Next steps
 
