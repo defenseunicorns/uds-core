@@ -115,7 +115,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: themeCustomiza
 | `termsAndConditions.text.configmap.name` | Name of the ConfigMap in the `keycloak` namespace that contains the terms HTML |
 | `termsAndConditions.text.inline` | Inline terms and conditions HTML string; use instead of a ConfigMap for simple text |
 
-For steps to create and deploy these ConfigMaps, see [Customize branding](/how-to-guides/identity-access/customize-branding/).
+For steps to create and deploy these ConfigMaps, see [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/).
 
 ## Custom plugins
 
@@ -185,7 +185,7 @@ For X.509 authentication, the Istio gateway must be configured with the CA certi
 - Tenant domain: `overrides.istio-tenant-gateway.uds-istio-config.values[].path: tls.cacert`
 - Admin domain: `overrides.istio-admin-gateway.uds-istio-config.values[].path: tls.cacert`
 
-For steps to configure a custom truststore, see [Configure truststore](/how-to-guides/identity-access/configure-truststore/).
+For steps to configure a custom truststore, see [Configure truststore](/how-to-guides/identity-and-authorization/configure-truststore/).
 
 ## FIPS mode
 
@@ -198,7 +198,7 @@ Bundle override paths: `overrides.keycloak.keycloak.values[].path: fips` and `ov
 | `fips` | `true` | Deprecated. FIPS 140-2 Strict Mode enabled state; always `true` in UDS Core — all deployments use FIPS mode by default |
 | `debugMode` | `false` | Enable verbose Keycloak bootstrap logging; used to verify FIPS mode activation |
 
-To verify FIPS mode is active, enable `debugMode` and check the Keycloak bootstrap logs for:
+When `debugMode` is `true`, Keycloak bootstrap logs will contain a line like:
 
 ```
 KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
@@ -206,7 +206,7 @@ KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 
 `BCFIPS version 2.0 Approved Mode` confirms FIPS Strict Mode is active. `FIPS-JVM: disabled` indicates the underlying JVM is not in FIPS mode, which is expected unless the host system has a FIPS-enabled kernel.
 
-For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-access/enable-fips-mode/).
+For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
 
 ## OpenTofu client
 
@@ -231,15 +231,15 @@ The client secret can be retrieved from the Keycloak Admin Console: **UDS realm 
 
 ## Related documentation
 
-- [Configure authentication flows](/how-to-guides/identity-access/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
-- [Customize branding](/how-to-guides/identity-access/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides
-- [Configure truststore](/how-to-guides/identity-access/configure-truststore/) — how-to guide for building and deploying a custom CA truststore
-- [Enable FIPS mode](/how-to-guides/identity-access/enable-fips-mode/) — how-to guide for enabling FIPS 140-2 Strict Mode
-- [Configure service accounts](/how-to-guides/identity-access/configure-service-accounts/) — how-to guide for SSO-protected service-to-service authentication
-- [Configure account lockout](/how-to-guides/identity-access/configure-account-lockout/) — how-to guide for adjusting brute-force protection thresholds
-- [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/) — how-to guide for session timeouts, concurrent session limits, and logout behavior
-- [Manage Keycloak with OpenTofu](/how-to-guides/identity-access/manage-keycloak-with-opentofu/) — how-to guide for programmatic realm management via the OpenTofu client
-- [Keycloak CRL airgap support](/reference/configuration/single-sign-on/keycloak-crl-airgap/) — reference guide for configuring CRL checking in airgapped environments
+- [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
+- [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides
+- [Configure truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — how-to guide for building and deploying a custom CA truststore
+- [Enable FIPS mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) — how-to guide for enabling FIPS 140-2 Strict Mode
+- [Configure service accounts](/how-to-guides/identity-and-authorization/configure-service-accounts/) — how-to guide for SSO-protected service-to-service authentication
+- [Configure account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) — how-to guide for adjusting brute-force protection thresholds
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — how-to guide for session timeouts, concurrent session limits, and logout behavior
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) — how-to guide for programmatic realm management via the OpenTofu client
+- [Configure Keycloak airgap CRLs](/how-to-guides/identity-and-authorization/configure-x509-crl-airgap/) — how-to guide for configuring CRL checking in airgapped environments
 - [Upgrade Keycloak realm](/operations/upgrade-keycloak-realm/) — version-specific steps for realm configuration changes
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) — upstream Keycloak reference
 - [Keycloak FIPS documentation](https://www.keycloak.org/server/fips) — upstream guide for Keycloak FIPS mode

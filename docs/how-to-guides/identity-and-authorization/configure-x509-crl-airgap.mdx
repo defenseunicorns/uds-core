@@ -16,7 +16,7 @@ You'll configure Keycloak to validate X.509/CAC certificates against locally loa
 - Docker installed (on the machine where you run the packaging script)
 - `bash`, `curl`, `unzip`, `find`, and `sort` available on the machine running the script
 - Access to a Kubernetes cluster running Kubernetes 1.31+
-- X.509/CAC authentication enabled in UDS Core — see [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) and [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/)
+- X.509/CAC authentication enabled in UDS Core — see [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) and [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/)
 
 ## Before you begin
 
@@ -244,11 +244,11 @@ Use your normal mTLS or browser client certificate flow and confirm Keycloak val
   <LinkCard
     title="Configure Keycloak authentication methods"
     description="Enable or disable X.509/CAC, OCSP, and CRL revocation checking via bundle overrides."
-    href="/how-to-guides/identity-access/configure-authentication-flows/"
+    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
   />
   <LinkCard
     title="Configure the CA truststore"
     description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
-    href="/how-to-guides/identity-access/configure-truststore/"
+    href="/how-to-guides/identity-and-authorization/configure-truststore/"
   />
 </CardGrid>

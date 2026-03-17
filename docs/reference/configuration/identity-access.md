@@ -8,10 +8,11 @@ UDS Core provides identity and access management through Keycloak, configured by
 
 ## Keycloak configuration overview
 
-UDS Core manages three areas of Keycloak configuration through the `uds-identity-config` component:
+UDS Core manages the following areas of Keycloak configuration through the `uds-identity-config` component:
 
 - **Realm configuration** — authentication flows, session timeouts, password policy, identity providers
 - **Theme configuration** — branding images, terms and conditions, registration form fields
+- **Truststore** — CA certificates for X.509/CAC authentication
 - **Custom plugins** — Keycloak extensions bundled with UDS Core
 
 Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrade-keycloak-realm/) for manual steps.
@@ -114,7 +115,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: themeCustomiza
 | `termsAndConditions.text.configmap.name` | Name of the ConfigMap in the `keycloak` namespace that contains the terms HTML |
 | `termsAndConditions.text.inline` | Inline terms and conditions HTML string; use instead of a ConfigMap for simple text |
 
-For steps to create and deploy these ConfigMaps, see [Customize branding](/how-to-guides/identity-access/customize-branding/).
+For steps to create and deploy these ConfigMaps, see [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/).
 
 ## Custom plugins
 
@@ -190,11 +191,12 @@ The client secret can be retrieved from the Keycloak Admin Console: **UDS realm 
 
 ## Related documentation
 
-- [Configure authentication flows](/how-to-guides/identity-access/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
-- [Customize branding](/how-to-guides/identity-access/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides
-- [Configure service accounts](/how-to-guides/identity-access/configure-service-accounts/) — how-to guide for SSO-protected service-to-service authentication
-- [Configure account lockout](/how-to-guides/identity-access/configure-account-lockout/) — how-to guide for adjusting brute-force protection thresholds
-- [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/) — how-to guide for session timeouts, concurrent session limits, and logout behavior
-- [Manage Keycloak with OpenTofu](/how-to-guides/identity-access/manage-keycloak-with-opentofu/) — how-to guide for programmatic realm management via the OpenTofu client
+- [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
+- [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — how-to guide for building and deploying a custom CA truststore
+- [Configure service accounts](/how-to-guides/identity-and-authorization/configure-service-accounts/) — how-to guide for SSO-protected service-to-service authentication
+- [Configure account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) — how-to guide for adjusting brute-force protection thresholds
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — how-to guide for session timeouts, concurrent session limits, and logout behavior
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) — how-to guide for programmatic realm management via the OpenTofu client
 - [Upgrade Keycloak realm](/operations/upgrade-keycloak-realm/) — version-specific steps for realm configuration changes
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) — upstream Keycloak reference
