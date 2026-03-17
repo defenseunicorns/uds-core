@@ -13,7 +13,6 @@ You'll set up a testing strategy for your UDS Package that validates deployment 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- Access to a Kubernetes cluster with UDS Core deployed
 - A [UDS Package](/how-to-guides/packaging-applications/create-uds-package/) ready for testing
 - [Node.js](https://nodejs.org/) installed (for Playwright and Jest)
 - [Shellcheck](https://www.shellcheck.net/) installed (for linting bash scripts)
@@ -35,6 +34,9 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
    Use [Playwright](https://playwright.dev/) for UI testing and [Jest](https://jestjs.io/) for API or non-UI testing. Use bash or other scripting languages for custom validation scripts as needed.
 
    > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template/tree/main/tests) includes Playwright stubs in the `tests/` directory to get you started.
+
+   > [!TIP]
    > Keep journey tests small and focused. Validate deployment and UDS integration — avoid duplicating upstream unit or feature tests.
 
    > [!NOTE]
@@ -47,6 +49,9 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
    - Data migration and persistence work correctly
    - Configurations carry over or update properly
    - No breaking changes occur in APIs or external integrations
+
+   > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template/blob/main/tasks.yaml) provides a default `test-upgrade` task you can use directly in your CI workflows.
 
 3. **Add linting and static analysis**
 
@@ -73,6 +78,9 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
    - **Repeatability** — Tests should produce consistent results regardless of execution order or frequency. Design them to handle dynamic and asynchronous workloads without compromising output integrity.
    - **Error handling** — Fail with actionable messages and include enough context to debug.
    - **Performance** — Balance coverage with rapid feedback to keep pipelines efficient.
+
+   > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template) includes default GitHub Actions CI/CD workflows you can use as a starting point or reference.
 
 </Steps>
 
@@ -125,31 +133,30 @@ uds run test:all
 
 See the [Reference Package test tasks](https://github.com/uds-packages/reference-package/blob/main/tasks/test.yaml) for a complete example.
 
+### Success criteria
+
+Your test suite is working correctly when:
+
+- All tasks in `uds run test:all` exit with code 0
+- No error output appears in health check, ingress, or UI task logs
+- Journey tests pass consistently across multiple runs
+- Upgrade tests confirm data persists and the package reaches a `Ready` state after upgrade
+
 ## Troubleshooting
 
-### Journey tests fail intermittently
+### Problem: Journey tests fail intermittently
 
 **Symptom:** Tests pass locally but fail in CI due to timing or async workloads.
 
 **Solution:** Add appropriate wait conditions or retries for dynamic resources. Ensure tests don't depend on execution order.
 
-### Upgrade tests fail on data migration
+### Problem: Upgrade tests fail on data migration
 
 **Symptom:** Data from the previous version is missing or corrupted after upgrade.
 
 **Solution:** Check that persistent volume claims and database migrations are handled correctly in your Zarf package lifecycle actions.
 
-## Next steps
+## Related documentation
 
-<CardGrid>
-  <LinkCard
-    title="UDS Package Requirements"
-    description="Verify your tested package meets the production-readiness and security standards required before publishing."
-    href="/concepts/configuration-and-packaging/package-requirements/"
-  />
-  <LinkCard
-    title="Troubleshoot UDS Package Deployments"
-    description="Diagnose stalled installs, Pepr policy violations, and common deployment issues when tests fail."
-    href="/how-to-guides/packaging-applications/troubleshoot-uds-packages/"
-  />
-</CardGrid>
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
+- [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md)
