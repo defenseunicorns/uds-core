@@ -20,7 +20,7 @@ You'll add SSO protection to an application that has no native OIDC support. Aut
 ## Before you begin
 
 > [!TIP]
-> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity - Authorization concepts](/concepts/core-features/identity-authorization/) for details.
+> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity and Authorization concepts](/concepts/core-features/identity-and-authorization/) for details.
 
 Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The first `redirectUris` entry you configure is used to populate the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
@@ -195,7 +195,7 @@ spec:
 
 ## Related Documentation
 
-- [Identity - Authorization concepts](/concepts/core-features/identity-authorization/) — background on when to use Authservice vs native SSO
+- [Identity and Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on when to use Authservice vs native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO and `enableAuthserviceSelector` field specification
 
@@ -207,11 +207,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Enforce group-based access controls"
     description="Restrict which Keycloak groups can access your Authservice-protected application."
-    href="/how-to-guides/identity-authorization/enforce-group-based-access/"
+    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
   />
   <LinkCard
     title="Configure Keycloak authentication methods"
     description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps."
-    href="/how-to-guides/identity-authorization/configure-authentication-flows/"
+    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
   />
 </CardGrid>

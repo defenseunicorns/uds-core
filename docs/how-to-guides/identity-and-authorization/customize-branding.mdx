@@ -25,7 +25,7 @@ UDS Core supports two layers of branding customization:
 | **Bundle overrides + ConfigMap** (this guide) | Logo, background, footer, favicon, Terms & Conditions text, show/hide registration form fields | No |
 | **Custom theme in uds-identity-config image** | CSS, layout changes, adding or restructuring registration form fields, new theme pages | Yes |
 
-This guide covers the bundle override approach. For CSS or structural theme changes, see [Build and deploy a custom identity config image](/how-to-guides/identity-authorization/build-deploy-custom-image/).
+This guide covers the bundle override approach. For CSS or structural theme changes, see [Build and deploy a custom identity config image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/).
 
 > [!NOTE]
 > The Terms & Conditions screen is only displayed if `TERMS_AND_CONDITIONS_ENABLED: "true"` is set in your `realmInitEnv` bundle override. The T&C content itself is configured via `themeCustomizations` as shown in this guide.
@@ -280,11 +280,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure Keycloak authentication methods"
     description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
-    href="/how-to-guides/identity-authorization/configure-authentication-flows/"
+    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
   />
   <LinkCard
     title="Build a custom Keycloak configuration image"
     description="Build and deploy a custom image for CSS or structural theme changes."
-    href="/how-to-guides/identity-authorization/build-deploy-custom-image/"
+    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
   />
 </CardGrid>
