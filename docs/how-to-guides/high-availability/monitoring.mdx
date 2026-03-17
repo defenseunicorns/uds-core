@@ -148,6 +148,9 @@ Grafana's default embedded SQLite database does not support multiple replicas an
                  value: "90GB"
    ```
 
+   > [!NOTE]
+   > If you are resizing storage on an existing deployment, follow the [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) runbook — PVC resizing requires additional steps beyond updating your bundle.
+
    To estimate disk needs, use the upstream formula from the [Prometheus storage documentation](https://prometheus.io/docs/prometheus/latest/storage/):
 
    ```
@@ -160,7 +163,7 @@ Grafana's default embedded SQLite database does not support multiple replicas an
    > Use the `prometheus_tsdb_storage_blocks_bytes` metric in Grafana to monitor actual disk usage over time. This is the most reliable way to right-size your PVC rather than guessing upfront.
 
    > [!CAUTION]
-   > If stored data exceeds PVC capacity, Prometheus will crash-loop. Always provision PVC size with headroom above your expected retention volume. `retentionSize` acts as a safety cap — Prometheus drops the oldest blocks when this limit is reached. To resize PVCs on a running cluster, see the [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) runbook.
+   > If stored data exceeds PVC capacity, Prometheus will crash-loop. Always provision PVC size with headroom above your expected retention volume. `retentionSize` acts as a safety cap — Prometheus drops the oldest blocks when this limit is reached.
 
 4. **Create and deploy your bundle**
 
