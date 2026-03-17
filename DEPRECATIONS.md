@@ -16,13 +16,12 @@ When adding a deprecation, include:
 - Removal Target: The projected major version for removal
 -->
 
-| Feature | Deprecated In | Details | Removal Target |
-|---------|---------------|---------|----------------|
-| `allow.podLabels`, `allow.remotePodLabels`, `expose.podLabels`, `expose.match` | 0.12.0 ([#154](https://github.com/defenseunicorns/uds-core/pull/154)) | **Reason:** API naming improved.<br/>**Migration:** Use `allow.selector`, `allow.remoteSelector`, `expose.selector`, `expose.advancedHTTP.match` instead | Package `v1beta1` |
-| Keycloak `fips` helm value | 0.43.0 ([#1518](https://github.com/defenseunicorns/uds-core/pull/1518)) | **Reason:** FIPS mode is now enabled by default.<br/>**Migration:** If you override `fips` to `false`, remove that override to enable FIPS mode before it becomes the only allowed method | 1.0.0 |
-| `operator.KUBEAPI_CIDR`, `operator.KUBENODE_CIDRS` | 0.48.0 ([#1233](https://github.com/defenseunicorns/uds-core/pull/1233)) | **Reason:** Moved to ClusterConfig CRD.<br/>**Migration:** Use `cluster.networking.kubeApiCIDR` and `cluster.networking.kubeNodeCIDRs` instead | 1.0.0 |
-| `CA_CERT` Zarf variable | 0.58.0 ([#2167](https://github.com/defenseunicorns/uds-core/pull/2167)) | **Reason:** Improved naming clarity.<br/>**Migration:** Use `CA_BUNDLE_CERTS` instead | 1.0.0 |
-| `sso.secretName`, `sso.secretLabels`, `sso.secretAnnotations`, `sso.secretTemplate` | 0.60.0 ([#2264](https://github.com/defenseunicorns/uds-core/pull/2264)) | **Reason:** Simplified field structure.<br/>**Migration:** Use `sso.secretConfig.name`, `.labels`, `.annotations`, `.template` instead | Package `v1beta1` |
+| Feature | PR | Deprecated In | Reason | Migration | Removal Target |
+|---------|-----|---------------|--------|-----------|----------------|
+| `allow.podLabels`, `allow.remotePodLabels`, `expose.podLabels`, `expose.match` | [#154](https://github.com/defenseunicorns/uds-core/pull/154) | 0.12.0 | Improve API naming and organization | Use `allow.selector`, `allow.remoteSelector`, `expose.selector`, `expose.advancedHTTP.match` instead | Package `v1beta1` |
+| Keycloak `fips` helm value | [#1518](https://github.com/defenseunicorns/uds-core/pull/1518) | 0.43.0 | FIPS mode is now enabled by default for all deployments | If you override `fips` to `false`, remove that override as soon as possible to enable FIPS mode before it becomes the only allowed method | 1.0.0 |
+| `operator.KUBEAPI_CIDR`, `operator.KUBENODE_CIDRS` | [#1233](https://github.com/defenseunicorns/uds-core/pull/1233) | 0.48.0 | Moved to ClusterConfig CRD for centralized configuration | Use `cluster.networking.kubeApiCIDR` and `cluster.networking.kubeNodeCIDRs` instead | 1.0.0 |
+| `sso.secretName`, `sso.secretLabels`, `sso.secretAnnotations`, `sso.secretTemplate` | [#2264](https://github.com/defenseunicorns/uds-core/pull/2264) | 0.60.0 | Simplify fields and make more coherent | Use `sso.secretConfig.name`, `.labels`, `.annotations`, `.template` instead | Package `v1beta1` |
 
 ## Recently Removed
 
@@ -31,3 +30,4 @@ This section lists features that were removed in recent major releases for histo
 | Feature | Deprecated In | Removed In | Migration |
 |---------|---------------|------------|-----------|
 | Keycloak `x509LookupProvider`, `mtlsClientCert` helm values | 0.47.0 | 1.0.0 | Use `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat`; remove any existing overrides utilizing the removed values |
+| `CA_CERT` Zarf variable | 0.58.0 | 1.0.0 | Use `CA_BUNDLE_CERTS` instead |
