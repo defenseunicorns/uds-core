@@ -19,10 +19,7 @@ export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>)
 
 export function validateCfg(cfg: ClusterConfig) {
   // Validate that the caBundle.certs is base64 encoded and is a valid cert bundle
-  if (
-    cfg.spec?.caBundle?.certs &&
-    cfg.spec.caBundle.certs !== "###ZARF_VAR_CA_BUNDLE_CERTS###"
-  ) {
+  if (cfg.spec?.caBundle?.certs && cfg.spec.caBundle.certs !== "###ZARF_VAR_CA_BUNDLE_CERTS###") {
     if (!isBase64(cfg.spec.caBundle.certs)) {
       throw new Error("ClusterConfig: caBundle.certs must be base64 encoded; found invalid value");
     }
