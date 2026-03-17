@@ -20,7 +20,7 @@ You'll add SSO protection to an application that has no native OIDC support. Aut
 ## Before you begin
 
 > [!TIP]
-> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity and Authorization concepts](/concepts/core-features/identity-and-authorization/) for details.
+> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) for details.
 
 Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The first `redirectUris` entry you configure is used to populate the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
@@ -195,7 +195,7 @@ spec:
 
 ## Related Documentation
 
-- [Identity and Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on when to use Authservice vs native SSO
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on when to use Authservice vs native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO and `enableAuthserviceSelector` field specification
 
