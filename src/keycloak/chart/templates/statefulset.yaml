@@ -192,12 +192,12 @@ spec:
 
             ## Activate the nginx provider
             - name: KC_SPI_X509CERT_LOOKUP__PROVIDER
-              value: {{ .Values.x509LookupProvider }}
+              value: nginx
             # Set nginx provider header name
-            - name: KC_SPI_X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT
+            - name: KC_SPI_X509CERT_LOOKUP__NGINX__SSL_CLIENT_CERT
               value: istio-mtls-client-certificate
             # Dumb value (not used in the nginx provider, but required by the SPI)
-            - name: KC_SPI_X509CERT_LOOKUP__{{ .Values.x509LookupProvider | upper }}__SSL_CLIENT_CERT_CHAIN_PREFIX
+            - name: KC_SPI_X509CERT_LOOKUP__NGINX__SSL_CLIENT_CERT_CHAIN_PREFIX
               value: UNUSED
             # Below 3 settings are a workaround for https://github.com/keycloak/keycloak/issues/43589
             # After Keycloak 26.6.0 release, they should be removed

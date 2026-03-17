@@ -1,0 +1,102 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Third Party TLS Header
+templates:
+  - uds-package.yaml
+  - alb-envoyfilter.yaml
+
+tests:
+  - it: should inject default client certificate header fallback
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            advancedHTTP:
+              headers:
+                request:
+                  remove:
+                    - istio-mtls-client-certificate
+                  add:
+                    istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+  - it: should omit fallback header injection when third-party tls header is configured
+    set:
+      thirdPartyIntegration:
+        tls:
+          tlsCertificateHeader: x-amzn-mtls-clientcert
+    template: uds-package.yaml
+    asserts:
+      - notContains:
+          path: spec.network.expose
+          any: true
+          content:
+            advancedHTTP:
+              headers:
+                request:
+                  remove:
+                    - istio-mtls-client-certificate
+                  add:
+                    istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+
+  - it: should not render alb envoy filter by default
+    template: alb-envoyfilter.yaml
+    asserts:
+      - notExists: {}
+
+  - it: should render alb envoy filter for generic PEM header forwarding
+    set:
+      thirdPartyIntegration:
+        tls:
+          tlsCertificateHeader: x-forwarded-client-cert
+          tlsCertificateFormat: PEM
+    template: alb-envoyfilter.yaml
+    asserts:
+      - isKind:
+          of: EnvoyFilter
+      - equal:
+          path: metadata.name
+          value: alb-client-cert-converter
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: local raw_cert = request_handle:headers\(\):get\("x-forwarded-client-cert"\)
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: decoded = raw_cert
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: local encoded = decoded
+      - notMatchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: function url_decode\(str\)
+      - notMatchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: decoded = url_decode\(raw_cert\)
+
+  - it: should render aws decoding branch when tlsCertificateFormat is AWS
+    set:
+      thirdPartyIntegration:
+        tls:
+          tlsCertificateHeader: x-amzn-mtls-clientcert
+          tlsCertificateFormat: AWS
+    template: alb-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: function url_decode\(str\)
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: local raw_cert = request_handle:headers\(\):get\("x-amzn-mtls-clientcert"\)
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: decoded = url_decode\(raw_cert\)
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: local encoded = request_handle:base64Escape\(decoded\)
+      - notMatchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.defaultSourceCode.inlineString
+          pattern: local encoded = decoded

@@ -191,9 +191,6 @@
     "configImage": {
       "type": "string"
     },
-    "mtlsClientCert": {
-      "type": "string"
-    },
     "dashboardAnnotations": {
       "type": "object"
     },
@@ -638,9 +635,6 @@
           }
         }
       }
-    },
-    "x509LookupProvider": {
-      "type": "string"
     },
     "migrations": {
       "type": "object",
