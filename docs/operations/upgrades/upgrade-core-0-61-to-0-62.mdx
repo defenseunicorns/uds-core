@@ -6,8 +6,8 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-> [!CAUTION]
-> This guide covers specific changes for the 0.61 to 0.62 upgrade. For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+> [!NOTE]
+> This guide covers specific changes for the 0.61 to 0.62 upgrade. For general upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
 ## What changed
 
@@ -27,10 +27,10 @@ UDS Core 0.62 adds uptime probe support for Authservice-enabled applications, in
 
 ## Prerequisites
 
-- Running UDS Core v0.61.1 or later (skip v0.61.0; see [0.60 to 0.61 guide](/operations/upgrades/upgrade-core-0-60-to-0-61/))
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Running UDS Core v0.61.1 or later (skip v0.61.0; see [0.60 to 0.61 guide](/core/operations/upgrades/upgrade-core-0-60-to-0-61/))
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli) installed
 - Access to a staging environment that mirrors production
-- Recent backup of your deployment (see [Backup & Restore](/how-to-guides/backup-restore/overview/))
+- Recent backup of your deployment (see [Backup & Restore](/core/how-to-guides/backup-restore/overview/))
 
 ## Pre-upgrade checklist
 
@@ -88,7 +88,7 @@ UDS Core 0.62 adds uptime probe support for Authservice-enabled applications, in
 1. **Verify UDS Core components**
 
    ```bash
-   uds zarf tools kubectl get pods -A | grep -v Running
+   uds zarf tools kubectl get pods -A
    ```
 
    All pods should be in `Running` or `Completed` state.
@@ -113,6 +113,6 @@ UDS Core 0.62 adds uptime probe support for Authservice-enabled applications, in
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes on a running platform
+- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) - applying config changes on a running platform
 - [UDS Core 0.62.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.62.0) - full changelog

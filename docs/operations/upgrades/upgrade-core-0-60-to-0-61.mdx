@@ -6,8 +6,8 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-> [!CAUTION]
-> This guide covers specific changes for the 0.60 to 0.61 upgrade. For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+> [!NOTE]
+> This guide covers specific changes for the 0.60 to 0.61 upgrade. For general upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
 > [!IMPORTANT]
 > Skip v0.61.0 and upgrade directly to v0.61.1. The v0.61.0 release introduced a redirect URI validation change that was reverted in v0.61.1, along with a fix for stale network authpolicies during mesh mode transitions.
@@ -29,9 +29,9 @@ There are no breaking changes in this release.
 ## Prerequisites
 
 - Running UDS Core v0.60.x
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli) installed
 - Access to a staging environment that mirrors production
-- Recent backup of your deployment (see [Backup & Restore](/how-to-guides/backup-restore/overview/))
+- Recent backup of your deployment (see [Backup & Restore](/core/how-to-guides/backup-restore/overview/))
 
 ## Pre-upgrade checklist
 
@@ -81,7 +81,7 @@ There are no breaking changes in this release.
 1. **Verify UDS Core components**
 
    ```bash
-   uds zarf tools kubectl get pods -A | grep -v Running
+   uds zarf tools kubectl get pods -A
    ```
 
    All pods should be in `Running` or `Completed` state.
@@ -98,6 +98,6 @@ There are no breaking changes in this release.
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes on a running platform
+- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) - applying config changes on a running platform
 - [UDS Core 0.61.1 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.61.1) - full changelog

@@ -9,7 +9,7 @@ import { Steps } from '@astrojs/starlight/components';
 This guide covers how to apply configuration changes to a running UDS Core deployment by updating bundle overrides and redeploying.
 
 > [!TIP]
-> If you are configuring a feature for the first time, see the [How-To Guides](/how-to-guides/overview/). This page covers changing configuration on an already-running platform.
+> If you are configuring a feature for the first time, see the [How-To Guides](/core/how-to-guides/overview/). This page covers changing configuration on an already-running platform.
 
 ## Applying bundle override changes
 
@@ -42,7 +42,7 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart. See [Pod Reload](/reference/configuration/pod-reload/) for details on automatic restart behavior.
+   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart.
 
 3. **Verify the change**
 
@@ -59,8 +59,5 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Pod Reload](/reference/configuration/pod-reload/) - automatic pod restart on Secret and ConfigMap changes
-- [SSO Secret Templating](/reference/configuration/single-sign-on/sso-templating) - SSO client secret configuration and rotation
-- [Central Trust Bundle Management](/reference/configuration/trust-management/central-trust-bundle-management/) - CA certificate management and rotation
-- [How-To Guides](/how-to-guides/overview/) - first-time configuration guides
+- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [How-To Guides](/core/how-to-guides/overview/) - first-time configuration guides

@@ -34,7 +34,7 @@ sidebar:
 import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
 > [!CAUTION]
-> This guide covers specific changes for the X.Y → X.Z upgrade. For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+> This guide covers specific changes for the X.Y → X.Z upgrade. For general upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
 ## What changed
 
@@ -57,7 +57,7 @@ Brief list of significant new features or improvements that operators should be 
 - Running UDS Core version X.Y (or X.Y.z)
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a staging environment that mirrors production
-- Recent backup of your deployment (see [Backup & Restore](/how-to-guides/backup-restore/overview/))
+- Recent backup of your deployment (see [Backup & Restore](/core/how-to-guides/backup-restore/overview/))
 
 ## Pre-upgrade checklist
 
@@ -149,8 +149,8 @@ If you encounter issues not covered here:
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes and secret rotation
+- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) - applying config changes and secret rotation
 - [UDS Core X.Z Release Notes](https://github.com/defenseunicorns/uds-core/releases) - full changelog
 ```
 

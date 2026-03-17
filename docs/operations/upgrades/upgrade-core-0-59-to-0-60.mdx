@@ -6,8 +6,8 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-> [!CAUTION]
-> This guide covers specific changes for the 0.59 to 0.60 upgrade. For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+> [!NOTE]
+> This guide covers specific changes for the 0.59 to 0.60 upgrade. For general upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
 ## What changed
 
@@ -50,9 +50,9 @@ spec:
 ## Prerequisites
 
 - Running UDS Core v0.59.x
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli) installed
 - Access to a staging environment that mirrors production
-- Recent backup of your deployment (see [Backup & Restore](/how-to-guides/backup-restore/overview/))
+- Recent backup of your deployment (see [Backup & Restore](/core/how-to-guides/backup-restore/overview/))
 
 ## Pre-upgrade checklist
 
@@ -71,10 +71,10 @@ spec:
    Identify all Package CRs that do not set `spec.network.serviceMesh.mode` explicitly. These will switch to ambient mode on upgrade:
 
    ```bash
-   uds zarf tools kubectl get packages -A -o jsonpath='{range .items[?(!@.spec.network.serviceMesh.mode)]}{.metadata.namespace}/{.metadata.name}{"\n"}{end}'
+   uds zarf tools kubectl get packages -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\t"}{.spec.network.serviceMesh.mode}{"\n"}{end}'
    ```
 
-   Decide for each Package whether ambient mode is acceptable or whether you need to pin it to `sidecar`.
+   Packages with a blank value in the second column have no explicit mesh mode set. Decide for each whether ambient mode is acceptable or whether you need to pin it to `sidecar`.
 
 4. **Test in staging**
 
@@ -128,7 +128,7 @@ spec:
 1. **Verify UDS Core components**
 
    ```bash
-   uds zarf tools kubectl get pods -A | grep -v Running
+   uds zarf tools kubectl get pods -A
    ```
 
    All pods should be in `Running` or `Completed` state.
@@ -153,7 +153,7 @@ spec:
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes on a running platform
+- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) - applying config changes on a running platform
 - [UDS Core 0.60.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.0) - full changelog
 - [UDS Core 0.60.2 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.2) - patch fixes for ambient mode and stale authpolicies
