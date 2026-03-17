@@ -34,13 +34,23 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
 > [!NOTE]
 > ImageVolumes are currently blocked by UDS policies. You will need to add a policy exemption as part of this guide.
 
+> [!TIP]
+> If you are running on `uds-k3d` with Kubernetes < 1.35, you must enable the `ImageVolume` feature gate. Add the following to your `uds-config.yaml`:
+> ```yaml
+> variables:
+>   uds-k3d-dev:
+>     k3d_extra_args: >-
+>       --k3s-arg --kube-apiserver-arg=feature-gates=ImageVolume=true@server:0
+>       --k3s-arg --kubelet-arg=feature-gates=ImageVolume=true@server:0
+> ```
+
 ## Steps
 
 <Steps>
 
 1. **Build the CRL Zarf package**
 
-   Run the packaging script from the UDS Core repo root on a connected machine (or inside the enclave if you are supplying a pre-downloaded ZIP). The script fetches or accepts CRL files, builds an OCI data image from them, generates the Keycloak CRL path string, and creates a Zarf package.
+   Run the [packaging script](https://github.com/defenseunicorns/uds-core/tree/main/scripts/keycloak-crl-airgap) from the UDS Core repo root on a connected machine (or inside the enclave if you are supplying a pre-downloaded ZIP). The script fetches or accepts CRL files, builds an OCI data image from them, generates the Keycloak CRL path string, and creates a Zarf package.
 
    **Download CRLs from DISA and build the package (default):**
 
@@ -48,14 +58,14 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
    bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh
    ```
 
-   **Use a pre-downloaded ZIP (recommended for airgap transfer):**
+   **Use a pre-downloaded ZIP:**
 
    ```bash
    bash scripts/keycloak-crl-airgap/create-keycloak-crl-oci-volume-package.sh \
      --crl-zip /path/to/crls.zip
    ```
 
-   Download the ZIP on a connected machine, transfer it into the airgap or build system, then run the script locally to produce the package.
+   Use this option when you have already downloaded the CRL ZIP (e.g., on a connected machine before transferring into an airgap) or when you want to supply a custom set of CRLs instead of the default DISA ones.
 
    The script excludes DoD Email (`DODEMAIL*`) and Software (`DODSW*`) CRLs by default. To include them:
 
@@ -115,7 +125,7 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
    > [!NOTE]
    > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running when you apply these overrides, you must fully tear down and redeploy Keycloak for them to take effect.
 
-   > [!CAUTION]
+   > [!WARNING]
    > Setting `X509_CRL_ABORT_IF_NON_UPDATED: "false"` allows authentication to proceed if the CRL has passed its `nextUpdate` time. This is appropriate for airgapped environments where refreshing the CRL on a fixed schedule may not be possible, but means expired CRLs will not block authentication. Set to `"true"` if your environment requires strict CRL freshness enforcement.
 
 3. **Add the CRL package to your bundle and set deployment order**
@@ -160,19 +170,7 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
                          description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
    ```
 
-5. **(Optional) Enable ImageVolume on k3d for Kubernetes < 1.35**
-
-   If you are running on `uds-k3d` with Kubernetes < 1.35, enable the `ImageVolume` feature gate via `uds-config.yaml`:
-
-   ```yaml title="uds-config.yaml"
-   variables:
-     uds-k3d-dev:
-       k3d_extra_args: >-
-         --k3s-arg --kube-apiserver-arg=feature-gates=ImageVolume=true@server:0
-         --k3s-arg --kubelet-arg=feature-gates=ImageVolume=true@server:0
-   ```
-
-6. **Create and deploy your bundle**
+5. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -199,7 +197,7 @@ The listed files should match the CRL filenames from `keycloak-crl-paths.txt`.
 
 **Confirm the CRL path configuration:**
 
-In the Keycloak admin console at `keycloak.<admin_domain>` → **uds** realm → **Authentication** → **Policies** → **X.509 authenticator settings**, verify the CRL Distribution Points value matches the contents of `keycloak-crl-paths.txt`.
+In the Keycloak admin console at `keycloak.<admin_domain>` → **uds** realm → **Authentication** → **Flows** → **UDS Authentication** → **X509/Validate Username Form settings**, verify the CRL Distribution Points value matches the contents of `keycloak-crl-paths.txt`.
 
 **Test X.509 authentication:**
 
