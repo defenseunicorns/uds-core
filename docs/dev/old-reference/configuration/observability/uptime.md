@@ -181,7 +181,7 @@ Endpoint probes produce standard Blackbox Exporter metrics:
 
 ### Example Queries
 
-```promql
+```text
 # Check all probes and their success status
 probe_success
 

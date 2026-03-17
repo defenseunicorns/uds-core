@@ -35,7 +35,7 @@ UDS Core provides a shared platform layer — networking, identity, observabilit
 The **`Package` CR** is the contract between layers:
 
 - **App teams declare** *what* they need — ingress routes, SSO clients, monitoring endpoints, network policy exceptions
-- **The platform fulfills** *how* — Istio routing, Keycloak clients, Pepr policies are all handled automatically
+- **The platform fulfills** *how* — Istio routing, Keycloak clients, UDS policies are all handled automatically
 
 When an app needs a policy exception, the team creates an **`Exemption` CR** — keeping exceptions explicit, auditable, and separate from the `Package` CR.
 

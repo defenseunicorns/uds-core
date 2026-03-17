@@ -52,7 +52,7 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
    > [!TIP]
    > If you're not familiar with LogQL syntax, use the **Builder** mode instead. It provides dropdowns for selecting labels and values without writing queries by hand. You can switch between Builder and Code mode at any time.
 
-   ```logql
+   ```text
    # All logs from a specific namespace
    {namespace="my-app"}
 
@@ -70,7 +70,7 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
 
    After selecting a stream, add **line filters** to search within log messages:
 
-   ```logql
+   ```text
    # Lines containing "error" (case-sensitive)
    {namespace="my-app"} |= "error"
 
@@ -86,7 +86,7 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
 
    You can chain multiple filters. Each filter narrows the results further:
 
-   ```logql
+   ```text
    {namespace="my-app"} |= "error" != "healthcheck" != "metrics"
    ```
 
@@ -94,7 +94,7 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
 
    Use **parser expressions** to extract structured data from log lines:
 
-   ```logql
+   ```text
    # Parse JSON logs and filter on extracted fields
    {namespace="my-app"} | json | status_code >= 500
 
@@ -106,7 +106,7 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
 
    LogQL can compute metrics from log streams, useful for spotting patterns:
 
-   ```logql
+   ```text
    # Error rate per namespace over 5-minute windows
    sum(rate({namespace="my-app"} |= "error" [5m])) by (app)
 
