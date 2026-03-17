@@ -14,8 +14,4 @@ variables:
     CA_BUNDLE_CERTS: <base64 encoded certificate authority>
 ```
 
-:::note[Legacy Support]
-The `CA_CERT` variable is still supported for backwards compatibility but is deprecated. Use `CA_BUNDLE_CERTS` for new deployments.
-:::
-
 See [configuring Istio Ingress](https://uds.defenseunicorns.com/reference/configuration/ingress/#configure-domain-name-and-tls-for-istio-gateways) for the relevant documentation on configuring ingress certificates.
