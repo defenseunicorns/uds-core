@@ -1,0 +1,28 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - X509 Provider Hardcoded
+templates:
+  - statefulset.yaml
+
+tests:
+  - it: should render hardcoded nginx x509 provider env vars by default
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_X509CERT_LOOKUP__PROVIDER
+            value: nginx
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_X509CERT_LOOKUP__NGINX__SSL_CLIENT_CERT
+            value: istio-mtls-client-certificate
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_SPI_X509CERT_LOOKUP__NGINX__SSL_CLIENT_CERT_CHAIN_PREFIX
+            value: UNUSED
