@@ -174,8 +174,8 @@ The template repository provides the standard directory structure:
            port: 8080
            uptime:
              checks:
-                paths:
-                  - "/" # e2e uptime monitoring metrics for this path on your app
+               paths:
+                 - "/" # e2e uptime monitoring metrics for this path on your app
    ```
 
    The `allow` block creates NetworkPolicies following the principle of least privilege — only permit traffic your application actually needs:
