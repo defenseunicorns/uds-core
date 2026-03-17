@@ -18,7 +18,7 @@ You'll build a custom uds-identity-config image containing your theme, plugin, o
 
 ## Before you begin
 
-Most branding changes (logos, T&C content) do not require an image rebuild — they use `themeCustomizations` bundle overrides. See [Customize login page branding](/how-to-guides/identity-access/customize-branding/) for that approach.
+Most branding changes (logos, T&C content) do not require an image rebuild — they use `themeCustomizations` bundle overrides. See [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) for that approach.
 
 An image rebuild is required when you change:
 - CSS or FreeMarker templates in `src/theme/`
@@ -170,7 +170,7 @@ uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak
 ## Related Documentation
 
 - [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with task definitions and Dockerfile
-- [Identity & Authentication concepts](/concepts/core-features/identity-access/) — how the identity config image fits into the UDS Core identity layer
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — how the identity config image fits into the UDS Core identity layer
 
 ## Next steps
 
@@ -180,11 +180,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Customize login page branding"
     description="Replace logos and Terms & Conditions content via bundle overrides — no image rebuild needed."
-    href="/how-to-guides/identity-access/customize-branding/"
+    href="/how-to-guides/identity-and-authorization/customize-branding/"
   />
   <LinkCard
     title="Configure the CA truststore"
     description="Build a custom image with your organization's CA certificates for X.509/CAC authentication."
-    href="/how-to-guides/identity-access/configure-truststore/"
+    href="/how-to-guides/identity-and-authorization/configure-truststore/"
   />
 </CardGrid>

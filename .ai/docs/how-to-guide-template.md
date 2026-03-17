@@ -4,7 +4,7 @@
 
 How-to guides are task-oriented pages that walk a user through accomplishing a specific goal. Each guide covers a single task — configuring a component, enabling a feature, connecting an external dependency, etc.
 
-How-to guides live under `docs/how-to-guides/<section>/` and are grouped by domain (e.g., high-availability, networking, identity-access). The section provides context; the page title should be the specific topic (e.g., "Keycloak", "Logging").
+How-to guides live under `docs/how-to-guides/<section>/` and are grouped by domain (e.g., high-availability, networking, identity-and-authorization). The section provides context; the page title should be the specific topic (e.g., "Keycloak", "Logging").
 
 ### What belongs in a how-to guide
 

@@ -18,7 +18,7 @@ You'll configure Keycloak login behavior for your UDS Core deployment: setting c
 
 ## Before you begin
 
-This guide configures Keycloak via Helm chart values — the fastest path to operational changes with no image rebuild required. If you're unsure which approach fits your need, see [Keycloak configuration layers](/concepts/core-features/identity-access/#keycloak-configuration-layers). For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/).
+This guide configures Keycloak via Helm chart values — the fastest path to operational changes with no image rebuild required. If you're unsure which approach fits your need, see [Keycloak configuration layers](/concepts/core-features/identity-and-authorization/#keycloak-configuration-layers). For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/).
 
 > [!NOTE]
 > Settings applied via `realmInitEnv` or `realmAuthFlows` bundle overrides (covered in this guide and related guides) are only imported during the initial Keycloak realm setup. On a running instance, these require a full Keycloak teardown and redeploy to take effect — or you can apply them manually in the admin UI. Each relevant step below notes which settings are affected.
@@ -133,7 +133,7 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
    ```
 
    > [!NOTE]
-   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-access/enable-fips-mode/).
+   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
 
 </Steps>
 
@@ -182,8 +182,8 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 
 ## Related Documentation
 
-- [Build a custom Keycloak configuration image](/how-to-guides/identity-access/build-deploy-custom-image/) — for theme and plugin customization beyond Helm values
-- [Manage FIPS 140-2 mode](/how-to-guides/identity-access/enable-fips-mode/) — verify FIPS status and understand constraints
+- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) — for theme and plugin customization beyond Helm values
+- [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) — verify FIPS status and understand constraints
 - [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full spec for SSO client configuration
 
@@ -195,11 +195,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Enforce group-based access controls"
     description="Restrict application access to users in specific Keycloak groups using the Package CR."
-    href="/how-to-guides/identity-access/enforce-group-based-access/"
+    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
   />
   <LinkCard
     title="Connect Azure AD as an identity provider"
     description="Federate Keycloak with Azure Entra ID for enterprise SSO."
-    href="/how-to-guides/identity-access/connect-azure-ad-idp/"
+    href="/how-to-guides/identity-and-authorization/connect-azure-ad-idp/"
   />
 </CardGrid>

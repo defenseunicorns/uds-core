@@ -28,7 +28,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
 | `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | unset | Additional client scopes to allow beyond the UDS defaults |
 
 > [!NOTE]
-> Settings for session timeouts, concurrent session limits, and logout behavior are covered in [Configure Keycloak login policies](/how-to-guides/identity-access/configure-keycloak-login-policies/). Settings for authentication methods (password, CAC, WebAuthn) are covered in [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/). Account lockout thresholds are covered in [Configure Keycloak account lockout](/how-to-guides/identity-access/configure-account-lockout/).
+> Settings for session timeouts, concurrent session limits, and logout behavior are covered in [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/). Settings for authentication methods (password, CAC, WebAuthn) are covered in [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/). Account lockout thresholds are covered in [Configure Keycloak account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/).
 
 ## Steps
 
@@ -176,7 +176,7 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Client Polic
 ## Related Documentation
 
 - [Keycloak password policies](https://www.keycloak.org/docs/latest/server_admin/#_password-policies) — full list of Keycloak password policy types
-- [Configure Keycloak authentication methods](/how-to-guides/identity-access/configure-authentication-flows/) — enable or disable authentication flows alongside password and account settings
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — enable or disable authentication flows alongside password and account settings
 - [Custom Keycloak plugin](/concepts/core-features/keycloak-plugin/) — how the UDS plugin enforces protocol mapper and client scope restrictions
 
 ## Next steps
@@ -187,11 +187,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure Keycloak login policies"
     description="Set session timeouts, concurrent session limits, and logout confirmation behavior."
-    href="/how-to-guides/identity-access/configure-keycloak-login-policies/"
+    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
   />
   <LinkCard
     title="Manage Keycloak with OpenTofu"
     description="Use the built-in OpenTofu client to programmatically manage Keycloak resources."
-    href="/how-to-guides/identity-access/manage-keycloak-with-opentofu/"
+    href="/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/"
   />
 </CardGrid>

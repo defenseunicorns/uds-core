@@ -50,7 +50,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    | CAC + MFA | Enable `X509_MFA_ENABLED` (also requires `OTP_ENABLED` or `WEBAUTHN_ENABLED`) |
 
    > [!NOTE]
-   > UDS Core ships with DoD UNCLASSIFIED CA certificates by default, so X.509/CAC authentication works out of the box in DoD environments. If your environment uses a different CA chain, see [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/).
+   > UDS Core ships with DoD UNCLASSIFIED CA certificates by default, so X.509/CAC authentication works out of the box in DoD environments. If your environment uses a different CA chain, see [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/).
 
 2. **Add `realmAuthFlows` to your bundle override**
 
@@ -78,7 +78,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    For clarity and auditability, specifying all settings explicitly is recommended — even settings you are leaving at their defaults.
 
    > [!NOTE]
-   > If you are disabling `X509_AUTH_ENABLED`, also update your Istio gateway configuration to stop requesting client certificates from browsers. With X.509 auth disabled, the gateway should not present mutual TLS to users — set the `tls.cacert` override on `istio-tenant-gateway` (and `istio-admin-gateway` if applicable) to an empty string or remove it. See [Configure the CA truststore](/how-to-guides/identity-access/configure-truststore/) for the gateway override structure.
+   > If you are disabling `X509_AUTH_ENABLED`, also update your Istio gateway configuration to stop requesting client certificates from browsers. With X.509 auth disabled, the gateway should not present mutual TLS to users — set the `tls.cacert` override on `istio-tenant-gateway` (and `istio-admin-gateway` if applicable) to an empty string or remove it. See [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) for the gateway override structure.
 
 3. **Create and deploy your bundle**
 
@@ -198,11 +198,11 @@ These guides and concepts may be useful to explore next:
   <LinkCard
     title="Configure the CA truststore"
     description="Configure the CA certificate bundle required for X.509/CAC authentication."
-    href="/how-to-guides/identity-access/configure-truststore/"
+    href="/how-to-guides/identity-and-authorization/configure-truststore/"
   />
   <LinkCard
     title="Configure user accounts and security policies"
     description="Set password complexity and email verification alongside auth flow configuration."
-    href="/how-to-guides/identity-access/configure-user-account-settings/"
+    href="/how-to-guides/identity-and-authorization/configure-user-account-settings/"
   />
 </CardGrid>
