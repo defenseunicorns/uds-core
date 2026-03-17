@@ -60,7 +60,7 @@
             "adminDomain": {
               "type": "string",
               "description": "Admin domain for cluster exposure."
-            },
+            }
           }
         },
         "policy": {
