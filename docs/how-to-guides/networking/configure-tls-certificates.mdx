@@ -4,7 +4,7 @@ sidebar:
   order: 2.01
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -212,20 +212,5 @@ base64 -i my-cert.pem | tr -d '\n'          # macOS
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/)
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Expose applications on gateways"
-    description="Make applications accessible through the tenant or admin gateway."
-    href="/how-to-guides/networking/expose-apps-on-gateways/"
-  />
-  <LinkCard
-    title="Enable the passthrough gateway"
-    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
-    href="/how-to-guides/networking/enable-passthrough-gateway/"
-  />
-</CardGrid>
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/)
+- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/)

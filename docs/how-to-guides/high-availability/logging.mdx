@@ -4,7 +4,7 @@ sidebar:
   order: 1.2
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -232,20 +232,5 @@ If the pod is not running, check for resource pressure or scheduling issues on t
 - [Grafana Loki: Storage Configuration](https://grafana.com/docs/loki/latest/configure/storage/) — full list of supported storage backends
 - [Grafana Loki: Scalable Deployment](https://grafana.com/docs/loki/latest/get-started/deployment-modes/#simple-scalable) — SimpleScalable mode architecture
 - [Vector: Going to Production](https://vector.dev/docs/setup/going-to-prod/) — Vector production resource and tuning recommendations
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure HA for Monitoring"
-    description="Grafana connects to Loki for log visualization and also requires HA configuration."
-    href="/how-to-guides/high-availability/monitoring/"
-  />
-  <LinkCard
-    title="Logging concepts"
-    description="Background on the Vector → Loki → Grafana pipeline in UDS Core."
-    href="/concepts/core-features/logging/"
-  />
-</CardGrid>
+- [Configure HA for Monitoring](/how-to-guides/high-availability/monitoring/) — Grafana connects to Loki for log visualization and also requires HA configuration.
+- [Logging concepts](/concepts/core-features/logging/) — Background on the Vector → Loki → Grafana pipeline in UDS Core.

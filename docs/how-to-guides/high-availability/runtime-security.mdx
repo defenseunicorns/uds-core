@@ -4,7 +4,7 @@ sidebar:
   order: 1.5
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -128,20 +128,5 @@ Common causes include network policies blocking outbound traffic and incorrect w
 - [Falco: Default Rules Reference](https://falco.org/docs/reference/rules/default-rules/) — built-in detection rules
 - [Falco: Outputs and Alerting](https://falco.org/docs/concepts/outputs/) — how Falco delivers alerts to Falcosidekick and other destinations
 - [Falcosidekick: Configuration](https://github.com/falcosecurity/falcosidekick#configuration) — supported output destinations and tuning options
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure HA for Service Mesh"
-    description="Verify Istio control plane resilience and pod distribution across nodes."
-    href="/how-to-guides/high-availability/service-mesh/"
-  />
-  <LinkCard
-    title="Runtime Security concepts"
-    description="Background on how Falco and Falcosidekick work in UDS Core."
-    href="/concepts/core-features/runtime-security/"
-  />
-</CardGrid>
+- [Configure HA for Service Mesh](/how-to-guides/high-availability/service-mesh/) — Verify Istio control plane resilience and pod distribution across nodes.
+- [Runtime Security concepts](/concepts/core-features/runtime-security/) — Background on how Falco and Falcosidekick work in UDS Core.

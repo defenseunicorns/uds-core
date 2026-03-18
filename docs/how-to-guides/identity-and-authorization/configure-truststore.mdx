@@ -4,7 +4,7 @@ sidebar:
   order: 3.08
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -194,20 +194,5 @@ unzip -t src/authorized_certs.zip
 
 - [Keycloak: X.509 client certificate user authentication](https://www.keycloak.org/docs/latest/server_admin/#_x509) — upstream reference for X.509/CAC authentication configuration in Keycloak
 - [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with Dockerfile, `ca-to-jks.sh`, and task definitions
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable X.509/CAC authentication after the truststore is configured."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-  <LinkCard
-    title="Build a custom Keycloak configuration image"
-    description="End-to-end workflow for building, publishing, and deploying a custom image."
-    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
-  />
-</CardGrid>
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable X.509/CAC authentication after the truststore is configured.
+- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) — End-to-end workflow for building, publishing, and deploying a custom image.

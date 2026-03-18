@@ -137,23 +137,8 @@ uds zarf tools kubectl get pods -n namespace
 
 - [External Doc: Topic](https://example.com) — brief description
 - [Internal Doc: Topic](/path/to/page/) — brief description
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Related Guide"
-    description="Why this is a natural next step."
-    href="/how-to-guides/section/page/"
-  />
-  <LinkCard
-    title="Related Concepts"
-    description="Background on how this works in UDS Core."
-    href="/concepts/core-features/topic/"
-  />
-</CardGrid>
+- [Related Guide](/how-to-guides/section/page/) — Why this is a related guide.
+- [Related Concepts](/concepts/core-features/topic/) — Background on how this works in UDS Core.
 ```
 
 ## Conventions
@@ -168,6 +153,9 @@ These guides and concepts may be useful to explore next:
 - When a step has multiple options (pick-one), use `<Tabs>` and `<TabItem>` components within the step rather than listing options with bold headings
 - Files use `.mdx` extension
 - Page titles are bare topic names — breadcrumbs provide section context
+- Frontmatter `title:` must not use surrounding quotes (e.g. `title: Policy Violations`, not `title: "Policy Violations"`) — quotes are unnecessary in YAML for plain strings and create inconsistency
+- Do not repeat the frontmatter `title:` as a `##` heading in the page body — Starlight renders the title automatically as the page's `<h1>`; a duplicate heading creates redundant visual hierarchy
+- The related links section must be headed `## Related Documentation` (capital D) — not `## Related documentation` or any other casing
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only
 - Code blocks use titles: `` ```yaml title="uds-bundle.yaml" ``
 - No `oci://` prefix on repository references
@@ -192,9 +180,8 @@ These guides and concepts may be useful to explore next:
      uds zarf tools kubectl apply -f manifest.yaml
      ```
   ```
-- Related Documentation comes before Next Steps
-- Next Steps uses `<CardGrid>` with `<LinkCard>` components
-- Related Documentation and Next Steps should not overlap: Related Documentation links to reference pages, external docs, and concepts; Next Steps links to actionable how-to guides or concepts as a natural follow-up
+- How-to guides use a single `## Related Documentation` section with a flat bullet list — no `## Next steps` section. All links (reference docs, external resources, follow-up guides, related concepts) go in this one section as bullets.
+- Overview/landing pages (e.g., `overview.mdx` files that introduce a section) may use `<CardGrid>` and `<LinkCard>` for visual navigation — the bullets-only convention applies to how-to guide body content only.
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
 - Troubleshooting headings use the `### Problem: Description` format, with `**Symptom:**` (singular) or `**Symptoms:**` (plural) and `**Solution:**` sub-headings
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing

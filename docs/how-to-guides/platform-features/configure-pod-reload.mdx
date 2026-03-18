@@ -4,7 +4,7 @@ sidebar:
   order: 10.1
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -133,18 +133,5 @@ uds zarf tools kubectl get pods -n <namespace> --show-labels
 
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — pod reload can be enabled for SSO client secrets via `secretConfig.labels`
 - [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) — pod reload can be enabled for CA certificate ConfigMaps via `caBundle.configMap.labels`
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title="Enable the classification banner"
-    description="Inject security classification markings into web UIs via Istio EnvoyFilter."
-    href="/how-to-guides/platform-features/enable-classification-banner/"
-  />
-  <LinkCard
-    title="Networking concepts"
-    description="Understand how UDS Core manages service mesh and network policies."
-    href="/concepts/core-features/networking/"
-  />
-</CardGrid>
+- [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) — Inject security classification markings into web UIs via Istio EnvoyFilter.
+- [Networking concepts](/concepts/core-features/networking/) — Understand how UDS Core manages service mesh and network policies.

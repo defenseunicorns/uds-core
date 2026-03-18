@@ -229,7 +229,7 @@ overrides:
 
 The client secret can be retrieved from the Keycloak Admin Console: **UDS realm → Clients → uds-opentofu-client → Credentials**.
 
-## Related documentation
+## Related Documentation
 
 - [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
 - [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides

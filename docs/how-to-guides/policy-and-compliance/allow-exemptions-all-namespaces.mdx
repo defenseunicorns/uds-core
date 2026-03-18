@@ -4,7 +4,8 @@ sidebar:
   order: 8.03
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
+
 
 ## What you'll accomplish
 
@@ -102,20 +103,5 @@ uds zarf tools kubectl get clusterconfig uds-cluster-config -o jsonpath='{.spec.
 
 - [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
 - [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) - securing who can create Exemption resources
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Audit security posture"
-    description="Review exemptions across all namespaces for scope and justification."
-    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
-  />
-  <LinkCard
-    title="Create UDS policy exemptions"
-    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
-    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
-  />
-</CardGrid>
+- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) — Review exemptions across all namespaces for scope and justification.
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.

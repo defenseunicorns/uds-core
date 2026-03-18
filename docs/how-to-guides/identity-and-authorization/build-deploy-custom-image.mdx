@@ -4,7 +4,7 @@ sidebar:
   order: 3.07
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -171,20 +171,5 @@ uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak
 
 - [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with task definitions and Dockerfile
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — how the identity config image fits into the UDS Core identity layer
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Customize login page branding"
-    description="Replace logos and Terms & Conditions content via bundle overrides — no image rebuild needed."
-    href="/how-to-guides/identity-and-authorization/customize-branding/"
-  />
-  <LinkCard
-    title="Configure the CA truststore"
-    description="Build a custom image with your organization's CA certificates for X.509/CAC authentication."
-    href="/how-to-guides/identity-and-authorization/configure-truststore/"
-  />
-</CardGrid>
+- [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) — Replace logos and Terms & Conditions content via bundle overrides — no image rebuild needed.
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — Build a custom image with your organization's CA certificates for X.509/CAC authentication.

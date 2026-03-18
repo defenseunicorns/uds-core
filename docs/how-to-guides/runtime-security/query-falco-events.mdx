@@ -4,7 +4,7 @@ sidebar:
   order: 6.2
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -106,20 +106,5 @@ After a few seconds, query Loki with `{rule="Terminal shell in container"}` and 
 - [Loki LogQL documentation](https://grafana.com/docs/loki/latest/query/) — full reference for Loki query syntax
 - [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — rule names and priorities for filtering queries
 - [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Tune Falco runtime detections"
-    description="Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules."
-    href="/how-to-guides/runtime-security/tune-falco-detections/"
-  />
-  <LinkCard
-    title="Route runtime alerts to external destinations"
-    description="Forward Falco detections to Slack, Mattermost, or Microsoft Teams."
-    href="/how-to-guides/runtime-security/route-runtime-alerts/"
-  />
-</CardGrid>
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) — Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
+- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) — Forward Falco detections to Slack, Mattermost, or Microsoft Teams.

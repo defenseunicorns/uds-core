@@ -4,7 +4,7 @@ sidebar:
   order: 4.3
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -163,18 +163,5 @@ The compactor needs at least one full compaction cycle plus the `retention_delet
 - [Grafana Loki: Retention](https://grafana.com/docs/loki/latest/operations/storage/retention/) — full compactor retention reference
 - [Grafana Loki: Limits Config](https://grafana.com/docs/loki/latest/configure/#limits_config) — all limits_config fields including retention
 - [Configure HA logging](/how-to-guides/high-availability/logging/) — S3 storage setup and Loki scaling
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title="Query application logs"
-    description="Find and filter logs using Grafana and LogQL."
-    href="/how-to-guides/logging/query-application-logs/"
-  />
-  <LinkCard
-    title="Logging Concepts"
-    description="How the Vector → Loki → Grafana pipeline works in UDS Core."
-    href="/concepts/core-features/logging/"
-  />
-</CardGrid>
+- [Query application logs](/how-to-guides/logging/query-application-logs/) — Find and filter logs using Grafana and LogQL.
+- [Logging Concepts](/concepts/core-features/logging/) — How the Vector → Loki → Grafana pipeline works in UDS Core.

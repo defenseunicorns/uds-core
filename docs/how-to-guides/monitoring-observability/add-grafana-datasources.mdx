@@ -4,7 +4,7 @@ sidebar:
   order: 5.3
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -89,20 +89,5 @@ uds zarf tools kubectl get configmap grafana-datasources -n grafana -o yaml
 
 - [Grafana: Data sources](https://grafana.com/docs/grafana/latest/datasources/) — full list of supported datasource types and configuration options
 - [Grafana: Provisioning data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources) — YAML provisioning format reference
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Add custom dashboards to Grafana"
-    description="Deploy dashboards that use your new datasource."
-    href="/how-to-guides/monitoring-observability/add-custom-dashboards/"
-  />
-  <LinkCard
-    title="Monitoring & Observability concepts"
-    description="Background on how the monitoring stack fits together in UDS Core."
-    href="/concepts/core-features/monitoring-observability/"
-  />
-</CardGrid>
+- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) — Deploy dashboards that use your new datasource.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on how the monitoring stack fits together in UDS Core.
