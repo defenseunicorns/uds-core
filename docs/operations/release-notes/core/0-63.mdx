@@ -1,0 +1,57 @@
+---
+title: UDS Core 0.63
+sidebar:
+  order: 3.004
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What changed
+
+UDS Core 0.63 introduces built-in uptime observability with recording rules and a Core Uptime dashboard, and adds a standalone CRDs functional layer that allows installing UDS CRDs before `core-base`. No breaking changes are included in this release.
+
+### Breaking changes
+
+There are no UDS Core breaking changes in this release. However, two upstream dependency changes may affect operators with custom overrides:
+
+| Change | Impact | Action required |
+|--------|--------|-----------------|
+| Grafana Helm chart upgraded from 10.x to 11.x | Chart now requires Kubernetes 1.25+; chart source moved to `grafana-community` repository | Verify your cluster meets the minimum Kubernetes version; review and update any custom Grafana chart overrides for 11.x compatibility |
+| Keycloak image renamed from `keycloak` to `keycloak-fips` | Custom overrides referencing the old image name will pull the wrong image | Update any bundle overrides that reference the Keycloak image name |
+
+### Notable features
+
+- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration
+- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure
+
+## Upgrade considerations
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Review Grafana overrides**
+
+   If you have custom Grafana Helm chart overrides in your bundle, review them for compatibility with chart 11.x. The chart source has moved to the `grafana-community` repository, and the minimum Kubernetes version is now 1.25.
+
+2. **Review Keycloak image references**
+
+   If you have bundle overrides that reference the Keycloak image name, update them from `keycloak` to `keycloak-fips`.
+
+</Steps>
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Confirm uptime dashboard**
+
+   Open Grafana and verify the new Core Uptime dashboard is available and displaying data.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [UDS Core 0.63.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.63.0) — full changelog

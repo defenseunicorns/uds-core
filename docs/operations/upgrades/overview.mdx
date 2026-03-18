@@ -6,7 +6,7 @@ sidebar:
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-This guide covers the general procedures, checklists, and strategies for upgrading UDS Core. For version-specific breaking changes and migration steps, see the version-specific guides linked at the bottom of this page.
+This guide covers the general procedures, checklists, and strategies for upgrading UDS Core. For version-specific breaking changes, notable features, and upgrade considerations, see the [Release Notes](/core/operations/release-notes/overview/).
 
 ## Why upgrades matter
 
@@ -72,7 +72,7 @@ Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly test
 
 3. **Review Keycloak upgrade steps**
 
-   Check for Keycloak-specific migration steps in the release notes. Some UDS Core upgrades require manual Keycloak realm configuration changes. See [Upgrade Keycloak realm configuration](/core/operations/upgrade-keycloak-realm/) for details.
+   Check for Keycloak-specific migration steps in the release notes. Some UDS Core upgrades require manual Keycloak realm configuration changes. See [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) for details.
 
 4. **Test in staging**
 
@@ -98,7 +98,7 @@ Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly test
 
 1. **Update the UDS Core bundle reference**
 
-   Update the version reference in your `uds-bundle.yaml`:
+   Update the version `ref` in your `uds-bundle.yaml`:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -139,12 +139,22 @@ After the bundle deployment completes, verify the health and functionality of yo
    The deployment performs basic health checks automatically. Additionally, confirm all UDS Core components are accessible at their endpoints with SSO login working.
 
    ```bash
-   uds zarf tools kubectl get pods -A | grep -v Running
+   uds zarf tools kubectl get pods -A | grep -Ev 'Running|Completed'
    ```
 
-   All pods should be in `Running` or `Completed` state.
+   This command filters out healthy pods. If it produces output, investigate those pods before proceeding.
 
-2. **Verify mission applications**
+2. **Verify Package resource status**
+
+   Confirm all UDS `Package` resources are `Ready`:
+
+   ```bash
+   uds zarf tools kubectl get packages -A
+   ```
+
+   All packages should show `Ready` in the `STATUS` column before proceeding.
+
+3. **Verify mission applications**
 
    Check that your applications are still running and healthy. Validate endpoint accessibility and confirm monitoring and SSO are working as expected.
 
@@ -161,32 +171,9 @@ Rather than attempting a rollback, use the following approaches:
 2. **Manual intervention:** where necessary, perform manual one-time fixes to restore access. Report persistent issues as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address
 3. **Restore from backup:** in critical situations, restore from backups rather than attempting a version rollback. See [Backup & Restore](/core/how-to-guides/backup-restore/overview/) for guidance
 
-## Version-specific guides
+## Release notes
 
-These guides cover breaking changes, migration steps, and verification for specific version upgrades:
-
-<CardGrid>
-  <LinkCard
-    title="0.59 to 0.60"
-    description="Istio ambient mode default, SSO secret field changes, Keycloak logout confirmation."
-    href="/core/operations/upgrades/upgrade-core-0-59-to-0-60/"
-  />
-  <LinkCard
-    title="0.60 to 0.61"
-    description="Blackbox Exporter, Keycloak HA, trust bundle on external apps. Skip v0.61.0, upgrade to v0.61.1."
-    href="/core/operations/upgrades/upgrade-core-0-60-to-0-61/"
-  />
-  <LinkCard
-    title="0.61 to 0.62"
-    description="Falco chart 8.x upgrade, uptime probes for Authservice apps, Falco rule overrides."
-    href="/core/operations/upgrades/upgrade-core-0-61-to-0-62/"
-  />
-  <LinkCard
-    title="0.62 to 0.63"
-    description="Core uptime observability, CRDs functional layer. Grafana chart 11.x, Keycloak FIPS image rename."
-    href="/core/operations/upgrades/upgrade-core-0-62-to-0-63/"
-  />
-</CardGrid>
+For version-specific breaking changes, notable features, and upgrade considerations, see the [Release Notes](/core/operations/release-notes/overview/).
 
 ## Additional resources
 
@@ -199,7 +186,7 @@ These guides cover breaking changes, migration steps, and verification for speci
   <LinkCard
     title="Keycloak Realm Upgrades"
     description="Version-specific steps for Keycloak realm configuration changes."
-    href="/core/operations/upgrade-keycloak-realm/"
+    href="/core/operations/upgrades/upgrade-keycloak-realm/"
   />
   <LinkCard
     title="GitHub Release Notes"

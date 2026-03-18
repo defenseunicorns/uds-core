@@ -1,7 +1,7 @@
 ---
 title: Upgrade Keycloak realm configuration
 sidebar:
-  order: 8
+  order: 2.6
 ---
 
 > [!NOTE]

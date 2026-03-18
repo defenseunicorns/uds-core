@@ -1,0 +1,38 @@
+---
+title: UDS Core 0.61
+sidebar:
+  order: 3.002
+---
+
+## What changed
+
+UDS Core 0.61 adds Blackbox Exporter to the monitoring layer, improves Keycloak high availability, and applies the UDS trust bundle to all external-facing UDS Core applications. The v0.61.1 patch also fixes cleanup of stale network authpolicies when the default mesh mode changes.
+
+### Breaking changes
+
+No breaking changes in this release.
+
+### Notable features
+
+- **Blackbox Exporter:** optional monitoring component for probing endpoint availability from outside the mesh
+- **Keycloak HA improvements:** enhanced high availability capabilities for the identity management layer
+- **Trust bundle on external-facing apps:** all external-facing UDS Core applications now use the UDS trust bundle for consistent PKI integration
+
+## Upgrade considerations
+
+> [!IMPORTANT]
+> Skip v0.61.0 and upgrade directly to v0.61.1. The v0.61.0 release introduced a redirect URI validation change that was reverted in v0.61.1, along with a fix for stale network authpolicies during mesh mode transitions.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    # Upgrade to 0.61.1 (skip 0.61.0)
+    ref: 0.61.1-upstream
+```
+
+## Related documentation
+
+- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [UDS Core 0.61.1 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.61.1) — full changelog

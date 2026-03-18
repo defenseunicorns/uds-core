@@ -13,7 +13,7 @@ This guide covers how to apply configuration changes to a running UDS Core deplo
 
 ## Applying bundle override changes
 
-When you need to change UDS Core configuration (adjusting resource limits, enabling features, or updating external endpoints), modify your bundle overrides and redeploy.
+When you need to change UDS Core configuration (such as adjusting resource limits, enabling features, or updating external endpoints), modify your bundle overrides and redeploy.
 
 <Steps>
 
@@ -46,10 +46,10 @@ When you need to change UDS Core configuration (adjusting resource limits, enabl
 
 3. **Verify the change**
 
-   Confirm the affected pods have picked up the new configuration:
+   Confirm the affected resources reflect the new configuration, for example:
 
    ```bash
-   uds zarf tools kubectl get pods -n <namespace> -w
+   uds zarf tools kubectl describe <resource> -n <namespace>
    ```
 
 </Steps>

@@ -1,13 +1,10 @@
 ---
-title: Upgrade UDS Core 0.59 to 0.60
+title: UDS Core 0.60
 sidebar:
-  order: 2.1
+  order: 3.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
-
-> [!NOTE]
-> This guide covers specific changes for the 0.59 to 0.60 upgrade. For general upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
 ## What changed
 
@@ -27,7 +24,12 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 - **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default
 - **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration
 
-### Known issues
+## Upgrade considerations
+
+> [!IMPORTANT]
+> Upgrade directly to v0.60.2 to avoid known issues with v0.60.0 and v0.60.1. The bundle reference below targets v0.60.2.
+
+### Known issues in v0.60.0 and v0.60.1
 
 Packages with an unset `spec.network.serviceMesh.mode` that request Authservice protection encounter two issues:
 
@@ -44,29 +46,11 @@ spec:
       mode: ambient
 ```
 
-> [!IMPORTANT]
-> Upgrade directly to v0.60.2 to avoid both known issues. The bundle reference below targets v0.60.2.
-
-## Prerequisites
-
-- Running UDS Core v0.59.x
-- [UDS CLI](https://github.com/defenseunicorns/uds-cli) installed
-- Access to a staging environment that mirrors production
-- Recent backup of your deployment (see [Backup & Restore](/core/how-to-guides/backup-restore/overview/))
-
-## Pre-upgrade checklist
+### Pre-upgrade steps
 
 <Steps>
 
-1. **Review the full release notes**
-
-   Read the [0.60.0 release notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.0) for the complete list of changes.
-
-2. **Check for deprecated features**
-
-   Review [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md) for features deprecated in this or earlier versions. Resolve any deprecation warnings before upgrading.
-
-3. **Audit Package CRs for mesh mode**
+1. **Audit Package CRs for mesh mode**
 
    Identify all Package CRs that do not set `spec.network.serviceMesh.mode` explicitly. These will switch to ambient mode on upgrade:
 
@@ -75,26 +59,6 @@ spec:
    ```
 
    Packages with a blank value in the second column have no explicit mesh mode set. Decide for each whether ambient mode is acceptable or whether you need to pin it to `sidecar`.
-
-4. **Test in staging**
-
-   Perform the upgrade in a staging environment before applying to production.
-
-</Steps>
-
-## Upgrade procedure
-
-<Steps>
-
-1. **Update your bundle reference**
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       # Upgrade from 0.59.x to 0.60.2 (includes fixes for ambient mode and stale authpolicies)
-       ref: 0.60.2-upstream
-   ```
 
 2. **Set explicit mesh mode on Package CRs**
 
@@ -112,32 +76,23 @@ spec:
 
    Update any `spec.sso` configurations in your Package CRs to use the new field names. Review the release notes for the specific field mapping.
 
-4. **Build and deploy**
+4. **Target v0.60.2**
 
-   ```bash
-   uds create <path-to-bundle-dir>
-   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       # Upgrade to 0.60.2 (includes fixes for ambient mode and stale authpolicies)
+       ref: 0.60.2-upstream
    ```
 
 </Steps>
 
-## Post-upgrade verification
+### Post-upgrade verification
 
 <Steps>
 
-1. **Verify UDS Core components**
-
-   ```bash
-   uds zarf tools kubectl get pods -A
-   ```
-
-   All pods should be in `Running` or `Completed` state.
-
-2. **Validate SSO and endpoint access**
-
-   Confirm all UDS Core UIs are accessible and SSO login works. Verify that the new logout confirmation prompt appears.
-
-3. **Confirm Istio mesh mode**
+1. **Confirm Istio mesh mode**
 
    Verify that workloads are running in the expected mesh mode:
 
@@ -145,15 +100,15 @@ spec:
    uds zarf tools kubectl get packages -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}: {.spec.network.serviceMesh.mode}{"\n"}{end}'
    ```
 
-4. **Verify mission applications**
+2. **Validate SSO and logout**
 
-   Confirm your applications are running and healthy.
+   Confirm SSO login works and the new logout confirmation prompt appears.
 
 </Steps>
 
 ## Related documentation
 
-- [Upgrade Overview](/core/operations/upgrades/overview/) - general upgrade procedures and checklists
-- [Configuration Changes](/core/operations/upgrades/configuration-changes/) - applying config changes on a running platform
-- [UDS Core 0.60.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.0) - full changelog
-- [UDS Core 0.60.2 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.2) - patch fixes for ambient mode and stale authpolicies
+- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [UDS Core 0.60.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.0) — full changelog
+- [UDS Core 0.60.2 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.2) — patch fixes for ambient mode and stale authpolicies
