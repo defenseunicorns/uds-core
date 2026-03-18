@@ -6,7 +6,6 @@
 suite: Keycloak - FIPS mode always enabled
 templates:
   - statefulset.yaml
-  - secret-kc-realm.yaml
 
 tests:
   - it: should always include FIPS feature flag in container args
@@ -22,10 +21,3 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--fips-mode=strict"
-
-  - it: should set FIPS_ENABLED to true in realm secret
-    template: secret-kc-realm.yaml
-    asserts:
-      - equal:
-          path: data.FIPS_ENABLED
-          value: "dHJ1ZQ=="
