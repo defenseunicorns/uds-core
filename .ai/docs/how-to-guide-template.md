@@ -37,6 +37,7 @@ Brief intro paragraph (2-3 sentences) explaining what the user will configure an
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token <!-- include if guide references registry.defenseunicorns.com packages -->
 - Access to a Kubernetes cluster [qualifier, e.g., "(**multi-node**, multi-AZ recommended)"]
 - [Guide-specific: external dependency, credential requirement, or knowledge prereq]
 
@@ -160,6 +161,7 @@ These guides and concepts may be useful to explore next:
 
 ### Prerequisites
 - Always list: **UDS CLI installed** and **Access to a Kubernetes cluster** (with guide-specific qualifiers like "(**multi-node**, multi-AZ recommended)")
+- If the guide references `registry.defenseunicorns.com` packages (e.g., bundle YAML with `repository: registry.defenseunicorns.com/...`), include: **[UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token**
 - Guide-specific items: external dependencies (e.g., external PostgreSQL), credential requirements, knowledge prereqs (e.g., familiarity with bundle overrides)
 
 ### General

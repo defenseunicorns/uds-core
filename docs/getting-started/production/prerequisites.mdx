@@ -149,6 +149,16 @@ Apply this as part of your node image build or cloud-init process.
 
 ---
 
+## UDS Registry Access
+
+UDS Core packages are published to the [UDS Registry](https://registry.defenseunicorns.com). You need an account and a read token to pull packages.
+
+1. **Create an account** at [registry.defenseunicorns.com](https://registry.defenseunicorns.com)
+2. **Create a read token** from your account settings in the registry web UI
+3. **Authenticate locally** using the command provided in the registry web UI after creating your token
+
+---
+
 ## Checklist
 
 Before moving on, confirm:
@@ -161,4 +171,5 @@ Before moving on, confirm:
 - Object storage buckets are created with credentials available
 - An external PostgreSQL database for Keycloak is available with credentials ready
 - UDS CLI is installed (`uds version`)
+- Authenticated to the [UDS Registry](https://registry.defenseunicorns.com) with a read token
 
