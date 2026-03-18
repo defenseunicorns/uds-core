@@ -28,7 +28,8 @@ sidebar:
   order: X.X
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+{/* Only add CardGrid / LinkCard if this is an overview/landing page — how-to guides do not use those components. */}
 
 ## What you'll accomplish
 
