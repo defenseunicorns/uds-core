@@ -28,7 +28,7 @@ UDS Core is not a traditional library — its public API is defined by the surfa
 | **Configuration and packaging** | Config chart values, exposed Zarf variables, component organization and included components in published packages |
 | **Default security posture** | Network policies, service mesh config, runtime security, mutations and validations |
 
-Anything not listed above (internal Helm templates, test utilities, unexposed implementation details) is **not** part of the public API. See the full [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the complete definition and examples.
+Anything not listed above (internal Helm templates, test utilities, unexposed implementation details) is **not** part of the public API. See the full [versioning policy](/reference/policies/versioning/) for the complete definition and examples.
 
 > [!WARNING]
 > **Security exception:** As a security-first platform, UDS Core may release security-related breaking changes in minor versions when the security benefit outweighs the disruption of waiting for a major release. These changes are still clearly advertised as breaking in the changelog and release notes.
@@ -46,7 +46,7 @@ In general:
 > [!NOTE]
 > Upstream major helm chart or application version changes that don't affect UDS Core's API contract are not considered breaking changes.
 
-See the [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the full breakdown and examples of each category.
+See the [versioning policy](/reference/policies/versioning/) for the full breakdown and examples of each category.
 
 ## Version Support
 
@@ -66,7 +66,7 @@ Deprecations use the `feat(deprecation)` conventional commit format and appear i
 - The recommended replacement or migration path
 - The projected major version in which it will be removed
 
-All active deprecations are tracked in [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md).
+All active deprecations are tracked in [DEPRECATIONS.md](/reference/policies/deprecations/).
 
 ### Support Period
 
