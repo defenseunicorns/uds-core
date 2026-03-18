@@ -4,7 +4,7 @@ sidebar:
   order: 5.6
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -159,20 +159,5 @@ uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 - [Prometheus: Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/) — full receiver and route configuration reference
 - [Prometheus: Alertmanager integrations](https://prometheus.io/docs/alerting/latest/integrations/) — supported notification channels (Slack, PagerDuty, OpsGenie, email, webhooks, etc.)
 - [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) — egress policy configuration for notification services
-
-## Next steps
-
-These guides may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Create metric alerting rules"
-    description="Define the alerting conditions that Alertmanager will route."
-    href="/how-to-guides/monitoring-observability/create-metric-alerting-rules/"
-  />
-  <LinkCard
-    title="Create log-based alerting and recording rules"
-    description="Add log pattern detection alerts that also route through Alertmanager."
-    href="/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/"
-  />
-</CardGrid>
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define the alerting conditions that Alertmanager will route.
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) — Add log pattern detection alerts that also route through Alertmanager.

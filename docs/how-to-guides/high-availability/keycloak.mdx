@@ -4,7 +4,7 @@ sidebar:
   order: 1.1
 ---
 
-import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -270,20 +270,5 @@ uds zarf tools kubectl get deployment -n kube-system metrics-server
 - [Keycloak: Configuring the Database](https://www.keycloak.org/server/db) — database connection options and tuning
 - [Keycloak: Caching and Cache Configuration](https://www.keycloak.org/server/caching) — distributed cache behavior across replicas
 - [PostgreSQL: High Availability](https://www.postgresql.org/docs/current/high-availability.html) — HA patterns for the backing database
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure HA for Authservice"
-    description="Authservice handles SSO for applications without native OIDC support and also requires HA configuration."
-    href="/how-to-guides/high-availability/authservice/"
-  />
-  <LinkCard
-    title="Identity & Authorization concepts"
-    description="Background on how Keycloak and Authservice work together in UDS Core."
-    href="/concepts/core-features/identity-and-authorization/"
-  />
-</CardGrid>
+- [Configure HA for Authservice](/how-to-guides/high-availability/authservice/) — Authservice handles SSO for applications without native OIDC support and also requires HA configuration.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — Background on how Keycloak and Authservice work together in UDS Core.

@@ -24,7 +24,7 @@ Runbooks live under `docs/operations/troubleshooting-and-runbooks/` and are `.md
 
 ```mdx
 ---
-title: "Topic Name"
+title: Topic Name
 sidebar:
   order: X.X
 ---
@@ -139,7 +139,7 @@ If this runbook doesn't resolve your issue:
 2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
 3. Open a new issue with your relevant details attached
 
-## Related documentation
+## Related Documentation
 
 - [Related How-To Guide](/how-to-guides/section/page/) — brief description
 - [Related Concepts Page](/concepts/core-features/topic/) — brief description
@@ -149,7 +149,7 @@ If this runbook doesn't resolve your issue:
 ## Conventions
 
 ### Structure
-- Every runbook follows the same section order: When to use this runbook → Overview → Pre-checks → Procedure → Verification → Additional help → Related documentation
+- Every runbook follows the same section order: When to use this runbook → Overview → Pre-checks → Procedure → Verification → Additional help → Related Documentation
 - "Pre-checks" and "Procedure" use the `<Steps>` component
 - For troubleshooting runbooks, the Procedure section is organized per-cause with subsections matching the "Overview" list
 - For procedural runbooks, Overview explains why the procedure is needed, "Pre-checks" covers preconditions, and Procedure is a single set of steps

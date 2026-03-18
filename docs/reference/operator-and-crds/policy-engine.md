@@ -4,8 +4,6 @@ sidebar:
   order: 1.5
 ---
 
-## Policy Engine
-
 This page lists all Pepr policies enforced by the UDS Policy Engine, including which are validating (blocking) vs. mutating (auto-correcting), and what each enforces.
 
 ### Source material from previous docs

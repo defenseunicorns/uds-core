@@ -4,7 +4,7 @@ sidebar:
   order: 5.4
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -168,20 +168,5 @@ Navigate to the **Graph** tab and run your `expr` query directly. If it returns 
 - [Prometheus: Alerting best practices](https://prometheus.io/docs/practices/alerting/) — guidance on alert design
 - [Prometheus Operator: PrometheusRule API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) — full CRD field reference
 - [Default rule runbooks](https://runbooks.prometheus-operator.dev/) — troubleshooting guides for kube-prometheus-stack alerts
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Route alerts to notification channels"
-    description="Configure Alertmanager to deliver your alerts to Slack, PagerDuty, or email."
-    href="/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/"
-  />
-  <LinkCard
-    title="Create log-based alerting and recording rules"
-    description="Complement metric alerts with log pattern detection using Loki Ruler."
-    href="/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/"
-  />
-</CardGrid>
+- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) — Configure Alertmanager to deliver your alerts to Slack, PagerDuty, or email.
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) — Complement metric alerts with log pattern detection using Loki Ruler.

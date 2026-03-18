@@ -4,7 +4,7 @@ sidebar:
   order: 3.04
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -199,20 +199,5 @@ In the Keycloak admin UI, check the UDS realm:
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on how Keycloak and identity federation work in UDS Core
 - [Keycloak: Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers) — reference for SAML attribute mapper types
 - [Azure: Quickstart — Register an application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enforce group-based access controls"
-    description="Restrict application access to users in specific Keycloak groups using the Package CR."
-    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Configure Keycloak login policies"
-    description="Set session timeouts, concurrent session limits, and other login behavior via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
-  />
-</CardGrid>
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session timeouts, concurrent session limits, and other login behavior via bundle overrides.

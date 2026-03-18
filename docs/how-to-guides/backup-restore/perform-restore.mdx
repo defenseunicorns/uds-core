@@ -4,7 +4,7 @@ sidebar:
   order: 7.5
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -117,25 +117,10 @@ uds zarf tools kubectl get volumesnapshotcontent
 
 If VolumeSnapshotContents are missing, the backup may not have included volume snapshots. See [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) or [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) to configure snapshot support.
 
-## Related documentation
+## Related Documentation
 
 - [Velero: Restore Reference](https://velero.io/docs/latest/restore-reference/) — restore configuration and behavior
 - [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) — backup lifecycle and garbage collection
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Perform a manual backup"
-    description="Verify your scheduled backups are running and trigger a manual backup on demand."
-    href="/how-to-guides/backup-restore/perform-backup/"
-  />
-  <LinkCard
-    title="Configure Velero storage backends"
-    description="Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule."
-    href="/how-to-guides/backup-restore/configure-storage-backends/"
-  />
-</CardGrid>
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) — Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

@@ -4,7 +4,7 @@ sidebar:
   order: 6.1
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -234,20 +234,5 @@ Common issues: missing quotes around rule names with special characters, mismatc
 - [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — complete list of stable, incubating, and sandbox rules
 - [Falco rules syntax](https://falco.org/docs/concepts/rules/basic-elements/) — upstream reference for writing Falco rules, macros, and lists
 - [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and runtime threat detection work in UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Query Falco events in Grafana"
-    description="Query and visualize runtime security events using Loki."
-    href="/how-to-guides/runtime-security/query-falco-events/"
-  />
-  <LinkCard
-    title="Route runtime alerts to external destinations"
-    description="Forward Falco detections to Slack, Mattermost, or Microsoft Teams."
-    href="/how-to-guides/runtime-security/route-runtime-alerts/"
-  />
-</CardGrid>
+- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) — Query and visualize runtime security events using Loki.
+- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) — Forward Falco detections to Slack, Mattermost, or Microsoft Teams.

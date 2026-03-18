@@ -4,7 +4,7 @@ sidebar:
   order: 3.01
 ---
 
-import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -198,21 +198,6 @@ spec:
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on when to use Authservice vs native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO and `enableAuthserviceSelector` field specification
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict which Keycloak groups can access your Authservice-protected application.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps.
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) — register native OIDC or SAML clients for applications that handle their own authentication flow
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enforce group-based access controls"
-    description="Restrict which Keycloak groups can access your Authservice-protected application."
-    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-</CardGrid>

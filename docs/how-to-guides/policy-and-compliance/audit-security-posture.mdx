@@ -4,7 +4,7 @@ sidebar:
   order: 8.05
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -125,23 +125,8 @@ A well-audited cluster shows:
 
 ## Related Documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
-- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full Package CR schema including network fields
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Create UDS policy exemptions"
-    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
-    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
-  />
-  <LinkCard
-    title="Define network access"
-    description="Configure Package CR allow rules for intra-cluster and external network access."
-    href="/how-to-guides/networking/define-network-access/"
-  />
-</CardGrid>
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
+- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including network fields
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
+- [Define network access](/how-to-guides/networking/define-network-access/) — Configure Package CR allow rules for intra-cluster and external network access.
