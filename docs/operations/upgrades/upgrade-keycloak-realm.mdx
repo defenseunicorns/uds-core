@@ -1,0 +1,24 @@
+---
+title: Upgrade Keycloak realm configuration
+sidebar:
+  order: 2.6
+---
+
+Some UDS Identity Config upgrades require manual changes to an existing Keycloak realm — for example, when a full realm re-import isn't possible and upstream Keycloak changes require manual intervention on a running instance. The source for these steps is the [uds-identity-config upgrading versions reference](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/upgrading-versions.md).
+
+> [!IMPORTANT]
+> Always consult the upstream document for the full step-by-step instructions. The summaries below describe what each version requires, not how to do it.
+
+## Version-specific realm changes
+
+| Version | Summary |
+| --- | --- |
+| **v0.24.0+** | Configure X.509 certificate revocation list (CRL) settings at the realm level. |
+| **v0.23.0+** | Enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature). |
+| **v0.19.0+** | Create a `view-system` role in the `realm-management` client and assign it to `realm-admin` to fix the broken ServerInfo endpoint (Keycloak 26.4.0). |
+
+## Related documentation
+
+- [uds-identity-config upgrading versions](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/upgrading-versions.md) — full step-by-step instructions for each version
+- [UDS Core 0.63 release notes](/core/operations/release-notes/core/0-63/) — includes Identity Config 0.24 updates
+- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists

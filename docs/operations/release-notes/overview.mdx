@@ -6,39 +6,23 @@ sidebar:
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Release notes for UDS products document what changed in each version, including breaking changes, notable features, and version-specific upgrade considerations. For standard upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
+Release notes for UDS Core document what changed in each version, including breaking changes, notable features, identity-config updates, and version-specific upgrade considerations. For standard upgrade procedures, see the [Upgrade Overview](/core/operations/upgrades/overview/).
 
-## UDS Core
+This page shows the latest 3 supported versions. Older release notes are available in the sidebar or on [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases).
 
-<CardGrid>
-  <LinkCard
-    title="UDS Core 0.63"
-    description="Core uptime observability, CRDs functional layer. Grafana chart 11.x, Keycloak FIPS image rename."
-    href="/core/operations/release-notes/core/0-63/"
-  />
-  <LinkCard
-    title="UDS Core 0.62"
-    description="Falco chart 8.x upgrade, uptime probes for Authservice apps, Falco rule overrides."
-    href="/core/operations/release-notes/core/0-62/"
-  />
-  <LinkCard
-    title="UDS Core 0.61"
-    description="Blackbox Exporter, Keycloak HA, trust bundle on external apps. Skip v0.61.0, upgrade to v0.61.1."
-    href="/core/operations/release-notes/core/0-61/"
-  />
-  <LinkCard
-    title="UDS Core 0.60"
-    description="Istio ambient mode default, SSO secret field changes, Keycloak logout confirmation."
-    href="/core/operations/release-notes/core/0-60/"
-  />
-</CardGrid>
+<LinkCard
+  title="UDS Core 0.63"
+  description="Core uptime observability, CRDs functional layer. Grafana chart 11.x, Keycloak FIPS image rename."
+  href="/core/operations/release-notes/core/0-63/"
+/>
+<LinkCard
+  title="UDS Core 0.62"
+  description="Falco chart 8.x upgrade, uptime probes for Authservice apps, Falco rule overrides."
+  href="/core/operations/release-notes/core/0-62/"
+/>
+<LinkCard
+  title="UDS Core 0.61"
+  description="Blackbox Exporter, Keycloak HA, trust bundle on external apps. Skip v0.61.0, upgrade to v0.61.1."
+  href="/core/operations/release-notes/core/0-61/"
+/>
 
-## UDS Identity Config
-
-<CardGrid>
-  <LinkCard
-    title="UDS Identity Config 0.24"
-    description="X.509 CRL realm configurations, CAC detection fix, plugin dependency updates."
-    href="/core/operations/release-notes/identity-config/0-24/"
-  />
-</CardGrid>

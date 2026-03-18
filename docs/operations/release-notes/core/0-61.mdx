@@ -8,15 +8,23 @@ sidebar:
 
 UDS Core 0.61 adds Blackbox Exporter to the monitoring layer, improves Keycloak high availability, and applies the UDS trust bundle to all external-facing UDS Core applications. The v0.61.1 patch also fixes cleanup of stale network authpolicies when the default mesh mode changes.
 
-### Breaking changes
-
-No breaking changes in this release.
-
 ### Notable features
 
 - **Blackbox Exporter:** optional monitoring component for probing endpoint availability from outside the mesh
 - **Keycloak HA improvements:** enhanced high availability capabilities for the identity management layer
 - **Trust bundle on external-facing apps:** all external-facing UDS Core applications now use the UDS trust bundle for consistent PKI integration
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Grafana | 12.3.1 | 12.3.2 |
+| Keycloak | 26.5.1 | 26.5.2 |
+| Loki | 3.6.3 | 3.6.4 |
+| K8s-Sidecar | 2.4.0 | 2.5.0 |
+| Metrics-Server | 0.8.0 | 0.8.1 |
+| Pepr | 1.0.4 | 1.0.8 |
+| Vector | 0.52.0 | 0.53.0 |
 
 ## Upgrade considerations
 
@@ -35,4 +43,5 @@ packages:
 
 - [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
 - [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
-- [UDS Core 0.61.1 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.61.1) — full changelog
+- [UDS Core 0.61.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0610-2026-02-10) — full changelog
+- [Full diff (0.60.0...0.61.0)](https://github.com/defenseunicorns/uds-core/compare/v0.60.0...v0.61.0) — all changes between versions

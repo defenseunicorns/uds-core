@@ -15,7 +15,6 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 | Change | Impact | Action required |
 |--------|--------|-----------------|
 | Default Istio mesh mode changed to `ambient` | Packages without explicit `spec.network.serviceMesh.mode` switch from sidecar to ambient on upgrade | Set `mode: sidecar` on any Package CR that must remain in sidecar mode |
-| SSO secret fields reorganized and renamed | Existing Package CRs referencing old SSO secret field names will break | Update `spec.sso` secret field names to match the new schema |
 
 ### Notable features
 
@@ -23,6 +22,18 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 - **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them
 - **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default
 - **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Istio | 1.28.1 | 1.28.3 |
+| Keycloak | 26.5.0 | 26.5.1 |
+| UDS Identity Config | 0.22.0 | 0.23.0 |
+| Prometheus | 3.8.1 | 3.9.1 |
+| Alertmanager | 0.30.0 | 0.30.1 |
+| Velero | 1.17.1 | 1.17.2 |
+| Velero plugins | 1.13.1 | 1.13.2 |
 
 ## Upgrade considerations
 
@@ -106,9 +117,19 @@ spec:
 
 </Steps>
 
+## Identity Config updates
+
+This release upgrades UDS Identity Config to 0.23. No breaking changes are included.
+
+- **Keycloak logout confirmation:** enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature)
+
+> [!NOTE]
+> Existing realms require manual client updates to enable logout confirmation. See [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.
+
 ## Related documentation
 
 - [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
 - [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
-- [UDS Core 0.60.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.0) — full changelog
-- [UDS Core 0.60.2 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.60.2) — patch fixes for ambient mode and stale authpolicies
+- [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) — identity-config version-specific migration steps
+- [UDS Core 0.60.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0600-2026-01-29) — full changelog
+- [Full diff (0.59.0...0.60.0)](https://github.com/defenseunicorns/uds-core/compare/v0.59.0...v0.60.0) — all changes between versions

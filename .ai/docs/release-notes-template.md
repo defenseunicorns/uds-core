@@ -4,17 +4,13 @@
 
 Release notes are version-specific pages that document what changed in a release, including breaking changes, notable features, and any version-specific upgrade considerations. Each page covers a single version.
 
-Release notes live under `docs/operations/release-notes/` in product-specific subdirectories:
-
-- `docs/operations/release-notes/core/` — UDS Core release notes
-- `docs/operations/release-notes/identity-config/` — UDS Identity Config release notes
+Release notes live under `docs/operations/release-notes/core/`. Identity-config changes are inlined into the corresponding Core release notes page (not maintained as separate pages).
 
 ### File naming
 
 Files are named by version number with hyphens replacing dots: `X-Y.mdx`
 
-- UDS Core examples: `0-60.mdx`, `0-61.mdx`, `1-0.mdx`
-- Identity Config examples: `0-24.mdx`, `0-25.mdx`
+- Examples: `0-60.mdx`, `0-61.mdx`, `1-0.mdx`
 
 ### What belongs in a release notes page
 
@@ -59,6 +55,12 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 - **Feature name:** what it does and why it matters
 
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Package name | X.Y.Z | X.Y.Z |
+
 ## Upgrade considerations
 
 <!-- OPTIONAL: Only include this section when version-specific steps exist beyond the standard
@@ -87,14 +89,15 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 ## Related documentation
 
 - [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [<Product> X.Y.0 Release Notes](github-release-url) — full changelog
+- [<Product> X.Y.0 Changelog](https://github.com/defenseunicorns/<repo>/blob/main/CHANGELOG.md#anchor) — full changelog
+- [Full diff (X.W.0...X.Y.0)](https://github.com/defenseunicorns/<repo>/compare/vX.W.0...vX.Y.0) — all changes between versions
 ```
 
 ## Conventions
 
 ### Structure
 
-- Every release notes page follows the same section order: What changed (with Breaking changes and Notable features subsections), Upgrade considerations (optional), Related documentation
+- Every release notes page follows the same section order: What changed (with Breaking changes, Notable features, and Dependency updates subsections), Upgrade considerations (optional), Related documentation
 - The "Upgrade considerations" section is **optional** — only include it when there are version-specific steps that go beyond the standard upgrade procedure in the overview. Remove it entirely if there are none.
 - When "Upgrade considerations" is included, use `<Steps>` components for pre-upgrade and post-upgrade subsections
 - Breaking changes use a table format with Change, Impact, and Action required columns
@@ -109,19 +112,34 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - No `oci://` prefix on repository references
 - Use `registry.defenseunicorns.com/public/core` for repository references
 - Use em dashes (—) in Related documentation link descriptions
+- Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs — anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date)
+- Include a full diff link comparing the previous minor version tag to the current one
 
 ### Naming
 
 - File name: `X-Y.mdx` with hyphens replacing dots in the version number
-- Title: `<Product> X.Y` (e.g., "UDS Core 0.63", "UDS Identity Config 0.24")
-- Product name in title matches the subdirectory: `core/` → "UDS Core", `identity-config/` → "UDS Identity Config"
+- Title: `UDS Core X.Y` (e.g., "UDS Core 0.63")
 
 ### Sidebar ordering
 
 - Release notes use 3-decimal ordering within the `release-notes/` section: `3.001`, `3.002`, `3.003`, etc.
-- Each product subdirectory has its own ordering sequence starting at `3.001`
 - Newer versions get higher order numbers so they appear later in the sidebar
-- This scheme supports ~999 releases per product before ordering conflicts
+- This scheme supports ~999 releases before ordering conflicts
+
+### Overview page maintenance
+
+- The release notes overview (`docs/operations/release-notes/overview.mdx`) shows only the latest 3 supported versions in its CardGrid
+- When adding a new release notes page, also update the overview: add a card for the new version and remove the oldest card
+- This matches the version support policy of 3 supported versions
+- A maintainer comment in the MDX file documents this convention
+
+### Identity Config updates
+
+- When a Core release bumps `uds-identity-config`, add an `## Identity Config updates` section to that Core release notes page
+- Place it after the Upgrade considerations section (or after Notable features if there are no upgrade considerations) and before Related documentation
+- Include a brief intro line noting the identity-config version, then list notable changes as bullet points
+- Add the identity-config changelog link to the Related documentation section
+- Do not create separate identity-config release notes pages — all identity-config content is inlined into Core
 
 ### Content guidance
 

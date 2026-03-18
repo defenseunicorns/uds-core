@@ -42,7 +42,7 @@ When you need to change UDS Core configuration (such as adjusting resource limit
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart.
+   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart — see [Configure pod reload on config changes](/core/how-to-guides/platform-features/configure-pod-reload/) for automatic restart configuration.
 
 3. **Verify the change**
 

@@ -14,13 +14,27 @@ UDS Core 0.62 adds uptime probe support for Authservice-enabled applications, in
 
 | Change | Impact | Action required |
 |--------|--------|-----------------|
-| Falco Helm chart upgraded from 7.0.2 to 8.0.0 | Custom Falco chart overrides may be incompatible with the new chart version | Review and update any custom Falco bundle overrides for chart 8.x compatibility |
+| Falco Helm chart upgraded from 7.0.2 to 8.0.0 | Custom Falco chart overrides may be incompatible with the new chart version | Review the [Falco 8.0.0 breaking changes](https://github.com/falcosecurity/charts/blob/master/charts/falco/BREAKING-CHANGES.md#800) and update any custom Falco bundle overrides for chart 8.x compatibility |
 
 ### Notable features
 
 - **Uptime probes for Authservice apps:** Blackbox Exporter uptime probes now support applications protected by Authservice, enabled through the `Package` CR
 - **Falco rule overrides:** configure custom Falco rule overrides through bundle values to tailor detection rules to your environment
 - **Stale authpolicy fix:** network authpolicies are now correctly cleaned up when a Package's mesh mode changes
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Alertmanager | 0.31.0 | 0.31.1 |
+| Falco | 0.42.1 | 0.43.0 |
+| Falco Helm chart | 7.0.2 | 8.0.0 |
+| Grafana | 12.3.2 | 12.3.3 |
+| Keycloak | 26.5.2 | 26.5.3 |
+| Loki | 3.6.4 | 3.6.5 |
+| Pepr | 1.0.8 | 1.1.0 |
+| Prometheus Blackbox Exporter | 11.7.0 | 11.8.0 |
+| Prometheus Operator | 0.88.0 | 0.89.0 |
 
 ## Upgrade considerations
 
@@ -56,4 +70,5 @@ UDS Core 0.62 adds uptime probe support for Authservice-enabled applications, in
 
 - [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
 - [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
-- [UDS Core 0.62.0 Release Notes](https://github.com/defenseunicorns/uds-core/releases/tag/v0.62.0) — full changelog
+- [UDS Core 0.62.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0620-2026-02-24) — full changelog
+- [Full diff (0.61.0...0.62.0)](https://github.com/defenseunicorns/uds-core/compare/v0.61.0...v0.62.0) — all changes between versions
