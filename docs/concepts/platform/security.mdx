@@ -128,16 +128,7 @@ UDS Core's observability stack doubles as an audit and compliance tool:
 
 ## Compliance & Authorization
 
-The security controls documented on this page are designed with regulated environments in mind. UDS Core helps address control families commonly evaluated across NIST 800-53, DISA STIG, and FedRAMP baselines:
-
-| Control Family | How UDS Core Addresses It |
-|---|---|
-| **Access Control (AC)** | RBAC, group-based SSO, Authservice enforcement, admin gateway isolation |
-| **Audit & Accountability (AU)** | Centralized log collection via Vector/Loki, searchable audit trail for all workloads |
-| **Configuration Management (CM)** | Immutable packaging via Zarf, policy enforcement via Pepr, explicit exemption audit trail |
-| **Identification & Authentication (IA)** | Keycloak with MFA support, FIPS 140-2 mode support |
-| **System & Communications Protection (SC)** | Istio STRICT mTLS, default-deny NetworkPolicy, zero-trust authorization |
-| **System & Information Integrity (SI)** | Falco runtime threat detection, per-release CVE scanning, SBOMs |
+The security controls documented on this page are designed with regulated environments in mind. UDS Core helps address control families commonly evaluated across NIST 800-53, DISA STIG, and FedRAMP baselines.
 
 If your organization is pursuing an **Authority to Operate (ATO)** or needs compliance documentation for a regulated environment deployment, Defense Unicorns provides technical documentation and control mapping artifacts to support your authorization effort.
 
