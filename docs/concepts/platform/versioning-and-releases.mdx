@@ -1,7 +1,7 @@
 ---
 title: Versioning & Releases
 sidebar:
-  order: 3.5
+  order: 3.6
 ---
 
 UDS Core follows [Semantic Versioning 2.0.0](https://semver.org/) with a predictable two-week release cadence.
@@ -25,12 +25,12 @@ UDS Core is not a traditional library — its public API is defined by the surfa
 | Surface | Examples |
 |---------|----------|
 | **CRDs** | Schema fields, types, validation rules, operator behavior |
-| **Configuration values** | Config chart values, exposed Zarf variables |
+| **Configuration and packaging** | Config chart values, exposed Zarf variables, component organization and included components in published packages |
 | **Default security posture** | Network policies, service mesh config, runtime security, mutations and validations |
 
 Anything not listed above (internal Helm templates, test utilities, unexposed implementation details) is **not** part of the public API. See the full [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the complete definition and examples.
 
-> [!CAUTION]
+> [!WARNING]
 > **Security exception:** As a security-first platform, UDS Core may release security-related breaking changes in minor versions when the security benefit outweighs the disruption of waiting for a major release. These changes are still clearly advertised as breaking in the changelog and release notes.
 
 ## Breaking vs Non-Breaking Changes
@@ -42,6 +42,9 @@ In general:
 - **Major version bump** — removal, renaming, or behavioral change to any public API surface; changes to defaults that alter existing behavior
 - **Minor version bump** — new opt-in features, additive CRD fields, new CRD versions without removing the old
 - **Patch version bump** — bug fixes restoring intended behavior, performance improvements with no behavioral change
+
+> [!NOTE]
+> Upstream major helm chart or application version changes that don't affect UDS Core's API contract are not considered breaking changes.
 
 See the [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the full breakdown and examples of each category.
 
@@ -90,14 +93,14 @@ Automated builds from the latest `main` branch are created daily at 10:00 UTC:
 
 - Tagged as `snapshot-latest` on GitHub
 - Available as Zarf packages and UDS bundles in the [GitHub Packages repository](https://github.com/orgs/defenseunicorns/packages?tab=packages&q=uds%2Fsnapshots+repo%3Adefenseunicorns%2Fuds-core)
-- Each snapshot has a unique tag combining date + commit hash; the most recent is also tagged `latest`
+- Each snapshot is tagged with a unique identifier combining date + commit hash + flavor (e.g., `2026-03-18-9496bfe-upstream`)
 
 ### Feature Previews
 
 For significant new features or architectural changes, special snapshot builds may be created from feature branches or `main` for early feedback and validation.
 
-> [!CAUTION]
+> [!WARNING]
 > Development builds are **not recommended for production use**. Use official releases for production deployments.
 
 > [!TIP]
-> **Ready to upgrade?** See the [upgrade guides](/operations/upgrades/) for version-specific steps, breaking changes, and rollback procedures.
+> **Ready to upgrade?** See the [upgrade guides](/operations/upgrades/overview/) for version-specific steps, breaking changes, and rollback procedures.
