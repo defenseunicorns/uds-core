@@ -1,0 +1,414 @@
+---
+title: Register and customize SSO clients
+sidebar:
+  order: 3.18
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll register an SSO client in Keycloak for an application that handles its own OIDC or SAML authentication flow natively. You'll also learn how to customize the generated Kubernetes secret, add protocol mappers for custom token claims, configure client attributes, and choose a client authenticator type.
+
+> [!TIP]
+> **This guide is for applications with native SSO support.** If your application has no built-in OIDC or SAML support, see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) to use Authservice as a proxy instead.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- An application that implements OIDC or SAML natively (handles login redirects, token validation, and session management itself)
+
+## Before you begin
+
+When a Package CR declares an `sso` block, the UDS Operator:
+
+1. Creates a Keycloak client in the `uds` realm
+2. Stores the client credentials in a Kubernetes secret named `sso-client-<clientId>` in the application namespace
+3. For SAML clients, fetches the IdP signing certificate from Keycloak and includes it in the secret as `samlIdpCertificate`
+
+The application reads its credentials from this secret and speaks directly to Keycloak — there is no proxy layer involved. This is the preferred integration model because the application has full visibility into user identity, roles, and claims.
+
+By default, the generated secret contains every Keycloak client field as a separate key. If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
+
+## Steps
+
+<Steps>
+
+1. **Register the SSO client in a Package CR**
+
+   <Tabs>
+     <TabItem label="OIDC client">
+
+     Define an OIDC client with `redirectUris` pointing to your application's callback endpoint:
+
+     ```yaml title="package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-app
+       namespace: my-app
+     spec:
+       sso:
+         - name: My Application
+           clientId: my-app
+           redirectUris:
+             - "https://my-app.uds.dev/auth/callback"
+           defaultClientScopes:
+             - openid
+     ```
+
+     The operator creates a confidential OIDC client in Keycloak and stores the `clientId` and `secret` in a Kubernetes secret named `sso-client-my-app`.
+
+     > [!NOTE]
+     > `standardFlowEnabled` defaults to `true`, which requires at least one entry in `redirectUris`. If you omit `redirectUris`, the Package CR will be rejected.
+
+     </TabItem>
+     <TabItem label="SAML client">
+
+     Set `protocol: "saml"` and configure the SAML-specific attributes:
+
+     ```yaml title="package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: my-saml-app
+       namespace: my-saml-app
+     spec:
+       sso:
+         - name: My SAML Application
+           clientId: my-saml-app
+           protocol: "saml"
+           standardFlowEnabled: false
+           attributes:
+             saml_assertion_consumer_url_post: "https://my-saml-app.uds.dev/saml/acs"
+             saml_single_logout_service_url_post: "https://my-saml-app.uds.dev/saml/slo"
+             saml_name_id_format: "username"
+             saml.assertion.signature: "true"
+             saml.client.signature: "false"
+     ```
+
+     The operator creates a SAML client in Keycloak and includes the IdP signing certificate as `samlIdpCertificate` in the generated Kubernetes secret. Your application uses this certificate to validate SAML assertions from Keycloak.
+
+     > [!NOTE]
+     > SAML clients do not use `redirectUris`. Set `standardFlowEnabled: false` to avoid the redirect URI validation. Configure assertion consumer and logout URLs via the `attributes` block instead.
+
+     The supported SAML attributes are:
+
+     | Attribute | Description |
+     |---|---|
+     | `saml_assertion_consumer_url_post` | POST binding URL for receiving SAML assertions |
+     | `saml_assertion_consumer_url_redirect` | Redirect binding URL for receiving SAML assertions |
+     | `saml_single_logout_service_url_post` | POST binding URL for single logout |
+     | `saml_single_logout_service_url_redirect` | Redirect binding URL for single logout |
+     | `saml_idp_initiated_sso_url_name` | URL fragment for IdP-initiated SSO |
+     | `saml_name_id_format` | NameID format (`username`, `email`, `transient`, `persistent`) |
+     | `saml.assertion.signature` | Sign SAML assertions (`"true"` / `"false"`) |
+     | `saml.client.signature` | Require client-signed requests (`"true"` / `"false"`) |
+     | `saml.encrypt` | Encrypt SAML assertions (`"true"` / `"false"`) |
+     | `saml.signing.certificate` | Client signing certificate (PEM, no header/footer) |
+
+     </TabItem>
+   </Tabs>
+
+2. **(Optional) Customize the generated Kubernetes secret**
+
+   By default, the secret contains every Keycloak client field as a separate key. Use `secretConfig` to control the secret name, add labels and annotations, and template the data layout:
+
+   ```yaml title="package.yaml"
+   spec:
+     sso:
+       - name: My Application
+         clientId: my-app
+         redirectUris:
+           - "https://my-app.uds.dev/auth/callback"
+         secretConfig:
+           name: my-app-oidc-credentials
+           labels:
+             app.kubernetes.io/part-of: my-app
+           template:
+             config.json: |
+               {
+                 "client_id": "clientField(clientId)",
+                 "client_secret": "clientField(secret)",
+                 "issuer": "https://sso.uds.dev/realms/uds",
+                 "redirect_uris": clientField(redirectUris).json()
+               }
+   ```
+
+   The `clientField()` syntax references Keycloak client properties. Supported operations:
+
+   | Syntax | Result |
+   |---|---|
+   | `clientField(clientId)` | Raw string value of the field |
+   | `clientField(redirectUris).json()` | JSON-serialized value (for arrays and objects) |
+   | `clientField(redirectUris)[0]` | Single element from an array or object by key |
+
+   > [!TIP]
+   > To enable [automatic pod reload](/how-to-guides/platform-features/configure-pod-reload/) when the secret changes (e.g., during credential rotation), add the pod reload label:
+   > ```yaml
+   > secretConfig:
+   >   labels:
+   >     uds.dev/pod-reload: "true"
+   >   annotations:
+   >     uds.dev/pod-reload-selector: "app=my-app"
+   > ```
+
+3. **(Optional) Add protocol mappers for custom token claims**
+
+   Protocol mappers control what claims appear in tokens issued for this client. Add mappers to the `protocolMappers` array:
+
+   <Tabs>
+     <TabItem label="Audience mapper">
+
+     Add an `aud` claim so tokens are accepted by a specific target application:
+
+     ```yaml title="package.yaml"
+     spec:
+       sso:
+         - name: My Application
+           clientId: my-app
+           redirectUris:
+             - "https://my-app.uds.dev/auth/callback"
+           protocolMappers:
+             - name: target-audience
+               protocol: "openid-connect"
+               protocolMapper: "oidc-audience-mapper"
+               config:
+                 included.client.audience: "target-app-client-id"
+                 access.token.claim: "true"
+                 introspection.token.claim: "true"
+                 id.token.claim: "false"
+                 lightweight.claim: "false"
+                 userinfo.token.claim: "false"
+     ```
+
+     > [!NOTE]
+     > `included.client.audience` references an existing Keycloak client by its `clientId`. Use `included.custom.audience` instead for arbitrary audience strings that may not match a Keycloak client.
+
+     </TabItem>
+     <TabItem label="User attribute mapper">
+
+     Map a Keycloak user attribute into a token claim:
+
+     ```yaml title="package.yaml"
+     spec:
+       sso:
+         - name: My Application
+           clientId: my-app
+           redirectUris:
+             - "https://my-app.uds.dev/auth/callback"
+           protocolMappers:
+             - name: department
+               protocol: "openid-connect"
+               protocolMapper: "oidc-usermodel-attribute-mapper"
+               config:
+                 user.attribute: "department"
+                 claim.name: "department"
+                 access.token.claim: "true"
+                 id.token.claim: "true"
+                 userinfo.token.claim: "true"
+                 jsonType.label: "String"
+     ```
+
+     </TabItem>
+     <TabItem label="Group membership mapper">
+
+     Include the user's Keycloak group memberships in the token:
+
+     ```yaml title="package.yaml"
+     spec:
+       sso:
+         - name: My Application
+           clientId: my-app
+           redirectUris:
+             - "https://my-app.uds.dev/auth/callback"
+           protocolMappers:
+             - name: group-membership
+               protocol: "openid-connect"
+               protocolMapper: "oidc-group-membership-mapper"
+               config:
+                 claim.name: "groups"
+                 full.path: "true"
+                 access.token.claim: "true"
+                 id.token.claim: "true"
+                 userinfo.token.claim: "true"
+     ```
+
+     </TabItem>
+   </Tabs>
+
+   > [!NOTE]
+   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If the operator rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` — see [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
+
+4. **(Optional) Configure client attributes**
+
+   The `attributes` map sets Keycloak client-level properties. Only a validated subset is accepted by the operator:
+
+   ```yaml title="package.yaml"
+   spec:
+     sso:
+       - name: My Application
+         clientId: my-app
+         redirectUris:
+           - "https://my-app.uds.dev/auth/callback"
+         attributes:
+           access.token.lifespan: "300"
+           pkce.code.challenge.method: "S256"
+           post.logout.redirect.uris: "https://my-app.uds.dev/logged-out"
+           use.refresh.tokens: "true"
+   ```
+
+   Supported OIDC attributes:
+
+   | Attribute | Description |
+   |---|---|
+   | `access.token.lifespan` | Override the realm-level token lifespan (seconds) |
+   | `client.session.idle.timeout` | Client-specific session idle timeout (seconds) |
+   | `client.session.max.lifespan` | Client-specific maximum session lifespan (seconds) |
+   | `pkce.code.challenge.method` | Require PKCE (`S256` or `plain`) |
+   | `post.logout.redirect.uris` | Allowed post-logout redirect URIs |
+   | `use.refresh.tokens` | Enable refresh tokens (`"true"` / `"false"`) |
+   | `logout.confirmation.enabled` | Show logout confirmation page (defaults to `"true"`) |
+   | `backchannel.logout.session.required` | Include session ID in backchannel logout (`"true"` / `"false"`) |
+   | `backchannel.logout.revoke.offline.tokens` | Revoke offline tokens on backchannel logout (`"true"` / `"false"`) |
+   | `oauth2.device.authorization.grant.enabled` | Enable the device authorization grant (`"true"` / `"false"`) |
+   | `oidc.ciba.grant.enabled` | Enable the CIBA grant (`"true"` / `"false"`) |
+
+   > [!CAUTION]
+   > Setting `client.session.idle.timeout` must be less than or equal to the realm-level `SSO_SESSION_IDLE_TIMEOUT` (default 600 s). A client timeout longer than the realm timeout has no effect. See [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/).
+
+   > [!NOTE]
+   > Any attribute not in the supported list will be rejected by the operator with an "unsupported attribute" error. The full list is validated in [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts).
+
+5. **(Optional) Use JWT-based client authentication**
+
+   By default, clients authenticate with a shared secret (`client-secret`). For environments that require asymmetric key authentication, set `clientAuthenticatorType` to `client-jwt`:
+
+   ```yaml title="package.yaml"
+   spec:
+     sso:
+       - name: My Application
+         clientId: my-app
+         clientAuthenticatorType: "client-jwt"
+         redirectUris:
+           - "https://my-app.uds.dev/auth/callback"
+   ```
+
+   With `client-jwt`, the application must present a signed JWT (using its private key) when requesting tokens. The corresponding public key or certificate is registered in Keycloak. No shared secret is stored in the Kubernetes secret.
+
+6. **Deploy the Package CR**
+
+   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f package.yaml
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the client was created and the secret is available:
+
+```bash
+# Check that the Package CR was reconciled
+uds zarf tools kubectl get package my-app -n my-app
+
+# Verify the client secret exists
+uds zarf tools kubectl get secret -n my-app sso-client-my-app
+```
+
+**Verify the Keycloak client:**
+1. Log in to the Keycloak admin console (uds realm)
+2. Go to **Clients** and find your client ID
+3. Confirm the protocol, redirect URIs, and client settings match your Package CR
+
+**End-to-end test (OIDC):**
+1. Navigate to your application's URL in a browser
+2. The application should redirect you to Keycloak for login
+3. After authenticating, you should be redirected back to the application's callback URI
+
+**Inspect the generated secret:**
+```bash
+# View all keys in the secret
+uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.data}' | jq 'keys'
+
+# Retrieve the client secret value
+# Linux
+uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.data.secret}' | base64 -d
+# macOS
+uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.data.secret}' | base64 -D
+```
+
+## Troubleshooting
+
+### Problem: Package CR rejected with "must specify redirectUris"
+
+**Symptom:** `kubectl apply` fails with a validation error about missing redirect URIs.
+
+**Solution:** `standardFlowEnabled` defaults to `true`, which requires `redirectUris`. Either add redirect URIs or explicitly set `standardFlowEnabled: false` if your client does not use the authorization code flow (e.g., SAML clients, service account clients).
+
+### Problem: Package CR rejected with "unsupported attribute"
+
+**Symptom:** The operator denies the Package CR because of an unrecognized attribute key.
+
+**Solution:** Only a specific set of attributes is allowed. Check the attribute name for typos and verify it is in the supported list above. Custom Keycloak attributes that are not in the validated set cannot be set via the Package CR — use [OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) for post-deploy management of unsupported attributes.
+
+### Problem: Client secret not found in the namespace
+
+**Symptom:** The expected Kubernetes secret does not exist after applying the Package CR.
+
+**Solution:** Check the UDS Operator logs for errors:
+
+```bash
+uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep <client-id>
+```
+
+If you specified `secretConfig.name`, the secret uses that name instead of the default `sso-client-<clientId>`.
+
+### Problem: SAML IdP certificate missing from secret
+
+**Symptom:** The `samlIdpCertificate` key is empty or missing in the generated secret.
+
+**Solution:** The operator fetches the certificate from Keycloak's SAML descriptor endpoint at `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor`. If Keycloak is not ready or the endpoint is unreachable, the certificate will be empty. Verify Keycloak is healthy:
+
+```bash
+uds zarf tools kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak
+```
+
+## Related Documentation
+
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO field specification
+- [Identity & Authorization reference](/reference/configuration/identity-and-authorization/) — realm initialization variables and authentication flow configuration
+- [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_clients) — upstream client management API
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on native SSO vs Authservice
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Enforce group-based access controls"
+    description="Restrict which Keycloak groups can access your application."
+    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
+  />
+  <LinkCard
+    title="Configure automatic pod reload"
+    description="Restart pods automatically when SSO client secrets are rotated."
+    href="/how-to-guides/platform-features/configure-pod-reload/"
+  />
+  <LinkCard
+    title="Configure service account clients"
+    description="Set up machine-to-machine authentication for automated processes."
+    href="/how-to-guides/identity-and-authorization/configure-service-accounts/"
+  />
+</CardGrid>

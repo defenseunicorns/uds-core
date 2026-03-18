@@ -1,0 +1,428 @@
+---
+title: Configure advanced HTTP routing
+sidebar:
+  order: 2.11
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure advanced HTTP routing rules for services exposed through UDS Core gateways — including match conditions, CORS policies, header manipulation, URI rewrites, redirects, direct responses, retries, and timeouts. These features extend the basic expose configuration to handle more complex traffic management scenarios.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed
+- An application exposed through a gateway — see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/)
+- Familiarity with the [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/)
+
+## Before you begin
+
+The `advancedHTTP` block is a property of each entry in the `spec.network.expose[]` array. It maps directly to [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) fields. The UDS Operator translates your `advancedHTTP` configuration into the generated VirtualService for that expose entry.
+
+All `advancedHTTP` features are composable — you can combine match conditions, headers, retries, and timeouts in a single expose entry. However, `redirect` and `directResponse` are terminal actions: when either is set, traffic is not forwarded to the backend service.
+
+> [!CAUTION]
+> `advancedHTTP` cannot be used with the passthrough gateway. Passthrough gateways forward raw TLS without terminating it, so HTTP-level routing is not possible.
+
+## Steps
+
+<Steps>
+
+1. **Filter traffic with match conditions**
+
+   Match conditions determine which requests activate the routing rule. Without match conditions, the rule applies to all requests for the expose entry's host.
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app: my-app
+           host: my-app
+           gateway: tenant
+           port: 8080
+           advancedHTTP:
+             match:
+               - name: api-gets
+                 uri:
+                   prefix: /api/v1
+                 method:
+                   exact: GET
+               - name: health-check
+                 uri:
+                   exact: /healthz
+   ```
+
+   Each match entry supports:
+
+   | Field | Description |
+   |---|---|
+   | `name` | Identifier for the match (used in Istio route naming) |
+   | `uri` | Match by URI path (`exact`, `prefix`, or `regex`) |
+   | `method` | Match by HTTP method (`exact`, `prefix`, or `regex`) |
+   | `queryParams` | Match by query parameter values (`exact`, `prefix`, or `regex`) |
+   | `ignoreUriCase` | Case-insensitive URI matching (`true` / `false`) |
+
+   URI and method patterns use [RE2 regex syntax](https://github.com/google/re2/wiki/Syntax) for the `regex` option.
+
+   > [!NOTE]
+   > Multiple match entries are evaluated with OR logic — a request matching **any** entry activates the rule. Within a single match entry, all specified fields (URI, method, query params) must match (AND logic).
+
+2. **Configure a CORS policy**
+
+   Add a `corsPolicy` block to handle cross-origin requests for APIs consumed by browser-based applications:
+
+   ```yaml title="uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-api
+           selector:
+             app: my-api
+           host: api
+           gateway: tenant
+           port: 8080
+           advancedHTTP:
+             corsPolicy:
+               allowOrigins:
+                 - exact: "https://my-frontend.uds.dev"
+                 - prefix: "https://staging."
+               allowMethods:
+                 - GET
+                 - POST
+                 - PUT
+                 - DELETE
+               allowHeaders:
+                 - Authorization
+                 - Content-Type
+               exposeHeaders:
+                 - X-Request-Id
+               allowCredentials: true
+               maxAge: "86400s"
+   ```
+
+   The `allowOrigins` field accepts `exact`, `prefix`, and `regex` matchers. Use `allowOrigin` (a flat string array) for simple exact-match origins.
+
+   > [!WARNING]
+   > Overly permissive CORS policies (e.g., allowing all origins with a broad regex) can expose your API to cross-site request forgery. Scope `allowOrigins` to the specific frontends that need access.
+
+3. **Manipulate request and response headers**
+
+   Add, set, or remove headers on requests before they reach your service, or on responses before they reach the client:
+
+   ```yaml title="uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app: my-app
+           host: my-app
+           gateway: tenant
+           port: 8080
+           advancedHTTP:
+             headers:
+               request:
+                 add:
+                   x-custom-header: "injected-value"
+                 set:
+                   x-forwarded-prefix: "/app"
+                 remove:
+                   - x-internal-only
+               response:
+                 add:
+                   strict-transport-security: "max-age=31536000; includeSubDomains"
+                 remove:
+                   - server
+   ```
+
+   | Operation | Behavior |
+   |---|---|
+   | `add` | Appends the header value (preserves existing values) |
+   | `set` | Overwrites the header with the specified value |
+   | `remove` | Removes the header entirely |
+
+4. **Rewrite URIs**
+
+   Rewrite the request URI before forwarding to the backend. This is useful when the gateway path differs from the application's internal routing:
+
+   <Tabs>
+     <TabItem label="Prefix rewrite">
+
+     Replace a matched URI prefix with a new value:
+
+     ```yaml title="uds-package.yaml"
+     spec:
+       network:
+         expose:
+           - service: my-app-service
+             selector:
+               app: my-app
+             host: my-app
+             gateway: tenant
+             port: 8080
+             advancedHTTP:
+               match:
+                 - name: api-rewrite
+                   uri:
+                     prefix: /public-api
+               rewrite:
+                 uri: /internal/v2
+     ```
+
+     A request to `/public-api/users` is forwarded to the backend as `/internal/v2/users`.
+
+     </TabItem>
+     <TabItem label="Regex rewrite">
+
+     Rewrite URIs using a regular expression:
+
+     ```yaml title="uds-package.yaml"
+     spec:
+       network:
+         expose:
+           - service: my-app-service
+             selector:
+               app: my-app
+             host: my-app
+             gateway: tenant
+             port: 8080
+             advancedHTTP:
+               match:
+                 - name: version-rewrite
+                   uri:
+                     regex: "/v([0-9]+)/(.*)"
+               rewrite:
+                 uriRegexRewrite:
+                   match: "/v([0-9]+)/(.*)"
+                   rewrite: "/api/\\2"
+     ```
+
+     A request to `/v3/users/123` is forwarded as `/api/users/123`. The `match` pattern uses [RE2 regex syntax](https://github.com/google/re2/wiki/Syntax).
+
+     </TabItem>
+   </Tabs>
+
+   You can also rewrite the `Authority` (Host) header with `rewrite.authority`:
+
+   ```yaml
+   rewrite:
+     authority: backend.internal.svc.cluster.local
+   ```
+
+5. **Configure redirects**
+
+   Return an HTTP redirect response instead of forwarding traffic to the backend:
+
+   ```yaml title="uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app: my-app
+           host: my-app
+           gateway: tenant
+           port: 8080
+           advancedHTTP:
+             match:
+               - name: old-path
+                 uri:
+                   prefix: /old-docs
+             redirect:
+               uri: /docs
+               redirectCode: 301
+   ```
+
+   Redirect fields:
+
+   | Field | Description |
+   |---|---|
+   | `uri` | Replace the path portion of the URL |
+   | `authority` | Replace the host portion of the URL |
+   | `scheme` | Replace the scheme (`http` or `https`) |
+   | `port` | Set a specific port |
+   | `derivePort` | Derive port from the scheme (`FROM_PROTOCOL_DEFAULT` or `FROM_REQUEST_PORT`) |
+   | `redirectCode` | HTTP status code (default: 301) |
+
+   > [!NOTE]
+   > When `redirect` is set, the request is not forwarded to the backend service. The `service`, `selector`, `port`, and `targetPort` fields in the expose entry still define the VirtualService destination for non-matched requests if you use `match` conditions.
+
+6. **Return direct responses**
+
+   Return a synthetic HTTP response without forwarding to any backend. This is useful for health check endpoints, maintenance pages, or blocking specific paths:
+
+   ```yaml title="uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - host: my-app
+           gateway: tenant
+           advancedHTTP:
+             match:
+               - name: maintenance
+                 uri:
+                   prefix: /maintenance
+             directResponse:
+               status: 503
+               body:
+                 string: '{"status": "maintenance", "message": "Service temporarily unavailable"}'
+   ```
+
+   > [!CAUTION]
+   > `directResponse` cannot be combined with `service`, `selector`, `port`, or `targetPort` in the same expose entry. Since there is no backend, these fields must be omitted.
+
+7. **Tune retries and timeouts**
+
+   Configure retry behavior for transient failures and set request timeouts:
+
+   ```yaml title="uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app: my-app
+           host: my-app
+           gateway: tenant
+           port: 8080
+           advancedHTTP:
+             timeout: "30s"
+             retries:
+               attempts: 3
+               perTryTimeout: "10s"
+               retryOn: "5xx,reset,connect-failure"
+               backoff: "1s"
+               retryIgnorePreviousHosts: true
+   ```
+
+   Retry fields:
+
+   | Field | Description |
+   |---|---|
+   | `attempts` | Maximum number of retries |
+   | `perTryTimeout` | Timeout for each individual attempt |
+   | `retryOn` | Comma-separated conditions that trigger retries (e.g., `5xx`, `reset`, `connect-failure`, `retriable-4xx`) |
+   | `backoff` | Minimum duration between retry attempts |
+   | `retryIgnorePreviousHosts` | Avoid retrying to hosts that already failed |
+   | `retryRemoteLocalities` | Allow retries to different localities |
+
+   > [!TIP]
+   > Set `timeout` to be greater than `attempts * perTryTimeout` to ensure all retries can complete before the overall timeout expires.
+
+8. **Deploy your application**
+
+   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   **Or** apply the Package CR directly for quick testing:
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
+   ```
+
+</Steps>
+
+## Verification
+
+Check that the Package CR was reconciled and the VirtualService was created with your routing rules:
+
+```bash
+# Verify the Package CR status
+uds zarf tools kubectl get package my-app -n my-app
+
+# Inspect the generated VirtualService
+uds zarf tools kubectl get virtualservice -n my-app -o yaml
+```
+
+**Test specific routing behavior:**
+
+```bash
+# Test a CORS preflight request
+curl -v -X OPTIONS https://api.uds.dev/resource \
+  -H "Origin: https://my-frontend.uds.dev" \
+  -H "Access-Control-Request-Method: POST"
+
+# Test a redirect
+curl -v -L https://my-app.uds.dev/old-docs
+
+# Test header injection
+curl -v https://my-app.uds.dev/ 2>&1 | grep -i "strict-transport-security"
+```
+
+## Troubleshooting
+
+### Problem: Package CR rejected with "advancedHTTP cannot be used with a passthrough gateway"
+
+**Symptom:** `kubectl apply` fails with a validation error.
+
+**Solution:** The passthrough gateway forwards raw TLS without terminating it, so HTTP-level routing features are not available. Use the `tenant` or `admin` gateway instead, or use a [custom gateway](/how-to-guides/networking/create-custom-gateways/) with TLS termination.
+
+### Problem: Package CR rejected with "directResponse cannot be combined with service, port, selector, targetPort"
+
+**Symptom:** `kubectl apply` fails when using `directResponse` alongside backend service fields.
+
+**Solution:** Remove `service`, `selector`, `port`, and `targetPort` from the expose entry. `directResponse` returns a response directly from the gateway without forwarding to any backend:
+
+```yaml
+expose:
+  - host: my-app
+    gateway: tenant
+    advancedHTTP:
+      directResponse:
+        status: 503
+        body:
+          string: "Maintenance mode"
+```
+
+### Problem: CORS preflight requests returning 403
+
+**Symptom:** Browser shows CORS errors; preflight `OPTIONS` requests are rejected.
+
+**Solution:** Verify `allowOrigins` matches the requesting origin exactly — `https://example.com` is not the same as `https://example.com/` (trailing slash). Also verify the request method is in `allowMethods` and the request headers are in `allowHeaders`.
+
+### Problem: URI rewrite not taking effect
+
+**Symptom:** Requests reach the backend with the original URI instead of the rewritten one.
+
+**Solution:** When using `rewrite.uri` (prefix rewrite), you must also have a `match` entry with a `uri.prefix` that matches the incoming path. Without the match, there is no prefix to replace. For regex rewrites, ensure the `uriRegexRewrite.match` pattern actually matches the incoming URI.
+
+## Related Documentation
+
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full `advancedHTTP` field specification
+- [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) — upstream reference for the underlying routing model
+- [Networking & Service Mesh concepts](/concepts/core-features/networking/) — background on how gateways and traffic routing work
+
+## Next steps
+
+These guides and concepts may be useful to explore next:
+
+<CardGrid>
+  <LinkCard
+    title="Expose applications on gateways"
+    description="Learn the basics of exposing applications before adding advanced routing."
+    href="/how-to-guides/networking/expose-apps-on-gateways/"
+  />
+  <LinkCard
+    title="Create a custom gateway"
+    description="Deploy a gateway with independent domain and TLS for specialized routing."
+    href="/how-to-guides/networking/create-custom-gateways/"
+  />
+  <LinkCard
+    title="Define network access"
+    description="Configure intra-cluster and external network access for your application."
+    href="/how-to-guides/networking/define-network-access/"
+  />
+</CardGrid>
