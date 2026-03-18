@@ -1,5 +1,9 @@
 # @lulaStart f93daf61-d44d-4893-b49f-c88d2df3ee14
-* @defenseunicorns/uds-core
+* @defenseunicorns/uds-foundation
+
+# Packaging docs
+/docs/how-to-guides/packaging-applications/ @defenseunicorns/uds-foundry @defenseunicorns/uds-foundation
+/docs/concepts/configuration-and-packaging/package-requirements.mdx @defenseunicorns/uds-foundry @defenseunicorns/uds-foundation
 
 # Additional privileged files
 /CODEOWNERS @jeff-mccoy @daveworth

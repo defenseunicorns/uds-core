@@ -1,0 +1,36 @@
+---
+title: Overview
+sidebar:
+  order: 9.0
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+These guides help application developers and platform engineers package their applications for deployment with UDS Core. Each guide focuses on a single task with step-by-step instructions and examples.
+
+A UDS Package is a [Zarf Package](https://docs.zarf.dev/ref/packages/) that deploys on top of UDS Core and includes the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). Packages contain the OCI images, Helm charts, and supplemental Kubernetes manifests required for an application to integrate with UDS Core services like SSO, networking, and monitoring.
+
+## Resources
+
+- [UDS Common](https://github.com/defenseunicorns/uds-common) — shared framework with common configurations and tasks
+- [UDS Package Template](https://github.com/uds-packages/template) — repository template for bootstrapping a new package
+- [Reference UDS Package](https://github.com/uds-packages/reference-package) — example package demonstrating structure and UDS Core integration
+- [UDS PK](https://github.com/defenseunicorns/uds-pk) — CLI tool for developing, maintaining, and publishing packages
+- [Maru Runner](https://github.com/defenseunicorns/maru-runner) — the UDS task runner behind `uds run`
+- [Zarf docs](https://docs.zarf.dev) — foundational documentation for Zarf, the underlying packaging system used by UDS Packages
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Create a UDS Package"
+    description="Take an existing Helm chart and package it as a UDS Package with network policies, SSO, and monitoring."
+    href="/how-to-guides/packaging-applications/create-uds-package/"
+  />
+  <LinkCard
+    title="Package testing"
+    description="Set up journey and upgrade tests to validate deployment correctness and UDS Core integration."
+    href="/how-to-guides/packaging-applications/package-testing/"
+  />
+
+</CardGrid>

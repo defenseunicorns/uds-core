@@ -1,0 +1,163 @@
+---
+title: Package Testing
+sidebar:
+  order: 9.2
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll set up a testing strategy for your UDS Package that validates deployment correctness, UDS Core integration, and upgrade compatibility. These practices ensure packages deploy reliably and integrate properly with core services like Istio and Keycloak.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A [UDS Package](/how-to-guides/packaging-applications/create-uds-package/) ready for testing
+- [Node.js](https://nodejs.org/) installed (for Playwright and Jest)
+- [yamllint](https://yamllint.readthedocs.io/) installed (for linting YAML files)
+- [Shellcheck](https://www.shellcheck.net/) installed (for linting bash scripts)
+
+## Before you begin
+
+UDS Package testing focuses on validating packaging, deployment, and integration — not duplicating upstream application tests. Tests should confirm that your packaging and configuration choices don't break key functionality, and that integration with UDS Core components works as expected.
+
+Place all test files — Playwright specs, Jest tests, custom validation scripts, and related configuration — in a `tests` directory at the root of your package repository.
+
+## Steps
+
+<Steps>
+
+1. **Add journey tests**
+
+   Journey tests validate the critical workflows impacted by your packaging, configuration, or deployment. Focus on deployment-related concerns like network policies, SSO access, and cluster resource access rather than upstream application logic.
+
+   Use [Playwright](https://playwright.dev/) for UI testing and [Jest](https://jestjs.io/) for API or non-UI testing. Use bash or other scripting languages for custom validation scripts as needed.
+
+   > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template/tree/main/tests) includes Playwright stubs in the `tests/` directory to get you started.
+
+   > [!TIP]
+   > Keep journey tests small and focused. Validate deployment and UDS integration — avoid duplicating upstream unit or feature tests.
+
+   > [!NOTE]
+   > If licensing or other constraints prevent a flow from running in CI, document the limitation and implement the most realistic validation available.
+
+2. **Add upgrade tests**
+
+   Upgrade tests validate that the current development package deploys successfully over the most recently released version. When writing upgrade tests, verify the following:
+
+   - Data migration and persistence work correctly
+   - Configurations carry over or update properly
+   - No breaking changes occur in APIs or external integrations
+
+   > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template/blob/main/tasks.yaml) provides a default `test-upgrade` task you can use directly in your CI workflows.
+
+3. **Add linting and static analysis**
+
+   Run linting checks to catch issues before deployment.
+
+   ```bash
+   # Lint Zarf package definitions
+   uds zarf dev lint # https://docs.zarf.dev/commands/zarf_dev_lint/
+
+   # Lint YAML files
+   yamllint .
+
+   # Lint bash scripts
+   shellcheck scripts/*.sh
+   ```
+
+   > [!TIP]
+   > By using [uds-common](https://github.com/defenseunicorns/uds-common/blob/main/tasks/lint.yaml), you can run `uds run lint:yaml|shell|all` from the directory root to execute these checks.
+
+4. **Integrate tests into CI/CD**
+
+   Configure your pipeline to run all tests automatically so every code change is verified before advancing through the workflow. Follow these principles for reliable test suites:
+
+   - **Repeatability** — Tests should produce consistent results regardless of execution order or frequency. Design them to handle dynamic and asynchronous workloads without compromising output integrity.
+   - **Error handling** — Fail with actionable messages and include enough context to debug.
+   - **Performance** — Balance coverage with rapid feedback to keep pipelines efficient.
+
+   > [!TIP]
+   > The [UDS Package Template](https://github.com/uds-packages/template) includes default GitHub Actions CI/CD workflows you can use as a starting point or reference.
+
+</Steps>
+
+## Verification
+
+Define your test tasks in a `tasks/test.yaml` file to automate and simplify test execution. A well-structured test file groups health checks, ingress validation, and UI tests into individual tasks, with an `all` task that runs them in sequence:
+
+```yaml
+tasks:
+  - name: all
+    actions:
+      - task: health-check
+      - task: ingress
+      - task: ui
+
+  - name: health-check
+    actions:
+      - description: Verify deployment is available
+        wait:
+          cluster:
+            kind: Deployment
+            name: my-package
+            namespace: my-package
+            condition: Available
+
+  - name: ingress
+    actions:
+      - description: Verify ingress returns 200
+        maxRetries: 30
+        cmd: |
+          STATUS=$(curl -L -o /dev/null -s -w "%{http_code}\n" https://my-package.uds.dev)
+          echo "Status: ${STATUS}"
+          if [ "$STATUS" != "200" ]; then
+            sleep 10
+            exit 1
+          fi
+
+  - name: ui
+    description: Run Playwright UI tests
+    actions:
+      - cmd: npx playwright test
+        dir: tests
+```
+
+With this in place, you can run all tests with a single command:
+
+```bash
+uds run test:all
+```
+
+See the [Reference Package test tasks](https://github.com/uds-packages/reference-package/blob/main/tasks/test.yaml) for a complete example.
+
+### Success criteria
+
+Your test suite is working correctly when:
+
+- All tasks in `uds run test:all` exit with code 0
+- No error output appears in health check, ingress, or UI task logs
+- Journey tests pass consistently across multiple runs
+- Upgrade tests confirm data persists and the package reaches a `Ready` state after upgrade
+
+## Troubleshooting
+
+### Problem: Journey tests fail intermittently
+
+**Symptom:** Tests pass locally but fail in CI due to timing or async workloads.
+
+**Solution:** Add appropriate wait conditions or retries for dynamic resources. Ensure tests don't depend on execution order.
+
+### Problem: Upgrade tests fail on data migration
+
+**Symptom:** Data from the previous version is missing or corrupted after upgrade.
+
+**Solution:** Check that persistent volume claims and database migrations are handled correctly in your Zarf package lifecycle actions.
+
+## Related documentation
+
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
+- [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md)
