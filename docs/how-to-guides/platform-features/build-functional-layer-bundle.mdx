@@ -130,15 +130,13 @@ Layers are published to organization-specific registries and require a Defense U
 
 ## Verification
 
-Confirm the deployed layers are healthy and identify any problematic pods:
+Confirm all deployed packages are healthy:
 
 ```bash
-# Check that core namespaces are healthy
-uds zarf tools kubectl get namespaces | grep -E "istio|keycloak|loki|monitoring|velero|falco"
-
-# List pods that are not Running or Completed in each layer's namespace
-uds zarf tools kubectl get pods -A | grep -v "Completed" | grep -v "Running"
+uds zarf package list
 ```
+
+All listed packages should show a successful deployment status. If any layer is missing or failed, check the deploy logs for dependency or ordering issues.
 
 ## Troubleshooting
 
