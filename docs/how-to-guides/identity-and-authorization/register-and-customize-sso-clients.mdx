@@ -8,7 +8,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll register an SSO client in Keycloak for an application that handles its own OIDC or SAML authentication flow natively. You'll also customize the generated Kubernetes secret, add protocol mappers for custom token claims, configure client attributes, and set the client authenticator type.
+You'll register an SSO client in Keycloak for an application that handles its own OIDC or SAML authentication flow natively. You'll also customize the generated Kubernetes secret, add protocol mappers for custom token claims, and configure client attributes.
 
 ## Prerequisites
 
@@ -36,6 +36,8 @@ If your application expects credentials in a specific format (JSON config file, 
 <Steps>
 
 1. **Register the SSO client in a Package CR**
+
+   Choose the protocol supported by your application. If your application supports both, [UDS package requirements](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md) recommend considering SAML with SCIM as the more secure default.
 
    <Tabs>
      <TabItem label="OIDC client">
@@ -66,7 +68,7 @@ If your application expects credentials in a specific format (JSON config file, 
      </TabItem>
      <TabItem label="SAML client">
 
-     Set `protocol: "saml"` and configure the SAML-specific attributes:
+     Set `protocol: "saml"` and provide `redirectUris` pointing to your application's SAML callback:
 
      ```yaml title="package.yaml"
      apiVersion: uds.dev/v1alpha1
@@ -79,21 +81,18 @@ If your application expects credentials in a specific format (JSON config file, 
          - name: My SAML Application
            clientId: my-saml-app
            protocol: "saml"
-           standardFlowEnabled: false
+           redirectUris:
+             - "https://my-saml-app.uds.dev/auth/saml/callback"
            attributes:
-             saml_assertion_consumer_url_post: "https://my-saml-app.uds.dev/saml/acs"
-             saml_single_logout_service_url_post: "https://my-saml-app.uds.dev/saml/slo"
-             saml_name_id_format: "username"
-             saml.assertion.signature: "true"
              saml.client.signature: "false"
      ```
 
      The operator creates a SAML client in Keycloak and includes the IdP signing certificate as `samlIdpCertificate` in the generated Kubernetes secret. Your application uses this certificate to validate SAML assertions from Keycloak.
 
      > [!NOTE]
-     > SAML clients do not use `redirectUris`. Set `standardFlowEnabled: false` to avoid the redirect URI validation. Configure assertion consumer and logout URLs via the `attributes` block instead.
+     > Like OIDC clients, SAML clients require `redirectUris` when `standardFlowEnabled` is `true` (the default). If your SAML client does not need redirect URI validation (e.g., it only uses IdP-initiated SSO), set `standardFlowEnabled: false` to skip the requirement.
 
-     The supported SAML attributes are:
+     You can configure additional SAML behavior through the `attributes` block. Supported SAML attributes:
 
      | Attribute | Description |
      |---|---|
@@ -113,9 +112,11 @@ If your application expects credentials in a specific format (JSON config file, 
 
 2. **(Optional) Customize the generated Kubernetes secret**
 
-   By default, the secret contains every Keycloak client field as a separate key. Use `secretConfig` to control the secret name, add labels and annotations, and template the data layout:
+   By default, the secret contains every Keycloak client field as a separate key. Use `secretConfig` to control the secret name, add labels and annotations, and template the data layout. Each key in `template` becomes a key in the Kubernetes secret — include only the keys your application needs:
 
    ```yaml title="package.yaml"
+   # This example shows multiple output formats for illustration.
+   # In practice, include only the format(s) your application expects.
    spec:
      sso:
        - name: My Application
@@ -127,13 +128,28 @@ If your application expects credentials in a specific format (JSON config file, 
            labels:
              app.kubernetes.io/part-of: my-app
            template:
+             # Raw key-value pairs (useful for envFrom)
+             CLIENT_ID: "clientField(clientId)"
+             CLIENT_SECRET: "clientField(secret)"
+             # JSON config file
              config.json: |
                {
                  "client_id": "clientField(clientId)",
                  "client_secret": "clientField(secret)",
-                 "issuer": "https://sso.uds.dev/realms/uds",
-                 "redirect_uris": clientField(redirectUris).json()
+                 "defaultScopes": clientField(defaultClientScopes).json(),
+                 "redirect_uri": "clientField(redirectUris)[0]"
                }
+             # Properties file
+             auth.properties: |
+               client-id=clientField(clientId)
+               client-secret=clientField(secret)
+               redirect-uri=clientField(redirectUris)[0]
+             # YAML config file
+             auth.yaml: |
+               client_id: clientField(clientId)
+               client_secret: clientField(secret)
+               default_scopes: clientField(defaultClientScopes).json()
+               redirect_uri: clientField(redirectUris)[0]
    ```
 
    The `clientField()` syntax references Keycloak client properties. Supported operations:
@@ -281,26 +297,7 @@ If your application expects credentials in a specific format (JSON config file, 
    > [!NOTE]
    > Any attribute not in the supported list will be rejected by the operator with an "unsupported attribute" error. The full list is validated in [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts).
 
-5. **(Optional) Use JWT-based client authentication**
-
-   By default, clients authenticate with a shared secret (`client-secret`). For environments that require asymmetric key authentication, set `clientAuthenticatorType` to `client-jwt`:
-
-   ```yaml title="package.yaml"
-   spec:
-     sso:
-       - name: My Application
-         clientId: my-app
-         clientAuthenticatorType: "client-jwt"
-         redirectUris:
-           - "https://my-app.uds.dev/auth/callback"
-   ```
-
-   With `client-jwt`, the application must present a signed JWT (using its private key) when requesting tokens. The operator still creates a Kubernetes secret, but the `secret` key is not used for authentication — the application uses its private key instead.
-
-   > [!NOTE]
-   > The Package CR only sets the authenticator type. Registering the client's public key or JWKS endpoint in Keycloak is a separate step — use the Keycloak admin UI or [manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) to add the key after deployment.
-
-6. **Deploy the Package CR**
+5. **Deploy the Package CR**
 
    **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -314,6 +311,10 @@ If your application expects credentials in a specific format (JSON config file, 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
    ```
+
+6. **Configure your application to use the client credentials**
+
+   Review your application's documentation for how to configure SSO. Point it at the generated Kubernetes secret (`sso-client-<clientId>` by default, or `secretConfig.name` if set) to supply the client ID, client secret, and issuer URL (`https://sso.<domain>/realms/uds`). For SAML clients, the secret also includes the `samlIdpCertificate`.
 
 </Steps>
 
@@ -339,6 +340,11 @@ uds zarf tools kubectl get secret -n my-app sso-client-my-app
 2. The application should redirect you to Keycloak for login
 3. After authenticating, you should be redirected back to the application's callback URI
 
+**End-to-end test (SAML):**
+1. Navigate to your application's SSO login URL
+2. The application should redirect you to Keycloak's SAML login page
+3. After authenticating, Keycloak should POST a SAML assertion back to your application's callback URL
+
 **Inspect the generated secret:**
 ```bash
 # View all keys in the secret
@@ -357,7 +363,7 @@ uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.dat
 
 **Symptom:** `kubectl apply` fails with a validation error about missing redirect URIs.
 
-**Solution:** `standardFlowEnabled` defaults to `true`, which requires `redirectUris`. Either add redirect URIs or explicitly set `standardFlowEnabled: false` if your client does not use the authorization code flow (e.g., SAML clients, service account clients).
+**Solution:** `standardFlowEnabled` defaults to `true`, which requires `redirectUris`. Either add redirect URIs or explicitly set `standardFlowEnabled: false` if your client does not need redirect URI validation (e.g., IdP-initiated SAML clients, service account clients).
 
 ### Problem: Package CR rejected with "unsupported attribute"
 
