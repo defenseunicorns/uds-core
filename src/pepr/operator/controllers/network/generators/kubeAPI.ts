@@ -225,7 +225,7 @@ export async function updateKubeAPINetworkPolicies(newPeers: V1NetworkPolicyPeer
         let message = err.data?.message || "Unknown error while applying KubeAPI network policies";
         if (UDSConfig.kubeApiCIDR) {
           message +=
-            ", ensure that the cluster.networking.kubeApiCIDR value configured in the ClusterConfig is correct.";
+            ", ensure that the cluster.networking.kubeApiCIDR Helm values path is correct.";
         }
         throw new Error(message);
       }

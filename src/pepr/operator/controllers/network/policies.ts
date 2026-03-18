@@ -302,15 +302,14 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         UDSConfig.kubeApiCIDR &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
       ) {
-        message +=
-          ", ensure that the cluster.networking.kubeApiCIDR value configured in the ClusterConfig is correct.";
+        message += ", ensure that the cluster.networking.kubeApiCIDR Helm values path is correct.";
       }
       if (
         UDSConfig.kubeNodeCIDRs.length > 0 &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
       ) {
         message +=
-          ", ensure that the cluster.networking.kubeNodeCIDRs value configured in the ClusterConfig is correct.";
+          ", ensure that the cluster.networking.kubeNodeCIDRs Helm values path is correct.";
       }
       throw new Error(message);
     }
