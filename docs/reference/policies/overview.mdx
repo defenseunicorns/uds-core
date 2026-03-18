@@ -1,0 +1,26 @@
+---
+title: Overview
+sidebar:
+  order: 2.0
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Project policies that govern how UDS Core is versioned, released, deprecated, and handles vulnerability disclosure.
+
+<CardGrid>
+  <Card title="Versioning" icon="document">
+    Semantic versioning strategy, API surface definitions, and what constitutes a breaking change.
+    <LinkCard title="View policy" href="/reference/policies/versioning/" />
+  </Card>
+
+  <Card title="Deprecations" icon="warning">
+    Active deprecations, migration paths, and removal targets.
+    <LinkCard title="View policy" href="/reference/policies/deprecations/" />
+  </Card>
+
+  <Card title="Security Policy" icon="approve-check-circle">
+    Supported versions and how to report vulnerabilities.
+    <LinkCard title="View policy" href="/reference/policies/security/" />
+  </Card>
+</CardGrid>
