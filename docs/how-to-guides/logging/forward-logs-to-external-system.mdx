@@ -13,6 +13,7 @@ After completing this guide, Vector will forward logs to an external S3-compatib
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
 - An S3-compatible bucket with write access (AWS S3, MinIO, or equivalent)
 - For AWS: an IAM role for [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) with `s3:PutObject` permission on the target bucket

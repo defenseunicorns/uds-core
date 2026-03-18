@@ -44,9 +44,12 @@ packages:
     ref: x.x.x
 
   - name: core
-    repository: ghcr.io/defenseunicorns/packages/uds/core
+    repository: registry.defenseunicorns.com/public/core
     ref: x.x.x
 ```
+
+> [!NOTE]
+> Pulling packages from the UDS Registry requires a [UDS Registry](https://registry.defenseunicorns.com) account and local authentication with a read token.
 
 Each entry references a Zarf package by OCI repository and version tag. Deploy order matters — packages are deployed top to bottom, so the platform is ready before applications land.
 
