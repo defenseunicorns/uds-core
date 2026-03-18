@@ -4,14 +4,11 @@ sidebar:
   order: 3.18
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll register an SSO client in Keycloak for an application that handles its own OIDC or SAML authentication flow natively. You'll also learn how to customize the generated Kubernetes secret, add protocol mappers for custom token claims, configure client attributes, and choose a client authenticator type.
-
-> [!TIP]
-> **This guide is for applications with native SSO support.** If your application has no built-in OIDC or SAML support, see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) to use Authservice as a proxy instead.
+You'll register an SSO client in Keycloak for an application that handles its own OIDC or SAML authentication flow natively. You'll also customize the generated Kubernetes secret, add protocol mappers for custom token claims, configure client attributes, and set the client authenticator type.
 
 ## Prerequisites
 
@@ -21,15 +18,18 @@ You'll register an SSO client in Keycloak for an application that handles its ow
 
 ## Before you begin
 
+> [!TIP]
+> **This guide is for applications with native SSO support.** If your application has no built-in OIDC or SAML support, see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) to use Authservice as a proxy instead.
+
 When a Package CR declares an `sso` block, the UDS Operator:
 
 1. Creates a Keycloak client in the `uds` realm
 2. Stores the client credentials in a Kubernetes secret named `sso-client-<clientId>` in the application namespace
 3. For SAML clients, fetches the IdP signing certificate from Keycloak and includes it in the secret as `samlIdpCertificate`
 
-The application reads its credentials from this secret and speaks directly to Keycloak — there is no proxy layer involved. This is the preferred integration model because the application has full visibility into user identity, roles, and claims.
+The application reads its credentials from this secret and speaks directly to Keycloak — there is no proxy layer involved.
 
-By default, the generated secret contains every Keycloak client field as a separate key. If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
+If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
 
 ## Steps
 
@@ -58,7 +58,7 @@ By default, the generated secret contains every Keycloak client field as a separ
              - openid
      ```
 
-     The operator creates a confidential OIDC client in Keycloak and stores the `clientId` and `secret` in a Kubernetes secret named `sso-client-my-app`.
+     The operator creates a confidential OIDC client in Keycloak and stores all client credentials in a Kubernetes secret named `sso-client-my-app`.
 
      > [!NOTE]
      > `standardFlowEnabled` defaults to `true`, which requires at least one entry in `redirectUris`. If you omit `redirectUris`, the Package CR will be rejected.
@@ -239,7 +239,7 @@ By default, the generated secret contains every Keycloak client field as a separ
    </Tabs>
 
    > [!NOTE]
-   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If the operator rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` — see [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
+   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` — see [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
 
 4. **(Optional) Configure client attributes**
 
@@ -275,8 +275,8 @@ By default, the generated secret contains every Keycloak client field as a separ
    | `oauth2.device.authorization.grant.enabled` | Enable the device authorization grant (`"true"` / `"false"`) |
    | `oidc.ciba.grant.enabled` | Enable the CIBA grant (`"true"` / `"false"`) |
 
-   > [!CAUTION]
-   > Setting `client.session.idle.timeout` must be less than or equal to the realm-level `SSO_SESSION_IDLE_TIMEOUT` (default 600 s). A client timeout longer than the realm timeout has no effect. See [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/).
+   > [!IMPORTANT]
+   > `client.session.idle.timeout` must be less than or equal to the realm-level `SSO_SESSION_IDLE_TIMEOUT` (default 600 s). A client timeout longer than the realm timeout has no effect. See [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/).
 
    > [!NOTE]
    > Any attribute not in the supported list will be rejected by the operator with an "unsupported attribute" error. The full list is validated in [package-validator.ts](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/operator/crd/validators/package-validator.ts).
@@ -295,7 +295,10 @@ By default, the generated secret contains every Keycloak client field as a separ
            - "https://my-app.uds.dev/auth/callback"
    ```
 
-   With `client-jwt`, the application must present a signed JWT (using its private key) when requesting tokens. The corresponding public key or certificate is registered in Keycloak. No shared secret is stored in the Kubernetes secret.
+   With `client-jwt`, the application must present a signed JWT (using its private key) when requesting tokens. The operator still creates a Kubernetes secret, but the `secret` key is not used for authentication — the application uses its private key instead.
+
+   > [!NOTE]
+   > The Package CR only sets the authenticator type. Registering the client's public key or JWKS endpoint in Keycloak is a separate step — use the Keycloak admin UI or [manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) to add the key after deployment.
 
 6. **Deploy the Package CR**
 
@@ -390,25 +393,6 @@ uds zarf tools kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak
 - [Identity & Authorization reference](/reference/configuration/identity-and-authorization/) — realm initialization variables and authentication flow configuration
 - [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_clients) — upstream client management API
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on native SSO vs Authservice
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enforce group-based access controls"
-    description="Restrict which Keycloak groups can access your application."
-    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Configure automatic pod reload"
-    description="Restart pods automatically when SSO client secrets are rotated."
-    href="/how-to-guides/platform-features/configure-pod-reload/"
-  />
-  <LinkCard
-    title="Configure service account clients"
-    description="Set up machine-to-machine authentication for automated processes."
-    href="/how-to-guides/identity-and-authorization/configure-service-accounts/"
-  />
-</CardGrid>
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — restrict which Keycloak groups can access your application
+- [Configure automatic pod reload](/how-to-guides/platform-features/configure-pod-reload/) — restart pods automatically when SSO client secrets are rotated
+- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) — set up machine-to-machine authentication for automated processes

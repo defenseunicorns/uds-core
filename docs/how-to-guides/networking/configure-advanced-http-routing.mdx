@@ -4,11 +4,11 @@ sidebar:
   order: 2.11
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure advanced HTTP routing rules for services exposed through UDS Core gateways — including match conditions, CORS policies, header manipulation, URI rewrites, redirects, direct responses, retries, and timeouts. These features extend the basic expose configuration to handle more complex traffic management scenarios.
+You'll configure advanced HTTP routing rules for services exposed through UDS Core gateways — including match conditions, CORS policies, header manipulation, URI rewrites, redirects, direct responses, retries, and timeouts.
 
 ## Prerequisites
 
@@ -32,7 +32,7 @@ All `advancedHTTP` features are composable — you can combine match conditions,
 
 1. **Filter traffic with match conditions**
 
-   Match conditions determine which requests activate the routing rule. Without match conditions, the rule applies to all requests for the expose entry's host.
+   Add a `match` block to filter which requests activate the routing rule. Without it, the rule applies to all requests for the expose entry's host:
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -109,10 +109,10 @@ All `advancedHTTP` features are composable — you can combine match conditions,
                maxAge: "86400s"
    ```
 
-   The `allowOrigins` field accepts `exact`, `prefix`, and `regex` matchers. Use `allowOrigin` (a flat string array) for simple exact-match origins.
+   The `allowOrigins` field accepts `exact`, `prefix`, and `regex` matchers.
 
    > [!WARNING]
-   > Overly permissive CORS policies (e.g., allowing all origins with a broad regex) can expose your API to cross-site request forgery. Scope `allowOrigins` to the specific frontends that need access.
+   > Overly permissive CORS policies (e.g., allowing all origins with a broad regex) allow malicious sites to read your API responses from a user's browser. Scope `allowOrigins` to the specific frontends that need access.
 
 3. **Manipulate request and response headers**
 
@@ -213,7 +213,7 @@ All `advancedHTTP` features are composable — you can combine match conditions,
 
    You can also rewrite the `Authority` (Host) header with `rewrite.authority`:
 
-   ```yaml
+   ```yaml title="uds-package.yaml"
    rewrite:
      authority: backend.internal.svc.cluster.local
    ```
@@ -254,7 +254,7 @@ All `advancedHTTP` features are composable — you can combine match conditions,
    | `redirectCode` | HTTP status code (default: 301) |
 
    > [!NOTE]
-   > When `redirect` is set, the request is not forwarded to the backend service. The `service`, `selector`, `port`, and `targetPort` fields in the expose entry still define the VirtualService destination for non-matched requests if you use `match` conditions.
+   > `redirect` is a terminal action — the request is not forwarded to the backend service. If you need to redirect only a subset of traffic, use a separate expose entry with `match` conditions for the redirect and another expose entry for the normal forwarded traffic.
 
 6. **Return direct responses**
 
@@ -318,7 +318,7 @@ All `advancedHTTP` features are composable — you can combine match conditions,
    > [!TIP]
    > Set `timeout` to be greater than `attempts * perTryTimeout` to ensure all retries can complete before the overall timeout expires.
 
-8. **Deploy your application**
+8. **Deploy the Package CR**
 
    **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -404,25 +404,6 @@ expose:
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full `advancedHTTP` field specification
 - [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) — upstream reference for the underlying routing model
 - [Networking & Service Mesh concepts](/concepts/core-features/networking/) — background on how gateways and traffic routing work
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Expose applications on gateways"
-    description="Learn the basics of exposing applications before adding advanced routing."
-    href="/how-to-guides/networking/expose-apps-on-gateways/"
-  />
-  <LinkCard
-    title="Create a custom gateway"
-    description="Deploy a gateway with independent domain and TLS for specialized routing."
-    href="/how-to-guides/networking/create-custom-gateways/"
-  />
-  <LinkCard
-    title="Define network access"
-    description="Configure intra-cluster and external network access for your application."
-    href="/how-to-guides/networking/define-network-access/"
-  />
-</CardGrid>
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — learn the basics of exposing applications before adding advanced routing
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) — deploy a gateway with independent domain and TLS for specialized routing
+- [Define network access](/how-to-guides/networking/define-network-access/) — configure intra-cluster and external network access for your application
