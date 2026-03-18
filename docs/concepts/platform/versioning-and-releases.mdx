@@ -72,15 +72,18 @@ All active deprecations are tracked in [DEPRECATIONS.md](https://github.com/defe
 
 Deprecated features remain supported for **at least three subsequent minor releases** and may only be removed in a major release. During the support period they continue to function without behavioral changes and may receive bug and security fixes.
 
-**Example:** A feature deprecated in `0.30.0` must remain supported through `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `1.0.0` (assuming `1.0.0` is released after `0.33.0`).
+**Example:** A feature deprecated in `1.3.0` must remain supported through `1.4.0`, `1.5.0`, and `1.6.0`. It becomes eligible for removal starting in `2.0.0` (assuming `2.0.0` is released after `1.6.0`).
 
 ### CRD Guarantees
 
-Because CRDs are a primary API boundary, they receive the same deprecation guarantees:
+CRDs are a primary API boundary and follow [Kubernetes API deprecation conventions](https://github.com/defenseunicorns/uds-core/blob/main/adrs/0008-crd-versioning.md) with stability tiers:
 
-- Deprecated CRD fields and versions remain accepted for at least three minor releases
+- **Alpha** CRDs (e.g., `v1alpha1`) may change or be removed without a deprecation period
+- **Beta** and **GA** CRD fields and versions remain accepted for at least three minor releases before removal
 - New CRD versions may be introduced without removing older versions
-- CRD version or field removal follows the standard lifecycle and only occurs in major releases
+- CRD version or field removal only occurs in major releases (for beta/GA)
+
+See [ADR 0008](https://github.com/defenseunicorns/uds-core/blob/main/adrs/0008-crd-versioning.md) for full CRD versioning and conversion details.
 
 > [!CAUTION]
 > Resolve all deprecation warnings before upgrading to the next major version to avoid encountering breaking changes.

@@ -1,4 +1,8 @@
-# UDS Core Deprecations
+---
+title: Deprecations
+sidebar:
+  order: 2.2
+---
 
 This document tracks all currently deprecated features in UDS Core. Deprecated features remain functional but are scheduled for removal in a future major release.
 

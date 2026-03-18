@@ -1,6 +1,8 @@
-# UDS Core Versioning
-
-## Overview
+---
+title: Versioning
+sidebar:
+  order: 2.1
+---
 
 This document defines the UDS Core versioning policy, specifically addressing what constitutes our API boundaries and what changes would be considered breaking changes according to [Semantic Versioning](https://semver.org/) principles.
 
