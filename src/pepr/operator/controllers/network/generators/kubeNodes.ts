@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -172,7 +172,7 @@ export async function updateKubeNodesNetworkPolicies() {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
         if (UDSConfig.kubeNodeCIDRs.length > 0) {
           message +=
-            ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+            ", ensure that the cluster.networking.kubeNodeCIDRs value configured in the ClusterConfig is correct.";
         }
         throw new Error(message);
       }
