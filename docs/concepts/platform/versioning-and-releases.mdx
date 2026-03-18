@@ -1,0 +1,103 @@
+---
+title: Versioning & Releases
+sidebar:
+  order: 3.5
+---
+
+UDS Core follows [Semantic Versioning 2.0.0](https://semver.org/) with a predictable two-week release cadence.
+
+## Release Cadence
+
+- **Minor/major releases** are published every two weeks (typically on Tuesdays).
+- **Patch releases** are cut outside the regular cycle for critical issues that cannot wait.
+
+Patches are reserved for:
+
+- Bugs preventing installation or upgrade (even for specific configurations)
+- Issues limiting access to core services (UIs/APIs) or ability to configure external dependencies
+- Significant regressions in functionality or behavior
+- Security vulnerabilities requiring immediate attention
+
+## Semantic Versioning
+
+UDS Core is not a traditional library — its public API is defined by the surfaces that users and automation interact with:
+
+| Surface | Examples |
+|---------|----------|
+| **CRDs** | Schema fields, types, validation rules, operator behavior |
+| **Configuration values** | Config chart values, exposed Zarf variables |
+| **Default security posture** | Network policies, service mesh config, runtime security, mutations and validations |
+
+Anything not listed above (internal Helm templates, test utilities, unexposed implementation details) is **not** part of the public API. See the full [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the complete definition and examples.
+
+> [!CAUTION]
+> **Security exception:** As a security-first platform, UDS Core may release security-related breaking changes in minor versions when the security benefit outweighs the disruption of waiting for a major release. These changes are still clearly advertised as breaking in the changelog and release notes.
+
+## Breaking vs Non-Breaking Changes
+
+Breaking changes are documented in the [CHANGELOG](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md) under the `⚠ BREAKING CHANGES` header and in [GitHub release notes](https://github.com/defenseunicorns/uds-core/releases). Each entry includes upgrade steps when applicable.
+
+In general:
+
+- **Major version bump** — removal, renaming, or behavioral change to any public API surface; changes to defaults that alter existing behavior
+- **Minor version bump** — new opt-in features, additive CRD fields, new CRD versions without removing the old
+- **Patch version bump** — bug fixes restoring intended behavior, performance improvements with no behavioral change
+
+See the [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for the full breakdown and examples of each category.
+
+## Version Support
+
+UDS Core provides patch support for the **latest three minor versions** (current plus two previous). Minor and major releases are cut from `main`, while patch releases are published from dedicated `release/X.Y` branches.
+
+Patch releases follow the [patch policy](#release-cadence) and are documented in GitHub releases (not the main repository changelog).
+
+## Deprecation Policy
+
+Deprecations signal upcoming breaking changes and give users a predictable migration window before removal.
+
+### How Deprecations Are Announced
+
+Deprecations use the `feat(deprecation)` conventional commit format and appear in GitHub release notes. Each deprecation includes:
+
+- What is being deprecated and why
+- The recommended replacement or migration path
+- The projected major version in which it will be removed
+
+All active deprecations are tracked in [DEPRECATIONS.md](https://github.com/defenseunicorns/uds-core/blob/main/DEPRECATIONS.md).
+
+### Support Period
+
+Deprecated features remain supported for **at least three subsequent minor releases** and may only be removed in a major release. During the support period they continue to function without behavioral changes and may receive bug and security fixes.
+
+**Example:** A feature deprecated in `0.30.0` must remain supported through `0.31.0`, `0.32.0`, and `0.33.0`. It becomes eligible for removal starting in `1.0.0` (assuming `1.0.0` is released after `0.33.0`).
+
+### CRD Guarantees
+
+Because CRDs are a primary API boundary, they receive the same deprecation guarantees:
+
+- Deprecated CRD fields and versions remain accepted for at least three minor releases
+- New CRD versions may be introduced without removing older versions
+- CRD version or field removal follows the standard lifecycle and only occurs in major releases
+
+> [!CAUTION]
+> Resolve all deprecation warnings before upgrading to the next major version to avoid encountering breaking changes.
+
+## Development Builds
+
+### Nightly Snapshots
+
+Automated builds from the latest `main` branch are created daily at 10:00 UTC:
+
+- Tagged as `snapshot-latest` on GitHub
+- Available as Zarf packages and UDS bundles in the [GitHub Packages repository](https://github.com/orgs/defenseunicorns/packages?tab=packages&q=uds%2Fsnapshots+repo%3Adefenseunicorns%2Fuds-core)
+- Each snapshot has a unique tag combining date + commit hash; the most recent is also tagged `latest`
+
+### Feature Previews
+
+For significant new features or architectural changes, special snapshot builds may be created from feature branches or `main` for early feedback and validation.
+
+> [!CAUTION]
+> Development builds are **not recommended for production use**. Use official releases for production deployments.
+
+> [!TIP]
+> **Ready to upgrade?** See the [upgrade guides](/operations/upgrades/) for version-specific steps, breaking changes, and rollback procedures.
