@@ -123,8 +123,9 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 ### Sidebar ordering
 
-- Release notes use 3-decimal ordering within the `release-notes/` section: `3.001`, `3.002`, `3.003`, etc.
+- Release notes use 3-decimal ordering within the `release-notes/` section, starting at `3.999` and decrementing: `3.999`, `3.998`, `3.997`, etc.
 - Newer versions get lower order numbers so they appear first in the sidebar
+- The oldest release starts at `3.999`; each subsequent release decrements by one
 - This scheme supports ~999 releases before ordering conflicts
 
 ### Overview page maintenance
