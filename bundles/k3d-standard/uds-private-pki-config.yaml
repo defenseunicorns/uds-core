@@ -3,18 +3,14 @@
 
 variables:
   core:
-    # Admin Gateway TLS certificate and key
-    ADMIN_TLS_CERT: "PLACEHOLDER_ADMIN_TLS_CERT"
-    ADMIN_TLS_KEY: "PLACEHOLDER_ADMIN_TLS_KEY"
-
     # CA_CERTS
     CA_BUNDLE_CERTS: "PLACEHOLDER_CA_BUNDLE_CERTS"
     CA_BUNDLE_INCLUDE_DOD_CERTS: "true"
     CA_BUNDLE_INCLUDE_PUBLIC_CERTS: "true"
 
-    # Enable Falco sandbox and incubating rules
-    FALCO_SANDBOX_RULES_ENABLED: true
-    FALCO_INCUBATING_RULES_ENABLED: true
+    # Admin Gateway TLS certificate and key
+    ADMIN_TLS_CERT: "PLACEHOLDER_ADMIN_TLS_CERT"
+    ADMIN_TLS_KEY: "PLACEHOLDER_ADMIN_TLS_KEY"
 
     # Tenant Gateway TLS certificate and key
     TENANT_TLS_CERT: "PLACEHOLDER_TENANT_TLS_CERT"
