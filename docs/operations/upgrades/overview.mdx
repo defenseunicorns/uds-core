@@ -6,7 +6,7 @@ sidebar:
 
 import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-This guide covers the general procedures, checklists, and strategies for upgrading UDS Core. For version-specific breaking changes, notable features, and upgrade considerations, see the [Release Notes](/core/operations/release-notes/overview/).
+This guide covers the general procedures, checklists, and strategies for upgrading UDS Core. For version-specific breaking changes, notable features, and upgrade considerations, see the [Release Notes](/operations/release-notes/overview/).
 
 ## Why upgrades matter
 
@@ -19,10 +19,10 @@ Regularly upgrading UDS Core is essential for:
 
 ## Release cadence and versioning
 
-UDS Core publishes new versions every two weeks, with patch releases for critical issues as needed. Before upgrading, review the [versioning policy](/core/concepts/platform/versioning-and-releases/) for details on release cadence, version support, breaking changes, and deprecation guarantees.
+UDS Core publishes new versions every two weeks, with patch releases for critical issues as needed. Before upgrading, review the [versioning policy](/concepts/platform/versioning-and-releases/) for details on release cadence, version support, breaking changes, and deprecation guarantees.
 
 > [!IMPORTANT]
-> Review the [release notes](/core/operations/release-notes/overview/) carefully for every upgrade — breaking changes and required upgrade steps are documented there.
+> Review the [release notes](/operations/release-notes/overview/) carefully for every upgrade — breaking changes and required upgrade steps are documented there.
 
 ## Upgrade strategies
 
@@ -51,7 +51,7 @@ Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly test
 
 1. **Review release notes**
 
-   Read the [release notes](/core/operations/release-notes/overview/) for all versions between your current and target version. Pay special attention to:
+   Read the [release notes](/operations/release-notes/overview/) for all versions between your current and target version. Pay special attention to:
 
    - Breaking changes
    - Deprecated features
@@ -60,11 +60,11 @@ Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly test
 
 2. **Check for deprecations**
 
-   Resolve any [active deprecations](/core/reference/policies/deprecations/) before upgrading, especially before major version upgrades.
+   Resolve any [active deprecations](/reference/policies/deprecations/) before upgrading, especially before major version upgrades.
 
 3. **Review Keycloak upgrade steps**
 
-   Check for [Keycloak realm configuration changes](/core/operations/upgrades/upgrade-keycloak-realm/) required by the target version.
+   Check for [Keycloak realm configuration changes](/operations/upgrades/upgrade-keycloak-realm/) required by the target version.
 
 4. **Test in staging**
 
@@ -80,7 +80,7 @@ Jumping multiple minor versions (e.g., 0.58.0 → 0.63.0) is **not directly test
 
 6. **Create a backup**
 
-   Back up your deployment before upgrading. See [Backup & Restore](/core/how-to-guides/backup-restore/overview/) for guidance.
+   Back up your deployment before upgrading. See [Backup & Restore](/how-to-guides/backup-restore/overview/) for guidance.
 
 </Steps>
 
@@ -161,7 +161,7 @@ Rather than attempting a rollback, use the following approaches:
 
 1. **Roll forward:** address issues by applying fixes or configuration changes to the current version
 2. **Manual intervention:** where necessary, perform manual one-time fixes to restore access. Report persistent issues as [GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for the team to address
-3. **Restore from backup:** in critical situations, restore from backups rather than attempting a version rollback. See [Backup & Restore](/core/how-to-guides/backup-restore/overview/) for guidance
+3. **Restore from backup:** in critical situations, restore from backups rather than attempting a version rollback. See [Backup & Restore](/how-to-guides/backup-restore/overview/) for guidance
 
 ## Additional resources
 
@@ -169,21 +169,21 @@ Rather than attempting a rollback, use the following approaches:
   <LinkCard
     title="Configuration Changes"
     description="Apply config changes to bundle overrides on a running platform."
-    href="/core/operations/upgrades/configuration-changes/"
+    href="/operations/upgrades/configuration-changes/"
   />
   <LinkCard
     title="Keycloak Realm Upgrades"
     description="Version-specific steps for Keycloak realm configuration changes."
-    href="/core/operations/upgrades/upgrade-keycloak-realm/"
+    href="/operations/upgrades/upgrade-keycloak-realm/"
   />
   <LinkCard
     title="Release Notes"
     description="Breaking changes, notable features, and upgrade considerations for each version."
-    href="/core/operations/release-notes/overview/"
+    href="/operations/release-notes/overview/"
   />
   <LinkCard
     title="Troubleshooting & Runbooks"
     description="Diagnose and resolve common issues on a running platform."
-    href="/core/operations/troubleshooting-and-runbooks/overview/"
+    href="/operations/troubleshooting-and-runbooks/overview/"
   />
 </CardGrid>

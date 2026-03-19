@@ -39,17 +39,18 @@ sidebar:
 
 import { Steps } from "@astrojs/starlight/components";
 
-## What changed
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
 Summary of what changed in this version and why it matters to operators (2-3 sentences).
 
-### Breaking changes
+### ⚠ Breaking changes
 
 | Change                         | Impact                                          | Action required           |
 | ------------------------------ | ----------------------------------------------- | ------------------------- |
 | Description of breaking change | What breaks or changes for existing deployments | What the operator must do |
 
-(Or "No breaking changes in this release." if none exist. Remove the table in that case.)
+<!-- Omit the ⚠ Breaking changes section entirely if there are no breaking changes. -->
 
 ### Notable features
 
@@ -88,7 +89,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 ## Related documentation
 
-- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
 - [<Product> X.Y.0 Changelog](https://github.com/defenseunicorns/<repo>/blob/main/CHANGELOG.md#anchor) — full changelog
 - [Full diff (X.W.0...X.Y.0)](https://github.com/defenseunicorns/<repo>/compare/vX.W.0...vX.Y.0) — all changes between versions
 ```
@@ -97,10 +98,10 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 ### Structure
 
-- Every release notes page follows the same section order: What changed (with Breaking changes, Notable features, and Dependency updates subsections), Upgrade considerations (optional), Related documentation
-- The "Upgrade considerations" section is **optional** — only include it when there are version-specific steps that go beyond the standard upgrade procedure in the overview. Remove it entirely if there are none.
-- When "Upgrade considerations" is included, use `<Steps>` components for pre-upgrade and post-upgrade subsections
-- Breaking changes use a table format with Change, Impact, and Action required columns
+- Every release notes page follows the same section order: NOTE callout, summary paragraph, then ⚠ Breaking changes (omit if none), Notable features, and Dependency updates subsections, Upgrade considerations (optional, with Identity Config updates as a subsection if applicable), Related documentation
+- The "Upgrade considerations" section is **optional** — only include it when there are version-specific steps that go beyond the standard upgrade procedure in the overview. However, if a Core release bumps identity-config, include the Upgrade considerations section with at least the Identity Config updates subsection.
+- When "Upgrade considerations" is included, use `<Steps>` components for pre-upgrade and post-upgrade subsections. Place Identity Config updates before Post-upgrade verification.
+- Breaking changes use a table format with Change, Impact, and Action required columns. Use the `### ⚠ Breaking changes` heading. Omit this section entirely if there are no breaking changes.
 
 ### Formatting
 
@@ -123,21 +124,21 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 ### Sidebar ordering
 
 - Release notes use 3-decimal ordering within the `release-notes/` section: `3.001`, `3.002`, `3.003`, etc.
-- Newer versions get higher order numbers so they appear later in the sidebar
+- Newer versions get lower order numbers so they appear first in the sidebar
 - This scheme supports ~999 releases before ordering conflicts
 
 ### Overview page maintenance
 
-- The release notes overview (`docs/operations/release-notes/overview.mdx`) shows only the latest 3 supported versions in its CardGrid
-- When adding a new release notes page, also update the overview: add a card for the new version and remove the oldest card
+- The release notes overview (`docs/operations/release-notes/overview.mdx`) shows only the latest 3 supported minor versions using standalone `LinkCard` components
+- When adding a new release notes page, also update the overview: add a LinkCard for the new version and remove the oldest one
 - This matches the version support policy of 3 supported versions
 - A maintainer comment in the MDX file documents this convention
 
 ### Identity Config updates
 
-- When a Core release bumps `uds-identity-config`, add an `## Identity Config updates` section to that Core release notes page
-- Place it after the Upgrade considerations section (or after Notable features if there are no upgrade considerations) and before Related documentation
+- When a Core release bumps `uds-identity-config`, add a `### Identity Config updates (X.Y)` subsection within the Upgrade considerations section, placed before the Post-upgrade verification subsection
 - Include a brief intro line noting the identity-config version, then list notable changes as bullet points
+- If manual realm changes are required, inline the step-by-step instructions directly in this subsection
 - Add the identity-config changelog link to the Related documentation section
 - Do not create separate identity-config release notes pages — all identity-config content is inlined into Core
 
@@ -149,3 +150,9 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Link to the Upgrade Overview for standard procedures — do not repeat them
 - Always include a NOTE callout at the top linking to the Upgrade Overview
 - The `import` line for Starlight components is only needed if the page uses `<Steps>` or other components
+- Link relevant PRs and issues in breaking changes and notable features where they help operators understand the change
+- Where possible, link to related how-to guides or reference docs from notable features so operators can find detailed configuration instructions
+- When a patch release fixes known issues from the initial minor release, add an `> [!IMPORTANT]` callout in the Upgrade considerations section directing operators to the patch version
+- When a Core release bumps identity-config and manual realm changes are required, inline the step-by-step instructions directly into the release notes page under an `### Manual realm changes (Identity Config X.Y)` heading within the Identity Config updates section
+- When a Core release bumps identity-config, include the identity-config CHANGELOG.md anchor link in the Related documentation section
+- Do not use the `/core/` prefix on internal links — the remark plugin in uds-docs handles product scoping automatically

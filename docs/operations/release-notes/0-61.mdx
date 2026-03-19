@@ -4,15 +4,16 @@ sidebar:
   order: 3.003
 ---
 
-## What changed
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
 UDS Core 0.61 adds Blackbox Exporter to the monitoring layer, improves Keycloak high availability, and applies the UDS trust bundle to all external-facing UDS Core applications. The v0.61.1 patch also fixes cleanup of stale network authpolicies when the default mesh mode changes.
 
 ### Notable features
 
-- **Blackbox Exporter:** optional monitoring component for probing endpoint availability from outside the mesh
-- **Keycloak HA improvements:** enhanced high availability capabilities for the identity management layer
-- **Trust bundle on external-facing apps:** all external-facing UDS Core applications now use the UDS trust bundle for consistent PKI integration
+- **Blackbox Exporter:** optional monitoring component for probing endpoint availability from outside the mesh ([#2314](https://github.com/defenseunicorns/uds-core/issues/2314))
+- **Keycloak HA improvements:** enhanced high availability capabilities for the identity management layer ([#2334](https://github.com/defenseunicorns/uds-core/issues/2334))
+- **Trust bundle on external-facing apps:** all external-facing UDS Core applications now use the UDS trust bundle for consistent PKI integration ([#2337](https://github.com/defenseunicorns/uds-core/issues/2337))
 
 ### Dependency updates
 
@@ -41,7 +42,7 @@ packages:
 
 ## Related documentation
 
-- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) — applying config changes on a running platform
 - [UDS Core 0.61.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0610-2026-02-10) — full changelog
 - [Full diff (0.60.0...0.61.0)](https://github.com/defenseunicorns/uds-core/compare/v0.60.0...v0.61.0) — all changes between versions

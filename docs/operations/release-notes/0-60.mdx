@@ -6,11 +6,12 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-## What changed
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
 UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Package` CRs. Packages without an explicit `spec.network.serviceMesh.mode` setting will automatically switch from sidecar to ambient mode on upgrade. This release also reorganizes SSO secret fields, enables Keycloak logout confirmation by default, and aligns Istio and Authservice with the cluster-wide trust bundle.
 
-### Breaking changes
+### ⚠ Breaking changes
 
 | Change | Impact | Action required |
 |--------|--------|-----------------|
@@ -18,10 +19,10 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 
 ### Notable features
 
-- **Exemption deployment for pre-core workloads:** deploy `Exemption` CRs before UDS Core for infrastructure that needs policy exceptions during bootstrap
-- **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them
-- **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default
-- **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration
+- **Exemption deployment for pre-core workloads:** deploy `Exemption` CRs before UDS Core for infrastructure that needs policy exceptions during bootstrap ([#2277](https://github.com/defenseunicorns/uds-core/issues/2277))
+- **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them ([#2277](https://github.com/defenseunicorns/uds-core/issues/2277))
+- **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default ([#2260](https://github.com/defenseunicorns/uds-core/issues/2260))
+- **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration ([#2281](https://github.com/defenseunicorns/uds-core/issues/2281))
 
 ### Dependency updates
 
@@ -99,6 +100,26 @@ spec:
 
 </Steps>
 
+### Identity Config updates (0.23)
+
+This release upgrades UDS Identity Config to 0.23.
+
+- **Keycloak logout confirmation:** enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature)
+
+Existing realms require manual client updates to enable logout confirmation. If you cannot perform a full realm re-import, follow these steps in the Keycloak admin console:
+
+<Steps>
+
+1. **Enable logout confirmation on default clients**
+
+   - Navigate to the `UDS` realm
+   - Go to `Clients` > `account`
+   - Find the `Logout confirmation` option and set it to `On`
+   - Click `Save`
+   - Repeat these steps for the `account-console` and `security-admin-console` clients
+
+</Steps>
+
 ### Post-upgrade verification
 
 <Steps>
@@ -117,19 +138,10 @@ spec:
 
 </Steps>
 
-## Identity Config updates
-
-This release upgrades UDS Identity Config to 0.23. No breaking changes are included.
-
-- **Keycloak logout confirmation:** enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature)
-
-> [!NOTE]
-> Existing realms require manual client updates to enable logout confirmation. See [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.
-
 ## Related documentation
 
-- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
-- [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) — identity-config version-specific migration steps
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) — applying config changes on a running platform
 - [UDS Core 0.60.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0600-2026-01-29) — full changelog
+- [UDS Identity Config 0.23.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0230-2026-01-23) — full changelog
 - [Full diff (0.59.0...0.60.0)](https://github.com/defenseunicorns/uds-core/compare/v0.59.0...v0.60.0) — all changes between versions

@@ -6,11 +6,12 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-## What changed
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
 UDS Core 0.63 introduces built-in uptime observability with recording rules and a Core Uptime dashboard, and adds a standalone CRDs functional layer that allows installing UDS CRDs before `core-base`. No breaking changes are included in this release.
 
-### Breaking changes
+### ⚠ Breaking changes
 
 There are no UDS Core breaking changes in this release. However, an upstream dependency change may affect operators with custom overrides:
 
@@ -20,8 +21,8 @@ There are no UDS Core breaking changes in this release. However, an upstream dep
 
 ### Notable features
 
-- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration
-- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure
+- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration ([#2426](https://github.com/defenseunicorns/uds-core/issues/2426))
+- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure ([#2429](https://github.com/defenseunicorns/uds-core/issues/2429))
 
 ### Dependency updates
 
@@ -34,7 +35,7 @@ There are no UDS Core breaking changes in this release. However, an upstream dep
 | Pepr | 1.1.0 | 1.1.2 |
 | Prometheus | 3.9.1 | 3.10.0 |
 | UDS Identity Config | 0.23.0 | 0.24.0 |
-| DoD CA Certs | — | External PKI v11.5 |
+| DoD CA Certs | External PKI v11.4 | External PKI v11.5 |
 
 ## Upgrade considerations
 
@@ -48,6 +49,14 @@ There are no UDS Core breaking changes in this release. However, an upstream dep
 
 </Steps>
 
+### Identity Config updates (0.24)
+
+This release upgrades UDS Identity Config to 0.24. No breaking changes or manual realm steps are required.
+
+- **X.509 CRL realm configurations:** expose X.509 certificate revocation list (CRL) settings for realm-level configuration ([#802](https://github.com/defenseunicorns/uds-identity-config/issues/802))
+- **New Doug logo:** updated branding for the login and account management pages ([#777](https://github.com/defenseunicorns/uds-identity-config/issues/777))
+- **CAC detection fix:** resolved an issue where CAC detection failed when using the browser's custom back button ([#792](https://github.com/defenseunicorns/uds-identity-config/issues/792))
+
 ### Post-upgrade verification
 
 <Steps>
@@ -58,19 +67,10 @@ There are no UDS Core breaking changes in this release. However, an upstream dep
 
 </Steps>
 
-## Identity Config updates
-
-This release upgrades UDS Identity Config to 0.24. No breaking changes are included.
-
-- **X.509 CRL realm configurations:** expose X.509 certificate revocation list (CRL) settings for realm-level configuration ([#802](https://github.com/defenseunicorns/uds-identity-config/issues/802))
-- **New Doug logo:** updated branding for the login and account management pages ([#777](https://github.com/defenseunicorns/uds-identity-config/issues/777))
-- **CAC detection fix:** resolved an issue where CAC detection failed when using the browser's custom back button ([#792](https://github.com/defenseunicorns/uds-identity-config/issues/792))
-
 ## Related documentation
 
-- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [Configuration Changes](/core/operations/upgrades/configuration-changes/) — applying config changes on a running platform
-- [Upgrade Keycloak realm configuration](/core/operations/upgrades/upgrade-keycloak-realm/) — identity-config version-specific migration steps
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) — applying config changes on a running platform
 - [UDS Core 0.63.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0630-2026-03-10) — full changelog
 - [UDS Identity Config 0.24.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0240-2026-03-06) — full changelog
 - [Full diff (0.62.0...0.63.0)](https://github.com/defenseunicorns/uds-core/compare/v0.62.0...v0.63.0) — all changes between versions

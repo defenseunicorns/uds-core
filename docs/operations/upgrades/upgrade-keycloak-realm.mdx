@@ -4,20 +4,22 @@ sidebar:
   order: 2.6
 ---
 
-Some UDS Identity Config upgrades require manual changes to an existing Keycloak realm — for example, when a full realm re-import isn't possible and upstream Keycloak changes require manual intervention on a running instance. The source for these steps is the [uds-identity-config upgrading versions reference](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/upgrading-versions.md).
+Some UDS Identity Config upgrades require manual changes to an existing Keycloak realm — for example, when a full realm re-import isn't possible and upstream Keycloak changes require manual intervention on a running instance.
 
-> [!IMPORTANT]
-> Always consult the upstream document for the full step-by-step instructions. The summaries below describe what each version requires, not how to do it.
+When manual realm changes are required, the specific steps are documented in the [release notes](/operations/release-notes/overview/) for the corresponding UDS Core version under the **Identity Config updates** section.
 
-## Version-specific realm changes
+## When manual changes are needed
 
-| Version | Summary |
-| --- | --- |
-| **v0.24.0** | Configure X.509 certificate revocation list (CRL) settings at the realm level. |
-| **v0.23.0** | Enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature). |
-| **v0.19.0** | Create a `view-system` role in the `realm-management` client and assign it to `realm-admin` to fix the broken ServerInfo endpoint (Keycloak 26.4.0). |
+Manual realm changes are typically required when:
+
+- A Keycloak version upgrade introduces new features that need to be enabled on existing clients or realms
+- A breaking change in Keycloak requires updating roles, authentication flows, or client configurations
+- New security settings need to be applied to an existing realm that cannot be re-imported
+
+> [!TIP]
+> If you can perform a full realm re-import during your upgrade, manual changes are not needed — the updated `realm.json` handles them automatically.
 
 ## Related documentation
 
-- [uds-identity-config upgrading versions](https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/upgrading-versions.md) — full step-by-step instructions for each version
-- [Upgrade Overview](/core/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Release Notes](/operations/release-notes/overview/) — version-specific changes including identity-config migration steps
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
