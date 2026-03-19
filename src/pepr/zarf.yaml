@@ -15,11 +15,6 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
-  # Note: This variable is deprecated and will be removed in future releases. Please use CA_BUNDLE_CERTS instead.
-  - name: CA_CERT
-    description: "Base64 encoded CA cert that signed the domain wildcard certs used for Istio ingress"
-    default: ""
-
   - name: CA_BUNDLE_CERTS
     description: "Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently trust. At a minimum this must at least include your Domain CA Cert if using Private PKI for your UDS Core Deployment"
     default: ""

@@ -18,7 +18,6 @@ cluster:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
     domain: "###ZARF_VAR_DOMAIN###"
     adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
-    caCert: "###ZARF_VAR_CA_CERT###"
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
