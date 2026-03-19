@@ -130,3 +130,23 @@ tests:
           of: ClusterConfig
       - notExists:
           path: spec.networking
+
+  - it: should fail when using removed operator.KUBEAPI_CIDR value
+    set:
+      operator:
+        KUBEAPI_CIDR: "10.0.0.0/24"
+      cluster:
+        expose:
+          domain: "example.com"
+    asserts:
+      - failedTemplate: {}
+
+  - it: should fail when using removed operator.KUBENODE_CIDRS value
+    set:
+      operator:
+        KUBENODE_CIDRS: "10.1.0.0/16"
+      cluster:
+        expose:
+          domain: "example.com"
+    asserts:
+      - failedTemplate: {}
