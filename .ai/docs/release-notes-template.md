@@ -4,7 +4,7 @@
 
 Release notes are version-specific pages that document what changed in a release, including breaking changes, notable features, and any version-specific upgrade considerations. Each page covers a single version.
 
-Release notes live under `docs/operations/release-notes/core/`. Identity-config changes are inlined into the corresponding Core release notes page (not maintained as separate pages).
+Release notes live under `docs/operations/release-notes/`. Identity-config changes are inlined into the corresponding Core release notes page (not maintained as separate pages).
 
 ### File naming
 
