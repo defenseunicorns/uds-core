@@ -256,13 +256,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows packages that have no issues", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [],
-      [],
-      [],
-    );
+    const mockReq = makeMockReq({}, [], [], [], []);
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
