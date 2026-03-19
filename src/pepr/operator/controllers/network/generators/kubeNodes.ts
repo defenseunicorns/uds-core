@@ -171,8 +171,7 @@ export async function updateKubeNodesNetworkPolicies() {
       } catch (err) {
         let message = err.data?.message || "Unknown error while applying KubeNode network policies";
         if (UDSConfig.kubeNodeCIDRs.length > 0) {
-          message +=
-            ", ensure that the cluster.networking.kubeNodeCIDRs Helm values path is correct.";
+          message += ", ensure that kubeNodeCIDRs is set correctly.";
         }
         throw new Error(message);
       }
