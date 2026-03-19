@@ -49,6 +49,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 | `OPENTOFU_CLIENT_ENABLED` | `false` | Enable the `uds-opentofu-client` Keycloak client for programmatic realm management |
 | `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""` | Comma-separated additional Protocol Mappers to allow in the UDS client policy |
 | `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | `""` | Comma-separated additional Client Scopes to allow in the UDS client policy |
+| `DISPLAY_NAME` | `"Unicorn Delivery Service"` | The display name for the realm. |
 
 > [!NOTE]
 > The default `PASSWORD_POLICY` value is: `hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(60) and specialChars(2) and digits(1) and lowerCase(1) and upperCase(1) and passwordHistory(5) and length(15) and notUsername(undefined)`.
@@ -98,6 +99,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: themeCustomiza
 |---|---|---|
 | `enableRegistrationFields` | `true` | When `false`, hides the Affiliation, Pay Grade, and Unit/Organization fields during registration |
 | `enableAccessRequestNotes` | `false` | Enable the Access Request Notes field on the registration page |
+| `realmDisplayName` | unset | Overrides the page title on the login page at the theme level, falling back to the Keycloak realm’s configured display name if unset. |
 
 For theme image and terms overrides, see [Theme customizations](#theme-customizations) below.
 
