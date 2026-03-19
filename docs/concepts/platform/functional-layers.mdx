@@ -1,7 +1,7 @@
 ---
 title: Functional Layers
 sidebar:
-  order: 3.05
+  order: 3.1
 ---
 
 UDS Core is published as a single `core` package that includes everything, but it is also available as **functional layers** — smaller Zarf packages grouped by capability. Layers let you deploy only the platform features your environment needs, which is useful for resource-constrained clusters, edge deployments, or environments that already provide some of these capabilities.
@@ -42,9 +42,9 @@ Default to the full `core` package unless you have an explicit reason to use ind
 | **Base** | Required for all UDS deployments and all other layers |
 | **Identity & Authorization** | Include if your deployment requires user authentication (direct login, SSO) |
 | **Metrics Server** | Include if your cluster does not already provide its own metrics server — skip it if one is already present (e.g., EKS, AKS, or GKE managed metrics) |
-| **Runtime Security** | Include if resources allow and you want runtime threat detection via Falco |
+| **Runtime Security** | Include for runtime threat detection via Falco |
 | **Logging** | Include if you need centralized log aggregation and shipping |
-| **Monitoring** | Include if resources allow and you want metrics dashboards, alerting, and uptime monitoring |
+| **Monitoring** | Include for metrics dashboards, alerting, and uptime monitoring |
 | **Backup & Restore** | Include if the deployment manages critical data or must maintain state across failures |
 
 > [!NOTE]
@@ -86,7 +86,7 @@ If pre-core components need UDS policy exemptions, deploy the **CRDs layer** fir
 
 ## UDS Add-Ons
 
-Defense Unicorns offers complementary add-on products that extend the UDS platform. These are not part of the open-source UDS Core but integrate with it.
+Defense Unicorns offers add-on products that enhance and extend the UDS platform. These are not part of the open-source UDS Core but integrate with it.
 
 | Add-On | What it provides |
 |---|---|

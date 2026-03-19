@@ -144,11 +144,11 @@ All listed packages should show a successful deployment status. If any layer is 
 
 **Symptom:** Pods from pre-core infrastructure components fail admission after `core-base` deploys.
 
-**Solution:** Deploy the `core-crds` layer before `core-base` and create `Exemption` resources alongside your pre-core components. See [Configure infrastructure exemptions](/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/).
+**Solution:** Deploy the `core-crds` layer before `core-base` and create `Exemption` resources alongside your pre-core components.
 
 ### Problem: Monitoring dashboards not accessible
 
-**Symptom:** Grafana returns a 403 or login redirect loop.
+**Symptom:** Package CR reconciliation errors for monitoring components that require SSO configuration.
 
 **Solution:** The `core-monitoring` layer requires the `core-identity-authorization` layer for SSO. Add it to your bundle before the monitoring layer.
 
