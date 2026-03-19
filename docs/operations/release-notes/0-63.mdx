@@ -13,8 +13,8 @@ UDS Core 0.63 introduces built-in uptime observability with recording rules and 
 
 ### Notable features
 
-- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration ([#2426](https://github.com/defenseunicorns/uds-core/issues/2426))
-- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure ([#2429](https://github.com/defenseunicorns/uds-core/issues/2429))
+- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration ([#2426](https://github.com/defenseunicorns/uds-core/pull/2426))
+- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure ([#2429](https://github.com/defenseunicorns/uds-core/pull/2429))
 
 ### Dependency updates
 
@@ -45,9 +45,9 @@ UDS Core 0.63 introduces built-in uptime observability with recording rules and 
 
 This release upgrades UDS Identity Config to [0.24.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.24.0). No breaking changes or manual realm steps are required.
 
-- **X.509 CRL realm configurations:** expose X.509 certificate revocation list (CRL) settings for realm-level configuration ([#802](https://github.com/defenseunicorns/uds-identity-config/issues/802))
-- **New Doug logo:** updated branding for the login and account management pages ([#777](https://github.com/defenseunicorns/uds-identity-config/issues/777))
-- **CAC detection fix:** resolved an issue where CAC detection failed when using the browser's custom back button ([#792](https://github.com/defenseunicorns/uds-identity-config/issues/792))
+- **X.509 CRL realm configurations:** expose X.509 certificate revocation list (CRL) settings for realm-level configuration ([#802](https://github.com/defenseunicorns/uds-identity-config/pull/802))
+- **New Doug logo:** updated branding for the login and account management pages ([#777](https://github.com/defenseunicorns/uds-identity-config/pull/777))
+- **CAC detection fix:** resolved an issue where CAC detection failed when using the browser's custom back button ([#792](https://github.com/defenseunicorns/uds-identity-config/pull/792))
 
 ### Post-upgrade verification
 

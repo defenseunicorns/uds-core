@@ -19,10 +19,10 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 
 ### Notable features
 
-- **Exemption deployment for pre-core workloads:** deploy `Exemption` CRs before UDS Core for infrastructure that needs policy exceptions during bootstrap ([#2277](https://github.com/defenseunicorns/uds-core/issues/2277))
-- **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them ([#2277](https://github.com/defenseunicorns/uds-core/issues/2277))
-- **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default ([#2260](https://github.com/defenseunicorns/uds-core/issues/2260))
-- **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration ([#2281](https://github.com/defenseunicorns/uds-core/issues/2281))
+- **Exemption deployment for pre-core workloads:** deploy `Exemption` CRs before UDS Core for infrastructure that needs policy exceptions during bootstrap ([#2277](https://github.com/defenseunicorns/uds-core/pull/2277))
+- **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them ([#2277](https://github.com/defenseunicorns/uds-core/pull/2277))
+- **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default ([#2260](https://github.com/defenseunicorns/uds-core/pull/2260))
+- **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration ([#2281](https://github.com/defenseunicorns/uds-core/pull/2281))
 
 ### Dependency updates
 
@@ -45,8 +45,8 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 
 Packages with an unset `spec.network.serviceMesh.mode` that request Authservice protection encounter two issues:
 
-- **Routing failure (v0.60.0):** the operator does not correctly handle ambient mode routing for Authservice-protected workloads, leaving them unprotected. Fixed in v0.60.1 via [PR #2326](https://github.com/defenseunicorns/uds-core/pull/2326).
-- **Stale AuthorizationPolicies (v0.60.0, v0.60.1):** after upgrading, stale AuthorizationPolicies from the previous sidecar configuration can block access to Authservice-enabled applications. Fixed in v0.60.2 via [Issue #2368](https://github.com/defenseunicorns/uds-core/issues/2368).
+- **Routing failure (v0.60.0):** the operator does not correctly handle ambient mode routing for Authservice-protected workloads, leaving them unprotected. Fixed in v0.60.1 via [#2326](https://github.com/defenseunicorns/uds-core/pull/2326).
+- **Stale AuthorizationPolicies (v0.60.0, v0.60.1):** after upgrading, stale AuthorizationPolicies from the previous sidecar configuration can block access to Authservice-enabled applications. Fixed in v0.60.2 via [#2368](https://github.com/defenseunicorns/uds-core/pull/2368).
 
 Set the mesh mode explicitly as a workaround if you cannot upgrade to v0.60.2 immediately:
 
