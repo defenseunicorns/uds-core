@@ -9,7 +9,7 @@ metadata:
   # x-release-please-start-version
   version: "0.63.0"
   # x-release-please-end
-  x-uds-dependencies: ["base", "identity-authorization"]
+  x-uds-dependencies: ["base"]
   annotations:
     dev.uds.title: UDS Core (Runtime Security)
     dev.uds.tagline: Enable more advanced security with Runtime inspection

@@ -31,10 +31,6 @@ Trust bundles are configured during UDS Core deployment using UDS/Zarf variables
 | `CA_BUNDLE_INCLUDE_DOD_CERTS` | Include DoD CA certificates in the bundle | `false` |
 | `CA_BUNDLE_INCLUDE_PUBLIC_CERTS` | Include standard public CA certificates in the bundle | `false` |
 
-:::note[Legacy Support]
-The `CA_CERT` variable is still supported for backwards compatibility but is deprecated. Use `CA_BUNDLE_CERTS` for new deployments. This new variable is also used for Authservice configuration as described in the [trusted CA SSO documentation](/reference/configuration/single-sign-on/trusted-ca).
-:::
-
 ### Cluster Trust Bundle Configuration
 
 The UDS Core trust bundle is configured at deployment time at the cluster level.

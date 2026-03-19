@@ -23,32 +23,33 @@ Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak 
 
 Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 
-| Variable                                         | Default   | Description                                                                                                          |
-| ------------------------------------------------ | --------- | -------------------------------------------------------------------------------------------------------------------- |
-| `GOOGLE_IDP_ENABLED`                             | `false`   | Enable the Google SAML identity provider                                                                             |
-| `GOOGLE_IDP_ID`                                  | unset     | Google SAML IdP entity ID                                                                                            |
-| `GOOGLE_IDP_SIGNING_CERT`                        | unset     | Google SAML signing certificate                                                                                      |
-| `GOOGLE_IDP_NAME_ID_FORMAT`                      | unset     | SAML NameID format for Google IdP                                                                                    |
-| `GOOGLE_IDP_CORE_ENTITY_ID`                      | unset     | Entity ID UDS Core presents to Google                                                                                |
-| `GOOGLE_IDP_ADMIN_GROUP`                         | unset     | Group name to assign admin role via Google IdP                                                                       |
-| `GOOGLE_IDP_AUDITOR_GROUP`                       | unset     | Group name to assign auditor role via Google IdP                                                                     |
-| `EMAIL_AS_USERNAME`                              | `false`   | Use the user's email address as their username                                                                       |
-| `EMAIL_VERIFICATION_ENABLED`                     | `false`   | Require email verification before account use                                                                        |
-| `TERMS_AND_CONDITIONS_ENABLED`                   | `false`   | Show a Terms and Conditions acceptance screen on login                                                               |
-| `PASSWORD_POLICY`                                | See note  | Keycloak password policy string applied to all realm users                                                           |
-| `X509_OCSP_FAIL_OPEN`                            | `false`   | Allow authentication when the OCSP responder is unreachable                                                          |
-| `X509_OCSP_CHECKING_ENABLED`                     | `true`    | Enable OCSP revocation checking for X.509 certificate authentication                                                 |
-| `X509_CRL_CHECKING_ENABLED`                      | `false`   | Enable CRL revocation checking for X.509 certificate authentication                                                  |
-| `X509_CRL_ABORT_IF_NON_UPDATED`                  | `false`   | Fail authentication if the CRL has passed its `nextUpdate` time                                                      |
-| `X509_CRL_RELATIVE_PATH`                         | `crl.pem` | CRL file path(s) relative to `/opt/keycloak/conf`; use `##` to separate multiple paths                               |
-| `ACCESS_TOKEN_LIFESPAN`                          | `60`      | Access token validity period in seconds                                                                              |
-| `SSO_SESSION_IDLE_TIMEOUT`                       | `600`     | Session idle timeout in seconds                                                                                      |
-| `SSO_SESSION_MAX_LIFESPAN`                       | `36000`   | Maximum absolute session duration in seconds, regardless of activity                                                 |
-| `SSO_SESSION_MAX_PER_USER`                       | `0`       | Maximum concurrent sessions per user; `0` means unlimited                                                            |
-| `MAX_TEMPORARY_LOCKOUTS`                         | `0`       | Number of temporary lockouts before permanent account lockout; `0` means permanent lockout on first threshold breach |
-| `OPENTOFU_CLIENT_ENABLED`                        | `false`   | Enable the `uds-opentofu-client` Keycloak client for programmatic realm management                                   |
-| `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""`      | Comma-separated additional Protocol Mappers to allow in the UDS client policy                                        |
-| `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`    | `""`      | Comma-separated additional Client Scopes to allow in the UDS client policy                                           |
+| Variable | Default | Description |
+|---|---|---|
+| `GOOGLE_IDP_ENABLED` | `false` | Enable the Google SAML identity provider |
+| `GOOGLE_IDP_ID` | unset | Google SAML IdP entity ID |
+| `GOOGLE_IDP_SIGNING_CERT` | unset | Google SAML signing certificate |
+| `GOOGLE_IDP_NAME_ID_FORMAT` | unset | SAML NameID format for Google IdP |
+| `GOOGLE_IDP_CORE_ENTITY_ID` | unset | Entity ID UDS Core presents to Google |
+| `GOOGLE_IDP_ADMIN_GROUP` | unset | Group name to assign admin role via Google IdP |
+| `GOOGLE_IDP_AUDITOR_GROUP` | unset | Group name to assign auditor role via Google IdP |
+| `EMAIL_AS_USERNAME` | `false` | Use the user's email address as their username |
+| `EMAIL_VERIFICATION_ENABLED` | `false` | Require email verification before account use |
+| `TERMS_AND_CONDITIONS_ENABLED` | `false` | Show a Terms and Conditions acceptance screen on login |
+| `PASSWORD_POLICY` | See note | Keycloak password policy string applied to all realm users |
+| `X509_OCSP_FAIL_OPEN` | `false` | Allow authentication when the OCSP responder is unreachable |
+| `X509_OCSP_CHECKING_ENABLED` | `true` | Enable OCSP revocation checking for X.509 certificate authentication |
+| `X509_CRL_CHECKING_ENABLED` | `false` | Enable CRL revocation checking for X.509 certificate authentication |
+| `X509_CRL_ABORT_IF_NON_UPDATED` | `false` | Fail authentication if the CRL has passed its `nextUpdate` time |
+| `X509_CRL_RELATIVE_PATH` | `crl.pem` | CRL file path(s) relative to `/opt/keycloak/conf`; use `##` to separate multiple paths |
+| `ACCESS_TOKEN_LIFESPAN` | `60` | Access token validity period in seconds |
+| `SSO_SESSION_IDLE_TIMEOUT` | `600` | Session idle timeout in seconds |
+| `SSO_SESSION_MAX_LIFESPAN` | `36000` | Maximum absolute session duration in seconds, regardless of activity |
+| `SSO_SESSION_MAX_PER_USER` | `0` | Maximum concurrent sessions per user; `0` means unlimited |
+| `MAX_TEMPORARY_LOCKOUTS` | `0` | Number of temporary lockouts before permanent account lockout; `0` means permanent lockout on first threshold breach |
+| `OPENTOFU_CLIENT_ENABLED` | `false` | Enable the `uds-opentofu-client` Keycloak client for programmatic realm management |
+| `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""` | Comma-separated additional Protocol Mappers to allow in the UDS client policy |
+| `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | `""` | Comma-separated additional Client Scopes to allow in the UDS client policy |
+| `DISPLAY_NAME` | `"Unicorn Delivery Service"` | The display name for the realm. |
 
 > [!NOTE]
 > The default `PASSWORD_POLICY` value is: `hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(60) and specialChars(2) and digits(1) and lowerCase(1) and upperCase(1) and passwordHistory(5) and length(15) and notUsername(undefined)`.
@@ -94,10 +95,11 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmConfig`
 
 Bundle override path: `overrides.keycloak.keycloak.values[].path: themeCustomizations.settings`
 
-| Field                      | Default | Description                                                                                      |
-| -------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
-| `enableRegistrationFields` | `true`  | When `false`, hides the Affiliation, Pay Grade, and Unit/Organization fields during registration |
-| `enableAccessRequestNotes` | `false` | Enable the Access Request Notes field on the registration page                                   |
+| Field | Default | Description |
+|---|---|---|
+| `enableRegistrationFields` | `true` | When `false`, hides the Affiliation, Pay Grade, and Unit/Organization fields during registration |
+| `enableAccessRequestNotes` | `false` | Enable the Access Request Notes field on the registration page |
+| `realmDisplayName` | unset | Overrides the page title on the login page at the theme level, falling back to the Keycloak realm’s configured display name if unset. |
 
 For theme image and terms overrides, see [Theme customizations](#theme-customizations) below.
 

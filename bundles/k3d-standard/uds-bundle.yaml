@@ -87,6 +87,9 @@ packages:
             - name: LOKI_S3_SECRET_ACCESS_KEY
               path: loki.storage.s3.secretAccessKey
               description: "The S3 Secret Access Key"
+            # NOTE: Loki write/read/backend replicas are scaled down to 1 to reduce resource
+            # consumption for demo and CI scenarios. These values are not recommended or supported
+            # for production and are known to cause issues in some scenarios.
             - name: LOKI_WRITE_REPLICAS
               path: write.replicas
               description: "Loki write replicas"
