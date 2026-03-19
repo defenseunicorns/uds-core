@@ -20,7 +20,7 @@ You'll configure Falcosidekick to forward runtime security alerts to Slack, Matt
 
 ## Before you begin
 
-By default, Falco events are shipped to Loki for centralized log aggregation and are queryable in Grafana. This guide adds external alert forwarding on top of Loki — it does not replace the default Loki integration.
+By default, Falco events are shipped to Loki for centralized log aggregation and are queryable in Grafana. This guide adds external alert forwarding on top of Loki; it does not replace the default Loki integration.
 
 ## Steps
 
@@ -81,7 +81,7 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
        | Setting | Description |
        |---|---|
        | `webhookurl` | Slack incoming webhook URL (format: `https://hooks.slack.com/services/XXXX/YYYY/ZZZZ`) |
-       | `channel` | Slack channel to post to (optional — defaults to the webhook's configured channel) |
+       | `channel` | Slack channel to post to (optional, defaults to the webhook's configured channel) |
        | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
        | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
 
@@ -236,10 +236,10 @@ uds zarf tools kubectl get networkpolicy -n falco
 
 **Solution:** Verify the webhook URL is correct and active. For Slack, confirm the app is still installed in the workspace. For Mattermost, confirm the incoming webhook is enabled. For Teams, confirm the connector is still active.
 
-## Related Documentation
+## Related documentation
 
-- [Falcosidekick outputs](https://github.com/falcosecurity/falcosidekick#outputs) — full list of supported output destinations
-- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
-- [High availability: Runtime security](/how-to-guides/high-availability/runtime-security/) — tune Falcosidekick replica count for resilient alert delivery
-- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) — Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
-- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) — Query and visualize runtime security events using Loki.
+- [Falcosidekick outputs](https://github.com/falcosecurity/falcosidekick#outputs) - full list of supported output destinations
+- [Runtime security concepts](/concepts/core-features/runtime-security/) - background on how Falco and Falcosidekick work in UDS Core
+- [High availability: Runtime security](/how-to-guides/high-availability/runtime-security/) - tune Falcosidekick replica count for resilient alert delivery
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) - Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
+- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) - Query and visualize runtime security events using Loki.

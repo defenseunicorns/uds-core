@@ -9,9 +9,9 @@ UDS Core provides runtime threat detection using [Falco](https://falco.org/), a 
 
 ## Why runtime security?
 
-Admission control and network policy prevent *known bad configurations* from entering the cluster. They cannot detect compromise that happens at runtime — a malicious binary executed inside a permitted container, credential theft from a mounted secret, or a process spawning an unexpected shell.
+Admission control and network policy prevent *known bad configurations* from entering the cluster. They cannot detect compromise that happens at runtime: a malicious binary executed inside a permitted container, credential theft from a mounted secret, or a process spawning an unexpected shell.
 
-Runtime security addresses this gap by observing behavior:
+Runtime security addresses this gap by observing system-level behavior:
 
 - Which system calls are made
 - Which files are accessed or modified
@@ -22,7 +22,7 @@ When a pattern matches a known-bad signature, an alert is generated. Operators a
 
 ## How Falco works
 
-Falco monitors the Linux kernel using [eBPF](https://ebpf.io/) probes. These probes observe system calls made by all processes on a node — including those inside containers — without modifying the containers themselves or requiring any application changes.
+Falco monitors the Linux kernel using [eBPF](https://ebpf.io/) probes. These probes observe system calls made by all processes on a node, including those inside containers, without modifying the containers themselves or requiring any application changes.
 
 | Component | Role |
 |---|---|
@@ -36,11 +36,11 @@ Falco rules define what constitutes suspicious behavior. UDS Core ships with a d
 
 The default Falco rule set covers a broad range of behaviors, including:
 
-- **Shell execution in containers** — unexpected shell spawns inside running containers are a common indicator of compromise
-- **Sensitive file access** — reads of `/etc/shadow`, `/proc/[pid]/mem`, credential files, and similar paths
-- **Privilege escalation attempts** — `setuid` execution, capability changes
-- **Network scanning and unexpected outbound connections** — unexpected connections to external IPs from workloads that should not be making them
-- **Cryptomining patterns** — process names and network connection patterns associated with mining software
+- **Shell execution in containers**: unexpected shell spawns inside running containers are a common indicator of compromise
+- **Sensitive file access**: reads of `/etc/shadow`, `/proc/[pid]/mem`, credential files, and similar paths
+- **Privilege escalation attempts**: `setuid` execution, capability changes
+- **Network scanning and unexpected outbound connections**: unexpected connections to external IPs from workloads that should not be making them
+- **Cryptomining patterns**: process names and network connection patterns associated with mining software
 
 For the full list of rules, see the [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/).
 
@@ -62,11 +62,9 @@ Runtime security is one layer of a broader defense model in UDS Core:
 | Runtime security (Falco) | Detects malicious behavior inside permitted workloads |
 
 > [!NOTE]
-> No single layer catches everything. The value of runtime security is specifically in catching compromise that the other layers cannot prevent — a legitimate container that has been exploited, or a supply chain attack that introduced a malicious binary into an otherwise-permitted image.
+> No single layer catches everything. The value of runtime security is specifically in catching compromise that the other layers cannot prevent: a legitimate container that has been exploited, or a supply chain attack that introduced a malicious binary into an otherwise-permitted image.
 
 For a broader look at how these layers fit together, see the [Security overview](/concepts/platform/security/).
-
----
 
 > [!TIP]
 > Ready to configure runtime security for your environment? See the [Runtime Security How-to Guides](/how-to-guides/runtime-security/overview/).

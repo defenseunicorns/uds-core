@@ -11,8 +11,6 @@ import { Steps } from '@astrojs/starlight/components';
 > [!CAUTION]
 > The `k3d-core-demo` bundle is for local development and evaluation only. It is **not intended for production use**.
 
----
-
 ## Install the UDS CLI
 
 <Steps>
@@ -33,8 +31,6 @@ import { Steps } from '@astrojs/starlight/components';
    > All releases are available on the [UDS CLI GitHub releases page](https://github.com/defenseunicorns/uds-cli/releases).
 
 </Steps>
-
----
 
 ## Deploy UDS Core
 
@@ -68,8 +64,6 @@ import { Steps } from '@astrojs/starlight/components';
 
 </Steps>
 
----
-
 ## Verify
 
 Once deployment completes, confirm UDS Core is healthy:
@@ -91,12 +85,10 @@ No output means all pods are healthy.
 > [!NOTE]
 > The `*.uds.dev` domain resolves to your local cluster automatically. No DNS configuration required.
 
----
-
-## Clean Up
+## Clean up
 
 > [!CAUTION]
-> Skip this step if you plan to continue with the [Integrate Your Package](/getting-started/local-demo/integrate-your-package/) tutorial — you'll reuse this cluster.
+> Skip this step if you plan to continue with the [Integrate Your Package](/getting-started/local-demo/integrate-your-package/) tutorial; you'll reuse this cluster.
 
 Delete the local k3d cluster:
 

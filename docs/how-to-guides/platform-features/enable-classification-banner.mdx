@@ -18,7 +18,7 @@ After completing this guide, web applications exposed through the Istio service 
 
 ## Before you begin
 
-The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. Because it modifies the HTML response body, it works best with standard server-rendered web applications. Single-page applications or apps with non-standard content delivery may not render the banner correctly — validate in a staging environment before adopting.
+The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. Because it modifies the HTML response body, it works best with standard server-rendered web applications. Single-page applications or apps with non-standard content delivery may not render the banner correctly; validate in a staging environment before adopting.
 
 For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
 
@@ -28,7 +28,7 @@ For custom-built applications, implementing the banner natively within the appli
 
 1. **Configure the banner text and footer**
 
-   Set the classification level via bundle overrides. The footer banner is enabled by default (`addFooter: true`) — include it in your overrides only if you need to disable it.
+   Set the classification level via bundle overrides. The footer banner is enabled by default (`addFooter: true`); include it in your overrides only if you need to disable it.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -116,8 +116,8 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 **Solution:** This can happen with single-page applications or apps that manipulate the DOM after initial load. For these applications, consider implementing the classification banner natively within the application instead of relying on EnvoyFilter injection.
 
-## Related Documentation
+## Related documentation
 
-- [Astro UXDS Classification Markings](https://www.astrouxds.com/components/classification-markings/) — standard color and formatting reference
-- [Istio EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) — how Istio modifies HTTP responses at the gateway
-- [Networking concepts](/concepts/core-features/networking/) — Understand how UDS Core manages the Istio service mesh and gateways.
+- [Astro UXDS Classification Markings](https://www.astrouxds.com/components/classification-markings/) - standard color and formatting reference
+- [Istio EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) - how Istio modifies HTTP responses at the gateway
+- [Networking concepts](/concepts/core-features/networking/) - Understand how UDS Core manages the Istio service mesh and gateways.

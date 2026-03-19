@@ -20,13 +20,13 @@ You'll configure a UDS Package to use the [OAuth 2.0 Device Authorization Grant]
 
 The Device Authorization Grant is designed for applications that either have no browser or cannot handle redirect-based authentication (for example, CLI tools, IoT devices, or CI/CD pipelines where a browser redirect is impractical).
 
-This flow creates a **public client** — a client with no secret. Two important constraints apply to public clients in UDS Core:
+This flow creates a **public client** (a client with no secret). Two important constraints apply to public clients in UDS Core:
 
-- `standardFlowEnabled` must be explicitly set to `false` — the UDS operator will reject the Package CR if it is not. Public clients in UDS Core are restricted to device flow only.
+- `standardFlowEnabled` must be explicitly set to `false`. The UDS operator will reject the Package CR if it is not. Public clients in UDS Core are restricted to device flow only.
 - `publicClient: true` is incompatible with `serviceAccountsEnabled: true`
 
 > [!NOTE]
-> If your application needs **both** device flow and a standard browser redirect flow, create two separate SSO clients in the same Package CR — one for each flow. They cannot be combined in a single client.
+> If your application needs **both** device flow and a standard browser redirect flow, create two separate SSO clients in the same Package CR, one for each flow. They cannot be combined in a single client.
 
 ## Steps
 
@@ -53,7 +53,7 @@ This flow creates a **public client** — a client with no secret. Two important
    ```
 
    > [!NOTE]
-   > No Kubernetes secret is created for public clients — there is no client secret to store. Your application initiates device flow by calling the Keycloak device authorization endpoint directly.
+   > No Kubernetes secret is created for public clients because there is no client secret to store. Your application initiates device flow by calling the Keycloak device authorization endpoint directly.
 
 2. **Apply the Package CR to the cluster**
 
@@ -107,7 +107,7 @@ A successful response includes a `device_code`, `user_code`, and `verification_u
 
 **Symptoms:** The application needs both flows but they cannot coexist on one client.
 
-**Solution:** Add two SSO clients to the Package CR — one for device flow (public, no standard flow) and one for the standard browser redirect flow (confidential, standard flow enabled):
+**Solution:** Add two SSO clients to the Package CR, one for device flow (public, no standard flow) and one for the standard browser redirect flow (confidential, standard flow enabled):
 
 ```yaml
 spec:
@@ -131,12 +131,12 @@ spec:
 
 **Symptoms:** Token obtained via device flow is rejected by SSO-protected applications.
 
-**Solution:** Authservice validates tokens against a specific client. A device flow token issued to a public client will not have the correct `aud` claim for an SSO-protected application unless you configure an audience mapper. See [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) for an example of adding audience mappers — the same approach applies here.
+**Solution:** Authservice validates tokens against a specific client. A device flow token issued to a public client will not have the correct `aud` claim for an SSO-protected application unless you configure an audience mapper. See [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) for an example of adding audience mappers; the same approach applies here.
 
-## Related Documentation
+## Related documentation
 
-- [OAuth 2.0 Device Authorization Grant (RFC 8628)](https://datatracker.ietf.org/doc/html/rfc8628) — specification for the device flow
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO client field specification
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on the UDS SSO model
-- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) — Set up machine-to-machine authentication using the OAuth 2.0 Client Credentials Grant.
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — Background on how Keycloak and Authservice work together in UDS Core.
+- [OAuth 2.0 Device Authorization Grant (RFC 8628)](https://datatracker.ietf.org/doc/html/rfc8628) - specification for the device flow
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO client field specification
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on the UDS SSO model
+- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) - Set up machine-to-machine authentication using the OAuth 2.0 Client Credentials Grant.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Keycloak and Authservice work together in UDS Core.

@@ -20,7 +20,7 @@ You'll configure [Keycloak](https://www.keycloak.org/) for production high avail
 
 ## Before you begin
 
-Keycloak is the identity provider for the entire platform — if it becomes unavailable, users cannot authenticate and applications that depend on SSO will reject new sessions.
+Keycloak is the identity provider for the entire platform; if it becomes unavailable, users cannot authenticate and applications that depend on SSO will reject new sessions.
 
 > [!NOTE]
 > By default, Keycloak runs in **devMode** with a single replica and an embedded H2 database. For production HA, all replicas must share an external PostgreSQL database to maintain consistent realm configuration, user sessions, and client registrations.
@@ -78,7 +78,7 @@ Keycloak is the identity provider for the entire platform — if it becomes unav
        > You can also set variables as environment variables prefixed with `UDS_` (e.g., `UDS_KEYCLOAK_DB_PASSWORD`) instead of using a config file.
      </TabItem>
      <TabItem label="Kubernetes secret references">
-       Reference pre-existing Kubernetes secrets — useful for external secret managers or shared credential stores. Set non-secret values directly in the bundle:
+       Reference pre-existing Kubernetes secrets, useful for external secret managers or shared credential stores. Set non-secret values directly in the bundle:
 
        ```yaml title="uds-bundle.yaml"
        packages:
@@ -265,11 +265,11 @@ uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tai
 uds zarf tools kubectl get deployment -n kube-system metrics-server
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Keycloak: Horizontal Scaling](https://www.keycloak.org/getting-started/getting-started-scaling-and-tuning#_horizontal_scaling) — upstream guidance on scaling Keycloak instances
-- [Keycloak: Configuring the Database](https://www.keycloak.org/server/db) — database connection options and tuning
-- [Keycloak: Caching and Cache Configuration](https://www.keycloak.org/server/caching) — distributed cache behavior across replicas
-- [PostgreSQL: High Availability](https://www.postgresql.org/docs/current/high-availability.html) — HA patterns for the backing database
-- [Configure HA for Authservice](/how-to-guides/high-availability/authservice/) — Authservice handles SSO for applications without native OIDC support and also requires HA configuration.
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — Background on how Keycloak and Authservice work together in UDS Core.
+- [Keycloak: Horizontal Scaling](https://www.keycloak.org/getting-started/getting-started-scaling-and-tuning#_horizontal_scaling) - upstream guidance on scaling Keycloak instances
+- [Keycloak: Configuring the Database](https://www.keycloak.org/server/db) - database connection options and tuning
+- [Keycloak: Caching and Cache Configuration](https://www.keycloak.org/server/caching) - distributed cache behavior across replicas
+- [PostgreSQL: High Availability](https://www.postgresql.org/docs/current/high-availability.html) - HA patterns for the backing database
+- [Configure HA for Authservice](/how-to-guides/high-availability/authservice/) - Authservice handles SSO for applications without native OIDC support and also requires HA configuration.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Keycloak and Authservice work together in UDS Core.

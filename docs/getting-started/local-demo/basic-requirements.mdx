@@ -20,9 +20,7 @@ Your container runtime must have access to at least:
 > [!NOTE]
 > **Windows (WSL):** WSL only accesses 50% of host RAM by default. You'll need a machine with at least 8 CPU cores and 20 GiB RAM. Adjust limits with a [`.wslconfig` file](https://learn.microsoft.com/en-us/windows/wsl/wsl-config).
 
----
-
-## Install Required Tools
+## Install required tools
 
 <Tabs>
   <TabItem label="macOS">
@@ -122,12 +120,12 @@ Your container runtime must have access to at least:
 
   2. **Install a container runtime**
 
-     **Option A: [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** — integrates automatically with WSL 2. In Docker Desktop settings, enable **Use the WSL 2 based engine**.
+     **Option A: [Docker Desktop](https://www.docker.com/products/docker-desktop/) for Windows** integrates automatically with WSL 2. In Docker Desktop settings, enable **Use the WSL 2 based engine**.
 
      > [!NOTE]
      > Docker Desktop requires a paid subscription for companies with 250+ employees or $10M+ revenue.
 
-     **Option B: [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)** — install directly inside your WSL Ubuntu distribution as a free alternative.
+     **Option B: [Docker Engine](https://docs.docker.com/engine/install/ubuntu/)** installs directly inside your WSL Ubuntu distribution as a free alternative.
 
   3. **Install [Homebrew](https://brew.sh/) and [k3d](https://k3d.io/)** in your WSL terminal
 
@@ -140,6 +138,8 @@ Your container runtime must have access to at least:
 
   ### Troubleshooting WSL
 
+  The following are common issues and solutions for WSL setups:
+
   - **Ubuntu won't start:** Enable virtualization in your BIOS.
   - **Missing Windows features:** Search "Turn Windows features on or off" → enable **Virtual Machine Platform** and **Windows Subsystem for Linux**.
   - **WSL running as version 1:** Check with `wsl -l -v`. Upgrade with `wsl --set-version <distro> 2`.
@@ -147,8 +147,6 @@ Your container runtime must have access to at least:
 
   </TabItem>
 </Tabs>
-
----
 
 ## Verify
 

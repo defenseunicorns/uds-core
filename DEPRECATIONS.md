@@ -6,7 +6,7 @@ sidebar:
 
 This document tracks all currently deprecated features in UDS Core. Deprecated features remain functional but are scheduled for removal in a future major release.
 
-## Active Deprecations
+## Active deprecations
 
 <!--
 When adding a deprecation, include:
@@ -24,7 +24,7 @@ When adding a deprecation, include:
 | `CA_CERT` Zarf variable | 0.58.0 ([#2167](https://github.com/defenseunicorns/uds-core/pull/2167)) | **Reason:** Improved naming clarity.<br/>**Migration:** Use `CA_BUNDLE_CERTS` instead | 1.0.0 |
 | `sso.secretName`, `sso.secretLabels`, `sso.secretAnnotations`, `sso.secretTemplate` | 0.60.0 ([#2264](https://github.com/defenseunicorns/uds-core/pull/2264)) | **Reason:** Simplified field structure.<br/>**Migration:** Use `sso.secretConfig.name`, `.labels`, `.annotations`, `.template` instead | Package `v1beta1` |
 
-## Recently Removed
+## Recently removed
 
 This section lists features that were removed in recent major releases for historical reference.
 

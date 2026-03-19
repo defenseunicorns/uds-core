@@ -14,15 +14,11 @@ The sample app is [podinfo](https://github.com/stefanprodan/podinfo), a lightwei
 > [!NOTE]
 > Assumes you have completed [Install and Deploy UDS](/getting-started/local-demo/install-and-deploy-uds/) and have a running local cluster.
 
----
-
 ## Requirements
 
-- **UDS CLI** — installed in the previous step (includes Zarf via `uds zarf`)
+- **UDS CLI**, installed in the previous step (includes Zarf via `uds zarf`)
 
----
-
-## Create the Zarf Package
+## Create the Zarf package
 
 A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and manifests for airgap-safe delivery. The UDS Operator watches for `Package` custom resources and automatically configures Istio ingress, Keycloak SSO, [Prometheus](https://prometheus.io/) monitoring, and network policies for your app.
 
@@ -118,8 +114,6 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
 
 </Steps>
 
----
-
 ## Verify
 
 Check that the UDS Operator processed the `Package` resource:
@@ -141,7 +135,7 @@ podinfo   Ready    ["uds-core-podinfo"]   ["podinfo.uds.dev"]   ["podinfo-..."] 
 
 Navigate to [https://podinfo.uds.dev](https://podinfo.uds.dev). You'll be redirected to Keycloak. Only members of `/UDS Core/Admin` can log in.
 
-Create a test user by setting up a simple `tasks.yaml` file that imports a helper from [uds-common](https://github.com/defenseunicorns/uds-common):
+Create a test user by setting up a `tasks.yaml` file that imports a helper from [uds-common](https://github.com/defenseunicorns/uds-common):
 
 ```yaml title="tasks.yaml"
 includes:
@@ -155,7 +149,7 @@ uds run common-setup:keycloak-user --set KEYCLOAK_USER_GROUP="/UDS Core/Admin"
 ```
 
 > [!CAUTION]
-> Default credentials: `username: doug` / `password: unicorn123!@#UN`. These are development-only credentials—never use them in production.
+> Default credentials: `username: doug` / `password: unicorn123!@#UN`. These are development-only credentials; never use them in production.
 
 **View metrics in Grafana:**
 
@@ -165,9 +159,7 @@ Go to [https://grafana.admin.uds.dev](https://grafana.admin.uds.dev) and navigat
 rate(process_cpu_seconds_total{namespace="podinfo"}[$__rate_interval])
 ```
 
----
-
-## What Happened
+## What happened
 
 By declaring your app's needs in the `Package` CR, the UDS Operator automatically provisioned:
 

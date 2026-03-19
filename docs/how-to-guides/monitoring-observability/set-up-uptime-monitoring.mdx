@@ -8,7 +8,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are configured through the UDS Package CR's `uptime` block — the operator automatically creates Prometheus Probe resources and configures Blackbox Exporter. You can monitor simple health checks, custom paths, and even Authservice-protected applications without additional setup.
+Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are configured through the UDS Package CR's `uptime` block. The operator automatically creates Prometheus Probe resources and configures Blackbox Exporter. You can monitor simple health checks, custom paths, and even Authservice-protected applications without additional setup.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 ## Before you begin
 
 > [!CAUTION]
-> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically — do not manually edit this secret, as the operator will reconcile any changes.
+> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically; do not manually edit this secret, as the operator will reconcile any changes.
 
 > [!NOTE]
 > Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client and configures OAuth2 authentication for the probe.
@@ -219,9 +219,9 @@ uds zarf tools kubectl describe package <name> -n <namespace>
 
 **Solution:** Check that the probe Keycloak client was created by reviewing operator logs. Verify the SSO entry's redirect URI origin matches the expose entry's FQDN.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) — upstream project documentation
-- [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) — Probe CRD field reference
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Alert when probe_success drops to 0 or SSL certificates near expiry.
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on how the monitoring stack fits together in UDS Core.
+- [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) - upstream project documentation
+- [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) - Probe CRD field reference
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Alert when probe_success drops to 0 or SSL certificates near expiry.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) - Background on how the monitoring stack fits together in UDS Core.

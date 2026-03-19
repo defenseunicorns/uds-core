@@ -8,7 +8,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-After completing this guide, UDS Core will work correctly behind an L7 load balancer such as AWS Application Load Balancer (ALB) or Azure Application Gateway. This involves configuring external TLS termination, trusted proxy settings, and optionally client certificate forwarding.
+After completing this guide, UDS Core will work correctly behind an L7 load balancer such as AWS Application Load Balancer (ALB) or Azure Application Gateway. You will configure external TLS termination, trusted proxy settings, and optionally client certificate forwarding.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 > **Client certificate forwarding requires hardened infrastructure.** When using an L7 load balancer to forward client certificates (e.g., for DoD CAC authentication), UDS Core trusts the HTTP headers passed through the Istio gateways. You **must** ensure:
 >
 > - All network components between the public internet and the Istio gateways are hardened against HTTP header injection and spoofing attacks
-> - The client certificate header is always sanitized — a client application must not be able to forge it from inside or outside the cluster
+> - The client certificate header is always sanitized; a client application must not be able to forge it from inside or outside the cluster
 > - All traffic between the edge load balancer and Istio gateways is secured and not reachable from inside or outside the cluster without going through the load balancer
 > - **Untrusted workloads in the cluster must not be able to reach the Istio ingressgateway pods directly.** If a workload can bypass the load balancer and send traffic straight to the ingressgateway, it can inject arbitrary headers (including forged client certificates), bypassing all authentication controls.
 >
@@ -147,9 +147,9 @@ After completing this guide, UDS Core will work correctly behind an L7 load bala
 - Verify the `tlsCertificateFormat` matches your load balancer's format (`AWS` for ALB, `PEM` for others)
 - Ensure the load balancer is configured to forward client certificates
 
-## Related Documentation
+## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Istio Network Topology Documentation](https://istio.io/latest/docs/ops/configuration/traffic-management/network-topologies/)
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure intra-cluster and external network access for your application.
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Make applications accessible through the tenant or admin gateway.

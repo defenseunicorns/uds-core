@@ -9,6 +9,8 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## Deploy
 
+Run the bundle you built in the previous step and verify that all components come up healthy.
+
 <Steps>
 
 1. **Run the deploy command**
@@ -17,7 +19,7 @@ import { Steps } from '@astrojs/starlight/components';
    uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
    ```
 
-   If you are using a `uds-config.yaml` for variables, it is picked up automatically from the current directory. You can also specify it explicitly:
+   If you are using a `uds-config.yaml` for variables, UDS CLI picks it up automatically from the current directory. You can also specify it explicitly:
 
    ```bash
    UDS_CONFIG=uds-config.yaml uds deploy uds-bundle-my-uds-core-*.tar.zst --confirm
@@ -43,9 +45,9 @@ import { Steps } from '@astrojs/starlight/components';
 
 </Steps>
 
----
-
 ## Verify
+
+Confirm that all UDS Core components deployed successfully.
 
 <Steps>
 
@@ -112,13 +114,11 @@ import { Steps } from '@astrojs/starlight/components';
 
 </Steps>
 
----
-
-## Common Issues
+## Common issues
 
 ### Pods stuck in `Pending`
 
-Usually indicates insufficient cluster resources or a missing storage class.
+This usually indicates insufficient cluster resources or a missing storage class.
 
 ```bash
 kubectl describe pod <pod-name> -n <namespace>
@@ -126,9 +126,9 @@ kubectl describe pod <pod-name> -n <namespace>
 
 Look for `Insufficient cpu`, `Insufficient memory`, or `no persistent volumes available` in the events.
 
-### Loki or Velero failing to start
+### Loki or Velero fails to start
 
-Often caused by incorrect object storage credentials or unreachable storage endpoint. Check the pod logs:
+Incorrect object storage credentials or an unreachable storage endpoint often cause this. Check the pod logs:
 
 ```bash
 kubectl logs -n logging -l app.kubernetes.io/name=loki --tail=50
@@ -139,14 +139,15 @@ kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50
 
 Your load balancer provisioner is not assigning IPs. Verify the provisioner is installed and configured in your cluster. For on-premises deployments, ensure MetalLB or kube-vip is running and has an IP pool configured.
 
-### Keycloak not loading
+### Keycloak does not load
 
-Check that:
+Verify the following:
+
 1. The Keycloak pod is `Running`: `kubectl get pods -n keycloak`
 2. DNS resolves to the load balancer IP
 3. The TLS certificate is valid for your admin domain
 
-### Keycloak failing to connect to database
+### Keycloak fails to connect to database
 
 If Keycloak is running but crashing on startup, check the logs for database connection errors:
 
@@ -156,11 +157,9 @@ kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
 
 Common causes: incorrect hostname, wrong credentials, database user lacks privileges, or the database server is not reachable from the cluster. Verify the values in your `uds-config.yaml` match what was provisioned in the [Provision External Services](/getting-started/production/provision-services/) step.
 
----
+## You're done
 
-## You're Done
-
-Congratulations — you've completed the UDS Core production deployment tutorial. You've provisioned the external services, built a production bundle, and deployed UDS Core to your cluster.
+You've completed the UDS Core production deployment tutorial. You've provisioned the external services, built a production bundle, and deployed UDS Core to your cluster.
 
 Here's what you've stood up:
 

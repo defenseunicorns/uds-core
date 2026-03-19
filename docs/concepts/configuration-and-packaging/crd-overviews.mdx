@@ -6,11 +6,11 @@ sidebar:
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Once packages are deployed, the UDS Operator takes over. Think of CRDs as forms you fill out to tell the platform what you need — the operator reads them and does the work behind the scenes.
+Once packages are deployed, the UDS Operator takes over. Think of CRDs as forms you fill out to tell the platform what you need; the operator reads them and does the work behind the scenes.
 
 <CardGrid>
   <Card title="Package" icon="document">
-    Declares what an application needs from the platform — networking, SSO, and monitoring.
+    Declares what an application needs from the platform: networking, SSO, and monitoring.
   </Card>
   <Card title="Exemption" icon="warning">
     Grants specific workloads permission to bypass named security policies.
@@ -20,18 +20,16 @@ Once packages are deployed, the UDS Operator takes over. Think of CRDs as forms 
   </Card>
 </CardGrid>
 
----
-
 ## Package
 
-Think of a Package CR as a **request form** for the platform. Instead of manually configuring Istio routes, writing NetworkPolicies, and setting up Keycloak clients, an application team fills out one declaration — and the operator provisions everything.
+Think of a Package CR as a **request form** for the platform. Instead of manually configuring Istio routes, writing NetworkPolicies, and setting up Keycloak clients, an application team fills out one declaration, and the operator provisions everything.
 
 A Package can declare things like:
 
-- **Networking** — which services to expose externally and what outbound traffic to allow
-- **SSO** — Keycloak client registration and authentication flows
-- **Monitoring** — metrics endpoints for Prometheus to scrape
-- **Service mesh** — ambient or sidecar mode
+- **Networking**: which services to expose externally and what outbound traffic to allow
+- **SSO**: Keycloak client registration and authentication flows
+- **Monitoring**: metrics endpoints for Prometheus to scrape
+- **Service mesh**: ambient or sidecar mode
 
 <LinkCard title="Package CR Reference" href="/reference/operator-and-crds/packages-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
@@ -41,39 +39,33 @@ A Package can declare things like:
 > [!TIP]
 > See [Networking & Service Mesh](/concepts/core-features/networking/) for how Package networking declarations work in practice.
 
----
-
 ## Exemption
 
-The platform enforces a strict security baseline out of the box — no privileged containers, no root execution, restricted volume types. But sometimes a workload genuinely needs to break a rule. A node-level metrics agent, for example, needs host access that would normally be blocked.
+The platform enforces a strict security baseline out of the box: no privileged containers, no root execution, restricted volume types. But sometimes a workload genuinely needs to break a rule. A node-level metrics agent, for example, needs host access that would normally be blocked.
 
-An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields — so the reason for the exemption can be documented right next to the exemption itself.
+An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields, so the reason for the exemption can be documented right next to the exemption itself.
 
 <LinkCard title="Exemption CR Reference" href="/reference/operator-and-crds/exemptions-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
 > Exemptions are restricted to the `uds-policy-exemptions` namespace by default. Centralizing them in one place makes them easier to audit and control with RBAC. This can be relaxed via ClusterConfig if needed.
 
----
-
 ## ClusterConfig
 
-While Package and Exemption are scoped to individual applications, ClusterConfig holds **shared global information** about the cluster deployment itself — things like:
+While Package and Exemption are scoped to individual applications, ClusterConfig holds **shared global information** about the cluster deployment itself:
 
-- **Domains** — tenant and admin domains for ingress gateways
-- **CA certificates** — custom trust bundles propagated to platform components
-- **Networking CIDRs** — Kubernetes API and node ranges for policy generation
-- **Policy settings** — such as whether exemptions can exist outside the default namespace
-- **Cluster identity** — name and tags for identification and reporting
+- **Domains**: tenant and admin domains for ingress gateways
+- **CA certificates**: custom trust bundles propagated to platform components
+- **Networking CIDRs**: Kubernetes API and node ranges for policy generation
+- **Policy settings**: such as whether exemptions can exist outside the default namespace
+- **Cluster identity**: name and tags for identification and reporting
 
-Unlike the other two CRDs, application teams don't touch ClusterConfig — it is managed by platform operators.
+Unlike the other two CRDs, application teams don't touch ClusterConfig. Platform operators manage it.
 
 <LinkCard title="ClusterConfig CR Reference" href="/reference/operator-and-crds/clusterconfig-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
-> ClusterConfig is a singleton — there is exactly one per cluster.
-
----
+> ClusterConfig is a singleton; there is exactly one per cluster.
 
 > [!TIP]
 > To configure these CRDs for your environment, see the [How-to Guides](/how-to-guides/overview/).

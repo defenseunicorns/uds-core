@@ -8,10 +8,10 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll prepare an existing Keycloak deployment for upgrade to a UDS Core version with FIPS 140-2 Strict Mode enabled — migrating password hashing algorithms and resetting credentials that are incompatible with FIPS before the upgrade runs.
+You'll prepare an existing Keycloak deployment for upgrade to a UDS Core version with FIPS 140-2 Strict Mode enabled by migrating password hashing algorithms and resetting credentials that are incompatible with FIPS before the upgrade runs.
 
 > [!NOTE]
-> **FIPS 140-2 Strict Mode is always enabled in UDS Core.** If you are deploying UDS Core for the first time, no action is required — FIPS is active by default. This guide applies only when upgrading an existing non-FIPS deployment.
+> **FIPS 140-2 Strict Mode is always enabled in UDS Core.** If you are deploying UDS Core for the first time, no action is required. FIPS is active by default. This guide applies only when upgrading an existing non-FIPS deployment.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ FIPS mode changes how Keycloak handles cryptography and passwords:
 
 | Constraint | Detail |
 |---|---|
-| Password hashing | `argon2` (upstream Keycloak default) is not FIPS-approved — UDS Core uses `pbkdf2-sha256` |
+| Password hashing | `argon2` (upstream Keycloak default) is not FIPS-approved; UDS Core uses `pbkdf2-sha256` |
 | Minimum password length | 14 characters |
 | Algorithms | Only FIPS-approved algorithms are available for signing, encryption, and hashing |
 
@@ -91,7 +91,7 @@ uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tai
 
 Look for:
 
-```
+```console
 KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 ```
 
@@ -103,7 +103,7 @@ KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 
 **Symptoms:** Cannot log in to the Keycloak admin console after upgrading. Login fails with a password error.
 
-**Solution:** The admin password was hashed with `argon2` or is shorter than 14 characters — FIPS rejects both. To recover:
+**Solution:** The admin password was hashed with `argon2` or is shorter than 14 characters. FIPS rejects both. To recover:
 
 1. Access the Keycloak pod directly:
    ```bash
@@ -113,8 +113,8 @@ KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
    ```
 2. Once logged in, follow step 3 above to reset all remaining accounts.
 
-## Related Documentation
+## Related documentation
 
-- [Keycloak FIPS 140-2 support](https://www.keycloak.org/server/fips) — upstream details on FIPS constraints and limitations
-- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session timeouts, concurrent session limits, and logout confirmation behavior.
-- [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/) — Set password complexity and hashing algorithm alongside FIPS requirements.
+- [Keycloak FIPS 140-2 support](https://www.keycloak.org/server/fips) - upstream details on FIPS constraints and limitations
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - Set session timeouts, concurrent session limits, and logout confirmation behavior.
+- [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/) - Set password complexity and hashing algorithm alongside FIPS requirements.

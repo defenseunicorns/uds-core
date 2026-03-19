@@ -8,7 +8,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-After completing this guide, your application will have the network access rules it needs — whether that's receiving traffic from other in-cluster services, reaching services in other namespaces, communicating with the Kubernetes API, or connecting to external hosts.
+After completing this guide, your application will have the network access rules it needs, whether that's receiving traffic from other in-cluster services, reaching services in other namespaces, communicating with the Kubernetes API, or connecting to external hosts.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ UDS Core enforces strict network policies by default. All intra-cluster and exte
 Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of fields.
 
 > [!NOTE]
-> The `expose` block handles ingress from gateways — see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/). The `allow` block covers everything else: intra-cluster traffic between namespaces, egress to external services, and access to infrastructure endpoints like the Kubernetes API.
+> The `expose` block handles ingress from gateways (see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/)). The `allow` block covers everything else: intra-cluster traffic between namespaces, egress to external services, and access to infrastructure endpoints like the Kubernetes API.
 
 ## Steps
 
@@ -254,7 +254,7 @@ Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector`
      <TabItem label="Unrestricted">
 
      > [!CAUTION]
-     > `remoteGenerated: Anywhere` bypasses host-based egress restrictions. Use this only when host-based rules don't fit your use case — for example, when your application needs to reach a large or unpredictable set of external hosts (e.g., wildcard domain requirements).
+     > `remoteGenerated: Anywhere` bypasses host-based egress restrictions. Use this only when host-based rules don't fit your use case, for example, when your application needs to reach a large or unpredictable set of external hosts (e.g., wildcard domain requirements).
 
      ```yaml title="uds-package.yaml"
      apiVersion: uds.dev/v1alpha1
@@ -281,7 +281,7 @@ Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector`
    > - **TLS passthrough**: External egress uses TLS passthrough mode, meaning traffic exits the mesh as-is. Without TLS origination, HTTP paths cannot be inspected, restricted, or logged.
    > - **Domain fronting**: TLS passthrough only verifies the SNI header, not the actual destination. This is only safe for trusted hosts. See [domain fronting](https://en.wikipedia.org/wiki/Domain_fronting) for background.
    > - **DNS exfiltration**: UDS Core does not currently block DNS-based data exfiltration.
-   > - **Audit all egress entries**: Platform engineers should review all `Package` custom resources to verify that every `Egress` entry is scoped appropriately — each one represents a traffic path that will be opened.
+   > - **Audit all egress entries**: Platform engineers should review all `Package` custom resources to verify that every `Egress` entry is scoped appropriately, as each one represents a traffic path that will be opened.
 
 4. **Deploy your application**
 
@@ -329,14 +329,14 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 **Solution:**
 - Verify the `remoteNamespace` and `remoteSelector` match the target pods exactly
 - Check that the `port` matches the port the remote service is listening on
-- Ensure both sides have the necessary rules — if app A needs to talk to app B, app A needs an `Egress` rule and app B needs an `Ingress` rule
+- Ensure both sides have the necessary rules; if app A needs to talk to app B, app A needs an `Egress` rule and app B needs an `Ingress` rule
 
 ### Problem: External egress blocked
 
 **Symptoms:** Application cannot reach an external service; connection timeouts or resets.
 
 **Solution:**
-- Verify the `remoteHost` matches exactly — `google.com` is not the same as `www.google.com`
+- Verify the `remoteHost` matches exactly; `google.com` is not the same as `www.google.com`
 - Check that your `selector` and `serviceAccount` match the workloads you expect
 - For sidecar mode, run `istioctl proxy-config listeners <egress-pod> -n <egress-namespace>` to verify expected routes
 
@@ -346,8 +346,8 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 
 **Solution:** The port is not exposed on the egress gateway service. Add it to `service.ports` in the gateway overrides as shown in the sidecar mode tab.
 
-## Related Documentation
+## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full CR schema and field reference for network, SSO, and monitoring configuration
-- [Allow permissive mesh traffic](/how-to-guides/networking/allow-permissive-mesh-traffic/) — Relax strict authorization policies when standard network rules aren't sufficient.
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — Learn how the service mesh, gateways, and authorization model work.
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [Allow permissive mesh traffic](/how-to-guides/networking/allow-permissive-mesh-traffic/) - Relax strict authorization policies when standard network rules aren't sufficient.
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Learn how the service mesh, gateways, and authorization model work.

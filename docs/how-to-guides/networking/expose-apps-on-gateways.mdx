@@ -8,13 +8,13 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-After completing this guide, your application will be accessible through one of UDS Core's ingress gateways — either the **tenant gateway** (for end-user applications) or the **admin gateway** (for admin-facing interfaces).
+After completing this guide, your application will be accessible through one of UDS Core's ingress gateways, either the **tenant gateway** (for end-user applications) or the **admin gateway** (for admin-facing interfaces).
 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
-- Access to a Kubernetes cluster with UDS Core deployed and TLS configured — see [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/)
+- Access to a Kubernetes cluster with UDS Core deployed and TLS configured (see [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/))
 - A domain configured in your `uds-config.yaml`:
   ```yaml title="uds-config.yaml"
   shared:
@@ -151,7 +151,7 @@ After completing this guide, your application will be accessible through one of 
 
 3. **(Optional) Configure advanced HTTP routing**
 
-   Add an `advancedHTTP` block to an expose entry to configure routing rules like header manipulation, CORS policies, URI rewrites, redirects, retries, and timeouts. The `advancedHTTP` fields map directly to [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) — refer to the Istio docs for the full field reference.
+   Add an `advancedHTTP` block to an expose entry to configure routing rules like header manipulation, CORS policies, URI rewrites, redirects, retries, and timeouts. The `advancedHTTP` fields map directly to [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute); refer to the Istio docs for the full field reference.
 
    > [!WARNING]
    > `advancedHTTP` cannot be used with the passthrough gateway. Passthrough gateways forward raw TLS without terminating it, so HTTP-level routing is not possible.
@@ -208,7 +208,7 @@ After completing this guide, your application will be accessible through one of 
                maxAge: "86400s"
    ```
 
-   All `advancedHTTP` options are composable — you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
+   All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
 
 4. **Deploy your application**
 
@@ -250,7 +250,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Browser or curl returns connection refused or timeout.
 
 **Solution:**
-- Verify the Package CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` — check the `STATUS` column
+- Verify the Package CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` (check the `STATUS` column)
 - Ensure your DNS resolves the hostname to the gateway load balancer IP
 
 ### Problem: Wrong gateway or domain
@@ -259,7 +259,7 @@ curl -v https://my-app.yourdomain.com
 
 **Solution:**
 - Check the `gateway` field in your Package CR matches your intent (`tenant` or `admin`)
-- Verify the `host` field — it becomes the subdomain prefix (e.g., `host: my-app` → `my-app.yourdomain.com`)
+- Verify the `host` field, which becomes the subdomain prefix (e.g., `host: my-app` becomes `my-app.yourdomain.com`)
 - Check `shared.domain` in your `uds-config.yaml`
 
 ### Problem: Root domain not working
@@ -271,11 +271,11 @@ curl -v https://my-app.yourdomain.com
 - Verify DNS has an A record for the root domain (not just a wildcard)
 - Check that TLS certificates are provided for the root domain configuration
 
-## Related Documentation
+## Related documentation
 
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — how the service mesh, gateways, and network policies work together in UDS Core
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full CR schema and field reference for network, SSO, and monitoring configuration
-- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) — Deploy the optional passthrough gateway for apps that handle their own TLS.
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure intra-cluster and external network access for your application.
-- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) — Deploy a gateway with independent domain, TLS, and security controls.
-- [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) — upstream reference for the full set of `advancedHTTP` fields
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
+- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.
+- [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) - upstream reference for the full set of `advancedHTTP` fields

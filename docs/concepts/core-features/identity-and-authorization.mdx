@@ -6,9 +6,9 @@ sidebar:
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-UDS Core centralizes authentication and authorization using [Keycloak](https://www.keycloak.org/) as the identity provider. When an application supports standard SSO flows — [OIDC](https://openid.net/developers/how-connect-works/), [OAuth2](https://oauth.net/2/), or [SAML](https://www.oasis-open.org/standard/saml/) — the UDS Operator automatically registers a Keycloak client for it and delivers credentials to the application namespace. The application handles its own token flow natively, which is the preferred approach.
+UDS Core centralizes authentication and authorization using [Keycloak](https://www.keycloak.org/) as the identity provider. When an application supports standard SSO flows ([OIDC](https://openid.net/developers/how-connect-works/), [OAuth2](https://oauth.net/2/), or [SAML](https://www.oasis-open.org/standard/saml/)), the UDS Operator automatically registers a Keycloak client for it and delivers credentials to the application namespace. The application handles its own token flow natively, which is the preferred approach.
 
-[Authservice](https://github.com/istio-ecosystem/authservice) is also available for applications that have no native SSO support. It intercepts requests and handles the OIDC flow on the application's behalf. This is a useful escape hatch, but not the recommended default — if an application can speak OIDC natively, it should.
+[Authservice](https://github.com/istio-ecosystem/authservice) is also available for applications that have no native SSO support. It intercepts requests and handles the OIDC flow on the application's behalf. This is a useful escape hatch, but not the recommended default. If an application can speak OIDC natively, it should.
 
 > [!TIP]
 > Prefer native SSO integration over Authservice where possible. Native integration is more observable, more maintainable, and keeps authentication logic inside the application where it belongs. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC.
@@ -17,9 +17,9 @@ UDS Core centralizes authentication and authorization using [Keycloak](https://w
 
 Applications deployed on regulated platforms cannot each maintain their own user stores or authentication logic. Centralizing identity provides:
 
-- **A single audit trail** — all authentication events flow through one system
-- **Consistent access control** — group membership and role assignments apply uniformly across services
-- **Reduced developer burden** — application teams declare SSO requirements in a Package CR; the platform handles client registration and token validation
+- **A single audit trail**: all authentication events flow through one system
+- **Consistent access control**: group membership and role assignments apply uniformly across services
+- **Reduced developer burden**: application teams declare SSO requirements in a Package CR; the platform handles client registration and token validation
 
 ## The SSO model
 
@@ -45,7 +45,7 @@ From there, how SSO works depends on whether the application supports OIDC nativ
     For applications with no native OIDC support, the operator can additionally configure Authservice to intercept requests before they reach the application and handle the OIDC flow transparently.
 
     **Limitations to be aware of:**
-    - Authservice handles authentication at the proxy layer — the token is passed through and applications *can* read claims from it (user identity, groups), but the application is not managing the OIDC flow itself, making the integration less observable and harder to troubleshoot
+    - Authservice handles authentication at the proxy layer; the token is passed through and applications *can* read claims from it (user identity, groups), but the application is not managing the OIDC flow itself, making the integration less observable and harder to troubleshoot
     - An additional proxy layer to configure and troubleshoot
   </TabItem>
 </Tabs>
@@ -68,10 +68,10 @@ UDS Core supports three layers of Keycloak customization, each suited to differe
 | Approach | Use for | Requires image rebuild? |
 |---|---|---|
 | **Helm chart values** | Session policies, account settings, auth flow toggles | No |
-| **UDS Identity Config image** | Custom themes, plugins, CA truststore | Yes — themes and plugins apply when the Keycloak pod restarts; no realm re-import needed |
+| **UDS Identity Config image** | Custom themes, plugins, CA truststore | Yes (themes and plugins apply when the Keycloak pod restarts; no realm re-import needed) |
 | **OpenTofu / IaC** | Managing groups, clients, IdPs post-deploy | No |
 
-Most operational configuration — session timeouts, lockout policies, authentication flows — is handled via Helm chart values without rebuilding anything. Custom themes, plugins, and truststore changes require building and deploying a custom UDS Identity Config image. Post-deploy management of Keycloak resources (groups, clients, IdPs) can be automated with OpenTofu.
+Most operational configuration (session timeouts, lockout policies, authentication flows) is handled via Helm chart values without rebuilding anything. Custom themes, plugins, and truststore changes require building and deploying a custom UDS Identity Config image. Post-deploy management of Keycloak resources (groups, clients, IdPs) can be automated with OpenTofu.
 
 > [!TIP]
 > Ready to configure identity for your environment? See the [Identity & Authorization How-to Guides](/how-to-guides/identity-and-authorization/overview/).

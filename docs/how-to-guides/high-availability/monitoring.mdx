@@ -115,7 +115,7 @@ Grafana's default embedded SQLite database does not support multiple replicas an
    > Use Grafana's built-in Prometheus dashboards to observe actual CPU and memory usage before choosing resource values. Over-provisioning wastes cluster resources; under-provisioning causes OOM kills and metric gaps.
 
    > [!CAUTION]
-   > **Multi-replica Prometheus is not tested or recommended at this time with UDS Core.** Scaling beyond a single replica requires an external TSDB backend (e.g., Thanos, Cortex, Mimir, VictoriaMetrics) to handle deduplication — each replica independently scrapes all targets, producing duplicate data. You would also need to reconfigure Grafana's data source to query the external backend. See the [Prometheus remote storage integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) if you need to pursue this path.
+   > **Multi-replica Prometheus is not tested or recommended at this time with UDS Core.** Scaling beyond a single replica requires an external TSDB backend (e.g., Thanos, Cortex, Mimir, VictoriaMetrics) to handle deduplication, because each replica independently scrapes all targets, producing duplicate data. You would also need to reconfigure Grafana's data source to query the external backend. See the [Prometheus remote storage integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) for details.
 
 3. **Configure Prometheus storage and retention**
 
@@ -150,11 +150,11 @@ Grafana's default embedded SQLite database does not support multiple replicas an
    ```
 
    > [!NOTE]
-   > If you are resizing storage on an existing deployment, follow the [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) runbook — PVC resizing requires additional steps beyond updating your bundle.
+   > If you are resizing storage on an existing deployment, follow the [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) runbook, because PVC resizing requires additional steps beyond updating your bundle.
 
    To estimate disk needs, use the upstream formula from the [Prometheus storage documentation](https://prometheus.io/docs/prometheus/latest/storage/):
 
-   ```
+   ```text
    needed_disk_space = retention_time_seconds × ingested_samples_per_second × bytes_per_sample
    ```
 
@@ -164,7 +164,7 @@ Grafana's default embedded SQLite database does not support multiple replicas an
    > Use the `prometheus_tsdb_storage_blocks_bytes` metric in Grafana to monitor actual disk usage over time. This is the most reliable way to right-size your PVC rather than guessing upfront.
 
    > [!CAUTION]
-   > If stored data exceeds PVC capacity, Prometheus will crash-loop. Always provision PVC size with headroom above your expected retention volume. `retentionSize` acts as a safety cap — Prometheus drops the oldest blocks when this limit is reached.
+   > If stored data exceeds PVC capacity, Prometheus will crash-loop. Always provision PVC size with headroom above your expected retention volume. `retentionSize` acts as a safety cap: Prometheus drops the oldest blocks when this limit is reached.
 
 4. **Create and deploy your bundle**
 
@@ -216,7 +216,7 @@ Ensure the PostgreSQL instance allows connections from the cluster's CIDR range.
 
 **Symptoms:** Grafana UI loads but dashboards display no data points.
 
-**Solution:** Dashboard definitions are stored in ConfigMaps and will load automatically. If data sources are missing, check that the Grafana PostgreSQL database was initialized correctly — the Grafana migration should run automatically on first startup with the new database.
+**Solution:** Dashboard definitions are stored in ConfigMaps and will load automatically. If data sources are missing, check that the Grafana PostgreSQL database was initialized correctly. The Grafana migration should run automatically on first startup with the new database.
 
 ### Problem: Prometheus pod crash-looping with storage errors
 
@@ -229,12 +229,12 @@ uds zarf tools kubectl get pvc -n monitoring -l "operator.prometheus.io/name=kub
 ```
 Either lower the `retentionSize` limit to trigger faster data pruning, or expand the PVC using the [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) runbook.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana: High Availability Setup](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/) — configuring Grafana for HA with an external database
-- [Grafana: Configure a PostgreSQL Database](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database) — database backend options for Grafana
-- [Prometheus: Storage](https://prometheus.io/docs/prometheus/latest/storage/) — TSDB storage architecture and operational guidance
-- [Prometheus: Remote Storage Integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) — Thanos, Cortex, VictoriaMetrics, and other remote storage options
-- [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) — runbook for expanding Prometheus storage on a running cluster
-- [Configure HA for Logging](/how-to-guides/high-availability/logging/) — Loki provides the log data that Grafana visualizes and also requires HA configuration.
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on the Prometheus, Grafana, and Alertmanager stack in UDS Core.
+- [Grafana: High Availability Setup](https://grafana.com/docs/grafana/latest/setup-grafana/set-up-for-high-availability/) - configuring Grafana for HA with an external database
+- [Grafana: Configure a PostgreSQL Database](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#database) - database backend options for Grafana
+- [Prometheus: Storage](https://prometheus.io/docs/prometheus/latest/storage/) - TSDB storage architecture and operational guidance
+- [Prometheus: Remote Storage Integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) - Thanos, Cortex, VictoriaMetrics, and other remote storage options
+- [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) - runbook for expanding Prometheus storage on a running cluster
+- [Configure HA for Logging](/how-to-guides/high-availability/logging/) - Loki provides the log data that Grafana visualizes and also requires HA configuration.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) - Background on the Prometheus, Grafana, and Alertmanager stack in UDS Core.

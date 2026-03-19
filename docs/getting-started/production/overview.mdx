@@ -7,19 +7,19 @@ sidebar:
 
 import { Steps } from '@astrojs/starlight/components';
 
-## What You'll Accomplish
+## What you'll accomplish
 
-You'll deploy UDS Core to a real Kubernetes cluster — cloud, on-premises, or airgapped. Unlike the local demo, you bring your own infrastructure and configure UDS Core for your environment.
+You'll deploy UDS Core to a real Kubernetes cluster (cloud, on-premises, or airgapped). Unlike the local demo, you bring your own infrastructure and configure UDS Core for your environment.
 
-This path is for:
+This path is for the following audiences:
 
 - Platform engineers standing up UDS Core for the first time
 - Teams deploying to EKS, AKS, RKE2, K3s, or other on-prem environments
 - Anyone migrating from an existing platform to UDS
 
----
+## What's different from the local demo
 
-## What's Different from the Local Demo
+Production deployments replace the local demo's ephemeral defaults with your own infrastructure.
 
 | | Local Demo | Production |
 |---|---|---|
@@ -29,9 +29,9 @@ This path is for:
 | **Backup storage** | In-cluster MinIO (dev only) | External object storage |
 | **Identity DB** | Embedded dev-mode database (not for prod) | External database |
 
----
-
 ## Requirements
+
+You need the following for a production deployment:
 
 - A running [CNCF-conformant](https://www.cncf.io/training/certification/software-conformance/) Kubernetes cluster
 - Wildcard DNS records for your admin and tenant domains
@@ -41,9 +41,9 @@ This path is for:
 - Sufficient cluster capacity (12+ vCPUs, 32+ GiB RAM across worker nodes)
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 
----
-
 ## Steps
+
+Work through these steps to deploy UDS Core to production.
 
 <Steps>
 
@@ -66,5 +66,5 @@ This path is for:
 </Steps>
 
 > [!NOTE]
-> Production deployments involve coordinating multiple systems — Kubernetes, DNS, certificates, storage, and databases. Expect to spend more time in prerequisites and provisioning than in the deployment itself.
+> Production deployments involve coordinating multiple systems: Kubernetes, DNS, certificates, storage, and databases. Expect to spend more time in prerequisites and provisioning than in the deployment itself.
 

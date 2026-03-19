@@ -8,7 +8,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll add SSO protection to an application that has no native OIDC support. Authservice intercepts requests before they reach the application and handles the authentication flow on the application's behalf — requiring users to log in via Keycloak before they can access the app.
+You'll add SSO protection to an application that has no native OIDC support. Authservice intercepts requests before they reach the application and handles the authentication flow on the application's behalf, requiring users to log in via Keycloak before they can access the app.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ Authservice works by matching a label selector on your application's pods. When 
        > **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
 
        > [!NOTE]
-       > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows — double-check both before deploying.
+       > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows; double-check both before deploying.
 
     2. **Apply the Package CR**
 
@@ -73,7 +73,7 @@ Authservice works by matching a label selector on your application's pods. When 
 
     1. **Use separate SSO clients for different auth rules**
 
-       If you need different group restrictions or different redirect URIs per service, define multiple SSO clients — one per logical access boundary:
+       If you need different group restrictions or different redirect URIs per service, define multiple SSO clients, one per logical access boundary:
 
        ```yaml title="package.yaml"
        apiVersion: uds.dev/v1alpha1
@@ -118,10 +118,10 @@ Authservice works by matching a label selector on your application's pods. When 
 </Tabs>
 
 > [!NOTE]
-> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually — the operator handles it.
+> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually; the operator handles it.
 
 > [!CAUTION]
-> **Selector matching in ambient mode:** The `enableAuthserviceSelector` must match both the pod labels **and** the Kubernetes Service's `spec.selector`. If the selector matches pods but not the service, the pod is mutated to use the waypoint but the service is not properly associated with it — traffic is blocked (503 errors) rather than routed through the SSO flow. Any `network.expose` entries should also use the same selector to ensure proper traffic flow from the gateway through the waypoint.
+> **Selector matching in ambient mode:** The `enableAuthserviceSelector` must match both the pod labels **and** the Kubernetes Service's `spec.selector`. If the selector matches pods but not the service, the pod is mutated to use the waypoint but the service is not properly associated with it, so traffic is blocked (503 errors) rather than routed through the SSO flow. Any `network.expose` entries should also use the same selector to ensure proper traffic flow from the gateway through the waypoint.
 
 ## Verification
 
@@ -150,7 +150,7 @@ uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 **Solution:** The redirect URI must not be a root path. Replace root-path URIs with a specific path:
 
 ```yaml
-# Invalid — root path not allowed for Authservice clients
+# Invalid: root path not allowed for Authservice clients
 redirectUris:
   - "https://myapp.example.com/"
 
@@ -163,7 +163,7 @@ redirectUris:
 
 **Symptoms:** After applying the Package CR with ambient mode, requests to the application return 503.
 
-**Solution:** Verify that the `enableAuthserviceSelector` matches both the pod labels AND the `spec.selector` of the Kubernetes Service for those pods. If the selector matches pod labels but not the service selector, the waypoint proxy is associated with the pods but not the service — traffic through the service is blocked rather than routed through the SSO flow.
+**Solution:** Verify that the `enableAuthserviceSelector` matches both the pod labels AND the `spec.selector` of the Kubernetes Service for those pods. If the selector matches pod labels but not the service selector, the waypoint proxy is associated with the pods but not the service, so traffic through the service is blocked rather than routed through the SSO flow.
 
 ```bash
 # Compare pod labels with service selector
@@ -193,11 +193,11 @@ spec:
         app: httpbin  # Must match monitor selector exactly
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on when to use Authservice vs native SSO
-- [Authservice repository](https://github.com/istio-ecosystem/authservice) — upstream configuration reference
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO and `enableAuthserviceSelector` field specification
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict which Keycloak groups can access your Authservice-protected application.
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps.
-- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) — register native OIDC or SAML clients for applications that handle their own authentication flow
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on when to use Authservice vs native SSO
+- [Authservice repository](https://github.com/istio-ecosystem/authservice) - upstream configuration reference
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO and `enableAuthserviceSelector` field specification
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict which Keycloak groups can access your Authservice-protected application.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps.
+- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - register native OIDC or SAML clients for applications that handle their own authentication flow

@@ -20,9 +20,9 @@ Use this runbook when:
 
 This is typically caused by one of the following:
 
-1. **Controller pods not running** — the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
-2. **Incorrect CR definition** — the `Exemption` or `Package` manifest doesn't match the expected schema, so the controller silently ignores it
-3. **Kubernetes Watch missed event** — the Watch connection between the Pepr controller and the API server dropped or timed out, causing CR change events to be lost
+1. **Controller pods not running:** the `pepr-system` pods are in a crash loop or have been evicted, so no controller is processing events
+2. **Incorrect CR definition:** the `Exemption` or `Package` manifest doesn't match the expected schema, so the controller silently ignores it
+3. **Kubernetes Watch missed event:** the Watch connection between the Pepr controller and the API server dropped or timed out, causing CR change events to be lost
 
 ## Pre-checks
 
@@ -34,7 +34,7 @@ This is typically caused by one of the following:
    uds zarf tools kubectl get pods -n pepr-system
    ```
 
-   **What to look for:** all pods should be in `Running` state with all containers ready. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem with the controller itself — skip to [Cause 1: Controller pods not running](#cause-1-controller-pods-not-running).
+   **What to look for:** all pods should be in `Running` state with all containers ready. Any `CrashLoopBackOff`, `Error`, or `Pending` states indicate a problem with the controller itself; skip to [Cause 1: Controller pods not running](#cause-1-controller-pods-not-running).
 
 2. **Verify the CR exists and check its status**
 
@@ -44,7 +44,7 @@ This is typically caused by one of the following:
    uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
    ```
 
-   **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it — see [Cause 2: Incorrect CR definition](#cause-2-incorrect-cr-definition).
+   **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it; see [Cause 2: Incorrect CR definition](#cause-2-incorrect-cr-definition).
 
    For an Exemption CR, confirm it exists in the correct namespace:
 
@@ -67,7 +67,7 @@ This is typically caused by one of the following:
    {"...":"...", "msg":"Processing exemption nvidia-gpu-operator, watch phase: MODIFIED"}
    ```
 
-   If no entries appear after applying your `Exemption` CR, the Watch likely missed the event — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
+   If no entries appear after applying your `Exemption` CR, the Watch likely missed the event; see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
 
 4. **Check Package processing logs**
 
@@ -82,7 +82,7 @@ This is typically caused by one of the following:
    {"...":"...","msg":"Processing Package authservice-test-app/mouse, status.phase: Ready, observedGeneration: 1, retryAttempt: 0"}
    ```
 
-   If no entries appear, the watcher is not picking up Package changes — see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
+   If no entries appear, the watcher is not picking up Package changes; see [Cause 3: Kubernetes Watch missed event](#cause-3-kubernetes-watch-missed-event).
 
 </Steps>
 
@@ -205,9 +205,9 @@ If this runbook doesn't resolve your issue:
 
 4. Open an issue on [UDS Core GitHub](https://github.com/defenseunicorns/uds-core/issues) with the metrics and logs attached
 
-## Related Documentation
+## Related documentation
 
-- [Packages specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — CR schema and field reference
-- [Exemptions specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — CR schema and field reference
-- [Kubernetes Watch](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes) — upstream documentation on Watch mechanics
+- [Packages specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - CR schema and field reference
+- [Exemptions specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - CR schema and field reference
+- [Kubernetes Watch](https://kubernetes.io/docs/reference/using-api/api-concepts/#efficient-detection-of-changes) - upstream documentation on Watch mechanics
 
