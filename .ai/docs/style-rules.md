@@ -22,7 +22,7 @@ Load this file before any review or writing pass and apply throughout.
 - Do not use `---` horizontal rule dividers between sections. Headings provide sufficient visual separation.
 - Include descriptive alt text for all images.
 - Use relative links for internal references.
-- Anchor lists with an introductory sentence. Never place a list directly under a heading with no lead-in.
+- Anchor lists with an introductory sentence. Avoid placing a list directly under a heading with no lead-in, except for simple link-list sections (for example, **Related documentation**) where the section is just a list of links.
 - Use second-person ("you") when addressing the reader. Avoid first-person pronouns.
 - Use "airgap" (one word). Use "the airgap" not "airgap environment".
 - Files use `.mdx` extension for published docs.

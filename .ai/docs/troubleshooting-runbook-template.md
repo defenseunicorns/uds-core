@@ -139,7 +139,7 @@ If this runbook doesn't resolve your issue:
 2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
 3. Open a new issue with your relevant details attached
 
-## Related Documentation
+## Related documentation
 
 - [Related How-To Guide](/how-to-guides/section/page/) — brief description
 - [Related Concepts Page](/concepts/core-features/topic/) — brief description
