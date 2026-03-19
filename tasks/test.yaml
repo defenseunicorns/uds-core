@@ -18,7 +18,6 @@ includes:
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 
-
 tasks:
   - name: base
     description: "Build and test the base layer"
@@ -184,6 +183,7 @@ tasks:
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the deployments"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
@@ -198,7 +198,7 @@ tasks:
       - cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --packages core --confirm --no-progress
+          uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
       - task: validate-packages
       - task: e2e-tests
 
