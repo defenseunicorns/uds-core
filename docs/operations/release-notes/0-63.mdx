@@ -11,14 +11,6 @@ import { Steps } from '@astrojs/starlight/components';
 
 UDS Core 0.63 introduces built-in uptime observability with recording rules and a Core Uptime dashboard, and adds a standalone CRDs functional layer that allows installing UDS CRDs before `core-base`. No breaking changes are included in this release.
 
-### ⚠ Breaking changes
-
-There are no UDS Core breaking changes in this release. However, an upstream dependency change may affect operators with custom overrides:
-
-| Change | Impact | Action required |
-|--------|--------|-----------------|
-| Grafana Helm chart upgraded from 10.x to 11.x | Chart now requires Kubernetes 1.25+; chart source moved to `grafana-community` repository | Verify your cluster meets the minimum Kubernetes version; review and update any custom Grafana chart overrides for 11.x compatibility |
-
 ### Notable features
 
 - **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration ([#2426](https://github.com/defenseunicorns/uds-core/issues/2426))
@@ -45,7 +37,7 @@ There are no UDS Core breaking changes in this release. However, an upstream dep
 
 1. **Review Grafana overrides**
 
-   If you have custom Grafana Helm chart overrides in your bundle, review them for compatibility with chart 11.x. The chart source has moved to the `grafana-community` repository, and the minimum Kubernetes version is now 1.25.
+   The Grafana Helm chart has been upgraded to 11.x, which requires Kubernetes 1.25 or later. Verify your cluster is running a [supported Kubernetes version](/concepts/platform/supported-distributions/). If you have custom Grafana Helm chart overrides in your bundle, review them for compatibility with the new chart version in the `grafana-community` repository.
 
 </Steps>
 
