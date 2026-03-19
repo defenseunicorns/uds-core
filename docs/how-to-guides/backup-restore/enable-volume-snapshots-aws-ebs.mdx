@@ -4,7 +4,7 @@ sidebar:
   order: 7.2
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll enable Velero to capture persistent volume data using AWS EBS snapshots, 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to an EKS cluster with UDS Core deployed
 - Velero storage backend configured (see [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/))
 - AWS EBS CSI driver installed and an EBS-backed StorageClass available in the cluster
@@ -183,25 +184,10 @@ To trigger a manual backup for testing, see [Perform a manual backup](/how-to-gu
 
 **Solution:** Verify the IRSA role attached to the `velero` service account in the `velero` namespace includes all policy statements above. Confirm the role ARN annotation on the service account matches the role with the Velero policy attached.
 
-## Related documentation
+## Related Documentation
 
 - [Velero Plugin for AWS](https://github.com/vmware-tanzu/velero-plugin-for-aws) — AWS EBS plugin and IAM permissions reference
 - [Velero: Backup Reference](https://velero.io/docs/latest/backup-reference/) — backup configuration options and status fields
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Perform a manual backup"
-    description="Verify your scheduled backups are running and trigger a manual backup on demand."
-    href="/how-to-guides/backup-restore/perform-backup/"
-  />
-  <LinkCard
-    title="Configure Velero storage backends"
-    description="Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule."
-    href="/how-to-guides/backup-restore/configure-storage-backends/"
-  />
-</CardGrid>
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) — Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

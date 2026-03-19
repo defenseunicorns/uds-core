@@ -10,6 +10,9 @@ import { Steps } from '@astrojs/starlight/components';
 
 A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) is a single deployable artifact that captures your environment's configuration alongside all packages and images. You'll create two files: a `uds-bundle.yaml` that defines what to deploy and how to configure it, and a `uds-config.yaml` that supplies runtime values (credentials, certificates, domain names).
 
+> [!NOTE]
+> Building a bundle that includes packages from the [UDS Registry](https://registry.defenseunicorns.com) requires an account created and authenticated locally with a read token.
+
 ---
 
 ## Choose a Core Flavor
@@ -50,7 +53,7 @@ packages:
     ref: v0.73.0
 
   - name: core
-    repository: ghcr.io/defenseunicorns/packages/uds/core
+    repository: registry.defenseunicorns.com/public/core
     ref: 0.62.0-upstream
 ```
 
@@ -266,7 +269,7 @@ packages:
     ref: v0.73.0
 
   - name: core
-    repository: ghcr.io/defenseunicorns/packages/uds/core
+    repository: registry.defenseunicorns.com/public/core
     ref: 0.62.0-upstream
     overrides:
       loki:

@@ -4,7 +4,7 @@ sidebar:
   order: 7.1
 ---
 
-import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll configure Velero's backup storage destination, provide credentials, and c
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
 - An S3-compatible or Azure Blob storage endpoint for backup data
 
@@ -264,31 +265,12 @@ uds zarf tools kubectl logs -n velero deploy/velero --previous --tail=50
 ```
 Common causes include malformed credential Secrets and missing required configuration values.
 
-## Related documentation
+## Related Documentation
 
 - [Velero: Supported Storage Providers](https://velero.io/docs/latest/supported-providers/) — full list of available storage plugins
 - [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) — BSL configuration reference
 - [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) — full list of upstream Helm values
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enable volume snapshots (AWS EBS)"
-    description="Capture persistent volume data using AWS EBS snapshots on EKS clusters."
-    href="/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/"
-  />
-  <LinkCard
-    title="Enable volume snapshots (vSphere CSI)"
-    description="Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters."
-    href="/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/"
-  />
-  <LinkCard
-    title="Perform a manual backup"
-    description="Verify your scheduled backups are running and trigger a manual backup on demand."
-    href="/how-to-guides/backup-restore/perform-backup/"
-  />
-</CardGrid>
+- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) — Capture persistent volume data using AWS EBS snapshots on EKS clusters.
+- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) — Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.

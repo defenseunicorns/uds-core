@@ -4,7 +4,7 @@ sidebar:
   order: 5.7
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -223,20 +223,5 @@ uds zarf tools kubectl describe package <name> -n <namespace>
 
 - [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) — upstream project documentation
 - [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) — Probe CRD field reference
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Create metric alerting rules"
-    description="Alert when probe_success drops to 0 or SSL certificates near expiry."
-    href="/how-to-guides/monitoring-observability/create-metric-alerting-rules/"
-  />
-  <LinkCard
-    title="Monitoring & Observability concepts"
-    description="Background on how the monitoring stack fits together in UDS Core."
-    href="/concepts/core-features/monitoring-observability/"
-  />
-</CardGrid>
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Alert when probe_success drops to 0 or SSL certificates near expiry.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on how the monitoring stack fits together in UDS Core.

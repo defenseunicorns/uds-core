@@ -4,7 +4,7 @@ sidebar:
   order: 3.12
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll replace the default Keycloak login page images (logo, background, footer,
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Custom image files (PNG format) for whichever assets you want to replace
 
 ## Before you begin
@@ -271,20 +272,5 @@ The output should be a single line with no literal newlines.
 ## Related Documentation
 
 - [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with theme assets and FreeMarker templates for deeper customization
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-  <LinkCard
-    title="Build a custom Keycloak configuration image"
-    description="Build and deploy a custom image for CSS or structural theme changes."
-    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
-  />
-</CardGrid>
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
+- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) — Build and deploy a custom image for CSS or structural theme changes.

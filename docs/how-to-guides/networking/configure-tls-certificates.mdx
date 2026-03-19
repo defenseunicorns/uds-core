@@ -4,7 +4,7 @@ sidebar:
   order: 2.01
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
 - A wildcard TLS certificate and private key (PEM format) for each gateway domain. If using a private or non-public CA, the root CA must be loaded in your OS trust store for browser and CLI verification to work.
   - Tenant gateway: `*.yourdomain.com`
@@ -210,22 +211,7 @@ base64 -i my-cert.pem | tr -d '\n'          # macOS
 
 ## Related Documentation
 
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/)
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Expose applications on gateways"
-    description="Make applications accessible through the tenant or admin gateway."
-    href="/how-to-guides/networking/expose-apps-on-gateways/"
-  />
-  <LinkCard
-    title="Enable the passthrough gateway"
-    description="Deploy the optional passthrough gateway for apps that handle their own TLS."
-    href="/how-to-guides/networking/enable-passthrough-gateway/"
-  />
-</CardGrid>
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — how the service mesh, gateways, and network policies work together in UDS Core
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) — Add custom CA certificates to pods and Istio's trust store.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
+- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) — Deploy the optional passthrough gateway for apps that handle their own TLS.

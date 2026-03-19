@@ -4,7 +4,7 @@ sidebar:
   order: 8.04
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll configure policy exemptions for infrastructure workloads that legitimatel
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed (or ready to deploy Core to)
 - Familiarity with [UDS Bundles](/concepts/configuration-and-packaging/bundles/)
 - The exemption policy names for your workload (see [Policy Engine](/reference/operator-and-crds/policy-engine/) reference)
@@ -159,22 +160,7 @@ uds zarf tools kubectl get exemptions -n uds-policy-exemptions | grep nodeport
 
 ## Related Documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies and exemption names
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Create UDS policy exemptions"
-    description="Create Exemption CRs to allow workloads to bypass specific UDS policies."
-    href="/how-to-guides/policy-and-compliance/create-policy-exemptions/"
-  />
-  <LinkCard
-    title="Audit security posture"
-    description="Review exemptions and Package CR network rules across your cluster."
-    href="/how-to-guides/policy-and-compliance/audit-security-posture/"
-  />
-</CardGrid>
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies and exemption names
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
+- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) — Review exemptions and Package CR network rules across your cluster.

@@ -1,10 +1,11 @@
 ---
-title: Overview
+title: Concepts
 sidebar:
   order: 1
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import LikeC4View from '@components/LikeC4View.astro';
 
 ## What is UDS Core?
 
@@ -25,6 +26,10 @@ UDS Core is organized into **functional layers** — discrete Zarf packages grou
 | `core-logging` | [Vector](https://vector.dev/) + [Loki](https://grafana.com/oss/loki/) |
 | `core-monitoring` | [Prometheus](https://prometheus.io/) + [Grafana](https://grafana.com/oss/grafana/) + [Alertmanager](https://prometheus.io/docs/alerting/latest/alertmanager/) + [Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) |
 | `core-backup-restore` | [Velero](https://velero.io/) |
+
+*Explore the interactive diagram below to see how UDS Core's components connect.*
+
+<LikeC4View viewId="index" />
 
 ## The UDS Operator
 

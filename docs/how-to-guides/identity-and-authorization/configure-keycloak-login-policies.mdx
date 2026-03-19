@@ -4,7 +4,7 @@ sidebar:
   order: 3.05
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll configure Keycloak login behavior for your UDS Core deployment: setting c
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Familiarity with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/)
 
 ## Before you begin
@@ -186,20 +187,4 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 - [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) — verify FIPS status and understand constraints
 - [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full spec for SSO client configuration
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enforce group-based access controls"
-    description="Restrict application access to users in specific Keycloak groups using the Package CR."
-    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Connect Azure AD as an identity provider"
-    description="Federate Keycloak with Azure Entra ID for enterprise SSO."
-    href="/how-to-guides/identity-and-authorization/connect-azure-ad-idp/"
-  />
-</CardGrid>
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.

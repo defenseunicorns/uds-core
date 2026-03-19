@@ -4,7 +4,7 @@ sidebar:
   order: 2.05
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -19,6 +19,7 @@ After completing this guide, your cluster will accept non-HTTP traffic (such as 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
 - An application with a service listening on a TCP port
 
@@ -193,25 +194,6 @@ For other protocols, test with the appropriate client on the external port you c
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
 - [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Create a custom gateway"
-    description="Deploy a gateway with independent domain, TLS, and security controls."
-    href="/how-to-guides/networking/create-custom-gateways/"
-  />
-  <LinkCard
-    title="Expose applications on gateways"
-    description="Make applications accessible through the tenant or admin gateway."
-    href="/how-to-guides/networking/expose-apps-on-gateways/"
-  />
-  <LinkCard
-    title="Define network access"
-    description="Configure intra-cluster and external network access for your application."
-    href="/how-to-guides/networking/define-network-access/"
-  />
-</CardGrid>
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) — Deploy a gateway with independent domain, TLS, and security controls.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
+- [Define network access](/how-to-guides/networking/define-network-access/) — Configure intra-cluster and external network access for your application.

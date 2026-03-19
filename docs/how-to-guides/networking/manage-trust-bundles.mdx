@@ -4,7 +4,7 @@ sidebar:
   order: 2.10
 ---
 
-import { Steps, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -209,20 +209,5 @@ uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.con
 - [Java Keytool documentation](https://docs.oracle.com/en/java/javase/17/docs/specs/man/keytool.html) — managing Java `cacerts` trust stores
 - [Python certifi](https://pypi.org/project/certifi/) — Python's default CA bundle and how to override it
 - [Node.js `NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) — adding extra CAs for Node.js applications
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure TLS certificates"
-    description="Set up TLS certificates for your ingress gateways — often paired with trust bundle configuration."
-    href="/how-to-guides/networking/configure-tls-certificates/"
-  />
-  <LinkCard
-    title="Identity & Authorization how-to guides"
-    description="Configure SSO with Keycloak, which may need trust bundle configuration for private PKI."
-    href="/how-to-guides/identity-and-authorization/overview/"
-  />
-</CardGrid>
+- [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) — Set up TLS certificates for your ingress gateways — often paired with trust bundle configuration.
+- [Identity & Authorization how-to guides](/how-to-guides/identity-and-authorization/overview/) — Configure SSO with Keycloak, which may need trust bundle configuration for private PKI.

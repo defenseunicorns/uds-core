@@ -1,8 +1,14 @@
-# Security Policy
+---
+title: Security Policy
+sidebar:
+  order: 2.3
+---
+
+This document outlines the security policy for UDS Core, including supported versions and how to report vulnerabilities.
 
 ## Supported Versions
 
-As [UDS Core](https://github.com/defenseunicorns/uds-core) has not yet reached v1.0.0, only the current latest minor release is supported.
+UDS Core provides patch support for the latest three minor versions (current plus two previous). See the [versioning policy](https://github.com/defenseunicorns/uds-core/blob/main/VERSIONING.md) for details.
 
 ## Reporting a Vulnerability
 

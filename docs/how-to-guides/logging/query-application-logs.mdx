@@ -4,7 +4,7 @@ sidebar:
   order: 4.1
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -166,18 +166,5 @@ uds zarf tools kubectl get pods -n vector
 - [Grafana Loki: Log queries](https://grafana.com/docs/loki/latest/query/log_queries/) — stream selectors, line filters, and parsers
 - [Grafana Loki: Metric queries](https://grafana.com/docs/loki/latest/query/metric_queries/) — aggregation functions and range vectors
 - [Logging Concepts](/concepts/core-features/logging/) — how the Vector → Loki → Grafana pipeline works
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title="Forward logs to an external system"
-    description="Send logs to S3 or other destinations alongside Loki."
-    href="/how-to-guides/logging/forward-logs-to-external-system/"
-  />
-  <LinkCard
-    title="Configure log retention"
-    description="Control how long Loki keeps log data."
-    href="/how-to-guides/logging/configure-log-retention/"
-  />
-</CardGrid>
+- [Forward logs to an external system](/how-to-guides/logging/forward-logs-to-external-system/) — Send logs to S3 or other destinations alongside Loki.
+- [Configure log retention](/how-to-guides/logging/configure-log-retention/) — Control how long Loki keeps log data.

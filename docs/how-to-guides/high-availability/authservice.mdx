@@ -4,7 +4,7 @@ sidebar:
   order: 1.4
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll configure [Authservice](https://github.com/istio-ecosystem/authservice) f
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - A **Redis or Valkey** instance accessible from the cluster
 - Applications using Authservice for SSO (see [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) for when Authservice is used vs. native SSO)
@@ -148,20 +149,5 @@ uds zarf tools kubectl logs -n authservice -l app.kubernetes.io/name=authservice
 - [Authservice: Configuration Reference](https://github.com/istio-ecosystem/authservice/blob/main/config/README.md) — session store and OIDC configuration options
 - [Redis: Documentation](https://redis.io/docs/latest/) — general Redis documentation for the backing session store
 - [Valkey: Documentation](https://valkey.io/docs/) — Redis-compatible alternative supported by Authservice
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure HA for Keycloak"
-    description="Keycloak is the identity provider that Authservice relies on and also requires HA configuration."
-    href="/how-to-guides/high-availability/keycloak/"
-  />
-  <LinkCard
-    title="Identity & Authorization concepts"
-    description="Background on how Authservice and Keycloak work together in UDS Core."
-    href="/concepts/core-features/identity-and-authorization/"
-  />
-</CardGrid>
+- [Configure HA for Keycloak](/how-to-guides/high-availability/keycloak/) — Keycloak is the identity provider that Authservice relies on and also requires HA configuration.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — Background on how Authservice and Keycloak work together in UDS Core.
