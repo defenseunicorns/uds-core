@@ -256,7 +256,13 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows packages that have no issues", async () => {
-    const mockReq = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [],
+      [],
+    );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
@@ -520,8 +526,23 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies network policies with no remote specified", async () => {
+    const mockReq = makeMockReq({}, [], [{}], [], []);
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that are the same name", async () => {
-    const mockReq = makeMockReq({}, [], [{}, {}], [], []);
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        { remoteGenerated: RemoteGenerated.Anywhere },
+        { remoteGenerated: RemoteGenerated.Anywhere },
+      ],
+      [],
+      [],
+    );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });

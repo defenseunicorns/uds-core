@@ -122,6 +122,19 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
+    // Every allow rule must specify at least one explicit remote target.
+    if (
+      !policy.remoteGenerated &&
+      !policy.remoteNamespace &&
+      !policy.remoteSelector &&
+      !policy.remoteCidr &&
+      !policy.remoteHost
+    ) {
+      return req.Deny(
+        "network allow rules must specify a remote: remoteGenerated, remoteNamespace, remoteSelector, remoteCidr, or remoteHost",
+      );
+    }
+
     // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
       policy.remoteGenerated &&
