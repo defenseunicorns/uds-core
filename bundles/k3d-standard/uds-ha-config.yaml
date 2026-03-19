@@ -3,13 +3,13 @@
 
 variables:
   core:
-    # Keycloak variables
-    keycloak_ha: true
-    keycloak_pg_username: postgres
-    keycloak_pg_password: unicorn123!@#UN
-    keycloak_pg_database: keycloak
-    keycloak_pg_host: host.k3d.internal
-    keycloak_devmode: false
+    # Authservice variables
+    AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
+    AUTHSERVICE_REPLICA_COUNT: 2
+
+    # Enable Falco sandbox and incubating rules
+    FALCO_SANDBOX_RULES_ENABLED: true
+    FALCO_INCUBATING_RULES_ENABLED: true
 
     # Grafana variables
     grafana_ha: true
@@ -20,6 +20,15 @@ variables:
     grafana_pg_user: postgres
     grafana_pg_ssl_mode: disable
 
-    # Authservice variables
-    AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
-    AUTHSERVICE_REPLICA_COUNT: 2
+    # Loki variables
+    LOKI_BACKEND_REPLICAS: 3
+    LOKI_READ_REPLICAS: 3
+    LOKI_WRITE_REPLICAS: 3
+
+    # Keycloak variables
+    keycloak_ha: true
+    keycloak_pg_username: postgres
+    keycloak_pg_password: unicorn123!@#UN
+    keycloak_pg_database: keycloak
+    keycloak_pg_host: host.k3d.internal
+    keycloak_devmode: false
