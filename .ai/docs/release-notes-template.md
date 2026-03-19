@@ -138,7 +138,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 ### Identity Config updates
 
 - When a Core release bumps `uds-identity-config`, add a `### Identity Config updates (X.Y)` subsection within the Upgrade considerations section, placed before the Post-upgrade verification subsection
-- Include a brief intro line noting the identity-config version, then list notable changes as bullet points
+- Include a brief intro line noting the identity-config version and link it to the GitHub release page using the full semver (e.g., `[0.23.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.23.0)`), then list notable changes as bullet points
 - If manual realm changes are required, inline the step-by-step instructions directly in this subsection
 - Add the identity-config changelog link to the Related documentation section
 - Do not create separate identity-config release notes pages — all identity-config content is inlined into Core
