@@ -91,7 +91,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 - [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
 - [<Product> X.Y.0 Changelog](https://github.com/defenseunicorns/<repo>/blob/main/CHANGELOG.md#anchor) — full changelog
-- [Full diff (X.W.0...X.Y.0)](https://github.com/defenseunicorns/<repo>/compare/vX.W.0...vX.Y.0) — all changes between versions
+- [Full diff (X.W.Z...X.Y.Z)](https://github.com/defenseunicorns/<repo>/compare/vX.W.Z...vX.Y.Z) — all changes between versions
 ```
 
 ## Conventions
@@ -114,7 +114,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Use `registry.defenseunicorns.com/public/core` for repository references
 - Use em dashes (—) in Related documentation link descriptions
 - Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs — anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date)
-- Include a full diff link comparing the previous minor version tag to the current one
+- Include a full diff link comparing the latest patch of the previous minor version to the latest patch of the current one (e.g., `v0.60.2...v0.61.1`, not `v0.60.0...v0.61.0`)
 
 ### Naming
 
