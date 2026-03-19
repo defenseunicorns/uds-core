@@ -115,20 +115,6 @@ invalid-cert-data
     expect(() => validateCfg(defaultCaBundle)).not.toThrowError();
   });
 
-  it("does not throw error if caBundle.certs is set to ###ZARF_VAR_CA_CERT###", () => {
-    const defaultCaBundle = {
-      ...mockCfg,
-      spec: {
-        ...mockCfg.spec!,
-        caBundle: {
-          ...mockCfg.spec!.caBundle,
-          certs: "###ZARF_VAR_CA_CERT###",
-        },
-      },
-    };
-    expect(() => validateCfg(defaultCaBundle)).not.toThrowError();
-  });
-
   it("validates multiple certificates in bundle", () => {
     const multipleCerts = validCert + "\n" + validCert;
     const validMultipleCaBundle = {

@@ -19,8 +19,8 @@ spec:
     {{- end }}
   {{- end }}
   caBundle:
-    {{- if or .Values.cluster.caBundle.certs .Values.cluster.expose.caCert }}
-    certs: {{ .Values.cluster.caBundle.certs | default .Values.cluster.expose.caCert | quote }}
+    {{- if .Values.cluster.caBundle.certs }}
+    certs: {{ .Values.cluster.caBundle.certs | quote }}
     {{- end }}
     includeDoDCerts: {{ .Values.cluster.caBundle.includeDoDCerts | default false | toString | eq "true" }}
     includePublicCerts: {{ .Values.cluster.caBundle.includePublicCerts | default false | toString | eq "true" }}
@@ -46,9 +46,6 @@ spec:
     adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
     {{- else }}
     adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
-    {{- end }}
-    {{- if .Values.cluster.expose.caCert }}
-    caCert: {{ .Values.cluster.expose.caCert | quote }}
     {{- end }}
   policy:
     allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}
