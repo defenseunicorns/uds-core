@@ -58,9 +58,9 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 ### Dependency updates
 
-| Package | Previous | Updated |
-|---------|----------|---------|
-| Package name | X.Y.Z | X.Y.Z |
+| Package      | Previous | Updated |
+| ------------ | -------- | ------- |
+| Package name | X.Y.Z    | X.Y.Z   |
 
 ## Upgrade considerations
 
@@ -112,7 +112,6 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Use `uds zarf tools kubectl` instead of bare `kubectl`
 - No `oci://` prefix on repository references
 - Use `registry.defenseunicorns.com/public/core` for repository references
-- Use em dashes (—) in Related documentation link descriptions
 - Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs — anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date)
 - Include a full diff link comparing the latest patch of the previous minor version to the latest patch of the current one (e.g., `v0.60.2...v0.61.1`, not `v0.60.0...v0.61.0`)
 
