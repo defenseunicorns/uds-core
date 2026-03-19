@@ -4,7 +4,7 @@ Date: 2026-03-04
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
@@ -29,8 +29,8 @@ This is an addendum to [ADR 0002](./0002-uds-core-functional-layers.md), updatin
 2. UDS Core Identity and Authorization (Keycloak + AuthService)
 3. UDS Core Metrics (Metrics Server)
 4. UDS Core Monitoring (Prometheus + Grafana)
-5. UDS Core Logging (Promtail + Loki)
-6. UDS Core Runtime Security (Falco)
+5. UDS Core Logging (Vector + Loki)
+6. UDS Core Runtime Security (Falco + Falcosidekick)
 7. UDS Core Backup and Restore (Velero)
 8. UDS Core (combination of all layers)
 
