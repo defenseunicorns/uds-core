@@ -205,7 +205,24 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    > [!NOTE]
    > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime — Keycloak does not need to be redeployed for them to take effect.
 
-7. **Create and deploy your bundle**
+7. **(Optional) Override the realm display name**
+
+   By default, the login page uses the Keycloak realm's configured display name as the browser page title. To override it at the theme level without modifying the realm, set `realmDisplayName` under `themeCustomizations.settings`:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           - path: themeCustomizations.settings
+             value:
+               realmDisplayName: "Unicorn Delivery Service"
+   ```
+
+   > [!NOTE]
+   > If `realmDisplayName` is not set, the login page falls back to the realm's own display name, which may be set at initial realm import via `realmInitEnv.DISPLAY_NAME`.
+
+8. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>

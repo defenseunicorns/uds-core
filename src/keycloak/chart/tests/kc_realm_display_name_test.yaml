@@ -1,0 +1,37 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak Realm Display Name Secret
+templates:
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should include OVERRIDE_REALM_DISPLAY_NAME when realmDisplayName is set
+    set:
+      themeCustomizations:
+        settings:
+          realmDisplayName: "My Custom Realm Name"
+    asserts:
+      - isKind:
+          of: Secret
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # Note: this value is the base64 encoding of "My Custom Realm Name"
+          value: "TXkgQ3VzdG9tIFJlYWxtIE5hbWU="
+
+  - it: should not include OVERRIDE_REALM_DISPLAY_NAME when realmDisplayName is unset or empty
+    set:
+      themeCustomizations:
+        settings:
+          realmDisplayName: ""
+    asserts:
+      - isKind:
+          of: Secret
+      - hasDocuments:
+          count: 1
+      - notExists:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
