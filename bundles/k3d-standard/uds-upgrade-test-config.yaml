@@ -6,3 +6,7 @@ variables:
     # Enable Falco sandbox and incubating rules
     FALCO_SANDBOX_RULES_ENABLED: true
     FALCO_INCUBATING_RULES_ENABLED: true
+
+    # The loki-backend statefulset is unable to restart cleanly when it contains a single replica.
+    # When the pod termination times out and the single replica is killed it leaves loki in a non-working state.
+    LOKI_BACKEND_REPLICAS: 3
