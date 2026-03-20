@@ -526,6 +526,18 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("allows network policies with remoteNamespace set to empty string (any namespace in cluster)", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteNamespace: "" }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies with remoteSelector set to empty object (all pods)", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteSelector: {} }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that are the same name", async () => {
     const mockReq = makeMockReq(
       {},

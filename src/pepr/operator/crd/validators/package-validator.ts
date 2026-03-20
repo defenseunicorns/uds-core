@@ -123,9 +123,10 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   for (const policy of networkPolicy) {
     // Every allow rule must specify at least one explicit remote target.
+    // Note: remoteNamespace uses === undefined because "" is a valid wildcard meaning "any namespace in cluster".
     if (
       !policy.remoteGenerated &&
-      !policy.remoteNamespace &&
+      policy.remoteNamespace === undefined &&
       !policy.remoteSelector &&
       !policy.remoteCidr &&
       !policy.remoteHost
