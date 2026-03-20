@@ -55,7 +55,7 @@ Confirm that all UDS Core components deployed successfully.
 
    ```bash
    # All pods should be Running or Completed
-   kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
+   uds zarf tools kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
    ```
 
    Any pods stuck in `Pending`, `CrashLoopBackOff`, or `Error` state indicate a problem. See [Common Issues](#common-issues) below.
@@ -63,7 +63,7 @@ Confirm that all UDS Core components deployed successfully.
 2. **Confirm namespaces**
 
    ```bash
-   kubectl get namespaces
+   uds zarf tools kubectl get namespaces
    ```
 
    Expected namespaces:
@@ -86,8 +86,8 @@ Confirm that all UDS Core components deployed successfully.
 3. **Verify Istio gateways**
 
    ```bash
-   kubectl get svc -n istio-tenant-gateway
-   kubectl get svc -n istio-admin-gateway
+   uds zarf tools kubectl get svc -n istio-tenant-gateway
+   uds zarf tools kubectl get svc -n istio-admin-gateway
    ```
 
    Both `LoadBalancer` services should have an `EXTERNAL-IP` assigned. If they show `<pending>`, your load balancer provisioner may not be configured correctly.
@@ -121,7 +121,7 @@ Confirm that all UDS Core components deployed successfully.
 This usually indicates insufficient cluster resources or a missing storage class.
 
 ```bash
-kubectl describe pod <pod-name> -n <namespace>
+uds zarf tools kubectl describe pod <pod-name> -n <namespace>
 ```
 
 Look for `Insufficient cpu`, `Insufficient memory`, or `no persistent volumes available` in the events.
@@ -131,8 +131,8 @@ Look for `Insufficient cpu`, `Insufficient memory`, or `no persistent volumes av
 Incorrect object storage credentials or an unreachable storage endpoint often cause this. Check the pod logs:
 
 ```bash
-kubectl logs -n logging -l app.kubernetes.io/name=loki --tail=50
-kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50
+uds zarf tools kubectl logs -n logging -l app.kubernetes.io/name=loki --tail=50
+uds zarf tools kubectl logs -n velero -l app.kubernetes.io/name=velero --tail=50
 ```
 
 ### Istio gateway `EXTERNAL-IP` stuck in `<pending>`
@@ -143,7 +143,7 @@ Your load balancer provisioner is not assigning IPs. Verify the provisioner is i
 
 Verify the following:
 
-1. The Keycloak pod is `Running`: `kubectl get pods -n keycloak`
+1. The Keycloak pod is `Running`: `uds zarf tools kubectl get pods -n keycloak`
 2. DNS resolves to the load balancer IP
 3. The TLS certificate is valid for your admin domain
 
@@ -152,7 +152,7 @@ Verify the following:
 If Keycloak is running but crashing on startup, check the logs for database connection errors:
 
 ```bash
-kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
+uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
 ```
 
 Common causes: incorrect hostname, wrong credentials, database user lacks privileges, or the database server is not reachable from the cluster. Verify the values in your `uds-config.yaml` match what was provisioned in the [Provision External Services](/getting-started/production/provision-services/) step.

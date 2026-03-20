@@ -70,7 +70,7 @@ Once deployment completes, confirm UDS Core is healthy:
 
 ```bash
 # All pods should be Running or Completed
-kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
+uds zarf tools kubectl get pods -A --no-headers | grep -Ev '(Running|Completed)'
 ```
 
 No output means all pods are healthy.

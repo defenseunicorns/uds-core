@@ -37,7 +37,7 @@ These are conservative minimums. Size up based on the workloads you plan to run 
 Several UDS Core components require persistent volumes. Verify your cluster has a default storage class configured:
 
 ```bash
-kubectl get storageclass
+uds zarf tools kubectl get storageclass
 ```
 
 The output should include `(default)` next to one of the listed storage classes:

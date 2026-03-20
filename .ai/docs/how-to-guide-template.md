@@ -161,7 +161,7 @@ uds zarf tools kubectl get pods -n namespace
 - The related links section must be headed `## Related documentation` (sentence case), not `## Related Documentation` or any other casing
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only
 - Code blocks use titles: `` ```yaml title="uds-bundle.yaml" ``
-- No `oci://` prefix on repository references
+- No `oci://` prefix on `repository` field values in `uds-bundle.yaml` (Zarf CLI commands like `zarf package publish` do require the `oci://` prefix)
 - Use `values` for static config, `variables` for secrets/environment-specific
 - Add `sensitive: true` to password and secret variables
 - For guides that only modify Core via bundle overrides: the final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
