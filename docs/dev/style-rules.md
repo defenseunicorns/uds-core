@@ -12,7 +12,7 @@ Load this file before any review or writing pass and apply throughout.
 - Be warm and human, not robotic or overly formal.
 - Be technically correct. When in doubt, flag rather than guess.
 - Don't repeat information. Link to it instead.
-- No emojis in documentation.
+- No emojis in documentation. The ⚠ symbol is allowed as a severity indicator in headings (for example, breaking changes).
 - No emdashes. Use commas, colons, semicolons, or parentheses instead.
 
 ## General guidelines

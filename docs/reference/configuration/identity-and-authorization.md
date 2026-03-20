@@ -19,7 +19,7 @@ Non-persistent components (themes, truststore, plugins) are automatically update
 
 ## Realm initialization variables
 
-Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrade-keycloak-realm/) for version-specific steps.
+Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.
 
 Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 
@@ -242,6 +242,6 @@ The client secret can be retrieved from the Keycloak Admin Console: **UDS realm 
 - [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - how-to guide for session timeouts, concurrent session limits, and logout behavior
 - [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - how-to guide for programmatic realm management via the OpenTofu client
 - [Configure Keycloak airgap CRLs](/how-to-guides/identity-and-authorization/configure-x509-crl-airgap/) - how-to guide for configuring CRL checking in airgapped environments
-- [Upgrade Keycloak realm](/operations/upgrade-keycloak-realm/) - version-specific steps for realm configuration changes
+- [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) - version-specific steps for realm configuration changes
 - [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) - upstream Keycloak reference
 - [Keycloak FIPS documentation](https://www.keycloak.org/server/fips) - upstream guide for Keycloak FIPS mode
