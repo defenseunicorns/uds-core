@@ -4,7 +4,7 @@ sidebar:
   order: 7.4
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -124,30 +124,11 @@ Common causes include storage connectivity issues and volume snapshot timeouts. 
 
 **Solution:** Velero's garbage collection runs hourly and removes expired backups based on TTL. Ensure your snapshot limit is high enough to accommodate the number of retained backups. For the default 10-day retention with daily backups, a minimum of 10 snapshots per volume is required (12 recommended). For vSphere environments, see [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) for snapshot limit configuration.
 
-## Related documentation
+## Related Documentation
 
 - [Velero: Backup Reference](https://velero.io/docs/latest/backup-reference/) — backup configuration options and API
 - [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) — backup lifecycle and garbage collection
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Restore from a backup"
-    description="Restore specific namespaces from a completed backup and verify data integrity."
-    href="/how-to-guides/backup-restore/perform-restore/"
-  />
-  <LinkCard
-    title="Enable volume snapshots (AWS EBS)"
-    description="Capture persistent volume data using AWS EBS snapshots on EKS clusters."
-    href="/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/"
-  />
-  <LinkCard
-    title="Enable volume snapshots (vSphere CSI)"
-    description="Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters."
-    href="/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/"
-  />
-</CardGrid>
+- [Restore from a backup](/how-to-guides/backup-restore/perform-restore/) — Restore specific namespaces from a completed backup and verify data integrity.
+- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) — Capture persistent volume data using AWS EBS snapshots on EKS clusters.
+- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) — Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.

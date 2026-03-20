@@ -1,16 +1,21 @@
 ---
-title: Overview
+title: Platform Features
 sidebar:
   order: 10.0
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Platform-wide UDS Core capabilities that aren't tied to a single component. These guides cover automatic pod restarts and UI-level classification markings.
+Platform-wide UDS Core capabilities that aren't tied to a single component. These guides cover custom layer bundles, automatic pod restarts, and UI-level classification markings.
 
 ## Guides
 
 <CardGrid>
+  <LinkCard
+    title="Build a functional layer bundle"
+    description="Deploy a tailored subset of UDS Core using individual functional layers."
+    href="/how-to-guides/platform-features/build-functional-layer-bundle/"
+  />
   <LinkCard
     title="Configure automatic pod reload"
     description="Automatically restart pods when their Secrets or ConfigMaps change."

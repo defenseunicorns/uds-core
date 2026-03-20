@@ -4,7 +4,7 @@ sidebar:
   order: 1.3
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll configure UDS Core's monitoring stack for production high availability: e
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster (**multi-node**, multi-AZ recommended)
 - An **external PostgreSQL** instance accessible from the cluster (for Grafana HA)
 
@@ -235,20 +236,5 @@ Either lower the `retentionSize` limit to trigger faster data pruning, or expand
 - [Prometheus: Storage](https://prometheus.io/docs/prometheus/latest/storage/) — TSDB storage architecture and operational guidance
 - [Prometheus: Remote Storage Integrations](https://prometheus.io/docs/operating/integrations/#remote-endpoints-and-storage) — Thanos, Cortex, VictoriaMetrics, and other remote storage options
 - [Resize Prometheus PVCs](/operations/troubleshooting-and-runbooks/resize-prometheus-pvc/) — runbook for expanding Prometheus storage on a running cluster
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure HA for Logging"
-    description="Loki provides the log data that Grafana visualizes and also requires HA configuration."
-    href="/how-to-guides/high-availability/logging/"
-  />
-  <LinkCard
-    title="Monitoring & Observability concepts"
-    description="Background on the Prometheus, Grafana, and Alertmanager stack in UDS Core."
-    href="/concepts/core-features/monitoring-observability/"
-  />
-</CardGrid>
+- [Configure HA for Logging](/how-to-guides/high-availability/logging/) — Loki provides the log data that Grafana visualizes and also requires HA configuration.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on the Prometheus, Grafana, and Alertmanager stack in UDS Core.

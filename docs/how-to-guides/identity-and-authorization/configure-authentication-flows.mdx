@@ -4,7 +4,7 @@ sidebar:
   order: 3.03
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll enable or disable the authentication methods available on the UDS Core lo
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 
 ## Before you begin
 
@@ -189,20 +190,5 @@ If you do need to require an additional factor after CAC authentication, use thi
 ## Related Documentation
 
 - [Keycloak: Authentication](https://www.keycloak.org/docs/latest/server_admin/#configuring-authentication) — upstream reference for Keycloak authentication flow configuration
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure the CA truststore"
-    description="Configure the CA certificate bundle required for X.509/CAC authentication."
-    href="/how-to-guides/identity-and-authorization/configure-truststore/"
-  />
-  <LinkCard
-    title="Configure user accounts and security policies"
-    description="Set password complexity and email verification alongside auth flow configuration."
-    href="/how-to-guides/identity-and-authorization/configure-user-account-settings/"
-  />
-</CardGrid>
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — Configure the CA certificate bundle required for X.509/CAC authentication.
+- [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/) — Set password complexity and email verification alongside auth flow configuration.

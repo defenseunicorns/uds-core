@@ -4,7 +4,7 @@ sidebar:
   order: 4.2
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ After completing this guide, Vector will forward logs to an external S3-compatib
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
 - An S3-compatible bucket with write access (AWS S3, MinIO, or equivalent)
 - For AWS: an IAM role for [IRSA](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) with `s3:PutObject` permission on the target bucket
@@ -187,18 +188,5 @@ uds zarf tools kubectl get netpol -n vector
 - [Vector AWS S3 sink](https://vector.dev/docs/reference/configuration/sinks/aws_s3/) — all S3 sink configuration options
 - [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) — network egress for Core components
 - [Logging Concepts](/concepts/core-features/logging/) — how the Vector → Loki → Grafana pipeline works
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title="Query application logs"
-    description="Find and filter logs using Grafana and LogQL."
-    href="/how-to-guides/logging/query-application-logs/"
-  />
-  <LinkCard
-    title="Configure log retention"
-    description="Control how long Loki keeps log data."
-    href="/how-to-guides/logging/configure-log-retention/"
-  />
-</CardGrid>
+- [Query application logs](/how-to-guides/logging/query-application-logs/) — Find and filter logs using Grafana and LogQL.
+- [Configure log retention](/how-to-guides/logging/configure-log-retention/) — Control how long Loki keeps log data.

@@ -4,7 +4,7 @@ sidebar:
   order: 3.11
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll configure Keycloak's brute-force protection to control how accounts are l
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 
 ## Before you begin
 
@@ -139,20 +140,5 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Security Def
 ## Related Documentation
 
 - [Keycloak: Brute Force Detection](https://www.keycloak.org/docs/latest/server_admin/#_brute-force) — upstream reference for all brute-force protection settings
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-  <LinkCard
-    title="Configure Keycloak login policies"
-    description="Set session limits and timeout settings that complement lockout configuration."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
-  />
-</CardGrid>
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session limits and timeout settings that complement lockout configuration.

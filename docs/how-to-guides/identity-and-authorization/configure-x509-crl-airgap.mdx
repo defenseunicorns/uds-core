@@ -4,7 +4,7 @@ sidebar:
   order: 3.17
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -13,6 +13,7 @@ You'll configure Keycloak to validate X.509/CAC certificates against locally loa
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Docker installed (on the machine where you run the packaging script)
 - `bash`, `curl`, `unzip`, `find`, and `sort` available on the machine running the script
 - Access to a Kubernetes cluster running Kubernetes 1.31+
@@ -237,18 +238,5 @@ Use your normal mTLS or browser client certificate flow and confirm Keycloak val
 
 - [Keycloak: X.509 client certificate user authentication](https://www.keycloak.org/docs/latest/server_admin/#_x509) — upstream Keycloak reference for X.509 authenticator configuration
 - [Kubernetes ImageVolume documentation](https://kubernetes.io/docs/concepts/storage/volumes/#image) — upstream reference for OCI image-backed volumes
-
-## Next steps
-
-<CardGrid>
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable X.509/CAC, OCSP, and CRL revocation checking via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-  <LinkCard
-    title="Configure the CA truststore"
-    description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
-    href="/how-to-guides/identity-and-authorization/configure-truststore/"
-  />
-</CardGrid>
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OCSP, and CRL revocation checking via bundle overrides.
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication.

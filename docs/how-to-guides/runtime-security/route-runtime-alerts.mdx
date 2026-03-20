@@ -4,7 +4,7 @@ sidebar:
   order: 6.3
 ---
 
-import { Steps, Tabs, TabItem, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll configure Falcosidekick to forward runtime security alerts to Slack, Matt
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster
 - Webhook URL for your target platform (Slack, Mattermost, or Teams)
 
@@ -240,20 +241,5 @@ uds zarf tools kubectl get networkpolicy -n falco
 - [Falcosidekick outputs](https://github.com/falcosecurity/falcosidekick#outputs) — full list of supported output destinations
 - [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
 - [High availability: Runtime security](/how-to-guides/high-availability/runtime-security/) — tune Falcosidekick replica count for resilient alert delivery
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Tune Falco runtime detections"
-    description="Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules."
-    href="/how-to-guides/runtime-security/tune-falco-detections/"
-  />
-  <LinkCard
-    title="Query Falco events in Grafana"
-    description="Query and visualize runtime security events using Loki."
-    href="/how-to-guides/runtime-security/query-falco-events/"
-  />
-</CardGrid>
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) — Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
+- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) — Query and visualize runtime security events using Loki.

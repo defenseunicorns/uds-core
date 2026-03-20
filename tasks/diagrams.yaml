@@ -21,7 +21,7 @@ tasks:
           npm ci
           npm run setup
           rm -rf diagrams
-          npx likec4 export png -o diagrams
+          npx likec4 export png -f "index" -f "indepth-uds-core" -o diagrams
         dir: docs/.c4/
 
   - name: d2-update

@@ -545,6 +545,9 @@
             },
             "enableAccessRequestNotes": {
               "type": "boolean"
+            },
+            "realmDisplayName": {
+              "type": "string"
             }
           },
           "additionalProperties": true

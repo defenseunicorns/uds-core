@@ -252,15 +252,13 @@ async function fetchCACerts(): Promise<{ dodCerts: string; publicCerts: string }
  * @param updateClusterResources Whether to update cluster resources (ConfigMaps, etc.)
  */
 async function handleCABundleUpdate(caBundle: ConfigCABundle, updateClusterResources?: boolean) {
-  // no caCert then set to empty string
+  // no certs then set to empty string
   if (!caBundle.certs) {
     caBundle.certs = "";
   }
 
   // handle dev mode placeholder
   if (caBundle.certs === "###ZARF_VAR_CA_BUNDLE_CERTS###") {
-    caBundle.certs = "";
-  } else if (caBundle.certs === "###ZARF_VAR_CA_CERT###") {
     caBundle.certs = "";
   }
 

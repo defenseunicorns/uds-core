@@ -4,7 +4,7 @@ sidebar:
   order: 5.5
 ---
 
-import { Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -209,20 +209,5 @@ uds zarf tools kubectl logs -n loki -l app.kubernetes.io/name=loki -c loki-sc-ru
 
 - [Grafana Loki: Alerting and recording rules](https://grafana.com/docs/loki/latest/alert/) — Loki ruler configuration reference
 - [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) — query language documentation
-
-## Next steps
-
-These guides may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Route alerts to notification channels"
-    description="Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email."
-    href="/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/"
-  />
-  <LinkCard
-    title="Create metric alerting rules"
-    description="Define additional alerting conditions based on Prometheus metrics."
-    href="/how-to-guides/monitoring-observability/create-metric-alerting-rules/"
-  />
-</CardGrid>
+- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) — Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email.
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define additional alerting conditions based on Prometheus metrics.

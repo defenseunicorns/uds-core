@@ -724,3 +724,8 @@ exclude:
     certificateIssuerOrganization: "OISTE Foundation"
     geographicFocus: "Switzerland, Global"
     companyWebsite: "https://oiste.org"
+  - commonName: "e-Szigno TLS Root CA 2023"
+    owner: "Microsec Ltd."
+    certificateIssuerOrganization: "Microsec Ltd."
+    geographicFocus: "Hungary, Europe"
+    companyWebsite: "https://e-szigno.hu/en/"

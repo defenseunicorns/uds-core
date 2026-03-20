@@ -4,7 +4,7 @@ sidebar:
   order: 3.13
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll configure user account behavior for your UDS Core Keycloak realm: setting
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 
 ## Before you begin
 
@@ -177,21 +178,6 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Client Polic
 
 - [Keycloak password policies](https://www.keycloak.org/docs/latest/server_admin/#_password-policies) — full list of Keycloak password policy types
 - [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — enable or disable authentication flows alongside password and account settings
-- [Custom Keycloak plugin](/concepts/core-features/keycloak-plugin/) — how the UDS plugin enforces protocol mapper and client scope restrictions
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Configure Keycloak login policies"
-    description="Set session timeouts, concurrent session limits, and logout confirmation behavior."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
-  />
-  <LinkCard
-    title="Manage Keycloak with OpenTofu"
-    description="Use the built-in OpenTofu client to programmatically manage Keycloak resources."
-    href="/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/"
-  />
-</CardGrid>
+- [Identity and Authorization](/concepts/core-features/identity-and-authorization/) — how UDS Core configures and extends Keycloak, including custom plugins and themes
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session timeouts, concurrent session limits, and logout confirmation behavior.
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) — Use the built-in OpenTofu client to programmatically manage Keycloak resources.

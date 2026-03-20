@@ -1,7 +1,7 @@
 ---
 title: Security
 sidebar:
-  order: 3.5
+  order: 3.6
 ---
 
 
@@ -16,6 +16,7 @@ UDS Core maintains a defense-in-depth baseline, providing real security across t
 - **Admission control** enforced by UDS policies via [Pepr](https://docs.pepr.dev/) (non-root, drop capabilities, block privileged/host access, etc.).
 - **Runtime security** with real-time detection and alerting on malicious behavior.
 - **Observability & audit**: centralized log collection and shipping, plus metrics and dashboards.
+- **Compliance-ready**: controls are designed to address requirements in NIST 800-53, DISA STIG, and FedRAMP baselines to support ATO processes.
 
 > [!NOTE]
 > Security defaults are intentionally restrictive. Operators can loosen controls where needed, but any reduction in the default security posture should be made deliberately and documented.
@@ -122,3 +123,13 @@ UDS Core's observability stack doubles as an audit and compliance tool:
 > **Why it matters:** Unified observability across logs and metrics means faster diagnosis during both security incidents and routine troubleshooting.
 
 [Logging Concepts &rarr;](/concepts/core-features/logging/) | [Monitoring & Observability Concepts &rarr;](/concepts/core-features/monitoring-observability/)
+
+---
+
+## Compliance & Authorization
+
+The security controls documented on this page are designed with regulated environments in mind. UDS Core helps address control families commonly evaluated across NIST 800-53, DISA STIG, and FedRAMP baselines.
+
+If your organization is pursuing an **Authority to Operate (ATO)** or needs compliance documentation for a regulated environment deployment, Defense Unicorns provides technical documentation and control mapping artifacts to support your authorization effort.
+
+[Contact Defense Unicorns &rarr;](https://www.defenseunicorns.com/contact)

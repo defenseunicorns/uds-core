@@ -22,43 +22,12 @@ tests:
           path: spec.caBundle.certs
           value: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
 
-  - it: should render with legacy expose.caCert value when caBundle.certs is empty
+  - it: should not render certs field when caBundle.certs is empty
     set:
       cluster:
         caBundle:
           certs: ""
         expose:
-          caCert: "LS0tLS1CRUdJTi...legacy-ca-cert"
-          domain: "example.com"
-    asserts:
-      - isKind:
-          of: ClusterConfig
-      - equal:
-          path: spec.caBundle.certs
-          value: "LS0tLS1CRUdJTi...legacy-ca-cert"
-
-  - it: should prefer caBundle.certs over expose.caCert when both are set
-    set:
-      cluster:
-        caBundle:
-          certs: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
-        expose:
-          caCert: "LS0tLS1CRUdJTi...legacy-ca-cert"
-          domain: "example.com"
-    asserts:
-      - isKind:
-          of: ClusterConfig
-      - equal:
-          path: spec.caBundle.certs
-          value: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
-
-  - it: should not render certs field when both values are empty strings
-    set:
-      cluster:
-        caBundle:
-          certs: ""
-        expose:
-          caCert: ""
           domain: "example.com"
     asserts:
       - isKind:
@@ -74,7 +43,6 @@ tests:
           includeDoDCerts: true
           includePublicCerts: false
         expose:
-          caCert: ""
           domain: "example.com"
     asserts:
       - isKind:

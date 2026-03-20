@@ -4,7 +4,7 @@ sidebar:
   order: 3.14
 ---
 
-import { Steps, LinkCard, CardGrid } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -14,6 +14,7 @@ You'll enable the built-in `uds-opentofu-client` in UDS Core's Keycloak realm an
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - [OpenTofu](https://opentofu.org/docs/intro/install/) installed
 
 ## Before you begin
@@ -200,21 +201,6 @@ After running `tofu apply`, confirm resources created by OpenTofu appear in the 
 
 - [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) — full provider resource reference
 - [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement
-- [Upgrade Keycloak realm configuration](/operations/upgrade-keycloak-realm/) — manual upgrade steps when re-importing the realm with new config
-
-## Next steps
-
-These guides and concepts may be useful to explore next:
-
-<CardGrid>
-  <LinkCard
-    title="Enforce group-based access controls"
-    description="Restrict application access to users in specific Keycloak groups using the Package CR."
-    href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-</CardGrid>
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) — manual upgrade steps when re-importing the realm with new config
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.

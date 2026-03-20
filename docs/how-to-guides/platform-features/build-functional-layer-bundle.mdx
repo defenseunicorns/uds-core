@@ -1,0 +1,160 @@
+---
+title: Build a functional layer bundle
+sidebar:
+  order: 10.3
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have a UDS Bundle that deploys a tailored subset of UDS Core using individual functional layers instead of the full `core` package. This is useful for resource-constrained environments, edge deployments, or clusters that already provide some platform capabilities.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster
+- Familiarity with [functional layers](/concepts/platform/functional-layers/) and their dependencies
+
+## Before you begin
+
+UDS Core functional layers are published as individual OCI Zarf packages. Each layer corresponds to a capability (identity, monitoring, logging, etc.) and can be included or excluded from your bundle independently — as long as dependency ordering is maintained.
+
+Layers are published to organization-specific registries and require a Defense Unicorns agreement for access. In the examples below, replace `<MY-ORG>` with your UDS Registry organization.
+
+> [!NOTE]
+> `<MY-ORG>` refers to your organization's namespace on [registry.defenseunicorns.com](https://registry.defenseunicorns.com). Access requires a subscription or agreement with Defense Unicorns — [contact Defense Unicorns](https://www.defenseunicorns.com/contact) for details.
+
+## Steps
+
+<Steps>
+
+1. **Decide which layers your environment needs**
+
+   Review the [layer selection criteria](/concepts/platform/functional-layers/#layer-selection-criteria) to determine which capabilities apply. At minimum, you need `core-base`. Add other layers based on your requirements.
+
+   Key dependency rules:
+   - `core-base` is required for all other layers (except `core-crds`)
+   - `core-monitoring` requires `core-identity-authorization`
+   - `core-crds` is only needed if pre-core infrastructure requires policy exemptions
+
+2. **Create your bundle manifest**
+
+   Define a `uds-bundle.yaml` that lists the layers you need in dependency order. Comment out or remove layers that don't fit your deployment.
+
+   > [!TIP]
+   > Start with the full example below and remove layers you don't need. Only `core-base` is required — all other layers are optional.
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: custom-core-bundle
+     description: UDS Core deployed with individual functional layers
+     version: "0.1.0"
+
+   packages:
+     - name: init
+       repository: ghcr.io/zarf-dev/packages/init
+       ref: x.x.x
+
+     # Optional — deploy before base if pre-core components need policy exemptions
+     - name: core-crds
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-crds
+       ref: x.x.x-upstream
+
+     # Required — foundation for all other layers
+     - name: core-base
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-base
+       ref: x.x.x-upstream
+
+     # Optional — remove if your deployment doesn't require user authentication
+     - name: core-identity-authorization
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-identity-authorization
+       ref: x.x.x-upstream
+
+     # Optional — skip if your cluster already provides a metrics server
+     - name: core-metrics-server
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-metrics-server
+       ref: x.x.x-upstream
+
+     # Optional — remove if runtime threat detection is not needed
+     - name: core-runtime-security
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-runtime-security
+       ref: x.x.x-upstream
+
+     # Optional — remove if log aggregation is not needed
+     - name: core-logging
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-logging
+       ref: x.x.x-upstream
+
+     # Optional — requires core-identity-authorization for Grafana login
+     - name: core-monitoring
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-monitoring
+       ref: x.x.x-upstream
+
+     # Optional — remove if backup/restore is not needed
+     - name: core-backup-restore
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-backup-restore
+       ref: x.x.x-upstream
+   ```
+
+   > [!IMPORTANT]
+   > All layers must use the **same version** for compatibility. Replace `x.x.x` with the UDS Core version you are deploying.
+
+3. **(Optional) Add overrides for individual layers**
+
+   You can apply [bundle overrides](/concepts/configuration-and-packaging/bundles/#overrides-and-variables) to individual layers just like you would to the full `core` package. The component and chart names are the same — only the package name in the bundle changes.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core-logging
+       repository: registry.defenseunicorns.com/<MY-ORG>/core-logging
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             values:
+               - path: loki.storage.type
+                 value: s3
+   ```
+
+4. **Create and deploy your bundle**
+
+   ```bash
+   uds create .
+   uds deploy uds-bundle-custom-core-bundle-*.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm all deployed packages are healthy:
+
+```bash
+uds zarf package list
+```
+
+All listed packages should show a successful deployment status. If any layer is missing or failed, check the deploy logs for dependency or ordering issues.
+
+## Troubleshooting
+
+### Problem: Policy violations during deployment
+
+**Symptom:** Pods from pre-core infrastructure components fail admission after `core-base` deploys.
+
+**Solution:** Deploy the `core-crds` layer before `core-base` and create `Exemption` resources alongside your pre-core components.
+
+### Problem: Monitoring dashboards not accessible
+
+**Symptom:** Package CR reconciliation errors for monitoring components that require SSO configuration.
+
+**Solution:** The `core-monitoring` layer requires the `core-identity-authorization` layer for SSO. Add it to your bundle before the monitoring layer.
+
+## Related Documentation
+
+- [Functional Layers](/concepts/platform/functional-layers/) — Layer architecture, dependencies, and selection criteria
+- [Bundles](/concepts/configuration-and-packaging/bundles/) — How bundles compose Zarf packages with overrides and variables
+- [Flavors](/concepts/platform/flavors/) — Choosing between upstream, registry1, and unicorn image variants
+- [Production getting-started guide](/getting-started/production/provision-services/) — Pre-core infrastructure provisioning for production environments
