@@ -1,0 +1,68 @@
+---
+title: UDS Core 0.63
+sidebar:
+  order: 3.996
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 0.63 introduces built-in uptime observability with recording rules and a Core Uptime dashboard, and adds a standalone CRDs functional layer that allows installing UDS CRDs before `core-base`. No breaking changes are included in this release.
+
+### Notable features
+
+- **Core uptime observability:** built-in recording rules and a new Core Uptime dashboard in Grafana provide visibility into component availability without additional configuration ([#2426](https://github.com/defenseunicorns/uds-core/pull/2426))
+- **CRDs functional layer:** a standalone `crds` layer enables installation of UDS CRDs (`Package`, `Exemption`, `ClusterConfig`) before `core-base`, allowing pre-core exemptions for prerequisite infrastructure ([#2429](https://github.com/defenseunicorns/uds-core/pull/2429))
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Grafana | 12.3.3 | 12.4.0 |
+| Grafana Helm chart | 10.5.15 | 11.3.0 |
+| Keycloak | 26.5.3 | 26.5.5 |
+| Loki | 3.6.5 | 3.6.7 |
+| Pepr | 1.1.0 | 1.1.2 |
+| Prometheus | 3.9.1 | 3.10.0 |
+| UDS Identity Config | 0.23.0 | 0.24.0 |
+| DoD CA Certs | External PKI v11.4 | External PKI v11.5 |
+
+## Upgrade considerations
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Review Grafana overrides**
+
+   The Grafana Helm chart has been upgraded to 11.x, which requires Kubernetes 1.25 or later. Verify your cluster is running a [supported Kubernetes version](/concepts/platform/supported-distributions/). If you have custom Grafana Helm chart overrides in your bundle, review them for compatibility with the new chart version in the `grafana-community` repository.
+
+</Steps>
+
+### Identity Config updates (0.24)
+
+This release upgrades UDS Identity Config to [0.24.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.24.0). No breaking changes or manual realm steps are required.
+
+- **X.509 CRL realm configurations:** expose X.509 certificate revocation list (CRL) settings for realm-level configuration ([#802](https://github.com/defenseunicorns/uds-identity-config/pull/802))
+- **New Doug logo:** updated branding for the login and account management pages ([#777](https://github.com/defenseunicorns/uds-identity-config/pull/777))
+- **CAC detection fix:** resolved an issue where CAC detection failed when using the browser's custom back button ([#792](https://github.com/defenseunicorns/uds-identity-config/pull/792))
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Confirm uptime dashboard**
+
+   Open Grafana and verify the new Core Uptime dashboard is available and displaying data.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [UDS Core 0.63.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0630-2026-03-10) — full changelog
+- [UDS Identity Config 0.24.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0240-2026-03-06) — full changelog
+- [Full diff (0.62.0...0.63.0)](https://github.com/defenseunicorns/uds-core/compare/v0.62.0...v0.63.0) — all changes between versions

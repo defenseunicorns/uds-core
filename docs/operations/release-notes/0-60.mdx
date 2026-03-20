@@ -1,0 +1,147 @@
+---
+title: UDS Core 0.60
+sidebar:
+  order: 3.999
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Package` CRs. Packages without an explicit `spec.network.serviceMesh.mode` setting will automatically switch from sidecar to ambient mode on upgrade. This release also reorganizes SSO secret fields, enables Keycloak logout confirmation by default, and aligns Istio and Authservice with the cluster-wide trust bundle.
+
+### ⚠ Breaking changes
+
+| Change | Impact | Action required |
+|--------|--------|-----------------|
+| Default Istio mesh mode changed to `ambient` | Packages without explicit `spec.network.serviceMesh.mode` switch from sidecar to ambient on upgrade | Set `mode: sidecar` on any Package CR that must remain in sidecar mode |
+
+### Notable features
+
+- **Exemption deployment for pre-core workloads:** deploy `Exemption` CRs before UDS Core for infrastructure that needs policy exceptions during bootstrap ([#2277](https://github.com/defenseunicorns/uds-core/pull/2277))
+- **Istio gateway nodeport configuration:** configure Istio gateways with nodeport settings for environments that require them ([#2277](https://github.com/defenseunicorns/uds-core/pull/2277))
+- **Keycloak logout confirmation:** all SSO clients now show a logout confirmation prompt by default ([#2260](https://github.com/defenseunicorns/uds-core/pull/2260))
+- **Trust bundle alignment:** Istio and Authservice use the common cluster trust bundle, aligning with central CA configuration ([#2281](https://github.com/defenseunicorns/uds-core/pull/2281))
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Istio | 1.28.1 | 1.28.3 |
+| Keycloak | 26.5.0 | 26.5.1 |
+| UDS Identity Config | 0.22.0 | 0.23.0 |
+| Prometheus | 3.8.1 | 3.9.1 |
+| Alertmanager | 0.30.0 | 0.30.1 |
+| Velero | 1.17.1 | 1.17.2 |
+| Velero plugins | 1.13.1 | 1.13.2 |
+
+## Upgrade considerations
+
+> [!IMPORTANT]
+> Upgrade directly to v0.60.2 to avoid known issues with v0.60.0 and v0.60.1. The bundle reference below targets v0.60.2.
+
+### Known issues in v0.60.0 and v0.60.1
+
+Packages with an unset `spec.network.serviceMesh.mode` that request Authservice protection encounter two issues:
+
+- **Routing failure (v0.60.0):** the operator does not correctly handle ambient mode routing for Authservice-protected workloads, leaving them unprotected. Fixed in v0.60.1 via [#2326](https://github.com/defenseunicorns/uds-core/pull/2326).
+- **Stale AuthorizationPolicies (v0.60.0, v0.60.1):** after upgrading, stale AuthorizationPolicies from the previous sidecar configuration can block access to Authservice-enabled applications. Fixed in v0.60.2 via [#2368](https://github.com/defenseunicorns/uds-core/pull/2368).
+
+Set the mesh mode explicitly as a workaround if you cannot upgrade to v0.60.2 immediately:
+
+```yaml title="package-cr.yaml"
+spec:
+  network:
+    serviceMesh:
+      # Set explicitly to avoid known issues with unset mesh mode
+      mode: ambient
+```
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Audit Package CRs for mesh mode**
+
+   Identify all Package CRs that do not set `spec.network.serviceMesh.mode` explicitly. These will switch to ambient mode on upgrade:
+
+   ```bash
+   uds zarf tools kubectl get packages -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\t"}{.spec.network.serviceMesh.mode}{"\n"}{end}'
+   ```
+
+   Packages with a blank value in the second column have no explicit mesh mode set. Decide for each whether ambient mode is acceptable or whether you need to pin it to `sidecar`.
+
+2. **Set explicit mesh mode on Package CRs**
+
+   For any Package that must remain in sidecar mode, set the mode explicitly:
+
+   ```yaml title="package-cr.yaml"
+   spec:
+     network:
+       serviceMesh:
+         # Pin to sidecar mode to prevent automatic switch to ambient
+         mode: sidecar
+   ```
+
+3. **Update SSO secret field names**
+
+   Update any `spec.sso` configurations in your Package CRs to use the new field names. Review the release notes for the specific field mapping.
+
+4. **Target v0.60.2**
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       # Upgrade to 0.60.2 (includes fixes for ambient mode and stale authpolicies)
+       ref: 0.60.2-upstream
+   ```
+
+</Steps>
+
+### Identity Config updates (0.23)
+
+This release upgrades UDS Identity Config to [0.23.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.23.0).
+
+- **Keycloak logout confirmation:** enable logout confirmation on the `account`, `account-console`, and `security-admin-console` clients (Keycloak 26.5.0 feature)
+
+Existing realms require manual client updates to enable logout confirmation. If you cannot perform a full realm re-import, follow these steps in the Keycloak admin console:
+
+<Steps>
+
+1. **Enable logout confirmation on default clients**
+
+   - Navigate to the `UDS` realm
+   - Go to `Clients` > `account`
+   - Find the `Logout confirmation` option and set it to `On`
+   - Click `Save`
+   - Repeat these steps for the `account-console` and `security-admin-console` clients
+
+</Steps>
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Confirm Istio mesh mode**
+
+   Verify that workloads are running in the expected mesh mode:
+
+   ```bash
+   uds zarf tools kubectl get packages -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}: {.spec.network.serviceMesh.mode}{"\n"}{end}'
+   ```
+
+2. **Validate SSO and logout**
+
+   Confirm SSO login works and the new logout confirmation prompt appears.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) — applying config changes on a running platform
+- [UDS Core 0.60.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#0600-2026-01-29) — full changelog
+- [UDS Identity Config 0.23.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0230-2026-01-23) — full changelog
+- [Full diff (0.59.1...0.60.2)](https://github.com/defenseunicorns/uds-core/compare/v0.59.1...v0.60.2) — all changes between versions

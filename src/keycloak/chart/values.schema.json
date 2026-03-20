@@ -209,12 +209,6 @@
     "enableServiceLinks": {
       "type": "boolean"
     },
-    "fips": {
-      "type": "boolean"
-    },
-    "fipsAllowWeakPasswords": {
-      "type": "boolean"
-    },
     "image": {
       "type": "object",
       "properties": {
@@ -551,6 +545,9 @@
             },
             "enableAccessRequestNotes": {
               "type": "boolean"
+            },
+            "realmDisplayName": {
+              "type": "string"
             }
           },
           "additionalProperties": true

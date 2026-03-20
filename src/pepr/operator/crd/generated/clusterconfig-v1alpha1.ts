@@ -60,10 +60,6 @@ export interface Expose {
    */
   adminDomain?: string;
   /**
-   * The trusted CA that signed your domain certificates if using Private PKI
-   */
-  caCert?: string;
-  /**
    * Domain all cluster services will be exposed on
    */
   domain: string;
