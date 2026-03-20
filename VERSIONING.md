@@ -10,7 +10,7 @@ This document defines the UDS Core versioning policy, specifically addressing wh
 
 Since UDS Core is a Kubernetes based platform, rather than a traditional application or library, it doesn’t have a traditional API. This document defines the contract with the end user, referred to as the “API” to keep with traditional SemVer wording/principles.
 
-For versioning purposes, the following are considered part of the API:
+For versioning purposes, the following constitute the public API:
 
 ### 1. Custom Resource Definitions (CRDs)
 

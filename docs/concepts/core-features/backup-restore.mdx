@@ -12,7 +12,7 @@ Application teams should not need to design backup strategies for each service t
 
 - **Consistency**: a cluster-level backup captures all namespaces and volumes in a coordinated way, avoiding split-brain scenarios where application data and Kubernetes state diverge
 - **Recovery testing**: the platform defines and tests restore procedures; application teams rely on the guarantee rather than each maintaining their own
-- **Compliance**: regulated environments require documented, tested backup and recovery capabilities with defined RPO (recovery point objective, how much data you can afford to lose) and RTO (recovery time objective, how long you can afford to be down) targets
+- **Compliance**: regulated environments require documented, tested backup and recovery capabilities with defined RPO (recovery point objective: how much data you can afford to lose) and RTO (recovery time objective: how long you can afford to be down) targets
 
 ## What Velero backs up
 
@@ -33,7 +33,7 @@ Velero runs backups on a [configurable cron schedule](https://velero.io/docs/lat
 > [!NOTE]
 > **UDS Core default:** a daily backup at 03:00 UTC with a 10-day retention window (`240h`).
 
-Teams can customize the schedule, retention, and scope to match their RTO/RPO requirements, for example, adding more frequent snapshots for critical namespaces or extending retention for compliance.
+Teams can customize the schedule, retention, and scope to match their RTO/RPO requirements (for example, adding more frequent snapshots for critical namespaces or extending retention for compliance).
 
 ## Restore scenarios
 

@@ -2,7 +2,7 @@
 
 ## About this template
 
-How-to guides are task-oriented pages that walk a user through accomplishing a specific goal. Each guide covers a single task — configuring a component, enabling a feature, connecting an external dependency, etc.
+How-to guides are task-oriented pages that walk a user through accomplishing a specific goal. Each guide covers a single task (configuring a component, enabling a feature, connecting an external dependency, etc.).
 
 How-to guides live under `docs/how-to-guides/<section>/` and are grouped by domain (e.g., high-availability, networking, identity-and-authorization). The section provides context; the page title should be the specific topic (e.g., "Keycloak", "Logging").
 
@@ -29,7 +29,7 @@ sidebar:
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
-{/* Only add CardGrid / LinkCard if this is an overview/landing page — how-to guides do not use those components. */}
+{/* Only add CardGrid / LinkCard if this is an overview/landing page - how-to guides do not use those components. */}
 
 ## What you'll accomplish
 
@@ -44,7 +44,7 @@ Brief intro paragraph (2-3 sentences) explaining what the user will configure an
 
 ## Before you begin
 
-<!-- Optional section. Use when the reader needs context about default behavior or architecture before the steps make sense. Keep it brief — if it's more than a few paragraphs, it belongs in Concepts. -->
+<!-- Optional section. Use when the reader needs context about default behavior or architecture before the steps make sense. Keep it brief; if it's more than a few paragraphs, it belongs in Concepts. -->
 
 Brief context about default behavior, architecture, or how the component works that the reader needs before following the steps.
 
@@ -137,10 +137,10 @@ uds zarf tools kubectl get pods -n namespace
 
 ## Related documentation
 
-- [External Doc: Topic](https://example.com) — brief description
-- [Internal Doc: Topic](/path/to/page/) — brief description
-- [Related Guide](/how-to-guides/section/page/) — Why this is a related guide.
-- [Related Concepts](/concepts/core-features/topic/) — Background on how this works in UDS Core.
+- [External Doc: Topic](https://example.com) - brief description
+- [Internal Doc: Topic](/path/to/page/) - brief description
+- [Related Guide](/how-to-guides/section/page/) - Why this is a related guide.
+- [Related Concepts](/concepts/core-features/topic/) - Background on how this works in UDS Core.
 ```
 
 ## Conventions
@@ -151,14 +151,14 @@ uds zarf tools kubectl get pods -n namespace
 - Guide-specific items: external dependencies (e.g., external PostgreSQL), credential requirements, knowledge prereqs (e.g., familiarity with bundle overrides)
 
 ### General
-- Use an optional "Before you begin" section for context about defaults or architecture — keep steps action-only
-- Do not use `---` horizontal rule dividers between sections — headings provide sufficient visual separation
+- Use an optional "Before you begin" section for context about defaults or architecture; keep steps action-only
+- Do not use `---` horizontal rule dividers between sections; headings provide sufficient visual separation
 - When a step has multiple options (pick-one), use `<Tabs>` and `<TabItem>` components within the step rather than listing options with bold headings
 - Files use `.mdx` extension
-- Page titles are bare topic names — breadcrumbs provide section context
-- Frontmatter `title:` must not use surrounding quotes (e.g. `title: Policy Violations`, not `title: "Policy Violations"`) — quotes are unnecessary in YAML for plain strings and create inconsistency
-- Do not repeat the frontmatter `title:` as a `##` heading in the page body — Starlight renders the title automatically as the page's `<h1>`; a duplicate heading creates redundant visual hierarchy
-- The related links section must be headed `## Related documentation` (sentence case) — not `## Related Documentation` or any other casing
+- Page titles are bare topic names; breadcrumbs provide section context
+- Frontmatter `title:` must not use surrounding quotes (e.g. `title: Policy Violations`, not `title: "Policy Violations"`). Quotes are unnecessary in YAML for plain strings and create inconsistency
+- Do not repeat the frontmatter `title:` as a `##` heading in the page body. Starlight renders the title automatically as the page's `<h1>`; a duplicate heading creates redundant visual hierarchy
+- The related links section must be headed `## Related documentation` (sentence case), not `## Related Documentation` or any other casing
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only
 - Code blocks use titles: `` ```yaml title="uds-bundle.yaml" ``
 - No `oci://` prefix on repository references
@@ -183,8 +183,8 @@ uds zarf tools kubectl get pods -n namespace
      uds zarf tools kubectl apply -f manifest.yaml
      ```
   ```
-- How-to guides use a single `## Related documentation` section with a flat bullet list — no `## Next steps` section. All links (reference docs, external resources, follow-up guides, related concepts) go in this one section as bullets.
-- Overview/landing pages (e.g., `overview.mdx` files that introduce a section) may use `<CardGrid>` and `<LinkCard>` for visual navigation — the bullets-only convention applies to how-to guide body content only.
+- How-to guides use a single `## Related documentation` section with a flat bullet list. No `## Next steps` section. All links (reference docs, external resources, follow-up guides, related concepts) go in this one section as bullets.
+- Overview/landing pages (e.g., `overview.mdx` files that introduce a section) may use `<CardGrid>` and `<LinkCard>` for visual navigation. The bullets-only convention applies to how-to guide body content only.
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
 - Troubleshooting headings use the `### Problem: Description` format, with `**Symptom:**` (singular) or `**Symptoms:**` (plural) and `**Solution:**` sub-headings
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing
@@ -195,10 +195,10 @@ When writing or reviewing bundle override examples, verify each of these before 
 
 1. **Component name:** Must match a named component in `packages/standard/zarf.yaml`. Check the `name:` fields under `components:` in that file.
 
-2. **Chart name:** Must match the `name:` field of a chart entry in the component's `zarf.yaml` or `common/zarf.yaml` under `src/`. Note that the `src/` directory name doesn't always match the component name (e.g., component `kube-prometheus-stack` lives in `src/prometheus-stack/`). The chart name is often NOT the same as the component name — for example, the `falco` component has charts named `falco` and `uds-falco-config`.
+2. **Chart name:** Must match the `name:` field of a chart entry in the component's `zarf.yaml` or `common/zarf.yaml` under `src/`. Note that the `src/` directory name doesn't always match the component name (e.g., component `kube-prometheus-stack` lives in `src/prometheus-stack/`). The chart name is often NOT the same as the component name. For example, the `falco` component has charts named `falco` and `uds-falco-config`.
 
 3. **Value path:** Must be a valid Helm value path for the referenced chart. For UDS config charts, verify against `src/<component>/chart/values.yaml`. For upstream charts, verify against `src/<component>/values/values.yaml` (local customizations) or the upstream chart's default values.
 
-4. **Secrets identification:** Webhook URLs, API tokens, storage access keys, and any credential-like values are secrets — not just passwords. If a value would grant access to a system if leaked, treat it as a secret.
+4. **Secrets identification:** Webhook URLs, API tokens, storage access keys, and any credential-like values are secrets, not just passwords. If a value would grant access to a system if leaked, treat it as a secret.
 
 5. **Values vs variables:** If a value is environment-specific AND contains credentials, tokens, or keys, always use a `variable` with `sensitive: true` and include a `uds-config.yaml` example showing how to pass it at deploy time. Only use `values` for configuration that is safe to embed in the bundle artifact.

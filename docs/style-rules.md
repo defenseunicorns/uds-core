@@ -115,7 +115,7 @@ Additional details that don't need to be visible by default.
 
   **Solution:** How to fix it, with a verification command if applicable.
   ```
-- End with related documentation, then next steps.
+- End with a Related documentation section.
 
 ## Terminology
 
