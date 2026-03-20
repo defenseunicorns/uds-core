@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -302,15 +302,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         UDSConfig.kubeApiCIDR &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeAPI
       ) {
-        message +=
-          ", ensure that the KUBEAPI_CIDR override configured for the operator is correct.";
+        message += ", ensure that kubeApiCIDR is set correctly.";
       }
       if (
         UDSConfig.kubeNodeCIDRs.length > 0 &&
         policy.metadata.labels["uds/generated"] === RemoteGenerated.KubeNodes
       ) {
-        message +=
-          ", ensure that the KUBENODE_CIDRS override configured for the operator is correct.";
+        message += ", ensure that kubeNodeCIDRs is set correctly.";
       }
       throw new Error(message);
     }
