@@ -51,6 +51,7 @@ spec:
   network:
     allow:
       - direction: Ingress
+        remoteNamespace: ""
         selector:
           app: curl-pkg-allow-all
         ports:

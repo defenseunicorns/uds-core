@@ -23,6 +23,8 @@ UDS Core enforces strict network policies by default. All intra-cluster and exte
 
 Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of fields.
 
+Every `allow` entry must also specify at least one remote field: `remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost`. Rules without a remote will be rejected at admission time. Explicit remotes improve auditability, providing a clearer definition of what is on the other side of allowed traffic. See [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) for how to review your allow rules for overly permissive configurations.
+
 > [!NOTE]
 > The `expose` block handles ingress from gateways — see [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/). The `allow` block covers everything else: intra-cluster traffic between namespaces, egress to external services, and access to infrastructure endpoints like the Kubernetes API.
 
@@ -85,6 +87,9 @@ Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector`
                app.kubernetes.io/name: prometheus
              port: 9090
      ```
+
+     > [!TIP]
+     > To allow traffic from any namespace (common for for some cluster-wide tooling) use `remoteNamespace: "*"` which matches all namespaces.
 
      </TabItem>
      <TabItem label="Infrastructure endpoints">
