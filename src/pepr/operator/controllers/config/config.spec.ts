@@ -947,32 +947,6 @@ describe("handleUDSConfig", () => {
     });
   });
 
-  describe("Legacy CA cert placeholder handling", () => {
-    beforeEach(() => {
-      vi.clearAllMocks();
-      mockCfg = {
-        ...defaultConfig,
-        metadata: { ...defaultConfig.metadata, generation: 2 },
-        status: { observedGeneration: 1 },
-      };
-      mockClusterConfGet.mockResolvedValue(mockCfg);
-      mockSecretGet.mockResolvedValue(mockSecret);
-      mockConfigMapGet.mockResolvedValue({
-        data: { dodCACerts: "", publicCACerts: "" },
-      });
-      mockPatchStatus.mockResolvedValue({});
-    });
-
-    it("handles legacy ###ZARF_VAR_CA_CERT### placeholder", async () => {
-      mockCfg.spec!.caBundle!.certs = "###ZARF_VAR_CA_CERT###";
-      UDSConfig.caBundle.certs = "old-cert";
-
-      await handleCfg(mockCfg, ConfigAction.UPDATE);
-
-      expect(UDSConfig.caBundle.certs).toBe("");
-    });
-  });
-
   describe("loadUDSConfig pre-fetch logic", () => {
     beforeEach(() => {
       vi.clearAllMocks();

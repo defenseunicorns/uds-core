@@ -1,0 +1,22 @@
+---
+title: Upgrade Keycloak realm configuration
+sidebar:
+  order: 2.6
+---
+
+Some UDS Identity Config upgrades require manual changes to an existing Keycloak realm — for example, when a full realm re-import isn't possible and upstream Keycloak changes require manual intervention on a running instance.
+
+When manual realm changes are required, the specific steps are documented in the [release notes](/operations/release-notes/overview/) for the corresponding UDS Core version under the **Identity Config updates** section.
+
+## When manual changes are needed
+
+Manual realm changes are typically required when:
+
+- A Keycloak version upgrade introduces new features that need to be enabled on existing clients or realms
+- A breaking change in Keycloak requires updating roles, authentication flows, or client configurations
+- New security settings need to be applied to an existing realm that cannot be re-imported
+
+## Related documentation
+
+- [Release Notes](/operations/release-notes/overview/) — version-specific changes including identity-config migration steps
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists

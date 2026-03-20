@@ -1,0 +1,63 @@
+---
+title: Configuration Changes
+sidebar:
+  order: 2.5
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+This guide covers how to apply configuration changes to a running UDS Core deployment by updating bundle overrides and redeploying.
+
+> [!TIP]
+> If you are configuring a feature for the first time, see the [How-To Guides](/how-to-guides/overview/). This page covers changing configuration on an already-running platform.
+
+## Applying bundle override changes
+
+When you need to change UDS Core configuration (such as adjusting resource limits, enabling features, or updating external endpoints), modify your bundle overrides and redeploy.
+
+<Steps>
+
+1. **Update your bundle configuration**
+
+   Modify the relevant values in your `uds-bundle.yaml` or `uds-config.yaml`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         component-name:
+           chart-name:
+             values:
+               # Set the config path to the new value
+               - path: config.path
+                 value: "new-value"
+   ```
+
+2. **Rebuild and deploy the bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart — see [Configure pod reload on config changes](/how-to-guides/platform-features/configure-pod-reload/) for automatic restart configuration.
+
+3. **Verify the change**
+
+   Confirm the affected resources reflect the new configuration, for example:
+
+   ```bash
+   uds zarf tools kubectl describe <resource> -n <namespace>
+   ```
+
+</Steps>
+
+> [!IMPORTANT]
+> Avoid making large configuration changes and version upgrades in the same deployment. Apply configuration changes and upgrades independently to simplify troubleshooting.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
+- [How-To Guides](/how-to-guides/overview/) — first-time configuration guides
