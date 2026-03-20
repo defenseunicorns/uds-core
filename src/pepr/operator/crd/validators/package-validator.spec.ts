@@ -268,7 +268,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows one package per namespace", async () => {
-    const mockReqValidPkg = makeMockReq({}, [], [{}], [{}], [{}]);
+    const mockReqValidPkg = makeMockReq({}, [], [], [{}], [{}]);
     await validator(mockReqValidPkg);
     const mockReqInvalidPkg = makeMockReq(
       { metadata: { name: "should-be-denied" } },
@@ -282,7 +282,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows packages to be created in unique namespaces", async () => {
-    const mockReq = makeMockReq({}, [], [{}], [{}], [{}]);
+    const mockReq = makeMockReq({}, [], [], [{}], [{}]);
     await validator(mockReq);
     const mockReqNewPkg = makeMockReq(
       { metadata: { namespace: "foo", name: "should-be-approved" } },
@@ -296,7 +296,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows existing packages to be updated", async () => {
-    const mockReqValidPkg = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    const mockReqValidPkg = makeMockReq({}, [{}], [], [{}], [{}]);
     await validator(mockReqValidPkg);
     const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
     await validator(mockReqValidPkgUpdate);

@@ -139,7 +139,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
       policy.remoteGenerated &&
-      (policy.remoteNamespace ||
+      (policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr ||
         policy.remoteHost ||
@@ -152,7 +152,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
-      (policy.remoteNamespace || policy.remoteSelector) &&
+      (policy.remoteNamespace !== undefined || policy.remoteSelector) &&
       (policy.remoteGenerated || policy.remoteCidr || policy.remoteHost || policy.remoteProtocol)
     ) {
       return req.Deny(
@@ -164,7 +164,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteCidr &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteHost ||
         policy.remoteProtocol)
@@ -178,7 +178,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteHost &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr)
     ) {
@@ -191,7 +191,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteProtocol &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr ||
         !policy.remoteHost)
