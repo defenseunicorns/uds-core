@@ -24,7 +24,7 @@ UDS Core now includes Falco by default in the `core-runtime-security` package la
 > NeuVector cleanup is a one-time upgrade task. If your cluster has never had NeuVector deployed, you can skip this guide entirely.
 
 > [!NOTE]
-> If you need to keep NeuVector running alongside Falco, deploy your bundle normally (without `CLEANUP_LEGACY_NEUVECTOR`) — your existing NeuVector resources will remain untouched. Manage NeuVector separately using the [standalone NeuVector package](https://github.com/uds-packages/neuvector). To run NeuVector without Falco, omit the `core-runtime-security` layer from your bundle entirely.
+> If you need to keep NeuVector running alongside Falco, deploy your bundle normally (without `CLEANUP_LEGACY_NEUVECTOR`); your existing NeuVector resources will remain untouched. Manage NeuVector separately using the [standalone NeuVector package](https://github.com/uds-packages/neuvector). To run NeuVector without Falco, omit the `core-runtime-security` layer from your bundle entirely.
 
 ## Steps
 
@@ -84,7 +84,7 @@ uds zarf tools kubectl get crds | grep neuvector
 
 **Symptoms:** The `neuvector` namespace or CRDs still exist after deploying with `CLEANUP_LEGACY_NEUVECTOR: "true"`.
 
-**Solution:** Verify the variable was set correctly — it must be the string `"true"` (quoted), not a boolean. Check your `uds-config.yaml`:
+**Solution:** Verify the variable was set correctly; it must be the string `"true"` (quoted), not a boolean. Check your `uds-config.yaml`:
 
 ```yaml
 variables:
@@ -104,9 +104,9 @@ Redeploy the bundle after confirming the variable is set correctly.
 uds zarf tools kubectl get crds | grep neuvector | awk '{print $1}' | xargs uds zarf tools kubectl delete crd
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) — deploy and manage NeuVector independently
-- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and runtime threat detection work in UDS Core
-- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) — Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
-- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) — Forward Falco detections to Slack, Mattermost, or Microsoft Teams.
+- [Standalone NeuVector](https://github.com/uds-packages/neuvector/blob/main/docs/neuvector-standalone.md) - deploy and manage NeuVector independently
+- [Runtime security concepts](/concepts/core-features/runtime-security/) - background on how Falco and runtime threat detection work in UDS Core
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) - Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
+- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) - Forward Falco detections to Slack, Mattermost, or Microsoft Teams.

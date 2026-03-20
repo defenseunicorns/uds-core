@@ -19,7 +19,7 @@ Connect Grafana to additional data sources beyond the defaults that ship with UD
 
 ## Before you begin
 
-UDS Core configures Grafana with three datasources by default: Prometheus (metrics), Loki (logs), and Alertmanager (alerts). Use this guide when you need to connect Grafana to additional datasources — for example, an external Prometheus instance, Tempo for distributed tracing, or a second Loki deployment.
+UDS Core configures Grafana with three datasources by default: Prometheus (metrics), Loki (logs), and Alertmanager (alerts). Use this guide when you need to connect Grafana to additional datasources, for example, an external Prometheus instance, Tempo for distributed tracing, or a second Loki deployment.
 
 The `extraDatasources` value injects entries into the existing `grafana-datasources` ConfigMap that UDS Core manages. This keeps your configuration declarative and avoids needing to replace the entire ConfigMap.
 
@@ -86,9 +86,9 @@ uds zarf tools kubectl get configmap grafana-datasources -n grafana -o yaml
 
 **Solution:** Verify the URL is reachable from within the cluster. Check that network policies allow egress from the `grafana` namespace to the datasource endpoint.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana: Data sources](https://grafana.com/docs/grafana/latest/datasources/) — full list of supported datasource types and configuration options
-- [Grafana: Provisioning data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources) — YAML provisioning format reference
-- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) — Deploy dashboards that use your new datasource.
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on how the monitoring stack fits together in UDS Core.
+- [Grafana: Data sources](https://grafana.com/docs/grafana/latest/datasources/) - full list of supported datasource types and configuration options
+- [Grafana: Provisioning data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources) - YAML provisioning format reference
+- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) - Deploy dashboards that use your new datasource.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) - Background on how the monitoring stack fits together in UDS Core.

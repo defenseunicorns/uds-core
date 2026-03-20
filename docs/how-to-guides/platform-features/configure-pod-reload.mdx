@@ -21,13 +21,13 @@ The UDS Operator watches for changes to Secrets and ConfigMaps labeled with `uds
 
 There are two targeting modes:
 
-- **Auto-discovery (default)** — the operator scans all pods in the namespace and restarts those that reference the changed resource through volume mounts, environment variables (`env` or `envFrom`), or projected volumes.
-- **Explicit selector** — you specify a label selector via annotation, and the operator restarts all pods matching those labels.
+- **Auto-discovery (default)**: the operator scans all pods in the namespace and restarts those that reference the changed resource through volume mounts, environment variables (`env` or `envFrom`), or projected volumes.
+- **Explicit selector**: you specify a label selector via annotation, and the operator restarts all pods matching those labels.
 
 For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the operator triggers a rolling restart by patching the pod template annotations. For standalone pods without a restartable controller, the operator evicts or deletes the pod; it will only be recreated if some other controller or process creates it again.
 
 > [!TIP]
-> Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/) — so pods automatically pick up rotated credentials and updated trust bundles.
+> Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/), so pods automatically pick up rotated credentials and updated trust bundles.
 
 ## Steps
 
@@ -35,7 +35,7 @@ For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the ope
 
 1. **Label the Secret or ConfigMap for pod reload**
 
-   Add the `uds.dev/pod-reload: "true"` label to the resource that changes — the Secret or ConfigMap, not the pods that consume it.
+   Add the `uds.dev/pod-reload: "true"` label to the resource that changes (the Secret or ConfigMap, not the pods that consume it).
 
    ```yaml title="secret.yaml"
    apiVersion: v1
@@ -129,9 +129,9 @@ uds zarf tools kubectl get configmap <name> -n <namespace> --show-labels
 uds zarf tools kubectl get pods -n <namespace> --show-labels
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — pod reload can be enabled for SSO client secrets via `secretConfig.labels`
-- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) — configure `secretConfig.labels` and `secretConfig.annotations` for SSO client secrets
-- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) — pod reload can be enabled for CA certificate ConfigMaps via `caBundle.configMap.labels`
-- [Networking concepts](/concepts/core-features/networking/) — Understand how UDS Core manages service mesh and network policies.
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - pod reload can be enabled for SSO client secrets via `secretConfig.labels`
+- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - configure `secretConfig.labels` and `secretConfig.annotations` for SSO client secrets
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) - pod reload can be enabled for CA certificate ConfigMaps via `caBundle.configMap.labels`
+- [Networking concepts](/concepts/core-features/networking/) - Understand how UDS Core manages service mesh and network policies.

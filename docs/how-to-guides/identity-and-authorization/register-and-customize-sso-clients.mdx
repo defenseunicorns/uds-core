@@ -27,7 +27,7 @@ When a Package CR declares an `sso` block, the UDS Operator:
 2. Stores the client credentials in a Kubernetes secret named `sso-client-<clientId>` in the application namespace
 3. For SAML clients, fetches the IdP signing certificate from Keycloak and includes it in the secret as `samlIdpCertificate`
 
-The application reads its credentials from this secret and speaks directly to Keycloak — there is no proxy layer involved.
+The application reads its credentials from this secret and speaks directly to Keycloak. There is no proxy layer involved.
 
 If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
 
@@ -112,7 +112,7 @@ If your application expects credentials in a specific format (JSON config file, 
 
 2. **(Optional) Customize the generated Kubernetes secret**
 
-   By default, the secret contains every Keycloak client field as a separate key. Use `secretConfig` to control the secret name, add labels and annotations, and template the data layout. Each key in `template` becomes a key in the Kubernetes secret — include only the keys your application needs:
+   By default, the secret contains every Keycloak client field as a separate key. Use `secretConfig` to control the secret name, add labels and annotations, and template the data layout. Each key in `template` becomes a key in the Kubernetes secret; include only the keys your application needs:
 
    ```yaml title="package.yaml"
    # This example shows multiple output formats for illustration.
@@ -255,7 +255,7 @@ If your application expects credentials in a specific format (JSON config file, 
    </Tabs>
 
    > [!NOTE]
-   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` — see [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
+   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`. See [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
 
 4. **(Optional) Configure client attributes**
 
@@ -369,7 +369,7 @@ uds zarf tools kubectl get secret -n my-app sso-client-my-app -o jsonpath='{.dat
 
 **Symptom:** The operator denies the Package CR because of an unrecognized attribute key.
 
-**Solution:** Only a specific set of attributes is allowed. Check the attribute name for typos and verify it is in the supported list above. Custom Keycloak attributes that are not in the validated set cannot be set via the Package CR — use [OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) for post-deploy management of unsupported attributes.
+**Solution:** Only a specific set of attributes is allowed. Check the attribute name for typos and verify it is in the supported list above. Custom Keycloak attributes that are not in the validated set cannot be set via the Package CR. Use [OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) for post-deploy management of unsupported attributes.
 
 ### Problem: Client secret not found in the namespace
 
@@ -393,12 +393,12 @@ If you specified `secretConfig.name`, the secret uses that name instead of the d
 uds zarf tools kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full SSO field specification
-- [Identity & Authorization reference](/reference/configuration/identity-and-authorization/) — realm initialization variables and authentication flow configuration
-- [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_clients) — upstream client management API
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on native SSO vs Authservice
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — restrict which Keycloak groups can access your application
-- [Configure automatic pod reload](/how-to-guides/platform-features/configure-pod-reload/) — restart pods automatically when SSO client secrets are rotated
-- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) — set up machine-to-machine authentication for automated processes
+- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO field specification
+- [Identity & Authorization reference](/reference/configuration/identity-and-authorization/) - realm initialization variables and authentication flow configuration
+- [Keycloak Admin REST API](https://www.keycloak.org/docs-api/latest/rest-api/index.html#_clients) - upstream client management API
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on native SSO vs Authservice
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict which Keycloak groups can access your application
+- [Configure automatic pod reload](/how-to-guides/platform-features/configure-pod-reload/) - restart pods automatically when SSO client secrets are rotated
+- [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) - set up machine-to-machine authentication for automated processes

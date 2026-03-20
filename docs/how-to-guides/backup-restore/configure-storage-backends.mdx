@@ -74,7 +74,7 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
        > [!NOTE]
        > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
 
-       **(Optional) Use an existing credentials Secret** — If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+       **(Optional) Use an existing credentials Secret:** If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
 
        ```yaml title="uds-bundle.yaml"
        packages:
@@ -225,6 +225,8 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
 
 ## Verification
 
+Confirm Velero is running and storage is connected:
+
 ```bash
 # Velero pod is running
 uds zarf tools kubectl get pods -n velero
@@ -265,12 +267,12 @@ uds zarf tools kubectl logs -n velero deploy/velero --previous --tail=50
 ```
 Common causes include malformed credential Secrets and missing required configuration values.
 
-## Related Documentation
+## Related documentation
 
-- [Velero: Supported Storage Providers](https://velero.io/docs/latest/supported-providers/) — full list of available storage plugins
-- [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) — BSL configuration reference
-- [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) — full list of upstream Helm values
-- [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) — Capture persistent volume data using AWS EBS snapshots on EKS clusters.
-- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) — Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
-- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Velero: Supported Storage Providers](https://velero.io/docs/latest/supported-providers/) - full list of available storage plugins
+- [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) - BSL configuration reference
+- [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) - full list of upstream Helm values
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
+- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) - Capture persistent volume data using AWS EBS snapshots on EKS clusters.
+- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) - Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.

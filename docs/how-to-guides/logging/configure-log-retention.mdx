@@ -15,11 +15,11 @@ After completing this guide, Loki will automatically delete log data older than 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
-- Loki connected to external object storage — see [Configure HA logging](/how-to-guides/high-availability/logging/) for object storage setup
+- Loki connected to external object storage (see [Configure HA logging](/how-to-guides/high-availability/logging/) for object storage setup)
 
 ## Before you begin
 
-By default, Loki retains logs **indefinitely** — no automatic deletion occurs unless you explicitly configure retention. Retention is handled by Loki's **compactor** component, which runs on the backend tier and periodically marks expired log chunks for deletion from object storage.
+By default, Loki retains logs **indefinitely**: no automatic deletion occurs unless you explicitly configure retention. Retention is handled by Loki's **compactor** component, which runs on the backend tier and periodically marks expired log chunks for deletion from object storage.
 
 Retention settings apply only to data stored in Loki. Logs already forwarded to external systems via Vector (see [Forward logs to an external system](/how-to-guides/logging/forward-logs-to-external-system/)) are not affected.
 
@@ -61,13 +61,13 @@ Retention settings apply only to data stored in Loki. Logs already forwarded to 
                # Number of parallel workers that delete expired chunks (Loki default: 150)
                - path: loki.compactor.retention_delete_worker_count
                  value: 150
-               # Global retention period — logs older than this are deleted
+               # Global retention period: logs older than this are deleted
                - path: loki.limits_config.retention_period
                  value: "30d"
    ```
 
    > [!IMPORTANT]
-   > `delete_request_store` is **required** when retention is enabled — Loki will fail to start without it. Set it to match your storage backend (e.g., `s3`, `gcs`, `azure`).
+   > `delete_request_store` is **required** when retention is enabled; Loki will fail to start without it. Set it to match your storage backend (e.g., `s3`, `gcs`, `azure`).
 
    > [!NOTE]
    > The compactor runs on a schedule controlled by `compaction_interval`. After deploying retention settings, allow at least one full cycle plus the `retention_delete_delay` before expecting storage to decrease.
@@ -159,10 +159,10 @@ uds zarf tools kubectl logs -n loki -l app.kubernetes.io/component=backend --tai
 
 The compactor needs at least one full compaction cycle plus the `retention_delete_delay` (default: 2h) after deployment before chunks are actually removed. If storage size hasn't decreased after several hours, check for errors related to object storage access in the output above.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana Loki: Retention](https://grafana.com/docs/loki/latest/operations/storage/retention/) — full compactor retention reference
-- [Grafana Loki: Limits Config](https://grafana.com/docs/loki/latest/configure/#limits_config) — all limits_config fields including retention
-- [Configure HA logging](/how-to-guides/high-availability/logging/) — S3 storage setup and Loki scaling
-- [Query application logs](/how-to-guides/logging/query-application-logs/) — Find and filter logs using Grafana and LogQL.
-- [Logging Concepts](/concepts/core-features/logging/) — How the Vector → Loki → Grafana pipeline works in UDS Core.
+- [Grafana Loki: Retention](https://grafana.com/docs/loki/latest/operations/storage/retention/) - full compactor retention reference
+- [Grafana Loki: Limits Config](https://grafana.com/docs/loki/latest/configure/#limits_config) - all limits_config fields including retention
+- [Configure HA logging](/how-to-guides/high-availability/logging/) - S3 storage setup and Loki scaling
+- [Query application logs](/how-to-guides/logging/query-application-logs/) - Find and filter logs using Grafana and LogQL.
+- [Logging Concepts](/concepts/core-features/logging/) - How the Vector → Loki → Grafana pipeline works in UDS Core.

@@ -33,7 +33,7 @@ Only backups with a `Completed` phase can be used for a restore.
 1. **Restore a namespace**
 
    > [!CAUTION]
-   > Velero will not overwrite existing resources. If restoring PersistentVolume data, delete the target PVC (and the PV, if the reclaim policy is `Retain`) before running the restore. Be cautious when deleting backups that have been used for restores — this may attempt to delete VolumeSnapshotContents that are still in use by restored volumes.
+   > Velero will not overwrite existing resources. If restoring PersistentVolume data, delete the target PVC (and the PV, if the reclaim policy is `Retain`) before running the restore. Be cautious when deleting backups that have been used for restores, as this may attempt to delete VolumeSnapshotContents that are still in use by restored volumes.
 
    Create a restore for specific namespace(s) from a completed backup:
 
@@ -117,10 +117,10 @@ uds zarf tools kubectl get volumesnapshotcontent
 
 If VolumeSnapshotContents are missing, the backup may not have included volume snapshots. See [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) or [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) to configure snapshot support.
 
-## Related Documentation
+## Related documentation
 
-- [Velero: Restore Reference](https://velero.io/docs/latest/restore-reference/) — restore configuration and behavior
-- [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) — backup lifecycle and garbage collection
-- [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.
-- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) — Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.
+- [Velero: Restore Reference](https://velero.io/docs/latest/restore-reference/) - restore configuration and behavior
+- [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) - backup lifecycle and garbage collection
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

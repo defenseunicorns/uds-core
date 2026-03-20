@@ -8,7 +8,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll replace the default Keycloak login page images (logo, background, footer, favicon) and Terms & Conditions content with custom versions using bundle overrides and Kubernetes ConfigMaps — no image rebuild required.
+You'll replace the default Keycloak login page images (logo, background, footer, favicon) and Terms & Conditions content with custom versions using bundle overrides and Kubernetes ConfigMaps. No image rebuild is required.
 
 ## Prerequisites
 
@@ -46,7 +46,7 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    | `footer.png` | Footer image |
    | `favicon.png` | Browser tab icon |
 
-   You do not need to replace all four — include only the keys you are customizing.
+   You do not need to replace all four; include only the keys you are customizing.
 
 2. **Create a ConfigMap with your image assets**
 
@@ -203,7 +203,7 @@ This guide covers the bundle override approach. For CSS or structural theme chan
    - Unit, Organization or Company Name
 
    > [!NOTE]
-   > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime — Keycloak does not need to be redeployed for them to take effect.
+   > Unlike `realmInitEnv`, `themeCustomizations.settings` values are applied at runtime. Keycloak does not need to be redeployed for them to take effect.
 
 7. **(Optional) Override the realm display name**
 
@@ -237,7 +237,7 @@ Confirm branding changes are applied:
 
 1. Navigate to `sso.<domain>` in a browser
 2. Verify the login page shows your custom logo, background, and footer
-3. Attempt to log in — if T&C is enabled, confirm the overlay appears before access is granted
+3. Attempt to log in. If T&C is enabled, confirm the overlay appears before access is granted
 
 **Iterate quickly during development:**
 
@@ -277,7 +277,7 @@ Verify each expected key (`background.png`, `logo.png`, etc.) is present in the 
 
 **Symptoms:** HTML tags appear as raw text, or layout is broken.
 
-**Solution:** Verify the T&C file is properly converted to a single-line HTML string — all newlines replaced with the literal `\n` sequence. Check the ConfigMap data key:
+**Solution:** Verify the T&C file is properly converted to a single-line HTML string, with all newlines replaced with the literal `\n` sequence. Check the ConfigMap data key:
 
 ```bash
 uds zarf tools kubectl get configmap keycloak-tc-overrides -n keycloak \
@@ -286,8 +286,8 @@ uds zarf tools kubectl get configmap keycloak-tc-overrides -n keycloak \
 
 The output should be a single line with no literal newlines.
 
-## Related Documentation
+## Related documentation
 
-- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with theme assets and FreeMarker templates for deeper customization
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
-- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) — Build and deploy a custom image for CSS or structural theme changes.
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) - source repository with theme assets and FreeMarker templates for deeper customization
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
+- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) - Build and deploy a custom image for CSS or structural theme changes.

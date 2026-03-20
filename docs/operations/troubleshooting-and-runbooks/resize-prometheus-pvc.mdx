@@ -12,17 +12,17 @@ Use this runbook when you need to increase the size of Prometheus PVCs managed b
 
 - Prometheus storage is running low or has filled up
 - You need to proactively increase capacity before running out of space
-- Volume size increase only — PVC shrinking is not supported
+- Volume size increase only; PVC shrinking is not supported
 
 ## Overview
 
 Prometheus storage may need to grow for one or more of the following reasons:
 
-1. **Increased data retention** — retention settings were raised, requiring more disk space for historical data
-2. **Higher metrics cardinality** — new workloads, labels, or scrape targets increased the volume of stored time series
-3. **Additional scrape targets** — more services were added to the cluster, increasing the total metrics ingestion rate
+1. **Increased data retention:** retention settings were raised, requiring more disk space for historical data
+2. **Higher metrics cardinality:** new workloads, labels, or scrape targets increased the volume of stored time series
+3. **Additional scrape targets:** more services were added to the cluster, increasing the total metrics ingestion rate
 
-This procedure follows upstream guidance from [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes).
+This procedure follows upstream guidance from [Prometheus Operator: Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes).
 
 > [!NOTE]
 > This runbook assumes UDS Core defaults: namespace `monitoring` and Prometheus CR name `kube-prometheus-stack-prometheus`. If your deployment uses non-default names, update the commands accordingly.
@@ -231,7 +231,7 @@ If this runbook doesn't resolve your issue:
 2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
 3. Open a new issue with your relevant details attached
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus Operator — Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes) — upstream guidance for PVC resize
-- [Monitoring & Observability](/concepts/core-features/monitoring-observability/) — how Prometheus fits into UDS Core's monitoring stack
+- [Prometheus Operator: Resizing Volumes](https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes) - upstream guidance for PVC resize
+- [Monitoring & Observability](/concepts/core-features/monitoring-observability/) - how Prometheus fits into UDS Core's monitoring stack

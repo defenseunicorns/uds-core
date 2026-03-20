@@ -161,6 +161,8 @@ By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots ar
 
 ## Verification
 
+Confirm volume snapshots are enabled and working:
+
 ```bash
 # Verify snapshots are enabled on the schedule
 uds zarf tools kubectl get schedule -n velero velero-udsbackup -o jsonpath='{.spec.template.snapshotVolumes}'
@@ -186,7 +188,7 @@ To trigger a manual backup for testing, see [Perform a manual backup](/how-to-gu
 
 **Symptoms:** Backups fail with a `FailedPrecondition` error in the Velero logs:
 
-```
+```text
 error executing custom action: rpc error: code = FailedPrecondition desc =
 the number of snapshots on the source volume reaches the configured maximum (3)
 ```
@@ -197,17 +199,17 @@ the number of snapshots on the source volume reaches the configured maximum (3)
 
 **Symptoms:** Deleting a backup does not clean up the associated VolumeSnapshotContents in Kubernetes or in vSphere.
 
-**Solution:** Be cautious when deleting backups that have been used for restores — Velero may attempt to delete VolumeSnapshotContents that are still in use by restored volumes. Velero's garbage collection runs hourly by default.
+**Solution:** Be cautious when deleting backups that have been used for restores; Velero may attempt to delete VolumeSnapshotContents that are still in use by restored volumes. Velero's garbage collection runs hourly by default.
 
 > [!TIP]
-> The [pyvmomi-community-samples](https://github.com/vmware/pyvmomi-community-samples/tree/master) repository contains scripts for interacting with vSphere directly. The [fcd_list_vdisk_snapshots](https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/fcd_list_vdisk_snapshots.py) script is useful for listing snapshots stored in vSphere that cannot be viewed in the vSphere UI — particularly when snapshots and VolumeSnapshotContents are deleted from the cluster but not cleaned up in vSphere.
+> The [pyvmomi-community-samples](https://github.com/vmware/pyvmomi-community-samples/tree/master) repository contains scripts for interacting with vSphere directly. The [fcd_list_vdisk_snapshots](https://github.com/vmware/pyvmomi-community-samples/blob/master/samples/fcd_list_vdisk_snapshots.py) script is useful for listing snapshots stored in vSphere that cannot be viewed in the vSphere UI, particularly when snapshots and VolumeSnapshotContents are deleted from the cluster but not cleaned up in vSphere.
 
-## Related Documentation
+## Related documentation
 
-- [Velero: CSI Snapshot Support](https://velero.io/docs/main/csi/) — CSI integration details and configuration
-- [Kubernetes: Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/) — CSI snapshot API reference
-- [Rancher vSphere Charts](https://github.com/rancher/vsphere-charts/tree/main) — CPI and CSI driver Helm charts
-- [vSphere CSI Snapshot Limits](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/using-vsphere-container-storage-plug-in/volume-snapshot-and-restore/volume-snapshot-and-restor-0.html) — snapshot per volume configuration
-- [Backup & restore concepts](/concepts/core-features/backup-restore/) — how Velero fits into UDS Core
-- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) — Verify your scheduled backups are running and trigger a manual backup on demand.
-- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) — Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.
+- [Velero: CSI Snapshot Support](https://velero.io/docs/main/csi/) - CSI integration details and configuration
+- [Kubernetes: Volume Snapshots](https://kubernetes.io/docs/concepts/storage/volume-snapshots/) - CSI snapshot API reference
+- [Rancher vSphere Charts](https://github.com/rancher/vsphere-charts/tree/main) - CPI and CSI driver Helm charts
+- [vSphere CSI Snapshot Limits](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/using-vsphere-container-storage-plug-in/volume-snapshot-and-restore/volume-snapshot-and-restor-0.html) - snapshot per volume configuration
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
+- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

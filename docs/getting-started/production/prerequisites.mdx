@@ -8,9 +8,7 @@ sidebar:
 
 Work through each section and confirm your environment meets the requirements before building your bundle.
 
----
-
-## Kubernetes Distribution
+## Kubernetes distribution
 
 UDS Core runs on any [CNCF-conformant Kubernetes distribution](https://www.cncf.io/training/certification/software-conformance/) that has not reached [End-of-Life](https://kubernetes.io/releases/#release-history). Supported and tested distributions include:
 
@@ -24,9 +22,7 @@ UDS Core runs on any [CNCF-conformant Kubernetes distribution](https://www.cncf.
 > [!NOTE]
 > If your distribution has distribution-specific hardening guides (e.g., RKE2 CIS profile), review the component-specific notes below for required configuration changes.
 
----
-
-## Cluster Capacity
+## Cluster capacity
 
 UDS Core deploys multiple platform services. Plan your cluster sizing to accommodate them. As a baseline for a production deployment:
 
@@ -36,14 +32,12 @@ UDS Core deploys multiple platform services. Plan your cluster sizing to accommo
 
 These are conservative minimums. Size up based on the workloads you plan to run on top of UDS Core.
 
----
-
-## Default Storage Class
+## Default storage class
 
 Several UDS Core components require persistent volumes. Verify your cluster has a default storage class configured:
 
 ```bash
-kubectl get storageclass
+uds zarf tools kubectl get storageclass
 ```
 
 The output should include `(default)` next to one of the listed storage classes:
@@ -53,19 +47,17 @@ NAME                   PROVISIONER             RECLAIMPOLICY   VOLUMEBINDINGMODE
 gp2 (default)          kubernetes.io/aws-ebs   Delete          WaitForFirstConsumer   true                   10d
 ```
 
----
+## Networking requirements
 
-## Networking Requirements
+### Load balancer
 
-### Load Balancer
-
-Istio's ingress gateways require a load balancer. When a `Service` of type `LoadBalancer` is created, your cluster must be able to provision an external IP automatically.
+Istio's ingress gateways require a load balancer. When a `Service` of type `LoadBalancer` is created, your cluster must be able to provision an external IP automatically. The following options are available by environment:
 
 - **Cloud environments:** Use your cloud provider's load balancer controller (e.g., [AWS Load Balancer Controller](https://github.com/kubernetes-sigs/aws-load-balancer-controller)).
 - **On-premises:** Use a bare-metal load balancer such as [MetalLB](https://metallb.universe.tf/) or [kube-vip](https://kube-vip.io/). A [MetalLB UDS Package](https://github.com/uds-packages/metallb) is available.
 - **Conflicting ingress controllers:** Some distributions (e.g., RKE2) include `ingress-nginx` by default. Disable it before deploying UDS Core to avoid conflicts with Istio.
 
-### RKE2 with CIS Profile
+### RKE2 with CIS profile
 
 If running RKE2 with the CIS hardening profile, control plane components bind to `127.0.0.1` by default, which prevents Prometheus from scraping them. Add the following to your control plane node's `/etc/rancher/rke2/config.yaml`:
 
@@ -84,23 +76,19 @@ Restart RKE2 after making these changes.
 
 You must own a domain and be able to create wildcard DNS records pointing to your load balancer IP. See [Provision External Services](/getting-started/production/provision-services/) for details.
 
-### TLS Certificates
+### TLS certificates
 
 You must have TLS certificates (or the ability to obtain them) for both your tenant and admin domains. See [Provision External Services](/getting-started/production/provision-services/) for options.
 
----
-
-## Network Policy Support
+## Network policy support
 
 The UDS Operator dynamically provisions `NetworkPolicy` resources to secure traffic between components. Your CNI must enforce network policies.
 
 If you are using **[Cilium](https://cilium.io/)**, CIDR-based network policies require an additional [feature flag](https://docs.cilium.io/en/stable/security/policy/language/#selecting-nodes-with-cidr-ipblock) for node addressability.
 
----
+## Istio requirements
 
-## Istio Requirements
-
-[Istio](https://istio.io/) requires certain kernel modules to be loaded on each node. Run the following as part of your node image build or cloud-init configuration:
+[Istio](https://istio.io/) requires certain kernel modules on each node. Load them as part of your node image build or cloud-init configuration:
 
 ```bash
 modules=("br_netfilter" "xt_REDIRECT" "xt_owner" "xt_statistic" "iptable_mangle" "iptable_nat" "xt_conntrack" "xt_tcpudp" "xt_connmark" "xt_mark" "ip_set")
@@ -112,11 +100,9 @@ done
 
 See [Istio's platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/) for the full upstream list.
 
----
+## Falco requirements
 
-## Falco Requirements
-
-UDS Core uses [Falco](https://falco.org/)'s [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe), which requires:
+UDS Core uses [Falco](https://falco.org/)'s [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe), which has the following requirements:
 
 - Kernel version **>= 5.8**
 - [BPF ring buffer](https://www.kernel.org/doc/html/next/bpf/ringbuf.html) support
@@ -124,9 +110,7 @@ UDS Core uses [Falco](https://falco.org/)'s [Modern eBPF Probe](https://falco.or
 
 Most modern OS distributions meet these requirements out of the box.
 
----
-
-## Vector Requirements
+## Vector requirements
 
 [Vector](https://vector.dev/) scrapes logs from all cluster workloads and may require kernel parameter adjustments on your nodes:
 
@@ -147,21 +131,17 @@ sysctl --system
 
 Apply this as part of your node image build or cloud-init process.
 
----
+## UDS Registry access
 
-## UDS Registry Access
-
-UDS Core packages are published to the [UDS Registry](https://registry.defenseunicorns.com). You need an account and a read token to pull packages.
+Defense Unicorns publishes UDS Core packages to the [UDS Registry](https://registry.defenseunicorns.com). You need an account and a read token to pull packages.
 
 1. **Create an account** at [registry.defenseunicorns.com](https://registry.defenseunicorns.com)
 2. **Create a read token** from your account settings in the registry web UI
 3. **Authenticate locally** using the command provided in the registry web UI after creating your token
 
----
-
 ## Checklist
 
-Before moving on, confirm:
+Before moving on, confirm you have completed the following:
 
 - Kubernetes cluster is running
 - Default storage class is present

@@ -5,7 +5,7 @@ sidebar:
 ---
 
 
-UDS Core uses [Istio](https://istio.io/) as its service mesh to provide secure, observable communication between all workloads. The mesh is not optional infrastructure — it is the security boundary that makes zero-trust networking practical without requiring application teams to manage TLS certificates or write network policies by hand.
+UDS Core uses [Istio](https://istio.io/) as its service mesh to provide secure, observable communication between all workloads. The mesh is not optional infrastructure; it is the security boundary that makes zero-trust networking practical without requiring application teams to manage TLS certificates or write network policies by hand.
 
 ## Why a service mesh?
 
@@ -13,9 +13,9 @@ In a traditional Kubernetes deployment, network security relies on IP-based `Net
 
 A service mesh solves this by inserting a proxy layer that handles TLS, identity, and traffic routing transparently. In UDS Core, Istio provides:
 
-- **Mutual TLS (mTLS) for all in-cluster traffic** — every connection between workloads is authenticated and encrypted, regardless of whether the application itself supports TLS. Workload identity is derived from Kubernetes service accounts via SPIFFE certificates.
-- **Authorization policies** — fine-grained rules that specify which workloads can talk to which other workloads, and on which ports. These default to *deny all* and are opened up only through explicit Package CR declarations.
-- **Ingress and egress control** — all traffic entering or leaving the cluster flows through Istio gateways, providing a consistent point for TLS termination, traffic inspection, and access control.
+- **Mutual TLS (mTLS) for all in-cluster traffic**: every connection between workloads is authenticated and encrypted, regardless of whether the application itself supports TLS. Workload identity is derived from Kubernetes service accounts via SPIFFE certificates.
+- **Authorization policies**: fine-grained rules that specify which workloads can talk to which other workloads, and on which ports. These default to *deny all* and are opened up only through explicit Package CR declarations.
+- **Ingress and egress control**: all traffic entering or leaving the cluster flows through Istio gateways, providing a consistent point for TLS termination, traffic inspection, and access control.
 
 ## Ambient vs. sidecar mode
 
@@ -28,7 +28,7 @@ Istio supports two data plane modes in UDS Core:
 | Upgrade disruption | No pod restarts needed | Pod restarts required |
 | L7 policy enforcement | Requires waypoint proxy per workload | Always available |
 
-**Ambient mode** is the default and is the direction Istio is investing in as the more sustainable, long-term data plane model. It reduces resource overhead, simplifies upgrades — the data plane can be updated without restarting application pods — and removes the operational complexity of managing per-pod sidecar injection.
+**Ambient mode** is the default and is the direction Istio is investing in as the more sustainable, long-term data plane model. It reduces resource overhead, simplifies upgrades (the data plane can be updated without restarting application pods), and removes the operational complexity of managing per-pod sidecar injection.
 
 > [!NOTE]
 > When Authservice is enabled for an application, the operator automatically provisions a waypoint proxy for L7 policy enforcement.
@@ -48,9 +48,9 @@ UDS Core deploys two required gateways and one optional gateway:
 This separation matters: the Tenant and Admin gateways are independently configurable, so operators can apply stricter controls on the admin plane (IP allowlisting, mTLS client certificates, etc.) without affecting end-user access patterns.
 
 > [!TIP]
-> A common pattern is to expose the Tenant Gateway publicly (or broadly within a network) while keeping the Admin Gateway accessible only via private/internal networking — behind a VPN, bastion, or restricted subnet. This lets end users reach applications normally — including Keycloak for SSO, which is on the Tenant Gateway — while ensuring that admin interfaces like Grafana and the Keycloak admin console are never reachable from the public internet.
+> A common pattern is to expose the Tenant Gateway publicly (or broadly within a network) while keeping the Admin Gateway accessible only via private/internal networking, behind a VPN, bastion, or restricted subnet. This lets end users reach applications normally (including Keycloak for SSO, which is on the Tenant Gateway) while ensuring that admin interfaces like Grafana and the Keycloak admin console are never reachable from the public internet.
 
-By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration — see [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/).
+By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration. See [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/).
 
 ## How application traffic flows
 
@@ -109,7 +109,7 @@ This means:
 
 ## Trust and certificate management
 
-When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that TLS-dependent flows — such as SSO and inter-service mTLS — do not break when operating in air-gapped environments with internally-issued certificates. See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for configuration steps.
+When using private PKI or self-signed certificates, UDS Core provides a trust bundle mechanism that propagates CA certificates to platform components (including Keycloak). This ensures that TLS-dependent flows (such as SSO and inter-service mTLS) do not break when operating in air-gapped environments with internally-issued certificates. See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for configuration steps.
 
 > [!TIP]
 > Ready to configure networking for your environment? See the [Networking How-to Guides](/how-to-guides/networking/overview/).

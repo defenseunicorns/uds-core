@@ -76,7 +76,7 @@ The Package CR `monitor` block is the UDS-native approach for defining metrics t
    ```
 
    > [!TIP]
-   > For PodMonitors, both `selector` and `podSelector` behave the same way -- either can be used to match pod labels.
+   > For PodMonitors, both `selector` and `podSelector` behave the same way; either can be used to match pod labels.
 
 3. **Optional: Customize the metrics path or add authorization**
 
@@ -181,9 +181,9 @@ curl http://localhost:8080/metrics
 
 Check that `targetPort` matches the actual container port and that `path` matches the endpoint your application exposes.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus Operator: ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor) — full ServiceMonitor field reference
-- [Prometheus Operator: PodMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor) — full PodMonitor field reference
-- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) — Build Grafana dashboards to visualize the metrics you're now collecting.
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define alerting conditions based on the metrics Prometheus is scraping.
+- [Prometheus Operator: ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor) - full ServiceMonitor field reference
+- [Prometheus Operator: PodMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor) - full PodMonitor field reference
+- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) - Build Grafana dashboards to visualize the metrics you're now collecting.
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define alerting conditions based on the metrics Prometheus is scraping.

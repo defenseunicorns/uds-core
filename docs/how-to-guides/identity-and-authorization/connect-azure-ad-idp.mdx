@@ -15,7 +15,7 @@ You'll configure Azure Entra ID as a SAML identity provider in Keycloak for both
 - UDS Core deployed
 - Azure Entra ID tenant with at least [Cloud Application Administrator](https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/permissions-reference#cloud-application-administrator) privileges
 - Existing Entra ID groups designated for Admin and Auditor roles in UDS Core
-- All users in Entra must have an email address defined — Keycloak requires this to create the user account
+- All users in Entra must have an email address defined (Keycloak requires this to create the user account)
 
 ## Before you begin
 
@@ -57,7 +57,7 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
    3. Add a **Groups claim**: select **All groups**, accept the default values, and save.
 
       > [!NOTE]
-      > Selecting **All groups** means the SAML assertion will include the Object IDs of every Entra group the user belongs to. This is necessary for the group mapper in Keycloak to work — but only the specific group OIDs you configure in the mapper will actually trigger a group assignment. Other group OIDs in the claim are ignored.
+      > Selecting **All groups** means the SAML assertion will include the Object IDs of every Entra group the user belongs to. This is necessary for the group mapper in Keycloak to work, but only the specific group OIDs you configure in the mapper will actually trigger a group assignment. Other group OIDs in the claim are ignored.
 
    4. Go to **Manage** → **Expose an API**, click **Add** next to "Application ID URI", and note the resulting URI (format: `api://<Application Client ID>`). You will need this value when configuring the SAML identity provider in Keycloak.
 
@@ -96,7 +96,7 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
 
    **Add attribute mappers** (go to the provider's **Mappers** tab → **Add mapper** for each):
 
-   The attribute names below use the prefix `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/` — the **Attribute name** column shows only the suffix. The groups claim uses a different Microsoft namespace and is shown in full.
+   The attribute names below use the prefix `http://schemas.xmlsoap.org/ws/2005/05/identity/claims/`. The **Attribute name** column shows only the suffix. The groups claim uses a different Microsoft namespace and is shown in full.
 
    | Mapper name       | Mapper type                 | Attribute name                      | User attribute |
    |-------------------|-----------------------------|-------------------------------------|----------------|
@@ -171,7 +171,7 @@ In the Keycloak admin UI, check the UDS realm:
 
 **Symptoms:** Error page after completing Entra authentication, or user is not created in Keycloak.
 
-**Solution:** Confirm all users in Entra have an email address defined. Keycloak requires this field to create a user account — logins for users without an email will fail silently at the federation step.
+**Solution:** Confirm all users in Entra have an email address defined. Keycloak requires this field to create a user account. Logins for users without an email will fail silently at the federation step.
 
 ### Problem: Users log in successfully but have wrong group membership
 
@@ -194,10 +194,10 @@ In the Keycloak admin UI, check the UDS realm:
 - Master realm: `https://keycloak.<admin_domain>/realms/master/broker/azure-saml/endpoint`
 - UDS realm: `https://sso.<domain>/realms/uds/broker/azure-saml/endpoint`
 
-## Related Documentation
+## Related documentation
 
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — background on how Keycloak and identity federation work in UDS Core
-- [Keycloak: Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers) — reference for SAML attribute mapper types
-- [Azure: Quickstart — Register an application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
-- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session timeouts, concurrent session limits, and other login behavior via bundle overrides.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on how Keycloak and identity federation work in UDS Core
+- [Keycloak: Identity Provider Mappers](https://www.keycloak.org/docs/latest/server_admin/#_mappers) - reference for SAML attribute mapper types
+- [Azure: Quickstart: Register an application](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app?tabs=certificate)
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict application access to users in specific Keycloak groups using the Package CR.
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - Set session timeouts, concurrent session limits, and other login behavior via bundle overrides.

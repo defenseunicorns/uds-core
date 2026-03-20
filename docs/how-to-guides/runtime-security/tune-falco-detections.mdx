@@ -8,7 +8,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll customize which threats Falco detects by enabling additional rulesets, disabling noisy rules, overriding built-in macros and lists, adding rule exceptions, and writing custom rules — all via bundle overrides without modifying Falco source files.
+You'll customize which threats Falco detects by enabling additional rulesets, disabling noisy rules, overriding built-in macros and lists, adding rule exceptions, and writing custom rules, all via bundle overrides without modifying Falco source files.
 
 ## Prerequisites
 
@@ -24,7 +24,7 @@ UDS Core ships Falco with three rulesets. Only the stable ruleset is enabled by 
 | Ruleset | Default | Description |
 |---|---|---|
 | [Stable](https://falco.org/docs/reference/rules/default-rules/) | Enabled | Production-grade rules covering common attack patterns (privilege escalation, unauthorized file access, container breakout) |
-| [Incubating](https://falco.org/docs/reference/rules/default-rules/) | Disabled | Rules with robust coverage for more specific use cases; may generate noise in some environments |
+| [Incubating](https://falco.org/docs/reference/rules/default-rules/) | Disabled | Rules with broader coverage for more specific use cases; may generate noise in some environments |
 | [Sandbox](https://falco.org/docs/reference/rules/default-rules/) | Disabled | Experimental rules for emerging threat patterns; expect false positives |
 
 UDS Core also pre-disables a set of known-noisy rules from each ruleset:
@@ -36,7 +36,7 @@ UDS Core also pre-disables a set of known-noisy rules from each ruleset:
 | Incubating | `Contact EC2 Instance Metadata Service From Container` | Expected in AWS environments using IMDS |
 | Incubating | `Contact cloud metadata service from container` | Expected in cloud environments using metadata services |
 
-All configuration in this guide uses the `uds-falco-config` Helm chart overrides in your `uds-bundle.yaml`. You can combine overrides from multiple steps into a single `values` array — the steps below show each override independently for clarity.
+All configuration in this guide uses the `uds-falco-config` Helm chart overrides in your `uds-bundle.yaml`. You can combine overrides from multiple steps into a single `values` array; the steps below show each override independently for clarity.
 
 ## Steps
 
@@ -81,11 +81,11 @@ All configuration in this guide uses the `uds-falco-config` Helm chart overrides
 
    **How to find rule names:**
 
-   - [Falco rules reference](https://falco.org/docs/reference/rules/default-rules/) — complete list of stable, incubating, and sandbox rules
-   - [UDS Core stable rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml) — `src/falco/chart/rules/stable-rules.yaml`
-   - [UDS Core incubating rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml) — `src/falco/chart/rules/incubating-rules.yaml`
-   - [UDS Core sandbox rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml) — `src/falco/chart/rules/sandbox-rules.yaml`
-   - Falco logs — query Loki with `{rule=~".+"}` to see rule names from live detections
+   - [Falco rules reference](https://falco.org/docs/reference/rules/default-rules/) - complete list of stable, incubating, and sandbox rules
+   - [UDS Core stable rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/stable-rules.yaml) - `src/falco/chart/rules/stable-rules.yaml`
+   - [UDS Core incubating rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/incubating-rules.yaml) - `src/falco/chart/rules/incubating-rules.yaml`
+   - [UDS Core sandbox rules](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/chart/rules/sandbox-rules.yaml) - `src/falco/chart/rules/sandbox-rules.yaml`
+   - Falco logs: query Loki with `{rule=~".+"}` to see rule names from live detections
 
    Look for entries that start with `- rule:` in the rule files to find exact rule names.
 
@@ -211,7 +211,7 @@ To verify your tuning by examining what events Falco is generating, see [Query F
 
 **Symptoms:** Alerts continue to fire for a rule you disabled or added an exception to.
 
-**Solution:** Verify the rule name matches exactly — names are case-sensitive and must match the `rule:` field in the Falco rules files. Also confirm the override is targeting the correct chart (`uds-falco-config`, not `falco`):
+**Solution:** Verify the rule name matches exactly; names are case-sensitive and must match the `rule:` field in the Falco rules files. Also confirm the override is targeting the correct chart (`uds-falco-config`, not `falco`):
 
 ```bash
 # Check which rules Falco loaded
@@ -230,10 +230,10 @@ uds zarf tools kubectl logs -n falco -l app.kubernetes.io/name=falco --previous
 
 Common issues: missing quotes around rule names with special characters, mismatched `fields`/`comps` array lengths in exceptions, or invalid `condition` syntax in macros.
 
-## Related Documentation
+## Related documentation
 
-- [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — complete list of stable, incubating, and sandbox rules
-- [Falco rules syntax](https://falco.org/docs/concepts/rules/basic-elements/) — upstream reference for writing Falco rules, macros, and lists
-- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and runtime threat detection work in UDS Core
-- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) — Query and visualize runtime security events using Loki.
-- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) — Forward Falco detections to Slack, Mattermost, or Microsoft Teams.
+- [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) - complete list of stable, incubating, and sandbox rules
+- [Falco rules syntax](https://falco.org/docs/concepts/rules/basic-elements/) - upstream reference for writing Falco rules, macros, and lists
+- [Runtime security concepts](/concepts/core-features/runtime-security/) - background on how Falco and runtime threat detection work in UDS Core
+- [Query Falco events in Grafana](/how-to-guides/runtime-security/query-falco-events/) - Query and visualize runtime security events using Loki.
+- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) - Forward Falco detections to Slack, Mattermost, or Microsoft Teams.

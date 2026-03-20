@@ -22,8 +22,8 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
 
 | Value | Behavior |
 |---|---|
-| `0` (default) | **Permanent lockout only** — 3 failed attempts within 12 hours locks the account permanently until an admin unlocks it |
-| `> 0` | **Temporary then permanent** — each group of 3 failures triggers a 15-minute temporary lockout; after `MAX_TEMPORARY_LOCKOUTS` temporary lockouts, the account is permanently locked |
+| `0` (default) | **Permanent lockout only**: 3 failed attempts within 12 hours locks the account permanently until an admin unlocks it |
+| `> 0` | **Temporary then permanent**: each group of 3 failures triggers a 15-minute temporary lockout; after `MAX_TEMPORARY_LOCKOUTS` temporary lockouts, the account is permanently locked |
 
 > [!CAUTION]
 > Modifying lockout behavior may have compliance implications. Check your organization's NIST controls or STIG requirements for brute-force protection before changing these settings.
@@ -137,8 +137,8 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Security Def
 
 **Solution:** `realmInitEnv` settings are applied only during initial realm import. The bundle must be deployed on a fresh Keycloak instance (or the realm must be re-imported) for the override to take effect. For an already-running instance, configure the settings manually in the Keycloak Admin Console as described in Step 2.
 
-## Related Documentation
+## Related documentation
 
-- [Keycloak: Brute Force Detection](https://www.keycloak.org/docs/latest/server_admin/#_brute-force) — upstream reference for all brute-force protection settings
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
-- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session limits and timeout settings that complement lockout configuration.
+- [Keycloak: Brute Force Detection](https://www.keycloak.org/docs/latest/server_admin/#_brute-force) - upstream reference for all brute-force protection settings
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - Set session limits and timeout settings that complement lockout configuration.

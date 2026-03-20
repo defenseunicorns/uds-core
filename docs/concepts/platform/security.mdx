@@ -4,8 +4,9 @@ sidebar:
   order: 3.6
 ---
 
+UDS Core takes a layered approach to security, enforcing controls at every stage from software supply chain through runtime behavior. This page summarizes each security layer and how they work together.
 
-## Defense-in-Depth at a Glance
+## Defense-in-depth at a glance
 
 UDS Core maintains a defense-in-depth baseline, providing real security across the entire software delivery and runtime process:
 
@@ -21,9 +22,7 @@ UDS Core maintains a defense-in-depth baseline, providing real security across t
 > [!NOTE]
 > Security defaults are intentionally restrictive. Operators can loosen controls where needed, but any reduction in the default security posture should be made deliberately and documented.
 
----
-
-## Secure Supply Chain
+## Secure supply chain
 
 UDS Core ships with transparency baked in:
 
@@ -34,9 +33,7 @@ UDS Core ships with transparency baked in:
 > [!NOTE]
 > **Why it matters:** You have full visibility into what you are running. Transparent software composition analysis helps identify and mitigate security risks before deployment.
 
----
-
-## Airgap Ready
+## Airgap ready
 
 UDS Core is built from the ground up for disconnected operation:
 
@@ -47,24 +44,20 @@ UDS Core is built from the ground up for disconnected operation:
 > [!NOTE]
 > **Why it matters:** You can deploy and operate securely in classified or offline environments without introducing network backdoors or hidden dependencies.
 
----
-
-## Identity & Single Sign-On
+## Identity & single sign-on
 
 UDS Core provides centralized identity management through Keycloak and Authservice:
 
 - **Keycloak SSO** with opinionated defaults for realms, clients, and group-based access control.
-- **Authservice integration** protects applications that do not natively support OIDC—enforced at the mesh edge rather than relying on application-level controls.
+- **Authservice integration** protects applications that do not natively support OIDC, enforced at the mesh edge rather than relying on application-level controls.
 - **Consistent login, token handling, and group mapping** across all applications running on the platform.
 
 > [!NOTE]
 > **Why it matters:** Access control is centralized and auditable. Applications get authentication and authorization enforcement without having to implement it themselves.
 
-[Identity & Authorization Concepts &rarr;](/concepts/core-features/identity-and-authorization/)
+[Identity & Authorization concepts &rarr;](/concepts/core-features/identity-and-authorization/)
 
----
-
-## Zero-Trust Networking & Service Mesh
+## Zero-trust networking & service mesh
 
 UDS Core implements a zero-trust networking model by default:
 
@@ -77,11 +70,9 @@ UDS Core implements a zero-trust networking model by default:
 > [!NOTE]
 > **Why it matters:** Lateral movement is constrained by both the Kubernetes networking layer and Istio. What your application can talk to is explicit and reviewable.
 
-[Networking & Service Mesh Concepts &rarr;](/concepts/core-features/networking/)
+[Networking & Service Mesh concepts &rarr;](/concepts/core-features/networking/)
 
----
-
-## Admission Control
+## Admission control
 
 Pepr enforces admission policies that prevent misconfigured or overly permissive workloads from reaching the cluster:
 
@@ -92,11 +83,9 @@ Pepr enforces admission policies that prevent misconfigured or overly permissive
 > [!NOTE]
 > **Why it matters:** Misconfigurations are caught at admission time, before they can affect the running cluster. Exemptions are an explicit audit trail, not silent bypasses.
 
-[Policy & Compliance Concepts &rarr;](/concepts/core-features/policy-and-compliance/)
+[Policy & Compliance concepts &rarr;](/concepts/core-features/policy-and-compliance/)
 
----
-
-## Runtime Security
+## Runtime security
 
 Falco provides real-time threat detection for running workloads:
 
@@ -107,11 +96,9 @@ Falco provides real-time threat detection for running workloads:
 > [!NOTE]
 > **Why it matters:** Malicious or anomalous behavior is detected immediately, enabling fast triage and response.
 
-[Runtime Security Concepts &rarr;](/concepts/core-features/runtime-security/)
+[Runtime Security concepts &rarr;](/concepts/core-features/runtime-security/)
 
----
-
-## Observability & Audit
+## Observability & audit
 
 UDS Core's observability stack doubles as an audit and compliance tool:
 
@@ -122,14 +109,12 @@ UDS Core's observability stack doubles as an audit and compliance tool:
 > [!NOTE]
 > **Why it matters:** Unified observability across logs and metrics means faster diagnosis during both security incidents and routine troubleshooting.
 
-[Logging Concepts &rarr;](/concepts/core-features/logging/) | [Monitoring & Observability Concepts &rarr;](/concepts/core-features/monitoring-observability/)
+[Logging concepts &rarr;](/concepts/core-features/logging/) | [Monitoring & Observability concepts &rarr;](/concepts/core-features/monitoring-observability/)
 
----
-
-## Compliance & Authorization
+## Compliance & authorization
 
 The security controls documented on this page are designed with regulated environments in mind. UDS Core helps address control families commonly evaluated across NIST 800-53, DISA STIG, and FedRAMP baselines.
 
 If your organization is pursuing an **Authority to Operate (ATO)** or needs compliance documentation for a regulated environment deployment, Defense Unicorns provides technical documentation and control mapping artifacts to support your authorization effort.
 
-[Contact Defense Unicorns &rarr;](https://www.defenseunicorns.com/contact)
+[Contact Defense Unicorns](https://www.defenseunicorns.com/contact)

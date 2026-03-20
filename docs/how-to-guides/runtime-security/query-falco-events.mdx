@@ -18,7 +18,7 @@ You'll query and visualize Falco runtime security events in Grafana using Loki, 
 
 ## Before you begin
 
-Falco events are shipped to Loki by default via Falcosidekick — no additional configuration is needed. Events are labeled with `priority` and `rule` fields, which you can use to filter queries.
+Falco events are shipped to Loki by default via Falcosidekick; no additional configuration is needed. Events are labeled with `priority` and `rule` fields, which you can use to filter queries.
 
 ## Steps
 
@@ -34,33 +34,33 @@ Falco events are shipped to Loki by default via Falcosidekick — no additional 
 
    **All events:**
 
-   ```
+   ```logql
    {priority=~".+"}
    ```
 
    **Filter by priority level:**
 
-   ```
+   ```logql
    {priority="Warning"}
    ```
 
-   ```
+   ```logql
    {priority="Error"}
    ```
 
    **Filter by specific rule:**
 
-   ```
+   ```logql
    {rule="Search Private Keys or Passwords"}
    ```
 
-   ```
+   ```logql
    {rule="Terminal shell in container"}
    ```
 
    You can combine filters:
 
-   ```
+   ```logql
    {priority="Warning", rule=~".*Privilege.*"}
    ```
 
@@ -101,10 +101,10 @@ After a few seconds, query Loki with `{rule="Terminal shell in container"}` and 
 
 **Solution:** Adjust the time range in Grafana to cover a period when Falco events were generated. If no events have been generated yet, trigger a test detection (see Verification above). Also confirm the Loki data source is configured correctly under **Configuration** → **Data sources** in Grafana.
 
-## Related Documentation
+## Related documentation
 
-- [Loki LogQL documentation](https://grafana.com/docs/loki/latest/query/) — full reference for Loki query syntax
-- [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) — rule names and priorities for filtering queries
-- [Runtime security concepts](/concepts/core-features/runtime-security/) — background on how Falco and Falcosidekick work in UDS Core
-- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) — Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
-- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) — Forward Falco detections to Slack, Mattermost, or Microsoft Teams.
+- [Loki LogQL documentation](https://grafana.com/docs/loki/latest/query/) - full reference for Loki query syntax
+- [Falco default rules reference](https://falco.org/docs/reference/rules/default-rules/) - rule names and priorities for filtering queries
+- [Runtime security concepts](/concepts/core-features/runtime-security/) - background on how Falco and Falcosidekick work in UDS Core
+- [Tune Falco runtime detections](/how-to-guides/runtime-security/tune-falco-detections/) - Customize which threats Falco detects by enabling rulesets, disabling rules, and writing custom rules.
+- [Route runtime alerts to external destinations](/how-to-guides/runtime-security/route-runtime-alerts/) - Forward Falco detections to Slack, Mattermost, or Microsoft Teams.

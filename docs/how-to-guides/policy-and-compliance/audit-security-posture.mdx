@@ -67,7 +67,7 @@ UDS Core provides two layers of auditable security configuration:
 
    This produces output like:
 
-   ```
+   ```text
    monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces
    monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.RequireNonRootUser
    istio-admin-gateway/admin-ingressgateway: uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices
@@ -123,10 +123,10 @@ A well-audited cluster shows:
 - No exemptions target removed workloads
 - No Package CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
 
-## Related Documentation
+## Related documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including network fields
-- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure Package CR allow rules for intra-cluster and external network access.
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies
+- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full Package CR schema including network fields
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) - Create Exemption CRs to allow workloads to bypass specific UDS policies.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure Package CR allow rules for intra-cluster and external network access.

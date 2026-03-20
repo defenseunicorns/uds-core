@@ -21,7 +21,7 @@ You'll configure [Authservice](https://github.com/istio-ecosystem/authservice) f
 ## Before you begin
 
 > [!CAUTION]
-> By default, Authservice runs as a **single replica** and stores user sessions **in memory**. Without a shared session store, scaling to multiple replicas causes session loss on failover — each replica maintains its own session state independently. You must configure an external session store before scaling.
+> By default, Authservice runs as a **single replica** and stores user sessions **in memory**. Without a shared session store, scaling to multiple replicas causes session loss on failover, because each replica maintains its own session state independently. You must configure an external session store before scaling.
 
 ## Steps
 
@@ -107,7 +107,7 @@ uds zarf tools kubectl get pods -n authservice -l app.kubernetes.io/name=authser
 uds zarf tools kubectl get hpa -n authservice
 ```
 
-**Session persistence test:** Log in to an Authservice-protected application, then delete one Authservice pod. Refresh the page — your session should survive:
+**Session persistence test:** Log in to an Authservice-protected application, then delete one Authservice pod. Refresh the page; your session should survive:
 
 ```bash
 # Delete one pod to simulate failover (replace with an actual pod name)
@@ -144,10 +144,10 @@ Check that `AUTHSERVICE_REDIS_URI` is set correctly and that the Redis instance 
 uds zarf tools kubectl logs -n authservice -l app.kubernetes.io/name=authservice --tail=100
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Authservice: Configuration Reference](https://github.com/istio-ecosystem/authservice/blob/main/config/README.md) — session store and OIDC configuration options
-- [Redis: Documentation](https://redis.io/docs/latest/) — general Redis documentation for the backing session store
-- [Valkey: Documentation](https://valkey.io/docs/) — Redis-compatible alternative supported by Authservice
-- [Configure HA for Keycloak](/how-to-guides/high-availability/keycloak/) — Keycloak is the identity provider that Authservice relies on and also requires HA configuration.
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — Background on how Authservice and Keycloak work together in UDS Core.
+- [Authservice: Configuration Reference](https://github.com/istio-ecosystem/authservice/blob/main/config/README.md) - session store and OIDC configuration options
+- [Redis: Documentation](https://redis.io/docs/latest/) - general Redis documentation for the backing session store
+- [Valkey: Documentation](https://valkey.io/docs/) - Redis-compatible alternative supported by Authservice
+- [Configure HA for Keycloak](/how-to-guides/high-availability/keycloak/) - Keycloak is the identity provider that Authservice relies on and also requires HA configuration.
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Authservice and Keycloak work together in UDS Core.
