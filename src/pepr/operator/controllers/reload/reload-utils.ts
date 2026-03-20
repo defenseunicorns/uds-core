@@ -209,19 +209,25 @@ export async function restartController(
   const controller = await retryWithDelay(getController, log);
 
   try {
-    // Setup parent fields if any are missing to ensure our apply doesn't hit errors
-    if (!controller.spec) controller.spec = {};
-    if (!controller.spec.template) controller.spec.template = {};
-    if (!controller.spec.template.metadata) controller.spec.template.metadata = {};
-    if (!controller.spec.template.metadata.annotations)
-      controller.spec.template.metadata.annotations = {};
-    controller.spec.template.metadata.annotations["uds.dev/restartedAt"] = new Date().toISOString();
-    // Clear managedFields before apply
-    delete controller.metadata?.managedFields;
+    // Build a sparse patch with only the fields pepr owns to avoid claiming ownership
+    // of fields managed by other field managers (e.g. helm.sh/chart, resource limits)
+    const patch = {
+      apiVersion: controller.apiVersion,
+      kind: controller.kind,
+      metadata: { name, namespace },
+      spec: {
+        template: {
+          metadata: {
+            annotations: {
+              "uds.dev/restartedAt": new Date().toISOString(),
+            },
+          },
+        },
+      },
+    };
 
-    // Update the annotation in the controller object and apply
     async function applyControllerAnnotation() {
-      return K8s(controllerKind, { name, namespace }).Apply(controller);
+      return K8s(controllerKind, { name, namespace }).Apply(patch, { force: true });
     }
     await retryWithDelay(applyControllerAnnotation, log);
   } catch (error) {

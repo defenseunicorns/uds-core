@@ -22,12 +22,18 @@ components:
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.29.1
         namespace: istio-system
+        # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
+        # This should be fixed in a future Istio version
+        serverSideApply: "false"
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.29.1
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
+        # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
+        # This should be fixed in a future Istio version
+        serverSideApply: "false"
         variables:
           - name: PROXY_MEMORY_REQUEST
             description: "Memory requests for sidecars in cluster"
