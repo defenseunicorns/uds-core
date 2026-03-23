@@ -1,25 +1,25 @@
 ---
 title: Set up uptime monitoring
 sidebar:
-  order: 5.7
+  order: 5.007
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are configured through the UDS Package CR's `uptime` block — the operator automatically creates Prometheus Probe resources and configures Blackbox Exporter. You can monitor simple health checks, custom paths, and even Authservice-protected applications without additional setup.
+Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are configured through the UDS `Package` CR's `uptime` block. The operator automatically creates Prometheus Probe resources and configures Blackbox Exporter. You can monitor simple health checks, custom paths, and even Authservice-protected applications without additional setup.
 
 ## Prerequisites
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- An application exposed via the Package CR `expose` block
+- An application exposed via the `Package` CR `expose` block
 
 ## Before you begin
 
 > [!CAUTION]
-> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically — do not manually edit this secret, as the operator will reconcile any changes.
+> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically; do not manually edit this secret, as the operator will reconcile any changes.
 
 > [!NOTE]
 > Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client and configures OAuth2 authentication for the probe.
@@ -28,9 +28,9 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 <Steps>
 
-1. **Add uptime checks to a Package CR**
+1. **Add uptime checks to a `Package` CR**
 
-   Add `uptime.checks.paths` to an `expose` entry in your Package CR. This creates a Prometheus Probe that issues HTTP GET requests at a regular interval and checks for a successful (2xx) response.
+   Add `uptime.checks.paths` to an `expose` entry in your `Package` CR. This creates a Prometheus Probe that issues HTTP GET requests at a regular interval and checks for a successful (2xx) response.
 
    ```yaml title="package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -74,7 +74,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 3. **Optional: Monitor multiple services**
 
-   Add uptime checks to multiple expose entries within a single Package CR to monitor several services at once.
+   Add uptime checks to multiple expose entries within a single `Package` CR to monitor several services at once.
 
    ```yaml title="package.yaml"
    spec:
@@ -148,14 +148,14 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 5. **Deploy your Package**
 
-   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
@@ -164,7 +164,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 </Steps>
 
 > [!CAUTION]
-> If you have multiple expose entries for the same FQDN, only one can have uptime checks configured. The operator will block the Package CR if you attempt to configure uptime checks on more than one expose entry for the same FQDN.
+> If you have multiple expose entries for the same FQDN, only one can have uptime checks configured. The operator will block the `Package` CR if you attempt to configure uptime checks on more than one expose entry for the same FQDN.
 
 ## Verification
 
@@ -205,9 +205,9 @@ probe_success{instance="https://myapp.uds.dev/health"}
 
 ### Problem: Probe not appearing
 
-**Symptom:** No probe data shows up in Grafana after applying the Package CR.
+**Symptom:** No probe data shows up in Grafana after applying the `Package` CR.
 
-**Solution:** Verify `uptime.checks.paths` is set in the expose entry. Check Package CR status:
+**Solution:** Verify `uptime.checks.paths` is set in the expose entry. Check `Package` CR status:
 
 ```bash
 uds zarf tools kubectl describe package <name> -n <namespace>
@@ -219,9 +219,9 @@ uds zarf tools kubectl describe package <name> -n <namespace>
 
 **Solution:** Check that the probe Keycloak client was created by reviewing operator logs. Verify the SSO entry's redirect URI origin matches the expose entry's FQDN.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) — upstream project documentation
-- [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) — Probe CRD field reference
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Alert when probe_success drops to 0 or SSL certificates near expiry.
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — Background on how the monitoring stack fits together in UDS Core.
+- [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter) - upstream project documentation
+- [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) - Probe CRD field reference
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Alert when probe_success drops to 0 or SSL certificates near expiry.
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) - Background on how the monitoring stack fits together in UDS Core.

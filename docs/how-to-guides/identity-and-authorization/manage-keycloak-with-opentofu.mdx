@@ -1,14 +1,14 @@
 ---
 title: Manage Keycloak with OpenTofu
 sidebar:
-  order: 3.14
+  order: 3.014
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll enable the built-in `uds-opentofu-client` in UDS Core's Keycloak realm and use it with the [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) to programmatically manage Keycloak resources — groups, clients, identity providers, and more.
+You'll enable the built-in `uds-opentofu-client` in UDS Core's Keycloak realm and use it with the [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) to programmatically manage Keycloak resources: groups, clients, identity providers, and more.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ You'll enable the built-in `uds-opentofu-client` in UDS Core's Keycloak realm an
 
 ## Before you begin
 
-UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is **disabled by default** — it carries `realm-admin` permissions and should only be enabled when you intend to actively use it.
+UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is **disabled by default** because it carries `realm-admin` permissions and should only be enabled when you intend to actively use it.
 
 > [!CAUTION]
 > **Plan your authentication flows before deploying UDS Core with the OpenTofu client enabled.** `realmInitEnv` values (including `OPENTOFU_CLIENT_ENABLED`) are applied only during initial realm import. If you need to enable the client on an already-running deployment, use the [admin UI method](#enable-the-client-in-the-keycloak-admin-ui) instead of redeploying.
@@ -159,7 +159,7 @@ UDS Core ships with a `uds-opentofu-client` in the `uds` realm. This client is *
 Confirm the OpenTofu client is enabled and your provider connectivity works:
 
 1. In the Keycloak Admin Console, go to **Clients** → `uds-opentofu-client` and confirm the **Enabled** toggle is **On**
-2. Run `tofu plan` — if the provider authenticates successfully, the plan output shows your resources without any authentication error
+2. Run `tofu plan`. If the provider authenticates successfully, the plan output shows your resources without any authentication error.
 
 After running `tofu apply`, confirm resources created by OpenTofu appear in the Keycloak Admin Console (for example, check **Groups** after creating groups).
 
@@ -197,10 +197,10 @@ After running `tofu apply`, confirm resources created by OpenTofu appear in the 
 2. Confirm `realm-management: realm-admin` is listed
 3. If missing, click **Assign role**, filter by **Client Roles**, find `realm-management: realm-admin`, and assign it
 
-## Related Documentation
+## Related documentation
 
-- [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) — full provider resource reference
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — set auth flows alongside OpenTofu enablement
-- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) — manual upgrade steps when re-importing the realm with new config
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.
+- [OpenTofu Keycloak provider](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) - full provider resource reference
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - set auth flows alongside OpenTofu enablement
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - manual upgrade steps when re-importing the realm with new config
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict application access to users in specific Keycloak groups using the `Package` CR.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable X.509/CAC, OTP, WebAuthn, and social login via bundle overrides.

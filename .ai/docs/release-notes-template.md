@@ -1,5 +1,7 @@
 # Release Notes Template
 
+> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+
 ## About this template
 
 Release notes are version-specific pages that document what changed in a release, including breaking changes, notable features, and any version-specific upgrade considerations. Each page covers a single version.
@@ -89,9 +91,9 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [<Product> X.Y.0 Changelog](https://github.com/defenseunicorns/<repo>/blob/main/CHANGELOG.md#anchor) — full changelog
-- [Full diff (X.W.Z...X.Y.Z)](https://github.com/defenseunicorns/<repo>/compare/vX.W.Z...vX.Y.Z) — all changes between versions
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [<Product> X.Y.0 Changelog](https://github.com/defenseunicorns/<repo>/blob/main/CHANGELOG.md#anchor) - full changelog
+- [Full diff (X.W.Z...X.Y.Z)](https://github.com/defenseunicorns/<repo>/compare/vX.W.Z...vX.Y.Z) - all changes between versions
 ```
 
 ## Conventions
@@ -99,7 +101,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 ### Structure
 
 - Every release notes page follows the same section order: NOTE callout, summary paragraph, then ⚠ Breaking changes (omit if none), Notable features, and Dependency updates subsections, Upgrade considerations (optional, with Identity Config updates as a subsection if applicable), Related documentation
-- The "Upgrade considerations" section is **optional** — only include it when there are version-specific steps that go beyond the standard upgrade procedure in the overview. However, if a Core release bumps identity-config, include the Upgrade considerations section with at least the Identity Config updates subsection.
+- The "Upgrade considerations" section is **optional**. Only include it when there are version-specific steps that go beyond the standard upgrade procedure in the overview. However, if a Core release bumps identity-config, include the Upgrade considerations section with at least the Identity Config updates subsection.
 - When "Upgrade considerations" is included, use `<Steps>` components for pre-upgrade and post-upgrade subsections. Place Identity Config updates before Post-upgrade verification.
 - Breaking changes use a table format with Change, Impact, and Action required columns. Use the `### ⚠ Breaking changes` heading. Omit this section entirely if there are no breaking changes.
 
@@ -112,7 +114,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Use `uds zarf tools kubectl` instead of bare `kubectl`
 - No `oci://` prefix on repository references
 - Use `registry.defenseunicorns.com/public/core` for repository references
-- Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs — anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date)
+- Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs. The anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date).
 - Include a full diff link comparing the latest patch of the previous minor version to the latest patch of the current one (e.g., `v0.60.2...v0.61.1`, not `v0.60.0...v0.61.0`)
 - In the dependency updates table, link the "Updated" version to the upstream release page (e.g., GitHub release or project release page). Leave unlinked for entries without a meaningful upstream release page (e.g., Helm chart-only bumps, DoD CA Certs)
 
@@ -141,14 +143,14 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Include a brief intro line noting the identity-config version and link it to the GitHub release page using the full semver (e.g., `[0.23.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.23.0)`), then list notable changes as bullet points
 - If manual realm changes are required, inline the step-by-step instructions directly in this subsection
 - Add the identity-config changelog link to the Related documentation section
-- Do not create separate identity-config release notes pages — all identity-config content is inlined into Core
+- Do not create separate identity-config release notes pages. All identity-config content is inlined into Core.
 
 ### Content guidance
 
 - Write for operators upgrading a running platform, not first-time installers
 - Focus on what changed, what action is required (if any), and how to verify version-specific changes
 - Be specific: include exact config paths, values, and commands
-- Link to the Upgrade Overview for standard procedures — do not repeat them
+- Link to the Upgrade Overview for standard procedures; do not repeat them
 - Always include a NOTE callout at the top linking to the Upgrade Overview
 - The `import` line for Starlight components is only needed if the page uses `<Steps>` or other components
 - Link relevant PRs and issues in breaking changes and notable features where they help operators understand the change
@@ -156,4 +158,4 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - When a patch release fixes known issues from the initial minor release, add an `> [!IMPORTANT]` callout in the Upgrade considerations section directing operators to the patch version
 - When a Core release bumps identity-config and manual realm changes are required, inline the step-by-step instructions directly into the release notes page under an `### Manual realm changes (Identity Config X.Y)` heading within the Identity Config updates section
 - When a Core release bumps identity-config, include the identity-config CHANGELOG.md anchor link in the Related documentation section
-- Do not use the `/core/` prefix on internal links — the remark plugin in uds-docs handles product scoping automatically
+- Do not use the `/core/` prefix on internal links. The remark plugin in uds-docs handles product scoping automatically.

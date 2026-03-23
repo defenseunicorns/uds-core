@@ -1,7 +1,7 @@
 ---
 title: Package Testing
 sidebar:
-  order: 9.2
+  order: 9.002
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -20,9 +20,9 @@ You'll set up a testing strategy for your UDS Package that validates deployment 
 
 ## Before you begin
 
-UDS Package testing focuses on validating packaging, deployment, and integration — not duplicating upstream application tests. Tests should confirm that your packaging and configuration choices don't break key functionality, and that integration with UDS Core components works as expected.
+UDS Package testing focuses on validating packaging, deployment, and integration, not duplicating upstream application tests. Tests should confirm that your packaging and configuration choices don't break key functionality, and that integration with UDS Core components works as expected.
 
-Place all test files — Playwright specs, Jest tests, custom validation scripts, and related configuration — in a `tests` directory at the root of your package repository.
+Place all test files (Playwright specs, Jest tests, custom validation scripts, and related configuration) in a `tests` directory at the root of your package repository.
 
 ## Steps
 
@@ -38,7 +38,7 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
    > The [UDS Package Template](https://github.com/uds-packages/template/tree/main/tests) includes Playwright stubs in the `tests/` directory to get you started.
 
    > [!TIP]
-   > Keep journey tests small and focused. Validate deployment and UDS integration — avoid duplicating upstream unit or feature tests.
+   > Keep journey tests small and focused. Validate deployment and UDS integration; avoid duplicating upstream unit or feature tests.
 
    > [!NOTE]
    > If licensing or other constraints prevent a flow from running in CI, document the limitation and implement the most realistic validation available.
@@ -76,9 +76,9 @@ Place all test files — Playwright specs, Jest tests, custom validation scripts
 
    Configure your pipeline to run all tests automatically so every code change is verified before advancing through the workflow. Follow these principles for reliable test suites:
 
-   - **Repeatability** — Tests should produce consistent results regardless of execution order or frequency. Design them to handle dynamic and asynchronous workloads without compromising output integrity.
-   - **Error handling** — Fail with actionable messages and include enough context to debug.
-   - **Performance** — Balance coverage with rapid feedback to keep pipelines efficient.
+   - **Repeatability**: Tests should produce consistent results regardless of execution order or frequency. Design them to handle dynamic and asynchronous workloads without compromising output integrity.
+   - **Error handling**: Fail with actionable messages and include enough context to debug.
+   - **Performance**: Balance coverage with rapid feedback to keep pipelines efficient.
 
    > [!TIP]
    > The [UDS Package Template](https://github.com/uds-packages/template) includes default GitHub Actions CI/CD workflows you can use as a starting point or reference.
@@ -157,7 +157,7 @@ Your test suite is working correctly when:
 
 **Solution:** Check that persistent volume claims and database migrations are handled correctly in your Zarf package lifecycle actions.
 
-## Related Documentation
+## Related documentation
 
 - [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
 - [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md)

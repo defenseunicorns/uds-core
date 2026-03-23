@@ -1,7 +1,7 @@
 ---
 title: Route alerts to notification channels
 sidebar:
-  order: 5.6
+  order: 5.006
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -134,7 +134,7 @@ uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 
 **Success criteria:**
 - Grafana > **Alerting > Alert rules** shows active alerts
-- The `Watchdog` alert fires continuously by design — if routing is configured correctly, it should **not** appear in your notification channel (it routes to the `empty` receiver)
+- The `Watchdog` alert fires continuously by design; if routing is configured correctly, it should **not** appear in your notification channel (it routes to the `empty` receiver)
 - Critical or warning alerts arrive in your configured notification channel with `send_resolved` notifications when they clear
 
 ## Troubleshooting
@@ -143,7 +143,7 @@ uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 
 **Symptom:** Alert rules show as firing in Grafana, but no notifications appear in Slack (or your configured channel).
 
-**Solution:** Verify that route matchers match the alert labels — a mismatch causes alerts to fall through to the default `empty` receiver. Check the receiver configuration (webhook URL, channel name). Review Alertmanager logs for delivery errors:
+**Solution:** Verify that route matchers match the alert labels, because a mismatch causes alerts to fall through to the default `empty` receiver. Check the receiver configuration (webhook URL, channel name). Review Alertmanager logs for delivery errors:
 
 ```bash
 uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager --tail=50
@@ -155,10 +155,10 @@ uds zarf tools kubectl logs -n monitoring -l app.kubernetes.io/name=alertmanager
 
 **Solution:** Verify the `additionalNetworkAllow` configuration includes the correct `remoteHost` and port for your notification service. Ensure the egress policy `selector` targets Alertmanager pods (`app.kubernetes.io/name: alertmanager`). See [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) for details on configuring egress policies.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus: Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/) — full receiver and route configuration reference
-- [Prometheus: Alertmanager integrations](https://prometheus.io/docs/alerting/latest/integrations/) — supported notification channels (Slack, PagerDuty, OpsGenie, email, webhooks, etc.)
-- [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) — egress policy configuration for notification services
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define the alerting conditions that Alertmanager will route.
-- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) — Add log pattern detection alerts that also route through Alertmanager.
+- [Prometheus: Alertmanager configuration](https://prometheus.io/docs/alerting/latest/configuration/) - full receiver and route configuration reference
+- [Prometheus: Alertmanager integrations](https://prometheus.io/docs/alerting/latest/integrations/) - supported notification channels (Slack, PagerDuty, OpsGenie, email, webhooks, etc.)
+- [Configure network access for Core services](/how-to-guides/networking/configure-core-network-access/) - egress policy configuration for notification services
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define the alerting conditions that Alertmanager will route.
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) - Add log pattern detection alerts that also route through Alertmanager.

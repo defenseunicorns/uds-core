@@ -1,7 +1,7 @@
 ---
 title: Manage trust bundles
 sidebar:
-  order: 2.10
+  order: 2.010
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -20,7 +20,7 @@ You'll configure UDS Core to distribute custom CA certificates across your clust
 
 UDS Core provides a centralized trust bundle system that automatically builds and distributes certificate trust bundles. When configured, UDS Core:
 
-- Creates `uds-trust-bundle` ConfigMaps in every namespace that contains a UDS Package CR
+- Creates `uds-trust-bundle` ConfigMaps in every namespace that contains a UDS `Package` CR
 - Syncs the bundle to `istio-system` for JWKS fetching
 - Injects the bundle into Authservice for OIDC TLS verification
 - Auto-mounts the bundle into platform components (Keycloak, Grafana, Loki, Vector, Velero, Prometheus, Alertmanager, Falcosidekick)
@@ -66,7 +66,7 @@ UDS Core provides a centralized trust bundle system that automatically builds an
 
 2. **Customize trust bundle distribution for a package**
 
-   Trust bundle ConfigMaps are automatically created in all namespaces with a UDS Package CR. To customize the ConfigMap for a specific package, use the `caBundle` field:
+   Trust bundle ConfigMaps are automatically created in all namespaces with a UDS `Package` CR. To customize the ConfigMap for a specific package, use the `caBundle` field:
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -90,7 +90,7 @@ UDS Core provides a centralized trust bundle system that automatically builds an
 
 3. **Mount the trust bundle in your application**
 
-   Platform components (Keycloak, Grafana, Loki, etc.) automatically mount the trust bundle — no manual configuration needed. For your own applications, mount the `uds-trust-bundle` ConfigMap as a volume.
+   Platform components (Keycloak, Grafana, Loki, etc.) automatically mount the trust bundle; no manual configuration is needed. For your own applications, mount the `uds-trust-bundle` ConfigMap as a volume.
 
    > [!WARNING]
    > If you override Helm `volumeMounts` or `volumes` values for a Core component (e.g., via bundle overrides), the automatic trust bundle mount will be replaced. You must include the trust bundle mount in your override to preserve it.
@@ -140,18 +140,18 @@ UDS Core provides a centralized trust bundle system that automatically builds an
    </Tabs>
 
    > [!CAUTION]
-   > Replacing the system CA bundle removes all default trusted CAs. Ensure your bundle includes all CAs your application needs. Also note that some programming languages and crypto libraries use their own embedded trust stores rather than the system trust store — consult your application's documentation.
+   > Replacing the system CA bundle removes all default trusted CAs. Ensure your bundle includes all CAs your application needs. Also note that some programming languages and crypto libraries use their own embedded trust stores rather than the system trust store; consult your application's documentation.
 
 4. **Deploy your application**
 
-   **(Recommended)** Include the volume mount configuration and Package CR in your application's [Zarf package](https://docs.zarf.dev/ref/create/) alongside your Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the volume mount configuration and `Package` CR in your application's [Zarf package](https://docs.zarf.dev/ref/create/) alongside your Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing (along with your updated application with mount):
+   **Or** apply the `Package` CR directly for quick testing (along with your updated application with mount):
 
    ```bash
    uds zarf tools kubectl apply -f uds-package.yaml
@@ -181,13 +181,13 @@ To confirm that platform components are using the trust bundle, check that servi
 
 **Symptom:** The `uds-trust-bundle` ConfigMap does not exist in your application's namespace.
 
-**Solution:** The ConfigMap is only created in namespaces that contain a UDS Package CR. Verify a Package CR exists:
+**Solution:** The ConfigMap is only created in namespaces that contain a UDS `Package` CR. Verify a `Package` CR exists:
 
 ```bash
 uds zarf tools kubectl get packages -n <namespace>
 ```
 
-If no Package CR exists, create one for your application. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for details.
+If no `Package` CR exists, create one for your application. See the [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for details.
 
 ### Problem: Application still rejects TLS connections
 
@@ -203,11 +203,11 @@ If no Package CR exists, create one for your application. See the [Package CR re
 uds zarf tools kubectl get pod <pod-name> -n <namespace> -o jsonpath='{.spec.containers[0].volumeMounts}' | jq .
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including `caBundle` fields
-- [Java Keytool documentation](https://docs.oracle.com/en/java/javase/17/docs/specs/man/keytool.html) — managing Java `cacerts` trust stores
-- [Python certifi](https://pypi.org/project/certifi/) — Python's default CA bundle and how to override it
-- [Node.js `NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) — adding extra CAs for Node.js applications
-- [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) — Set up TLS certificates for your ingress gateways — often paired with trust bundle configuration.
-- [Identity & Authorization how-to guides](/how-to-guides/identity-and-authorization/overview/) — Configure SSO with Keycloak, which may need trust bundle configuration for private PKI.
+- [`Package` CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full `Package` CR schema including `caBundle` fields
+- [Java Keytool documentation](https://docs.oracle.com/en/java/javase/17/docs/specs/man/keytool.html) - managing Java `cacerts` trust stores
+- [Python certifi](https://pypi.org/project/certifi/) - Python's default CA bundle and how to override it
+- [Node.js `NODE_EXTRA_CA_CERTS`](https://nodejs.org/api/cli.html#node_extra_ca_certsfile) - adding extra CAs for Node.js applications
+- [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) - Set up TLS certificates for your ingress gateways, often paired with trust bundle configuration.
+- [Identity & Authorization how-to guides](/how-to-guides/identity-and-authorization/overview/) - Configure SSO with Keycloak, which may need trust bundle configuration for private PKI.

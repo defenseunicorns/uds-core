@@ -1,14 +1,14 @@
 ---
 title: Audit security posture
 sidebar:
-  order: 8.05
+  order: 8.005
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting Package CR network rules for overly permissive configurations.
+You'll review your cluster's security posture by auditing policy exemptions for scope and justification, and inspecting `Package` CR network rules for overly permissive configurations.
 
 ## Prerequisites
 
@@ -19,11 +19,11 @@ You'll review your cluster's security posture by auditing policy exemptions for 
 
 UDS Core provides two layers of auditable security configuration:
 
-- **Policy exemptions** - Exemption CRs that allow specific workloads to bypass UDS policies. Each exempted resource is annotated, creating a built-in audit trail.
-- **Package CR network rules** - The `allow` fields in Package CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
+- **Policy exemptions** - `Exemption` CRs that allow specific workloads to bypass UDS policies. Each exempted resource is annotated, creating a built-in audit trail.
+- **`Package` CR network rules** - The `allow` fields in `Package` CRs generate Kubernetes NetworkPolicies and Istio AuthorizationPolicies. Overly broad rules can silently weaken your network segmentation.
 
 > [!IMPORTANT]
-> Your organization should include review of Package CRs and Exemption CRs as part of the normal deployment process. Catching overly permissive configurations during code review is more effective than auditing after the fact.
+> Your organization should include review of `Package` CRs and `Exemption` CRs as part of the normal deployment process. Catching overly permissive configurations during code review is more effective than auditing after the fact.
 
 ## Steps
 
@@ -31,7 +31,7 @@ UDS Core provides two layers of auditable security configuration:
 
 1. **Review active exemptions**
 
-   List all Exemption CRs and check their scope:
+   List all `Exemption` CRs and check their scope:
 
    ```bash
    # List exemptions in the default namespace
@@ -67,17 +67,17 @@ UDS Core provides two layers of auditable security configuration:
 
    This produces output like:
 
-   ```
+   ```text
    monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.DisallowHostNamespaces
    monitoring/node-exporter: uds-core.pepr.dev/uds-core-policies.RequireNonRootUser
    istio-admin-gateway/admin-ingressgateway: uds-core.pepr.dev/uds-core-policies.DisallowNodePortServices
    ```
 
-   Cross-reference this list against your Exemption CRs. Every exempted resource should map back to a documented, justified exemption.
+   Cross-reference this list against your `Exemption` CRs. Every exempted resource should map back to a documented, justified exemption.
 
-3. **Audit Package CR network allow rules**
+3. **Audit `Package` CR network allow rules**
 
-   List all Package CRs and inspect their network rules:
+   List all `Package` CRs and inspect their network rules:
 
    ```bash
    # List all packages across namespaces
@@ -98,7 +98,7 @@ UDS Core provides two layers of auditable security configuration:
    | `remoteHost` egress without justification | Opens egress to a specific external hostname | Is the hostname documented and expected? |
 
    > [!IMPORTANT]
-   > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the Package CR requests. Audit is the only mechanism to catch overly broad rules.
+   > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the `Package` CR requests. Audit is the only mechanism to catch overly broad rules.
 
 4. **Verify Pepr controller health**
 
@@ -119,14 +119,14 @@ UDS Core provides two layers of auditable security configuration:
 A well-audited cluster shows:
 
 - All `pepr-system` pods are `Running` and `Ready`
-- Every Exemption CR has a `title` and `description` with clear justification
+- Every `Exemption` CR has a `title` and `description` with clear justification
 - No exemptions target removed workloads
-- No Package CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
+- No `Package` CR `allow` rules use `remoteGenerated: Anywhere` without documented justification
 
-## Related Documentation
+## Related documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Package CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) — full Package CR schema including network fields
-- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure Package CR allow rules for intra-cluster and external network access.
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies
+- [`Exemption` CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [`Package` CR specification](/reference/operator-and-crds/packages-v1alpha1-cr/) - full `Package` CR schema including network fields
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) - Create `Exemption` CRs to allow workloads to bypass specific UDS policies.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure `Package` CR allow rules for intra-cluster and external network access.

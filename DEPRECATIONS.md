@@ -6,7 +6,7 @@ sidebar:
 
 This document tracks all currently deprecated features in UDS Core. Deprecated features remain functional but are scheduled for removal in a future major release.
 
-## Active Deprecations
+## Active deprecations
 
 <!--
 When adding a deprecation, include:
@@ -21,7 +21,7 @@ When adding a deprecation, include:
 | `allow.podLabels`, `allow.remotePodLabels`, `expose.podLabels`, `expose.match`      | 0.12.0 ([#154](https://github.com/defenseunicorns/uds-core/pull/154))   | **Reason:** API naming improved.<br/>**Migration:** Use `allow.selector`, `allow.remoteSelector`, `expose.selector`, `expose.advancedHTTP.match` instead | Package `v1beta1` |
 | `sso.secretName`, `sso.secretLabels`, `sso.secretAnnotations`, `sso.secretTemplate` | 0.60.0 ([#2264](https://github.com/defenseunicorns/uds-core/pull/2264)) | **Reason:** Simplified field structure.<br/>**Migration:** Use `sso.secretConfig.name`, `.labels`, `.annotations`, `.template` instead                   | Package `v1beta1` |
 
-## Recently Removed
+## Recently removed
 
 This section lists features that were removed in recent major releases for historical reference.
 

@@ -6,11 +6,11 @@ sidebar:
 
 This document defines the UDS Core versioning policy, specifically addressing what constitutes our API boundaries and what changes would be considered breaking changes according to [Semantic Versioning](https://semver.org/) principles.
 
-## What Constitutes the UDS Core API?
+## What constitutes the UDS Core API?
 
-Since UDS Core is a Kubernetes based platform, rather than a traditional application or library, we don’t have a traditional API. This document defines our contract with the end user, and we refer to this as our “API” to keep with traditional SemVer wording/principles.
+Since UDS Core is a Kubernetes based platform, rather than a traditional application or library, it doesn’t have a traditional API. This document defines the contract with the end user, referred to as the “API” to keep with traditional SemVer wording/principles.
 
-For versioning purposes, we consider the following to be part of our API:
+For versioning purposes, the following constitute the public API:
 
 ### 1. Custom Resource Definitions (CRDs)
 
@@ -18,25 +18,25 @@ For versioning purposes, we consider the following to be part of our API:
 - Behavior of the UDS Operator interacting with these resources
 - Required configurations and existing behavior of custom resources
 
-### 2. UDS Core Configuration and Packaging
+### 2. UDS Core configuration and packaging
 
 - UDS Core's own configuration values (config charts)
 - Exposed Zarf variables and their expected behavior
 - Component organization and included components in published packages
 
-### 3. Default Security Posture
+### 3. Default security posture
 
 - Default networking restrictions (network policies)
 - Default security integrations (service mesh configuration, runtime security)
 - Default mutations and policy validations
 
-Anything not listed here is generally not considered to be part of our public API, for example: internal implementation details, non-configurable Helm templates, test/debug utilities, and any component not exposed to the user or external automation.
+Anything not listed here is generally not considered to be part of the public API, for example: internal implementation details, non-configurable Helm templates, test/debug utilities, and any component not exposed to the user or external automation.
 
-## Breaking vs. Non-Breaking Changes
+## Breaking vs. non-breaking changes
 
 Any references to “public API” or “API” in the below sections assume the above definition of UDS Core’s API / Contract with the end user.
 
-### Breaking Changes (Require Major Version Bump)
+### Breaking changes (require major version bump)
 
 The following changes would be considered breaking changes and would require a major version bump:
 
@@ -47,18 +47,18 @@ The following changes would be considered breaking changes and would require a m
 - **Removal of supported capabilities** previously available to users
 - **Significant changes to security posture** that would require users to reconfigure their mission applications
 
-### Examples of Breaking Changes:
+### Examples of breaking changes:
 
 1. Changing the default service mesh integration method (i.e. from sidecar to ambient mode)
 2. Adding new, more restrictive default network policies that would block previously allowed traffic
 3. Removing a field from the Package CRD (i.e. removing `monitor[].path`)
 4. Removing/replacing a component (i.e. the tooling used for monitoring) from the published UDS Core package
 
-### Security Exception
+### Security exception
 
 As a security-first platform, UDS Core reserves the right to release security-related breaking changes in minor versions when the security benefit to users outweighs the disruption of waiting for a major release. These changes will still be clearly advertised as breaking changes in the changelog and release notes.
 
-We will always strive to minimize the impact on users and will only exercise this exception when we believe the security improvement is necessary and urgent. Examples of when this exception may be applied include:
+The team will always strive to minimize the impact on users and will only exercise this exception when the security improvement is necessary and urgent. Examples of when this exception may be applied include:
 
 - Removing or changing default behaviors that pose a security risk
 - Enforcing stricter security policies to address discovered vulnerabilities
@@ -66,7 +66,7 @@ We will always strive to minimize the impact on users and will only exercise thi
 
 Users should review release notes carefully for any security-related breaking changes, even in minor releases.
 
-### Non-Breaking Changes (Compatible with Minor or Patch Version Bumps)
+### Non-breaking changes (compatible with minor or patch version bumps)
 
 The following changes are compatible with a minor version bump (new features) or patch version bump (bug fixes):
 
@@ -79,7 +79,7 @@ The following changes are compatible with a minor version bump (new features) or
 - **New features** that are opt-in and don't change existing defaults
 - **Upstream major helm chart/application changes** that don't affect UDS Core's API contract
 
-### Examples of Non-Breaking Changes:
+### Examples of non-breaking changes:
 
 1. Adding a new optional field to a CRD
 2. Creating a new "v1" Package CRD without removing/changing the "v1beta1" Package CRD

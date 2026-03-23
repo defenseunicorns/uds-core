@@ -1,7 +1,7 @@
 ---
 title: Build a custom Keycloak configuration image
 sidebar:
-  order: 3.07
+  order: 3.007
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -19,7 +19,7 @@ You'll build a custom uds-identity-config image containing your theme, plugin, o
 
 ## Before you begin
 
-Most branding changes (logos, T&C content) do not require an image rebuild — they use `themeCustomizations` bundle overrides. See [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) for that approach.
+Most branding changes (logos, T&C content) do not require an image rebuild. They use `themeCustomizations` bundle overrides. See [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) for that approach.
 
 An image rebuild is required when you change:
 - CSS or FreeMarker templates in `src/theme/`
@@ -61,7 +61,7 @@ An image rebuild is required when you change:
    This builds the Docker image tagged as `registry.example.com/uds/identity-config:1.0.0` and creates `zarf-package-keycloak-identity-config-<arch>-dev.zst` for airgap transport.
 
    > [!NOTE]
-   > For local development and testing only, you can build just the image without creating a Zarf package:
+   > For local development and testing only, you can build the image without creating a Zarf package:
    > ```bash
    > uds run dev-build
    > ```
@@ -70,7 +70,7 @@ An image rebuild is required when you change:
 4. **Publish the image or Zarf package**
 
    > [!CAUTION]
-   > `ttl.sh` is a public, ephemeral registry — images are accessible to anyone and expire after the specified duration. Only use it for local testing. For any shared or production environment, push to a private registry your cluster can access securely.
+   > `ttl.sh` is a public, ephemeral registry: images are accessible to anyone and expire after the specified duration. Only use it for local testing. For any shared or production environment, push to a private registry your cluster can access securely.
 
    **Push the image to your registry:**
 
@@ -168,9 +168,9 @@ uds zarf tools kubectl rollout restart statefulset/keycloak -n keycloak
 uds zarf tools kubectl exec -n keycloak statefulset/keycloak -- ls /opt/keycloak/providers/
 ```
 
-## Related Documentation
+## Related documentation
 
-- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) — source repository with task definitions and Dockerfile
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) — how the identity config image fits into the UDS Core identity layer
-- [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) — Replace logos and Terms & Conditions content via bundle overrides — no image rebuild needed.
-- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — Build a custom image with your organization's CA certificates for X.509/CAC authentication.
+- [uds-identity-config repository](https://github.com/defenseunicorns/uds-identity-config) - source repository with task definitions and Dockerfile
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - how the identity config image fits into the UDS Core identity layer
+- [Customize login page branding](/how-to-guides/identity-and-authorization/customize-branding/) - Replace logos and Terms & Conditions content via bundle overrides (no image rebuild needed).
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) - Build a custom image with your organization's CA certificates for X.509/CAC authentication.
