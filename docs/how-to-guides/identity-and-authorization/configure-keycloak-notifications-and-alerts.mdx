@@ -74,7 +74,7 @@ Because logging and dashboards are enabled by default, you can already view Keyc
 Confirm alerting rules are active:
 
 ```bash
-# Verify the PrometheusRule was created
+# Verify the PrometheusRule exists
 uds zarf tools kubectl get prometheusrule -n keycloak
 
 # Verify recording rules ConfigMap exists (should already be present by default)
@@ -91,9 +91,9 @@ Verify through the Grafana UI:
 
 ## Troubleshooting
 
-### Problem: Alerts not firing after enabling detailedObservability
+### Problem: Alerts not firing after enabling `detailedObservability`
 
-**Symptom:** The `detailedObservability.alerts.enabled` override is set to `true`, but no alerts appear in Grafana Alerting.
+**Symptom:** You set `detailedObservability.alerts.enabled` to `true`, but no alerts appear in Grafana Alerting.
 
 **Solution:** Verify the `PrometheusRule` exists:
 
