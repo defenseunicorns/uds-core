@@ -67,7 +67,7 @@ Because logging and dashboards are enabled by default, you can already view Keyc
    > [!NOTE]
    > All three alerts have a 1-minute pending period (`for: 1m`). An alert stays in `PENDING` state for up to 60 seconds after the condition first evaluates true before transitioning to `FIRING` and notifying Alertmanager.
 
-   Alertmanager receives all three alerts. To route them to Slack, PagerDuty, email, or other channels, see [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/).
+   Alertmanager receives all three alerts. To route them to Slack, PagerDuty, email, or other channels, see [Route alerts to notification channels](/how-to-guides/monitoring-and-observability/route-alerts-to-notification-channels/).
 
 2. **Create and deploy your bundle**
 
@@ -128,8 +128,8 @@ If neither query returns results, Keycloak may not have an event listener config
 
 ## Related documentation
 
-- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Keycloak alerts to Slack, PagerDuty, email, and more
-- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) - Write custom Loki alerting and recording rules
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define additional Prometheus-based alerting conditions
+- [Route alerts to notification channels](/how-to-guides/monitoring-and-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Keycloak alerts to Slack, PagerDuty, email, and more
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-and-observability/create-log-based-alerting-and-recording-rules/) - Write custom Loki alerting and recording rules
+- [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/) - Define additional Prometheus-based alerting conditions
 - [Prometheus: Alertmanager receiver integrations](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings) - Full list of supported notification channels
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Keycloak and SSO work in UDS Core
