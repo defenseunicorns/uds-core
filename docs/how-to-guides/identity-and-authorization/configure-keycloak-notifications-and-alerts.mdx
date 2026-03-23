@@ -1,14 +1,14 @@
 ---
 title: Configure Keycloak notifications and alerts
 sidebar:
-  order: 3.19
+  order: 3.019
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-Enable Prometheus alerting rules for Keycloak so that changes to realm configurations, user accounts, and system administrator memberships fire alerts through Alertmanager. UDS Core already collects Keycloak event logs and converts them into Prometheus metrics by default. This guide enables the alerting rules that act on those metrics.
+You'll enable Prometheus alerting rules for Keycloak so that changes to realm configurations, user accounts, and system administrator memberships fire alerts through Alertmanager. UDS Core already collects Keycloak event logs and converts them into Prometheus metrics by default. This guide enables the alerting rules that act on those metrics.
 
 ## Prerequisites
 
@@ -20,11 +20,14 @@ Enable Prometheus alerting rules for Keycloak so that changes to realm configura
 
 UDS Core ships three layers of Keycloak observability, each controlled by a `detailedObservability` Helm value:
 
-| Layer | Helm value | Default | What it provides |
+| Layer | Helm value | Default | Description |
 |---|---|---|---|
 | Enhanced logging | `detailedObservability.logging.enabled` | `true` | Sets Keycloak's `JBossLoggingEventListenerProvider` to `info` level with sanitized, full-representation output |
 | Recording rules + dashboard | `detailedObservability.dashboards.enabled` | `true` | Loki recording rules that convert event logs into Prometheus metrics, plus the **UDS Keycloak Notifications** Grafana dashboard |
 | Alerting rules | `detailedObservability.alerts.enabled` | `false` | PrometheusRule alerts that fire when the recording-rule metrics detect changes |
+
+> [!NOTE]
+> The recording-rules ConfigMap is created when either `detailedObservability.dashboards.enabled` or `detailedObservability.alerts.enabled` is `true`. Enabling alerts (as this guide does) also activates the recording rules if they are not already present.
 
 Because logging and dashboards are enabled by default, you can already view Keycloak event metrics in Grafana without any configuration. This guide enables the third layer (alerting rules) so that changes trigger notifications through Alertmanager.
 
@@ -50,17 +53,25 @@ Because logging and dashboards are enabled by default, you can already view Keyc
                  value: true
    ```
 
-   This creates a `PrometheusRule` with three alerts based on the recording-rule metrics that are already active by default:
+   The override creates a `PrometheusRule` with three alerts based on the recording-rule metrics that are already active by default:
 
-   | Alert | Metric | Severity | Description |
-   |---|---|---|---|
-   | `KeycloakRealmModificationsDetected` | `uds_keycloak:realm_modifications_count` | warning | Fires on realm configuration changes within a 5-minute window |
-   | `KeycloakUserModificationsDetected` | `uds_keycloak:user_modifications_count` | warning | Fires on user or group membership changes within a 5-minute window |
-   | `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_count` | critical | Fires on system administrator changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm) within a 5-minute window |
+   | Alert | Severity | Description |
+   |---|---|---|
+   | `KeycloakRealmModificationsDetected` | warning | Fires on realm configuration changes within a 5-minute window |
+   | `KeycloakUserModificationsDetected` | warning | Fires on user or group membership changes within a 5-minute window |
+   | `KeycloakSystemAdminModificationsDetected` | critical | Fires on system administrator membership changes within a 5-minute window |
+
+   > [!NOTE]
+   > `KeycloakSystemAdminModificationsDetected` uses two detection branches. When `JSONLogEventListenerProvider` is active, it filters specifically on `/UDS Core/Admin` group membership changes. When the standard `org.keycloak.events` logger is active, it matches all `USER|GROUP_MEMBERSHIP` resource changes — that logger does not expose group paths, so narrower filtering is not possible.
+
+   > [!NOTE]
+   > All three alerts have a 1-minute pending period (`for: 1m`). An alert stays in `PENDING` state for up to 60 seconds after the condition first evaluates true before transitioning to `FIRING` and notifying Alertmanager.
 
    Alertmanager receives all three alerts. To route them to Slack, PagerDuty, email, or other channels, see [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/).
 
 2. **Create and deploy your bundle**
+
+   Build the bundle and deploy it to your cluster:
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -83,15 +94,17 @@ uds zarf tools kubectl get configmap -n keycloak -l loki_rule=1
 
 Verify through the Grafana UI:
 
-- **Alerts:** Open Grafana **Alerting > Alert rules** and filter for `Keycloak`. The three alerts (`KeycloakRealmModificationsDetected`, `KeycloakUserModificationsDetected`, `KeycloakSystemAdminModificationsDetected`) should appear in the list.
+- **Alerts:** Open Grafana **Alerting > Alert rules** and filter for `Keycloak`. The three Keycloak alerts should appear in the list.
 - **Recording rules:** Open Grafana **Explore**, select the **Prometheus** datasource, and query `uds_keycloak:realm_modifications_count`. If the metric returns data, the recording rules are working.
 - **Dashboard:** Navigate to the **UDS Keycloak Notifications** dashboard in Grafana to view the metrics and associated log tables.
 
-![UDS Keycloak Notifications Grafana dashboard](../../.images/sso/keycloak-notifications-grafana.png)
+The dashboard displays metric counts and associated Keycloak event log tables for each modification type.
+
+![Grafana dashboard showing realm, user, and admin modification metric counts with associated Keycloak event log tables](../../.images/sso/keycloak-notifications-grafana.png)
 
 ## Troubleshooting
 
-### Problem: Alerts not firing after enabling `detailedObservability`
+### Problem: Alerts not firing after enabling `detailedObservability.alerts.enabled`
 
 **Symptom:** You set `detailedObservability.alerts.enabled` to `true`, but no alerts appear in Grafana Alerting.
 
@@ -101,13 +114,17 @@ Verify through the Grafana UI:
 uds zarf tools kubectl get prometheusrule -n keycloak
 ```
 
-If the `PrometheusRule` exists but alerts are not firing, confirm that Keycloak is logging events. Open Grafana **Explore**, select the **Loki** datasource, and query:
+If the `PrometheusRule` exists but alerts are not firing, confirm that Keycloak is logging events. Open Grafana **Explore**, select the **Loki** datasource, and run one of the following queries depending on which event listener is active in the target realm:
 
-```text
+```logql
 {app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider"
 ```
 
-If no results appear, the `JSONLogEventListenerProvider` may not be active for the target realm. Verify it is listed under **Realm Settings > Events > Event Listeners** in the Keycloak Admin Console.
+```logql
+{app="keycloak", namespace="keycloak"} | json | loggerName=~"org.keycloak.events"
+```
+
+If neither query returns results, Keycloak may not have an event listener configured for the target realm. Check **Realm Settings > Events > Event Listeners** in the Keycloak Admin Console to confirm at least one listener is present.
 
 ## Related documentation
 

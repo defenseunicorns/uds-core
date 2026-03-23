@@ -182,6 +182,7 @@ tasks:
           [ -f "$(pwd)/docs/index.mdx" ] && ln -s "$(pwd)/docs/index.mdx" uds-docs/src/content/docs/core/
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
           ln -s $(pwd)/docs/.images uds-docs/src/content/docs/.images
+          ln -s $(pwd)/docs/.images uds-docs/src/content/docs/core/.images
       - description: "Create product config for dev server"
         cmd: |
           mkdir -p uds-docs/.product-configs
