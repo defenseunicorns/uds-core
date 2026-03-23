@@ -256,7 +256,7 @@ The template repository provides the standard directory structure:
 
    The `secretTemplate` generates a Kubernetes secret with the exact fields your application expects for its SSO configuration. The keys and values vary by application; check your upstream chart's documentation or `values.yaml` for the environment variables it uses to configure its OIDC/Keycloak connection.
 
-   **Monitoring**: declare metrics endpoints for Prometheus to scrape, if your app supports metrics. See [Capture Application Metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) for more detail.
+   **Monitoring**: declare metrics endpoints for Prometheus to scrape, if your app supports metrics. See [Capture Application Metrics](/how-to-guides/monitoring-and-observability/capture-application-metrics/) for more detail.
 
    ```yaml title="chart/templates/uds-package.yaml (continued)"
      monitor:

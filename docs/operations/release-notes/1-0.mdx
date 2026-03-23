@@ -54,9 +54,9 @@ The following steps only apply if your bundle overrides the specific deprecated 
 
 <Steps>
 
-1. **(Optional) Migrate `CA_CERT` to `CA_BUNDLE_CERTS`**
+1. **Check your config for the `CA_CERT` variable**
 
-   If your deployment config sets the `CA_CERT` variable, rename it to `CA_BUNDLE_CERTS`:
+   Search your `uds-config.yaml` for the `CA_CERT` variable. If present, rename it to `CA_BUNDLE_CERTS`:
 
    ```yaml title="uds-config.yaml"
    variables:
@@ -67,13 +67,13 @@ The following steps only apply if your bundle overrides the specific deprecated 
 
    See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for full details on configuring CA certificates.
 
-2. **(Optional) Remove Keycloak FIPS overrides**
+2. **Check your bundle for Keycloak FIPS overrides**
 
-   If your bundle overrides `fips` or `fipsAllowWeakPasswords` in the Keycloak helm values, remove those overrides. FIPS mode is now enabled by default and cannot be disabled. If you were not previously running in FIPS mode, review the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for instructions on handling password upgrades.
+   Search your `uds-bundle.yaml` for `fips` or `fipsAllowWeakPasswords` in the Keycloak Helm values. If present, remove them: FIPS mode is now always enabled and these values are no longer accepted. If you were not previously running in FIPS mode, review the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for instructions on handling password upgrades.
 
    ```yaml title="uds-bundle.yaml"
    overrides:
-     core:
+     keycloak:
        keycloak:
          values:
            # - path: fips                     # Remove this
@@ -82,13 +82,13 @@ The following steps only apply if your bundle overrides the specific deprecated 
            #   value: true
    ```
 
-3. **(Optional) Migrate operator CIDR values**
+3. **Check your bundle for operator CIDR overrides**
 
-   If your bundle overrides `operator.KUBEAPI_CIDR` or `operator.KUBENODE_CIDRS`, remove those overrides and use the `cluster.networking` helm values on the `uds-operator-config` chart instead:
+   Search your `uds-bundle.yaml` for `operator.KUBEAPI_CIDR` or `operator.KUBENODE_CIDRS`. If present, replace them with the `cluster.networking` Helm values on the `uds-operator-config` chart:
 
    ```yaml title="uds-bundle.yaml"
    overrides:
-     core:
+     uds-operator-config:
        uds-operator-config:
          values:
            # - path: operator.KUBEAPI_CIDR       # Remove this
@@ -103,13 +103,13 @@ The following steps only apply if your bundle overrides the specific deprecated 
                - "<your-cidr-2>"
    ```
 
-4. **(Optional) Migrate Keycloak x509/mTLS values**
+4. **Check your bundle for Keycloak x509/mTLS overrides**
 
-   If your bundle overrides `x509LookupProvider` or `mtlsClientCert` in the Keycloak helm values, remove those overrides and use `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat` instead:
+   Search your `uds-bundle.yaml` for `x509LookupProvider` or `mtlsClientCert` in the Keycloak Helm values. If present, replace them with `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat`:
 
    ```yaml title="uds-bundle.yaml"
    overrides:
-     core:
+     keycloak:
        keycloak:
          values:
            # - path: x509LookupProvider                          # Remove this
@@ -122,9 +122,9 @@ The following steps only apply if your bundle overrides the specific deprecated 
              value: "<your-format>"
    ```
 
-5. **(Optional) Add explicit remote to `network.allow` rules**
+5. **Check your `Package` CRs for `network.allow` rules without an explicit remote**
 
-   If you have `Package` CRs with `network.allow` rules that do not specify a remote (`remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost`), those rules will now be rejected at admission. Add an explicit remote to each affected rule:
+   Review any `Package` CRs with `network.allow` rules. If any rules do not specify a remote (`remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost`), they will now be rejected at admission. Add an explicit remote to each affected rule:
 
    ```yaml title="package.yaml"
    spec:

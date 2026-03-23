@@ -28,7 +28,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Packaging lifecycle and configuration
 
-- **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-observability/capture-application-metrics/)
+- **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-and-observability/capture-application-metrics/)
 - **MUST** be versioned using the UDS Package [Versioning scheme](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#versioning).
 - **MUST** contain documentation under a `docs` folder at the root that describes how to configure the package and outlines package dependencies.
 - **MUST** include application [metadata for UDS Registry](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/metadata-guidelines.md) publishing.

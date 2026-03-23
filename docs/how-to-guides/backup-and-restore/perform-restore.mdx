@@ -14,7 +14,7 @@ You'll restore specific namespaces from a completed Velero backup and confirm th
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- A completed Velero backup to restore from (see [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/))
+- A completed Velero backup to restore from (see [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/))
 
 ## Before you begin
 
@@ -81,7 +81,7 @@ Only backups with a `Completed` phase can be used for a restore.
 To run a full end-to-end disaster recovery drill:
 
 1. Create a test namespace with a deployment and ConfigMap.
-2. Trigger a manual backup (see [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/)).
+2. Trigger a manual backup (see [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/)).
 3. Delete the test namespace.
 4. Restore from the backup (step 1 above).
 5. Verify the namespace, deployment, and ConfigMap are restored.
@@ -115,12 +115,12 @@ Look at the `Included Namespaces` and `Excluded Namespaces` fields to confirm sc
 uds zarf tools kubectl get volumesnapshotcontent
 ```
 
-If VolumeSnapshotContents are missing, the backup may not have included volume snapshots. See [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-restore/enable-volume-snapshots-aws-ebs/) or [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-restore/enable-volume-snapshots-vsphere/) to configure snapshot support.
+If VolumeSnapshotContents are missing, the backup may not have included volume snapshots. See [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) or [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) to configure snapshot support.
 
 ## Related documentation
 
 - [Velero: Restore Reference](https://velero.io/docs/latest/restore-reference/) - restore configuration and behavior
 - [Velero: How Velero Works](https://velero.io/docs/main/how-velero-works/) - backup lifecycle and garbage collection
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
-- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
-- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.
+- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-and-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

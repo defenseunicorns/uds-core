@@ -141,7 +141,7 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
    ```
 
    > [!TIP]
-   > For more details on PrometheusRule CRs, see [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/).
+   > For more details on PrometheusRule CRs, see [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/).
 
 4. **Deploy your rules**
 
@@ -209,5 +209,5 @@ uds zarf tools kubectl logs -n loki -l app.kubernetes.io/name=loki -c loki-sc-ru
 
 - [Grafana Loki: Alerting and recording rules](https://grafana.com/docs/loki/latest/alert/) - Loki ruler configuration reference
 - [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) - query language documentation
-- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email.
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define additional alerting conditions based on Prometheus metrics.
+- [Route alerts to notification channels](/how-to-guides/monitoring-and-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email.
+- [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/) - Define additional alerting conditions based on Prometheus metrics.

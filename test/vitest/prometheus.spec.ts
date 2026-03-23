@@ -69,7 +69,11 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
         return body.data.activeTargets;
       },
       targets => {
-        const unhealthy = targets.filter(target => target.health !== "up");
+        // Exclude policy-tests namespace — probes created there by pepr-policies/probe.spec.ts
+        // may linger in Prometheus briefly after teardown, causing false failures.
+        const unhealthy = targets.filter(
+          target => target.health !== "up" && !target.scrapePool.includes("/policy-tests/"),
+        );
         for (const target of unhealthy) {
           console.warn(`Target ${target.scrapePool} is ${target.health}`);
         }
@@ -80,6 +84,11 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
       10000,
     );
 
-    expect(targets.every(target => target.health === "up")).toBe(true);
+    // Same exclusion as the polling condition above — see pepr-policies/probe.spec.ts
+    expect(
+      targets
+        .filter(target => !target.scrapePool.includes("/policy-tests/"))
+        .every(target => target.health === "up"),
+    ).toBe(true);
   });
 });
