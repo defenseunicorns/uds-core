@@ -77,5 +77,5 @@ UDS Core ships Prometheus recording rules that track the availability of core in
 ## Related documentation
 
 - [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/): high-level overview of the monitoring stack
-- [Set up uptime monitoring](/how-to-guides/monitoring-observability/set-up-uptime-monitoring/): configure uptime probes for your own applications
-- [Monitoring How-to Guides](/how-to-guides/monitoring-observability/overview/): task-oriented monitoring guides
+- [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/): configure uptime probes for your own applications
+- [Monitoring How-to Guides](/how-to-guides/monitoring-and-observability/overview/): task-oriented monitoring guides
