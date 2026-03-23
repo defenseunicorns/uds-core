@@ -15,7 +15,7 @@ You'll enable Velero to capture persistent volume data using vSphere CSI snapsho
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to an RKE2 cluster with UDS Core deployed
-- Velero storage backend configured (see [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/))
+- Velero storage backend configured (see [Configure Velero storage backends](/how-to-guides/backup-and-restore/configure-storage-backends/))
 - vSphere environment with a user account that has the required CSI roles and privileges (see [Broadcom vSphere Roles and Privileges](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/vsphere-container-storage-plug-in-deployment/preparing-for-installation-of-vsphere-container-storage-plug-in.html))
 - Ability to apply `HelmChartConfig` overrides to RKE2 system charts
 
@@ -180,7 +180,7 @@ uds zarf tools kubectl get volumesnapshot -A
 - After a backup completes, VolumeSnapshot resources are created for each PVC
 - Snapshot count matches the number of PVCs in backed-up namespaces
 
-To trigger a manual backup for testing, see [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/).
+To trigger a manual backup for testing, see [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/).
 
 ## Troubleshooting
 
@@ -211,5 +211,5 @@ the number of snapshots on the source volume reaches the configured maximum (3)
 - [Rancher vSphere Charts](https://github.com/rancher/vsphere-charts/tree/main) - CPI and CSI driver Helm charts
 - [vSphere CSI Snapshot Limits](https://techdocs.broadcom.com/us/en/vmware-cis/vsphere/container-storage-plugin/3-0/getting-started-with-vmware-vsphere-container-storage-plug-in-3-0/using-vsphere-container-storage-plug-in/volume-snapshot-and-restore/volume-snapshot-and-restor-0.html) - snapshot per volume configuration
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
-- [Perform a manual backup](/how-to-guides/backup-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
-- [Configure Velero storage backends](/how-to-guides/backup-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.
+- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-and-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.
