@@ -148,7 +148,7 @@ All listed packages should show a successful deployment status. If any layer is 
 
 ### Problem: Monitoring dashboards not accessible
 
-**Symptom:** Package CR reconciliation errors for monitoring components that require SSO configuration.
+**Symptom:** `Package` CR reconciliation errors for monitoring components that require SSO configuration.
 
 **Solution:** The `core-monitoring` layer requires the `core-identity-authorization` layer for SSO. Add it to your bundle before the monitoring layer.
 

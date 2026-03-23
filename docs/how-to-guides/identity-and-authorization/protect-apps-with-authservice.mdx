@@ -30,7 +30,7 @@ Authservice works by matching a label selector on your application's pods. When 
   <TabItem label="Single service">
     <Steps>
 
-    1. **Add `enableAuthserviceSelector` to the Package CR**
+    1. **Add `enableAuthserviceSelector` to the `Package` CR**
 
        Set the selector to match the labels on your application pods:
 
@@ -58,7 +58,7 @@ Authservice works by matching a label selector on your application's pods. When 
        > [!NOTE]
        > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows; double-check both before deploying.
 
-    2. **Apply the Package CR**
+    2. **Apply the `Package` CR**
 
        ```bash
        uds zarf tools kubectl apply -f package.yaml
@@ -104,7 +104,7 @@ Authservice works by matching a label selector on your application's pods. When 
                  - "/MyApp/Users"
        ```
 
-    2. **Apply the Package CR**
+    2. **Apply the `Package` CR**
 
        ```bash
        uds zarf tools kubectl apply -f package.yaml
@@ -118,7 +118,7 @@ Authservice works by matching a label selector on your application's pods. When 
 </Tabs>
 
 > [!NOTE]
-> **Ambient mode support:** If your Package CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually; the operator handles it.
+> **Ambient mode support:** If your `Package` CR sets `spec.network.serviceMesh.mode: ambient`, the UDS Operator automatically creates and manages an Istio [waypoint proxy](https://istio.io/latest/docs/ambient/usage/waypoint/) for Authservice to use. You do not need to configure the waypoint manually; the operator handles it.
 
 > [!CAUTION]
 > **Selector matching in ambient mode:** The `enableAuthserviceSelector` must match both the pod labels **and** the Kubernetes Service's `spec.selector`. If the selector matches pods but not the service, the pod is mutated to use the waypoint but the service is not properly associated with it, so traffic is blocked (503 errors) rather than routed through the SSO flow. Any `network.expose` entries should also use the same selector to ensure proper traffic flow from the gateway through the waypoint.
@@ -143,7 +143,7 @@ uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 
 ## Troubleshooting
 
-### Problem: Package CR is rejected with a redirect URI error
+### Problem: `Package` CR is rejected with a redirect URI error
 
 **Symptoms:** `kubectl apply` fails with an error about invalid redirect URIs.
 
@@ -161,7 +161,7 @@ redirectUris:
 
 ### Problem: Traffic is blocked with 503 errors in ambient mode
 
-**Symptoms:** After applying the Package CR with ambient mode, requests to the application return 503.
+**Symptoms:** After applying the `Package` CR with ambient mode, requests to the application return 503.
 
 **Solution:** Verify that the `enableAuthserviceSelector` matches both the pod labels AND the `spec.selector` of the Kubernetes Service for those pods. If the selector matches pod labels but not the service selector, the waypoint proxy is associated with the pods but not the service, so traffic through the service is blocked rather than routed through the SSO flow.
 
@@ -175,7 +175,7 @@ uds zarf tools kubectl get service -n <app-namespace> -o yaml | grep -A5 selecto
 
 **Symptoms:** Prometheus shows scrape errors for a workload that uses `enableAuthserviceSelector`.
 
-**Solution:** The `monitor[].podSelector` (or `monitor[].selector`) in the Package CR must exactly match the `sso[].enableAuthserviceSelector` for the protected workload. When these match, the operator creates an authorization exception that allows Prometheus to scrape metrics directly without going through the SSO flow.
+**Solution:** The `monitor[].podSelector` (or `monitor[].selector`) in the `Package` CR must exactly match the `sso[].enableAuthserviceSelector` for the protected workload. When these match, the operator creates an authorization exception that allows Prometheus to scrape metrics directly without going through the SSO flow.
 
 ```yaml
 spec:
@@ -197,7 +197,7 @@ spec:
 
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on when to use Authservice vs native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) - upstream configuration reference
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO and `enableAuthserviceSelector` field specification
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO and `enableAuthserviceSelector` field specification
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict which Keycloak groups can access your Authservice-protected application.
 - [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable X.509/CAC, OTP, WebAuthn, and social login for users accessing your protected apps.
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - register native OIDC or SAML clients for applications that handle their own authentication flow

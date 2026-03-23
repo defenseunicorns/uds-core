@@ -19,13 +19,13 @@ Applications deployed on regulated platforms cannot each maintain their own user
 
 - **A single audit trail**: all authentication events flow through one system
 - **Consistent access control**: group membership and role assignments apply uniformly across services
-- **Reduced developer burden**: application teams declare SSO requirements in a Package CR; the platform handles client registration and token validation
+- **Reduced developer burden**: application teams declare SSO requirements in a `Package` CR; the platform handles client registration and token validation
 
 ## The SSO model
 
 **Keycloak** is the identity provider. It manages users, groups, and OAuth2/OIDC clients, and federates to external identity providers (Azure AD, Google, LDAP) when teams need to connect an existing directory service.
 
-**The UDS Operator** automates Keycloak client registration. When a Package CR declares an `sso` block, the operator:
+**The UDS Operator** automates Keycloak client registration. When a `Package` CR declares an `sso` block, the operator:
 
 - Creates a Keycloak OIDC client with the correct redirect URIs
 - Stores the client credentials in a Kubernetes secret in the application namespace
@@ -59,7 +59,7 @@ UDS Core pre-configures two Keycloak groups that drive access to platform admin 
 | `/UDS Core/Admin` | Platform administrators | Grafana admin, Keycloak admin console, Alertmanager |
 | `/UDS Core/Auditor` | Read-only platform access | Grafana viewer, log browsing |
 
-Application teams can define their own group-based restrictions in their Package CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
+Application teams can define their own group-based restrictions in their `Package` CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
 
 ## Keycloak configuration layers
 

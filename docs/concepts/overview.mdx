@@ -34,9 +34,9 @@ UDS Core is organized into **functional layers**, discrete Zarf packages grouped
 
 ## The UDS Operator
 
-The UDS Operator is the control plane for UDS Core. The key integration point is the **UDS Package custom resource (CR)**. Teams create a Package CR declaring networking intent, SSO requirements, and monitoring needs. The operator reconciles the CR and creates all necessary platform resources automatically.
+The UDS Operator is the control plane for UDS Core. The key integration point is the **UDS `Package` custom resource (CR)**. Teams create a `Package` CR declaring networking intent, SSO requirements, and monitoring needs. The operator reconciles the CR and creates all necessary platform resources automatically.
 
-It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources. When a Package CR is created or updated, the operator:
+It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources. When a `Package` CR is created or updated, the operator:
 
 - Generates Istio `VirtualService` and `AuthorizationPolicy` resources to control traffic
 - Creates Kubernetes `NetworkPolicy` resources to enforce network boundaries
@@ -44,7 +44,7 @@ It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources. Whe
 - Sets up an Authservice SSO flow to protect mission applications that don't natively implement OIDC
 - Creates `ServiceMonitor`, `PodMonitor`, and blackbox probe resources for Prometheus to scrape application metrics
 
-This automation means platform teams don't need to write low-level Istio or Kubernetes networking configuration for each application, nor manually configure SSO for each app. The Package CR drives all of it from a single declaration.
+This automation means platform teams don't need to write low-level Istio or Kubernetes networking configuration for each application, nor manually configure SSO for each app. The `Package` CR drives all of it from a single declaration.
 
 ## The Policy Engine
 

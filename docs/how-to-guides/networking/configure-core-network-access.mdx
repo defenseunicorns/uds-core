@@ -19,7 +19,7 @@ After completing this guide, you will have extended the network access rules for
 
 ## Before you begin
 
-UDS Core's built-in Package CRs define the network rules each component needs out of the box. However, some deployment scenarios require additional network access. For example:
+UDS Core's built-in `Package` CRs define the network rules each component needs out of the box. However, some deployment scenarios require additional network access. For example:
 
 - **Falco** sending alerts to an external SIEM or webhook
 - **Vector** shipping logs to an external Elasticsearch or S3 endpoint
@@ -27,7 +27,7 @@ UDS Core's built-in Package CRs define the network rules each component needs ou
 - **Prometheus** scraping targets outside the cluster
 - **Keycloak** reaching an external identity provider or OCSP endpoint
 
-Most Core components support an `additionalNetworkAllow` values field that lets you inject extra `allow` rules into the component's Package CR at deploy time via bundle overrides.
+Most Core components support an `additionalNetworkAllow` values field that lets you inject extra `allow` rules into the component's `Package` CR at deploy time via bundle overrides.
 
 ### Supported components
 
@@ -48,7 +48,7 @@ The following Core components support `additionalNetworkAllow`:
 
 1. **Add network rules via bundle overrides**
 
-   Use the `additionalNetworkAllow` values path in your UDS bundle to inject additional `allow` rules for a Core component. Each entry follows the same schema as a Package CR `allow` rule. Select a component below for an example:
+   Use the `additionalNetworkAllow` values path in your UDS bundle to inject additional `allow` rules for a Core component. Each entry follows the same schema as a `Package` CR `allow` rule. Select a component below for an example:
 
    <Tabs>
      <TabItem label="Falco">
@@ -130,7 +130,7 @@ The following Core components support `additionalNetworkAllow`:
    </Tabs>
 
    > [!TIP]
-   > The same pattern works for any supported component; substitute the appropriate `overrides.<zarf-component>.<chart-name>` path from the table above. Each rule entry supports the same fields as a Package CR `allow` rule. See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full schema.
+   > The same pattern works for any supported component; substitute the appropriate `overrides.<zarf-component>.<chart-name>` path from the table above. Each rule entry supports the same fields as a `Package` CR `allow` rule. See the [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full schema.
 
 2. **Create and deploy your bundle**
 
@@ -142,13 +142,13 @@ The following Core components support `additionalNetworkAllow`:
 
 ## Verification
 
-Verify the Package CR was reconciled with the additional rules:
+Verify the `Package` CR was reconciled with the additional rules:
 
 ```bash
 uds zarf tools kubectl get package -n <component-namespace> -o yaml
 ```
 
-Look for your custom `allow` entries in the Package CR's `spec.network.allow` list. Then verify the resources were created:
+Look for your custom `allow` entries in the `Package` CR's `spec.network.allow` list. Then verify the resources were created:
 
 ```bash
 # Check network policies
@@ -165,14 +165,14 @@ uds zarf tools kubectl get serviceentry -n istio-egress-ambient
 **Symptoms:** The Core component still cannot reach the external or internal destination.
 
 **Solution:**
-- Verify the Package CR includes your additional rule: `uds zarf tools kubectl get package <name> -n <namespace> -o yaml`
+- Verify the `Package` CR includes your additional rule: `uds zarf tools kubectl get package <name> -n <namespace> -o yaml`
 - Check that `selector` labels match the component's pods: `uds zarf tools kubectl get pods -n <namespace> --show-labels`
 - For external hosts, verify the `remoteHost` matches exactly; no wildcards are supported
 - Ensure the component's Helm chart supports `additionalNetworkAllow` (check the chart's `values.yaml` for the field)
 
 ### Problem: Override not applied
 
-**Symptoms:** The Package CR doesn't include your custom rules after deployment.
+**Symptoms:** The `Package` CR doesn't include your custom rules after deployment.
 
 **Solution:**
 - Verify the bundle override path is correct: `overrides.<zarf-component>.<chart-name>.values`
@@ -181,6 +181,6 @@ uds zarf tools kubectl get serviceentry -n istio-egress-ambient
 
 ## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure network access rules for your own applications.
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Learn how the service mesh, gateways, and authorization model work.

@@ -27,7 +27,7 @@ There are two targeting modes:
 For pods managed by a Deployment, ReplicaSet, StatefulSet, or DaemonSet, the operator triggers a rolling restart by patching the pod template annotations. For standalone pods without a restartable controller, the operator evicts or deletes the pod; it will only be recreated if some other controller or process creates it again.
 
 > [!TIP]
-> Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/), so pods automatically pick up rotated credentials and updated trust bundles.
+> Pod reload integrates with other UDS Core features. You can enable it for SSO client secrets via `secretConfig.labels` in your [`Package` CR](/reference/operator-and-crds/packages-v1alpha1-cr/), and for CA certificate ConfigMaps via `caBundle.configMap.labels` when [managing trust bundles](/how-to-guides/networking/manage-trust-bundles/), so pods automatically pick up rotated credentials and updated trust bundles.
 
 ## Steps
 
@@ -131,7 +131,7 @@ uds zarf tools kubectl get pods -n <namespace> --show-labels
 
 ## Related documentation
 
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - pod reload can be enabled for SSO client secrets via `secretConfig.labels`
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - pod reload can be enabled for SSO client secrets via `secretConfig.labels`
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - configure `secretConfig.labels` and `secretConfig.annotations` for SSO client secrets
 - [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) - pod reload can be enabled for CA certificate ConfigMaps via `caBundle.configMap.labels`
 - [Networking concepts](/concepts/core-features/networking/) - Understand how UDS Core manages service mesh and network policies.

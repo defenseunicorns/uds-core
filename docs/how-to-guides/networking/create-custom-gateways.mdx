@@ -35,7 +35,7 @@ Two keywords alter gateway behavior when included in the name:
 - **`passthrough`** (e.g., `custom-passthrough`): An extra SNI host match is added for all `expose` entries
 
 > [!NOTE]
-> UDS Core handles the integration with the Package CR system, but you are responsible for creating, configuring, and managing the gateway itself.
+> UDS Core handles the integration with the `Package` CR system, but you are responsible for creating, configuring, and managing the gateway itself.
 
 ## Steps
 
@@ -125,7 +125,7 @@ Two keywords alter gateway behavior when included in the name:
 
 4. **Expose a service through the custom gateway**
 
-   Use the custom gateway name in your Package CR to route traffic through it:
+   Use the custom gateway name in your `Package` CR to route traffic through it:
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -157,7 +157,7 @@ Two keywords alter gateway behavior when included in the name:
 
 ## Verification
 
-Check that the Package CR was reconciled and shows the expected endpoints:
+Check that the `Package` CR was reconciled and shows the expected endpoints:
 
 ```bash
 uds zarf tools kubectl get package my-app -n my-app
@@ -173,14 +173,14 @@ curl -v https://my-app.mydomain.dev
 
 ### Problem: Traffic not routing through the custom gateway
 
-**Symptoms:** Package CR reconciles but traffic doesn't reach the service.
+**Symptoms:** `Package` CR reconciles but traffic doesn't reach the service.
 
 **Solution:** Verify naming conventions match exactly:
 - Release name: `<name>-ingressgateway`
 - Namespace: `istio-<name>-gateway`
 - Config `name`: `<name>`
 
-A mismatch in any of these will prevent the Package CR from connecting to your gateway.
+A mismatch in any of these will prevent the `Package` CR from connecting to your gateway.
 
 ### Problem: TLS errors on non-passthrough gateway
 
@@ -191,6 +191,6 @@ A mismatch in any of these will prevent the Package CR from connecting to your g
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
 - [Configure TLS certificates](/how-to-guides/networking/configure-tls-certificates/) - Set up TLS certificates for your ingress gateways.
 - [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/) - Accept TCP traffic (SSH, database ports, etc.) through a gateway.

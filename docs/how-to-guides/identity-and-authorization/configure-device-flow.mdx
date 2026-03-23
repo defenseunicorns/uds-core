@@ -14,7 +14,7 @@ You'll configure a UDS Package to use the [OAuth 2.0 Device Authorization Grant]
 
 - UDS Core deployed
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
-- A UDS Package CR for the application that needs device flow
+- A UDS `Package` CR for the application that needs device flow
 
 ## Before you begin
 
@@ -22,17 +22,17 @@ The Device Authorization Grant is designed for applications that either have no 
 
 This flow creates a **public client** (a client with no secret). Two important constraints apply to public clients in UDS Core:
 
-- `standardFlowEnabled` must be explicitly set to `false`. The UDS operator will reject the Package CR if it is not. Public clients in UDS Core are restricted to device flow only.
+- `standardFlowEnabled` must be explicitly set to `false`. The UDS operator will reject the `Package` CR if it is not. Public clients in UDS Core are restricted to device flow only.
 - `publicClient: true` is incompatible with `serviceAccountsEnabled: true`
 
 > [!NOTE]
-> If your application needs **both** device flow and a standard browser redirect flow, create two separate SSO clients in the same Package CR, one for each flow. They cannot be combined in a single client.
+> If your application needs **both** device flow and a standard browser redirect flow, create two separate SSO clients in the same `Package` CR, one for each flow. They cannot be combined in a single client.
 
 ## Steps
 
 <Steps>
 
-1. **Configure the Package CR for device flow**
+1. **Configure the `Package` CR for device flow**
 
    Add an SSO client with `publicClient: true`, `standardFlowEnabled: false`, and the `oauth2.device.authorization.grant.enabled` attribute:
 
@@ -55,7 +55,7 @@ This flow creates a **public client** (a client with no secret). Two important c
    > [!NOTE]
    > No Kubernetes secret is created for public clients because there is no client secret to store. Your application initiates device flow by calling the Keycloak device authorization endpoint directly.
 
-2. **Apply the Package CR to the cluster**
+2. **Apply the `Package` CR to the cluster**
 
    **(Recommended)** Include `package.yaml` as a manifest in your application's Zarf package. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -64,13 +64,13 @@ This flow creates a **public client** (a client with no secret). Two important c
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
    ```
 
-   The UDS Operator creates the Keycloak client in the UDS realm when the Package CR is applied.
+   The UDS Operator creates the Keycloak client in the UDS realm when the `Package` CR is applied.
 
 </Steps>
 
@@ -107,7 +107,7 @@ A successful response includes a `device_code`, `user_code`, and `verification_u
 
 **Symptoms:** The application needs both flows but they cannot coexist on one client.
 
-**Solution:** Add two SSO clients to the Package CR, one for device flow (public, no standard flow) and one for the standard browser redirect flow (confidential, standard flow enabled):
+**Solution:** Add two SSO clients to the `Package` CR, one for device flow (public, no standard flow) and one for the standard browser redirect flow (confidential, standard flow enabled):
 
 ```yaml
 spec:
@@ -136,7 +136,7 @@ spec:
 ## Related documentation
 
 - [OAuth 2.0 Device Authorization Grant (RFC 8628)](https://datatracker.ietf.org/doc/html/rfc8628) - specification for the device flow
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO client field specification
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO client field specification
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on the UDS SSO model
 - [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) - Set up machine-to-machine authentication using the OAuth 2.0 Client Credentials Grant.
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Keycloak and Authservice work together in UDS Core.

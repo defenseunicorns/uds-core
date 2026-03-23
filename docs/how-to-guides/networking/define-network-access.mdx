@@ -15,13 +15,13 @@ After completing this guide, your application will have the network access rules
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - Access to a Kubernetes cluster with UDS Core deployed
-- Familiarity with the [Package CR](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- Familiarity with the [`Package` CR](/reference/operator-and-crds/packages-v1alpha1-cr/)
 
 ## Before you begin
 
-UDS Core enforces strict network policies by default. All intra-cluster and external traffic must be explicitly declared in your Package CR's `allow` block. The UDS Operator translates these declarations into Kubernetes `NetworkPolicy` resources, Istio `AuthorizationPolicy` resources, and for external egress, into Istio `ServiceEntry` and routing resources.
+UDS Core enforces strict network policies by default. All intra-cluster and external traffic must be explicitly declared in your `Package` CR's `allow` block. The UDS Operator translates these declarations into Kubernetes `NetworkPolicy` resources, Istio `AuthorizationPolicy` resources, and for external egress, into Istio `ServiceEntry` and routing resources.
 
-Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of fields.
+Each `allow` entry specifies a `direction` (`Ingress` or `Egress`), a `selector` to match your pods, and details about the remote end (namespace, labels, host, or a generated target). See the [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of fields.
 
 Every `allow` entry must also specify at least one remote field: `remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost`. Rules without a remote will be rejected at admission time. Explicit remotes improve auditability, providing a clearer definition of what is on the other side of allowed traffic. See [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) for how to review your allow rules for overly permissive configurations.
 
@@ -139,7 +139,7 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
 
      In ambient mode, the dedicated egress waypoint is automatically included in UDS Core. No additional components need to be enabled.
 
-     Add an `allow` entry with `direction: Egress` and `remoteHost` to your Package CR:
+     Add an `allow` entry with `direction: Egress` and `remoteHost` to your `Package` CR:
 
      ```yaml title="uds-package.yaml"
      apiVersion: uds.dev/v1alpha1
@@ -174,7 +174,7 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
      </TabItem>
      <TabItem label="Specific host (sidecar)">
 
-     For workloads running in sidecar mode, you first need to enable the optional sidecar egress gateway in your UDS Core bundle, then define the egress rule in your application's Package CR.
+     For workloads running in sidecar mode, you first need to enable the optional sidecar egress gateway in your UDS Core bundle, then define the egress rule in your application's `Package` CR.
 
      <Steps>
 
@@ -231,7 +231,7 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
         uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
         ```
 
-     3. **Define the egress rule in your Package CR**
+     3. **Define the egress rule in your `Package` CR**
 
         ```yaml title="uds-package.yaml"
         apiVersion: uds.dev/v1alpha1
@@ -290,14 +290,14 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
 
 4. **Deploy your application**
 
-   **(Recommended)** Include the Package CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f uds-package.yaml
@@ -307,7 +307,7 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
 
 ## Verification
 
-Check that the Package CR was reconciled:
+Check that the `Package` CR was reconciled:
 
 ```bash
 uds zarf tools kubectl get package my-app -n my-app
@@ -353,6 +353,6 @@ uds zarf tools kubectl get virtualservice -n istio-egress-gateway
 
 ## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
 - [Allow permissive mesh traffic](/how-to-guides/networking/allow-permissive-mesh-traffic/) - Relax strict authorization policies when standard network rules aren't sufficient.
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Learn how the service mesh, gateways, and authorization model work.

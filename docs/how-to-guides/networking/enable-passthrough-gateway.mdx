@@ -49,7 +49,7 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 2. **Expose a service through the passthrough gateway**
 
-   Use `gateway: passthrough` in your Package CR. The application behind this gateway must handle TLS termination itself.
+   Use `gateway: passthrough` in your `Package` CR. The application behind this gateway must handle TLS termination itself.
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -72,14 +72,14 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 3. **Deploy your application**
 
-   **(Recommended)** Include the Package CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f uds-package.yaml
@@ -89,7 +89,7 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 ## Verification
 
-Check that the Package CR was reconciled and shows the expected endpoints:
+Check that the `Package` CR was reconciled and shows the expected endpoints:
 
 ```bash
 uds zarf tools kubectl get package my-tls-app -n my-tls-app
@@ -113,7 +113,7 @@ curl -v https://my-tls-app.yourdomain.com
 
 **Symptoms:** Connection resets or TLS errors when accessing the application.
 
-**Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the Package CR. The passthrough gateway does not perform any TLS termination; the application must handle it.
+**Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the `Package` CR. The passthrough gateway does not perform any TLS termination; the application must handle it.
 
 ## Related documentation
 

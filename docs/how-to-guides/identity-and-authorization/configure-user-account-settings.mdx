@@ -170,7 +170,7 @@ In the Keycloak Admin Console, navigate to **Realm Settings** → **Client Polic
 
 ### Problem: Package deployment fails after adding security hardening entries
 
-**Symptoms:** The UDS Operator rejects a Package CR that includes a protocol mapper or client scope.
+**Symptoms:** The UDS Operator rejects a `Package` CR that includes a protocol mapper or client scope.
 
 **Solution:** Confirm the mapper or scope name is spelled correctly. Also confirm Keycloak was fully redeployed after the `realmInitEnv` change was applied, since these settings only take effect on initial realm import.
 

@@ -22,7 +22,7 @@ Once packages are deployed, the UDS Operator takes over. Think of CRDs as forms 
 
 ## Package
 
-Think of a Package CR as a **request form** for the platform. Instead of manually configuring Istio routes, writing NetworkPolicies, and setting up Keycloak clients, an application team fills out one declaration, and the operator provisions everything.
+Think of a `Package` CR as a **request form** for the platform. Instead of manually configuring Istio routes, writing NetworkPolicies, and setting up Keycloak clients, an application team fills out one declaration, and the operator provisions everything.
 
 A Package can declare things like:
 
@@ -34,7 +34,7 @@ A Package can declare things like:
 <LinkCard title="Package CR Reference" href="/reference/operator-and-crds/packages-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 
 > [!NOTE]
-> Only one Package CR can exist per namespace. This constraint enables workload isolation and simplifies policy generation.
+> Only one `Package` CR can exist per namespace. This constraint enables workload isolation and simplifies policy generation.
 
 > [!TIP]
 > See [Networking & Service Mesh](/concepts/core-features/networking/) for how Package networking declarations work in practice.
@@ -43,7 +43,7 @@ A Package can declare things like:
 
 The platform enforces a strict security baseline out of the box: no privileged containers, no root execution, restricted volume types. But sometimes a workload genuinely needs to break a rule. A node-level metrics agent, for example, needs host access that would normally be blocked.
 
-An Exemption CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields, so the reason for the exemption can be documented right next to the exemption itself.
+An `Exemption` CR is a **permission slip**. It names exactly which policies to bypass and targets specific workloads by namespace and name. It also supports title and description fields, so the reason for the exemption can be documented right next to the exemption itself.
 
 <LinkCard title="Exemption CR Reference" href="/reference/operator-and-crds/exemptions-v1alpha1-cr/" description="Full schema, fields, and YAML examples." />
 

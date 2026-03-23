@@ -38,7 +38,7 @@ This is typically caused by one of the following:
 
 2. **Verify the CR exists and check its status**
 
-   For a Package CR, confirm it exists and check its status:
+   For a `Package` CR, confirm it exists and check its status:
 
    ```bash
    uds zarf tools kubectl get packages -n <namespace> <package-name> -o jsonpath='{.status.phase}'
@@ -46,7 +46,7 @@ This is typically caused by one of the following:
 
    **What to look for:** the `status.phase` should be `Ready`. If it's stuck on `Pending` or shows an error, the operator is not successfully reconciling it; see [Cause 2: Incorrect CR definition](#cause-2-incorrect-cr-definition).
 
-   For an Exemption CR, confirm it exists in the correct namespace:
+   For an `Exemption` CR, confirm it exists in the correct namespace:
 
    ```bash
    uds zarf tools kubectl get exemptions -n uds-policy-exemptions <exemption-name>
@@ -179,7 +179,7 @@ uds zarf tools kubectl logs -n pepr-system deploy/pepr-uds-core-watcher --tail=5
 **Success indicators:**
 
 - Log entries show `Processing exemption` or `Processing Package` with the correct CR name
-- The `status.phase` progresses to `Ready` for Package CRs
+- The `status.phase` progresses to `Ready` for `Package` CRs
 - Workloads reflect the expected exemption or package behavior
 
 ## Additional help

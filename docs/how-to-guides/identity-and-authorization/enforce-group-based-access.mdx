@@ -44,9 +44,9 @@ Application teams can define their own group paths. Group paths follow Keycloak'
    > [!NOTE]
    > Group paths are case-sensitive. `/UDS Core/Admin` and `/uds core/admin` are different paths.
 
-2. **Add `groups.anyOf` to your Package CR**
+2. **Add `groups.anyOf` to your `Package` CR**
 
-   In your application's Package CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access.
+   In your application's `Package` CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access.
 
    ```yaml title="package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -76,13 +76,13 @@ Application teams can define their own group paths. Group paths follow Keycloak'
        - "/MyApp/Operators"
    ```
 
-3. **Apply the Package CR**
+3. **Apply the `Package` CR**
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
    ```
 
-   The UDS Operator reconciles the Package CR and updates the Authservice authorization policy to enforce group membership.
+   The UDS Operator reconciles the `Package` CR and updates the Authservice authorization policy to enforce group membership.
 
 </Steps>
 
@@ -113,7 +113,7 @@ uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 1. Log in to the Keycloak admin UI (uds realm)
 2. Go to **Groups** and navigate to the intended group
 3. Copy the full path including parent groups and leading `/`
-4. Compare it character-for-character with the value in your Package CR (paths are case-sensitive)
+4. Compare it character-for-character with the value in your `Package` CR (paths are case-sensitive)
 
 ### Problem: Group membership does not match what's in Keycloak
 
@@ -134,5 +134,5 @@ To inspect the token claims, use the Keycloak Account console at `sso.<domain>` 
 ## Related documentation
 
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on platform groups and the SSO model
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full `groups` field specification
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full `groups` field specification
 - [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) - required prerequisite for group-based access on apps without native OIDC

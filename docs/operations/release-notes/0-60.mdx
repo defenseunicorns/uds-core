@@ -15,7 +15,7 @@ UDS Core 0.60 changes the default Istio service mesh mode to ambient for all `Pa
 
 | Change | Impact | Action required |
 |--------|--------|-----------------|
-| Default Istio mesh mode changed to `ambient` | Packages without explicit `spec.network.serviceMesh.mode` switch from sidecar to ambient on upgrade | Set `mode: sidecar` on any Package CR that must remain in sidecar mode |
+| Default Istio mesh mode changed to `ambient` | Packages without explicit `spec.network.serviceMesh.mode` switch from sidecar to ambient on upgrade | Set `mode: sidecar` on any `Package` CR that must remain in sidecar mode |
 
 ### Notable features
 
@@ -62,9 +62,9 @@ spec:
 
 <Steps>
 
-1. **Audit Package CRs for mesh mode**
+1. **Audit `Package` CRs for mesh mode**
 
-   Identify all Package CRs that do not set `spec.network.serviceMesh.mode` explicitly. These will switch to ambient mode on upgrade:
+   Identify all `Package` CRs that do not set `spec.network.serviceMesh.mode` explicitly. These will switch to ambient mode on upgrade:
 
    ```bash
    uds zarf tools kubectl get packages -A -o jsonpath='{range .items[*]}{.metadata.namespace}/{.metadata.name}{"\t"}{.spec.network.serviceMesh.mode}{"\n"}{end}'
@@ -72,7 +72,7 @@ spec:
 
    Packages with a blank value in the second column have no explicit mesh mode set. Decide for each whether ambient mode is acceptable or whether you need to pin it to `sidecar`.
 
-2. **Set explicit mesh mode on Package CRs**
+2. **Set explicit mesh mode on `Package` CRs**
 
    For any Package that must remain in sidecar mode, set the mode explicitly:
 
@@ -86,7 +86,7 @@ spec:
 
 3. **Update SSO secret field names**
 
-   Update any `spec.sso` configurations in your Package CRs to use the new field names. Review the release notes for the specific field mapping.
+   Update any `spec.sso` configurations in your `Package` CRs to use the new field names. Review the release notes for the specific field mapping.
 
 4. **Target v0.60.2**
 

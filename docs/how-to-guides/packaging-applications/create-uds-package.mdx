@@ -21,14 +21,14 @@ All examples reference the [Reference Package](https://github.com/uds-packages/r
 
 ## Before you begin
 
-A UDS Package wraps a Helm chart with platform integration (networking, SSO, monitoring, and security policies) declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
+A UDS Package wraps a Helm chart with platform integration (networking, SSO, monitoring, and security policies) declared through the [UDS `Package` custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
 
 The template repository provides the standard directory structure:
 
 | File / Directory | Purpose |
 |---|---|
 | `bundle/` | Dev/test bundle for local development and CI |
-| `chart/` | Helm chart containing the UDS Package CR and integration templates |
+| `chart/` | Helm chart containing the UDS `Package` CR and integration templates |
 | `common/` | Base `zarf.yaml` shared across all flavors |
 | `tasks/` | Package-specific task definitions included by `tasks.yaml` |
 | `tests/` | Integration tests (Playwright, Jest, or custom scripts) |
@@ -86,7 +86,7 @@ The template repository provides the standard directory structure:
    ```
 
    > [!NOTE]
-   > The first chart (`uds-reference-package-config`) is the local config chart that deploys the UDS Package CR and any supplemental templates (secrets, dashboards, etc.). The second is the upstream application chart. Both deploy to the same namespace.
+   > The first chart (`uds-reference-package-config`) is the local config chart that deploys the UDS `Package` CR and any supplemental templates (secrets, dashboards, etc.). The second is the upstream application chart. Both deploy to the same namespace.
 
 3. **Configure the root Zarf package definition**
 
@@ -147,9 +147,9 @@ The template repository provides the standard directory structure:
      pullPolicy: Always
    ```
 
-5. **Define the UDS Package CR**
+5. **Define the UDS `Package` CR**
 
-   The Package CR in `chart/templates/uds-package.yaml` tells the UDS Operator what your application needs from the platform. Configure the three main integration sections:
+   The `Package` CR in `chart/templates/uds-package.yaml` tells the UDS Operator what your application needs from the platform. Configure the three main integration sections:
 
    **Networking**: expose services through Istio gateways and declare allowed traffic.
 
@@ -271,7 +271,7 @@ The template repository provides the standard directory structure:
 
 6. **Configure the chart values**
 
-   The config chart's `chart/values.yaml` defines the inputs consumed by your Package CR templates. Bundle deployers can override them via `overrides` in `uds-bundle.yaml`:
+   The config chart's `chart/values.yaml` defines the inputs consumed by your `Package` CR templates. Bundle deployers can override them via `overrides` in `uds-bundle.yaml`:
 
    ```yaml title="chart/values.yaml"
    domain: "###ZARF_VAR_DOMAIN###"
@@ -412,7 +412,7 @@ The template repository provides the standard directory structure:
 
 ## Verification
 
-Confirm the UDS Operator processed your Package CR:
+Confirm the UDS Operator processed your `Package` CR:
 
 ```bash
 uds zarf tools kubectl get package -n reference-package
@@ -481,7 +481,7 @@ For more guidance on diagnosing and resolving policy violations, see the [Policy
 
 ## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Define Network Access](/how-to-guides/networking/define-network-access/)
 - [Identity & Authorization](/concepts/core-features/identity-and-authorization/)
 - [Bundles](/concepts/configuration-and-packaging/bundles/)

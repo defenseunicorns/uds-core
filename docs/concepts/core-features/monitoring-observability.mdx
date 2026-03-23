@@ -28,7 +28,7 @@ By including monitoring as a platform layer, UDS Core provides:
 
 ## How application teams add metrics
 
-Applications declare their monitoring needs in the Package CR's `monitor` block. The UDS Operator automatically creates the appropriate [`ServiceMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor), [`PodMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor), and [`Probe`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources for Prometheus to scrape. Alert rules for application-specific conditions are expressed as [`PrometheusRule`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
+Applications declare their monitoring needs in the `Package` CR's `monitor` block. The UDS Operator automatically creates the appropriate [`ServiceMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor), [`PodMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor), and [`Probe`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources for Prometheus to scrape. Alert rules for application-specific conditions are expressed as [`PrometheusRule`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
 
 ## Alert routing principles
 

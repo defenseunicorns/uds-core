@@ -30,7 +30,7 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
    mkdir podinfo-package && cd podinfo-package
    ```
 
-2. **Create the UDS Package CR**
+2. **Create the UDS `Package` CR**
 
    This manifest tells the UDS Operator what platform integrations your app needs:
 
@@ -77,7 +77,7 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
 
 3. **Create `zarf.yaml`**
 
-   The Zarf package definition bundles the Helm chart, the Package CR, and the container image together:
+   The Zarf package definition bundles the Helm chart, the `Package` CR, and the container image together:
 
    ```yaml title="zarf.yaml"
    kind: ZarfPackageConfig
@@ -110,7 +110,7 @@ A [Zarf Package](https://docs.zarf.dev/) bundles your application's images and m
    uds zarf package deploy zarf-package-podinfo-*.tar.zst --confirm
    ```
 
-   This builds `zarf-package-podinfo-<arch>-0.0.1.tar.zst`, then deploys it onto your existing UDS Core cluster. The UDS Operator picks up the Package CR and configures ingress, SSO, monitoring, and network policies automatically.
+   This builds `zarf-package-podinfo-<arch>-0.0.1.tar.zst`, then deploys it onto your existing UDS Core cluster. The UDS Operator picks up the `Package` CR and configures ingress, SSO, monitoring, and network policies automatically.
 
 </Steps>
 

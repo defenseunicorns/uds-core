@@ -14,7 +14,7 @@ In a traditional Kubernetes deployment, network security relies on IP-based `Net
 A service mesh solves this by inserting a proxy layer that handles TLS, identity, and traffic routing transparently. In UDS Core, Istio provides:
 
 - **Mutual TLS (mTLS) for all in-cluster traffic**: every connection between workloads is authenticated and encrypted, regardless of whether the application itself supports TLS. Workload identity is derived from Kubernetes service accounts via SPIFFE certificates.
-- **Authorization policies**: fine-grained rules that specify which workloads can talk to which other workloads, and on which ports. These default to *deny all* and are opened up only through explicit Package CR declarations.
+- **Authorization policies**: fine-grained rules that specify which workloads can talk to which other workloads, and on which ports. These default to *deny all* and are opened up only through explicit `Package` CR declarations.
 - **Ingress and egress control**: all traffic entering or leaving the cluster flows through Istio gateways, providing a consistent point for TLS termination, traffic inspection, and access control.
 
 ## Ambient vs. sidecar mode
@@ -78,7 +78,7 @@ The UDS Operator reads this declaration and generates the underlying Istio resou
 - A `VirtualService` routing `my-app.yourdomain.com` to the service
 - An `AuthorizationPolicy` permitting ingress from the tenant gateway
 
-Application teams never write Istio YAML directly. The Package CR is the intent interface; the operator handles the mechanics.
+Application teams never write Istio YAML directly. The `Package` CR is the intent interface; the operator handles the mechanics.
 
 ### Egress
 
@@ -100,11 +100,11 @@ The operator creates the networking resources needed for each declared egress ru
 
 ## Authorization policy model
 
-Istio in UDS Core defaults to **deny all** ingress. Traffic is permitted only when an explicit `ALLOW` authorization policy exists. The UDS Operator generates these policies automatically based on Package CR `expose` and `allow` declarations.
+Istio in UDS Core defaults to **deny all** ingress. Traffic is permitted only when an explicit `ALLOW` authorization policy exists. The UDS Operator generates these policies automatically based on `Package` CR `expose` and `allow` declarations.
 
 This means:
-- A service that is not declared in any Package CR receives no traffic from the mesh
-- Cross-service communication must be declared explicitly in the Package CR
+- A service that is not declared in any `Package` CR receives no traffic from the mesh
+- Cross-service communication must be declared explicitly in the `Package` CR
 - Platform components (Prometheus scraping, log collection) have pre-configured allow policies
 
 ## Trust and certificate management

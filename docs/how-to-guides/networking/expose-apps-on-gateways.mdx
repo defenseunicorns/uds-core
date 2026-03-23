@@ -70,7 +70,7 @@ After completing this guide, your application will be accessible through one of 
 
    Ensure your DNS has an A record for the root domain pointing to your ingress gateway.
 
-2. **Define a Package CR for your application**
+2. **Define a `Package` CR for your application**
 
    Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically.
 
@@ -208,18 +208,18 @@ After completing this guide, your application will be accessible through one of 
                maxAge: "86400s"
    ```
 
-   All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
+   All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
 
 4. **Deploy your application**
 
-   **(Recommended)** Include the Package CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f uds-package.yaml
@@ -231,7 +231,7 @@ After completing this guide, your application will be accessible through one of 
 
 ## Verification
 
-Check that the Package CR was reconciled and shows the expected endpoints:
+Check that the `Package` CR was reconciled and shows the expected endpoints:
 
 ```bash
 uds zarf tools kubectl get package my-app -n my-app
@@ -250,7 +250,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Browser or curl returns connection refused or timeout.
 
 **Solution:**
-- Verify the Package CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` (check the `STATUS` column)
+- Verify the `Package` CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` (check the `STATUS` column)
 - Ensure your DNS resolves the hostname to the gateway load balancer IP
 
 ### Problem: Wrong gateway or domain
@@ -258,7 +258,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Application accessible on an unexpected URL or not at all.
 
 **Solution:**
-- Check the `gateway` field in your Package CR matches your intent (`tenant` or `admin`)
+- Check the `gateway` field in your `Package` CR matches your intent (`tenant` or `admin`)
 - Verify the `host` field, which becomes the subdomain prefix (e.g., `host: my-app` becomes `my-app.yourdomain.com`)
 - Check `shared.domain` in your `uds-config.yaml`
 
@@ -274,7 +274,7 @@ curl -v https://my-app.yourdomain.com
 ## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
 - [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
 - [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.

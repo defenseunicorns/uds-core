@@ -14,14 +14,14 @@ After completing this guide, you will have relaxed Istio's strict authorization 
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- Confirmation that [Package CR `expose` and `allow` rules](/reference/operator-and-crds/packages-v1alpha1-cr/) cannot satisfy your traffic requirements
+- Confirmation that [`Package` CR `expose` and `allow` rules](/reference/operator-and-crds/packages-v1alpha1-cr/) cannot satisfy your traffic requirements
 
 ## Before you begin
 
 > [!CAUTION]
-> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements, not to bypass the authorization model.
+> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the `Package` CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements, not to bypass the authorization model.
 
-UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your Package CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
+UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your `Package` CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
 
 Some workloads need traffic that falls outside this model. Common examples include:
 
@@ -31,7 +31,7 @@ Some workloads need traffic that falls outside this model. Common examples inclu
 In these cases, you can layer additional `ALLOW` [authorization policies](https://istio.io/latest/docs/concepts/security/#authorization-policies) on top of the operator-generated ones. Istio evaluates `DENY` policies first, then `ALLOW` policies, so your additional `ALLOW` rules will not override any existing `DENY` policies.
 
 > [!NOTE]
-> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity, so traffic must be allowed by both layers. Any explicit `allow` entries in your Package CR are still required for Kubernetes-level network policy access.
+> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity, so traffic must be allowed by both layers. Any explicit `allow` entries in your `Package` CR are still required for Kubernetes-level network policy access.
 
 ## Steps
 
@@ -220,7 +220,7 @@ Test that the previously-blocked traffic now flows as expected.
 
 ## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)
 - [Istio PeerAuthentication Documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Learn how the service mesh, gateways, and authorization model work.

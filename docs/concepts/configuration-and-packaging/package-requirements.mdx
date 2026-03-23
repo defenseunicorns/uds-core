@@ -22,7 +22,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Security, policy, and hardening
 
-- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS Exemption custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
+- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
 - **MUST** declaratively implement any available application hardening guidelines by default.
 - **SHOULD** consider security options during implementation to provide the most secure default possible (i.e. SAML w/SCIM vs OIDC).
 
@@ -39,8 +39,8 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Networking and service mesh
 
-- **MUST** define network policies under the `allow` key as required in the [UDS Package Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
-- **MUST** define any external interfaces under the `expose` key in the [UDS Package Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
+- **MUST** define network policies under the `allow` key as required in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
+- **MUST** define any external interfaces under the `expose` key in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
 - **MUST** not rely on exposed interfaces (e.g., `.uds.dev`) being accessible from the deployment environment (bastion or pipeline).
 - **MUST** deploy and operate successfully with Istio enabled.
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
