@@ -121,7 +121,7 @@ Ask the user directly: "Are there any manual upgrade steps operators need to per
 
 ### For minor/major releases — create new file
 
-Follow the template from `.ai/docs/release-notes-template.md`. Determine the sidebar order by looking at the most recent release notes file and decrementing by 1.
+Follow the template from `.ai/docs/release-notes-template.md`. Determine the `sidebar.order` by looking at the most recent release notes file and using the next lower 3-decimal value (for example: `3.999`, `3.998`, `3.997`, … — decrement by `0.001`).
 
 ### For patch releases — update existing file
 
