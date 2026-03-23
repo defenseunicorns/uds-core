@@ -69,7 +69,7 @@ The following steps only apply if your bundle overrides the specific deprecated 
 
 2. **Check your bundle for Keycloak FIPS overrides**
 
-   Search your `uds-bundle.yaml` for `fips` or `fipsAllowWeakPasswords` in the Keycloak Helm values. If present, remove them — FIPS mode is now always enabled and these values are no longer accepted. If you were not previously running in FIPS mode, review the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for instructions on handling password upgrades.
+   Search your `uds-bundle.yaml` for `fips` or `fipsAllowWeakPasswords` in the Keycloak Helm values. If present, remove them: FIPS mode is now always enabled and these values are no longer accepted. If you were not previously running in FIPS mode, review the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for instructions on handling password upgrades.
 
    ```yaml title="uds-bundle.yaml"
    overrides:
