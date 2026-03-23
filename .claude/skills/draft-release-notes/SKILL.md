@@ -170,12 +170,14 @@ This release includes <features, bug fixes, CVE fixes, etc as applicable>. You c
 
 Some particular changes of note:
 - <List any significant features included>
-- <List any dependency updates with their application versions>
 - <List any significant bug fixes (focus on any prominent/very public bugs)>
+- Full dependency updates (<docs-site-link>#dependency-updates)
 
 As per usual please reach out in #product-support if you encounter any issues consuming this release.
 <Also note if we are tracking any bugs or CVEs that we know will be fixed soon in a patch>
 ```
+
+Instead of listing individual dependency updates in the Slack message, link to the dependency updates section of the release notes page. Use the anchor `#dependency-updates` on the docs site URL.
 
 Also provide the metadata for the Slack workflow:
 - **Announcement Tier:** Let the user decide this
