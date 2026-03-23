@@ -1,7 +1,7 @@
 ---
 title: Enable and use the passthrough gateway
 sidebar:
-  order: 2.03
+  order: 2.003
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -49,7 +49,7 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 2. **Expose a service through the passthrough gateway**
 
-   Use `gateway: passthrough` in your Package CR. The application behind this gateway must handle TLS termination itself.
+   Use `gateway: passthrough` in your `Package` CR. The application behind this gateway must handle TLS termination itself.
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -72,14 +72,14 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 3. **Deploy your application**
 
-   **(Recommended)** Include the Package CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR in your application's Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f uds-package.yaml
@@ -89,13 +89,13 @@ After completing this guide, you will have the optional passthrough gateway depl
 
 ## Verification
 
-Check that the Package CR was reconciled and shows the expected endpoints:
+Check that the `Package` CR was reconciled and shows the expected endpoints:
 
 ```bash
 uds zarf tools kubectl get package my-tls-app -n my-tls-app
 ```
 
-The `ENDPOINTS` column should show your application's URL. Test access — the TLS certificate presented should be your application's certificate, not the gateway's:
+The `ENDPOINTS` column should show your application's URL. Test access; the TLS certificate presented should be your application's certificate, not the gateway's:
 
 ```bash
 curl -v https://my-tls-app.yourdomain.com
@@ -113,10 +113,10 @@ curl -v https://my-tls-app.yourdomain.com
 
 **Symptoms:** Connection resets or TLS errors when accessing the application.
 
-**Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the Package CR. The passthrough gateway does not perform any TLS termination — the application must handle it.
+**Solution:** Ensure your application is correctly configured to terminate TLS on the port specified in the `Package` CR. The passthrough gateway does not perform any TLS termination; the application must handle it.
 
-## Related Documentation
+## Related documentation
 
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — how the service mesh, gateways, and network policies work together in UDS Core
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
-- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) — Deploy a gateway with independent domain, TLS, and security controls.
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Make applications accessible through the tenant or admin gateway.
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.

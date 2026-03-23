@@ -1,7 +1,7 @@
 ---
 title: Create metric alerting rules
 sidebar:
-  order: 5.4
+  order: 5.004
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -63,10 +63,10 @@ UDS Core ships default alerting rules from the upstream kube-prometheus-stack ch
 
    Key fields in each rule:
 
-   - **`expr`** — PromQL expression that defines the alerting condition. When this expression returns results, the alert becomes active.
-   - **`for`** — How long the condition must be continuously true before the alert fires. Prevents flapping on transient spikes.
-   - **`labels.severity`** — Used by Alertmanager for routing. Common values are `critical`, `warning`, and `info`.
-   - **`annotations`** — Human-readable context attached to the alert. Include a `summary`, `description`, and `runbook` URL to make alerts actionable.
+   - **`expr`:** PromQL expression that defines the alerting condition. When this expression returns results, the alert becomes active.
+   - **`for`:** How long the condition must be continuously true before the alert fires. Prevents flapping on transient spikes.
+   - **`labels.severity`:** Used by Alertmanager for routing. Common values are `critical`, `warning`, and `info`.
+   - **`annotations`:** Human-readable context attached to the alert. Include a `summary`, `description`, and `runbook` URL to make alerts actionable.
 
 2. **Deploy the rule**
 
@@ -134,9 +134,9 @@ UDS Core ships default alerting rules from the upstream kube-prometheus-stack ch
 Open Grafana and navigate to **Alerting > Alert rules**. Filter by the Prometheus datasource. Confirm your custom rules appear in the list.
 
 Check the rule state to understand its current status:
-- **Inactive** — condition is not met
-- **Pending** — condition is met but the `for` duration has not elapsed
-- **Firing** — active alert being sent to Alertmanager
+- **Inactive:** condition is not met
+- **Pending:** condition is met but the `for` duration has not elapsed
+- **Firing:** active alert being sent to Alertmanager
 
 ## Troubleshooting
 
@@ -161,13 +161,13 @@ uds zarf tools kubectl describe prometheusrule <name> -n <namespace>
 uds zarf connect prometheus
 ```
 
-Navigate to the **Graph** tab and run your `expr` query directly. If it returns results, check that the `for` duration has elapsed — the alert will remain in Pending state until the condition is continuously true for that period.
+Navigate to the **Graph** tab and run your `expr` query directly. If it returns results, check that the `for` duration has elapsed, because the alert will remain in Pending state until the condition is continuously true for that period.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus: Alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) — PromQL alerting rule syntax
-- [Prometheus: Alerting best practices](https://prometheus.io/docs/practices/alerting/) — guidance on alert design
-- [Prometheus Operator: PrometheusRule API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) — full CRD field reference
-- [Default rule runbooks](https://runbooks.prometheus-operator.dev/) — troubleshooting guides for kube-prometheus-stack alerts
-- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) — Configure Alertmanager to deliver your alerts to Slack, PagerDuty, or email.
-- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) — Complement metric alerts with log pattern detection using Loki Ruler.
+- [Prometheus: Alerting rules](https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/) - PromQL alerting rule syntax
+- [Prometheus: Alerting best practices](https://prometheus.io/docs/practices/alerting/) - guidance on alert design
+- [Prometheus Operator: PrometheusRule API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) - full CRD field reference
+- [Default rule runbooks](https://runbooks.prometheus-operator.dev/) - troubleshooting guides for kube-prometheus-stack alerts
+- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver your alerts to Slack, PagerDuty, or email.
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) - Complement metric alerts with log pattern detection using Loki Ruler.

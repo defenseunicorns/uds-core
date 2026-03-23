@@ -3,14 +3,12 @@ title: Provision External Services
 prev: true
 next: true
 sidebar:
-  order: 3.3
+  order: 3.002
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 Before building your bundle, provision the external services UDS Core requires: DNS, TLS certificates, object storage, and a database for Keycloak. Work through each section and note the values you'll need when configuring overrides in the next step.
-
----
 
 <Steps>
 
@@ -18,12 +16,12 @@ Before building your bundle, provision the external services UDS Core requires: 
 
    UDS Core uses two domains to route traffic:
 
-   - **Tenant domain** — application traffic (e.g., `yourdomain.com`)
-   - **Admin domain** — platform UIs: Keycloak Admin Console, Grafana (e.g., `admin.yourdomain.com`)
+   - **Tenant domain**: application traffic (e.g., `yourdomain.com`)
+   - **Admin domain**: platform UIs such as Keycloak Admin Console and Grafana (e.g., `admin.yourdomain.com`)
 
-   Create wildcard DNS records for both domains. You will point these to your load balancer IP or hostname after deployment — see [Deploy to Production](/getting-started/production/deploy/) for details on retrieving the gateway IPs.
+   Create wildcard DNS records for both domains. You will point these to your load balancer IP or hostname after deployment. See [Deploy to Production](/getting-started/production/deploy/) for details on retrieving the gateway IPs.
 
-   The domain can be set in `uds-config.yaml` via the `shared` section:
+   Set the domain in `uds-config.yaml` via the `shared` section:
 
    ```yaml title="uds-config.yaml"
    shared:
@@ -36,7 +34,7 @@ Before building your bundle, provision the external services UDS Core requires: 
 
 2. **TLS Certificates**
 
-   UDS Core requires TLS certificates for two Istio ingress gateways: admin and tenant. Certificates must be provided in PEM format, base64-encoded, and must include the **full certificate chain** (server certificate → intermediates → root CA).
+   UDS Core requires TLS certificates for two Istio ingress gateways: admin and tenant. Provide certificates in PEM format, base64-encoded, including the **full certificate chain** (server certificate, intermediates, root CA).
 
    | Gateway | Purpose |
    |---|---|
@@ -108,11 +106,9 @@ Before building your bundle, provision the external services UDS Core requires: 
 
 </Steps>
 
----
-
 ## Checklist
 
-Before moving on, confirm:
+Before moving on, confirm you have completed the following:
 
 - Wildcard DNS records created for tenant domain (`*.yourdomain.com`)
 - Wildcard DNS records created for admin domain (`*.admin.yourdomain.com`)

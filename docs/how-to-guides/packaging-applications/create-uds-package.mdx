@@ -1,14 +1,14 @@
 ---
 title: Create a UDS Package
 sidebar:
-  order: 9.1
+  order: 9.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll take an existing Helm chart and package it as a UDS Package — complete with network policies, SSO integration, and monitoring — ready to deploy on UDS Core. This guide uses the [UDS Package Template](https://github.com/uds-packages/template) as the starting point, which uses a standard format for UDS Packages.
+You'll take an existing Helm chart and package it as a UDS Package, complete with network policies, SSO integration, and monitoring, ready to deploy on UDS Core. This guide uses the [UDS Package Template](https://github.com/uds-packages/template) as the starting point, which uses a standard format for UDS Packages.
 
 All examples reference the [Reference Package](https://github.com/uds-packages/reference-package), a working UDS Package that demonstrates every integration point covered here.
 
@@ -21,20 +21,20 @@ All examples reference the [Reference Package](https://github.com/uds-packages/r
 
 ## Before you begin
 
-A UDS Package wraps a Helm chart with platform integration — networking, SSO, monitoring, and security policies — declared through the [UDS Package custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
+A UDS Package wraps a Helm chart with platform integration (networking, SSO, monitoring, and security policies) declared through the [UDS `Package` custom resource](/reference/operator-and-crds/packages-v1alpha1-cr/). The UDS Operator watches for this CR and automatically provisions Istio ingress, Keycloak clients, Prometheus monitors, Istio Authorization policies, network policies, etc...
 
 The template repository provides the standard directory structure:
 
 | File / Directory | Purpose |
 |---|---|
 | `bundle/` | Dev/test bundle for local development and CI |
-| `chart/` | Helm chart containing the UDS Package CR and integration templates |
+| `chart/` | Helm chart containing the UDS `Package` CR and integration templates |
 | `common/` | Base `zarf.yaml` shared across all flavors |
 | `tasks/` | Package-specific task definitions included by `tasks.yaml` |
 | `tests/` | Integration tests (Playwright, Jest, or custom scripts) |
-| `values/` | Helm values files — `common-values.yaml` for shared config, `<flavor>-values.yaml` per flavor |
-| `tasks.yaml` | Root [UDS Runner](https://github.com/defenseunicorns/uds-common/tree/main/tasks) task file — entry point for `uds run` commands |
-| `zarf.yaml` | Root package definition — metadata, flavors, images, and variable declarations |
+| `values/` | Helm values files: `common-values.yaml` for shared config, `<flavor>-values.yaml` per flavor |
+| `tasks.yaml` | Root [UDS Runner](https://github.com/defenseunicorns/uds-common/tree/main/tasks) task file, entry point for `uds run` commands |
+| `zarf.yaml` | Root package definition: metadata, flavors, images, and variable declarations |
 
 ## Steps
 
@@ -61,7 +61,7 @@ The template repository provides the standard directory structure:
 
 2. **Configure the common Zarf package definition**
 
-   The `common/zarf.yaml` defines what's shared across all flavors — the config chart, the upstream Helm chart reference, and shared values. Update it to point to your application's upstream chart:
+   The `common/zarf.yaml` defines what's shared across all flavors: the config chart, the upstream Helm chart reference, and shared values. Update it to point to your application's upstream chart:
 
    ```yaml title="common/zarf.yaml"
    kind: ZarfPackageConfig
@@ -86,13 +86,13 @@ The template repository provides the standard directory structure:
    ```
 
    > [!NOTE]
-   > The first chart (`uds-reference-package-config`) is the local config chart that deploys the UDS Package CR and any supplemental templates (secrets, dashboards, etc.). The second is the upstream application chart. Both deploy to the same namespace.
+   > The first chart (`uds-reference-package-config`) is the local config chart that deploys the UDS `Package` CR and any supplemental templates (secrets, dashboards, etc.). The second is the upstream application chart. Both deploy to the same namespace.
 
 3. **Configure the root Zarf package definition**
 
    The root `zarf.yaml` defines package metadata and per-flavor components. Each flavor imports from `common/zarf.yaml` and adds its own values file and container images:
 
-   The `variables` block declares Zarf package variables that deployers can set at deploy time via `uds-config.yaml` or `--set` flags. They are injected into Helm values using the `###ZARF_VAR_<NAME>###` syntax — you can see this in `chart/values.yaml` where `domain: "###ZARF_VAR_DOMAIN###"` picks up the deployer-supplied domain at deploy time. Use `sensitive: true` on variables that contain secrets so their values are never logged. See the [Zarf variables reference](https://docs.zarf.dev/ref/packages/#variables) for all available options.
+   The `variables` block declares Zarf package variables that deployers can set at deploy time via `uds-config.yaml` or `--set` flags. They are injected into Helm values using the `###ZARF_VAR_<NAME>###` syntax; you can see this in `chart/values.yaml` where `domain: "###ZARF_VAR_DOMAIN###"` picks up the deployer-supplied domain at deploy time. Use `sensitive: true` on variables that contain secrets so their values are never logged. See the [Zarf variables reference](https://docs.zarf.dev/ref/packages/#variables) for all available options.
 
    ```yaml title="zarf.yaml"
    kind: ZarfPackageConfig
@@ -138,7 +138,7 @@ The template repository provides the standard directory structure:
 
 4. **Update the flavor values**
 
-   Create `values/upstream-values.yaml` for flavor-specific overrides (primarily image references). The structure here must match your upstream chart's `values.yaml` — check the chart's documentation or inspect its `values.yaml` to find the correct keys for the image repository, tag, and pull policy:
+   Create `values/upstream-values.yaml` for flavor-specific overrides (primarily image references). The structure here must match your upstream chart's `values.yaml`; check the chart's documentation or inspect its `values.yaml` to find the correct keys for the image repository, tag, and pull policy:
 
    ```yaml title="values/upstream-values.yaml"
    image:
@@ -147,13 +147,13 @@ The template repository provides the standard directory structure:
      pullPolicy: Always
    ```
 
-5. **Define the UDS Package CR**
+5. **Define the UDS `Package` CR**
 
-   The Package CR in `chart/templates/uds-package.yaml` tells the UDS Operator what your application needs from the platform. Configure the three main integration sections:
+   The `Package` CR in `chart/templates/uds-package.yaml` tells the UDS Operator what your application needs from the platform. Configure the three main integration sections:
 
-   **Networking** — expose services through Istio gateways and declare allowed traffic.
+   **Networking**: expose services through Istio gateways and declare allowed traffic.
 
-   The `expose` block creates an Istio VirtualService that routes external traffic through a gateway to your service. The `selector` must match the labels on your application's pods — if it doesn't, traffic won't reach the right pods. The `host` becomes the subdomain (e.g., `reference-package.uds.dev`). See [Expose Apps on Gateways](/how-to-guides/networking/expose-apps-on-gateways/) for detailed configuration options.
+   The `expose` block creates an Istio VirtualService that routes external traffic through a gateway to your service. The `selector` must match the labels on your application's pods; if it doesn't, traffic won't reach the right pods. The `host` becomes the subdomain (e.g., `reference-package.uds.dev`). See [Expose Apps on Gateways](/how-to-guides/networking/expose-apps-on-gateways/) for detailed configuration options.
 
    ```yaml title="chart/templates/uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -178,7 +178,7 @@ The template repository provides the standard directory structure:
                  - "/" # e2e uptime monitoring metrics for this path on your app
    ```
 
-   The `allow` block creates NetworkPolicies following the principle of least privilege — only permit traffic your application actually needs:
+   The `allow` block creates NetworkPolicies following the principle of least privilege. Only permit traffic your application actually needs:
 
    ```yaml title="chart/templates/uds-package.yaml (continued)"
        allow:
@@ -232,9 +232,9 @@ The template repository provides the standard directory structure:
    - An escape hatch (`additionalNetworkAllow`) for deployers to add custom rules via bundle overrides
 
    > [!IMPORTANT]
-   > Network `allow` rules must follow the principle of least privilege — only permit traffic your application actually needs. See [Define Network Access](/how-to-guides/networking/define-network-access/) for detailed configuration options.
+   > Network `allow` rules must follow the principle of least privilege. Only permit traffic your application actually needs. See [Define Network Access](/how-to-guides/networking/define-network-access/) for detailed configuration options.
 
-   **SSO** — register a Keycloak client if your app has a user login. If your application has no native OIDC/SSO support, [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) is available as an alternative.
+   **SSO**: register a Keycloak client if your app has a user login. If your application has no native OIDC/SSO support, [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) is available as an alternative.
 
    ```yaml title="chart/templates/uds-package.yaml (continued)"
      {{- if .Values.sso.enabled }}
@@ -254,9 +254,9 @@ The template repository provides the standard directory structure:
      {{- end }}
    ```
 
-   The `secretTemplate` generates a Kubernetes secret with the exact fields your application expects for its SSO configuration. The keys and values vary by application — check your upstream chart's documentation or `values.yaml` for the environment variables it uses to configure its OIDC/Keycloak connection.
+   The `secretTemplate` generates a Kubernetes secret with the exact fields your application expects for its SSO configuration. The keys and values vary by application; check your upstream chart's documentation or `values.yaml` for the environment variables it uses to configure its OIDC/Keycloak connection.
 
-   **Monitoring** — declare metrics endpoints for Prometheus to scrape, if your app supports metrics. See [Capture Application Metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) for more detail.
+   **Monitoring**: declare metrics endpoints for Prometheus to scrape, if your app supports metrics. See [Capture Application Metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) for more detail.
 
    ```yaml title="chart/templates/uds-package.yaml (continued)"
      monitor:
@@ -271,7 +271,7 @@ The template repository provides the standard directory structure:
 
 6. **Configure the chart values**
 
-   The config chart's `chart/values.yaml` defines the inputs consumed by your Package CR templates. Bundle deployers can override them via `overrides` in `uds-bundle.yaml`:
+   The config chart's `chart/values.yaml` defines the inputs consumed by your `Package` CR templates. Bundle deployers can override them via `overrides` in `uds-bundle.yaml`:
 
    ```yaml title="chart/values.yaml"
    domain: "###ZARF_VAR_DOMAIN###"
@@ -302,7 +302,7 @@ The template repository provides the standard directory structure:
      enabled: true
    ```
 
-   `values/common-values.yaml` contains Helm values passed to the **upstream application chart** across all flavors — use it for security hardening and shared defaults that every deployment should have. Use bundle `overrides` for anything deployment-specific:
+   `values/common-values.yaml` contains Helm values passed to the **upstream application chart** across all flavors. Use it for security hardening and shared defaults that every deployment should have. Use bundle `overrides` for anything deployment-specific:
 
    ```yaml title="values/common-values.yaml"
    # Pod-level security
@@ -322,14 +322,14 @@ The template repository provides the standard directory structure:
    ```
 
    > [!IMPORTANT]
-   > The security context is critical — UDS Core enforces non-root execution by default via Pepr policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
+   > The security context is critical. UDS Core enforces non-root execution by default via Pepr policies. Pods that attempt to run as root will be denied by the admission webhook. Always set `runAsNonRoot: true` and drop all capabilities.
 
    > [!NOTE]
    > Use `values` (Helm value overrides in `uds-bundle.yaml`) for static configuration and `variables` (set at deploy time via `uds-config.yaml`) for secrets and environment-specific settings. Add `sensitive: true` to password and secret variables.
 
 7. **Set up the dev/test bundle**
 
-   A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) composes multiple Zarf packages into a single deployable unit. The dev bundle in `bundle/uds-bundle.yaml` wires your package together with its dependencies — like a database — so you can develop and test locally without needing a full environment. It also serves as the bundle used in CI to validate your package end-to-end.
+   A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) composes multiple Zarf packages into a single deployable unit. The dev bundle in `bundle/uds-bundle.yaml` wires your package together with its dependencies (like a database) so you can develop and test locally without needing a full environment. It also serves as the bundle used in CI to validate your package end-to-end.
 
    The reference package includes a PostgreSQL operator as a dependency:
 
@@ -383,7 +383,7 @@ The template repository provides the standard directory structure:
                    enabled: true
    ```
 
-   The bundle uses `overrides` to wire up dependencies — connecting the database secret, enabling SSO, and enabling monitoring. This is how deployers configure packages without modifying the package itself.
+   The bundle uses `overrides` to wire up dependencies: connecting the database secret, enabling SSO, and enabling monitoring. This is how deployers configure packages without modifying the package itself.
 
 8. **Build and deploy your package**
 
@@ -393,7 +393,7 @@ The template repository provides the standard directory structure:
    # Spin up a local k3d cluster, build, deploy
    uds run default
 
-   # Iterate on an existing cluster (skips cluster & SBOM creation  — faster inner loop)
+   # Iterate on an existing cluster (skips cluster & SBOM creation, faster inner loop)
    uds run dev
    ```
 
@@ -401,7 +401,7 @@ The template repository provides the standard directory structure:
    > Run `uds run --list` to see all available tasks and what each one does.
 
    > [!NOTE]
-   > If deployment appears stalled — the terminal shows "performing Helm install" for several minutes — check Helm release status and namespace events:
+   > If deployment appears stalled (the terminal shows "performing Helm install" for several minutes), check Helm release status and namespace events:
    > ```bash
    > helm status <package-name> -n <namespace>
    > uds zarf tools kubectl get events -n <namespace>
@@ -412,7 +412,7 @@ The template repository provides the standard directory structure:
 
 ## Verification
 
-Confirm the UDS Operator processed your Package CR:
+Confirm the UDS Operator processed your `Package` CR:
 
 ```bash
 uds zarf tools kubectl get package -n reference-package
@@ -479,11 +479,11 @@ securityContext:
 
 For more guidance on diagnosing and resolving policy violations, see the [Policy Violations runbook](/operations/troubleshooting-and-runbooks/policy-violations/).
 
-## Related Documentation
+## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Define Network Access](/how-to-guides/networking/define-network-access/)
 - [Identity & Authorization](/concepts/core-features/identity-and-authorization/)
 - [Bundles](/concepts/configuration-and-packaging/bundles/)
 - [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
-- [Package testing](/how-to-guides/packaging-applications/package-testing/) — Set up journey and upgrade tests for your package.
+- [Package testing](/how-to-guides/packaging-applications/package-testing/) - Set up journey and upgrade tests for your package.

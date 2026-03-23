@@ -1,26 +1,26 @@
 ---
 title: Monitoring & Observability
 sidebar:
-  order: 5.0
+  order: 5.000
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-UDS Core ships a full monitoring and observability stack — Prometheus for metrics collection, Grafana for visualization, Alertmanager for alert routing, and Blackbox Exporter for uptime probes. This section provides task-oriented guides for integrating your applications with that stack.
+UDS Core ships a full monitoring and observability stack: Prometheus for metrics collection, Grafana for visualization, Alertmanager for alert routing, and Blackbox Exporter for uptime probes. This section provides task-oriented guides for integrating your applications with that stack.
 
 These guides assume you already have UDS Core deployed and are familiar with [UDS bundle overrides](/how-to-guides/packaging-applications/overview/). For background on how the monitoring components fit together, see the [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/).
 
-## Related Documentation
+## Related documentation
 
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — How the Prometheus, Grafana, and Alertmanager stack fits together
-- [HA Monitoring](/how-to-guides/high-availability/monitoring/) — Scaling Grafana and tuning Prometheus resources for production
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) - How the Prometheus, Grafana, and Alertmanager stack fits together
+- [HA Monitoring](/how-to-guides/high-availability/monitoring/) - Scaling Grafana and tuning Prometheus resources for production
 
 ## Component guides
 
 <CardGrid>
   <LinkCard
     title="Capture application metrics"
-    description="Configure Prometheus to scrape metrics from your application using the Package CR."
+    description="Configure Prometheus to scrape metrics from your application using the `Package` CR."
     href="/how-to-guides/monitoring-observability/capture-application-metrics/"
   />
   <LinkCard
@@ -54,8 +54,6 @@ These guides assume you already have UDS Core deployed and are familiar with [UD
     href="/how-to-guides/monitoring-observability/set-up-uptime-monitoring/"
   />
 </CardGrid>
-
----
 
 > [!TIP]
 > New to UDS Core monitoring? Start with the [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) to understand how the stack fits together.

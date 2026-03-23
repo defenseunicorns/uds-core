@@ -1,14 +1,14 @@
 ---
 title: Configure Google SAML as an identity provider
 sidebar:
-  order: 3.15
+  order: 3.015
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll connect an external social or enterprise identity provider to UDS Core's Keycloak realm so that users can authenticate using their organization's existing credentials instead of local Keycloak accounts. UDS Core includes a pre-built Google SAML integration configurable entirely via bundle overrides — no Keycloak admin UI clickops required.
+You'll connect an external social or enterprise identity provider to UDS Core's Keycloak realm so that users can authenticate using their organization's existing credentials instead of local Keycloak accounts. UDS Core includes a pre-built Google SAML integration configurable entirely via bundle overrides, with no Keycloak admin UI clickops required.
 
 ## Prerequisites
 
@@ -23,10 +23,10 @@ UDS Core supports two approaches for connecting identity providers:
 
 | Approach | When to use |
 |---|---|
-| **`realmInitEnv` bundle overrides** (this guide) | Google SAML — a pre-built integration is included in the UDS realm; all configuration is declarative |
-| **Keycloak admin UI or OpenTofu** | Other SAML providers (Azure Entra, Okta, etc.) — requires manual configuration in the Keycloak admin console or via the OpenTofu client |
+| **`realmInitEnv` bundle overrides** (this guide) | Google SAML: a pre-built integration is included in the UDS realm; all configuration is declarative |
+| **Keycloak admin UI or OpenTofu** | Other SAML providers (Azure Entra, Okta, etc.); requires manual configuration in the Keycloak admin console or via the OpenTofu client |
 
-Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` override so the social login option appears on the login page. This is the default — only include it explicitly if you have previously disabled it.
+Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` override so the social login option appears on the login page. This is the default; only include it explicitly if you have previously disabled it.
 
 > [!NOTE]
 > `realmInitEnv` values are applied only during initial realm import. If Keycloak is already running, Keycloak must be fully torn down and redeployed for these settings to take effect.
@@ -42,9 +42,9 @@ Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` ove
    In the app configuration:
    - Give the app a name (e.g., `UDS Core`)
    - On the **Google Identity Provider details** page, collect:
-     - **SSO URL** (the SAML endpoint — this becomes part of your entity ID)
+     - **SSO URL** (the SAML endpoint; this becomes part of your entity ID)
      - **Entity ID** (the Google IdP entity ID, format: `https://accounts.google.com/o/saml2?idpid=XXXXX`)
-     - **Certificate** — download and base64-encode the signing certificate
+     - **Certificate**: download and base64-encode the signing certificate
 
    On the **Service Provider details** page, set:
    - **ACS URL**: `https://sso.<domain>/realms/uds/broker/google-saml/endpoint`
@@ -99,7 +99,7 @@ Both approaches require `SOCIAL_AUTH_ENABLED: true` in your `realmAuthFlows` ove
                    SOCIAL_AUTH_ENABLED: true
    ```
 
-   `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` are optional — omit them if you are not using group-based access control or managing group membership another way.
+   `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` are optional. Omit them if you are not using group-based access control or managing group membership another way.
 
 4. **Create and deploy your bundle**
 
@@ -161,11 +161,11 @@ After a user authenticates via Google, go to **Users** in the Keycloak Admin Con
 
 **Solution:** Confirm the group names in `GOOGLE_IDP_ADMIN_GROUP` and `GOOGLE_IDP_AUDITOR_GROUP` exactly match the group names or emails in Google Workspace. Also confirm the user is a member of the correct Google Workspace group and that the SAML app includes the Groups attribute mapping.
 
-## Related Documentation
+## Related documentation
 
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — enable or disable the `SOCIAL_AUTH_ENABLED` toggle alongside IdP configuration
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — restrict application access to users in specific Keycloak groups
-- [Connect Azure AD as an identity provider](/how-to-guides/identity-and-authorization/connect-azure-ad-idp/) — admin UI-based approach for Azure Entra ID
-- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) — configure other SAML providers programmatically post-deploy
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
-- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — Enable or disable social login, X.509/CAC, OTP, and WebAuthn via bundle overrides.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - enable or disable the `SOCIAL_AUTH_ENABLED` toggle alongside IdP configuration
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict application access to users in specific Keycloak groups
+- [Connect Azure AD as an identity provider](/how-to-guides/identity-and-authorization/connect-azure-ad-idp/) - admin UI-based approach for Azure Entra ID
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - configure other SAML providers programmatically post-deploy
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict application access to users in specific Keycloak groups using the `Package` CR.
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - Enable or disable social login, X.509/CAC, OTP, and WebAuthn via bundle overrides.

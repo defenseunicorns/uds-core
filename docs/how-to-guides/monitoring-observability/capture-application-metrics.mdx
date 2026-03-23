@@ -1,14 +1,14 @@
 ---
 title: Capture application metrics
 sidebar:
-  order: 5.1
+  order: 5.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-Configure Prometheus to scrape metrics from your application using the UDS Package CR's `monitor` block. Once configured, your application's metrics will appear alongside the built-in platform metrics in Prometheus, making them available for dashboards and alerting.
+Configure Prometheus to scrape metrics from your application using the UDS `Package` CR's `monitor` block. Once configured, your application's metrics will appear alongside the built-in platform metrics in Prometheus, making them available for dashboards and alerting.
 
 ## Prerequisites
 
@@ -20,18 +20,18 @@ Configure Prometheus to scrape metrics from your application using the UDS Packa
 
 UDS Core's Prometheus instance automatically scrapes metrics from all platform components out of the box. This guide shows how to add **your application's** metrics to that collection.
 
-The Package CR `monitor` block is the UDS-native approach for defining metrics targets. When you specify a `monitor` entry, the UDS Operator automatically creates the underlying `ServiceMonitor` or `PodMonitor` resources and configures the necessary network policies for Prometheus to reach your application's metrics endpoint.
+The `Package` CR `monitor` block is the UDS-native approach for defining metrics targets. When you specify a `monitor` entry, the UDS Operator automatically creates the underlying `ServiceMonitor` or `PodMonitor` resources and configures the necessary network policies for Prometheus to reach your application's metrics endpoint.
 
 > [!TIP]
-> If your application's Helm chart already supports creating `ServiceMonitor` or `PodMonitor` resources directly, you can use those instead. The Package CR approach is useful when the chart does not support monitors natively or when you want a simplified, consistent configuration method.
+> If your application's Helm chart already supports creating `ServiceMonitor` or `PodMonitor` resources directly, you can use those instead. The `Package` CR approach is useful when the chart does not support monitors natively or when you want a simplified, consistent configuration method.
 
 ## Steps
 
 <Steps>
 
-1. **Add a ServiceMonitor via the Package CR**
+1. **Add a ServiceMonitor via the `Package` CR**
 
-   Define a `monitor` entry in your Package CR's `spec` block. The `selector` labels must match the Kubernetes Service that fronts your application, and `portName` must match a named port on that Service.
+   Define a `monitor` entry in your `Package` CR's `spec` block. The `selector` labels must match the Kubernetes Service that fronts your application, and `portName` must match a named port on that Service.
 
    ```yaml title="package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -76,7 +76,7 @@ The Package CR `monitor` block is the UDS-native approach for defining metrics t
    ```
 
    > [!TIP]
-   > For PodMonitors, both `selector` and `podSelector` behave the same way -- either can be used to match pod labels.
+   > For PodMonitors, both `selector` and `podSelector` behave the same way; either can be used to match pod labels.
 
 3. **Optional: Customize the metrics path or add authorization**
 
@@ -112,20 +112,20 @@ The Package CR `monitor` block is the UDS-native approach for defining metrics t
 
 4. **Deploy your Package**
 
-   **(Recommended)** Include the Package CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the `Package` CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
    uds zarf package deploy zarf-package-*.tar.zst --confirm
    ```
 
-   **Or** apply the Package CR directly for quick testing:
+   **Or** apply the `Package` CR directly for quick testing:
 
    ```bash
    uds zarf tools kubectl apply -f package.yaml
    ```
 
-   The UDS Operator will reconcile the Package CR and create the corresponding `ServiceMonitor` or `PodMonitor` resource along with the required network policies.
+   The UDS Operator will reconcile the `Package` CR and create the corresponding `ServiceMonitor` or `PodMonitor` resource along with the required network policies.
 
 </Steps>
 
@@ -150,7 +150,7 @@ In the Prometheus UI, navigate to **Status > Targets**. Your application's targe
 
 **Symptom:** Your application does not show up in the Prometheus targets list.
 
-**Solution:** Verify that the `selector` labels and `portName` in your Package CR match the actual Service (or pod) labels and port names. Check that the ServiceMonitor was created:
+**Solution:** Verify that the `selector` labels and `portName` in your `Package` CR match the actual Service (or pod) labels and port names. Check that the ServiceMonitor was created:
 
 ```bash
 uds zarf tools kubectl get servicemonitor -A
@@ -162,7 +162,7 @@ If using a PodMonitor:
 uds zarf tools kubectl get podmonitor -A
 ```
 
-Also confirm the Package CR was reconciled successfully:
+Also confirm the `Package` CR was reconciled successfully:
 
 ```bash
 uds zarf tools kubectl describe package my-app -n my-app
@@ -181,9 +181,9 @@ curl http://localhost:8080/metrics
 
 Check that `targetPort` matches the actual container port and that `path` matches the endpoint your application exposes.
 
-## Related Documentation
+## Related documentation
 
-- [Prometheus Operator: ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor) — full ServiceMonitor field reference
-- [Prometheus Operator: PodMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor) — full PodMonitor field reference
-- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) — Build Grafana dashboards to visualize the metrics you're now collecting.
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define alerting conditions based on the metrics Prometheus is scraping.
+- [Prometheus Operator: ServiceMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor) - full ServiceMonitor field reference
+- [Prometheus Operator: PodMonitor API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor) - full PodMonitor field reference
+- [Add custom dashboards to Grafana](/how-to-guides/monitoring-observability/add-custom-dashboards/) - Build Grafana dashboards to visualize the metrics you're now collecting.
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define alerting conditions based on the metrics Prometheus is scraping.

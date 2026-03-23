@@ -1,12 +1,12 @@
 ---
 title: Environments
 sidebar:
-  order: 3.3
+  order: 3.003
 ---
 
-UDS Core runs consistently from a developer laptop to a classified production enclave. The same packages, policy baseline, and observability stack travel across every environment — only cluster-level configuration changes.
+UDS Core runs consistently from a developer laptop to a classified production enclave. The same packages, policy baseline, and observability stack travel across every environment; only cluster-level configuration changes.
 
-## Typical Environment Tiers
+## Typical environment tiers
 
 | Environment | Typical Purpose | Typical Cluster |
 |-------------|----------------|-----------------|
@@ -16,19 +16,19 @@ UDS Core runs consistently from a developer laptop to a classified production en
 | **Production** | Mission workloads, real users, compliance scope | EKS, AKS, RKE2, or any CNCF-conformant distro |
 
 > [!TIP]
-> For local development, Defense Unicorns publishes two pre-built bundles: **`k3d-core-slim-dev`** (Base + Identity & Authorization — lightweight, fast startup) and **`k3d-core-demo`** (Full Core — full-fidelity local environment). Both use the `upstream` flavor.
+> For local development, Defense Unicorns publishes two pre-built bundles: **`k3d-core-slim-dev`** (Base + Identity & Authorization, lightweight, fast startup) and **`k3d-core-demo`** (Full Core, full-fidelity local environment). Both use the `upstream` flavor.
 
-## What Varies Between Environments
+## What varies between environments
 
 Cluster-level configuration is the primary dimension that changes across environments:
 
-- **Cluster identity** — name and tags
-- **Domains & TLS** — tenant and admin domains, custom CA certificates
-- **External integrations** — database endpoints for Keycloak/Grafana HA, external object storage for Loki/Velero
+- **Cluster identity**: name and tags
+- **Domains & TLS**: tenant and admin domains, custom CA certificates
+- **External integrations**: database endpoints for Keycloak/Grafana HA, external object storage for Loki/Velero
 
-## What Stays the Same
+## What stays the same
 
-Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (UDS policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency closes the gap that other platforms leave between dev and production — if it works in dev, it will work in staging and production. The only variables are cluster-level config, not the platform itself.
+Across every environment tier you deploy the **same packages at the same version**, the **same policy baseline** (UDS policies, Istio authorization), and the **same observability stack** (Prometheus, Loki, Grafana). This consistency closes the gap that other platforms leave between dev and production. If it works in dev, it will work in staging and production. The only variables are cluster-level config, not the platform itself.
 
 > [!CAUTION]
 > Don't skip staging. Configuration differences between environments are the most common source of production issues, and local dev won't surface them. A staging cluster with production-parity config catches problems before they reach real users.

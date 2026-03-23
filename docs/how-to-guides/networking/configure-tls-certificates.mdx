@@ -1,7 +1,7 @@
 ---
 title: Configure TLS certificates for gateways
 sidebar:
-  order: 2.01
+  order: 2.001
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -18,7 +18,7 @@ After completing this guide, your UDS Core ingress gateways will serve traffic u
 - A wildcard TLS certificate and private key (PEM format) for each gateway domain. If using a private or non-public CA, the root CA must be loaded in your OS trust store for browser and CLI verification to work.
   - Tenant gateway: `*.yourdomain.com`
   - Admin gateway: `*.admin.yourdomain.com` (or your custom admin domain)
-  - Root domain (optional): `yourdomain.com` — only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/)
+  - Root domain (optional): `yourdomain.com`, only needed if you [expose a service on the root domain](/how-to-guides/networking/expose-apps-on-gateways/)
 
 ## Before you begin
 
@@ -209,9 +209,9 @@ base64 -i my-cert.pem | tr -d '\n'          # macOS
 
 **Solution:** Enable TLS 1.2 support as shown above. This is common in environments with legacy systems or specific compliance requirements.
 
-## Related Documentation
+## Related documentation
 
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — how the service mesh, gateways, and network policies work together in UDS Core
-- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) — Add custom CA certificates to pods and Istio's trust store.
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
-- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) — Deploy the optional passthrough gateway for apps that handle their own TLS.
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
+- [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) - Add custom CA certificates to pods and Istio's trust store.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Make applications accessible through the tenant or admin gateway.
+- [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.

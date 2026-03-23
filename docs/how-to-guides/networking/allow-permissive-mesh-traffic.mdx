@@ -1,7 +1,7 @@
 ---
 title: Allow permissive traffic through the mesh
 sidebar:
-  order: 2.08
+  order: 2.008
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -14,24 +14,24 @@ After completing this guide, you will have relaxed Istio's strict authorization 
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to a Kubernetes cluster with UDS Core deployed
-- Confirmation that [Package CR `expose` and `allow` rules](/reference/operator-and-crds/packages-v1alpha1-cr/) cannot satisfy your traffic requirements
+- Confirmation that [`Package` CR `expose` and `allow` rules](/reference/operator-and-crds/packages-v1alpha1-cr/) cannot satisfy your traffic requirements
 
 ## Before you begin
 
 > [!CAUTION]
-> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the Package CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements — not to bypass the authorization model.
+> **This guide is for exceptional cases only.** UDS Core's default deny-all authorization model exists to enforce zero-trust networking. Relaxing these policies weakens your security posture. Before proceeding, verify that your application truly cannot work within the standard model by declaring its traffic in the `Package` CR using `expose` and `allow` rules. In most cases, the correct solution is to properly declare your application's traffic requirements, not to bypass the authorization model.
 
-UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your Package CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
+UDS Core uses Istio's [authorization policy](https://istio.io/latest/docs/concepts/security/#authorization-policies) model to enforce a **deny-all** posture by default. The UDS Operator automatically generates `ALLOW` authorization policies based on your `Package` CR `expose` and `allow` declarations. Any traffic not explicitly allowed is denied.
 
 Some workloads need traffic that falls outside this model. Common examples include:
 
-- **Applications with unusual TLS handling** — workloads that perform their own mTLS or have TLS configurations that conflict with Istio's automatic mTLS, preventing the mesh from properly identifying the traffic source
-- **Traffic from sources outside the mesh** — requests originating from components that are not part of the Istio service mesh (e.g., infrastructure controllers, legacy services, or external systems routing directly to pods)
+- **Applications with unusual TLS handling**: workloads that perform their own mTLS or have TLS configurations that conflict with Istio's automatic mTLS, preventing the mesh from properly identifying the traffic source
+- **Traffic from sources outside the mesh**: requests originating from components that are not part of the Istio service mesh (e.g., infrastructure controllers, legacy services, or external systems routing directly to pods)
 
 In these cases, you can layer additional `ALLOW` [authorization policies](https://istio.io/latest/docs/concepts/security/#authorization-policies) on top of the operator-generated ones. Istio evaluates `DENY` policies first, then `ALLOW` policies, so your additional `ALLOW` rules will not override any existing `DENY` policies.
 
 > [!NOTE]
-> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity — traffic must be allowed by both layers. Any explicit `allow` entries in your Package CR are still required for Kubernetes-level network policy access.
+> These authorization policies control the **mTLS identity and authorization** posture of the mesh. Kubernetes network policies still independently restrict pod-to-pod connectivity, so traffic must be allowed by both layers. Any explicit `allow` entries in your `Package` CR are still required for Kubernetes-level network policy access.
 
 ## Steps
 
@@ -106,7 +106,7 @@ In these cases, you can layer additional `ALLOW` [authorization policies](https:
 
 2. **Apply a PeerAuthentication policy**
 
-   Without a permissive `PeerAuthentication`, Istio will still enforce strict mTLS and reject connections from sources that cannot present a valid mesh identity — even if the `AuthorizationPolicy` allows them. Match the scope of your `PeerAuthentication` to the `AuthorizationPolicy` you chose in step 1.
+   Without a permissive `PeerAuthentication`, Istio will still enforce strict mTLS and reject connections from sources that cannot present a valid mesh identity, even if the `AuthorizationPolicy` allows them. Match the scope of your `PeerAuthentication` to the `AuthorizationPolicy` you chose in step 1.
 
    <Tabs>
      <TabItem label="Specific port">
@@ -207,7 +207,7 @@ Test that the previously-blocked traffic now flows as expected.
 **Solution:**
 - Verify the policy is in the correct namespace (must match the workload's namespace)
 - Check the `selector` labels match your workload: `uds zarf tools kubectl get pods -n <namespace> --show-labels`
-- Remember that Istio evaluates `DENY` policies before `ALLOW` policies — if a `DENY` policy exists, your `ALLOW` policy will not override it
+- Remember that Istio evaluates `DENY` policies before `ALLOW` policies; if a `DENY` policy exists, your `ALLOW` policy will not override it
 - Ensure you have also applied a permissive `PeerAuthentication` if the traffic source cannot present a valid mesh identity
 
 ### Problem: Scope too broad
@@ -218,10 +218,10 @@ Test that the previously-blocked traffic now flows as expected.
 - Narrow the scope: add a `selector` to target specific workloads, or add port restrictions
 - Move from a namespace-scoped policy to a workload-scoped one
 
-## Related Documentation
+## Related documentation
 
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Istio Authorization Policy Documentation](https://istio.io/latest/docs/concepts/security/#authorization-policies)
 - [Istio PeerAuthentication Documentation](https://istio.io/latest/docs/reference/config/security/peer_authentication/)
-- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) — Learn how the service mesh, gateways, and authorization model work.
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure intra-cluster and external network access for your application.
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Learn how the service mesh, gateways, and authorization model work.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.

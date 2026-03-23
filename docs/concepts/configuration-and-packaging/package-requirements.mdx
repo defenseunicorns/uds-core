@@ -1,17 +1,17 @@
 ---
 title: UDS Package Requirements
 sidebar:
-  order: 4.3
+  order: 4.003
 ---
 
-UDS Packages must meet a set of standards to ensure they are secure, maintainable, and compatible with UDS Core. This page defines those standards using [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology — **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice.
+UDS Packages must meet a set of standards to ensure they are secure, maintainable, and compatible with UDS Core. This page defines those standards using [RFC-2119](https://datatracker.ietf.org/doc/html/rfc2119) terminology: **MUST** indicates a mandatory requirement, **SHOULD** a strong recommendation, and **MAY** an optional practice.
 
 > [!NOTE]
 > Use this page as a pre-publish checklist. For step-by-step guidance on building a package that meets these requirements, see [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/).
 >
 > These requirements are mandatory for Defense Unicorns engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security across the UDS ecosystem.
 
-## UDS Operator Integration
+## UDS Operator integration
 
 - **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
 - **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
@@ -20,13 +20,13 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **SHOULD** limit the use of Zarf variable templates and prioritize configuring packages via Helm value overrides.
   > This ensures that the package is configured the same way that the bundle would be and avoids any side effect issues of Zarf's `###` templating.
 
-## Security, Policy, and Hardening
+## Security, policy, and hardening
 
-- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS Exemption custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
+- **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
 - **MUST** declaratively implement any available application hardening guidelines by default.
 - **SHOULD** consider security options during implementation to provide the most secure default possible (i.e. SAML w/SCIM vs OIDC).
 
-## Packaging Lifecycle and Configuration
+## Packaging lifecycle and configuration
 
 - **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-observability/capture-application-metrics/)
 - **MUST** be versioned using the UDS Package [Versioning scheme](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#versioning).
@@ -37,10 +37,10 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **SHOULD** implement or allow for multiple flavors (ideally with common definitions in a common directory).
   > This allows for different images or configurations to be delivered consistently to customers.
 
-## Networking and Service Mesh
+## Networking and service mesh
 
-- **MUST** define network policies under the `allow` key as required in the [UDS Package Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
-- **MUST** define any external interfaces under the `expose` key in the [UDS Package Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
+- **MUST** define network policies under the `allow` key as required in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/). These policies **MUST** adhere to the principle of least privilege, permitting only strictly necessary traffic.
+- **MUST** define any external interfaces under the `expose` key in the [UDS `Package` Custom Resource](/reference/operator-and-crds/packages-v1alpha1-cr/).
 - **MUST** not rely on exposed interfaces (e.g., `.uds.dev`) being accessible from the deployment environment (bastion or pipeline).
 - **MUST** deploy and operate successfully with Istio enabled.
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
@@ -48,7 +48,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **SHOULD** avoid workarounds with Istio such as disabling strict mTLS peer authentication.
 - **MAY** template network policy keys to provide flexibility for delivery customers to configure.
 
-## Identity and Access Management
+## Identity and access management
 
 - **MUST** use and create a Keycloak client through the `sso` key for any UDS Package providing an end-user login. [SSO Resource](/how-to-guides/packaging-applications/create-uds-package/)
 - **SHOULD** name the Keycloak client `<App> Login` (i.e. `Mattermost Login`) to provide login UX consistency.
@@ -61,15 +61,13 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
 - **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
 
-## Package Maintenance
+## Package maintenance
 
 - **MUST** be actively maintained by the package maintainers identified in CODEOWNERS. [See CODEOWNERS guidance](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#codeowners)
 - **MUST** have a dependency management bot (such as renovate) configured to open PRs to update the core package and support dependencies.
 - **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - **SHOULD** lint their configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
-
----
 
 > [!TIP]
 > Ready to create your own package? See the [Packaging Applications](/how-to-guides/packaging-applications/overview/) how-to guides for step-by-step guidance.
