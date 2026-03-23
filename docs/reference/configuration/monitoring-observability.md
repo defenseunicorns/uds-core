@@ -1,7 +1,7 @@
 ---
 title: Monitoring & Observability
 sidebar:
-  order: 5
+  order: 5.000
 ---
 
 UDS Core's monitoring stack exposes configuration surfaces for uptime probes, recording rules, and Grafana dashboards. This page documents the defaults, available metrics, and bundle variables that control monitoring behavior.
@@ -63,19 +63,19 @@ Endpoint probes produce standard Blackbox Exporter metrics:
 
 UDS Core ships Prometheus recording rules that track the availability of core infrastructure components. These produce `uds:<component>:up` metrics (1 = available, 0 = unavailable) and require no user configuration. Rules are organized by layer:
 
-- **base** — Istiod, Istio CNI, ztunnel, admin and tenant ingress gateways, Pepr admission and watcher
-- **monitoring** — Prometheus, Alertmanager, Blackbox Exporter, Kube State Metrics, Prometheus Operator, Node Exporter, Grafana, Grafana endpoint (probe-derived)
-- **logging** — Loki backend, write, read, and gateway, Vector
-- **identity-authorization** — Keycloak, Keycloak Waypoint, Authservice, Keycloak SSO endpoint (probe-derived), Keycloak admin endpoint (probe-derived)
-- **runtime-security** — Falco, Falcosidekick
-- **backup-restore** — Velero
-- **core** — `uds:access:up`, the overall access health indicator derived from `uds:keycloak_endpoint:up` (probe-derived)
+- **base**: Istiod, Istio CNI, ztunnel, admin and tenant ingress gateways, Pepr admission and watcher
+- **monitoring**: Prometheus, Alertmanager, Blackbox Exporter, Kube State Metrics, Prometheus Operator, Node Exporter, Grafana, Grafana endpoint (probe-derived)
+- **logging**: Loki backend, write, read, and gateway, Vector
+- **identity-authorization**: Keycloak, Keycloak Waypoint, Authservice, Keycloak SSO endpoint (probe-derived), Keycloak admin endpoint (probe-derived)
+- **runtime-security**: Falco, Falcosidekick
+- **backup-restore**: Velero
+- **core**: `uds:access:up`, the overall access health indicator derived from `uds:keycloak_endpoint:up` (probe-derived)
 
 > [!NOTE]
 > Rules marked "probe-derived" depend on `probe_success` metrics from the default uptime probes. If probes are disabled, these rules will produce no data.
 
 ## Related documentation
 
-- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/) — high-level overview of the monitoring stack
-- [Set up uptime monitoring](/how-to-guides/monitoring-observability/set-up-uptime-monitoring/) — configure uptime probes for your own applications
-- [Monitoring How-to Guides](/how-to-guides/monitoring-observability/overview/) — task-oriented monitoring guides
+- [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/): high-level overview of the monitoring stack
+- [Set up uptime monitoring](/how-to-guides/monitoring-observability/set-up-uptime-monitoring/): configure uptime probes for your own applications
+- [Monitoring How-to Guides](/how-to-guides/monitoring-observability/overview/): task-oriented monitoring guides
