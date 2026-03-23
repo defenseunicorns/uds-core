@@ -1,10 +1,10 @@
 ---
 title: Policy & Compliance
 sidebar:
-  order: 2.7
+  order: 2.007
 ---
 
-UDS Core enforces secure and compliant workload behavior through [Pepr](https://docs.pepr.dev/), a Kubernetes controller that runs as admission webhooks. Every resource submitted to the cluster passes through Pepr before being persisted — giving the platform a consistent, centralized place to enforce policy.
+UDS Core enforces secure and compliant workload behavior through [Pepr](https://docs.pepr.dev/), a Kubernetes controller that runs as admission webhooks. Every resource submitted to the cluster passes through Pepr before being persisted, giving the platform a consistent, centralized place to enforce policy.
 
 ## How policies work
 
@@ -15,17 +15,17 @@ Pepr evaluates two types of policies against incoming resources:
 | Mutation | Automatically corrects a setting to a safe default | Drop all capabilities, set `runAsNonRoot: true` |
 | Validation | Blocks the resource if it does not meet the policy | Disallow privileged containers, reject NodePort services |
 
-Mutations run first and silently fix common misconfigurations — application teams often never notice them. Validations run after mutations and reject resources that cannot be automatically corrected, returning a clear error message describing what must be fixed.
+Mutations run first and silently fix common misconfigurations; application teams often never notice them. Validations run after mutations and reject resources that cannot be automatically corrected, returning a clear error message describing what must be fixed.
 
 ## What policies enforce
 
 UDS Core's default policy set targets common misconfigurations that introduce risk in multi-tenant and regulated environments:
 
-- **No privileged containers** — containers must not run with `privileged: true`
-- **No root users** — containers must declare `runAsNonRoot: true` or an equivalent non-zero UID
-- **Capability drops** — containers must drop `ALL` capabilities; only specific allowed capabilities may be added back
-- **No host namespaces** — containers must not share the host's PID, IPC, or network namespaces
-- **No NodePort services** — services must use ClusterIP or be exposed through the service mesh gateway
+- **No privileged containers**: containers must not run with `privileged: true`
+- **No root users**: containers must declare `runAsNonRoot: true` or an equivalent non-zero UID
+- **Capability drops**: containers must drop `ALL` capabilities; only specific allowed capabilities may be added back
+- **No host namespaces**: containers must not share the host's PID, IPC, or network namespaces
+- **No NodePort services**: services must use ClusterIP or be exposed through the service mesh gateway
 
 Mutations apply safe defaults where possible (capability drops, `runAsNonRoot`). Validations block configurations that cannot be safely corrected automatically.
 
@@ -34,14 +34,12 @@ Mutations apply safe defaults where possible (capability drops, `runAsNonRoot`).
 
 ## Exemptions
 
-Some workloads legitimately require behavior that policy would otherwise block — a privileged DaemonSet for node-level observability, or a legacy application that cannot yet run as non-root. UDS Core handles these cases through the `Exemption` custom resource.
+Some workloads legitimately require behavior that policy would otherwise block, such as a privileged DaemonSet for node-level observability, or a legacy application that cannot yet run as non-root. UDS Core handles these cases through the `Exemption` custom resource.
 
 An exemption declares that a specific workload in a specific namespace is permitted to bypass a named policy. Exemptions are stored as Kubernetes objects, which means they appear in audit logs, require RBAC to create, and can be reviewed in code review like any other resource.
 
 > [!NOTE]
-> Exemptions should be used sparingly and with justification. An exemption is a deliberate exception to a security control, not a workaround. Prefer fixing the workload to requiring an exemption — and document the reason when an exemption is unavoidable.
-
----
+> Exemptions should be used sparingly and with justification. An exemption is a deliberate exception to a security control, not a workaround. Prefer fixing the workload to requiring an exemption, and document the reason when an exemption is unavoidable.
 
 > [!TIP]
 > Ready to configure policies for your environment? See the [Policy & Compliance How-to Guides](/how-to-guides/policy-and-compliance/overview/). For a full list of enforced policies, see the [Policy Engine](/reference/operator-and-crds/policy-engine/) reference.

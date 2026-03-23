@@ -1,20 +1,20 @@
 ---
 title: Reference
 sidebar:
-  order: 0
+  order: 0.000
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Authoritative details for UDS Core-specific configuration surfaces, CRD schemas, and operator behavior. This section is intentionally narrow — for upstream product docs (Istio, Keycloak, Velero, etc.), refer to their official documentation.
+Authoritative details for UDS Core-specific configuration surfaces, CRD schemas, and operator behavior. This section is intentionally narrow; for upstream product docs (Istio, Keycloak, Velero, etc.), refer to their official documentation.
 
 <CardGrid>
   <Card title="Operator, CRDs & Policy Engine" icon="document">
-    UDS Operator behavior, complete field-level schema reference for Package, Exemption, and ClusterConfig custom resources, and the Pepr policy engine.
+    UDS Operator behavior, complete field-level schema reference for `Package`, `Exemption`, and `ClusterConfig` custom resources, and the Pepr policy engine.
     <LinkCard title="View reference" href="/reference/operator-and-crds/overview/" />
   </Card>
   <Card title="Identity & Authorization" icon="setting">
-    Keycloak and Authservice configuration surfaces — SSO fields, group mapping, session behavior, and identity provider integration.
+    Keycloak and Authservice configuration surfaces: SSO fields, group mapping, session behavior, and identity provider integration.
     <LinkCard title="View reference" href="/reference/configuration/identity-and-authorization/" />
   </Card>
   <Card title="Policies" icon="information">

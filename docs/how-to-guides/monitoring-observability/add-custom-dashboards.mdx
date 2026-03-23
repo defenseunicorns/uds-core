@@ -1,7 +1,7 @@
 ---
 title: Add custom dashboards to Grafana
 sidebar:
-  order: 5.2
+  order: 5.002
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -175,9 +175,9 @@ If your ConfigMap is missing from the output, re-apply it with the correct label
 
 **Solution:** Verify the `grafana_folder` annotation is present and its value matches your desired folder name. Also confirm the folder support overrides (`sidecar.dashboards.folderAnnotation` and `sidecar.dashboards.provider.foldersFromFilesStructure`) are applied in your bundle.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana: Build your first dashboard](https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/) — interactive dashboard creation
-- [Grafana: Export a dashboard as JSON](https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json) — exporting for use as code
-- [Add Grafana datasources](/how-to-guides/monitoring-observability/add-grafana-datasources/) — Connect Grafana to additional data sources for your dashboards.
-- [Capture application metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) — Get your application's metrics into Prometheus so dashboards have data to display.
+- [Grafana: Build your first dashboard](https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/) - interactive dashboard creation
+- [Grafana: Export a dashboard as JSON](https://grafana.com/docs/grafana/latest/dashboards/share-dashboards-panels/#export-a-dashboard-as-json) - exporting for use as code
+- [Add Grafana datasources](/how-to-guides/monitoring-observability/add-grafana-datasources/) - Connect Grafana to additional data sources for your dashboards.
+- [Capture application metrics](/how-to-guides/monitoring-observability/capture-application-metrics/) - Get your application's metrics into Prometheus so dashboards have data to display.

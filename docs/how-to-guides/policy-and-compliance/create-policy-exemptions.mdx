@@ -1,14 +1,14 @@
 ---
 title: Create UDS policy exemptions
 sidebar:
-  order: 8.01
+  order: 8.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll create a UDS Exemption CR to allow a workload to bypass specific UDS policies when a code-level fix isn't possible.
+You'll create a UDS `Exemption` CR to allow a workload to bypass specific UDS policies when a code-level fix isn't possible.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ You'll create a UDS Exemption CR to allow a workload to bypass specific UDS poli
 
 ## Before you begin
 
-UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resource submitted to the cluster. When a workload legitimately requires behavior that policy blocks (for example, a privileged DaemonSet for node-level monitoring), you can create an Exemption CR to bypass specific policies for targeted resources.
+UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resource submitted to the cluster. When a workload legitimately requires behavior that policy blocks (for example, a privileged DaemonSet for node-level monitoring), you can create an `Exemption` CR to bypass specific policies for targeted resources.
 
 > [!NOTE]
 > Before creating an exemption, confirm the violation can't be resolved by adjusting your workload configuration. See the [Policy Violations](/operations/troubleshooting-and-runbooks/policy-violations/) runbook for common fixes.
@@ -30,7 +30,7 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resour
 
 <Steps>
 
-1. **Create the Exemption CR manifest**
+1. **Create the `Exemption` CR manifest**
 
    Each exemption specifies which policies to bypass (see the [Policy Engine](/reference/operator-and-crds/policy-engine/) reference for exemption names) and a matcher that targets specific resources:
 
@@ -116,7 +116,7 @@ UDS Core uses [Pepr](https://docs.pepr.dev/) to enforce policies on every resour
 After deploying the exemption, confirm it is active and your workload is running:
 
 ```bash
-# Verify the Exemption CR exists
+# Verify the `Exemption` CR exists
 uds zarf tools kubectl get exemptions -n uds-policy-exemptions
 
 # Check that the target pod has the exemption annotation
@@ -136,21 +136,21 @@ uds zarf tools kubectl get pods -n <namespace>
 
 ### Problem: Exemption not taking effect
 
-**Symptom:** The workload is still blocked despite an Exemption CR being deployed.
+**Symptom:** The workload is still blocked despite an `Exemption` CR being deployed.
 
 **Solution:** Verify the following:
 
-1. The Exemption CR is in the `uds-policy-exemptions` namespace (or all-namespace exemptions are enabled)
+1. The `Exemption` CR is in the `uds-policy-exemptions` namespace (or all-namespace exemptions are enabled)
 2. The `matcher.namespace` matches the workload's namespace exactly
 3. The `matcher.name` regex matches the resource name. Test your regex against the actual pod/service name.
 4. The `matcher.kind` is correct (`pod` for pods, `service` for services)
 
 If the exemption exists but still isn't being applied, see the [Exemptions & Packages Not Updating](/operations/troubleshooting-and-runbooks/exemptions-and-packages/) runbook for detailed diagnostics.
 
-## Related Documentation
+## Related documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies, severity levels, and blocked annotations
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Policy Violations runbook](/operations/troubleshooting-and-runbooks/policy-violations/) — diagnose and fix admission failures and unexpected mutations
-- [Configure infrastructure exemptions](/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/) — Set up exemptions via bundle overrides for Core components and infrastructure workloads.
-- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) — Review exemptions and Package CR network rules across your cluster.
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies, severity levels, and blocked annotations
+- [`Exemption` CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Policy Violations runbook](/operations/troubleshooting-and-runbooks/policy-violations/) - diagnose and fix admission failures and unexpected mutations
+- [Configure infrastructure exemptions](/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/) - Set up exemptions via bundle overrides for Core components and infrastructure workloads.
+- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) - Review exemptions and `Package` CR network rules across your cluster.

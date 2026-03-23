@@ -1,8 +1,10 @@
 # Reference Page Template
 
+> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+
 ## About this template
 
-Reference pages document stable UDS Core configuration surfaces — the exact fields, defaults, and behaviors that bundle operators and platform engineers need to look up. They are **not** task-oriented.
+Reference pages document stable UDS Core configuration surfaces: the exact fields, defaults, and behaviors that bundle operators and platform engineers need to look up. They are **not** task-oriented.
 
 Reference pages live under `docs/reference/<section>/` and use the `.md` extension unless Starlight components (Tabs, Steps, CardGrid, LinkCard) are needed, in which case use `.mdx`.
 
@@ -27,10 +29,10 @@ Reference pages live under `docs/reference/<section>/` and use the `.md` extensi
 ---
 title: Section Name
 sidebar:
-  order: X.X
+  order: X.XXX
 ---
 
-One or two sentences describing what UDS Core configures in this area and why it matters to bundle operators. Keep it narrow — only UDS Core-specific surfaces, not a general introduction to the underlying technology.
+One or two sentences describing what UDS Core configures in this area and why it matters to bundle operators. Keep it narrow: only UDS Core-specific surfaces, not a general introduction to the underlying technology.
 
 ## Configuration surface one
 
@@ -42,7 +44,7 @@ One sentence describing what this section covers.
 | `field.other` | boolean | `false` | What this field controls |
 
 > [!NOTE]
-> Any behavior note that isn't obvious from the table — e.g., when changes take effect, mutual exclusion, or ordering constraints.
+> Any behavior note that isn't obvious from the table, e.g., when changes take effect, mutual exclusion, or ordering constraints.
 
 Minimal example showing the bundle override path:
 
@@ -61,9 +63,9 @@ overrides:
 
 ## Related documentation
 
-- [How-to guide title](/how-to-guides/section/page/) — brief description
-- [Upstream doc title](https://example.com) — brief description
-- [Concepts page title](/concepts/section/page/) — brief description
+- [How-to guide title](/how-to-guides/section/page/) - brief description
+- [Upstream doc title](https://example.com) - brief description
+- [Concepts page title](/concepts/section/page/) - brief description
 ```
 
 ## Conventions
@@ -72,7 +74,7 @@ overrides:
 - Opening paragraph: 1–2 sentences, no heading, describes what UDS Core surfaces in this area
 - `##` headings for each logical configuration surface
 - `###` for sub-sections when a surface has meaningfully distinct sub-areas
-- End with `## Related documentation` — no "Next steps" or CardGrid (those are how-to guide patterns)
+- End with `## Related documentation`. No "Next steps" section
 - No horizontal rule (`---`) dividers between sections
 
 ### Tables
@@ -83,18 +85,18 @@ overrides:
 
 ### Code examples
 - Use fenced YAML blocks; add `title="..."` only when the file name adds clarity
-- Show only the relevant override path — do not include `packages:`, `repository:`, or `ref:` boilerplate unless needed to show context
+- Show only the relevant override path. Do not include `packages:`, `repository:`, or `ref:` boilerplate unless needed to show context
 - Never use `oci://` prefix on repository references
 - Use `registry.defenseunicorns.com/public/core` for UDS Core repository references (no `oci://` prefix)
 
 ### Alert syntax
-- `> [!NOTE]` — caveats, timing constraints, non-obvious behavior
-- `> [!TIP]` — helpful hints (use sparingly in reference pages)
-- `> [!CAUTION]` — data loss or security risk
-- `> [!WARNING]` — potential issues
+- `> [!NOTE]`: caveats, timing constraints, non-obvious behavior
+- `> [!TIP]`: helpful hints (use sparingly in reference pages)
+- `> [!CAUTION]`: data loss or security risk
+- `> [!WARNING]`: potential issues
 
 ### Callout usage
-- Minimize callouts in reference pages — most information belongs in the table itself or prose
+- Minimize callouts in reference pages. Most information belongs in the table itself or prose
 - Use `> [!NOTE]` for timing constraints (e.g., "requires redeployment to take effect")
 - Use `> [!CAUTION]` for security implications only
 

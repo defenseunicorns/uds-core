@@ -1,7 +1,7 @@
 ---
 title: Create log-based alerting and recording rules
 sidebar:
-  order: 5.5
+  order: 5.005
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -23,7 +23,7 @@ Define alerting conditions based on log patterns using Loki Ruler, and optionall
 1. **Loki alerting rules** detect log patterns and send alerts directly to Alertmanager. Use these when you want to be notified about specific log events like error spikes or missing logs.
 2. **Loki recording rules** create Prometheus metrics from log queries. These are useful for building dashboards and for enabling metric-based alerting on log data.
 
-Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar watches for these ConfigMaps and loads them automatically — no restart required.
+Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar watches for these ConfigMaps and loads them automatically, with no restart required.
 
 ## Steps
 
@@ -71,10 +71,10 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
 
    Key fields in each alerting rule:
 
-   - **`expr`** — A LogQL expression that defines the alert condition. `rate()` counts log lines per second matching a filter; `absent_over_time()` fires when no logs match within the window.
-   - **`for`** — How long the condition must be true before the alert fires. This prevents transient spikes from triggering notifications.
-   - **`labels`** — Attached to the alert and used by Alertmanager for routing and grouping (e.g., `severity`, `service`).
-   - **`annotations`** — Human-readable metadata like `summary` and `runbook_url` that appear in alert notifications.
+   - **`expr`:** A LogQL expression that defines the alert condition. `rate()` counts log lines per second matching a filter; `absent_over_time()` fires when no logs match within the window.
+   - **`for`:** How long the condition must be true before the alert fires. This prevents transient spikes from triggering notifications.
+   - **`labels`:** Attached to the alert and used by Alertmanager for routing and grouping (e.g., `severity`, `service`).
+   - **`annotations`:** Human-readable metadata like `summary` and `runbook_url` that appear in alert notifications.
 
 2. **Optional: Create recording rules**
 
@@ -111,7 +111,7 @@ Rules are deployed via ConfigMaps labeled `loki_rule: "1"`. The Loki sidecar wat
                  ) * 100
    ```
 
-   Each `record` entry defines a Prometheus metric name (e.g., `my_app:error_rate`) and a LogQL expression that produces its value. The `interval` field controls how often the rules are evaluated — `30s` is a good starting point.
+   Each `record` entry defines a Prometheus metric name (e.g., `my_app:error_rate`) and a LogQL expression that produces its value. The `interval` field controls how often the rules are evaluated. `30s` is a good starting point.
 
 3. **Optional: Alert on recorded metrics**
 
@@ -203,11 +203,11 @@ uds zarf tools kubectl logs -n loki -l app.kubernetes.io/name=loki -c loki-sc-ru
 
 **Symptom:** The alerting rule appears in Grafana but stays in the `Normal` or `Pending` state.
 
-**Solution:** Verify the LogQL expression returns results. Open Grafana **Explore**, select the **Loki** datasource, and run the `expr` from your rule. If it returns no data, check that logs are actually being ingested for the target namespace and application. Also confirm that the `for` duration has elapsed — the condition must be true continuously for the specified period.
+**Solution:** Verify the LogQL expression returns results. Open Grafana **Explore**, select the **Loki** datasource, and run the `expr` from your rule. If it returns no data, check that logs are actually being ingested for the target namespace and application. Also confirm that the `for` duration has elapsed, because the condition must be true continuously for the specified period.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana Loki: Alerting and recording rules](https://grafana.com/docs/loki/latest/alert/) — Loki ruler configuration reference
-- [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) — query language documentation
-- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) — Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email.
-- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) — Define additional alerting conditions based on Prometheus metrics.
+- [Grafana Loki: Alerting and recording rules](https://grafana.com/docs/loki/latest/alert/) - Loki ruler configuration reference
+- [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) - query language documentation
+- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Loki alerts to Slack, PagerDuty, or email.
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define additional alerting conditions based on Prometheus metrics.

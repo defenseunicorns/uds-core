@@ -1,7 +1,7 @@
 ---
 title: Logging
 sidebar:
-  order: 1.2
+  order: 1.002
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -21,9 +21,9 @@ You'll configure UDS Core's logging pipeline for production high availability: c
 ## Before you begin
 
 > [!NOTE]
-> Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default — it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
+> Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default, so it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
 
-Vector runs as a **DaemonSet** — one pod per node — so it automatically scales with your cluster. No replica configuration is needed for Vector.
+Vector runs as a **DaemonSet** (one pod per node), so it automatically scales with your cluster. No replica configuration is needed for Vector.
 
 ## Steps
 
@@ -31,7 +31,7 @@ Vector runs as a **DaemonSet** — one pod per node — so it automatically scal
 
 1. **Connect Loki to external object storage**
 
-   Production Loki deployments require external object storage for log chunk and index data. The example below uses access keys, which work with AWS S3, MinIO, and any S3-compatible provider. For Azure and GCP, the override structure differs — see the [Loki cloud deployment guides](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/) for provider-specific examples.
+   Production Loki deployments require external object storage for log chunk and index data. The example below uses access keys, which work with AWS S3, MinIO, and any S3-compatible provider. For Azure and GCP, the override structure differs. See the [Loki cloud deployment guides](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/) for provider-specific examples.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -92,7 +92,7 @@ Vector runs as a **DaemonSet** — one pod per node — so it automatically scal
 
 2. **Tune Loki replicas and resources**
 
-   Loki ships in **SimpleScalable** deployment mode with three tiers — write, read, and backend — each defaulting to 3 replicas. Adjust replica counts and resource allocations based on your log volume and query load. See the [Grafana Loki sizing guide](https://grafana.com/docs/loki/latest/setup/size/) for help choosing values.
+   Loki ships in **SimpleScalable** deployment mode with three tiers (write, read, and backend), each defaulting to 3 replicas. Adjust replica counts and resource allocations based on your log volume and query load. See the [Grafana Loki sizing guide](https://grafana.com/docs/loki/latest/setup/size/) for help choosing values.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -145,14 +145,14 @@ Vector runs as a **DaemonSet** — one pod per node — so it automatically scal
    | **Backend** | Handles compaction and index management | Typically stable at 3 replicas |
 
    > [!TIP]
-   > For most deployments, the default of 3 replicas per tier is sufficient — focus on tuning resources rather than adding replicas. Only increase replica counts if your log volume or query load requires it.
+   > For most deployments, the default of 3 replicas per tier is sufficient; focus on tuning resources rather than adding replicas. Only increase replica counts if your log volume or query load requires it.
 
    > [!IMPORTANT]
    > UDS Core only supports Loki in **SimpleScalable** mode. Other deployment modes (monolithic, microservices) are not tested or directly supported.
 
 3. **Configure Vector resources for production**
 
-   Vector runs as a **DaemonSet** — one pod per node — so it automatically scales as your cluster grows. No replica configuration is needed. For production workloads, increase the default resource allocation:
+   Vector runs as a **DaemonSet** (one pod per node), so it automatically scales as your cluster grows. No replica configuration is needed. For production workloads, increase the default resource allocation:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -227,11 +227,11 @@ uds zarf tools kubectl get pods -n vector -o wide | grep <node-name>
 ```
 If the pod is not running, check for resource pressure or scheduling issues on that node.
 
-## Related Documentation
+## Related documentation
 
-- [Grafana Loki: Sizing](https://grafana.com/docs/loki/latest/setup/size/) — guidance on sizing Loki for your log volume
-- [Grafana Loki: Storage Configuration](https://grafana.com/docs/loki/latest/configure/storage/) — full list of supported storage backends
-- [Grafana Loki: Scalable Deployment](https://grafana.com/docs/loki/latest/get-started/deployment-modes/#simple-scalable) — SimpleScalable mode architecture
-- [Vector: Going to Production](https://vector.dev/docs/setup/going-to-prod/) — Vector production resource and tuning recommendations
-- [Configure HA for Monitoring](/how-to-guides/high-availability/monitoring/) — Grafana connects to Loki for log visualization and also requires HA configuration.
-- [Logging concepts](/concepts/core-features/logging/) — Background on the Vector → Loki → Grafana pipeline in UDS Core.
+- [Grafana Loki: Sizing](https://grafana.com/docs/loki/latest/setup/size/) - guidance on sizing Loki for your log volume
+- [Grafana Loki: Storage Configuration](https://grafana.com/docs/loki/latest/configure/storage/) - full list of supported storage backends
+- [Grafana Loki: Scalable Deployment](https://grafana.com/docs/loki/latest/get-started/deployment-modes/#simple-scalable) - SimpleScalable mode architecture
+- [Vector: Going to Production](https://vector.dev/docs/setup/going-to-prod/) - Vector production resource and tuning recommendations
+- [Configure HA for Monitoring](/how-to-guides/high-availability/monitoring/) - Grafana connects to Loki for log visualization and also requires HA configuration.
+- [Logging concepts](/concepts/core-features/logging/) - Background on the Vector → Loki → Grafana pipeline in UDS Core.

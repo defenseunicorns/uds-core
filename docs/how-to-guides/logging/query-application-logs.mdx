@@ -1,14 +1,14 @@
 ---
 title: Query application logs
 sidebar:
-  order: 4.1
+  order: 4.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-After completing this guide you will be able to find, filter, and analyze logs from any workload in your cluster using Grafana's Explore interface and LogQL — the query language for Loki.
+After completing this guide you will be able to find, filter, and analyze logs from any workload in your cluster using Grafana's Explore interface and LogQL, the query language for Loki.
 
 ## Prerequisites
 
@@ -43,11 +43,11 @@ UDS Core's Vector DaemonSet automatically collects stdout/stderr from every pod 
    Navigate to Grafana (`https://grafana.<admin_domain>`), then select **Explore** from the left sidebar. In the datasource dropdown at the top, select **Loki**. Adjust the **time range picker** in the top-right corner to cover the period you want to search.
 
    > [!TIP]
-   > For quick namespace and pod filtering without writing LogQL, try the **Loki Dashboard quick search** included with UDS Core — find it under **Dashboards** in Grafana. The steps below cover Grafana Explore for more advanced querying.
+   > For quick namespace and pod filtering without writing LogQL, try the **Loki Dashboard quick search** included with UDS Core (find it under **Dashboards** in Grafana). The steps below cover Grafana Explore for more advanced querying.
 
 2. **Filter logs by label**
 
-   Start with a **stream selector** — a set of label matchers inside curly braces. This is the most efficient way to narrow results because Loki indexes labels, not log content. Switch to **Code** mode (toggle in the top-right of the query editor) to paste LogQL queries directly.
+   Start with a **stream selector**, a set of label matchers inside curly braces. This is the most efficient way to narrow results because Loki indexes labels, not log content. Switch to **Code** mode (toggle in the top-right of the query editor) to paste LogQL queries directly.
 
    > [!TIP]
    > If you're not familiar with LogQL syntax, use the **Builder** mode instead. It provides dropdowns for selecting labels and values without writing queries by hand. You can switch between Builder and Code mode at any time.
@@ -136,7 +136,7 @@ Confirm the queries above return log results in Grafana Explore. If you see log 
 
 **Symptom:** Loki does not appear in the datasource dropdown in Grafana Explore.
 
-**Solution:** Navigate to **Administration → Data sources** in Grafana and confirm a Loki datasource exists. UDS Core provisions this automatically — if it's missing, check that the Loki pods are running and the Grafana deployment has completed successfully:
+**Solution:** Navigate to **Administration > Data sources** in Grafana and confirm a Loki datasource exists. UDS Core provisions this automatically. If it's missing, check that the Loki pods are running and the Grafana deployment has completed successfully:
 
 ```bash
 uds zarf tools kubectl get pods -n loki
@@ -147,7 +147,7 @@ uds zarf tools kubectl get pods -n grafana
 
 **Symptom:** Query returns empty results even for namespaces you know are active.
 
-**Solution:** Check the time range selector in the top-right corner of Grafana Explore — the default may be too narrow. Expand to "Last 1 hour" or "Last 6 hours". If still empty, confirm Vector is running:
+**Solution:** Check the time range selector in the top-right corner of Grafana Explore, as the default may be too narrow. Expand to "Last 1 hour" or "Last 6 hours". If still empty, confirm Vector is running:
 
 ```bash
 uds zarf tools kubectl get pods -n vector
@@ -160,11 +160,11 @@ uds zarf tools kubectl get pods -n vector
 **Solution:** Narrow your query with more specific label selectors and a shorter time range. Avoid querying across all namespaces with broad time windows. Add label filters to reduce the number of streams Loki needs to scan.
 
 
-## Related Documentation
+## Related documentation
 
-- [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) — full LogQL query reference
-- [Grafana Loki: Log queries](https://grafana.com/docs/loki/latest/query/log_queries/) — stream selectors, line filters, and parsers
-- [Grafana Loki: Metric queries](https://grafana.com/docs/loki/latest/query/metric_queries/) — aggregation functions and range vectors
-- [Logging Concepts](/concepts/core-features/logging/) — how the Vector → Loki → Grafana pipeline works
-- [Forward logs to an external system](/how-to-guides/logging/forward-logs-to-external-system/) — Send logs to S3 or other destinations alongside Loki.
-- [Configure log retention](/how-to-guides/logging/configure-log-retention/) — Control how long Loki keeps log data.
+- [Grafana Loki: LogQL](https://grafana.com/docs/loki/latest/query/) - full LogQL query reference
+- [Grafana Loki: Log queries](https://grafana.com/docs/loki/latest/query/log_queries/) - stream selectors, line filters, and parsers
+- [Grafana Loki: Metric queries](https://grafana.com/docs/loki/latest/query/metric_queries/) - aggregation functions and range vectors
+- [Logging Concepts](/concepts/core-features/logging/) - how the Vector → Loki → Grafana pipeline works
+- [Forward logs to an external system](/how-to-guides/logging/forward-logs-to-external-system/) - Send logs to S3 or other destinations alongside Loki.
+- [Configure log retention](/how-to-guides/logging/configure-log-retention/) - Control how long Loki keeps log data.

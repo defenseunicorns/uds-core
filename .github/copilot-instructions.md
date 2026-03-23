@@ -6,7 +6,12 @@ When reviewing code changes, read all files in `.ai/code/` for guidance. These f
 
 ## Documentation
 
-When reviewing changes to docs (`docs/` directory), read all files in `.ai/docs/` for templates, conventions, and guidance. Flag any deviations from these conventions in review comments.
+- Read all files in `.ai/docs/` for templates, conventions, and guidance on documentation changes
+- When reviewing docs changes, audit against `docs/dev/style-rules.md` (formatting, structure, tone rules) and `docs/dev/voice-profile.md` (project writing voice)
+- Flag style-rules.md violations in review comments with the specific rule being violated
+- Flag voice-profile.md deviations when tone, sentence style, or reader address doesn't match
+- Use severity levels: CRITICAL (incorrect info, broken instructions), MAJOR (significant style/voice violations), MINOR (noticeable but non-blocking), NIT (cosmetic)
+- Check the quick checklist at the end of style-rules.md as a final quality gate
 
 ## PR Reviews
 

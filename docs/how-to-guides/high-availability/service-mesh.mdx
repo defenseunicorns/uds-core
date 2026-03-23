@@ -1,7 +1,7 @@
 ---
 title: Service Mesh
 sidebar:
-  order: 1.6
+  order: 1.006
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -10,7 +10,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 You'll configure [Istio](https://istio.io/)'s control plane (`istiod`) and ingress gateways for production high availability by increasing minimum replica counts, tuning resource allocation, and verifying that pod anti-affinity is spreading replicas across nodes.
 
-Istio's control plane manages service discovery, certificate rotation, and configuration distribution for the entire mesh. If istiod becomes unavailable, new connections cannot be established and configuration changes stop propagating. The ingress gateways are the entry point for all external traffic — if a gateway goes down, traffic to the applications it serves is interrupted.
+Istio's control plane manages service discovery, certificate rotation, and configuration distribution for the entire mesh. If istiod becomes unavailable, new connections cannot be established and configuration changes stop propagating. The ingress gateways are the entry point for all external traffic; if a gateway goes down, traffic to the applications it serves is interrupted.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ UDS Core configures istiod with two HA mechanisms out of the box:
 > [!NOTE]
 > The anti-affinity is a **soft preference**, not a hard requirement. Kubernetes will try to spread istiod pods across nodes, but if insufficient nodes are available (e.g., on a 2-node cluster), it will co-locate replicas rather than leave them unscheduled. On clusters with 3+ nodes, you should see replicas distributed across different nodes.
 
-With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single replica during low-traffic periods — creating a temporary single point of failure.
+With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single replica during low-traffic periods, creating a temporary single point of failure.
 
 ## Steps
 
@@ -83,7 +83,7 @@ With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single re
    ```
 
    > [!NOTE]
-   > istiod's resource needs scale with the number of services, endpoints, and configuration objects in the mesh — not directly with traffic volume. See the [Istio performance and scalability guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) for benchmarks.
+   > istiod's resource needs scale with the number of services, endpoints, and configuration objects in the mesh, not directly with traffic volume. See the [Istio performance and scalability guide](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) for benchmarks.
 
 3. **Scale the admin and tenant ingress gateways**
 
@@ -175,6 +175,8 @@ With the default `autoscaleMin: 1`, the HPA may scale istiod down to a single re
 
 ## Verification
 
+Confirm istiod and the gateways are scaled and distributed:
+
 ```bash
 # Confirm istiod pods are on different nodes
 uds zarf tools kubectl get pods -n istio-system -l app=istiod -o custom-columns=NAME:.metadata.name,NODE:.spec.nodeName,STATUS:.status.phase
@@ -202,7 +204,7 @@ uds zarf tools kubectl get pods -n istio-tenant-gateway -o wide
 
 **Symptoms:** All istiod replicas are on a single node, creating a single point of failure.
 
-**Solution:** The anti-affinity is a soft preference — Kubernetes will co-locate pods when it has no better option. Verify you have at least 3 schedulable nodes:
+**Solution:** The anti-affinity is a soft preference; Kubernetes will co-locate pods when it has no better option. Verify you have at least 3 schedulable nodes:
 ```bash
 uds zarf tools kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints
 ```
@@ -218,12 +220,12 @@ If nodes have taints preventing istiod scheduling, add appropriate tolerations v
 uds zarf tools kubectl get pods -n kube-system -l k8s-app=metrics-server
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Istio istiod Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery) — full list of istiod helm values
-- [Istio Gateway Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) — full list of gateway helm values
-- [Istio: Deployment Best Practices](https://istio.io/latest/docs/ops/best-practices/deployment/) — control plane resilience and scaling guidance
-- [Istio: Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) — benchmarks and tuning for large clusters
-- [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) — HPA configuration and scaling behavior
-- [Kubernetes: Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) — affinity, anti-affinity, and topology spread constraints
-- [Networking & Service Mesh concepts](/concepts/core-features/networking/) — Background on Istio's role in UDS Core.
+- [Istio istiod Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/istio-control/istio-discovery) - full list of istiod helm values
+- [Istio Gateway Helm Chart](https://github.com/istio/istio/tree/master/manifests/charts/gateway) - full list of gateway helm values
+- [Istio: Deployment Best Practices](https://istio.io/latest/docs/ops/best-practices/deployment/) - control plane resilience and scaling guidance
+- [Istio: Performance and Scalability](https://istio.io/latest/docs/ops/deployment/performance-and-scalability/) - benchmarks and tuning for large clusters
+- [Kubernetes: Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/) - HPA configuration and scaling behavior
+- [Kubernetes: Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/) - affinity, anti-affinity, and topology spread constraints
+- [Networking & Service Mesh concepts](/concepts/core-features/networking/) - Background on Istio's role in UDS Core.
