@@ -34,33 +34,33 @@ Falco events are shipped to Loki by default via Falcosidekick; no additional con
 
    **All events:**
 
-   ```logql
+   ```text
    {priority=~".+"}
    ```
 
    **Filter by priority level:**
 
-   ```logql
+   ```text
    {priority="Warning"}
    ```
 
-   ```logql
+   ```text
    {priority="Error"}
    ```
 
    **Filter by specific rule:**
 
-   ```logql
+   ```text
    {rule="Search Private Keys or Passwords"}
    ```
 
-   ```logql
+   ```text
    {rule="Terminal shell in container"}
    ```
 
    You can combine filters:
 
-   ```logql
+   ```text
    {priority="Warning", rule=~".*Privilege.*"}
    ```
 

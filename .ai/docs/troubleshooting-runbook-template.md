@@ -1,5 +1,7 @@
 # Troubleshooting Runbook Template
 
+> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+
 ## About this template
 
 Troubleshooting runbooks are operations-focused pages that help platform operators diagnose and resolve issues on a **running** UDS Core deployment. Each runbook covers a single problem area with a consistent structure: when to use it, diagnose root cause, fix, and verify.

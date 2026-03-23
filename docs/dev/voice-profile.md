@@ -1,10 +1,5 @@
 # Voice Profile
 
-> **Note:** Two distinct registers appear across these sources. Published user-facing docs use
-> "you" address and GFM alert callout syntax. Internal design docs use "we" and GitHub aside blocks.
-> This profile covers published docs as the primary target. See "Internal Design Docs" section for
-> the divergent patterns.
-
 ## Tone
 Peer-level technical authority, confident without being condescending. Explains *why* alongside
 *how*. States limitations and caveats directly rather than softening them. No filler, no marketing
@@ -110,10 +105,3 @@ shell commands. Inline comments to explain non-obvious fields.
 - Use "we" when addressing the reader, reserve it for the DU/UDS team voice
 - Stack subordinate clauses, break them into separate sentences
 
-## Internal Design Doc Divergence
-When writing internal design docs (GitHub-rendered, not Starlight):
-- Switch to "we" for design decisions: "we will add...", "we need to ensure..."
-- Use `<aside>`, `> [!NOTE]`, or Starlight `:::note` syntax for callouts
-- System-as-subject for implementation steps: "The UDS Operator will check..."
-- Numbered lists for reconciliation/validation flows are the primary structure
-- Include rationale and alternatives considered, not just what, but why

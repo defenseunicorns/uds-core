@@ -65,7 +65,7 @@ Bundles support two layers of configuration so that a single artifact can adapt 
 | **Overrides** | `uds-bundle.yaml` | Bundle author | Defaults and Helm value mappings the author pre-configures |
 | **Variables** | `uds-config.yaml` | Deployer | Secrets, endpoints, and values that differ per cluster |
 
-The bundle author defines *which* Helm values and Zarf variables are configurable and where they map. The deployer provides the *values* via `uds-config.yaml` at deploy time. This separation means you build once and configure per cluster: the bundle defines the knobs, `uds-config.yaml` turns them.
+The bundle author defines *which* Helm values and Zarf variables are configurable and where they map. The deployer provides the *values* via `uds-config.yaml` at deploy time. This separation lets you build the bundle once and configure it specific to each cluster.
 
 > [!NOTE]
 > A bundle is an artifact, not a runtime concept. Once deployed, the cluster contains individual Zarf packages and their resources; the bundle itself is not tracked as a Kubernetes object. To understand what happens *after* deployment, see [Core CRDs](/concepts/configuration-and-packaging/crd-overviews/).

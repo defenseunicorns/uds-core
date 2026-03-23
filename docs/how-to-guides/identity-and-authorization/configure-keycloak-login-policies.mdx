@@ -134,7 +134,7 @@ This guide configures Keycloak via Helm chart values, the fastest path to operat
    ```
 
    > [!NOTE]
-   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
+   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/).
 
 </Steps>
 
@@ -184,7 +184,7 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 ## Related documentation
 
 - [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) - for theme and plugin customization beyond Helm values
-- [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) - verify FIPS status and understand constraints
+- [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) - verify FIPS status and understand constraints
 - [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) - upstream reference for session configuration options
 - [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full spec for SSO client configuration
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict application access to users in specific Keycloak groups using the Package CR.

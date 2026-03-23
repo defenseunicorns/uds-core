@@ -1,5 +1,7 @@
 # Reference Page Template
 
+> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+
 ## About this template
 
 Reference pages document stable UDS Core configuration surfaces: the exact fields, defaults, and behaviors that bundle operators and platform engineers need to look up. They are **not** task-oriented.
@@ -72,7 +74,7 @@ overrides:
 - Opening paragraph: 1–2 sentences, no heading, describes what UDS Core surfaces in this area
 - `##` headings for each logical configuration surface
 - `###` for sub-sections when a surface has meaningfully distinct sub-areas
-- End with `## Related documentation`. No "Next steps" or CardGrid (those are how-to guide patterns)
+- End with `## Related documentation`. No "Next steps" section
 - No horizontal rule (`---`) dividers between sections
 
 ### Tables

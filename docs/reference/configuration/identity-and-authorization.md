@@ -202,13 +202,13 @@ Bundle override paths: `overrides.keycloak.keycloak.values[].path: fips` and `ov
 
 When `debugMode` is `true`, Keycloak bootstrap logs will contain a line like:
 
-```plaintext
+```console
 KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 ```
 
 `BCFIPS version 2.0 Approved Mode` confirms FIPS Strict Mode is active. `FIPS-JVM: disabled` indicates the underlying JVM is not in FIPS mode, which is expected unless the host system has a FIPS-enabled kernel.
 
-For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
+For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/).
 
 ## OpenTofu client
 
@@ -236,7 +236,7 @@ The client secret can be retrieved from the Keycloak Admin Console: **UDS realm 
 - [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - how-to guide for enabling and disabling authentication methods
 - [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) - how-to guide for logo, background, and terms and conditions overrides
 - [Configure truststore](/how-to-guides/identity-and-authorization/configure-truststore/) - how-to guide for building and deploying a custom CA truststore
-- [Enable FIPS mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) - how-to guide for enabling FIPS 140-2 Strict Mode
+- [Enable FIPS mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) - how-to guide for enabling FIPS 140-2 Strict Mode
 - [Configure service accounts](/how-to-guides/identity-and-authorization/configure-service-accounts/) - how-to guide for SSO-protected service-to-service authentication
 - [Configure account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) - how-to guide for adjusting brute-force protection thresholds
 - [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - how-to guide for session timeouts, concurrent session limits, and logout behavior

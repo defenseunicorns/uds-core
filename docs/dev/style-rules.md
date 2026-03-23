@@ -123,6 +123,11 @@ Additional details that don't need to be visible by default.
 - Define acronyms on first use.
 - Use standard industry terminology.
 - Maintain consistent capitalization for product names.
+- Use backtick code notation for CRD names (`Package`, `Exemption`, `ClusterConfig`) when referring to the Custom Resource objects, to distinguish from generic concepts.
+
+## Procedures
+
+- For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**`.
 
 ## Links and references
 

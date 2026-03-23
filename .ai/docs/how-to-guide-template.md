@@ -1,5 +1,7 @@
 # How-To Guide Template
 
+> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+
 ## About this template
 
 How-to guides are task-oriented pages that walk a user through accomplishing a specific goal. Each guide covers a single task (configuring a component, enabling a feature, connecting an external dependency, etc.).
@@ -185,7 +187,7 @@ uds zarf tools kubectl get pods -n namespace
   ```
 - How-to guides use a single `## Related documentation` section with a flat bullet list. No `## Next steps` section. All links (reference docs, external resources, follow-up guides, related concepts) go in this one section as bullets.
 - Overview/landing pages (e.g., `overview.mdx` files that introduce a section) may use `<CardGrid>` and `<LinkCard>` for visual navigation. The bullets-only convention applies to how-to guide body content only.
-- For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**` (per [Google](https://developers.google.com/style/procedures#optional-steps) and [Microsoft](https://learn.microsoft.com/en-us/style-guide/procedures-instructions/writing-step-by-step-instructions) style guides)
+- For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**`
 - Troubleshooting headings use the `### Problem: Description` format, with `**Symptom:**` (singular) or `**Symptoms:**` (plural) and `**Solution:**` sub-headings
 - Verify all helm paths against source `values.yaml` and all upstream URLs before publishing
 
