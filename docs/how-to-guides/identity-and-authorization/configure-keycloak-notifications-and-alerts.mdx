@@ -55,11 +55,11 @@ Because logging and dashboards are enabled by default, you can already view Keyc
 
    The override creates a `PrometheusRule` with three alerts based on the recording-rule metrics that are already active by default:
 
-   | Alert | Severity | Description |
-   |---|---|---|
-   | `KeycloakRealmModificationsDetected` | warning | Fires on realm configuration changes within a 5-minute window |
-   | `KeycloakUserModificationsDetected` | warning | Fires on user or group membership changes within a 5-minute window |
-   | `KeycloakSystemAdminModificationsDetected` | critical | Fires on system administrator membership changes within a 5-minute window |
+   | Alert | Description |
+   |---|---|
+   | `KeycloakRealmModificationsDetected` | **warning:** Fires on realm configuration changes within a 5-minute window |
+   | `KeycloakUserModificationsDetected` | **warning:** Fires on user or group membership changes within a 5-minute window |
+   | `KeycloakSystemAdminModificationsDetected` | **critical:** Fires on system administrator membership changes within a 5-minute window |
 
    > [!NOTE]
    > `KeycloakSystemAdminModificationsDetected` uses two detection branches. When `JSONLogEventListenerProvider` is active, it filters specifically on `/UDS Core/Admin` group membership changes. When the standard `org.keycloak.events` logger is active, it matches all `USER|GROUP_MEMBERSHIP` resource changes — that logger does not expose group paths, so narrower filtering is not possible.
