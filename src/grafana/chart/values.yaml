@@ -49,4 +49,4 @@ additionalNetworkAllow: []
 
 # Enable default uptime monitoring probes for Grafana endpoints
 uptime:
-  enabled: ###ZARF_VAR_UPTIME_ENABLED###
+  enabled: true

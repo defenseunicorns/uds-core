@@ -19,10 +19,6 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
-  - name: UPTIME_ENABLED
-    description: "Enable default uptime monitoring probes for Keycloak endpoints"
-    default: "true"
-    type: raw
 
 components:
   - name: keycloak

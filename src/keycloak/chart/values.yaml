@@ -473,4 +473,4 @@ detailedObservability:
 
 # Enable default uptime monitoring probes for Keycloak endpoints
 uptime:
-  enabled: ###ZARF_VAR_UPTIME_ENABLED###
+  enabled: true

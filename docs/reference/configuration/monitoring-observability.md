@@ -27,7 +27,7 @@ UDS Core includes endpoint probes for core services out of the box. These are co
 
 ### Disabling default probes
 
-Each service exposes an `UPTIME_ENABLED` Zarf variable (type: boolean, default: `true`) that controls whether its default probes are created.
+Each service has an `uptime.enabled` Helm value (boolean, default: `true`) that controls whether its default probes are created.
 
 To disable probes in your bundle, add a value override:
 

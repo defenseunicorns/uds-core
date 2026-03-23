@@ -19,10 +19,6 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
-  - name: UPTIME_ENABLED
-    description: "Enable default uptime monitoring probes for Grafana endpoints"
-    default: "true"
-    type: raw
 
 components:
   - name: grafana
