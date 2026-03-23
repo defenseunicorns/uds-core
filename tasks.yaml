@@ -207,8 +207,6 @@ tasks:
   - name: update-diagrams
     description: "Regenerate C4 and D2 Diagrams"
     actions:
-      - description: "Regenerate operator resource tree"
-        task: diagrams:d2-update
       - description: "Regenerate C4 Diagrams"
         task: diagrams:c4-update
 
