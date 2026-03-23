@@ -23,7 +23,7 @@ This release removes the following deprecated fields: the legacy `CA_CERT` Zarf 
 | Removed `fips` and `fipsAllowWeakPasswords` Keycloak Helm values ([#2483](https://github.com/defenseunicorns/uds-core/pull/2483)) | FIPS mode is now always enabled; overrides referencing these values will fail | Remove any `fips` or `fipsAllowWeakPasswords` overrides. See the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for handling password upgrades if you were not previously running in FIPS mode |
 | Removed `operator.KUBEAPI_CIDR` and `operator.KUBENODE_CIDRS` Helm values ([#2494](https://github.com/defenseunicorns/uds-core/pull/2494)) | Deployments overriding these operator config values will fail | Use `cluster.networking.kubeApiCIDR` and `cluster.networking.kubeNodeCIDRs` instead |
 | Removed `x509LookupProvider` and `mtlsClientCert` Keycloak Helm values ([#2486](https://github.com/defenseunicorns/uds-core/pull/2486)) | Deployments overriding these values will fail | Use `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat` instead |
-| `network.allow` rules without an explicit remote are now rejected at admission ([#2510](https://github.com/defenseunicorns/uds-core/pull/2510)) | `Package` CRs with allow rules that omit `remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost` will be blocked | Add `remoteGenerated: Anywhere` for unrestricted access or `remoteNamespace: "*"` for any in-cluster target to affected rules |
+| `network.allow` rules without an explicit remote are now rejected at admission ([#2510](https://github.com/defenseunicorns/uds-core/pull/2510)) | `Package` CRs with allow rules that do not specify one of `remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost` will be blocked | Add `remoteGenerated: Anywhere` for unrestricted access or `remoteNamespace: "*"` for any in-cluster target to affected rules |
 
 ### Notable features
 
@@ -39,6 +39,12 @@ This release removes the following deprecated fields: the legacy `CA_CERT` Zarf 
 | Prometheus Operator | 0.89.0 | [0.90.0](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.90.0) |
 | UDS Identity Config | 0.24.0 | [0.25.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.25.0) |
 | Vector | 0.53.0 | [0.54.0](https://github.com/vectordotdev/vector/releases/tag/v0.54.0) |
+| Grafana Helm chart | 11.3.0 | [11.3.3](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.3.3) |
+| kube-prometheus-stack Helm chart | 82.4.2 | [82.13.5](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-82.13.5) |
+| Loki Helm chart | 6.53.0 | [6.57.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-6.57.0) |
+| Prometheus Blackbox Exporter Helm chart | 11.8.0 | [11.9.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.9.0) |
+| prometheus-operator-crds Helm chart | 27.0.0 | [28.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-28.0.0) |
+| Vector Helm chart | 0.50.0 | [0.51.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.51.0) |
 
 ## Upgrade considerations
 

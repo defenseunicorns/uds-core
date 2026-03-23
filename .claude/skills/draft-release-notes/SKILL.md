@@ -53,10 +53,11 @@ gh pr view <DEP_PR_NUMBER> --repo defenseunicorns/uds-core --json title,body
 
 ## Step 3: Gather dependency updates
 
-Review all `chore(deps):` PRs in the release. Only include **core application updates** in the dependency table — these are the actual applications operators care about (e.g., Prometheus, Grafana, Keycloak, Loki, Pepr, Neuvector, Velero, Istio, etc.).
+Review all `chore(deps):` PRs in the release. Include both **application updates** and **Helm chart version bumps** in a single dependency table. Application updates track the actual running software (e.g., Prometheus 3.10.0, Grafana 12.4.1). Helm chart bumps track the chart packaging version (e.g., kube-prometheus-stack 82.13.5, Grafana Helm chart 11.3.3).
+
+For Helm chart entries, add a "Helm chart" suffix to the package name (e.g., "Falco Helm chart", "Grafana Helm chart", "kube-prometheus-stack Helm chart"). Skip Helm charts where the chart version always matches the application version (e.g., Istio charts). Skip local/internal charts (keycloak, authservice, uds-operator-config, uds-cluster-crds). Skip test-only charts (podinfo).
 
 **Do NOT include:**
-- Helm chart version bumps (e.g., "grafana helm chart 10.x → 11.x") — unless the chart bump is a breaking change, in which case call it out in the breaking changes section instead
 - Support library updates (e.g., zarf-agent, uds-runtime)
 - GitHub Actions or CI tooling updates
 - Go module or build dependency updates
@@ -87,7 +88,20 @@ In the dependency table, link the "Updated" version number to the upstream relea
 - Node Exporter: `https://github.com/prometheus/node_exporter/releases/tag/vX.Y.Z`
 - Kube State Metrics: `https://github.com/kubernetes/kube-state-metrics/releases/tag/vX.Y.Z`
 
-Leave entries unlinked when there is no meaningful upstream release page (e.g., Helm chart-only bumps, DoD CA Certs).
+When a Helm chart version is bumped independently of the application version, include it in the same dependency table with a "Helm chart" suffix (e.g., "Falco Helm chart", "Grafana Helm chart"). Link the updated version to the chart's release page using these patterns:
+
+- Falco Helm chart: `https://github.com/falcosecurity/charts/releases/tag/falco-X.Y.Z`
+- Grafana Helm chart: `https://github.com/grafana-community/helm-charts/releases/tag/grafana-X.Y.Z`
+- Istio Helm chart: `https://github.com/istio/istio/releases/tag/X.Y.Z` (chart version matches app version)
+- kube-prometheus-stack Helm chart: `https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-X.Y.Z`
+- Loki Helm chart: `https://github.com/grafana-community/helm-charts/releases/tag/loki-X.Y.Z`
+- Metrics Server Helm chart: `https://github.com/kubernetes-sigs/metrics-server/releases/tag/metrics-server-helm-chart-X.Y.Z`
+- Prometheus Blackbox Exporter Helm chart: `https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-X.Y.Z`
+- prometheus-operator-crds Helm chart: `https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-X.Y.Z`
+- Vector Helm chart: `https://github.com/vectordotdev/helm-charts/releases/tag/vector-X.Y.Z`
+- Velero Helm chart: `https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-X.Y.Z`
+
+Leave entries unlinked when there is no meaningful upstream release page (e.g., DoD CA Certs).
 
 ## Step 4: Check for identity-config changes
 
@@ -135,7 +149,7 @@ Add to the existing minor version's release notes:
 For minor/major releases, update `docs/operations/release-notes/overview.mdx`:
 - Add a new `<LinkCard>` for the new version at the top
 - Remove the oldest one (keep only 3)
-- Write a brief description summarizing the key changes
+- Write a brief description summarizing the key features and changes — do not mention dependency version bumps in the LinkCard description unless they are truly significant (e.g., a major version bump that causes breaking changes)
 
 ## Step 7: Generate Slack announcement
 
