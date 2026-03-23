@@ -62,7 +62,7 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 
 | Package      | Previous | Updated |
 | ------------ | -------- | ------- |
-| Package name | X.Y.Z    | X.Y.Z   |
+| Package name | X.Y.Z    | [X.Y.Z](https://upstream-release-url) |
 
 ## Upgrade considerations
 
@@ -116,6 +116,8 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Use `registry.defenseunicorns.com/public/core` for repository references
 - Link to CHANGELOG.md anchor links (not GitHub release pages) for changelogs. The anchor format is `#XY0-YYYY-MM-DD` (version with dots stripped, then date).
 - Include a full diff link comparing the latest patch of the previous minor version to the latest patch of the current one (e.g., `v0.60.2...v0.61.1`, not `v0.60.0...v0.61.0`)
+- In the dependency updates table, link the "Updated" version to the upstream release page (e.g., GitHub release or project release page). Leave unlinked for entries without a meaningful upstream release page (e.g., DoD CA Certs)
+- When a Helm chart version is bumped independently of the application version, include it in the same dependency table with a "Helm chart" suffix in the package name (e.g., "Falco Helm chart", "Grafana Helm chart"). Link the updated version to the chart's release page.
 
 ### Naming
 
