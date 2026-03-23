@@ -1,0 +1,58 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Grafana - Uptime Probe Toggle
+set:
+  domain: "example.com"
+  adminDomain: "admin.example.com"
+templates:
+  - uds-package.yaml
+
+tests:
+  - it: should include uptime block when uptime.enabled is true
+    set:
+      uptime:
+        enabled: true
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            uptime:
+              checks:
+                paths:
+                  - /healthz
+
+  - it: should not include uptime block when uptime.enabled is false
+    set:
+      uptime:
+        enabled: false
+    template: uds-package.yaml
+    asserts:
+      - notContains:
+          path: spec.network.expose
+          any: true
+          content:
+            uptime:
+              checks:
+                paths:
+                  - /healthz
+
+  - it: should still render expose entry when uptime is disabled
+    set:
+      uptime:
+        enabled: false
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            host: grafana
+            gateway: admin
+            service: grafana
+            port: 80
+            targetPort: 3000

@@ -724,6 +724,16 @@
         "type": "string"
       },
       "description": "Custom annotations to add to the pod template"
+    },
+    "uptime": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable default uptime monitoring probes for Keycloak endpoints"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

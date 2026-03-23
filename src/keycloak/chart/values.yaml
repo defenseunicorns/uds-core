@@ -470,3 +470,7 @@ detailedObservability:
   logging:
     enabled: true
 # @lulaEnd e4ea044c-75fc-4acc-a552-8bba2aab1b12
+
+# Enable default uptime monitoring probes for Keycloak endpoints
+uptime:
+  enabled: ###ZARF_VAR_UPTIME_ENABLED###

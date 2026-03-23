@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 domain: "###ZARF_VAR_DOMAIN###"
@@ -46,3 +46,7 @@ additionalNetworkAllow: []
 #       app: thanos
 #     description: "Thanos Query"
 #     port: 9090
+
+# Enable default uptime monitoring probes for Grafana endpoints
+uptime:
+  enabled: ###ZARF_VAR_UPTIME_ENABLED###
