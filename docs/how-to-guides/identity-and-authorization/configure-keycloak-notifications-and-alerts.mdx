@@ -1,0 +1,116 @@
+---
+title: Configure Keycloak notifications and alerts
+sidebar:
+  order: 3.19
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Enable Prometheus alerting rules for Keycloak so that changes to realm configurations, user accounts, and system administrator memberships fire alerts through Alertmanager. UDS Core already collects Keycloak event logs and converts them into Prometheus metrics by default. This guide enables the alerting rules that act on those metrics.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster with UDS Core deployed
+
+## Before you begin
+
+UDS Core ships three layers of Keycloak observability, each controlled by a `detailedObservability` Helm value:
+
+| Layer | Helm value | Default | What it provides |
+|---|---|---|---|
+| Enhanced logging | `detailedObservability.logging.enabled` | `true` | Sets Keycloak's `JBossLoggingEventListenerProvider` to `info` level with sanitized, full-representation output |
+| Recording rules + dashboard | `detailedObservability.dashboards.enabled` | `true` | Loki recording rules that convert event logs into Prometheus metrics, plus the **UDS Keycloak Notifications** Grafana dashboard |
+| Alerting rules | `detailedObservability.alerts.enabled` | `false` | PrometheusRule alerts that fire when the recording-rule metrics detect changes |
+
+Because logging and dashboards are enabled by default, you can already view Keycloak event metrics in Grafana without any configuration. This guide enables the third layer (alerting rules) so that changes trigger notifications through Alertmanager.
+
+## Steps
+
+<Steps>
+
+1. **Enable Keycloak alerting rules**
+
+   Add the following override to your UDS Bundle configuration:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               # Enable Prometheus alerting rules for Keycloak event modifications
+               - path: detailedObservability.alerts.enabled
+                 value: true
+   ```
+
+   This creates a `PrometheusRule` with three alerts based on the recording-rule metrics that are already active by default:
+
+   | Alert | Metric | Severity | Description |
+   |---|---|---|---|
+   | `KeycloakRealmModificationsDetected` | `uds_keycloak:realm_modifications_count` | warning | Fires when realm configuration changes are detected within a 5-minute window |
+   | `KeycloakUserModificationsDetected` | `uds_keycloak:user_modifications_count` | warning | Fires when user or group membership changes are detected within a 5-minute window |
+   | `KeycloakSystemAdminModificationsDetected` | `uds_keycloak:system_admin_modifications_count` | critical | Fires when system administrator changes (members of the `master` realm and `/UDS Core/Admin` members for the `uds` realm) are detected within a 5-minute window |
+
+   All alerts are sent to Alertmanager. To route them to Slack, PagerDuty, email, or other channels, see [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/).
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm alerting rules are active:
+
+```bash
+# Verify the PrometheusRule was created
+uds zarf tools kubectl get prometheusrule -n keycloak
+
+# Verify recording rules ConfigMap exists (should already be present by default)
+uds zarf tools kubectl get configmap -n keycloak -l loki_rule=1
+```
+
+- **Alerts:** Open Grafana **Alerting > Alert rules** and filter for `Keycloak`. The three alerts (`KeycloakRealmModificationsDetected`, `KeycloakUserModificationsDetected`, `KeycloakSystemAdminModificationsDetected`) should appear in the list.
+- **Recording rules:** Open Grafana **Explore**, select the **Prometheus** datasource, and query `uds_keycloak:realm_modifications_count`. If the metric returns data, the recording rules are working.
+- **Dashboard:** Navigate to the **UDS Keycloak Notifications** dashboard in Grafana to view the metrics and associated log tables.
+
+![UDS Keycloak Notifications Grafana dashboard](../../.images/sso/keycloak-notifications-grafana.png)
+
+## Troubleshooting
+
+### Problem: Alerts not firing after enabling detailedObservability
+
+**Symptom:** The `detailedObservability.alerts.enabled` override is set to `true`, but no alerts appear in Grafana Alerting.
+
+**Solution:** Verify the PrometheusRule was created:
+
+```bash
+uds zarf tools kubectl get prometheusrule -n keycloak
+```
+
+If the PrometheusRule exists but alerts are not firing, confirm that events are being logged. Open Grafana **Explore**, select the **Loki** datasource, and query:
+
+```
+{app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider"
+```
+
+If no results appear, the `JSONLogEventListenerProvider` may not be active for the target realm. Verify it is listed under **Realm Settings > Events > Event Listeners** in the Keycloak Admin Console.
+
+## Related documentation
+
+- [Route alerts to notification channels](/how-to-guides/monitoring-observability/route-alerts-to-notification-channels/) - Configure Alertmanager to deliver Keycloak alerts to Slack, PagerDuty, email, and more
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-observability/create-log-based-alerting-and-recording-rules/) - Write custom Loki alerting and recording rules
+- [Create metric alerting rules](/how-to-guides/monitoring-observability/create-metric-alerting-rules/) - Define additional Prometheus-based alerting conditions
+- [Prometheus: Alertmanager receiver integrations](https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings) - Full list of supported notification channels
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - Background on how Keycloak and SSO work in UDS Core
