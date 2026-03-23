@@ -27,7 +27,7 @@ How-to guides live under `docs/how-to-guides/<section>/` and are grouped by doma
 ---
 title: Topic Name
 sidebar:
-  order: X.X
+  order: X.XXX
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';

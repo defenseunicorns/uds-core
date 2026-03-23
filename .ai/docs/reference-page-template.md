@@ -29,7 +29,7 @@ Reference pages live under `docs/reference/<section>/` and use the `.md` extensi
 ---
 title: Section Name
 sidebar:
-  order: X.X
+  order: X.XXX
 ---
 
 One or two sentences describing what UDS Core configures in this area and why it matters to bundle operators. Keep it narrow: only UDS Core-specific surfaces, not a general introduction to the underlying technology.

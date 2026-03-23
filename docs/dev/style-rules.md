@@ -129,6 +129,14 @@ Additional details that don't need to be visible by default.
 
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**`.
 
+## Sidebar ordering
+
+Use decimal `order:` values in frontmatter to control page position within a section. Always use three decimal places (`X.XXX`). This leaves room for future insertions without renumbering existing pages.
+
+- Overview/landing pages: `X.000` (e.g., `1.000`, `2.000`)
+- Content pages: `X.001`, `X.002`, etc.
+- Release notes (newest first): descend from `X.999` (e.g., `3.999`, `3.998`, `3.997`)
+
 ## Links and references
 
 - Use descriptive link text. Never "click here."

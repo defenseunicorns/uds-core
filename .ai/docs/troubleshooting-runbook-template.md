@@ -28,7 +28,7 @@ Runbooks live under `docs/operations/troubleshooting-and-runbooks/` and are `.md
 ---
 title: Topic Name
 sidebar:
-  order: X.X
+  order: X.XXX
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -178,8 +178,9 @@ If this runbook doesn't resolve your issue:
 - Link to Reference for exact settings, Concepts only when understanding is needed
 
 ### Sidebar ordering
-- Overview page: `order: 1.0`
-- Runbook pages: `order: 1.1`, `1.2`, `1.3`, etc. Decimal ordering allows flexible insertion without renumbering
+- Follow the three-decimal convention in [style-rules.md](../../docs/dev/style-rules.md#sidebar-ordering)
+- Overview page: `order: 1.000`
+- Runbook pages: `order: 1.001`, `1.002`, `1.003`, etc.
 
 ### Imports
 - Always include: `import { Steps } from '@astrojs/starlight/components';`
