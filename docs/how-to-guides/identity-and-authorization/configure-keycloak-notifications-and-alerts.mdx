@@ -20,11 +20,11 @@ You'll enable Prometheus alerting rules for Keycloak so that changes to realm co
 
 UDS Core ships three layers of Keycloak observability, each controlled by a `detailedObservability` Helm value:
 
-| Layer | Helm value | Default | Description |
-|---|---|---|---|
-| Enhanced logging | `detailedObservability.logging.enabled` | `true` | Sets Keycloak's `JBossLoggingEventListenerProvider` to `info` level with sanitized, full-representation output |
-| Recording rules + dashboard | `detailedObservability.dashboards.enabled` | `true` | Loki recording rules that convert event logs into Prometheus metrics, plus the **UDS Keycloak Notifications** Grafana dashboard |
-| Alerting rules | `detailedObservability.alerts.enabled` | `false` | PrometheusRule alerts that fire when the recording-rule metrics detect changes |
+| Helm value | Default | Description |
+|---|---|---|
+| `detailedObservability.logging.enabled` | `true` | Sets Keycloak's `JBossLoggingEventListenerProvider` to `info` level with sanitized, full-representation output |
+| `detailedObservability.dashboards.enabled` | `true` | Loki recording rules that convert event logs into Prometheus metrics, plus the **UDS Keycloak Notifications** Grafana dashboard |
+| `detailedObservability.alerts.enabled` | `false` | PrometheusRule alerts that fire when the recording-rule metrics detect changes |
 
 > [!NOTE]
 > The recording-rules ConfigMap is created when either `detailedObservability.dashboards.enabled` or `detailedObservability.alerts.enabled` is `true`. Enabling alerts (as this guide does) also activates the recording rules if they are not already present.
@@ -116,11 +116,11 @@ uds zarf tools kubectl get prometheusrule -n keycloak
 
 If the `PrometheusRule` exists but alerts are not firing, confirm that Keycloak is logging events. Open Grafana **Explore**, select the **Loki** datasource, and run one of the following queries depending on which event listener is active in the target realm:
 
-```logql
+```text
 {app="keycloak", namespace="keycloak"} | json | loggerName="uds.keycloak.plugin.eventListeners.JSONLogEventListenerProvider"
 ```
 
-```logql
+```text
 {app="keycloak", namespace="keycloak"} | json | loggerName=~"org.keycloak.events"
 ```
 
