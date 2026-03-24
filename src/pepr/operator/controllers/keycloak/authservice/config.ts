@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -279,7 +279,7 @@ async function checksumDeployment(checksum: string) {
 }
 
 /**
- * Applies a checksum to the Kubernetes authservice deployment to force a rollout.
+ * Applies the authservice configuration as a Kubernetes Secret.
  *
  * @param {string} base64EncodedConfig - The base64 encoded AuthserviceConfig to apply.
  */

@@ -16,6 +16,7 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
+const MANAGED_LABEL_FIELDS = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
 
 export enum IstioState {
   Sidecar = Mode.Sidecar,
@@ -208,9 +209,10 @@ export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
   const labels = (meta["f:labels"] as Record<string, unknown>) ?? {};
   const annotations = (meta["f:annotations"] as Record<string, unknown>) ?? {};
 
-  const managedLabels = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
   return (
-    Object.keys(labels).some(k => !managedLabels.has(k)) ||
+    Object.keys(v1).some(k => k !== "f:metadata") ||
+    Object.keys(meta).some(k => k !== "f:labels" && k !== "f:annotations") ||
+    Object.keys(labels).some(k => !MANAGED_LABEL_FIELDS.has(k)) ||
     Object.keys(annotations).some(
       k => k !== `f:${ISTIO_STATE_ANNOTATION}` && !k.startsWith("f:uds.dev/pkg-"),
     )
@@ -259,27 +261,30 @@ export async function applyNamespaceUpdates(
 ): Promise<boolean> {
   const patchLabels = pickManagedLabels(labels);
   const patchAnnotations = pickManagedAnnotations(annotations);
-
-  if (
+  const valuesChanged =
     !R.equals(pickManagedLabels(originalLabels), patchLabels) ||
-    !R.equals(pickManagedAnnotations(originalAnnotations), patchAnnotations)
-  ) {
-    // Before applying the sparse patch, release any fields Pepr previously over-claimed.
-    // This prevents SSA from deleting non-Pepr-managed labels/annotations that old code
-    // claimed ownership of via force:true on a full object.
-    const peprEntry = managedFields?.find(
-      e => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
-    );
-    if (peprEntry && nsEntryIsOverClaimed(peprEntry)) {
-      await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!, log);
-    }
+    !R.equals(pickManagedAnnotations(originalAnnotations), patchAnnotations);
 
+  // Check for over-claiming unconditionally so stale entries are cleaned up even when
+  // label/annotation values haven't changed (e.g. first reconcile after upgrading from old code).
+  const peprEntry = managedFields?.find(
+    e => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
+  );
+  const overClaimed = peprEntry != null && nsEntryIsOverClaimed(peprEntry);
+
+  if (overClaimed) {
+    await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!, log);
+  }
+
+  if (overClaimed || valuesChanged) {
     log.debug(logMessage || `Applying updates to namespace ${namespace}.`);
     await K8s(kind.Namespace).Apply(
       { metadata: { name: namespace, labels: patchLabels, annotations: patchAnnotations } },
       { force: true },
     );
-    return true;
+    // Return true only when managed values changed — callers use this to decide pod cycling.
+    // A cleanup-only apply (overClaimed but no value change) does not require pod restarts.
+    return valuesChanged;
   }
 
   log.debug(`No namespace updates needed for ${namespace}.`);

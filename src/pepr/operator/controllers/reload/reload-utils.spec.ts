@@ -140,11 +140,8 @@ function makeTestReplicaSet() {
   } as kind.ReplicaSet;
 }
 
-function sparseRestartPatch(apiVersion: string, kind: string, name: string, namespace: string) {
+function sparseRestartPatch() {
   return {
-    apiVersion,
-    kind,
-    metadata: { name, namespace },
     spec: {
       template: {
         metadata: {
@@ -240,10 +237,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the StatefulSet with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
-      sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
-      { force: true },
-    );
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -306,10 +300,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the Deployment with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
-      sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
-      { force: true },
-    );
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.Deployment);
@@ -357,10 +348,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the ReplicaSet directly with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
-      sparseRestartPatch("apps/v1", "ReplicaSet", "test-replicaset", "default"),
-      { force: true },
-    );
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.ReplicaSet);
@@ -422,10 +410,7 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
 
     // Verify Apply was called
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
-      sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
-      { force: true },
-    );
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -476,10 +461,7 @@ describe("restartController", () => {
     );
 
     // Verify Apply was called with the correct annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
-      sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
-      { force: true },
-    );
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
 
     // Verify createEvent was called
     expect(mockK8sClient.Create).toHaveBeenCalled();
@@ -609,6 +591,7 @@ describe("restartController", () => {
     // Patch should have been called to strip the over-claimed entry
     expect(mockK8sClient.Patch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
       { op: "remove", path: "/metadata/managedFields/0" },
     ]);
     expect(mockK8sClient.Apply).toHaveBeenCalled();
@@ -653,6 +636,52 @@ describe("restartController", () => {
     );
 
     expect(mockK8sClient.Patch).not.toHaveBeenCalled();
+    expect(mockK8sClient.Apply).toHaveBeenCalled();
+  });
+
+  it("proceeds to Apply when the managedFields Patch fails", async () => {
+    const patchError = new Error("test op failed");
+    const mockK8sClient = createMockK8sClient({
+      Get: vi.fn().mockResolvedValue({
+        ...makeTestStatefulSet(),
+        metadata: {
+          name: "test-statefulset",
+          namespace: "default",
+          uid: "test-uid",
+          managedFields: [
+            {
+              manager: "pepr",
+              operation: "Apply",
+              fieldsV1: {
+                "f:spec": {
+                  "f:replicas": {},
+                  "f:template": {
+                    "f:metadata": {
+                      "f:annotations": { "f:uds.dev/restartedAt": {} },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+      Patch: vi.fn().mockRejectedValueOnce(patchError),
+    });
+    (K8s as Mock).mockReturnValue(mockK8sClient);
+    const mockLogger = createMockLogger();
+
+    await restartController(
+      "default",
+      kind.StatefulSet,
+      "test-statefulset",
+      "CA changed",
+      mockLogger,
+      "CA",
+    );
+
+    expect(mockK8sClient.Patch).toHaveBeenCalled();
+    // Apply must still run even though the Patch failed
     expect(mockK8sClient.Apply).toHaveBeenCalled();
   });
 });
@@ -722,6 +751,21 @@ describe("controllerEntryIsOverClaimed", () => {
               },
             },
           },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("returns true when fieldsV1 has a top-level key beyond f:spec", () => {
+    expect(
+      controllerEntryIsOverClaimed({
+        fieldsV1: {
+          "f:spec": {
+            "f:template": {
+              "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+            },
+          },
+          "f:metadata": { "f:labels": {} },
         },
       }),
     ).toBe(true);

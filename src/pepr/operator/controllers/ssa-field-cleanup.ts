@@ -34,6 +34,7 @@ export async function removePeprManagedFieldsEntry(
   try {
     await K8s(resourceKind, { name, namespace }).Patch([
       { op: "test", path: `/metadata/managedFields/${idx}/manager`, value: PEPR_FIELD_MANAGER },
+      { op: "test", path: `/metadata/managedFields/${idx}/operation`, value: "Apply" },
       { op: "remove", path: `/metadata/managedFields/${idx}` },
     ]);
   } catch (err) {

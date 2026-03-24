@@ -56,6 +56,7 @@ describe("removePeprManagedFieldsEntry", () => {
     );
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/0/manager", value: PEPR_FIELD_MANAGER },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
       { op: "remove", path: "/metadata/managedFields/0" },
     ]);
   });
@@ -75,6 +76,7 @@ describe("removePeprManagedFieldsEntry", () => {
     );
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/2/manager", value: PEPR_FIELD_MANAGER },
+      { op: "test", path: "/metadata/managedFields/2/operation", value: "Apply" },
       { op: "remove", path: "/metadata/managedFields/2" },
     ]);
   });
@@ -93,6 +95,7 @@ describe("removePeprManagedFieldsEntry", () => {
     );
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/1/manager", value: PEPR_FIELD_MANAGER },
+      { op: "test", path: "/metadata/managedFields/1/operation", value: "Apply" },
       { op: "remove", path: "/metadata/managedFields/1" },
     ]);
   });

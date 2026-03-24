@@ -190,6 +190,7 @@ export function controllerEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boole
   const annotations = (templateMeta["f:annotations"] as Record<string, unknown>) ?? {};
 
   return (
+    Object.keys(v1).some(k => k !== "f:spec") ||
     Object.keys(spec).some(k => k !== "f:template") ||
     Object.keys(template).some(k => k !== "f:metadata") ||
     Object.keys(templateMeta).some(k => k !== "f:annotations") ||
@@ -247,9 +248,6 @@ export async function restartController(
     // Build a sparse patch with only the fields pepr owns to avoid claiming ownership
     // of fields managed by other field managers (e.g. helm.sh/chart, resource limits)
     const patch = {
-      apiVersion: controller.apiVersion,
-      kind: controller.kind,
-      metadata: { name, namespace },
       spec: {
         template: {
           metadata: {

@@ -1202,6 +1202,7 @@ describe("applyNamespaceUpdates", () => {
     // Patch to strip over-claimed entry should be called before Apply
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
       { op: "remove", path: "/metadata/managedFields/0" },
     ]);
     expect(mockApply).toHaveBeenCalled();
@@ -1237,6 +1238,89 @@ describe("applyNamespaceUpdates", () => {
     );
 
     expect(mockPatch).not.toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalled();
+  });
+
+  test("cleans up and re-applies when over-claimed but Pepr-managed values are unchanged", async () => {
+    const namespace = "test-ns";
+    // Same Istio label before and after — no value change
+    const labels = { "istio-injection": "enabled" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    // Pepr's entry over-claims a non-managed label
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      },
+    ];
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      managedFields,
+    );
+
+    // Values didn't change, so return false (no pod cycling needed)
+    expect(result).toBe(false);
+    // But we still cleaned up and re-applied to fix SSA ownership
+    expect(mockPatch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
+      { op: "remove", path: "/metadata/managedFields/0" },
+    ]);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio-injection": "enabled" },
+          annotations: { "uds.dev/pkg-my-app": "true" },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("proceeds to Apply when the managedFields Patch fails", async () => {
+    const namespace = "test-ns";
+    mockPatch.mockRejectedValueOnce(new Error("test op failed"));
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      },
+    ];
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      managedFields,
+    );
+
+    expect(result).toBe(true);
+    expect(mockPatch).toHaveBeenCalled();
+    // Apply must still run even though the Patch failed
     expect(mockApply).toHaveBeenCalled();
   });
 });
@@ -1295,6 +1379,32 @@ describe("nsEntryIsOverClaimed", () => {
               "f:uds.dev/pkg-foo": {},
               "f:kubectl.kubernetes.io/last-applied-configuration": {},
             },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns true when fieldsV1 has a top-level key beyond f:metadata", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {} },
+          },
+          "f:status": {},
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns true when f:metadata has an unexpected sub-key beyond f:labels and f:annotations", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {} },
+            "f:finalizers": {},
           },
         },
       }),
