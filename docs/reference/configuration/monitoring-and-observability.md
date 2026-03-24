@@ -116,5 +116,10 @@ spec:
 ## Related documentation
 
 - [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/): high-level overview of the monitoring stack
-- [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/): step-by-step guide for configuring application uptime probes
-- [Monitoring How-to Guides](/how-to-guides/monitoring-and-observability/overview/): task-oriented monitoring guides
+- [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/): configure application uptime probes
+- [Capture application metrics](/how-to-guides/monitoring-and-observability/capture-application-metrics/): expose metrics from your application for Prometheus scraping
+- [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/): define PrometheusRule alerts for probe and application metrics
+- [Create log-based alerting and recording rules](/how-to-guides/monitoring-and-observability/create-log-based-alerting-and-recording-rules/): configure Loki Ruler alerts and recording rules
+- [Route alerts to notification channels](/how-to-guides/monitoring-and-observability/route-alerts-to-notification-channels/): configure Alertmanager receivers and routing
+- [Add custom dashboards](/how-to-guides/monitoring-and-observability/add-custom-dashboards/): deploy Grafana dashboards alongside your application
+- [Add Grafana datasources](/how-to-guides/monitoring-and-observability/add-grafana-datasources/): connect additional data sources to Grafana
