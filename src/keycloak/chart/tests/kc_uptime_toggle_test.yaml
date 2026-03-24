@@ -58,7 +58,7 @@ tests:
                 paths:
                   - /
 
-  - it: should include uptime blocks when uptime.enabled is not set (nil)
+  - it: should include uptime blocks when uptime object is overridden without enabled key (defaults preserved)
     set:
       uptime: {}
     template: uds-package.yaml
