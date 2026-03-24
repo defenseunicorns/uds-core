@@ -4,9 +4,11 @@ sidebar:
   order: 5.000
 ---
 
-UDS Core's monitoring stack exposes configuration surfaces for uptime probes, recording rules, and Grafana dashboards. This page documents the defaults, available metrics, and bundle variables that control monitoring behavior.
+UDS Core's monitoring stack exposes configuration surfaces at two levels: built-in platform monitoring that works out of the box, and application-level uptime probes that operators configure through the Package CR.
 
-## Grafana dashboards
+## Built-in monitoring
+
+### Grafana dashboards
 
 UDS Core adds two uptime-focused dashboards to Grafana alongside its component dashboards:
 
@@ -15,9 +17,9 @@ UDS Core adds two uptime-focused dashboards to Grafana alongside its component d
 | **UDS / Monitoring / Core Uptime**  | Availability status, uptime percentage, and component status timeline for UDS Core infrastructure components      |
 | **UDS / Monitoring / Probe Uptime** | Probe uptime status timeline, percentage uptime, and TLS certificate expiration dates for all monitored endpoints |
 
-## Default uptime probes
+### Default uptime probes
 
-UDS Core includes endpoint probes for core services out of the box. These are configured in the Package CR's `expose` entries and create Prometheus [Probes](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) automatically.
+UDS Core includes endpoint probes for core services out of the box. These create Prometheus [Probes](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) automatically.
 
 | Service          | Gateway | Monitored paths                                     | Probe name                  |
 | ---------------- | ------- | --------------------------------------------------- | --------------------------- |
@@ -25,7 +27,7 @@ UDS Core includes endpoint probes for core services out of the box. These are co
 | Keycloak (admin) | admin   | `/`                                                 | `uds-keycloak-admin-uptime` |
 | Grafana          | admin   | `/healthz`                                          | `uds-grafana-admin-uptime`  |
 
-### Disabling default probes
+#### Disabling default probes
 
 Each service has an `uptime.enabled` Helm value (boolean, default: `true`) that controls whether its default probes are created.
 
@@ -48,18 +50,7 @@ overrides:
 > [!NOTE]
 > Disabling default uptime probes removes the underlying `probe_success` metrics that the built-in dashboards rely on. The Probe Uptime dashboard will show no data for disabled services, and the Core Uptime dashboard will show gaps for probe-derived components such as `keycloak-sso-endpoint`, `keycloak-admin-endpoint`, and `core-access`.
 
-## Probe metrics
-
-Endpoint probes produce standard Blackbox Exporter metrics:
-
-| Metric                           | Description                                   |
-| -------------------------------- | --------------------------------------------- |
-| `probe_success`                  | Whether the probe succeeded (1) or failed (0) |
-| `probe_duration_seconds`         | Total probe duration                          |
-| `probe_http_status_code`         | HTTP response status code                     |
-| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp          |
-
-## Recording rules
+### Recording rules
 
 UDS Core ships Prometheus recording rules that track the availability of core infrastructure components. These produce `uds:<component>:up` metrics (1 = available, 0 = unavailable) and require no user configuration. Rules are organized by layer:
 
@@ -74,8 +65,56 @@ UDS Core ships Prometheus recording rules that track the availability of core in
 > [!NOTE]
 > Rules marked "probe-derived" depend on `probe_success` metrics from the default uptime probes. If probes are disabled, these rules will produce no data.
 
+### Probe metrics
+
+All endpoint probes (both built-in and application) produce standard Blackbox Exporter metrics:
+
+| Metric                           | Description                                   |
+| -------------------------------- | --------------------------------------------- |
+| `probe_success`                  | Whether the probe succeeded (1) or failed (0) |
+| `probe_duration_seconds`         | Total probe duration                          |
+| `probe_http_status_code`         | HTTP response status code                     |
+| `probe_ssl_earliest_cert_expiry` | SSL certificate expiration timestamp          |
+
+## Application uptime probes
+
+Applications configure uptime monitoring through the `uptime` block on `expose` entries in the Package CR. The UDS Operator creates Prometheus Probe resources and configures Blackbox Exporter automatically. For step-by-step setup, see [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/).
+
+### Package CR schema
+
+The `uptime` block is nested under each `spec.network.expose[]` entry:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `uptime` | object | no | Uptime monitoring configuration for this exposed service. Presence of `checks.paths` enables monitoring. |
+| `uptime.checks` | object | no | HTTP probe checks configuration for Blackbox Exporter. |
+| `uptime.checks.paths` | string[] | yes (if `checks` is set) | List of URL paths to probe, appended to the host FQDN. Minimum 1 item. |
+
+```yaml
+spec:
+  network:
+    expose:
+      - service: my-app
+        host: myapp
+        gateway: tenant
+        port: 8080
+        uptime:
+          checks:
+            paths:
+              - /healthz
+              - /ready
+```
+
+### Constraints
+
+- **One probe per FQDN**: only one `expose` entry per FQDN can have `uptime.checks` configured. The operator rejects the Package CR if duplicate FQDNs have uptime checks.
+- **Authservice-protected apps**: the operator automatically creates a Keycloak service account client and configures OAuth2 authentication for probes on Authservice-protected endpoints. No additional configuration is needed.
+
+> [!NOTE]
+> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically; do not manually edit this secret.
+
 ## Related documentation
 
 - [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/): high-level overview of the monitoring stack
-- [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/): configure uptime probes for your own applications
+- [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/): step-by-step guide for configuring application uptime probes
 - [Monitoring How-to Guides](/how-to-guides/monitoring-and-observability/overview/): task-oriented monitoring guides
