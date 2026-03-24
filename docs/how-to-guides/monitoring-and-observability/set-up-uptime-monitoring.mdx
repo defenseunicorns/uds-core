@@ -24,6 +24,9 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 > [!NOTE]
 > Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client and configures OAuth2 authentication for the probe.
 
+> [!NOTE]
+> UDS Core ships default probe alerts through `PrometheusRule` resources in the `uds-prometheus-config` chart. By default, UDS Core creates `UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical` alerts. To tune or disable these defaults, reference [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/).
+
 ## Steps
 
 <Steps>
@@ -52,7 +55,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
                  - /
    ```
 
-2. **Optional: Monitor custom health endpoints**
+2. **(Optional) Monitor custom health endpoints**
 
    Specify multiple paths to monitor specific health endpoints on a single service.
 
@@ -72,7 +75,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
                  - /ready
    ```
 
-3. **Optional: Monitor multiple services**
+3. **(Optional) Monitor multiple services**
 
    Add uptime checks to multiple expose entries within a single `Package` CR to monitor several services at once.
 
@@ -109,7 +112,7 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
                  - /
    ```
 
-4. **Optional: Monitor Authservice-protected applications**
+4. **(Optional) Monitor Authservice-protected applications**
 
    For applications protected by Authservice, add `uptime.checks` to the expose entry as normal. The UDS Operator detects the `enableAuthserviceSelector` on the matching SSO entry and automatically:
 
@@ -223,6 +226,6 @@ uds zarf tools kubectl describe package <name> -n <namespace>
 
 - [Prometheus: Blackbox Exporter](https://github.com/prometheus/blackbox_exporter): upstream project documentation
 - [Prometheus Operator: Probe API](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe): Probe CRD field reference
-- [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/): Alert when probe_success drops to 0 or SSL certificates near expiry.
+- [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/): Create custom alerts beyond the UDS Core default probe alerts.
 - [Monitoring & Observability concepts](/concepts/core-features/monitoring-observability/): Background on how the monitoring stack fits together in UDS Core.
 - [Monitoring & Observability reference](/reference/configuration/monitoring-and-observability/): Default probes, recording rules, and how to disable built-in uptime probes.
