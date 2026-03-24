@@ -1,7 +1,7 @@
 ---
 title: Monitoring & Observability
 sidebar:
-  order: 5.000
+  order: 3.002
 ---
 
 UDS Core's monitoring stack exposes configuration surfaces at two levels: built-in platform monitoring that works out of the box, and application-level uptime probes that operators configure through the Package CR.
@@ -31,7 +31,7 @@ UDS Core includes endpoint probes for core services out of the box. These create
 
 Each service has an `uptime.enabled` Helm value (boolean, default: `true`) that controls whether its default probes are created.
 
-To disable probes in your bundle, add a value override:
+To disable probes for Keycloak and Grafana, add a value override in your bundle:
 
 ```yaml
 overrides:
@@ -79,39 +79,6 @@ All endpoint probes (both built-in and application) produce standard Blackbox Ex
 ## Application uptime probes
 
 Applications configure uptime monitoring through the `uptime` block on `expose` entries in the Package CR. The UDS Operator creates Prometheus Probe resources and configures Blackbox Exporter automatically. For step-by-step setup, see [Set up uptime monitoring](/how-to-guides/monitoring-and-observability/set-up-uptime-monitoring/).
-
-### Package CR schema
-
-The `uptime` block is nested under each `spec.network.expose[]` entry:
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `uptime` | object | no | Uptime monitoring configuration for this exposed service. Presence of `checks.paths` enables monitoring. |
-| `uptime.checks` | object | no | HTTP probe checks configuration for Blackbox Exporter. |
-| `uptime.checks.paths` | string[] | yes (if `checks` is set) | List of URL paths to probe, appended to the host FQDN. Minimum 1 item. |
-
-```yaml
-spec:
-  network:
-    expose:
-      - service: my-app
-        host: myapp
-        gateway: tenant
-        port: 8080
-        uptime:
-          checks:
-            paths:
-              - /healthz
-              - /ready
-```
-
-### Constraints
-
-- **One probe per FQDN**: only one `expose` entry per FQDN can have `uptime.checks` configured. The operator rejects the Package CR if duplicate FQDNs have uptime checks.
-- **Authservice-protected apps**: the operator automatically creates a Keycloak service account client and configures OAuth2 authentication for probes on Authservice-protected endpoints. No additional configuration is needed.
-
-> [!NOTE]
-> The UDS Operator fully manages the Blackbox Exporter configuration via the `uds-prometheus-blackbox-config` secret in the `monitoring` namespace. Probe modules are generated automatically; do not manually edit this secret.
 
 ## Related documentation
 

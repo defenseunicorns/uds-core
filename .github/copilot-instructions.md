@@ -4,6 +4,8 @@
 
 When reviewing code changes, read all files in `.ai/code/` for guidance. These files describe things to keep in mind when specific source files change.
 
+When reviewing any file that has a copyright header, verify the year includes the current year. If the header says `Copyright 2024` and the current year is 2026, flag it as needing an update to `Copyright 2024-2026`. If it already includes the current year, no action is needed.
+
 ## Documentation
 
 - Read all files in `.ai/docs/` for templates, conventions, and guidance on documentation changes
