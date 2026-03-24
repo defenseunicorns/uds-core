@@ -65,6 +65,9 @@ jobs:
         with:
           version: ${{ matrix.install_cli }}
 
+      - name: Print CLI version for debug
+        run: uds version
+
       - name: Deploy latest release (install phase)
         run: uds run -f tasks/deploy.yaml latest-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
 
@@ -76,6 +79,9 @@ jobs:
         uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
         with:
           version: ${{ matrix.upgrade_cli }}
+
+      - name: Print CLI version for debug
+        run: uds version
 
       - name: Run upgrade phase
         run: uds run -f tasks/test.yaml upgrade-existing --set FLAVOR=${{ matrix.flavor }} --no-progress
@@ -114,6 +120,9 @@ jobs:
         uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
         with:
           version: v0.29.0
+
+      - name: Print CLI version for debug
+        run: uds version
 
       - name: Test UDS Core Install (old CLI)
         run: uds run test:uds-core-e2e --set FLAVOR=upstream --no-progress

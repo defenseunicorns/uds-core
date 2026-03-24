@@ -178,7 +178,7 @@ describe("AuthService Config Tests", () => {
   it("updateAuthServiceSecret should debounce and update the Kubernetes secret", async () => {
     vi.useFakeTimers();
 
-    const patchMock = vi.fn(); // Mock the Patch method
+    const checksumApplyMock = vi.fn(); // Mock the Apply method for checksum
 
     (K8s as Mock).mockImplementation(kindType => {
       if (kindType === kind.Secret) {
@@ -188,7 +188,7 @@ describe("AuthService Config Tests", () => {
       }
       if (kindType === kind.Deployment) {
         return {
-          Patch: patchMock, // Mock the Patch function for Deployment
+          Apply: checksumApplyMock, // Mock the Apply function for Deployment checksum
         };
       }
     });
@@ -201,14 +201,14 @@ describe("AuthService Config Tests", () => {
 
     await updatePromise;
 
-    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once
-    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called once for the checksum
+    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once for secret
+    expect(checksumApplyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once for checksum
   });
 
   it("updateAuthServiceSecret should only apply changes after debounce delay", async () => {
     vi.useFakeTimers();
 
-    const patchMock = vi.fn(); // Mock Patch for Deployment
+    const checksumApplyMock = vi.fn(); // Mock Apply for Deployment checksum
 
     // Mock K8s functionality for Secret and Deployment
     (K8s as Mock).mockImplementation(kindType => {
@@ -219,7 +219,7 @@ describe("AuthService Config Tests", () => {
       }
       if (kindType === "Deployment") {
         return {
-          Patch: patchMock, // Mock Patch for Deployment
+          Apply: checksumApplyMock, // Mock Apply for Deployment checksum
         };
       }
     });
@@ -232,14 +232,14 @@ describe("AuthService Config Tests", () => {
 
     await updatePromise; // Ensure the promise is awaited after the debounce
 
-    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once
-    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+    expect(applyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called once for secret
+    expect(checksumApplyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called for the deployment checksum
   });
 
   it("updateAuthServiceSecret should only applied if called once between debounce delay", async () => {
     vi.useFakeTimers();
 
-    const patchMock = vi.fn(); // Mock Patch for Deployment
+    const checksumApplyMock = vi.fn(); // Mock Apply for Deployment checksum
 
     // Mock K8s functionality for Secret and Deployment
     (K8s as Mock).mockImplementation(kindType => {
@@ -250,7 +250,7 @@ describe("AuthService Config Tests", () => {
       }
       if (kindType === "Deployment") {
         return {
-          Patch: patchMock, // Mock Patch for Deployment
+          Apply: checksumApplyMock, // Mock Apply for Deployment checksum
         };
       }
     });
@@ -285,13 +285,13 @@ describe("AuthService Config Tests", () => {
       }
     });
     expect(applyMock).toHaveBeenCalledTimes(1);
-    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+    expect(checksumApplyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called for deployment checksum
   });
 
   it("updateAuthServiceSecret should reset secret on failure", async () => {
     vi.useFakeTimers();
 
-    const patchMock = vi.fn(); // Mock Patch for Deployment
+    const checksumApplyMock = vi.fn(); // Mock Apply for Deployment checksum
 
     (K8s as Mock).mockImplementation(kindType => {
       if (kindType === kind.Secret) {
@@ -301,7 +301,7 @@ describe("AuthService Config Tests", () => {
       }
       if (kindType === kind.Deployment) {
         return {
-          Patch: patchMock, // Mock the Patch function for Deployment
+          Apply: checksumApplyMock, // Mock the Apply function for Deployment checksum
         };
       }
     });
@@ -327,7 +327,7 @@ describe("AuthService Config Tests", () => {
       }
     });
     expect(applyMock).toHaveBeenCalledTimes(1);
-    expect(patchMock).toHaveBeenCalledTimes(1); // Ensure Patch is called for the deployment
+    expect(checksumApplyMock).toHaveBeenCalledTimes(1); // Ensure Apply is called for deployment checksum
 
     (K8s as Mock).mockImplementationOnce(kindType => {
       if (kindType === kind.Secret) {

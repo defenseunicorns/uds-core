@@ -258,13 +258,18 @@ export async function updateAuthServiceSecret(
  */
 async function checksumDeployment(checksum: string) {
   try {
-    await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Patch([
+    await K8s(kind.Deployment, { name: "authservice", namespace: operatorConfig.namespace }).Apply(
       {
-        op: "add",
-        path: "/spec/template/metadata/annotations/pepr.dev~1checksum",
-        value: checksum,
+        spec: {
+          template: {
+            metadata: {
+              annotations: { "pepr.dev/checksum": checksum },
+            },
+          },
+        },
       },
-    ]);
+      { force: true },
+    );
 
     log.info(`Successfully applied the checksum to authservice`);
   } catch (e) {

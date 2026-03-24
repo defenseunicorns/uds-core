@@ -17,10 +17,8 @@ spec:
       {{- include "authservice.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      annotations:
-        # Pre-create an empty checksum to ensure pod cycles when first update occurs
-        pepr.dev/checksum: "initialized"
       {{- with .Values.podAnnotations }}
+      annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
