@@ -1,0 +1,86 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CLI Matrix Testing
+
+on:
+  schedule:
+    # Runs every morning at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  pull_request:
+    # milestoned is added here as a workaround for release-please not triggering PR workflows (PRs should be added to a milestone to trigger the workflow).
+    # labeled is added to support renovate-ready labelling on PRs
+    types: [milestoned, labeled, opened, reopened, synchronize]
+    paths:
+      - ".github/workflows/test-upgrade-matrix.yaml"
+      - "bundles/k3d-standard/**"
+
+permissions:
+  contents: read
+  id-token: write # This is needed for OIDC federation.
+  packages: read # Allows reading the published GHCR packages
+
+jobs:
+  upgrade-matrix:
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 60
+    name: "CLI Upgrade (${{ matrix.scenario }}, ${{ matrix.flavor }})"
+
+    strategy:
+      matrix:
+        include:
+          # Both versions intentionally frozen on last compatible CLI version
+          - scenario: old-old
+            flavor: upstream
+            install_cli: v0.29.0
+            upgrade_cli: v0.29.0
+          # install_cli intentionally frozen (last compatible version); upgrade_cli tracks new releases via Renovate
+          - scenario: old-new
+            flavor: upstream
+            install_cli: v0.29.0
+            # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+            upgrade_cli: v0.30.0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      # Override the CLI installed by setup with the install-phase version (old CLI)
+      - name: Install CLI for install phase
+        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        with:
+          version: ${{ matrix.install_cli }}
+
+      - name: Deploy latest release (install phase)
+        run: uds run -f tasks/deploy.yaml latest-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy latest release test resources
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      # Switch to the upgrade-phase CLI version before building and deploying current branch
+      - name: Install CLI for upgrade phase
+        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        with:
+          version: ${{ matrix.upgrade_cli }}
+
+      - name: Run upgrade phase
+        run: uds run -f tasks/test.yaml upgrade-existing --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -upgrade-matrix-${{ matrix.scenario }}-${{ matrix.flavor }}
