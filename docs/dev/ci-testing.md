@@ -43,6 +43,22 @@ Where: k3d
 
 What: Individual [layer packages](https://github.com/defenseunicorns/uds-core/tree/main/packages)
 
+### "CLI Matrix"
+
+In order to validate compatibility across CLI versions, we run a matrix of tests covering different CLI versions at install and upgrade time. This catches issues that would only surface when using an older CLI or upgrading the CLI version.
+
+The matrix currently covers:
+
+- **old-old**: Install latest release with the last compatible CLI version, then upgrade to the current branch with the same CLI
+- **old-new**: Install latest release with the last compatible CLI version, then upgrade to the current branch with the current CLI
+- **old-cli install**: Fresh install of the current branch using the last compatible CLI version
+
+When: Nightly and on PRs that change `bundles/k3d-standard/**`
+
+Where: k3d
+
+What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), `upstream` flavor
+
 ### "Production"
 
 Our "production" testing aims to mimic a more production-like setup by running a full deployment of core on a variety of Kubernetes distributions. These tests provide more production-like configurations with external cloud dependencies, HA setups, and multi-node clusters.
