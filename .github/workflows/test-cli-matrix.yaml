@@ -15,6 +15,11 @@ on:
       - ".github/workflows/test-cli-matrix.yaml"
       - "bundles/k3d-standard/**"
 
+# Abort prior jobs in the same workflow / PR; use ref for PRs, sha for scheduled runs
+concurrency:
+  group: test-cli-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   id-token: write # This is needed for OIDC federation.
@@ -88,7 +93,7 @@ jobs:
   cli-install:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
-    name: "CLI Install (old-cli, upstream)"
+    name: "CLI Install (old, upstream)"
 
     steps:
       - name: Checkout repository
