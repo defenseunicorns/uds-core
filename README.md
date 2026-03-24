@@ -1,7 +1,5 @@
 # Unicorn Delivery Service - Core (UDS Core)
 
-![UDS Core](docs/.images/UDS_Core_Logo_Dark.svg)
-
 [![Latest Release](https://img.shields.io/github/v/release/defenseunicorns/uds-core)](https://github.com/defenseunicorns/uds-core/releases)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/defenseunicorns/uds-core/tag-and-release.yaml)](https://github.com/defenseunicorns/uds-core/tag-and-release.yaml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core/badge)](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core)
