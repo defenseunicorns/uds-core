@@ -1,7 +1,7 @@
 ---
 title: Set up non-HTTP ingress
 sidebar:
-  order: 2.05
+  order: 2.005
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -44,7 +44,7 @@ This example configures SSH ingress, but the same process applies to any TCP pro
              values:
                - path: "service.ports"
                  value:
-                   # Default ports — you MUST include these
+                   # Default ports - you MUST include these
                    - name: status-port
                      port: 15021
                      protocol: TCP
@@ -120,9 +120,9 @@ This example configures SSH ingress, but the same process applies to any TCP pro
                  number: 22  # Port on the destination service
    ```
 
-5. **Add a network policy via the Package CR**
+5. **Add a network policy via the `Package` CR**
 
-   UDS Core enforces strict network policies by default. Allow ingress from the gateway in your Package CR:
+   UDS Core enforces strict network policies by default. Allow ingress from the gateway in your `Package` CR:
 
    ```yaml title="uds-package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -145,7 +145,7 @@ This example configures SSH ingress, but the same process applies to any TCP pro
 
 6. **Deploy your application**
 
-   **(Recommended)** Include the Gateway, VirtualService, and Package CR manifests in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+   **(Recommended)** Include the Gateway, VirtualService, and `Package` CR manifests in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
    uds zarf package create --confirm
@@ -190,10 +190,10 @@ For other protocols, test with the appropriate client on the external port you c
 - Verify the network policy allows ingress from the gateway namespace: `uds zarf tools kubectl get package example -n example`
 - Confirm the destination service and port are correct: `uds zarf tools kubectl get svc -n example`
 
-## Related Documentation
+## Related documentation
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/)
-- [Package CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
-- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) — Deploy a gateway with independent domain, TLS, and security controls.
-- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) — Make applications accessible through the tenant or admin gateway.
-- [Define network access](/how-to-guides/networking/define-network-access/) — Configure intra-cluster and external network access for your application.
+- [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
+- [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Make applications accessible through the tenant or admin gateway.
+- [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.

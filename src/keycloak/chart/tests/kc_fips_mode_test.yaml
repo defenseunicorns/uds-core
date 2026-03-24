@@ -1,0 +1,31 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - FIPS mode always enabled
+templates:
+  - statefulset.yaml
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should always include FIPS feature flag in container args
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--features=preview,fips"
+
+  - it: should always include FIPS strict mode in container args
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--fips-mode=strict"
+
+  - it: should set FIPS_ENABLED to true in realm secret
+    template: secret-kc-realm.yaml
+    asserts:
+      - equal:
+          path: data.FIPS_ENABLED
+          value: "dHJ1ZQ=="

@@ -1,14 +1,14 @@
 ---
 title: Configure Keycloak HTTP retries
 sidebar:
-  order: 3.06
+  order: 3.006
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll enable and tune Keycloak's outbound HTTP retry behavior for requests to external services such as upstream identity providers. This configuration is applied via bundle overrides — no image rebuild required.
+You'll enable and tune Keycloak's outbound HTTP retry behavior for requests to external services such as upstream identity providers. This configuration is applied via bundle overrides. No image rebuild is required.
 
 ## Prerequisites
 
@@ -76,7 +76,7 @@ Confirm the bundle override applied successfully:
 1. Review your `uds deploy` output for the Keycloak release upgrade
 2. Confirm Keycloak is healthy and login flows that depend on external services (such as external IdPs) behave as expected during transient network failures
 
-## Related Documentation
+## Related documentation
 
-- [Configure Keycloak outgoing HTTP requests](https://www.keycloak.org/server/outgoinghttp) — upstream Keycloak docs for outgoing HTTP requests
-- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — Set session timeouts, concurrent session limits, and logout behavior via bundle overrides.
+- [Configure Keycloak outgoing HTTP requests](https://www.keycloak.org/server/outgoinghttp) - upstream Keycloak docs for outgoing HTTP requests
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - Set session timeouts, concurrent session limits, and logout behavior via bundle overrides.

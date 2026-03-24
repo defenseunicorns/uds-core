@@ -1,0 +1,195 @@
+---
+title: Enable volume snapshots (AWS EBS)
+sidebar:
+  order: 7.002
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll enable Velero to capture persistent volume data using AWS EBS snapshots, so your backups include both Kubernetes resources and on-disk application state.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to an EKS cluster with UDS Core deployed
+- Velero storage backend configured (see [Configure Velero storage backends](/how-to-guides/backup-and-restore/configure-storage-backends/))
+- AWS EBS CSI driver installed and an EBS-backed StorageClass available in the cluster
+- Ability to attach IAM policies to the Velero service account's IRSA role
+
+## Before you begin
+
+By default, UDS Core backs up **Kubernetes resources only**. Volume snapshots are disabled:
+
+| Setting | Default |
+|---|---|
+| `snapshotsEnabled` | `false` |
+| `schedules.udsbackup.template.snapshotVolumes` | `false` |
+
+> [!NOTE]
+> If your applications use PersistentVolumes and you need to restore the actual on-disk data (not just the PVC resource definitions), you must enable volume snapshots. Without them, a restore will recreate the PVC but the underlying data will be lost.
+
+## Steps
+
+<Steps>
+
+1. **Configure IAM permissions for EBS**
+
+   The Velero service account must have an IAM role (via IRSA) with permissions to manage EBS snapshots. Add the following IAM policy statements to your Velero IRSA role:
+
+   ```hcl title="velero-iam-policy.tf"
+   # Velero AWS plugin policy
+   # Reference: https://github.com/vmware-tanzu/velero-plugin-for-aws#set-permissions-for-velero
+   data "aws_iam_policy_document" "velero_policy" {
+     statement {
+       effect = "Allow"
+       actions = [
+         "kms:ReEncryptFrom",
+         "kms:ReEncryptTo"
+       ]
+       # Replace with the ARN of your EBS volume encryption KMS key
+       resources = ["<YOUR_EBS_KMS_KEY_ARN>"]
+     }
+
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:DescribeVolumes", "ec2:DescribeSnapshots"]
+       resources = ["*"]
+     }
+
+     # Replace <YOUR_CLUSTER_NAME> with your EKS cluster name
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:CreateVolume"]
+       resources = ["*"]
+       condition {
+         test     = "StringEquals"
+         variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+     }
+
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:CreateSnapshot"]
+       resources = ["*"]
+       condition {
+         test     = "StringEquals"
+         variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+     }
+
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:CreateSnapshot"]
+       resources = ["*"]
+       condition {
+         test     = "StringEquals"
+         variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+     }
+
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:DeleteSnapshot"]
+       resources = ["*"]
+       condition {
+         test     = "StringEquals"
+         variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+     }
+
+     statement {
+       effect    = "Allow"
+       actions   = ["ec2:CreateTags"]
+       resources = ["*"]
+       condition {
+         test     = "StringEquals"
+         variable = "aws:RequestTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+       condition {
+         test     = "StringEqualsIfExists"
+         variable = "ec2:ResourceTag/kubernetes.io/cluster/<YOUR_CLUSTER_NAME>"
+         values   = ["owned"]
+       }
+     }
+   }
+   ```
+
+   > [!CAUTION]
+   > Replace `<YOUR_EBS_KMS_KEY_ARN>` with the ARN of your EBS volume encryption KMS key and `<YOUR_CLUSTER_NAME>` with your EKS cluster name. This policy scopes snapshot permissions to volumes tagged by the EBS CSI driver, following AWS best practices.
+
+2. **Enable snapshots in your bundle**
+
+   Add the following overrides to enable volume snapshots in the default backup schedule:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         velero:
+           velero:
+             values:
+               - path: snapshotsEnabled
+                 value: true
+               - path: schedules.udsbackup.template.snapshotVolumes
+                 value: true
+   ```
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm volume snapshots are enabled and working:
+
+```bash
+# Verify snapshots are enabled on the schedule
+uds zarf tools kubectl get schedule -n velero velero-udsbackup -o jsonpath='{.spec.template.snapshotVolumes}'
+
+# After a backup completes, check that volume snapshots were taken
+uds zarf tools kubectl get backup -n velero <backup-name> -o jsonpath='{.status.volumeSnapshotsCompleted}'
+```
+
+**Success criteria:**
+- `snapshotVolumes` is `true` on the schedule
+- After a backup completes, `volumeSnapshotsCompleted` is greater than 0 and matches the number of PVCs in the backed-up namespaces
+- EBS snapshots are visible in the AWS Console under EC2 → Snapshots, tagged with your EKS cluster name
+
+To trigger a manual backup for testing, see [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/).
+
+## Troubleshooting
+
+### Problem: EBS snapshots remain in AWS after backup deletion
+
+**Symptoms:** After deleting a Velero backup, the corresponding EBS snapshots are still visible in the AWS Console and are not removed.
+
+**Solution:** Velero's garbage collection runs hourly and removes expired backups based on TTL. Be cautious when deleting backups that have been used for restores; Velero may defer deletion of snapshots still referenced by restored volumes. If snapshots persist beyond the expected TTL, verify that the Velero IRSA role includes the `ec2:DeleteSnapshot` permission scoped to the cluster tag.
+
+### Problem: IAM permission denied errors in Velero logs
+
+**Symptoms:** Backup fails with `AccessDenied` errors in Velero logs referencing `ec2:CreateSnapshot` or similar actions.
+
+**Solution:** Verify the IRSA role attached to the `velero` service account in the `velero` namespace includes all policy statements above. Confirm the role ARN annotation on the service account matches the role with the Velero policy attached.
+
+## Related documentation
+
+- [Velero Plugin for AWS](https://github.com/vmware-tanzu/velero-plugin-for-aws) - AWS EBS plugin and IAM permissions reference
+- [Velero: Backup Reference](https://velero.io/docs/latest/backup-reference/) - backup configuration options and status fields
+- [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
+- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero storage backends](/how-to-guides/backup-and-restore/configure-storage-backends/) - Set up S3 or Azure Blob storage, provide credentials, and customize the backup schedule.

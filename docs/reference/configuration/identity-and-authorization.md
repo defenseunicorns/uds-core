@@ -1,25 +1,25 @@
 ---
 title: Identity & Authorization
 sidebar:
-  order: 4
+  order: 3.001
 ---
 
-UDS Core provides identity and access management through Keycloak, configured by the `uds-identity-config` component. This page documents the UDS-specific configuration surfaces exposed to bundle operators — the Helm chart paths, environment variables, and defaults that control realm behavior, authentication flows, themes, plugins, and account security.
+UDS Core provides identity and access management through Keycloak, configured by the `uds-identity-config` component. This page documents the UDS-specific configuration surfaces exposed to bundle operators: the Helm chart paths, environment variables, and defaults that control realm behavior, authentication flows, themes, plugins, and account security.
 
 ## Keycloak configuration overview
 
 UDS Core manages four areas of Keycloak configuration through the `uds-identity-config` component:
 
-- **Realm configuration** — authentication flows, session timeouts, password policy, identity providers
-- **Theme configuration** — branding images, terms and conditions, registration form fields
-- **Truststore** — CA certificates used for X.509 client authentication
-- **Custom plugins** — Keycloak extensions bundled with UDS Core
+- **Realm configuration:** authentication flows, session timeouts, password policy, identity providers
+- **Theme configuration:** branding images, terms and conditions, registration form fields
+- **Truststore:** CA certificates used for X.509 client authentication
+- **Custom plugins:** Keycloak extensions bundled with UDS Core
 
 Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for manual steps.
 
 ## Realm initialization variables
 
-Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime — to change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.
+Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.
 
 Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 
@@ -77,7 +77,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmAuthFlows
 | `X509_MFA_ENABLED`               | `false` | Require MFA (OTP or WebAuthn) after X.509 authentication; requires `OTP_ENABLED` or `WEBAUTHN_ENABLED` |
 
 > [!CAUTION]
-> Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` simultaneously leaves no authentication method available. MFA is not configurable for SSO flows — that responsibility shifts to the identity provider.
+> Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` simultaneously leaves no authentication method available. MFA is not configurable for SSO flows; that responsibility shifts to the identity provider.
 
 ## Runtime configuration
 
@@ -172,7 +172,7 @@ UDS Core configures Keycloak brute-force detection with the following defaults.
 
 ## Truststore configuration
 
-The Keycloak truststore contains the CA certificates used to validate X.509 client certificates. It is built at image-build time by the `uds-identity-config` component and is not persisted — it is refreshed automatically on every Keycloak upgrade.
+The Keycloak truststore contains the CA certificates used to validate X.509 client certificates. It is built at image-build time by the `uds-identity-config` component and is not persisted; it is refreshed automatically on every Keycloak upgrade.
 
 The following aspects of truststore behavior can be customized in the `uds-identity-config` image:
 
@@ -195,20 +195,20 @@ FIPS 140-2 Strict Mode is **always enabled** in UDS Core. The `uds-identity-conf
 
 Bundle override paths: `overrides.keycloak.keycloak.values[].path: fips` and `overrides.keycloak.keycloak.values[].path: debugMode`
 
-| Field       | Default | Description                                                                                                            |
-| ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `fips`      | `true`  | Deprecated. FIPS 140-2 Strict Mode enabled state; always `true` in UDS Core — all deployments use FIPS mode by default |
-| `debugMode` | `false` | Enable verbose Keycloak bootstrap logging; used to verify FIPS mode activation                                         |
+| Field | Default | Description |
+|---|---|---|
+| `fips` | `true` | Deprecated. FIPS 140-2 Strict Mode enabled state; always `true` in UDS Core. All deployments use FIPS mode by default |
+| `debugMode` | `false` | Enable verbose Keycloak bootstrap logging; used to verify FIPS mode activation |
 
 When `debugMode` is `true`, Keycloak bootstrap logs will contain a line like:
 
-```
+```console
 KC(BCFIPS version 2.0 Approved Mode, FIPS-JVM: disabled)
 ```
 
 `BCFIPS version 2.0 Approved Mode` confirms FIPS Strict Mode is active. `FIPS-JVM: disabled` indicates the underlying JVM is not in FIPS mode, which is expected unless the host system has a FIPS-enabled kernel.
 
-For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
+For upgrade guidance when migrating an existing non-FIPS deployment, see [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/).
 
 ## OpenTofu client
 
@@ -231,17 +231,17 @@ overrides:
 
 The client secret can be retrieved from the Keycloak Admin Console: **UDS realm → Clients → uds-opentofu-client → Credentials**.
 
-## Related Documentation
+## Related documentation
 
-- [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) — how-to guide for enabling and disabling authentication methods
-- [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) — how-to guide for logo, background, and terms and conditions overrides
-- [Configure truststore](/how-to-guides/identity-and-authorization/configure-truststore/) — how-to guide for building and deploying a custom CA truststore
-- [Enable FIPS mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) — how-to guide for enabling FIPS 140-2 Strict Mode
-- [Configure service accounts](/how-to-guides/identity-and-authorization/configure-service-accounts/) — how-to guide for SSO-protected service-to-service authentication
-- [Configure account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) — how-to guide for adjusting brute-force protection thresholds
-- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) — how-to guide for session timeouts, concurrent session limits, and logout behavior
-- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) — how-to guide for programmatic realm management via the OpenTofu client
-- [Configure Keycloak airgap CRLs](/how-to-guides/identity-and-authorization/configure-x509-crl-airgap/) — how-to guide for configuring CRL checking in airgapped environments
-- [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) — version-specific steps for realm configuration changes
-- [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) — upstream Keycloak reference
-- [Keycloak FIPS documentation](https://www.keycloak.org/server/fips) — upstream guide for Keycloak FIPS mode
+- [Configure authentication flows](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - how-to guide for enabling and disabling authentication methods
+- [Customize branding](/how-to-guides/identity-and-authorization/customize-branding/) - how-to guide for logo, background, and terms and conditions overrides
+- [Configure truststore](/how-to-guides/identity-and-authorization/configure-truststore/) - how-to guide for building and deploying a custom CA truststore
+- [Enable FIPS mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) - how-to guide for enabling FIPS 140-2 Strict Mode
+- [Configure service accounts](/how-to-guides/identity-and-authorization/configure-service-accounts/) - how-to guide for SSO-protected service-to-service authentication
+- [Configure account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) - how-to guide for adjusting brute-force protection thresholds
+- [Configure Keycloak login policies](/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/) - how-to guide for session timeouts, concurrent session limits, and logout behavior
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - how-to guide for programmatic realm management via the OpenTofu client
+- [Configure Keycloak airgap CRLs](/how-to-guides/identity-and-authorization/configure-x509-crl-airgap/) - how-to guide for configuring CRL checking in airgapped environments
+- [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) - version-specific steps for realm configuration changes
+- [Keycloak Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/) - upstream Keycloak reference
+- [Keycloak FIPS documentation](https://www.keycloak.org/server/fips) - upstream guide for Keycloak FIPS mode

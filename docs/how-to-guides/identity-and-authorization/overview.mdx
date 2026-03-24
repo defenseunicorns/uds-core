@@ -1,7 +1,7 @@
 ---
 title: Identity and Authorization
 sidebar:
-  order: 3.0
+  order: 3.000
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
@@ -20,7 +20,7 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
   />
   <LinkCard
     title="Enforce group-based access controls"
-    description="Restrict application access to users in specific Keycloak groups using the Package CR."
+    description="Restrict application access to users in specific Keycloak groups using the `Package` CR."
     href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
   />
   <LinkCard
@@ -35,7 +35,7 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
   />
   <LinkCard
     title="Configure Google SAML as an identity provider"
-    description="Connect Google SAML using realmInitEnv bundle overrides — no admin UI required."
+    description="Connect Google SAML using realmInitEnv bundle overrides, with no admin UI required."
     href="/how-to-guides/identity-and-authorization/configure-google-idp/"
   />
   <LinkCard
@@ -91,7 +91,7 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
   <LinkCard
     title="Upgrade to FIPS 140-2 mode"
     description="Migrate an existing non-FIPS deployment to FIPS 140-2 Strict Mode before upgrading UDS Core."
-    href="/how-to-guides/identity-and-authorization/enable-fips-mode/"
+    href="/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/"
   />
   <LinkCard
     title="Configure CRL-based certificate revocation in an airgap"
@@ -102,5 +102,10 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     title="Register and customize SSO clients"
     description="Register native OIDC or SAML clients, customize secrets, add protocol mappers, and configure client attributes."
     href="/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/"
+  />
+  <LinkCard
+    title="Configure Keycloak notifications and alerts"
+    description="Enable Prometheus alerting rules so Keycloak realm, user, and admin changes trigger Alertmanager notifications."
+    href="/how-to-guides/identity-and-authorization/configure-keycloak-notifications-and-alerts/"
   />
 </CardGrid>

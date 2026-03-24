@@ -1,7 +1,7 @@
 ---
 title: Configure infrastructure exemptions
 sidebar:
-  order: 8.04
+  order: 8.004
 ---
 
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
@@ -20,7 +20,7 @@ You'll configure policy exemptions for infrastructure workloads that legitimatel
 
 ## Before you begin
 
-Infrastructure exemptions are typically applied during or before Core installation to resolve infrastructure-specific issues that would otherwise block deployment. Application-level exemptions should be deployed as manifests alongside their applications instead — see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/).
+Infrastructure `Exemption`s are typically applied during or before Core installation to resolve infrastructure-specific issues that would otherwise block deployment. For application-level `Exemption`s, deploy manifests alongside the applications instead; see [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/).
 
 Some infrastructure workloads require privileges that UDS Core policies normally block. For example:
 
@@ -146,7 +146,7 @@ uds zarf tools kubectl get pods -n <namespace>
 
 **Symptom:** Gateway services are still blocked after enabling the NodePort exemption.
 
-**Solution:** Verify the `exemptions.istioGatewayNodeport.enabled` value is set to `true` in your bundle and that you redeployed Core after the change. Check that the Exemption CR exists:
+**Solution:** Verify the `exemptions.istioGatewayNodeport.enabled` value is set to `true` in your bundle and that you redeployed Core after the change. Check that the `Exemption` CR exists:
 
 ```bash
 uds zarf tools kubectl get exemptions -n uds-policy-exemptions | grep nodeport
@@ -158,9 +158,9 @@ uds zarf tools kubectl get exemptions -n uds-policy-exemptions | grep nodeport
 
 **Solution:** Verify the matcher fields match your workload exactly. The `namespace` must match the workload's namespace and the `name` regex must match the pod or service name. If the exemption CR exists but pods still aren't being exempted, see the [Exemptions & Packages Not Updating](/operations/troubleshooting-and-runbooks/exemptions-and-packages/) runbook for detailed diagnostics.
 
-## Related Documentation
+## Related documentation
 
-- [Policy Engine](/reference/operator-and-crds/policy-engine/) — full reference of all enforced policies and exemption names
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
-- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) — Review exemptions and Package CR network rules across your cluster.
+- [Policy Engine](/reference/operator-and-crds/policy-engine/) - full reference of all enforced policies and exemption names
+- [`Exemption` CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) - Create `Exemption` CRs to allow workloads to bypass specific UDS policies.
+- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) - Review exemptions and `Package` CR network rules across your cluster.

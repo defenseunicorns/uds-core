@@ -1,7 +1,7 @@
 ---
 title: Configuration Changes
 sidebar:
-  order: 2.5
+  order: 2.001
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -42,7 +42,7 @@ When you need to change UDS Core configuration (such as adjusting resource limit
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart — see [Configure pod reload on config changes](/how-to-guides/platform-features/configure-pod-reload/) for automatic restart configuration.
+   Helm handles the rolling update for affected components. Pods that reference changed ConfigMaps or Secrets may need a restart. See [Configure pod reload on config changes](/how-to-guides/platform-features/configure-pod-reload/) for automatic restart configuration.
 
 3. **Verify the change**
 
@@ -59,5 +59,5 @@ When you need to change UDS Core configuration (such as adjusting resource limit
 
 ## Related documentation
 
-- [Upgrade Overview](/operations/upgrades/overview/) — general upgrade procedures and checklists
-- [How-To Guides](/how-to-guides/overview/) — first-time configuration guides
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [How-To Guides](/how-to-guides/overview/) - first-time configuration guides

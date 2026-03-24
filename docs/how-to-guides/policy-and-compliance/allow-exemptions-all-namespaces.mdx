@@ -1,7 +1,7 @@
 ---
 title: Allow exemptions in all namespaces
 sidebar:
-  order: 8.03
+  order: 8.003
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -9,7 +9,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure UDS Core to accept Exemption CRs in any namespace instead of only the default `uds-policy-exemptions` namespace, and verify the configuration works.
+You'll configure UDS Core to accept `Exemption` CRs in any namespace instead of only the default `uds-policy-exemptions` namespace, and verify the configuration works.
 
 ## Prerequisites
 
@@ -19,10 +19,10 @@ You'll configure UDS Core to accept Exemption CRs in any namespace instead of on
 
 ## Before you begin
 
-By default, Exemption CRs are only accepted in the `uds-policy-exemptions` namespace. This provides a single, controlled location where platform engineers manage all policy exemptions. Enabling all-namespace exemptions allows teams to manage their own exemptions in their application namespaces.
+By default, `Exemption` CRs are only accepted in the `uds-policy-exemptions` namespace. This provides a single, controlled location where platform engineers manage all policy exemptions. Enabling all-namespace exemptions allows teams to manage their own exemptions in their application namespaces.
 
 > [!WARNING]
-> Enabling all-namespace exemptions means any user with permission to create Exemption CRs in any namespace can bypass UDS policies. Before enabling this, ensure your RBAC configuration restricts who can create, update, and delete Exemption resources. Without proper RBAC controls, this setting significantly increases the risk of unintended or unauthorized policy bypasses.
+> Enabling all-namespace exemptions means any user with permission to create `Exemption` CRs in any namespace can bypass UDS policies. Before enabling this, ensure your RBAC configuration restricts who can create, update, and delete Exemption resources. Without proper RBAC controls, this setting significantly increases the risk of unintended or unauthorized policy bypasses.
 
 ## Steps
 
@@ -48,7 +48,7 @@ By default, Exemption CRs are only accepted in the `uds-policy-exemptions` names
 
 ## Verification
 
-Create a test Exemption CR in an application namespace to confirm the configuration is working:
+Create a test `Exemption` CR in an application namespace to confirm the configuration is working:
 
 ```yaml title="test-exemption.yaml"
 apiVersion: uds.dev/v1alpha1
@@ -74,7 +74,7 @@ uds zarf tools kubectl apply -f test-exemption.yaml
 Confirm the exemption was created and processed:
 
 ```bash
-# Verify the Exemption CR exists in the application namespace
+# Verify the `Exemption` CR exists in the application namespace
 uds zarf tools kubectl get exemptions -n my-app
 
 # Check Pepr logs for processing
@@ -91,7 +91,7 @@ uds zarf tools kubectl delete exemption test-exemption -n my-app
 
 ### Problem: Exemption rejected in application namespace
 
-**Symptom:** Creating an Exemption CR outside `uds-policy-exemptions` returns a validation error.
+**Symptom:** Creating an `Exemption` CR outside `uds-policy-exemptions` returns a validation error.
 
 **Solution:** Verify that `ALLOW_ALL_NS_EXEMPTIONS` is set to `"true"` and that the Core bundle was redeployed after the change. Check the UDS Operator config:
 
@@ -99,9 +99,9 @@ uds zarf tools kubectl delete exemption test-exemption -n my-app
 uds zarf tools kubectl get clusterconfig uds-cluster-config -o jsonpath='{.spec.policy}'
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Exemption CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) — full CR schema and field reference
-- [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) — securing who can create Exemption resources
-- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) — Review exemptions across all namespaces for scope and justification.
-- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) — Create Exemption CRs to allow workloads to bypass specific UDS policies.
+- [`Exemption` CR specification](/reference/operator-and-crds/exemptions-v1alpha1-cr/) - full CR schema and field reference
+- [Kubernetes RBAC documentation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/) - securing who can create Exemption resources
+- [Audit security posture](/how-to-guides/policy-and-compliance/audit-security-posture/) - Review exemptions across all namespaces for scope and justification.
+- [Create UDS policy exemptions](/how-to-guides/policy-and-compliance/create-policy-exemptions/) - Create `Exemption` CRs to allow workloads to bypass specific UDS policies.
