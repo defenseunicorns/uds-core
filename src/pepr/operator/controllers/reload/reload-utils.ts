@@ -3,11 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1OwnerReference } from "@kubernetes/client-node";
+import { V1ManagedFieldsEntry, V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { createEvent, retryWithDelay } from "../utils";
+import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "../ssa-field-cleanup";
 
 /**
  * Reload a list of pods using controller-based rolling restart when possible,
@@ -178,6 +179,25 @@ async function handleReplicaSetOwner(
 }
 
 /**
+ * Returns true if Pepr's managedFields entry contains spec fields beyond the single annotation
+ * Pepr actually manages, indicating it previously over-claimed SSA ownership.
+ */
+export function controllerEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
+  const v1 = entry.fieldsV1 as Record<string, unknown>;
+  const spec = (v1?.["f:spec"] as Record<string, unknown>) ?? {};
+  const template = (spec["f:template"] as Record<string, unknown>) ?? {};
+  const templateMeta = (template["f:metadata"] as Record<string, unknown>) ?? {};
+  const annotations = (templateMeta["f:annotations"] as Record<string, unknown>) ?? {};
+
+  return (
+    Object.keys(spec).some(k => k !== "f:template") ||
+    Object.keys(template).some(k => k !== "f:metadata") ||
+    Object.keys(templateMeta).some(k => k !== "f:annotations") ||
+    Object.keys(annotations).some(k => k !== "f:uds.dev/restartedAt")
+  );
+}
+
+/**
  * Restart a controller (Deployment, StatefulSet, DaemonSet, ReplicaSet) using the kubectl-style annotation
  */
 export async function restartController(
@@ -207,6 +227,21 @@ export async function restartController(
     return K8s(controllerKind).InNamespace(namespace).Get(name);
   }
   const controller = await retryWithDelay(getController, log);
+
+  // Before applying the sparse patch, release any fields Pepr previously over-claimed.
+  // Old code applied the full controller object, stealing SSA ownership of every spec field.
+  const peprEntry = controller.metadata?.managedFields?.find(
+    (e: V1ManagedFieldsEntry) => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
+  );
+  if (peprEntry && controllerEntryIsOverClaimed(peprEntry)) {
+    await removePeprManagedFieldsEntry(
+      controllerKind,
+      name,
+      namespace,
+      controller.metadata!.managedFields!,
+      log,
+    );
+  }
 
   try {
     // Build a sparse patch with only the fields pepr owns to avoid claiming ownership

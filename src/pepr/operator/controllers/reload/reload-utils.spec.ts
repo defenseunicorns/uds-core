@@ -8,7 +8,7 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import * as reloadUtils from "./reload-utils";
-import { reloadPods, restartController } from "./reload-utils";
+import { controllerEntryIsOverClaimed, reloadPods, restartController } from "./reload-utils";
 
 // Mock K8s client
 vi.mock("pepr", () => {
@@ -140,13 +140,19 @@ function makeTestReplicaSet() {
   } as kind.ReplicaSet;
 }
 
-function withRestartedAtAnnotation<T extends object>(obj: T): T {
-  const clone = JSON.parse(JSON.stringify(obj));
-  clone.spec.template.metadata.annotations = {
-    ...(clone.spec.template.metadata.annotations || {}),
-    "uds.dev/restartedAt": expect.any(String),
+function sparseRestartPatch(apiVersion: string, kind: string, name: string, namespace: string) {
+  return {
+    apiVersion,
+    kind,
+    metadata: { name, namespace },
+    spec: {
+      template: {
+        metadata: {
+          annotations: { "uds.dev/restartedAt": expect.any(String) },
+        },
+      },
+    },
   };
-  return clone;
 }
 
 describe("reloadPods", () => {
@@ -234,7 +240,8 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the StatefulSet with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testStatefulSet));
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
+      { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -297,7 +304,8 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the Deployment with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testDeployment));
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
+      { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.Deployment);
@@ -345,7 +353,8 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the ReplicaSet directly with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testReplicaSet));
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "ReplicaSet", "test-replicaset", "default"),
+      { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.ReplicaSet);
@@ -407,7 +416,8 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
 
     // Verify Apply was called
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testStatefulSet));
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
+      { force: true });
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -458,7 +468,8 @@ describe("restartController", () => {
     );
 
     // Verify Apply was called with the correct annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(withRestartedAtAnnotation(testDeployment));
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
+      { force: true });
 
     // Verify createEvent was called
     expect(mockK8sClient.Create).toHaveBeenCalled();
@@ -544,5 +555,151 @@ describe("restartController", () => {
       }),
       "Failed to apply StatefulSet controller update: Secret changed",
     );
+  });
+
+  it("strips over-claimed managedFields entry before applying when Pepr owns extra spec fields", async () => {
+    const mockK8sClient = createMockK8sClient({
+      Get: vi.fn().mockResolvedValue({
+        ...makeTestStatefulSet(),
+        metadata: {
+          name: "test-statefulset",
+          namespace: "default",
+          uid: "test-uid",
+          managedFields: [
+            {
+              manager: "pepr",
+              operation: "Apply",
+              fieldsV1: {
+                "f:spec": {
+                  "f:replicas": {},
+                  "f:template": {
+                    "f:metadata": {
+                      "f:annotations": { "f:uds.dev/restartedAt": {} },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    });
+    (K8s as Mock).mockReturnValue(mockK8sClient);
+    const mockLogger = createMockLogger();
+
+    await restartController("default", kind.StatefulSet, "test-statefulset", "CA changed", mockLogger, "CA");
+
+    // Patch should have been called to strip the over-claimed entry
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "remove", path: "/metadata/managedFields/0" },
+    ]);
+    expect(mockK8sClient.Apply).toHaveBeenCalled();
+  });
+
+  it("does not strip managedFields when Pepr entry only owns the restart annotation", async () => {
+    const mockK8sClient = createMockK8sClient({
+      Get: vi.fn().mockResolvedValue({
+        ...makeTestStatefulSet(),
+        metadata: {
+          name: "test-statefulset",
+          namespace: "default",
+          uid: "test-uid",
+          managedFields: [
+            {
+              manager: "pepr",
+              operation: "Apply",
+              fieldsV1: {
+                "f:spec": {
+                  "f:template": {
+                    "f:metadata": {
+                      "f:annotations": { "f:uds.dev/restartedAt": {} },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      }),
+    });
+    (K8s as Mock).mockReturnValue(mockK8sClient);
+    const mockLogger = createMockLogger();
+
+    await restartController("default", kind.StatefulSet, "test-statefulset", "CA changed", mockLogger, "CA");
+
+    expect(mockK8sClient.Patch).not.toHaveBeenCalled();
+    expect(mockK8sClient.Apply).toHaveBeenCalled();
+  });
+});
+
+describe("controllerEntryIsOverClaimed", () => {
+  it("returns false for an exactly-correct sparse entry", () => {
+    expect(
+      controllerEntryIsOverClaimed({
+        fieldsV1: {
+          "f:spec": {
+            "f:template": {
+              "f:metadata": {
+                "f:annotations": { "f:uds.dev/restartedAt": {} },
+              },
+            },
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false when fieldsV1 has no spec", () => {
+    expect(controllerEntryIsOverClaimed({ fieldsV1: {} })).toBe(false);
+  });
+
+  it("returns true when spec has extra fields beyond f:template", () => {
+    expect(
+      controllerEntryIsOverClaimed({
+        fieldsV1: {
+          "f:spec": {
+            "f:replicas": {},
+            "f:template": {
+              "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+            },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("returns true when template has extra fields beyond f:metadata", () => {
+    expect(
+      controllerEntryIsOverClaimed({
+        fieldsV1: {
+          "f:spec": {
+            "f:template": {
+              "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+              "f:spec": { "f:containers": {} },
+            },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("returns true when annotations contain extra keys", () => {
+    expect(
+      controllerEntryIsOverClaimed({
+        fieldsV1: {
+          "f:spec": {
+            "f:template": {
+              "f:metadata": {
+                "f:annotations": {
+                  "f:uds.dev/restartedAt": {},
+                  "f:kubectl.kubernetes.io/last-applied-configuration": {},
+                },
+              },
+            },
+          },
+        },
+      }),
+    ).toBe(true);
   });
 });

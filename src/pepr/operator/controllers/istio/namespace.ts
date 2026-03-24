@@ -3,10 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1ManagedFieldsEntry } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "../ssa-field-cleanup";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -66,6 +68,7 @@ export async function enableIstio(pkg: UDSPackage) {
     annotations,
     sourceNS.metadata?.labels,
     sourceNS.metadata?.annotations,
+    sourceNS.metadata?.managedFields,
   );
 
   await restartPodsIfNeeded(pkg.metadata.namespace, result.shouldRestartPods, targetIstioState);
@@ -115,6 +118,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     annotations,
     sourceNS.metadata?.labels,
     sourceNS.metadata?.annotations,
+    sourceNS.metadata?.managedFields,
     `Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`,
   );
 
@@ -195,6 +199,45 @@ export function getCurrentIstioState(labels: Record<string, string>): IstioState
 }
 
 /**
+ * Returns true if Pepr's managedFields entry contains labels or annotations beyond the set
+ * Pepr actually manages, indicating it previously over-claimed SSA ownership.
+ */
+export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
+  const v1 = entry.fieldsV1 as Record<string, unknown>;
+  const meta = (v1?.["f:metadata"] as Record<string, unknown>) ?? {};
+  const labels = (meta["f:labels"] as Record<string, unknown>) ?? {};
+  const annotations = (meta["f:annotations"] as Record<string, unknown>) ?? {};
+
+  const managedLabels = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
+  return (
+    Object.keys(labels).some(k => !managedLabels.has(k)) ||
+    Object.keys(annotations).some(
+      k => k !== `f:${ISTIO_STATE_ANNOTATION}` && !k.startsWith("f:uds.dev/pkg-"),
+    )
+  );
+}
+
+// Pick only the label keys Pepr manages so the SSA patch doesn't claim ownership of
+// labels set by Helm or other field managers.
+function pickManagedLabels(labels: Record<string, string> | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (labels?.[INJECTION_LABEL] !== undefined) result[INJECTION_LABEL] = labels[INJECTION_LABEL];
+  if (labels?.[AMBIENT_LABEL] !== undefined) result[AMBIENT_LABEL] = labels[AMBIENT_LABEL];
+  return result;
+}
+
+// Pick only the annotation keys Pepr manages.
+function pickManagedAnnotations(
+  annotations: Record<string, string> | undefined,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(annotations || {}).filter(
+      ([k]) => k === ISTIO_STATE_ANNOTATION || k.startsWith("uds.dev/pkg-"),
+    ),
+  );
+}
+
+/**
  * Apply namespace updates if there are changes to labels or annotations
  *
  * @param namespace The namespace name
@@ -211,24 +254,36 @@ export async function applyNamespaceUpdates(
   annotations: Record<string, string>,
   originalLabels: Record<string, string> | undefined,
   originalAnnotations: Record<string, string> | undefined,
+  managedFields: V1ManagedFieldsEntry[] | undefined,
   logMessage?: string,
 ): Promise<boolean> {
-  const updatedNamespace = {
-    metadata: {
-      name: namespace,
-      labels,
-      annotations,
-    },
-  };
+  const patchLabels = pickManagedLabels(labels);
+  const patchAnnotations = pickManagedAnnotations(annotations);
 
-  if (!R.equals(originalLabels, labels) || !R.equals(originalAnnotations, annotations)) {
+  if (
+    !R.equals(pickManagedLabels(originalLabels), patchLabels) ||
+    !R.equals(pickManagedAnnotations(originalAnnotations), patchAnnotations)
+  ) {
+    // Before applying the sparse patch, release any fields Pepr previously over-claimed.
+    // This prevents SSA from deleting non-Pepr-managed labels/annotations that old code
+    // claimed ownership of via force:true on a full object.
+    const peprEntry = managedFields?.find(
+      e => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
+    );
+    if (peprEntry && nsEntryIsOverClaimed(peprEntry)) {
+      await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!, log);
+    }
+
     log.debug(logMessage || `Applying updates to namespace ${namespace}.`);
-    await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
+    await K8s(kind.Namespace).Apply(
+      { metadata: { name: namespace, labels: patchLabels, annotations: patchAnnotations } },
+      { force: true },
+    );
     return true;
-  } else {
-    log.debug(`No namespace updates needed for ${namespace}.`);
-    return false;
   }
+
+  log.debug(`No namespace updates needed for ${namespace}.`);
+  return false;
 }
 
 /**
