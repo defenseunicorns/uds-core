@@ -35,7 +35,7 @@ What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/mai
 
 ### "Single Layer"
 
-Single layer tests deploy an individual [functional layer](https://uds.defenseunicorns.com/reference/uds-core/functional-layers/) of core as well as any dependency layers required (i.e. base, identity-authorization). The primary goal of these tests is to provide fast feedback on issues in the layers without needing to wait on the full core tests. They also help to validate that layers work "in isolation" with only the documented dependencies.
+Single layer tests deploy an individual [functional layer](https://docs.defenseunicorns.com/core/concepts/platform/functional-layers/) of core as well as any dependency layers required (i.e. base, identity-authorization). The primary goal of these tests is to provide fast feedback on issues in the layers without needing to wait on the full core tests. They also help to validate that layers work "in isolation" with only the documented dependencies.
 
 When: Conditionally on PRs
 

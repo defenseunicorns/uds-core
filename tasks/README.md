@@ -1,6 +1,6 @@
 # Tasks for UDS Core
 
-This directory contains a number of [UDS task files](https://uds.defenseunicorns.com/reference/cli/uds-runner/) that are used both for CI and local dev to support testing and publishing workflows.
+This directory contains a number of [UDS task files](https://docs.defenseunicorns.com/cli/how-to-guides/use-uds-runner/) that are used both for CI and local dev to support testing and publishing workflows.
 
 ## `create.yaml`
 

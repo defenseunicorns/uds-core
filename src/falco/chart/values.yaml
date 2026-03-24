@@ -3,7 +3,7 @@
 
 # Support for custom `network.allow` entries on the Package CR, useful for sending Falco Sidekick alerts to external destinations
 additionalNetworkAllow: []
-# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+# ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
 #       app.kubernetes.io/name: falcosidekick

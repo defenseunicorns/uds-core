@@ -13,5 +13,5 @@ domain: "###ZARF_VAR_DOMAIN###"
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 # Optional annotations for grouping dashboards in Grafana folders.
-# see docs for more info: https://uds.defenseunicorns.com/reference/configuration/uds-monitoring-metrics/#grouping-dashboards
+# see docs for more info: https://docs.defenseunicorns.com/core/how-to-guides/monitoring--observability/add-custom-dashboards/
 dashboardAnnotations: {}
