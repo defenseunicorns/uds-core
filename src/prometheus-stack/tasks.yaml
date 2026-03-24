@@ -65,12 +65,20 @@ tasks:
 
   - name: e2e-test
     actions:
+      - description: "Install vitest dependencies"
+        cmd: |
+          npm ci
+        dir: test/vitest
       - description: "Run Prometheus-Stack E2E tests"
         cmd: |
-          npm ci && npx vitest run "prometheus"
+          npx vitest run "prometheus"
+        dir: test/vitest
+      - description: "Run UDS Core default probe alert tests"
+        cmd: |
+          npx vitest run "default-probe-alerts"
         dir: test/vitest
       - description: "Run Blackbox Exporter integration tests"
         cmd: |
           echo "Running Blackbox Exporter integration tests..."
-          npm ci && npx vitest run "blackbox-exporter"
+          npx vitest run "blackbox-exporter"
         dir: test/vitest
