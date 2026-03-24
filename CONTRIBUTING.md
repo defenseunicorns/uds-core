@@ -35,7 +35,7 @@ Before starting, ensure that you have the following installed:
 - **Git**: [Install Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - **K3d**: [Install K3d](https://k3d.io/#installation)
 - **Node.js** (for building and running Pepr): [Install Node.js](https://nodejs.org/en/download/) (we recommend Node 24 to align with what CI tests/builds with)
-- **UDS CLI** (for running tasks and deploying): [Install UDS](https://uds.defenseunicorns.com/cli/quickstart-and-usage/)
+- **UDS CLI** (for running tasks and deploying): [Install UDS](https://docs.defenseunicorns.com/cli/getting-started/quickstart/)
 - **Go** (for pre-commit tooling): [Install Go](https://go.dev/doc/install)
 - **Helm** (for development and testing): [Install Helm](https://helm.sh/docs/intro/install/)
 - **Helm Unittest Plugin** (for development and testing): [Install Helm unittest](https://github.com/helm-unittest/helm-unittest?tab=readme-ov-file#install)

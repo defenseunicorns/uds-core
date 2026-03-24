@@ -5,9 +5,9 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core/badge)](https://api.securityscorecards.dev/projects/github.com/defenseunicorns/uds-core)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10959/badge)](https://www.bestpractices.dev/projects/10959)
 
-## [UDS Core Overview](https://uds.defenseunicorns.com/reference/uds-core/overview/)
+## [UDS Core Overview](https://docs.defenseunicorns.com/core/concepts/overview/)
 
-UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. UDS Core provides advanced automation with the [UDS Operator](https://uds.defenseunicorns.com/reference/configuration/uds-operator/overview/) and [UDS Policy Engine](./src/pepr/policies/README.md). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
+UDS Core establishes a secure baseline for cloud-native systems and ships with compliance documentation and first-class support for airgap/egress-limited systems. UDS Core provides advanced automation with the [UDS Operator](https://docs.defenseunicorns.com/core/reference/operator--crds/overview/) and [UDS Policy Engine](https://docs.defenseunicorns.com/core/reference/operator--crds/policy-engine/). UDS Core is a collection of several individual applications combined into a single [Zarf](https://zarf.dev) package and we recommend using [UDS CLI](https://github.com/defenseunicorns/uds-cli?tab=readme-ov-file#install) to deploy it as a [UDS Bundle](#using-uds-core-in-production).
 
 #### tl;dr - [try it now](#quickstart)
 
