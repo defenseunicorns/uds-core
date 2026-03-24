@@ -58,6 +58,30 @@ tests:
                 paths:
                   - /
 
+  - it: should include uptime blocks when uptime.enabled is not set (nil)
+    set:
+      uptime: {}
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            uptime:
+              checks:
+                paths:
+                  - /
+                  - /realms/uds/.well-known/openid-configuration
+
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            uptime:
+              checks:
+                paths:
+                  - /
+
   - it: should still render expose entries when uptime is disabled
     set:
       uptime:

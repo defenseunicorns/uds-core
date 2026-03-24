@@ -41,6 +41,20 @@ tests:
                 paths:
                   - /healthz
 
+  - it: should include uptime block when uptime.enabled is not set (nil)
+    set:
+      uptime: {}
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            uptime:
+              checks:
+                paths:
+                  - /healthz
+
   - it: should still render expose entry when uptime is disabled
     set:
       uptime:
