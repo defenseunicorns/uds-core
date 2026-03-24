@@ -13,6 +13,10 @@ on:
       - "scripts/renovate/**"
       - "scripts/root-ca-retriever/**"
 
+concurrency:
+  group: scripts-test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: ${{ matrix.script-dir }} Tests
