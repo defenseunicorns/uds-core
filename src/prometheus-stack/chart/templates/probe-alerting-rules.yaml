@@ -1,0 +1,61 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- $endpointDownEnabled := .Values.udsCoreDefaultAlerts.probeEndpointDown.enabled }}
+{{- $tlsWarningEnabled := .Values.udsCoreDefaultAlerts.probeTLSExpiryWarning.enabled }}
+{{- $tlsCriticalEnabled := .Values.udsCoreDefaultAlerts.probeTLSExpiryCritical.enabled }}
+{{- if and (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") .Values.udsCoreDefaultAlerts.enabled (or $endpointDownEnabled $tlsWarningEnabled $tlsCriticalEnabled) }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: uds-prometheus-stack-probe-alerts
+  namespace: {{ .Release.Namespace }}
+spec:
+  groups:
+    - name: uds-monitoring-probe-alerts
+      rules:
+        {{- if $endpointDownEnabled }}
+        - alert: UDSProbeEndpointDown
+          expr: probe_success == 0
+          for: {{ .Values.udsCoreDefaultAlerts.probeEndpointDown.for }}
+          labels:
+            severity: {{ .Values.udsCoreDefaultAlerts.probeEndpointDown.severity }}
+            source: blackbox
+            category: probe
+          annotations:
+            summary: "Endpoint probe down: {{`{{ $labels.instance }}`}}"
+            description: "Blackbox probe for {{`{{ $labels.instance }}`}} has reported probe_success=0 for more than {{ .Values.udsCoreDefaultAlerts.probeEndpointDown.for }}."
+        {{- end }}
+
+        {{- if $tlsWarningEnabled }}
+        - alert: UDSProbeTLSExpiryWarning
+          expr: |
+            ((probe_ssl_earliest_cert_expiry - time()) / 86400 < {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryWarning.days }})
+            and on(instance, job)
+            (probe_success == 1)
+          for: {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryWarning.for }}
+          labels:
+            severity: {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryWarning.severity }}
+            source: blackbox
+            category: probe
+          annotations:
+            summary: "TLS certificate expiring soon: {{`{{ $labels.instance }}`}}"
+            description: "TLS certificate for {{`{{ $labels.instance }}`}} expires in less than {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryWarning.days }} days."
+        {{- end }}
+
+        {{- if $tlsCriticalEnabled }}
+        - alert: UDSProbeTLSExpiryCritical
+          expr: |
+            ((probe_ssl_earliest_cert_expiry - time()) / 86400 < {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryCritical.days }})
+            and on(instance, job)
+            (probe_success == 1)
+          for: {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryCritical.for }}
+          labels:
+            severity: {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryCritical.severity }}
+            source: blackbox
+            category: probe
+          annotations:
+            summary: "TLS certificate expiring critically: {{`{{ $labels.instance }}`}}"
+            description: "TLS certificate for {{`{{ $labels.instance }}`}} expires in less than {{ .Values.udsCoreDefaultAlerts.probeTLSExpiryCritical.days }} days."
+        {{- end }}
+{{- end }}
