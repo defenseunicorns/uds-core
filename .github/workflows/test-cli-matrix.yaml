@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-name: CLI Matrix Testing
+name: CLI Compatibility
 
 on:
   schedule:
@@ -29,7 +29,7 @@ jobs:
   cli-upgrade:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
-    name: "CLI Upgrade (${{ matrix.scenario }}, ${{ matrix.flavor }})"
+    name: "Test Upgrade (${{ matrix.scenario }}, ${{ matrix.flavor }})"
 
     strategy:
       matrix:
@@ -93,7 +93,7 @@ jobs:
   cli-install:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
-    name: "CLI Install (old, upstream)"
+    name: "Test Install (old, upstream)"
 
     steps:
       - name: Checkout repository

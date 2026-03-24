@@ -30,6 +30,17 @@ tasks:
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
 
+  - name: k3d-standard-bundle-upgrade
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the upgrade deployment"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+    actions:
+      - description: "Deploy UDS Core (core package only, for upgrade testing)"
+        cmd: uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
+        env:
+          - UDS_CONFIG=${{ .inputs.configFile }}
+
   - name: k3d-standard-bundle-private-pki
     actions:
       - description: "Deploy k3d cluster and init packages"
