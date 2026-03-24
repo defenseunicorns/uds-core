@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: uds.dev/v1alpha1
@@ -124,11 +124,13 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: 8080
+        {{- if .Values.uptime.enabled }}
         uptime:
           checks:
             paths:
               - /
               - /realms/uds/.well-known/openid-configuration
+        {{- end }}
         advancedHTTP:
           match:
             - name: redirect-welcome
@@ -177,10 +179,12 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
+        {{- if .Values.uptime.enabled }}
         uptime:
           checks:
             paths:
               - /
+        {{- end }}
         {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:

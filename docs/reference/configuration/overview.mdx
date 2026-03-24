@@ -1,0 +1,21 @@
+---
+title: Overview
+sidebar:
+  order: 3.000
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Configuration surfaces exposed by UDS Core components: the fields, defaults, and bundle overrides that control platform behavior.
+
+<CardGrid>
+  <Card title="Identity & Authorization" icon="setting">
+    Keycloak realm configuration, authentication flows, themes, plugins, and account security settings.
+    <LinkCard title="View reference" href="/reference/configuration/identity-and-authorization/" />
+  </Card>
+
+  <Card title="Monitoring & Observability" icon="magnifier">
+    Uptime probes, recording rules, probe metrics, and Grafana dashboards.
+    <LinkCard title="View reference" href="/reference/configuration/monitoring-and-observability/" />
+  </Card>
+</CardGrid>
