@@ -12,7 +12,7 @@ on:
     # labeled is added to support renovate-ready labelling on PRs
     types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
-      - ".github/workflows/test-upgrade-matrix.yaml"
+      - ".github/workflows/test-cli-matrix.yaml"
       - "bundles/k3d-standard/**"
 
 permissions:
@@ -21,7 +21,7 @@ permissions:
   packages: read # Allows reading the published GHCR packages
 
 jobs:
-  upgrade-matrix:
+  cli-upgrade:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
     name: "CLI Upgrade (${{ matrix.scenario }}, ${{ matrix.flavor }})"
@@ -84,3 +84,41 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -upgrade-matrix-${{ matrix.scenario }}-${{ matrix.flavor }}
+
+  cli-install:
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 30
+    name: "CLI Install (old-cli, upstream)"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
+          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+
+      # Override the CLI installed by setup with the old CLI to verify current branch installs cleanly without new CLI
+      # Intentionally frozen — represents the last compatible CLI version
+      - name: Install old CLI
+        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        with:
+          version: v0.29.0
+
+      - name: Test UDS Core Install (old CLI)
+        run: uds run test:uds-core-e2e --set FLAVOR=upstream --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -install-old-cli-upstream
