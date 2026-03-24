@@ -1,14 +1,14 @@
 ---
 title: Platform vs Application Layer
 sidebar:
-  order: 3.4
+  order: 3.004
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-UDS Core provides a shared platform layer — networking, identity, observability, security, and backup — so application teams can focus on mission logic rather than infrastructure plumbing. This page clarifies the ownership boundary between the two layers. See our [interactive architecture diagram](/concepts/overview/#how-uds-core-is-structured) for a visual overview.
+UDS Core provides a shared platform layer (networking, identity, observability, security, and backup) so application teams can focus on mission logic rather than infrastructure plumbing. This page clarifies the ownership boundary between the two layers. See the [interactive architecture diagram](/concepts/overview/#how-uds-core-is-structured) for a visual overview.
 
-## Capability Ownership
+## Capability ownership
 
 <CardGrid>
   <Card title="Platform Provides" icon="approve-check-circle">
@@ -23,25 +23,25 @@ UDS Core provides a shared platform layer — networking, identity, observabilit
 
   <Card title="Application Teams Own" icon="document">
     - Workload packaging
-    - Package CR declarations
+    - `Package` CR declarations
     - Application configuration
     - Data management & migrations
     - Scaling & resource requests
   </Card>
 </CardGrid>
 
-## How the Two Layers Interact
+## How the two layers interact
 
 The **`Package` CR** is the contract between layers:
 
-- **App teams declare** *what* they need — ingress routes, SSO clients, monitoring endpoints, network policy exceptions
-- **The platform fulfills** *how* — Istio routing, Keycloak clients, UDS policies are all handled automatically
+- **App teams declare** *what* they need: ingress routes, SSO clients, monitoring endpoints, network policy exceptions
+- **The platform fulfills** *how*: Istio routing, Keycloak clients, UDS policies are all handled automatically
 
-When an app needs a policy exception, the team creates an **`Exemption` CR** — keeping exceptions explicit, auditable, and separate from the `Package` CR.
+When an app needs a policy exception, the team creates an **`Exemption` CR**, keeping exceptions explicit, auditable, and separate from the `Package` CR.
 
 See [Core CRDs](/concepts/configuration-and-packaging/crd-overviews/) for details on both CRs.
 
-## Why This Separation Matters
+## Why this separation matters
 
 <CardGrid>
   <Card title="Consistency" icon="approve-check">
@@ -53,7 +53,7 @@ See [Core CRDs](/concepts/configuration-and-packaging/crd-overviews/) for detail
   </Card>
 
   <Card title="Speed" icon="rocket">
-    Teams declare intent, not infrastructure details — ship faster.
+    Teams declare intent, not infrastructure details. Ship faster.
   </Card>
 
   <Card title="Upgradability" icon="random">

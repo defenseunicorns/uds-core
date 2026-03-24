@@ -1,14 +1,14 @@
 ---
 title: Configure Keycloak login policies
 sidebar:
-  order: 3.05
+  order: 3.005
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure Keycloak login behavior for your UDS Core deployment: setting concurrent session limits, session idle timeouts, and logout confirmation behavior. All configuration in this guide is applied via bundle overrides — no image rebuild required.
+You'll configure Keycloak login behavior for your UDS Core deployment: setting concurrent session limits, session idle timeouts, and logout confirmation behavior. All configuration in this guide is applied via bundle overrides. No image rebuild is required.
 
 ## Prerequisites
 
@@ -19,10 +19,10 @@ You'll configure Keycloak login behavior for your UDS Core deployment: setting c
 
 ## Before you begin
 
-This guide configures Keycloak via Helm chart values — the fastest path to operational changes with no image rebuild required. If you're unsure which approach fits your need, see [Keycloak configuration layers](/concepts/core-features/identity-and-authorization/#keycloak-configuration-layers). For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/).
+This guide configures Keycloak via Helm chart values, the fastest path to operational changes with no image rebuild required. If you're unsure which approach fits your need, see [Keycloak configuration layers](/concepts/core-features/identity-and-authorization/#keycloak-configuration-layers). For custom themes or plugins, see [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/).
 
 > [!NOTE]
-> Settings applied via `realmInitEnv` or `realmAuthFlows` bundle overrides (covered in this guide and related guides) are only imported during the initial Keycloak realm setup. On a running instance, these require a full Keycloak teardown and redeploy to take effect — or you can apply them manually in the admin UI. Each relevant step below notes which settings are affected.
+> Settings applied via `realmInitEnv` or `realmAuthFlows` bundle overrides (covered in this guide and related guides) are only imported during the initial Keycloak realm setup. On a running instance, these require a full Keycloak teardown and redeploy to take effect, or you can apply them manually in the admin UI. Each relevant step below notes which settings are affected.
 
 ## Steps
 
@@ -30,7 +30,7 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
 
 1. **Limit concurrent sessions per user**
 
-   By default, Keycloak allows unlimited concurrent sessions per user. To restrict this — for example, to enforce single-session policies or limit login storms — set these values in your bundle:
+   By default, Keycloak allows unlimited concurrent sessions per user. To restrict this (for example, to enforce single-session policies or limit login storms), set these values in your bundle:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -64,7 +64,7 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
    - **Client session idle timeout**: Controls the refresh token expiration for a specific application. Must be set equal to or shorter than the realm timeout.
 
    > [!CAUTION]
-   > **The client session timeout must not exceed the realm session timeout.** Keycloak 26.5.0+ (UDS Core 0.59.0+) will reject this configuration. Earlier versions accepted it silently but the realm timeout took precedence anyway — so users would still be logged out at the realm timeout interval regardless of the client setting.
+   > **The client session timeout must not exceed the realm session timeout.** Keycloak 26.5.0+ (UDS Core 0.59.0+) will reject this configuration. Earlier versions accepted it silently but the realm timeout took precedence anyway, so users would still be logged out at the realm timeout interval regardless of the client setting.
 
    **Configure realm session timeouts via bundle override:**
 
@@ -96,16 +96,16 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
    3. Go to **Realm Settings** → **Sessions** tab
    4. Adjust **SSO Session Idle** and **SSO Session Max** as needed
 
-   **Configure per-client session timeouts** (admin UI only — not available as a bundle override):
+   **Configure per-client session timeouts** (admin UI only, not available as a bundle override):
    1. Go to **Clients** → select the client → **Advanced** tab → **Advanced Settings**
    2. Set **Client Session Idle** to a value ≤ the realm's **SSO Session Idle**
 
    > [!NOTE]
-   > When a client session expires, users are not necessarily forced to log in again immediately. If the realm session is still active, browser-based applications can silently obtain new tokens. However, applications using only bearer tokens (without browser session cookies) will require the user to reauthenticate once the refresh token expires. The realm session timeout is the outer bound — once it expires, all clients are logged out regardless of client session settings.
+   > When a client session expires, users are not necessarily forced to log in again immediately. If the realm session is still active, browser-based applications can silently obtain new tokens. However, applications using only bearer tokens (without browser session cookies) will require the user to reauthenticate once the refresh token expires. The realm session timeout is the outer bound: once it expires, all clients are logged out regardless of client session settings.
 
 3. **Disable logout confirmation**
 
-   By default, UDS Core shows a confirmation page when a user logs out. To skip this for specific applications, set the `logout.confirmation.enabled` attribute in the Package CR:
+   By default, UDS Core shows a confirmation page when a user logs out. To skip this for specific applications, set the `logout.confirmation.enabled` attribute in the `Package` CR:
 
    ```yaml title="package.yaml"
    apiVersion: uds.dev/v1alpha1
@@ -124,7 +124,7 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
    ```
 
    > [!NOTE]
-   > This is a per-client setting in the Package CR, not a global Keycloak setting. To disable it globally, configure the default in Keycloak's realm settings instead.
+   > This is a per-client setting in the `Package` CR, not a global Keycloak setting. To disable it globally, configure the default in Keycloak's realm settings instead.
 
 4. **Create and deploy your bundle**
 
@@ -134,7 +134,7 @@ This guide configures Keycloak via Helm chart values — the fastest path to ope
    ```
 
    > [!NOTE]
-   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/).
+   > To learn about FIPS 140-2 mode (always enabled), see [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/).
 
 </Steps>
 
@@ -176,15 +176,15 @@ Also verify that the client session idle timeout is ≤ the realm session idle t
 
 **Symptoms:** Users still see a logout confirmation page after setting `logout.confirmation.enabled: "false"`.
 
-**Solution:** Confirm the Package CR is applied and the UDS Operator has reconciled it. Check the operator logs:
+**Solution:** Confirm the `Package` CR is applied and the UDS Operator has reconciled it. Check the operator logs:
 ```bash
 uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=50 | grep logout
 ```
 
-## Related Documentation
+## Related documentation
 
-- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) — for theme and plugin customization beyond Helm values
-- [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/enable-fips-mode/) — verify FIPS status and understand constraints
-- [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) — upstream reference for session configuration options
-- [Package CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) — full spec for SSO client configuration
-- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) — Restrict application access to users in specific Keycloak groups using the Package CR.
+- [Build a custom Keycloak configuration image](/how-to-guides/identity-and-authorization/build-deploy-custom-image/) - for theme and plugin customization beyond Helm values
+- [Manage FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) - verify FIPS status and understand constraints
+- [Keycloak: Session and Token Timeouts](https://www.keycloak.org/docs/latest/server_admin/#_timeouts) - upstream reference for session configuration options
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full spec for SSO client configuration
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict application access to users in specific Keycloak groups using the `Package` CR.

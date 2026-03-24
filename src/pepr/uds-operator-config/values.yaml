@@ -1,11 +1,7 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 operator:
-  ### DEPRECATED: This section is deprecated and will be removed in a future release. ###
-  KUBEAPI_CIDR: ""
-  KUBENODE_CIDRS: ""
-  ### END DEPRECATED ###
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
 
 cluster:

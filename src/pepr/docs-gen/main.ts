@@ -12,9 +12,9 @@ const TABLE_STYLE = 'style="width: 100%; table-layout: fixed;"';
 
 // Sidebar ordering for generated CRD docs (decimal format matches subfolder convention)
 const SIDEBAR_ORDER: Record<string, string> = {
-  packages: "1.1",
-  exemptions: "1.2",
-  clusterconfig: "1.3",
+  packages: "1.001",
+  exemptions: "1.002",
+  clusterconfig: "1.003",
 };
 
 // Utility to capitalize the first letter of a string

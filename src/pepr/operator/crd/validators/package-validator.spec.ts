@@ -256,7 +256,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows packages that have no issues", async () => {
-    const mockReq = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    const mockReq = makeMockReq({}, [], [], [], []);
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
@@ -268,7 +268,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows one package per namespace", async () => {
-    const mockReqValidPkg = makeMockReq({}, [], [{}], [{}], [{}]);
+    const mockReqValidPkg = makeMockReq({}, [], [], [{}], [{}]);
     await validator(mockReqValidPkg);
     const mockReqInvalidPkg = makeMockReq(
       { metadata: { name: "should-be-denied" } },
@@ -282,7 +282,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows packages to be created in unique namespaces", async () => {
-    const mockReq = makeMockReq({}, [], [{}], [{}], [{}]);
+    const mockReq = makeMockReq({}, [], [], [{}], [{}]);
     await validator(mockReq);
     const mockReqNewPkg = makeMockReq(
       { metadata: { namespace: "foo", name: "should-be-approved" } },
@@ -296,7 +296,7 @@ describe("Test validation of Package CRs", () => {
   });
 
   it("allows existing packages to be updated", async () => {
-    const mockReqValidPkg = makeMockReq({}, [{}], [{}], [{}], [{}]);
+    const mockReqValidPkg = makeMockReq({}, [{}], [], [{}], [{}]);
     await validator(mockReqValidPkg);
     const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
     await validator(mockReqValidPkgUpdate);
@@ -520,8 +520,35 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
+  it("denies network policies with no remote specified", async () => {
+    const mockReq = makeMockReq({}, [], [{}], [], []);
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies with remoteNamespace set to empty string (any namespace in cluster)", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteNamespace: "" }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies with remoteSelector set to empty object (all pods)", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteSelector: {} }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that are the same name", async () => {
-    const mockReq = makeMockReq({}, [], [{}, {}], [], []);
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        { remoteGenerated: RemoteGenerated.Anywhere },
+        { remoteGenerated: RemoteGenerated.Anywhere },
+      ],
+      [],
+      [],
+    );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });

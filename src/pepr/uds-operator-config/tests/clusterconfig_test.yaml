@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
@@ -55,3 +55,66 @@ tests:
       - equal:
           path: spec.caBundle.includePublicCerts
           value: false
+
+  - it: should render networking with kubeApiCIDR
+    set:
+      cluster:
+        expose:
+          domain: "example.com"
+        networking:
+          kubeApiCIDR: "10.0.0.0/24"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.networking.kubeApiCIDR
+          value: "10.0.0.0/24"
+
+  - it: should render networking with kubeNodeCIDRs
+    set:
+      cluster:
+        expose:
+          domain: "example.com"
+        networking:
+          kubeNodeCIDRs:
+            - "10.1.0.0/16"
+            - "10.2.0.0/16"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.networking.kubeNodeCIDRs
+          value:
+            - "10.1.0.0/16"
+            - "10.2.0.0/16"
+
+  - it: should not render networking section when neither value is set
+    set:
+      cluster:
+        expose:
+          domain: "example.com"
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - notExists:
+          path: spec.networking
+
+  - it: should fail when using removed operator.KUBEAPI_CIDR value
+    set:
+      operator:
+        KUBEAPI_CIDR: "10.0.0.0/24"
+      cluster:
+        expose:
+          domain: "example.com"
+    asserts:
+      - failedTemplate: {}
+
+  - it: should fail when using removed operator.KUBENODE_CIDRS value
+    set:
+      operator:
+        KUBENODE_CIDRS: "10.1.0.0/16"
+      cluster:
+        expose:
+          domain: "example.com"
+    asserts:
+      - failedTemplate: {}

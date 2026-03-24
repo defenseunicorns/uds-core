@@ -122,10 +122,24 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
+    // Every allow rule must specify at least one explicit remote target.
+    // Note: remoteNamespace uses === undefined because "" is a valid wildcard meaning "any namespace in cluster".
+    if (
+      !policy.remoteGenerated &&
+      policy.remoteNamespace === undefined &&
+      !policy.remoteSelector &&
+      !policy.remoteCidr &&
+      !policy.remoteHost
+    ) {
+      return req.Deny(
+        "network allow rules must specify a remote: remoteGenerated, remoteNamespace, remoteSelector, remoteCidr, or remoteHost",
+      );
+    }
+
     // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
       policy.remoteGenerated &&
-      (policy.remoteNamespace ||
+      (policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr ||
         policy.remoteHost ||
@@ -138,7 +152,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
     if (
-      (policy.remoteNamespace || policy.remoteSelector) &&
+      (policy.remoteNamespace !== undefined || policy.remoteSelector) &&
       (policy.remoteGenerated || policy.remoteCidr || policy.remoteHost || policy.remoteProtocol)
     ) {
       return req.Deny(
@@ -150,7 +164,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteCidr &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteHost ||
         policy.remoteProtocol)
@@ -164,7 +178,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteHost &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr)
     ) {
@@ -177,7 +191,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     if (
       policy.remoteProtocol &&
       (policy.remoteGenerated ||
-        policy.remoteNamespace ||
+        policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr ||
         !policy.remoteHost)

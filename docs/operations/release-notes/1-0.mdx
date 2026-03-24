@@ -1,0 +1,153 @@
+---
+title: UDS Core 1.0
+sidebar:
+  order: 3.995
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.0 is a major milestone for the project. This release establishes a formal API stability guarantee for UDS Core and cleans up the configuration surface by removing all features that were deprecated with a 1.0.0 removal target. It also coincides with the launch of a completely new documentation site with comprehensive how-to guides, operational runbooks, and configuration reference.
+
+UDS Core releases include version-specific release notes on this documentation site covering breaking changes, dependency updates, and step-by-step upgrade instructions. Starting with 1.0, this practice is formalized as the single reference for planning and executing your upgrades.
+
+This release removes the following deprecated fields: the legacy `CA_CERT` Zarf variable, Keycloak FIPS toggle values, operator CIDR Helm values, and Keycloak X.509/mTLS Helm values. If you are using any of these deprecated inputs, you must migrate to their replacements before upgrading. See [DEPRECATIONS.md](/reference/policies/deprecations/) for the full deprecation tracking table.
+
+### ⚠ Breaking changes
+
+| Change | Impact | Action required |
+|--------|--------|-----------------|
+| Removed `CA_CERT` Zarf variable and `spec.expose.caCert` ClusterConfig field ([#2489](https://github.com/defenseunicorns/uds-core/pull/2489)) | Deployments using the `CA_CERT` variable or `spec.expose.caCert` field will fail | Migrate to the `CA_BUNDLE_CERTS` Zarf variable / `spec.caBundle.certs` field |
+| Removed `fips` and `fipsAllowWeakPasswords` Keycloak Helm values ([#2483](https://github.com/defenseunicorns/uds-core/pull/2483)) | FIPS mode is now always enabled; overrides referencing these values will fail | Remove any `fips` or `fipsAllowWeakPasswords` overrides. See the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for handling password upgrades if you were not previously running in FIPS mode |
+| Removed `operator.KUBEAPI_CIDR` and `operator.KUBENODE_CIDRS` Helm values ([#2494](https://github.com/defenseunicorns/uds-core/pull/2494)) | Deployments overriding these operator config values will fail | Use `cluster.networking.kubeApiCIDR` and `cluster.networking.kubeNodeCIDRs` instead |
+| Removed `x509LookupProvider` and `mtlsClientCert` Keycloak Helm values ([#2486](https://github.com/defenseunicorns/uds-core/pull/2486)) | Deployments overriding these values will fail | Use `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat` instead |
+| `network.allow` rules without an explicit remote are now rejected at admission ([#2510](https://github.com/defenseunicorns/uds-core/pull/2510)) | `Package` CRs with allow rules that do not specify one of `remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost` will be blocked | Add `remoteGenerated: Anywhere` for unrestricted access or `remoteNamespace: "*"` for any in-cluster target to affected rules |
+
+### Notable features
+
+- **Keycloak realm display name customization:** you can now set a custom realm display name via `themeCustomizations.settings.realmDisplayName` or `realmInitEnv.DISPLAY_NAME`, enabling full customization of the browser tab title on the login page ([#2479](https://github.com/defenseunicorns/uds-core/pull/2479))
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Grafana | 12.4.0 | [12.4.1](https://github.com/grafana/grafana/releases/tag/v12.4.1) |
+| Istio | 1.28.3 | [1.29.1](https://istio.io/latest/news/releases/1.29.x/announcing-1.29.1/) |
+| Pepr | 1.1.2 | [1.1.4](https://github.com/defenseunicorns/pepr/releases/tag/v1.1.4) |
+| Prometheus Operator | 0.89.0 | [0.90.0](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.90.0) |
+| UDS Identity Config | 0.24.0 | [0.25.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.25.0) |
+| Vector | 0.53.0 | [0.54.0](https://github.com/vectordotdev/vector/releases/tag/v0.54.0) |
+| Grafana Helm chart | 11.3.0 | [11.3.3](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.3.3) |
+| kube-prometheus-stack Helm chart | 82.4.2 | [82.13.5](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-82.13.5) |
+| Loki Helm chart | 6.53.0 | [6.57.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-6.57.0) |
+| Prometheus Blackbox Exporter Helm chart | 11.8.0 | [11.9.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.9.0) |
+| prometheus-operator-crds Helm chart | 27.0.0 | [28.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-28.0.0) |
+| Vector Helm chart | 0.50.0 | [0.51.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.51.0) |
+
+## Upgrade considerations
+
+### Pre-upgrade steps
+
+The following steps only apply if your bundle overrides the specific deprecated values being removed. If you are not using any of these overrides, no action is required.
+
+<Steps>
+
+1. **Check your config for the `CA_CERT` variable**
+
+   Search your `uds-config.yaml` for the `CA_CERT` variable. If present, rename it to `CA_BUNDLE_CERTS`:
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       # CA_CERT: "LS0tLS1..."           # Remove this
+       CA_BUNDLE_CERTS: "LS0tLS1..."     # Use this instead
+   ```
+
+   See [Manage trust bundles](/how-to-guides/networking/manage-trust-bundles/) for full details on configuring CA certificates.
+
+2. **Check your bundle for Keycloak FIPS overrides**
+
+   Search your `uds-bundle.yaml` for `fips` or `fipsAllowWeakPasswords` in the Keycloak Helm values. If present, remove them: FIPS mode is now always enabled and these values are no longer accepted. If you were not previously running in FIPS mode, review the [FIPS mode guide](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) for instructions on handling password upgrades.
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           # - path: fips                     # Remove this
+           #   value: true
+           # - path: fipsAllowWeakPasswords   # Remove this
+           #   value: true
+   ```
+
+3. **Check your bundle for operator CIDR overrides**
+
+   Search your `uds-bundle.yaml` for `operator.KUBEAPI_CIDR` or `operator.KUBENODE_CIDRS`. If present, replace them with the `cluster.networking` Helm values on the `uds-operator-config` chart:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     uds-operator-config:
+       uds-operator-config:
+         values:
+           # - path: operator.KUBEAPI_CIDR       # Remove this
+           #   value: "<your-cidr>"
+           # - path: operator.KUBENODE_CIDRS      # Remove this
+           #   value: "<your-cidrs>"
+           - path: cluster.networking.kubeApiCIDR  # Use this instead
+             value: "<your-cidr>"
+           - path: cluster.networking.kubeNodeCIDRs
+             value:
+               - "<your-cidr-1>"
+               - "<your-cidr-2>"
+   ```
+
+4. **Check your bundle for Keycloak x509/mTLS overrides**
+
+   Search your `uds-bundle.yaml` for `x509LookupProvider` or `mtlsClientCert` in the Keycloak Helm values. If present, replace them with `thirdPartyIntegration.tls.tlsCertificateHeader` and `thirdPartyIntegration.tls.tlsCertificateFormat`:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     keycloak:
+       keycloak:
+         values:
+           # - path: x509LookupProvider                          # Remove this
+           #   value: "<your-provider>"
+           # - path: mtlsClientCert                              # Remove this
+           #   value: "<your-cert>"
+           - path: thirdPartyIntegration.tls.tlsCertificateHeader  # Use this instead
+             value: "<your-header>"
+           - path: thirdPartyIntegration.tls.tlsCertificateFormat
+             value: "<your-format>"
+   ```
+
+5. **Check your `Package` CRs for `network.allow` rules without an explicit remote**
+
+   Review any `Package` CRs with `network.allow` rules. If any rules do not specify a remote (`remoteGenerated`, `remoteNamespace`, `remoteSelector`, `remoteCidr`, or `remoteHost`), they will now be rejected at admission. Add an explicit remote to each affected rule:
+
+   ```yaml title="package.yaml"
+   spec:
+     network:
+       allow:
+         - direction: Egress
+           # remoteGenerated: Anywhere      # Add this for unrestricted access
+           # remoteNamespace: "*"           # Or this for any in-cluster target
+   ```
+
+</Steps>
+
+### Identity Config updates (0.25)
+
+This release upgrades UDS Identity Config to [0.25.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.25.0). No breaking changes or manual realm steps are required.
+
+- **Realm display name override:** adds support for overriding the Keycloak realm display name via theme customization, enabling the realm display name feature in Core ([#820](https://github.com/defenseunicorns/uds-identity-config/pull/820))
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configuration Changes](/operations/upgrades/configuration-changes/) - applying config changes on a running platform
+- [Deprecation Policy](/concepts/platform/versioning-and-releases/) - versioning strategy and deprecation tracking
+- [UDS Core 1.0.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#100-2026-03-23) - full changelog
+- [UDS Identity Config 0.25.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0250-2026-03-19) - full changelog
+- [Full diff (0.63.0...1.0.0)](https://github.com/defenseunicorns/uds-core/compare/v0.63.0...v1.0.0) - all changes between versions
