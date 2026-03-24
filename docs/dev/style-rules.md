@@ -25,7 +25,7 @@ Load this file before any review or writing pass and apply throughout.
 - Anchor lists with an introductory sentence. Avoid placing a list directly under a heading with no lead-in, except for simple link-list sections (for example, **Related documentation**) where the section is just a list of links.
 - Use second-person ("you") when addressing the reader. Avoid first-person pronouns.
 - Use "airgap" (one word). Use "the airgap" not "airgap environment".
-- Files use `.mdx` extension for published docs.
+- Files use the `.md` extension unless Starlight components (Tabs, Steps, CardGrid, LinkCard) are needed, in which case use `.mdx`.
 
 ## Code and commands
 
