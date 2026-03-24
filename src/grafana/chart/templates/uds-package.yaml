@@ -47,7 +47,7 @@ spec:
         gateway: admin
         port: 80
         targetPort: 3000
-        {{- if ne .Values.uptime.enabled false }}
+        {{- if .Values.uptime.enabled }}
         uptime:
           checks:
             paths:

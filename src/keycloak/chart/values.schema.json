@@ -733,6 +733,7 @@
           "description": "Enable default uptime monitoring probes for Keycloak endpoints"
         }
       },
+      "required": ["enabled"],
       "additionalProperties": false
     }
   }

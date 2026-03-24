@@ -124,7 +124,7 @@ spec:
         selector:
           app.kubernetes.io/name: keycloak
         port: 8080
-        {{- if ne .Values.uptime.enabled false }}
+        {{- if .Values.uptime.enabled }}
         uptime:
           checks:
             paths:
@@ -179,7 +179,7 @@ spec:
         gateway: admin
         host: keycloak
         port: 8080
-        {{- if ne .Values.uptime.enabled false }}
+        {{- if .Values.uptime.enabled }}
         uptime:
           checks:
             paths:
