@@ -16,6 +16,9 @@ on:
       - "bundles/k3d-standard/**"
       - "test/playwright/private-pki/**"
 
+concurrency:
+  group: private-pki-test-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
