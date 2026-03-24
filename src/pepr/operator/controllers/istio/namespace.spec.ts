@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,7 +11,12 @@ import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace
 // Import the utility functions for direct testing
 // Note: These need to be exported in namespace.ts for testing
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
-import { applyNamespaceUpdates, getCurrentIstioState, getIstioLabels, nsEntryIsOverClaimed } from "./namespace";
+import {
+  applyNamespaceUpdates,
+  getCurrentIstioState,
+  getIstioLabels,
+  nsEntryIsOverClaimed,
+} from "./namespace";
 
 vi.mock("pepr", async () => {
   const originalModule = (await vi.importActual("pepr")) as object;

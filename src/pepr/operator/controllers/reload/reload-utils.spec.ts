@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -240,8 +240,10 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the StatefulSet with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
-      { force: true });
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
+      { force: true },
+    );
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -304,8 +306,10 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the Deployment with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
-      { force: true });
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
+      { force: true },
+    );
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.Deployment);
@@ -353,8 +357,10 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "SecretChanged");
 
     // Should apply the ReplicaSet directly with restart annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "ReplicaSet", "test-replicaset", "default"),
-      { force: true });
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      sparseRestartPatch("apps/v1", "ReplicaSet", "test-replicaset", "default"),
+      { force: true },
+    );
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.ReplicaSet);
@@ -416,8 +422,10 @@ describe("reloadPods", () => {
     await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
 
     // Verify Apply was called
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
-      { force: true });
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      sparseRestartPatch("apps/v1", "StatefulSet", "test-statefulset", "default"),
+      { force: true },
+    );
 
     // Verify the correct controller kind was used
     expect(lastUsedControllerKind).toBe(kind.StatefulSet);
@@ -468,8 +476,10 @@ describe("restartController", () => {
     );
 
     // Verify Apply was called with the correct annotation
-    expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
-      { force: true });
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      sparseRestartPatch("apps/v1", "Deployment", "test-deployment", "default"),
+      { force: true },
+    );
 
     // Verify createEvent was called
     expect(mockK8sClient.Create).toHaveBeenCalled();
@@ -587,7 +597,14 @@ describe("restartController", () => {
     (K8s as Mock).mockReturnValue(mockK8sClient);
     const mockLogger = createMockLogger();
 
-    await restartController("default", kind.StatefulSet, "test-statefulset", "CA changed", mockLogger, "CA");
+    await restartController(
+      "default",
+      kind.StatefulSet,
+      "test-statefulset",
+      "CA changed",
+      mockLogger,
+      "CA",
+    );
 
     // Patch should have been called to strip the over-claimed entry
     expect(mockK8sClient.Patch).toHaveBeenCalledWith([
@@ -626,7 +643,14 @@ describe("restartController", () => {
     (K8s as Mock).mockReturnValue(mockK8sClient);
     const mockLogger = createMockLogger();
 
-    await restartController("default", kind.StatefulSet, "test-statefulset", "CA changed", mockLogger, "CA");
+    await restartController(
+      "default",
+      kind.StatefulSet,
+      "test-statefulset",
+      "CA changed",
+      mockLogger,
+      "CA",
+    );
 
     expect(mockK8sClient.Patch).not.toHaveBeenCalled();
     expect(mockK8sClient.Apply).toHaveBeenCalled();

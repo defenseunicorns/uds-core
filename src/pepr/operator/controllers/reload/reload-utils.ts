@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,8 +7,8 @@ import { V1ManagedFieldsEntry, V1OwnerReference } from "@kubernetes/client-node"
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
-import { createEvent, retryWithDelay } from "../utils";
 import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "../ssa-field-cleanup";
+import { createEvent, retryWithDelay } from "../utils";
 
 /**
  * Reload a list of pods using controller-based rolling restart when possible,
