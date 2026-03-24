@@ -74,6 +74,9 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
        > [!NOTE]
        > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
 
+       > [!TIP]
+       > For EKS deployments, consider using [IRSA (IAM Roles for Service Accounts)](/how-to-guides/backup-and-restore/configure-velero-irsa/) instead of static access keys. IRSA eliminates long-lived credentials from your cluster configuration and aligns with AWS IAM security recommendations.
+
        **(Optional) Use an existing credentials Secret:** If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
 
        ```yaml title="uds-bundle.yaml"
@@ -273,6 +276,7 @@ Common causes include malformed credential Secrets and missing required configur
 - [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) - BSL configuration reference
 - [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) - full list of upstream Helm values
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
+- [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - Authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
 - [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - Capture persistent volume data using AWS EBS snapshots on EKS clusters.
 - [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
 - [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.

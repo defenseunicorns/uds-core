@@ -1,0 +1,263 @@
+---
+title: Configure Loki with IRSA on AWS EKS
+sidebar:
+  order: 1.003
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure Loki to authenticate to S3 using IAM Roles for Service Accounts (IRSA), replacing static access keys with temporary credentials the IRSA webhook injects automatically. Loki accesses both of its S3 buckets (chunks and admin) without storing long-lived keys in your cluster.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to an EKS cluster with UDS Core deployed
+- An [OIDC (OpenID Connect) identity provider configured](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) on the cluster
+- Permission to create IAM roles and policies in AWS
+- Two S3 buckets for Loki: one for chunks (log data) and one for admin (compactor state and internal metadata)
+- Loki configured with external S3 storage (see [Configure HA for Logging](/how-to-guides/high-availability/logging/))
+
+## Before you begin
+
+> [!NOTE]
+> This guide covers IRSA authentication for Loki running in production with external S3 storage. If you have not yet connected Loki to S3, complete the [Configure HA for Logging](/how-to-guides/high-availability/logging/) guide first and return here to replace static credentials with IRSA.
+
+IRSA works by annotating the Loki service account (`loki/loki`) with an IAM role ARN (Amazon Resource Name). The account is named `loki` because UDS Core sets `fullnameOverride: loki` in the Helm values; if you customize that override, update the trust policy `sub` condition to match. The IRSA webhook automatically injects temporary credentials, which the Loki S3 client uses in place of static access keys.
+
+Loki requires access to two buckets: one for log chunk data and one for admin data (compactor state and internal metadata such as delete markers and tenant configuration). The same IAM role covers both buckets.
+
+## Steps
+
+<Steps>
+
+1. **Create an IAM policy for Loki S3 access**
+
+   Create a policy that grants Loki read, write, and delete access to both its S3 buckets. Loki's compactor requires `s3:DeleteObject` to expire old chunks according to the configured retention period.
+
+   ```hcl title="loki-s3-policy.tf"
+   # Loki S3 storage policy: covers both chunks and admin buckets
+   # Reference: https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/aws/
+   data "aws_iam_policy_document" "loki_s3" {
+     statement {
+       effect  = "Allow"
+       actions = [
+         "s3:PutObject",
+         "s3:GetObject",
+         "s3:DeleteObject",
+         "s3:AbortMultipartUpload",
+         "s3:ListMultipartUploadParts",
+       ]
+       resources = [
+         "arn:aws:s3:::YOUR_CHUNKS_BUCKET/*",
+         "arn:aws:s3:::YOUR_ADMIN_BUCKET/*",
+       ]
+     }
+
+     statement {
+       effect  = "Allow"
+       actions = [
+         "s3:ListBucket",
+         "s3:GetBucketLocation",
+         "s3:ListBucketMultipartUploads",
+       ]
+       resources = [
+         "arn:aws:s3:::YOUR_CHUNKS_BUCKET",
+         "arn:aws:s3:::YOUR_ADMIN_BUCKET",
+       ]
+     }
+   }
+
+   resource "aws_iam_policy" "loki_s3" {
+     name   = "loki-s3-policy"
+     policy = data.aws_iam_policy_document.loki_s3.json
+   }
+   ```
+
+   > [!NOTE]
+   > Replace `YOUR_CHUNKS_BUCKET` and `YOUR_ADMIN_BUCKET` with your actual bucket names. Scope the resource ARNs to your specific buckets to enforce least privilege.
+
+2. **Create an IAM role with an IRSA trust policy**
+
+   Create a role that the `loki` service account in the `loki` namespace can assume:
+
+   ```hcl title="loki-irsa-role.tf"
+   # The OIDC provider URL for your EKS cluster, without the https:// prefix.
+   # Example: oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE1234567890
+   variable "oidc_provider" {
+     description = "EKS cluster OIDC provider URL (without https://)"
+   }
+
+   variable "aws_account_id" {
+     description = "AWS account ID"
+   }
+
+   data "aws_iam_policy_document" "loki_irsa_trust" {
+     statement {
+       effect = "Allow"
+
+       principals {
+         type        = "Federated"
+         identifiers = ["arn:aws:iam::${var.aws_account_id}:oidc-provider/${var.oidc_provider}"]
+       }
+
+       actions = ["sts:AssumeRoleWithWebIdentity"]
+
+       condition {
+         test     = "StringEquals"
+         variable = "${var.oidc_provider}:sub"
+         values   = ["system:serviceaccount:loki:loki"]
+       }
+
+       condition {
+         test     = "StringEquals"
+         variable = "${var.oidc_provider}:aud"
+         values   = ["sts.amazonaws.com"]
+       }
+     }
+   }
+
+   resource "aws_iam_role" "loki" {
+     name               = "loki-s3-role"
+     assume_role_policy = data.aws_iam_policy_document.loki_irsa_trust.json
+   }
+
+   resource "aws_iam_role_policy_attachment" "loki_s3" {
+     role       = aws_iam_role.loki.name
+     policy_arn = aws_iam_policy.loki_s3.arn
+   }
+   ```
+
+   > [!NOTE]
+   > The `sub` condition in the trust policy scopes the role to the `loki` service account in the `loki` namespace. This prevents any other service account in the cluster from assuming this role.
+
+3. **Configure your bundle for IRSA**
+
+   Add the overrides below to your bundle. The `values` entries clear the access key fields that UDS Core sets by default (populated with MinIO credentials) and remove the MinIO endpoint so Loki derives the correct endpoint from the AWS region. The `variables` entries supply your bucket names, region, and the IRSA role ARN.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         loki:
+           loki:
+             variables:
+               # S3 bucket for Loki log chunk data
+               - name: LOKI_CHUNKS_BUCKET
+                 path: loki.storage.bucketNames.chunks
+               # S3 bucket for Loki admin data (compactor state and internal metadata)
+               - name: LOKI_ADMIN_BUCKET
+                 path: loki.storage.bucketNames.admin
+               # AWS region for both S3 buckets
+               - name: LOKI_S3_REGION
+                 path: loki.storage.s3.region
+               # IRSA role ARN annotated on the Loki service account
+               - name: LOKI_IRSA_ROLE_ARN
+                 path: serviceAccount.annotations.eks\.amazonaws\.com/role-arn
+             values:
+               # Set S3 as the storage backend type
+               - path: loki.storage.type
+                 value: "s3"
+               # Clear the MinIO endpoint so Loki derives the endpoint from the AWS region
+               - path: loki.storage.s3.endpoint
+                 value: ""
+               # Leave access keys empty; Loki will use the IRSA credential chain instead
+               - path: loki.storage.s3.accessKeyId
+                 value: ""
+               - path: loki.storage.s3.secretAccessKey
+                 value: ""
+               # Use virtual-hosted-style S3 URLs (required for AWS S3; path style is for MinIO)
+               - path: loki.storage.s3.s3ForcePathStyle
+                 value: false
+   ```
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       LOKI_CHUNKS_BUCKET: "your-loki-chunks-bucket"
+       LOKI_ADMIN_BUCKET: "your-loki-admin-bucket"
+       LOKI_S3_REGION: "us-east-1"
+       LOKI_IRSA_ROLE_ARN: "arn:aws:iam::123456789012:role/loki-s3-role"
+   ```
+
+   > [!NOTE]
+   > Replace the bucket names, region, and role ARN with your actual values. Both buckets must exist in the same AWS region. If you are migrating from the [Configure HA for Logging](/how-to-guides/high-availability/logging/) guide, this configuration replaces that guide's storage section: remove `LOKI_ACCESS_KEY_ID` and `LOKI_SECRET_ACCESS_KEY` from both your bundle and `uds-config.yaml`.
+
+4. **Create and deploy your bundle**
+
+   Build the bundle artifact and deploy it to your cluster:
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the Loki pods are running and can reach your S3 buckets:
+
+```bash
+# Verify the IRSA annotation is present on the Loki service account
+uds zarf tools kubectl get sa -n loki loki -o jsonpath='{.metadata.annotations}' | grep eks.amazonaws.com
+
+# Check that all Loki tier pods are running (write, read, backend)
+uds zarf tools kubectl get pods -n loki -l app.kubernetes.io/name=loki
+
+# Check Loki write-tier logs for S3 authentication or connection errors
+uds zarf tools kubectl logs -n loki -l app.kubernetes.io/component=write --tail=30
+```
+
+**Success criteria:**
+- The `loki` service account in the `loki` namespace has an `eks.amazonaws.com/role-arn` annotation matching your role ARN
+- All Loki write, read, and backend pods are `Running`
+- Loki write logs contain no `AccessDenied` or credential errors
+- Grafana can query recent logs from the Loki data source (Explore → Loki → run `{namespace="vector"}`)
+
+## Troubleshooting
+
+### Problem: Loki pods in CrashLoopBackOff
+
+**Symptoms:** Loki write or backend pods restart repeatedly; logs show S3 authentication or connection errors.
+
+**Solution:** Verify the IRSA annotation is on the service account and that the role ARN is correct:
+
+```bash
+uds zarf tools kubectl get sa -n loki loki -o yaml | grep eks.amazonaws.com
+```
+
+If the annotation is missing, confirm `LOKI_IRSA_ROLE_ARN` is set in `uds-config.yaml` and redeploy the bundle.
+
+If the annotation is present but S3 errors continue, check that the `loki.storage.s3.endpoint` override is set to `""`. A non-empty endpoint (such as the default MinIO URL) overrides the AWS regional endpoint and prevents Loki from reaching S3.
+
+### Problem: Access denied to S3
+
+**Symptoms:** Loki logs show `AccessDenied` or `403 Forbidden` errors for S3 operations.
+
+**Solution:** Verify the IAM role trust policy's `sub` condition exactly matches `system:serviceaccount:loki:loki`, the `aud` condition is set to `sts.amazonaws.com`, and the OIDC provider ARN in the `Federated` principal matches your EKS cluster.
+
+Confirm the S3 policy covers both the chunks and admin bucket ARNs, including the `/*` suffix on the object-level statements. A missing suffix limits the policy to bucket-level actions only and blocks object reads and writes.
+
+### Problem: Loki pods start but write no data to S3
+
+**Symptoms:** Loki write or backend pods log `InvalidAccessKeyId` errors, or Loki appears healthy but log queries return no data.
+
+**Solution:** Verify that `loki.storage.s3.accessKeyId` and `loki.storage.s3.secretAccessKey` are explicitly set to `""` in the bundle `values`. If the Zarf defaults (`uds` / `uds-secret`) are present in the Loki config, the S3 client uses those credentials directly instead of the IRSA credential chain, causing `InvalidAccessKeyId` errors.
+
+Check the active Loki configuration Secret to confirm the access keys are empty:
+
+```bash
+uds zarf tools kubectl get secret -n loki loki -o jsonpath='{.data.config\.yaml}' | base64 -d | grep access_key
+```
+
+## Related documentation
+
+- [Grafana Loki: AWS Deployment Guide](https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/aws/) - provider-specific Loki configuration for AWS S3
+- [AWS: IAM Roles for Service Accounts](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html) - IRSA setup and OIDC provider configuration
+- [Configure HA for Logging](/how-to-guides/high-availability/logging/) - Loki S3 storage, replica tuning, and Vector resource configuration.
+- [Logging concepts](/concepts/core-features/logging/) - background on the Vector → Loki → Grafana pipeline in UDS Core.
