@@ -22,7 +22,7 @@ You'll configure UDS Core's logging pipeline for production high availability: c
 ## Before you begin
 
 > [!TIP]
-> On EKS, consider using [Configure Loki with IRSA on AWS EKS](/how-to-guides/high-availability/configure-loki-irsa/) instead of static credentials to connect Loki to S3. IRSA replaces long-lived access keys with temporary credentials injected by the EKS OIDC webhook.
+> On EKS, consider using [Configure Loki with IRSA on Amazon EKS](/how-to-guides/logging/configure-loki-irsa/) instead of static credentials to connect Loki to S3. IRSA replaces long-lived access keys with temporary credentials injected by the EKS OIDC webhook.
 
 > [!NOTE]
 > Loki runs in **SimpleScalable** mode with **3 replicas per tier** (write, read, backend) by default, so it is already HA out of the box. This guide covers connecting it to external storage for production durability and adjusting replica counts if your workload requires it.
@@ -228,6 +228,6 @@ If the pod is not running, check for resource pressure or scheduling issues on t
 - [Grafana Loki: Storage Configuration](https://grafana.com/docs/loki/latest/configure/storage/) - full list of supported storage backends
 - [Grafana Loki: Scalable Deployment](https://grafana.com/docs/loki/latest/get-started/deployment-modes/#simple-scalable) - SimpleScalable mode architecture
 - [Vector: Going to Production](https://vector.dev/docs/setup/going-to-prod/) - Vector production resource and tuning recommendations
-- [Configure Loki with IRSA on AWS EKS](/how-to-guides/high-availability/configure-loki-irsa/) - authenticate Loki to S3 using IAM Roles for Service Accounts instead of static access keys.
+- [Configure Loki with IRSA on Amazon EKS](/how-to-guides/logging/configure-loki-irsa/) - authenticate Loki to S3 using IAM Roles for Service Accounts instead of static access keys.
 - [Configure HA for Monitoring](/how-to-guides/high-availability/monitoring/) - Grafana connects to Loki for log visualization and also requires HA configuration.
 - [Logging concepts](/concepts/core-features/logging/) - background on the Vector → Loki → Grafana pipeline in UDS Core.

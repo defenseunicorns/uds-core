@@ -1,8 +1,8 @@
 ---
-title: Configure Loki with IRSA on AWS EKS
-description: Configure Loki to authenticate to S3 using IAM Roles for Service Accounts (IRSA) on AWS EKS, replacing static access keys with temporary credentials.
+title: Configure Loki with IRSA on Amazon EKS
+description: Configure Loki to authenticate to S3 using IAM Roles for Service Accounts (IRSA) on Amazon EKS, replacing static access keys with temporary credentials.
 sidebar:
-  order: 1.003
+  order: 4.004
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -19,14 +19,14 @@ You'll configure Loki to authenticate to S3 using IAM Roles for Service Accounts
 - An [OIDC (OpenID Connect) identity provider configured](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) on the cluster
 - Permission to create IAM roles and policies in AWS
 - Two S3 buckets for Loki: one for chunks (log data) and one for admin (compactor state and internal metadata)
-- [OpenTofu](https://opentofu.org/) or Terraform installed locally to provision IAM resources
+- [OpenTofu](https://opentofu.org/docs/intro/install/) installed
 
 ## Before you begin
 
 > [!NOTE]
 > This guide covers S3 storage configuration and IRSA setup for Loki on EKS. If you are not using EKS or want to start with static credentials, see [Configure HA for Logging](/how-to-guides/high-availability/logging/) instead.
 
-IRSA works by annotating the Loki service account (`loki/loki`) with an IAM role ARN (Amazon Resource Name). The account is named `loki` because UDS Core sets `fullnameOverride: loki` in the Helm values; if you customize that override, update the trust policy `sub` condition to match. The IRSA webhook automatically injects temporary credentials, which the Loki S3 client uses in place of static access keys.
+IRSA works by annotating the Loki service account (`loki/loki`) with an IAM role ARN. The account is named `loki` because UDS Core sets `fullnameOverride: loki` in the Helm values; if you customize that override, update the trust policy `sub` condition to match. The Amazon EKS OIDC webhook automatically injects temporary credentials, which the Loki S3 client uses in place of static access keys.
 
 Loki requires access to two buckets: one for log chunk data and one for admin data (compactor state and internal metadata such as delete markers and tenant configuration). The same IAM role covers both buckets.
 
@@ -94,8 +94,9 @@ Loki requires access to two buckets: one for log chunk data and one for admin da
      description = "EKS cluster OIDC provider URL (without https://)"
    }
 
-   variable "aws_account_id" {
-     description = "AWS account ID"
+   # Look up the OIDC provider already registered in IAM for this cluster
+   data "aws_iam_openid_connect_provider" "eks" {
+     url = "https://${var.oidc_provider}"
    }
 
    data "aws_iam_policy_document" "loki_irsa_trust" {
@@ -104,7 +105,7 @@ Loki requires access to two buckets: one for log chunk data and one for admin da
 
        principals {
          type        = "Federated"
-         identifiers = ["arn:aws:iam::${var.aws_account_id}:oidc-provider/${var.oidc_provider}"]
+         identifiers = [data.aws_iam_openid_connect_provider.eks.arn]
        }
 
        actions = ["sts:AssumeRoleWithWebIdentity"]
@@ -137,7 +138,7 @@ Loki requires access to two buckets: one for log chunk data and one for admin da
    > [!NOTE]
    > The `sub` condition in the trust policy scopes the role to the `loki` service account in the `loki` namespace. This prevents any other service account in the cluster from assuming this role.
 
-   Place both `.tf` files in the same directory and replace the bucket name placeholders. Supply `oidc_provider` and `aws_account_id` via `-var` flags or a `terraform.tfvars` file, then apply:
+   Place both `.tf` files in the same directory and replace the bucket name placeholders. Supply `oidc_provider` via a `-var` flag or a `terraform.tfvars` file, then apply:
 
    ```bash
    tofu init
@@ -146,7 +147,7 @@ Loki requires access to two buckets: one for log chunk data and one for admin da
    ```
 
    > [!NOTE]
-   > If you use Terraform instead of OpenTofu, replace `tofu` with `terraform` — the commands are identical.
+   > If you use Terraform instead of OpenTofu, replace `tofu` with `terraform`: the commands are identical.
 
 3. **Configure your bundle for IRSA**
 

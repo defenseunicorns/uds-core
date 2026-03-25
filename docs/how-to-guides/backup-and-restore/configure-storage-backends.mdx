@@ -1,6 +1,6 @@
 ---
 title: Configure Velero storage backends
-description: Configure Velero's backup storage destination using S3-compatible storage or Azure Blob Storage, with options for static credentials, existing Kubernetes Secrets, or IRSA on AWS EKS.
+description: Configure Velero's backup storage destination using S3-compatible storage or Azure Blob Storage, with options for static credentials, existing Kubernetes Secrets, or IRSA on Amazon EKS.
 sidebar:
   order: 7.001
 ---
@@ -115,11 +115,11 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
            ```
 
          </TabItem>
-         <TabItem label="IRSA on AWS EKS">
+         <TabItem label="IRSA on Amazon EKS">
 
-           IRSA (IAM Roles for Service Accounts) lets Velero assume an IAM role without storing credentials in the cluster. The EKS OIDC webhook injects temporary credentials that the AWS SDK uses automatically.
+           IRSA (IAM Roles for Service Accounts) lets Velero assume an IAM role without storing credentials in the cluster. The Amazon EKS OIDC webhook injects temporary credentials that the AWS SDK uses automatically.
 
-           For full configuration steps, including IAM policy and role setup, see [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/).
+           For full configuration steps, including IAM policy and role setup, see [Configure Velero with IRSA on Amazon EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/).
 
          </TabItem>
        </Tabs>
@@ -292,7 +292,7 @@ Common causes include malformed credential Secrets and missing required configur
 - [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) - BSL configuration reference
 - [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) - full list of upstream Helm values
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
-- [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
+- [Configure Velero with IRSA on Amazon EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
 - [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - capture persistent volume data using AWS EBS snapshots on EKS clusters.
 - [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
 - [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - verify your scheduled backups are running and trigger a manual backup on demand.
