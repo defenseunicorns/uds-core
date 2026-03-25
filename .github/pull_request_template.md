@@ -20,4 +20,4 @@ Relates to #
 ## Checklist before merging
 
 - [ ] Test, docs, adr added or updated as needed
-- [ ] [Contributor Guide](https://github.com/defenseunicorns/uds-template-capability/blob/main/CONTRIBUTING.md) followed
+- [ ] [Contributor Guide](https://github.com/defenseunicorns/uds-core/blob/main/CONTRIBUTING.md) followed
