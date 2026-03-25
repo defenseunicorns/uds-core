@@ -115,6 +115,7 @@ tasks:
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the deployment"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
     actions:
       - task: resolve-latest-core-release
       - description: "Create the latest version with bundle overrides"
