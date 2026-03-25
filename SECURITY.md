@@ -1,6 +1,6 @@
 ---
 title: Security Policy
-description: UDS Core security policy: supported version window for patch support and instructions for reporting vulnerabilities.
+description: UDS Core security policy covering the supported version window for patch support and instructions for reporting vulnerabilities.
 sidebar:
   order: 2.3
 ---

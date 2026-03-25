@@ -1,6 +1,6 @@
 ---
 title: Deprecations
-description: Complete reference for UDS Core deprecations: currently deprecated features and their scheduled removal versions.
+description: Complete reference for UDS Core deprecations, listing currently deprecated features and their scheduled removal versions.
 sidebar:
   order: 2.2
 ---

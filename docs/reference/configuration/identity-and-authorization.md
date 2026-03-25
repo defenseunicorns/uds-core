@@ -1,6 +1,6 @@
 ---
 title: Identity & Authorization
-description: Complete reference for UDS Core identity and authorization configuration: Keycloak Helm values, realmInitEnv variables, theme and plugin settings, and SSO defaults.
+description: Complete reference for UDS Core identity and authorization configuration, covering Keycloak Helm values, realmInitEnv variables, theme and plugin settings, and SSO defaults.
 sidebar:
   order: 3.001
 ---
