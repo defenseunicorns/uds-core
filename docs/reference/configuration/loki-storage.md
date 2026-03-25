@@ -113,7 +113,7 @@ overrides:
 
 ## Additional configuration
 
-UDS Core deploys Loki in `SimpleScalable` mode with a `replication_factor` of `1`. It does not override upstream chart defaults for replica counts or most query settings. For the full set of available fields, see the [upstream Loki Helm chart values](https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml). For guidance on tuning replicas and resources for production workloads, see [Configure high-availability logging](/how-to-guides/high-availability/logging/). For compactor and retention settings, see [Configure log retention](/how-to-guides/logging/configure-log-retention/).
+UDS Core deploys Loki in `SimpleScalable` mode with a `replication_factor` of `1`. It does not override upstream chart defaults for replica counts or most query settings. For the full set of available fields, see the [upstream Loki Helm chart values](https://github.com/grafana-community/helm-charts/blob/main/charts/loki/values.yaml). For guidance on tuning replicas and resources for production workloads, see [Configure high-availability logging](/how-to-guides/high-availability/logging/). For compactor and retention settings, see [Configure log retention](/how-to-guides/logging/configure-log-retention/).
 
 ## Related documentation
 
