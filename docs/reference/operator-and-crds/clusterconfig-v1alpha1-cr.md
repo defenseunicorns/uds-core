@@ -1,6 +1,5 @@
 ---
 title: Clusterconfig CR (v1alpha1)
-description: Complete reference for the ClusterConfig v1alpha1 custom resource, which holds cluster-wide UDS settings like domains, CA certificates, and networking CIDRs.
 tableOfContents:
   maxHeadingLevel: 6
 sidebar:

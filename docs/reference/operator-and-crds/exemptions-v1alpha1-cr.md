@@ -1,6 +1,5 @@
 ---
 title: Exemptions CR (v1alpha1)
-description: Complete reference for the Exemption v1alpha1 custom resource, which grants workloads permission to bypass named UDS security policies.
 tableOfContents:
   maxHeadingLevel: 6
 sidebar:
