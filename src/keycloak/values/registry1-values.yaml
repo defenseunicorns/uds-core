@@ -3,7 +3,7 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips
-  tag: "26.5.5-fips"
+  tag: "26.5.6-fips"
 podSecurityContext:
   fsGroup: 2000
 securityContext:
