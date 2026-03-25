@@ -18,6 +18,13 @@ export const PEPR_FIELD_MANAGER = "pepr";
  *
  * Uses a `test` + `remove` pair: if the managedFields array has shifted between our GET and this
  * PATCH, the `test` fails atomically and we log + continue rather than removing the wrong entry.
+ *
+ * @param resourceKind The Kubernetes kind class for the resource
+ * @param name The name of the resource
+ * @param namespace The namespace of the resource, or undefined for cluster-scoped resources
+ * @param managedFields The current managedFields array from the resource's metadata — passed in
+ *   by the caller (who already holds the fetched object) to avoid a redundant GET
+ * @param log Logger instance for logging
  */
 export async function removePeprManagedFieldsEntry(
   resourceKind: Parameters<typeof K8s>[0],

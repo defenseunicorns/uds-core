@@ -247,6 +247,8 @@ function pickManagedAnnotations(
  * @param annotations The updated annotations
  * @param originalLabels The original labels
  * @param originalAnnotations The original annotations
+ * @param managedFields The current managedFields array from the namespace's metadata, used to
+ *   detect and clean up any over-claimed Pepr SSA entries
  * @param logMessage Optional log message
  * @returns Whether updates were applied
  */
