@@ -8,7 +8,7 @@ We appreciate contributions in several forms:
 - **Report Issues or Bugs**: If you encounter a problem, feel free to open a [GitHub issue](https://github.com/defenseunicorns/uds-core/issues/new?template=bug_report.md). Include details on your environment, how to reproduce the bug, and any relevant logs or screenshots. This helps us improve UDS Core’s stability.
 - **Suggest Enhancements**: Have an idea for a new feature or an improvement? You can [open an issue](https://github.com/defenseunicorns/uds-core/issues/new?template=feature_request.md) to propose it. For significant feature ideas, please start with an issue only to gather feedback before spending time on code. This ensures the idea aligns with our project goals and roadmap, which is primarily driven by internal needs (we’ll evaluate suggestions for alignment).
 - **Submit Code Changes (Pull Requests)**: You can contribute fixes, minor enhancements, or even new features via pull requests (PRs). We especially welcome contributions that fix bugs or improve performance/stability. If you plan to work on something, it’s a good idea to open an issue first to ensure you are aligned with the maintainers.
-- **Improve Documentation**: Contributions to documentation (e.g. tutorials, configuration reference, even code comments) are valuable. If you find areas of the docs that can be clearer, you can submit changes. Follow the [style rules](docs/dev/style-rules.md) and [voice profile](docs/dev/voice-profile.md) for writing conventions, and the templates in `.ai/docs/` for page structure.
+- **Improve Documentation**: Contributions to documentation (e.g. tutorials, configuration reference, even code comments) are valuable. If you find areas of the docs that can be clearer, you can submit changes. Follow the [style rules](docs/dev/style-rules.md) and [voice profile](docs/dev/voice-profile.md) for writing conventions, and the templates in `.ai/docs/` for page structure. See [Documentation Standards](#documentation-standards) below for requirements.
 
 Please note that large-scale changes or new features might not be immediately incorporated if they don’t fit with our current focus. We’ll do our best to communicate politely and provide guidance on such contributions (e.g. suggesting a smaller scope or alternative approaches) – our intent is not to discourage ideas, but to keep the project stable and aligned with its vision.
 
@@ -161,6 +161,61 @@ When opening a pull request make sure to follow the below guidelines to ensure t
 > When submitting a pull request (PR) from a forked repository, please note that our CI/CD processes may not run completely due to security restrictions. This is because certain secrets required for the full CI/CD pipeline are not accessible from forks.
 >
 > If you notice CI/CD failures, it might be due to these limitations rather than issues with your code. Our maintainers will review your PR and, if necessary, check out your branch and push it to the main repository. This step allows the full CI/CD process to run with the required secrets, ensuring that all checks are performed.
+
+## Documentation Standards
+
+All documentation contributions must follow these standards.
+
+### Page structure
+
+Use the templates in `.ai/docs/` for the correct structure for each page type:
+
+| Page type | Template |
+|---|---|
+| How-to guide | `.ai/docs/how-to-guide-template.md` |
+| Reference page | `.ai/docs/reference-page-template.md` |
+| Troubleshooting runbook | `.ai/docs/troubleshooting-runbook-template.md` |
+| Release notes | `.ai/docs/release-notes-template.md` |
+
+For voice, tone, and formatting conventions that apply across all page types, see [docs/dev/style-rules.md](docs/dev/style-rules.md) and [docs/dev/voice-profile.md](docs/dev/voice-profile.md).
+
+### Required: `description` frontmatter
+
+Every docs page must have a `description` field in its frontmatter. This is not optional.
+
+```yaml
+---
+title: Configure TLS certificates for gateways
+description: Configure valid TLS certificates for UDS Core ingress gateways using cert-manager, manual secrets, or cloud-managed certificate options.
+sidebar:
+  order: X.XXX
+---
+```
+
+**Why it's required:**
+- **`llms.txt`**: the description appears next to each page in the AI-readable docs index so LLMs can navigate to the right content. Without it, AI-assisted answers about UDS Core degrade.
+- **Search**: used as the snippet below each search result on the docs site.
+- **SEO**: used as the HTML `<meta name="description">` tag.
+
+**Writing a good description** (1–2 sentences, active voice):
+- How-to guide: start with a verb, e.g. "Configure...", "Enable...", "Set up..."
+- Reference page: summarize what configuration surface is documented, e.g. "Complete reference for..."
+- Concept page: describe how the component works, e.g. "How UDS Core uses Falco to detect runtime threats..."
+- Runbook: start with "Diagnose and resolve..." or "Recover..."
+- Overview/index page: start with "Guides for..." or "Index of...", e.g. "Guides for configuring UDS Core networking: TLS, gateways, and network access rules."
+- Release notes: "UDS Core X.Y release notes: [headline feature or breaking change]."
+- Avoid "This page..." or "Learn about..." openings
+
+### Where docs live
+
+Product docs live under `docs/` in this repo and are published to the UDS docs site via automated integration. Docs are organized into these sections (controlled by `docs/docs.config.json`):
+- `docs/getting-started/`: installation and first deployment steps
+- `docs/concepts/`: architectural concepts and feature explanations
+- `docs/how-to-guides/`: task-oriented configuration guides
+- `docs/reference/`: configuration surfaces, CRD schemas, policies
+- `docs/operations/`: upgrades, troubleshooting runbooks, release notes
+
+The `docs/dev/` directory contains internal development documentation (style guides, CI setup) that is not published to the public docs site.
 
 ## Additional Notes
 

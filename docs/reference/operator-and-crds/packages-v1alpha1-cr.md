@@ -1,5 +1,6 @@
 ---
 title: Packages CR (v1alpha1)
+description: Complete reference for the Package v1alpha1 custom resource, which declares an application's network access, SSO clients, and monitoring configuration.
 tableOfContents:
   maxHeadingLevel: 6
 sidebar:

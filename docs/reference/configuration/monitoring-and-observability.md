@@ -1,5 +1,6 @@
 ---
 title: Monitoring & Observability
+description: Complete reference for UDS Core monitoring configuration surfaces: built-in Grafana dashboards and the Package CR uptime probe fields.
 sidebar:
   order: 3.002
 ---

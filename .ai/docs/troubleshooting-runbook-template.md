@@ -27,6 +27,7 @@ Runbooks live under `docs/operations/troubleshooting-and-runbooks/` and are `.md
 ```mdx
 ---
 title: Topic Name
+description: One or two sentences describing what issue this runbook addresses and what the reader will be able to do. Used in llms.txt, search, and SEO; required on every page. A good description starts with a verb: "Diagnose and resolve...", "Recover...", "Resize..."
 sidebar:
   order: X.XXX
 ---
@@ -157,6 +158,9 @@ If this runbook doesn't resolve your issue:
 - For procedural runbooks, Overview explains why the procedure is needed, "Pre-checks" covers preconditions, and Procedure is a single set of steps
 - Keep sections focused. If a section requires extensive configuration, link to the relevant how-to guide instead of duplicating it
 - Prevention tips should be `> [!TIP]` callouts inline within Procedure or Verification. Do not create a separate Prevention section
+
+### Frontmatter
+- `description:` is **required** on every page. Write 1–2 sentences summarizing what issue the runbook addresses and what the reader will accomplish. This drives `llms.txt` navigation, search snippets, and SEO. Example: "Diagnose and resolve issues where UDS Exemption or Package CRs are not being reconciled by the UDS Operator."
 
 ### Formatting
 - Files use `.mdx` extension

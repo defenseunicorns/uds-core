@@ -28,6 +28,7 @@ Reference pages live under `docs/reference/<section>/` and use the `.md` extensi
 ```md
 ---
 title: Section Name
+description: One or two sentences describing what this reference page covers. Used in llms.txt, search, and SEO; required on every page. A good description summarizes what configuration surface is documented and who needs it.
 sidebar:
   order: X.XXX
 ---
@@ -99,6 +100,9 @@ overrides:
 - Minimize callouts in reference pages. Most information belongs in the table itself or prose
 - Use `> [!NOTE]` for timing constraints (e.g., "requires redeployment to take effect")
 - Use `> [!CAUTION]` for security implications only
+
+### Frontmatter
+- `description:` is **required** on every page. Write 1–2 sentences in active voice summarizing what configuration surface the page documents and who needs it. This drives `llms.txt` navigation, search snippets, and SEO. Example: "Complete reference for UDS Core identity and authorization configuration: Keycloak Helm values, realmInitEnv variables, theme and plugin settings, and SSO defaults."
 
 ### Related documentation
 - List external upstream docs (e.g., Keycloak, Istio) with brief descriptions
