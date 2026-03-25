@@ -186,8 +186,8 @@ export async function handleResourceUpdate(
       await cleanupOverClaimedControllerFields(namespace, pods, log);
     } catch (err) {
       log.warn(
-        { resource: name, namespace, type: resourceType },
-        `Field manager cleanup failed: ${err}`,
+        { resource: name, namespace, type: resourceType, err },
+        "Field manager cleanup failed",
       );
     }
     return;

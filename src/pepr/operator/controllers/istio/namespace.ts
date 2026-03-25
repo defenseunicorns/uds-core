@@ -204,8 +204,8 @@ export function getCurrentIstioState(labels: Record<string, string>): IstioState
  * Pepr actually manages, indicating it previously over-claimed SSA ownership.
  */
 export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
-  const v1 = entry.fieldsV1 as Record<string, unknown>;
-  const meta = (v1?.["f:metadata"] as Record<string, unknown>) ?? {};
+  const v1 = (entry.fieldsV1 ?? {}) as Record<string, unknown>;
+  const meta = (v1["f:metadata"] as Record<string, unknown>) ?? {};
   const labels = (meta["f:labels"] as Record<string, unknown>) ?? {};
   const annotations = (meta["f:annotations"] as Record<string, unknown>) ?? {};
 

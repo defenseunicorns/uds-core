@@ -43,9 +43,9 @@ Where: k3d
 
 What: Individual [layer packages](https://github.com/defenseunicorns/uds-core/tree/main/packages)
 
-### "CLI Matrix"
+### CLI matrix
 
-In order to validate compatibility across CLI versions, we run a matrix of tests covering different CLI versions at install and upgrade time. This catches issues that would only surface when using an older CLI or upgrading the CLI version.
+To validate compatibility across CLI versions, CI runs a matrix of tests covering different CLI versions at install and upgrade time. This catches issues that would only surface when using an older CLI or upgrading the CLI version.
 
 The matrix currently covers:
 

@@ -143,8 +143,8 @@ async function resolveControllerKindAndName(
  * @returns True if the entry claims ownership of fields beyond `uds.dev/restartedAt`
  */
 export function controllerEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
-  const v1 = entry.fieldsV1 as Record<string, unknown>;
-  const spec = (v1?.["f:spec"] as Record<string, unknown>) ?? {};
+  const v1 = (entry.fieldsV1 ?? {}) as Record<string, unknown>;
+  const spec = (v1["f:spec"] as Record<string, unknown>) ?? {};
   const template = (spec["f:template"] as Record<string, unknown>) ?? {};
   const templateMeta = (template["f:metadata"] as Record<string, unknown>) ?? {};
   const annotations = (templateMeta["f:annotations"] as Record<string, unknown>) ?? {};
