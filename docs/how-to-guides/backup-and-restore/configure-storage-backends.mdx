@@ -1,5 +1,6 @@
 ---
 title: Configure Velero storage backends
+description: Configure Velero's backup storage destination using S3-compatible storage or Azure Blob Storage, with options for static credentials, existing Kubernetes Secrets, or IRSA on AWS EKS.
 sidebar:
   order: 7.001
 ---
@@ -47,66 +48,81 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
    <Tabs>
      <TabItem label="S3-compatible storage">
 
-       Add the following variables to your `uds-config.yaml`:
+       Choose the authentication method that matches your environment.
 
-       ```yaml title="uds-config.yaml"
-       variables:
-         core:
-           VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
-           VELERO_BUCKET: "my-velero-backups"
-           VELERO_BUCKET_REGION: "us-east-1"
-           VELERO_BUCKET_KEY: "<your-access-key>"
-           VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
-       ```
+       <Tabs>
+         <TabItem label="Static access keys">
 
-       The full set of available variables:
+           Add the following variables to your `uds-config.yaml`:
 
-       | Variable | Description | Default |
-       |---|---|---|
-       | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
-       | `VELERO_BUCKET` | Bucket name | `uds` |
-       | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
-       | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
-       | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
-       | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
-       | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
+           ```yaml title="uds-config.yaml"
+           variables:
+             core:
+               VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
+               VELERO_BUCKET: "my-velero-backups"
+               VELERO_BUCKET_REGION: "us-east-1"
+               VELERO_BUCKET_KEY: "<your-access-key>"
+               VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
+           ```
 
-       > [!NOTE]
-       > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
+           The full set of available variables:
 
-       > [!TIP]
-       > For EKS deployments, consider using [IRSA (IAM Roles for Service Accounts)](/how-to-guides/backup-and-restore/configure-velero-irsa/) instead of static access keys. IRSA eliminates long-lived credentials from your cluster configuration and aligns with AWS IAM security recommendations.
+           | Variable | Description | Default |
+           |---|---|---|
+           | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
+           | `VELERO_BUCKET` | Bucket name | `uds` |
+           | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
+           | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
+           | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
+           | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
+           | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
 
-       **(Optional) Use an existing credentials Secret:** If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+           > [!NOTE]
+           > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
 
-       ```yaml title="uds-bundle.yaml"
-       packages:
-         - name: core
-           repository: registry.defenseunicorns.com/public/core
-           ref: x.x.x-upstream
-           overrides:
-             velero:
-               velero:
-                 values:
-                   - path: credentials.existingSecret
-                     value: "velero-bucket-credentials"
-       ```
+         </TabItem>
+         <TabItem label="Existing Kubernetes Secret">
 
-       The Secret must follow this format:
+           If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
 
-       ```yaml
-       apiVersion: v1
-       kind: Secret
-       metadata:
-         name: velero-bucket-credentials
-         namespace: velero
-       type: Opaque
-       stringData:
-         cloud: |
-           [default]
-           aws_access_key_id=<your-access-key>
-           aws_secret_access_key=<your-secret-key>
-       ```
+           ```yaml title="uds-bundle.yaml"
+           packages:
+             - name: core
+               repository: registry.defenseunicorns.com/public/core
+               ref: x.x.x-upstream
+               overrides:
+                 velero:
+                   velero:
+                     values:
+                       - path: credentials.existingSecret
+                         value: "velero-bucket-credentials"
+           ```
+
+           The Secret must follow this format:
+
+           ```yaml
+           apiVersion: v1
+           kind: Secret
+           metadata:
+             name: velero-bucket-credentials
+             namespace: velero
+           type: Opaque
+           stringData:
+             cloud: |
+               [default]
+               aws_access_key_id=<your-access-key>
+               aws_secret_access_key=<your-secret-key>
+           ```
+
+         </TabItem>
+         <TabItem label="IRSA on AWS EKS">
+
+           IRSA (IAM Roles for Service Accounts) lets Velero assume an IAM role without storing credentials in the cluster. The EKS OIDC webhook injects temporary credentials that the AWS SDK uses automatically.
+
+           For full configuration steps, including IAM policy and role setup, see [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/).
+
+         </TabItem>
+       </Tabs>
 
      </TabItem>
      <TabItem label="Azure Blob Storage">
@@ -276,7 +292,7 @@ Common causes include malformed credential Secrets and missing required configur
 - [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) - BSL configuration reference
 - [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) - full list of upstream Helm values
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
-- [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - Authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
-- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - Capture persistent volume data using AWS EBS snapshots on EKS clusters.
-- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
-- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero with IRSA on AWS EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
+- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - capture persistent volume data using AWS EBS snapshots on EKS clusters.
+- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
+- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - verify your scheduled backups are running and trigger a manual backup on demand.

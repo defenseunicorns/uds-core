@@ -1,5 +1,6 @@
 ---
 title: Configure Velero with IRSA on AWS EKS
+description: Configure Velero to authenticate to S3 using IAM Roles for Service Accounts (IRSA) on AWS EKS, replacing static access keys with temporary credentials.
 sidebar:
   order: 7.002
 ---
@@ -18,6 +19,7 @@ You'll configure Velero to authenticate to S3 using IAM Roles for Service Accoun
 - An [OIDC (OpenID Connect) identity provider configured](https://docs.aws.amazon.com/eks/latest/userguide/enable-iam-roles-for-service-accounts.html) on the cluster
 - Permission to create IAM roles and policies in AWS
 - An S3 bucket for Velero backups
+- [OpenTofu](https://opentofu.org/) or Terraform installed locally to provision IAM resources
 
 ## Before you begin
 
@@ -32,7 +34,7 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
 
 1. **Create an IAM policy for S3 access**
 
-   Create a policy with the permissions Velero requires to read, write, and manage backup objects:
+   The following examples use OpenTofu to provision the required IAM resources. They assume an `aws` provider is already configured in your workspace. Create the S3 access policy:
 
    ```hcl title="velero-s3-policy.tf"
    # Velero S3 backup storage policy
@@ -69,6 +71,9 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
 
    > [!NOTE]
    > Replace `YOUR_VELERO_BUCKET` with your backup bucket name. Scope the resource ARNs to your specific bucket to enforce least privilege.
+
+   > [!NOTE]
+   > If your S3 bucket uses SSE-KMS encryption, also grant `kms:Decrypt`, `kms:GenerateDataKey`, and `kms:DescribeKey` on the KMS key ARN used for encryption.
 
 2. **Create an IAM role with an IRSA trust policy**
 
@@ -124,6 +129,17 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
    > [!NOTE]
    > The `sub` condition in the trust policy scopes the role to the `velero-server` service account in the `velero` namespace. This prevents any other service account in the cluster from assuming this role.
 
+   Place both `.tf` files in the same directory. Supply `oidc_provider` and `aws_account_id` via `-var` flags or a `terraform.tfvars` file, then apply:
+
+   ```bash
+   tofu init
+   tofu plan
+   tofu apply
+   ```
+
+   > [!NOTE]
+   > If you use Terraform instead of OpenTofu, replace `tofu` with `terraform` — the commands are identical.
+
 3. **Configure your bundle for IRSA**
 
    Add the overrides below to your bundle. Setting `credentials.useSecret: false` tells Velero not to mount a credentials file, so the AWS SDK uses the web identity token the IRSA webhook injects. The `configuration.backupStorageLocation` override replaces the default UDS Core configuration, which includes a credential `Secret` reference incompatible with IRSA.
@@ -156,6 +172,8 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
                        s3ForcePathStyle: false
    ```
 
+   Supply the role ARN in your `uds-config.yaml`:
+
    ```yaml title="uds-config.yaml"
    variables:
      core:
@@ -166,7 +184,7 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
    > Replace `<your-bucket-name>` and `<your-region>` with your actual values directly in the bundle YAML. Unlike the static-credential approach, these cannot be set in `uds-config.yaml` because the entire `configuration.backupStorageLocation` array must be overridden to remove the credential `Secret` reference incompatible with IRSA. Set `s3ForcePathStyle: false` for AWS S3; use `true` only for MinIO or other providers that require path-style access.
 
    > [!TIP]
-   > To also capture persistent volume data using EBS snapshots, see [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/). That guide assumes IRSA is already configured on the Velero service account.
+   > To also capture persistent volume data using EBS snapshots, see [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) for the required IAM permissions and full configuration. You can add those permissions to this same IAM role.
 
 4. **Create and deploy your bundle**
 
