@@ -7,7 +7,7 @@ import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { retryWithDelay } from "../utils";
-import { reloadPods } from "./reload-utils";
+import { cleanupOverClaimedControllerFields, reloadPods } from "./reload-utils";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 
@@ -178,8 +178,23 @@ export async function handleResourceUpdate(
   // Update the cache regardless of whether we process this update
   checksumCache.set(cacheKey, currentChecksum);
 
-  // If this is the first time we're seeing this resource, or if the data hasn't changed, exit early
-  if (!previousChecksum || previousChecksum === currentChecksum) {
+  // First time we've seen this resource — proactively clean up any over-claimed controller
+  // fields so Helm upgrades don't conflict before the first reload fires.
+  if (!previousChecksum) {
+    try {
+      const pods = await discoverResourceConsumers(namespace, name);
+      await cleanupOverClaimedControllerFields(namespace, pods, log);
+    } catch (err) {
+      log.warn(
+        { resource: name, namespace, type: resourceType },
+        `Field manager cleanup failed: ${err}`,
+      );
+    }
+    return;
+  }
+
+  // Data unchanged — nothing to do
+  if (previousChecksum === currentChecksum) {
     return;
   }
 

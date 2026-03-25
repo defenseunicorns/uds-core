@@ -8,7 +8,12 @@ import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import * as reloadUtils from "./reload-utils";
-import { controllerEntryIsOverClaimed, reloadPods, restartController } from "./reload-utils";
+import {
+  cleanupOverClaimedControllerFields,
+  controllerEntryIsOverClaimed,
+  reloadPods,
+  restartController,
+} from "./reload-utils";
 
 // Mock K8s client
 vi.mock("pepr", () => {
@@ -769,5 +774,276 @@ describe("controllerEntryIsOverClaimed", () => {
         },
       }),
     ).toBe(true);
+  });
+});
+
+describe("cleanupOverClaimedControllerFields", () => {
+  let mockLogger: Logger;
+  let mockK8sClient: ReturnType<typeof createMockK8sClient>;
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mockLogger = createMockLogger();
+    mockK8sClient = createMockK8sClient();
+    vi.mocked(K8s as Mock).mockReturnValue(mockK8sClient);
+  });
+
+  it("no-op when pod list is empty", async () => {
+    await cleanupOverClaimedControllerFields("default", [], mockLogger);
+    expect(mockK8sClient.Get).not.toHaveBeenCalled();
+  });
+
+  it("no-op when pods have no controller ownerRef", async () => {
+    const pods = [{ metadata: { name: "standalone" } }];
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Get).not.toHaveBeenCalled();
+  });
+
+  it("skips Succeeded and Failed pods", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "pod-a",
+          ownerReferences: [{ kind: "Deployment", name: "dep", controller: true }],
+        },
+        status: { phase: "Succeeded" },
+      },
+      {
+        metadata: {
+          name: "pod-b",
+          ownerReferences: [{ kind: "Deployment", name: "dep", controller: true }],
+        },
+        status: { phase: "Failed" },
+      },
+    ];
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Get).not.toHaveBeenCalled();
+  });
+
+  it("cleans up over-claimed Deployment entry discovered via pod ownerRef", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "dep-pod",
+          ownerReferences: [{ kind: "Deployment", name: "test-dep", controller: true }],
+        },
+      },
+    ];
+    mockK8sClient.Get.mockResolvedValue({
+      ...makeTestDeployment(),
+      metadata: {
+        name: "test-dep",
+        namespace: "default",
+        uid: "uid",
+        managedFields: [
+          {
+            manager: "pepr",
+            operation: "Apply",
+            fieldsV1: {
+              "f:spec": {
+                "f:replicas": {},
+                "f:template": {
+                  "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+                },
+              },
+            },
+          },
+        ],
+      },
+      spec: {
+        template: {
+          metadata: { annotations: { "uds.dev/restartedAt": "2026-01-01T00:00:00.000Z" } },
+        },
+      },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+
+    expect(mockK8sClient.Patch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
+      { op: "remove", path: "/metadata/managedFields/0" },
+    ]);
+    // Should re-apply the existing timestamp to re-establish narrow ownership
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      {
+        spec: {
+          template: {
+            metadata: { annotations: { "uds.dev/restartedAt": "2026-01-01T00:00:00.000Z" } },
+          },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  it("skips cleanup when controller entry is not over-claimed", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "dep-pod",
+          ownerReferences: [{ kind: "Deployment", name: "test-dep", controller: true }],
+        },
+      },
+    ];
+    mockK8sClient.Get.mockResolvedValue({
+      ...makeTestDeployment(),
+      metadata: {
+        name: "test-dep",
+        namespace: "default",
+        uid: "uid",
+        managedFields: [
+          {
+            manager: "pepr",
+            operation: "Apply",
+            fieldsV1: {
+              "f:spec": {
+                "f:template": {
+                  "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Patch).not.toHaveBeenCalled();
+    expect(mockK8sClient.Apply).not.toHaveBeenCalled();
+  });
+
+  it("resolves ReplicaSet to parent Deployment for cleanup", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "rs-pod",
+          ownerReferences: [{ kind: "ReplicaSet", name: "test-rs", controller: true }],
+        },
+      },
+    ];
+    // First Get: the ReplicaSet (with Deployment owner)
+    mockK8sClient.Get.mockResolvedValueOnce({
+      metadata: {
+        name: "test-rs",
+        ownerReferences: [{ kind: "Deployment", name: "test-dep", controller: true }],
+      },
+    });
+    // Second Get: the Deployment (narrow entry, no cleanup needed)
+    mockK8sClient.Get.mockResolvedValueOnce({
+      ...makeTestDeployment(),
+      metadata: { name: "test-dep", namespace: "default", uid: "uid", managedFields: [] },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Patch).not.toHaveBeenCalled();
+  });
+
+  it("resolves standalone ReplicaSet (no Deployment owner) directly", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "rs-pod",
+          ownerReferences: [{ kind: "ReplicaSet", name: "test-rs", controller: true }],
+        },
+      },
+    ];
+    // ReplicaSet with no Deployment owner
+    mockK8sClient.Get.mockResolvedValueOnce({
+      ...makeTestReplicaSet(),
+      metadata: {
+        name: "test-rs",
+        namespace: "default",
+        uid: "uid",
+        ownerReferences: [],
+        managedFields: [],
+      },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Patch).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates controllers when multiple pods share the same controller", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "pod-a",
+          ownerReferences: [{ kind: "Deployment", name: "dep", controller: true }],
+        },
+      },
+      {
+        metadata: {
+          name: "pod-b",
+          ownerReferences: [{ kind: "Deployment", name: "dep", controller: true }],
+        },
+      },
+    ];
+    mockK8sClient.Get.mockResolvedValue({
+      ...makeTestDeployment(),
+      metadata: { name: "dep", namespace: "default", uid: "uid", managedFields: [] },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    // Should only GET the Deployment once
+    expect(mockK8sClient.Get).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-applies existing timestamp after removing stale entry", async () => {
+    const timestamp = "2026-03-01T12:00:00.000Z";
+    const pods = [
+      {
+        metadata: {
+          name: "pod-a",
+          ownerReferences: [{ kind: "StatefulSet", name: "test-ss", controller: true }],
+        },
+      },
+    ];
+    mockK8sClient.Get.mockResolvedValue({
+      ...makeTestStatefulSet(),
+      metadata: {
+        name: "test-ss",
+        namespace: "default",
+        uid: "uid",
+        managedFields: [
+          {
+            manager: "pepr",
+            operation: "Apply",
+            fieldsV1: {
+              "f:spec": {
+                "f:replicas": {},
+                "f:template": {
+                  "f:metadata": { "f:annotations": { "f:uds.dev/restartedAt": {} } },
+                },
+              },
+            },
+          },
+        ],
+      },
+      spec: { template: { metadata: { annotations: { "uds.dev/restartedAt": timestamp } } } },
+    });
+
+    await cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger);
+    expect(mockK8sClient.Apply).toHaveBeenCalledWith(
+      { spec: { template: { metadata: { annotations: { "uds.dev/restartedAt": timestamp } } } } },
+      { force: true },
+    );
+  });
+
+  it("logs warning and continues when cleanup fails for one controller", async () => {
+    const pods = [
+      {
+        metadata: {
+          name: "pod-a",
+          ownerReferences: [{ kind: "Deployment", name: "dep", controller: true }],
+        },
+      },
+    ];
+    mockK8sClient.Get.mockRejectedValueOnce(new Error("API error"));
+
+    await expect(
+      cleanupOverClaimedControllerFields("default", pods as kind.Pod[], mockLogger),
+    ).resolves.toBeUndefined();
+    expect(mockLogger.warn).toHaveBeenCalled();
   });
 });

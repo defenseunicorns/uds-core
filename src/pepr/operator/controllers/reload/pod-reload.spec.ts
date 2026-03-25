@@ -58,6 +58,7 @@ vi.mock("pepr", async importOriginal => {
 vi.mock("./reload-utils", async () => {
   return {
     reloadPods: vi.fn(),
+    cleanupOverClaimedControllerFields: vi.fn(),
   };
 });
 
@@ -191,6 +192,22 @@ describe("pod-reload", () => {
 
       // Second call with the same data should not reload pods
       await handleSecretUpdate(secret as kind.Secret);
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("should call cleanupOverClaimedControllerFields on first observation and not reload pods", async () => {
+      const secret = {
+        metadata: { name: "test-secret", namespace: "default" },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(utils.cleanupOverClaimedControllerFields).toHaveBeenCalledWith(
+        "default",
+        expect.any(Array),
+        expect.anything(),
+      );
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
