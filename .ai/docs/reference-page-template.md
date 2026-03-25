@@ -79,7 +79,7 @@ overrides:
 
 ### Tables
 - Four-column format: `| Field | Type | Default | Description |`
-- Use `—` for fields with no default or that are required
+- Use `unset` (no backticks in the table cell) for fields with no default or that are required
 - Wrap field names in backticks: `` `field.name` ``
 - For enum types, list values: `` `value1` \| `value2` ``
 

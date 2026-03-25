@@ -70,10 +70,10 @@ The `loki.storage` fields control the object storage type, endpoint, credentials
 | `loki.storage.s3.secretAccessKey`  | string  | `"uds-secret"`                                        | Secret access key for S3 authentication                                                                  |
 | `loki.storage.s3.s3ForcePathStyle` | boolean | `true`                                                | Use path-style URLs instead of virtual-hosted-style; required for MinIO and most S3-compatible providers |
 | `loki.storage.s3.insecure`         | boolean | `false`                                               | Allow HTTP (non-TLS) connections to the storage endpoint                                                 |
-| `loki.storage.s3.region`           | string  | —                                                     | AWS region for the S3 bucket; required for AWS S3, not needed for MinIO                                  |
+| `loki.storage.s3.region`           | string  | unset                                                 | AWS region for the S3 bucket; required for AWS S3, not needed for MinIO                                  |
 
 > [!NOTE]
-> The defaults target the internal MinIO dev stack deployed by `uds-dev-stack`. Production deployments must override the endpoint, credentials, and bucket names to point to external object storage. UDS Core does not set a default for `bucketNames.ruler`, but the Loki chart templates reference this field for ruler storage configuration. If you use Loki's ruler with external object storage, you may need to set `loki.storage.bucketNames.ruler` to a valid bucket name.
+> The defaults target the internal MinIO dev stack deployed by `uds-dev-stack`. Production deployments must override the endpoint, credentials, and bucket names to point to external object storage. The upstream Loki chart also supports a `bucketNames.ruler` field, but UDS Core does not use it. Ruler configuration is loaded from in-cluster ConfigMaps, so overriding this field is not necessary.
 
 The following example shows a minimal production override for S3-compatible storage:
 
@@ -113,20 +113,7 @@ overrides:
 
 ## Additional configuration
 
-Operators may need to adjust query and replication settings depending on log volume and cluster topology.
-
-| Field                                                      | Type    | Default          | Description                                                                                          |
-| ---------------------------------------------------------- | ------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
-| `deploymentMode`                                           | string  | `SimpleScalable` | Loki deployment architecture; alternatives are `SingleBinary` and `Distributed`                      |
-| `loki.commonConfig.replication_factor`                     | integer | `1`              | Number of replicas for each log chunk; increase for data durability in production                    |
-| `loki.limits_config.split_queries_by_interval`             | string  | `"30m"`          | Time interval used to split large queries into smaller sub-queries                                   |
-| `loki.limits_config.allow_structured_metadata`             | boolean | `false`          | Enable structured metadata on log lines; requires schema `v13` or later                              |
-| `loki.query_scheduler.max_outstanding_requests_per_tenant` | integer | `32000`          | Maximum queued queries per tenant before Loki rejects new requests                                   |
-| `read.replicas`                                            | integer | `3`              | Number of read-tier replicas; inherited from upstream chart, not set by UDS Core                     |
-| `write.replicas`                                           | integer | `3`              | Number of write-tier replicas; inherited from upstream chart, not set by UDS Core                    |
-| `backend.replicas`                                         | integer | `3`              | Number of backend-tier replicas; inherited from upstream chart, not set by UDS Core                  |
-
-UDS Core does not override the upstream chart defaults for replica counts. For guidance on tuning replicas and resources for production workloads, see [Configure high-availability logging](/how-to-guides/high-availability/logging/). For compactor and retention settings, see [Configure log retention](/how-to-guides/logging/configure-log-retention/).
+UDS Core deploys Loki in `SimpleScalable` mode with a `replication_factor` of `1`. It does not override upstream chart defaults for replica counts or most query settings. For the full set of available fields, see the [upstream Loki Helm chart values](https://github.com/grafana/loki/blob/main/production/helm/loki/values.yaml). For guidance on tuning replicas and resources for production workloads, see [Configure high-availability logging](/how-to-guides/high-availability/logging/). For compactor and retention settings, see [Configure log retention](/how-to-guides/logging/configure-log-retention/).
 
 ## Related documentation
 
