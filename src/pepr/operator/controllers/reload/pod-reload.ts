@@ -214,7 +214,10 @@ export async function handleResourceUpdate(
         }
       })
       .catch(err =>
-        log.warn({ resource: name, namespace, type: resourceType, err }, "Field manager cleanup failed"),
+        log.warn(
+          { resource: name, namespace, type: resourceType, err },
+          "Field manager cleanup failed",
+        ),
       );
     await startupCleanupQueue;
     return;
