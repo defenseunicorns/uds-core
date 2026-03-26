@@ -218,17 +218,42 @@ describe("pod-reload", () => {
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
-    it("should set the SSA cleanup annotation after first-observation cleanup", async () => {
+    it("should set the SSA cleanup annotation after first-observation cleanup when annotations exist", async () => {
       const secret = {
-        metadata: { name: "test-secret", namespace: "default" },
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          annotations: { "existing.annotation/key": "value" },
+        },
         data: { key: "dmFsdWU=" },
       };
 
       await handleSecretUpdate(secret as kind.Secret);
       await startupCleanupQueue;
 
-      // Annotation is set via JSON Patch (not SSA Apply) to avoid affecting field ownership
+      // Annotation is set via JSON Patch (not SSA Apply) to avoid affecting field ownership.
+      // When annotations already exist, only the single add op is needed.
       expect(mockPatch).toHaveBeenCalledWith([
+        {
+          op: "add",
+          path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
+          value: "true",
+        },
+      ]);
+    });
+
+    it("should create the annotations map first when resource has no annotations", async () => {
+      const secret = {
+        metadata: { name: "test-secret", namespace: "default" },
+        data: { key: "dmFsdWU=" },
+        // No annotations field — patch would fail without first creating the map
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
+
+      expect(mockPatch).toHaveBeenCalledWith([
+        { op: "add", path: "/metadata/annotations", value: {} },
         {
           op: "add",
           path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,

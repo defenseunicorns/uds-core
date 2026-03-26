@@ -208,9 +208,14 @@ export async function handleResourceUpdate(
           const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
           // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
           const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
-          await K8s(kindClass, { name, namespace }).Patch([
-            { op: "add", path: annotationPath, value: "true" },
-          ]);
+          // If the resource has no annotations map yet, we must create it first —
+          // JSON Patch `add` on a child key fails if the parent object is absent.
+          const ops: { op: "add"; path: string; value: unknown }[] = [];
+          if (!resource.metadata?.annotations) {
+            ops.push({ op: "add", path: "/metadata/annotations", value: {} });
+          }
+          ops.push({ op: "add", path: annotationPath, value: "true" });
+          await K8s(kindClass, { name, namespace }).Patch(ops);
         } catch (annotationErr) {
           log.warn(
             { resource: name, namespace, type: resourceType, annotationErr },
