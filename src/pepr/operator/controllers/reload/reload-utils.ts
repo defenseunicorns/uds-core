@@ -139,6 +139,9 @@ async function resolveControllerKindAndName(
  * Returns true if Pepr's managedFields entry contains spec fields beyond the single annotation
  * Pepr actually manages, indicating it previously over-claimed SSA ownership.
  *
+ * NOTE: If Pepr owns another field in the controller for some reason, this will remove Pepr's ownership.
+ * While currently this is not true with any fields, it is something to make sure we properly maintain/update if needed.
+ *
  * @param entry The managed fields entry to inspect
  * @returns True if the entry claims ownership of fields beyond `uds.dev/restartedAt`
  */
@@ -175,24 +178,28 @@ async function cleanupControllerEntry(
   name: string,
   log: Logger,
 ) {
-  async function getController() {
-    return K8s(controllerKind).InNamespace(namespace).Get(name);
-  }
-  const controller = await retryWithDelay(getController, log);
-
-  const peprEntry = controller.metadata?.managedFields?.find(
-    (e: V1ManagedFieldsEntry) => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
-  );
-
-  if (peprEntry && controllerEntryIsOverClaimed(peprEntry)) {
-    await removePeprManagedFieldsEntry(
-      controllerKind,
-      name,
-      namespace,
-      controller.metadata!.managedFields!,
-      log,
+  // Wrap GET + cleanup together so a retry re-fetches managedFields, fixing index races
+  // (where the managedFields array shifted between our GET and the JSON Patch).
+  async function fetchAndCleanController() {
+    const controller = await K8s(controllerKind).InNamespace(namespace).Get(name);
+    const peprEntry = controller.metadata?.managedFields?.find(
+      (e: V1ManagedFieldsEntry) => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
     );
+    const wasOverClaimed = peprEntry != null && controllerEntryIsOverClaimed(peprEntry);
+    if (wasOverClaimed) {
+      await removePeprManagedFieldsEntry(
+        controllerKind,
+        name,
+        namespace,
+        controller.metadata!.managedFields!,
+      );
+    }
+    return { controller, wasOverClaimed };
+  }
 
+  const { controller, wasOverClaimed } = await retryWithDelay(fetchAndCleanController, log);
+
+  if (wasOverClaimed) {
     // Re-apply the existing timestamp (same value) to re-establish narrow Pepr ownership
     // without triggering a pod restart.
     const existingTimestamp = (

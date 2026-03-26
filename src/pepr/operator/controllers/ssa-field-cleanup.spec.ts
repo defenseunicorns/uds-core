@@ -5,7 +5,6 @@
 
 import { V1ManagedFieldsEntry } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
-import { Logger } from "pino";
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
 import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "./ssa-field-cleanup";
 
@@ -15,7 +14,6 @@ vi.mock("pepr", async () => {
 });
 
 const mockPatch = vi.fn().mockResolvedValue({});
-const mockLog = { warn: vi.fn(), debug: vi.fn() } as unknown as Logger;
 
 describe("removePeprManagedFieldsEntry", () => {
   beforeEach(() => {
@@ -24,7 +22,7 @@ describe("removePeprManagedFieldsEntry", () => {
   });
 
   test("no-op when managedFields is empty", async () => {
-    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, [], mockLog);
+    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, []);
     expect(mockPatch).not.toHaveBeenCalled();
   });
 
@@ -32,13 +30,7 @@ describe("removePeprManagedFieldsEntry", () => {
     const managedFields: V1ManagedFieldsEntry[] = [
       { manager: "helm", operation: "Apply", fieldsV1: {} },
     ];
-    await removePeprManagedFieldsEntry(
-      kind.Namespace,
-      "test-ns",
-      undefined,
-      managedFields,
-      mockLog,
-    );
+    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields);
     expect(mockPatch).not.toHaveBeenCalled();
   });
 
@@ -47,13 +39,7 @@ describe("removePeprManagedFieldsEntry", () => {
       { manager: PEPR_FIELD_MANAGER, operation: "Apply", fieldsV1: {} },
       { manager: "helm", operation: "Apply", fieldsV1: {} },
     ];
-    await removePeprManagedFieldsEntry(
-      kind.Namespace,
-      "test-ns",
-      undefined,
-      managedFields,
-      mockLog,
-    );
+    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields);
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/0/manager", value: PEPR_FIELD_MANAGER },
       { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
@@ -67,13 +53,7 @@ describe("removePeprManagedFieldsEntry", () => {
       { manager: "zarf", operation: "Apply", fieldsV1: {} },
       { manager: PEPR_FIELD_MANAGER, operation: "Apply", fieldsV1: {} },
     ];
-    await removePeprManagedFieldsEntry(
-      kind.Namespace,
-      "test-ns",
-      undefined,
-      managedFields,
-      mockLog,
-    );
+    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields);
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/2/manager", value: PEPR_FIELD_MANAGER },
       { op: "test", path: "/metadata/managedFields/2/operation", value: "Apply" },
@@ -86,13 +66,7 @@ describe("removePeprManagedFieldsEntry", () => {
       { manager: PEPR_FIELD_MANAGER, operation: "Update", fieldsV1: {} },
       { manager: PEPR_FIELD_MANAGER, operation: "Apply", fieldsV1: {} },
     ];
-    await removePeprManagedFieldsEntry(
-      kind.Namespace,
-      "test-ns",
-      undefined,
-      managedFields,
-      mockLog,
-    );
+    await removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields);
     expect(mockPatch).toHaveBeenCalledWith([
       { op: "test", path: "/metadata/managedFields/1/manager", value: PEPR_FIELD_MANAGER },
       { op: "test", path: "/metadata/managedFields/1/operation", value: "Apply" },
@@ -100,14 +74,13 @@ describe("removePeprManagedFieldsEntry", () => {
     ]);
   });
 
-  test("logs warning and continues when patch fails (index race)", async () => {
+  test("throws when patch fails (e.g. index race) so callers abort the sparse Apply", async () => {
     mockPatch.mockRejectedValueOnce(new Error("test op failed"));
     const managedFields: V1ManagedFieldsEntry[] = [
       { manager: PEPR_FIELD_MANAGER, operation: "Apply", fieldsV1: {} },
     ];
     await expect(
-      removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields, mockLog),
-    ).resolves.toBeUndefined();
-    expect(mockLog.warn).toHaveBeenCalled();
+      removePeprManagedFieldsEntry(kind.Namespace, "test-ns", undefined, managedFields),
+    ).rejects.toThrow("test op failed");
   });
 });

@@ -275,7 +275,15 @@ export async function applyNamespaceUpdates(
   const overClaimed = peprEntry != null && nsEntryIsOverClaimed(peprEntry);
 
   if (overClaimed) {
-    await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!, log);
+    try {
+      await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!);
+    } catch (err) {
+      log.error(
+        { err, namespace },
+        "Failed to remove stale Pepr managedFields entry; aborting namespace apply to avoid dropping fields",
+      );
+      throw err;
+    }
   }
 
   if (overClaimed || valuesChanged) {

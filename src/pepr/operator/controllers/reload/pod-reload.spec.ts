@@ -16,6 +16,7 @@ import {
   handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
+  startupCleanupQueue,
 } from "./pod-reload";
 import * as utils from "./reload-utils";
 
@@ -76,6 +77,7 @@ describe("pod-reload", () => {
   // Global mocks for K8s API
   const mockGet = vi.fn();
   const mockApply = vi.fn();
+  const mockPatch = vi.fn().mockResolvedValue({});
   const mockWithLabel = vi.fn().mockReturnThis();
   const mockInNamespace = vi.fn().mockReturnThis();
 
@@ -89,6 +91,7 @@ describe("pod-reload", () => {
     // Reset the mocks
     mockGet.mockReset();
     mockApply.mockReset();
+    mockPatch.mockReset().mockResolvedValue({});
     mockWithLabel.mockReset().mockReturnThis();
     mockInNamespace.mockReset().mockReturnThis();
 
@@ -108,7 +111,7 @@ describe("pod-reload", () => {
       Apply: mockApply,
       WithField: vi.fn().mockReturnThis(),
       Create: vi.fn(),
-      Patch: vi.fn(),
+      Patch: mockPatch,
       PatchStatus: vi.fn(),
       Raw: vi.fn(),
       Proxy: vi.fn(),
@@ -205,6 +208,7 @@ describe("pod-reload", () => {
       };
 
       await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
 
       expect(utils.cleanupOverClaimedControllerFields).toHaveBeenCalledWith(
         "default",
@@ -221,11 +225,16 @@ describe("pod-reload", () => {
       };
 
       await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
 
-      expect(mockApply).toHaveBeenCalledWith(
-        { metadata: { annotations: { [SSA_CLEANUP_ANNOTATION]: "true" } } },
-        { force: true },
-      );
+      // Annotation is set via JSON Patch (not SSA Apply) to avoid affecting field ownership
+      expect(mockPatch).toHaveBeenCalledWith([
+        {
+          op: "add",
+          path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
+          value: "true",
+        },
+      ]);
     });
 
     it("should skip cleanup on first observation when SSA cleanup annotation is already set", async () => {

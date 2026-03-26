@@ -644,7 +644,7 @@ describe("restartController", () => {
     expect(mockK8sClient.Apply).toHaveBeenCalled();
   });
 
-  it("proceeds to Apply when the managedFields Patch fails", async () => {
+  it("throws and skips Apply when the managedFields Patch fails", async () => {
     const patchError = new Error("test op failed");
     const mockK8sClient = createMockK8sClient({
       Get: vi.fn().mockResolvedValue({
@@ -676,18 +676,20 @@ describe("restartController", () => {
     (K8s as Mock).mockReturnValue(mockK8sClient);
     const mockLogger = createMockLogger();
 
-    await restartController(
-      "default",
-      kind.StatefulSet,
-      "test-statefulset",
-      "CA changed",
-      mockLogger,
-      "CA",
-    );
+    await expect(
+      restartController(
+        "default",
+        kind.StatefulSet,
+        "test-statefulset",
+        "CA changed",
+        mockLogger,
+        "CA",
+      ),
+    ).rejects.toThrow("test op failed");
 
     expect(mockK8sClient.Patch).toHaveBeenCalled();
-    // Apply must still run even though the Patch failed
-    expect(mockK8sClient.Apply).toHaveBeenCalled();
+    // Apply must NOT run when cleanup fails — sparse Apply on stale ownership could drop fields
+    expect(mockK8sClient.Apply).not.toHaveBeenCalled();
   });
 });
 

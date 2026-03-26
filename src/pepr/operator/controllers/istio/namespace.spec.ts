@@ -1290,7 +1290,7 @@ describe("applyNamespaceUpdates", () => {
     );
   });
 
-  test("proceeds to Apply when the managedFields Patch fails", async () => {
+  test("throws and skips Apply when the managedFields Patch fails", async () => {
     const namespace = "test-ns";
     mockPatch.mockRejectedValueOnce(new Error("test op failed"));
     const labels = { "istio.io/dataplane-mode": "ambient" };
@@ -1309,19 +1309,20 @@ describe("applyNamespaceUpdates", () => {
       },
     ];
 
-    const result = await applyNamespaceUpdates(
-      namespace,
-      labels,
-      annotations,
-      originalLabels,
-      originalAnnotations,
-      managedFields,
-    );
+    await expect(
+      applyNamespaceUpdates(
+        namespace,
+        labels,
+        annotations,
+        originalLabels,
+        originalAnnotations,
+        managedFields,
+      ),
+    ).rejects.toThrow("test op failed");
 
-    expect(result).toBe(true);
     expect(mockPatch).toHaveBeenCalled();
-    // Apply must still run even though the Patch failed
-    expect(mockApply).toHaveBeenCalled();
+    // Apply must NOT run when cleanup fails — sparse Apply on stale ownership could drop fields
+    expect(mockApply).not.toHaveBeenCalled();
   });
 });
 

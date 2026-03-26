@@ -24,7 +24,8 @@ export const configMapChecksumCache = new Map<string, string>();
 export const SSA_CLEANUP_ANNOTATION = "uds.dev/pod-reload-cleanup-complete";
 
 // Serializes first-observation cleanup calls to avoid thundering-herd API pressure on startup.
-let startupCleanupQueue: Promise<void> = Promise.resolve();
+// Exported for testing so specs can await it after calling a handler.
+export let startupCleanupQueue: Promise<void> = Promise.resolve();
 
 /**
  * Computes a SHA256 checksum of the resource data
@@ -200,12 +201,16 @@ export async function handleResourceUpdate(
         const pods = await discoverResourceConsumers(namespace, name);
         await cleanupOverClaimedControllerFields(namespace, pods, log);
         // Mark complete so future restarts skip this work entirely.
+        // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
+        // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
+        // (e.g. the CA cert in uds-trust-bundle).
         try {
           const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
-          await K8s(kindClass, { name, namespace }).Apply(
-            { metadata: { annotations: { [SSA_CLEANUP_ANNOTATION]: "true" } } },
-            { force: true },
-          );
+          // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
+          const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
+          await K8s(kindClass, { name, namespace }).Patch([
+            { op: "add", path: annotationPath, value: "true" },
+          ]);
         } catch (annotationErr) {
           log.warn(
             { resource: name, namespace, type: resourceType, annotationErr },
@@ -219,7 +224,6 @@ export async function handleResourceUpdate(
           "Field manager cleanup failed",
         ),
       );
-    await startupCleanupQueue;
     return;
   }
 
