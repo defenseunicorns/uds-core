@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -18,6 +18,13 @@ export type ResourceType = "Secret" | "ConfigMap";
 // Exported for testing purposes
 export const secretChecksumCache = new Map<string, string>();
 export const configMapChecksumCache = new Map<string, string>();
+
+// Annotation set on a Secret/ConfigMap after its backing controllers have been cleaned up.
+// Prevents re-running the cleanup on every controller restart.
+export const SSA_CLEANUP_ANNOTATION = "uds.dev/pod-reload-cleanup-complete";
+
+// Serializes first-observation cleanup calls to avoid thundering-herd API pressure on startup.
+let startupCleanupQueue: Promise<void> = Promise.resolve();
 
 /**
  * Computes a SHA256 checksum of the resource data
@@ -181,15 +188,35 @@ export async function handleResourceUpdate(
   // First time we've seen this resource — proactively clean up any over-claimed controller
   // fields so Helm upgrades don't conflict before the first reload fires.
   if (!previousChecksum) {
-    try {
-      const pods = await discoverResourceConsumers(namespace, name);
-      await cleanupOverClaimedControllerFields(namespace, pods, log);
-    } catch (err) {
-      log.warn(
-        { resource: name, namespace, type: resourceType, err },
-        "Field manager cleanup failed",
-      );
+    // Already cleaned up on a prior run — skip entirely.
+    if (resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
+      return;
     }
+
+    // Chain onto the queue so concurrent first-observation events on startup
+    // run sequentially rather than fanning out parallel API calls.
+    startupCleanupQueue = startupCleanupQueue
+      .then(async () => {
+        const pods = await discoverResourceConsumers(namespace, name);
+        await cleanupOverClaimedControllerFields(namespace, pods, log);
+        // Mark complete so future restarts skip this work entirely.
+        try {
+          const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
+          await K8s(kindClass, { name, namespace }).Apply(
+            { metadata: { annotations: { [SSA_CLEANUP_ANNOTATION]: "true" } } },
+            { force: true },
+          );
+        } catch (annotationErr) {
+          log.warn(
+            { resource: name, namespace, type: resourceType, annotationErr },
+            "Failed to mark cleanup complete; will retry on next restart",
+          );
+        }
+      })
+      .catch(err =>
+        log.warn({ resource: name, namespace, type: resourceType, err }, "Field manager cleanup failed"),
+      );
+    await startupCleanupQueue;
     return;
   }
 

@@ -15,7 +15,7 @@ on:
       - ".github/workflows/test-cli-matrix.yaml"
       - "bundles/k3d-standard/**"
 
-# Abort prior jobs in the same workflow / PR; use ref for PRs, sha for scheduled runs
+# Abort prior jobs in the same workflow / PR
 concurrency:
   group: test-cli-matrix-${{ github.ref }}
   cancel-in-progress: true

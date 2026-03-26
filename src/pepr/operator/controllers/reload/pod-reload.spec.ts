@@ -6,6 +6,7 @@
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
+  SSA_CLEANUP_ANNOTATION,
   computeResourceChecksum,
   configMapChecksumCache,
   discoverConfigMapConsumers,
@@ -74,6 +75,7 @@ describe("pod-reload", () => {
 
   // Global mocks for K8s API
   const mockGet = vi.fn();
+  const mockApply = vi.fn();
   const mockWithLabel = vi.fn().mockReturnThis();
   const mockInNamespace = vi.fn().mockReturnThis();
 
@@ -86,6 +88,7 @@ describe("pod-reload", () => {
   function setupK8sMock(mockGetResponse: K8sResponse = { items: [] }) {
     // Reset the mocks
     mockGet.mockReset();
+    mockApply.mockReset();
     mockWithLabel.mockReset().mockReturnThis();
     mockInNamespace.mockReset().mockReturnThis();
 
@@ -102,7 +105,7 @@ describe("pod-reload", () => {
       Delete: vi.fn(),
       Evict: vi.fn(),
       Watch: vi.fn(),
-      Apply: vi.fn(),
+      Apply: mockApply,
       WithField: vi.fn().mockReturnThis(),
       Create: vi.fn(),
       Patch: vi.fn(),
@@ -208,6 +211,36 @@ describe("pod-reload", () => {
         expect.any(Array),
         expect.anything(),
       );
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("should set the SSA cleanup annotation after first-observation cleanup", async () => {
+      const secret = {
+        metadata: { name: "test-secret", namespace: "default" },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(mockApply).toHaveBeenCalledWith(
+        { metadata: { annotations: { [SSA_CLEANUP_ANNOTATION]: "true" } } },
+        { force: true },
+      );
+    });
+
+    it("should skip cleanup on first observation when SSA cleanup annotation is already set", async () => {
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+        },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
