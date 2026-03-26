@@ -1,0 +1,56 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - debugMode with autoscaling enabled
+templates:
+  - statefulset.yaml
+  - secret-postgresql.yaml
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should render debug logging env vars alongside autoscaling env vars
+    set:
+      devMode: false
+      debugMode: true
+      autoscaling:
+        enabled: true
+      postgresql:
+        username: "test-user"
+        password: "test-password"
+        database: "test-db"
+        host: "test-host"
+        port: 5432
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_LOG_LEVEL
+            value: DEBUG
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_LOG_CATEGORY__ORG_APACHE_HTTP__LEVEL
+            value: DEBUG
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_SERVICES_X509__LEVEL
+            value: TRACE
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_COMMON_CRYPTO__LEVEL
+            value: TRACE
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: QUARKUS_LOG_CATEGORY__ORG_KEYCLOAK_CRYPTO__LEVEL
+            value: TRACE
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: KC_CACHE
+            value: ispn
