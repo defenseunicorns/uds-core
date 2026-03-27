@@ -1,12 +1,13 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1OwnerReference } from "@kubernetes/client-node";
+import { V1ManagedFieldsEntry, V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
+import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "../ssa-field-cleanup";
 import { createEvent, retryWithDelay } from "../utils";
 
 /**
@@ -73,44 +74,14 @@ export async function reloadPods(
     }
 
     try {
-      if (controllerRef.kind === "ReplicaSet") {
-        // For ReplicaSets, try to find the parent Deployment
-        await handleReplicaSetOwner(namespace, controllerRef.name, message, log, reason);
-      } else if (controllerRef.kind === "Deployment") {
-        // Handle Deployment directly
-        await restartController(
-          namespace,
-          kind.Deployment,
-          controllerRef.name,
-          message,
-          log,
-          reason,
-        );
-      } else if (controllerRef.kind === "StatefulSet") {
-        // Handle StatefulSet directly
-        await restartController(
-          namespace,
-          kind.StatefulSet,
-          controllerRef.name,
-          message,
-          log,
-          reason,
-        );
-      } else if (controllerRef.kind === "DaemonSet") {
-        // Handle DaemonSet directly
-        await restartController(
-          namespace,
-          kind.DaemonSet,
-          controllerRef.name,
-          message,
-          log,
-          reason,
-        );
-      } else {
+      const resolved = await resolveControllerKindAndName(namespace, controllerRef, log);
+      if (!resolved) {
         // Unhandled controller type, evict the pod directly
         standalonePodsToEvict.push(pod);
         continue;
       }
+
+      await restartController(namespace, resolved.kindClass, resolved.name, message, log, reason);
 
       // Mark this controller as handled
       handledControllers[controllerKey] = true;
@@ -135,50 +106,138 @@ export async function reloadPods(
 }
 
 /**
- * Handle ReplicaSet by finding its parent Deployment or handling it directly
+ * Resolves a pod's controllerRef to the effective controller kind and name,
+ * walking ReplicaSet → parent Deployment when applicable.
+ *
+ * @param namespace The namespace containing the controller
+ * @param ref The owner reference from the pod (kind + name)
+ * @param log Logger instance for logging
+ * @returns The resolved kind class and name, or null for unhandled controller kinds
  */
-async function handleReplicaSetOwner(
+async function resolveControllerKindAndName(
   namespace: string,
-  replicaSetName: string,
-  message: string,
+  ref: { kind: string; name: string },
   log: Logger,
-  reason: string,
-): Promise<void> {
-  try {
-    // Get the ReplicaSet
+): Promise<{ kindClass: GenericClass; name: string } | null> {
+  if (ref.kind === "ReplicaSet") {
     async function getReplicaSet() {
-      return K8s(kind.ReplicaSet).InNamespace(namespace).Get(replicaSetName);
+      return K8s(kind.ReplicaSet).InNamespace(namespace).Get(ref.name);
     }
     const rs = await retryWithDelay(getReplicaSet, log);
-
-    // Look for a Deployment owner
-    const deploymentOwner = rs.metadata?.ownerReferences?.find(ref => ref.kind === "Deployment");
-
-    if (deploymentOwner?.name) {
-      // Found a Deployment owner, restart it
-      await restartController(
-        namespace,
-        kind.Deployment,
-        deploymentOwner.name,
-        message,
-        log,
-        reason,
-      );
-    } else {
-      // Standalone ReplicaSet - restart it directly using the same annotation pattern
-      await restartController(namespace, kind.ReplicaSet, replicaSetName, message, log, reason);
-    }
-  } catch (error) {
-    log.error(
-      { replicaSet: replicaSetName, namespace, error },
-      `Failed to handle ReplicaSet owner: ${message}`,
-    );
-    throw error;
+    const deploymentOwner = rs.metadata?.ownerReferences?.find(r => r.kind === "Deployment");
+    return deploymentOwner?.name
+      ? { kindClass: kind.Deployment, name: deploymentOwner.name }
+      : { kindClass: kind.ReplicaSet, name: ref.name };
   }
+  if (ref.kind === "Deployment") return { kindClass: kind.Deployment, name: ref.name };
+  if (ref.kind === "StatefulSet") return { kindClass: kind.StatefulSet, name: ref.name };
+  if (ref.kind === "DaemonSet") return { kindClass: kind.DaemonSet, name: ref.name };
+  return null;
 }
 
 /**
- * Restart a controller (Deployment, StatefulSet, DaemonSet, ReplicaSet) using the kubectl-style annotation
+ * Returns true if Pepr's managedFields entry contains spec fields beyond the single annotation
+ * Pepr actually manages, indicating it previously over-claimed SSA ownership.
+ *
+ * NOTE: If Pepr owns another field in the controller for some reason, this will remove Pepr's ownership.
+ * While currently this is not true with any fields, it is something to make sure we properly maintain/update if needed.
+ *
+ * @param entry The managed fields entry to inspect
+ * @returns True if the entry claims ownership of fields beyond `uds.dev/restartedAt`
+ */
+export function controllerEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
+  const v1 = (entry.fieldsV1 ?? {}) as Record<string, unknown>;
+  const spec = (v1["f:spec"] as Record<string, unknown>) ?? {};
+  const template = (spec["f:template"] as Record<string, unknown>) ?? {};
+  const templateMeta = (template["f:metadata"] as Record<string, unknown>) ?? {};
+  const annotations = (templateMeta["f:annotations"] as Record<string, unknown>) ?? {};
+
+  return (
+    Object.keys(v1).some(k => k !== "f:spec") ||
+    Object.keys(spec).some(k => k !== "f:template") ||
+    Object.keys(template).some(k => k !== "f:metadata") ||
+    Object.keys(templateMeta).some(k => k !== "f:annotations") ||
+    Object.keys(annotations).some(k => k !== "f:uds.dev/restartedAt")
+  );
+}
+
+/**
+ * Fetches a controller, removes any stale over-claimed Pepr SSA entry, and
+ * re-establishes narrow Pepr ownership by re-applying the existing restartedAt
+ * annotation (same value → no pod restart). Returns the fetched controller.
+ *
+ * @param namespace The namespace containing the controller
+ * @param controllerKind The Kubernetes kind class for the controller
+ * @param name The name of the controller resource
+ * @param log Logger instance for logging
+ * @returns The fetched controller resource
+ */
+async function cleanupControllerEntry(
+  namespace: string,
+  controllerKind: GenericClass,
+  name: string,
+  log: Logger,
+) {
+  // Wrap GET + cleanup together so a retry re-fetches managedFields, fixing index races
+  // (where the managedFields array shifted between our GET and the JSON Patch).
+  async function fetchAndCleanController() {
+    const controller = await K8s(controllerKind).InNamespace(namespace).Get(name);
+    const peprEntry = controller.metadata?.managedFields?.find(
+      (e: V1ManagedFieldsEntry) => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
+    );
+    const wasOverClaimed = peprEntry != null && controllerEntryIsOverClaimed(peprEntry);
+    if (wasOverClaimed) {
+      await removePeprManagedFieldsEntry(
+        controllerKind,
+        name,
+        namespace,
+        controller.metadata!.managedFields!,
+      );
+    }
+    return { controller, wasOverClaimed };
+  }
+
+  const { controller, wasOverClaimed } = await retryWithDelay(fetchAndCleanController, log);
+
+  if (wasOverClaimed) {
+    // Re-apply the existing timestamp (same value) to re-establish narrow Pepr ownership
+    // without triggering a pod restart.
+    const existingTimestamp = (
+      controller as {
+        spec?: { template?: { metadata?: { annotations?: Record<string, string> } } };
+      }
+    ).spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
+
+    if (existingTimestamp) {
+      async function reApplyAnnotation() {
+        return K8s(controllerKind, { name, namespace }).Apply(
+          {
+            spec: {
+              template: {
+                metadata: { annotations: { "uds.dev/restartedAt": existingTimestamp } },
+              },
+            },
+          },
+          { force: true },
+        );
+      }
+      await retryWithDelay(reApplyAnnotation, log);
+    }
+  }
+
+  return controller;
+}
+
+/**
+ * Restart a controller (Deployment, StatefulSet, DaemonSet, ReplicaSet) using the kubectl-style
+ * rolling restart annotation (`uds.dev/restartedAt`).
+ *
+ * @param namespace The namespace containing the controller
+ * @param controllerKind The Kubernetes kind class for the controller
+ * @param name The name of the controller resource
+ * @param message The reason for the restart (used in event message and logs)
+ * @param log Logger instance for logging
+ * @param reason The event reason string (used in the Kubernetes event)
  */
 export async function restartController(
   namespace: string,
@@ -202,26 +261,27 @@ export async function restartController(
     throw new Error(`Unsupported controller kind: ${controllerKindName}`);
   }
 
-  // Get the controller resource for the event
-  async function getController() {
-    return K8s(controllerKind).InNamespace(namespace).Get(name);
-  }
-  const controller = await retryWithDelay(getController, log);
+  // Fetch the controller and clean up any stale over-claimed Pepr SSA entry.
+  // Old code applied the full controller object, stealing SSA ownership of every spec field.
+  const controller = await cleanupControllerEntry(namespace, controllerKind, name, log);
 
   try {
-    // Setup parent fields if any are missing to ensure our apply doesn't hit errors
-    if (!controller.spec) controller.spec = {};
-    if (!controller.spec.template) controller.spec.template = {};
-    if (!controller.spec.template.metadata) controller.spec.template.metadata = {};
-    if (!controller.spec.template.metadata.annotations)
-      controller.spec.template.metadata.annotations = {};
-    controller.spec.template.metadata.annotations["uds.dev/restartedAt"] = new Date().toISOString();
-    // Clear managedFields before apply
-    delete controller.metadata?.managedFields;
+    // Build a sparse patch with only the fields pepr owns to avoid claiming ownership
+    // of fields managed by other field managers (e.g. helm.sh/chart, resource limits)
+    const patch = {
+      spec: {
+        template: {
+          metadata: {
+            annotations: {
+              "uds.dev/restartedAt": new Date().toISOString(),
+            },
+          },
+        },
+      },
+    };
 
-    // Update the annotation in the controller object and apply
     async function applyControllerAnnotation() {
-      return K8s(controllerKind, { name, namespace }).Apply(controller);
+      return K8s(controllerKind, { name, namespace }).Apply(patch, { force: true });
     }
     await retryWithDelay(applyControllerAnnotation, log);
   } catch (error) {
@@ -256,6 +316,48 @@ export async function restartController(
 
   // Log success if we got here (apply was successful)
   log.info(`Successfully restarted ${controllerKindName} ${namespace}/${name}: ${message}`);
+}
+
+/**
+ * Best-effort cleanup of stale over-claimed Pepr managedFields entries for the
+ * controllers backing the given pods. Called on first observation of a labeled
+ * secret/ConfigMap so Helm upgrades don't hit SSA conflicts before the first
+ * reload fires.
+ *
+ * @param namespace The namespace containing the pods and their controllers
+ * @param pods List of pods whose backing controllers should be cleaned up
+ * @param log Logger instance for logging
+ */
+export async function cleanupOverClaimedControllerFields(
+  namespace: string,
+  pods: kind.Pod[],
+  log: Logger,
+): Promise<void> {
+  const handled = new Set<string>();
+
+  for (const pod of pods) {
+    const phase = pod.status?.phase;
+    if (phase === "Succeeded" || phase === "Failed") continue;
+    if (pod.metadata?.deletionTimestamp) continue;
+
+    const controllerRef = pod.metadata?.ownerReferences?.find(ref => ref.controller === true);
+    if (!controllerRef) continue;
+
+    const key = `${controllerRef.kind}:${controllerRef.name}`;
+    if (handled.has(key)) continue;
+    handled.add(key);
+
+    try {
+      const resolved = await resolveControllerKindAndName(namespace, controllerRef, log);
+      if (!resolved) continue;
+      await cleanupControllerEntry(namespace, resolved.kindClass, resolved.name, log);
+    } catch (err) {
+      log.warn(
+        { err, controller: key, namespace },
+        "Failed to clean up controller fields on first load; continuing",
+      );
+    }
+  }
 }
 
 /**

@@ -28,12 +28,9 @@ export async function updateKeycloakClientsSecret(
 ) {
   config.data = config.data || {};
 
-  // This might be a bug but it seems Zarf adds managedFields, which is prohibited in Secrets.
-  delete config.metadata?.managedFields;
-
   if (!config.data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
     log.info("Generating new Keycloak client secret");
     config.data[KEYCLOAK_CLIENT_SECRET_KEY] = Buffer.from(uuidv4()).toString("base64");
-    await K8s(kind.Secret).Apply(config);
+    await K8s(kind.Secret).Apply(config, { force: true });
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,7 +7,7 @@ import { createHash } from "crypto";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { retryWithDelay } from "../utils";
-import { reloadPods } from "./reload-utils";
+import { cleanupOverClaimedControllerFields, reloadPods } from "./reload-utils";
 
 const log = setupLogger(Component.OPERATOR_SECRETS);
 
@@ -18,6 +18,14 @@ export type ResourceType = "Secret" | "ConfigMap";
 // Exported for testing purposes
 export const secretChecksumCache = new Map<string, string>();
 export const configMapChecksumCache = new Map<string, string>();
+
+// Annotation set on a Secret/ConfigMap after its backing controllers have been cleaned up.
+// Prevents re-running the cleanup on every controller restart.
+export const SSA_CLEANUP_ANNOTATION = "uds.dev/pod-reload-cleanup-complete";
+
+// Serializes first-observation cleanup calls to avoid thundering-herd API pressure on startup.
+// Exported for testing so specs can await it after calling a handler.
+export let startupCleanupQueue: Promise<void> = Promise.resolve();
 
 /**
  * Computes a SHA256 checksum of the resource data
@@ -178,8 +186,54 @@ export async function handleResourceUpdate(
   // Update the cache regardless of whether we process this update
   checksumCache.set(cacheKey, currentChecksum);
 
-  // If this is the first time we're seeing this resource, or if the data hasn't changed, exit early
-  if (!previousChecksum || previousChecksum === currentChecksum) {
+  // First time we've seen this resource — proactively clean up any over-claimed controller
+  // fields so Helm upgrades don't conflict before the first reload fires.
+  if (!previousChecksum) {
+    // Already cleaned up on a prior run — skip entirely.
+    if (resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
+      return;
+    }
+
+    // Chain onto the queue so concurrent first-observation events on startup
+    // run sequentially rather than fanning out parallel API calls.
+    startupCleanupQueue = startupCleanupQueue
+      .then(async () => {
+        const pods = await discoverResourceConsumers(namespace, name);
+        await cleanupOverClaimedControllerFields(namespace, pods, log);
+        // Mark complete so future restarts skip this work entirely.
+        // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
+        // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
+        // (e.g. the CA cert in uds-trust-bundle).
+        try {
+          const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
+          // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
+          const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
+          // If the resource has no annotations map yet, we must create it first —
+          // JSON Patch `add` on a child key fails if the parent object is absent.
+          const ops: { op: "add"; path: string; value: unknown }[] = [];
+          if (!resource.metadata?.annotations) {
+            ops.push({ op: "add", path: "/metadata/annotations", value: {} });
+          }
+          ops.push({ op: "add", path: annotationPath, value: "true" });
+          await K8s(kindClass, { name, namespace }).Patch(ops);
+        } catch (annotationErr) {
+          log.warn(
+            { resource: name, namespace, type: resourceType, annotationErr },
+            "Failed to mark cleanup complete; will retry on next restart",
+          );
+        }
+      })
+      .catch(err =>
+        log.warn(
+          { resource: name, namespace, type: resourceType, err },
+          "Field manager cleanup failed",
+        ),
+      );
+    return;
+  }
+
+  // Data unchanged — nothing to do
+  if (previousChecksum === currentChecksum) {
     return;
   }
 
