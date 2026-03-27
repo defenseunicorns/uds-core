@@ -123,7 +123,7 @@ Use the following Helm values to tune or disable the built-in probe alert rules:
 | `.probeTLSExpiryCritical.days` | integer | `14` | Sets the critical threshold, in days before certificate expiry |
 | `.probeTLSExpiryCritical.severity` | string | `critical` | Sets the `severity` label for `UDSProbeTLSExpiryCritical` |
 
-The following example shows common tuning patterns for the default probe alerts:
+The following snippet shows several examples of how the default probe alert settings can be modified:
 
 ```yaml title="uds-bundle.yaml"
 overrides:
