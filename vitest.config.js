@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -12,7 +12,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.spec.ts'],
-    exclude: ['test/vitest/**', 'scripts/**'],
+    exclude: ['test/vitest/**', 'scripts/**', 'uds-docs/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
