@@ -25,7 +25,14 @@ describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
     "UDSProbeTLSExpiryCritical",
   ] as const;
 
-  const fetchAlertRuleNames = async (): Promise<string[]> => {
+  type PrometheusAlertRule = {
+    type?: string;
+    name?: string;
+    health?: string;
+    state?: string;
+  };
+
+  const fetchAlertRules = async (): Promise<PrometheusAlertRule[]> => {
     const response = await fetch(`${prometheusProxy.url}/api/v1/rules`);
     if (!response.ok) {
       throw new Error(`Prometheus rules API returned ${response.status}`);
@@ -35,10 +42,7 @@ describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
       status: string;
       data?: {
         groups?: Array<{
-          rules?: Array<{
-            type?: string;
-            name?: string;
-          }>;
+          rules?: PrometheusAlertRule[];
         }>;
       };
     };
@@ -49,21 +53,26 @@ describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
 
     return (body.data?.groups ?? [])
       .flatMap(group => group.rules ?? [])
-      .filter(rule => rule.type === "alerting" && Boolean(rule.name))
-      .map(rule => rule.name as string);
+      .filter(rule => rule.type === "alerting" && Boolean(rule.name));
   };
 
-  const expectAlertRulePresent = (alertName: string) =>
+  const expectAlertRuleHealthy = (alertName: string) =>
     pollUntilSuccess(
-      fetchAlertRuleNames,
-      names => names.includes(alertName),
-      `${alertName} alert rule to be loaded`,
+      async () => {
+        const rules = await fetchAlertRules();
+        return rules.find(rule => rule.name === alertName) ?? null;
+      },
+      rule => rule?.health === "ok" && rule?.state === "inactive",
+      `${alertName} alert rule to be loaded and healthy`,
       120000,
       5000,
     );
 
-  test.concurrent.each(alertRules)("alert rule %s should be loaded", async alertRule => {
-    const alertRuleNames = await expectAlertRulePresent(alertRule);
-    expect(alertRuleNames).toContain(alertRule);
+  test.concurrent.each(alertRules)("alert rule %s should be loaded and healthy", async alertRule => {
+    const rule = await expectAlertRuleHealthy(alertRule);
+    expect(rule).not.toBeNull();
+    expect(rule?.name).toBe(alertRule);
+    expect(rule?.health).toBe("ok");
+    expect(rule?.state).toBe("inactive");
   });
 });
