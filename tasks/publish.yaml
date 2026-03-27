@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -28,14 +28,14 @@ tasks:
       - description: "Publish amd64/arm64 packages per flavor"
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
-          uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
-          uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          ./uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          ./uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
 
       - description: "Tag the latest package (if a snapshot release)"
         cmd: |
           if [ $(echo "${TARGET_REPO}" | grep 'snapshot') ]; then
              pkgPath="${TARGET_REPO}/core"
-             uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
+             ./uds zarf tools registry copy ${pkgPath}:${VERSION}-${FLAVOR} ${pkgPath}:latest-${FLAVOR}
           fi
 
   - name: checkpoint-package
@@ -43,7 +43,7 @@ tasks:
     actions:
       - description: "Publish the checkpoint package for the current UDS_ARCH"
         cmd: |
-          uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
+          ./uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
 
   - name: bundles
     description: "Publish UDS Bundles"
@@ -52,18 +52,18 @@ tasks:
       - description: "Publish amd64 and arm64 bundles"
         cmd: |
           echo "Publishing bundles to ${TARGET_REPO}"
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
       - description: "Tag the latest bundles"
         cmd: |
           pkgPath="${TARGET_REPO}/bundles/k3d-core-demo"
-          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
-          uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
 
   - name: single-layer
     description: "Test and Publish UDS Core layer"
@@ -80,4 +80,4 @@ tasks:
           layer: ${LAYER}
       - task: utils:determine-repo
       - description: "Publish build of layer"
-        cmd: uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
+        cmd: ./uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

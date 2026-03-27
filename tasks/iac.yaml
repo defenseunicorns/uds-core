@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -32,7 +32,7 @@ tasks:
           ATTEMPTS=${API_WAIT_ATTEMPTS:-60}
           SLEEP=${API_WAIT_SLEEP:-10}
           for i in $(seq 1 $ATTEMPTS); do
-            if uds zarf tools kubectl get --raw="/readyz" >/dev/null 2>&1; then
+            if ./uds zarf tools kubectl get --raw="/readyz" >/dev/null 2>&1; then
               echo "API server ready"
               exit 0
             fi
@@ -41,7 +41,7 @@ tasks:
           done
 
           echo "API server did not become ready in time" >&2
-          uds zarf tools kubectl get --raw="/readyz?verbose"
+          ./uds zarf tools kubectl get --raw="/readyz?verbose"
           exit 1
 
   - name: cluster-ready
@@ -66,7 +66,7 @@ tasks:
           # wait for nodes to be ready
           echo "Waiting for all cluster nodes to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get nodes | grep Ready | wc -l) -lt 4 ]; then
+            if [ $(./uds zarf tools kubectl get nodes | grep Ready | wc -l) -lt 4 ]; then
               sleep 5;
             else
               break
@@ -75,7 +75,7 @@ tasks:
           # wait for cluster components
           echo "Waiting for Helm Controller to install cluster components..."
           while true; do
-            if [ $(uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
+            if [ $(./uds zarf tools kubectl get po -n kube-system -l batch.kubernetes.io/controller-uid --no-headers | egrep -v Completed | wc -l) -gt 0 ]; then
                sleep 5;
             else
               break
@@ -83,7 +83,7 @@ tasks:
           done
           echo "Waiting for cluster components to be ready...";
           while true; do
-            if [ $(uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
+            if [ $(./uds zarf tools kubectl get po,job -A --no-headers=true | egrep -v 'Running|Complete' | wc -l) -gt 0 ]; then
               sleep 5;
             else
               echo "Cluster is ready!"

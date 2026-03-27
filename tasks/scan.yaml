@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -36,14 +36,14 @@ tasks:
           - name: VERSION
       - description: "Get latest tag version from OCI"
         if: ${{ eq .variables.VERSION "latest" }}
-        cmd: uds zarf tools registry ls ${TARGET_REPO}/${PACKAGE} | grep ${FLAVOR} | sort -V | tail -1
+        cmd: ./uds zarf tools registry ls ${TARGET_REPO}/${PACKAGE} | grep ${FLAVOR} | sort -V | tail -1
         setVariables:
           - name: VERSION
       - description: "Pull the SBOMs from the package"
         cmd: |
           rm -rf cve/sboms/${PACKAGE}
           mkdir -p cve/sboms
-          uds zarf package inspect sbom oci://${TARGET_REPO}/${PACKAGE}:${VERSION} --output cve/sboms
+          ./uds zarf package inspect sbom oci://${TARGET_REPO}/${PACKAGE}:${VERSION} --output cve/sboms
 
   # Note: This task assumes local SBOMs already available for the specified package
   - name: scan-sbom

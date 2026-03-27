@@ -24,7 +24,7 @@ tasks:
     actions:
       - task: create:pepr-build
       - task: setup:k3d-test-cluster
-      - cmd: uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
+      - cmd: ./uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
   - name: single-layer
     description: "Build and test a single layer, must set UDS_LAYER environment variable"
@@ -48,13 +48,13 @@ tasks:
     description: "Sets up a k3d cluster and deploys dependencies for the given layer"
     actions:
       - task: setup:k3d-test-cluster
-      - cmd: uds zarf tools yq '.metadata.x-uds-dependencies.[]' packages/${LAYER}/zarf.yaml 2>/dev/null
+      - cmd: ./uds zarf tools yq '.metadata.x-uds-dependencies.[]' packages/${LAYER}/zarf.yaml 2>/dev/null
         mute: true
         setVariables:
           - name: LAYER_DEPS
       - cmd: |
           for dep in $LAYER_DEPS; do
-            uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
+            ./uds run -f tasks/test.yaml single-layer --set LAYER=$dep --set FLAVOR=${FLAVOR} --no-progress
           done
 
   - name: validate-packages
@@ -70,9 +70,9 @@ tasks:
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
-                uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
+                ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
               else
-                uds run -f src/${package}/tasks.yaml validate --no-progress
+                ./uds run -f src/${package}/tasks.yaml validate --no-progress
               fi
             fi
           done
@@ -86,7 +86,7 @@ tasks:
         required: true
     actions:
       - cmd: |
-          uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
+          ./uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
 
   - name: e2e-tests
     description: "E2E Test all packages"
@@ -239,8 +239,8 @@ tasks:
           group: "/UDS Core/Admin"
       - description: "Setup Authservice App for Testing"
         cmd: |
-          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
-          uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
-          uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
+          ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          ./uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
+          ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
