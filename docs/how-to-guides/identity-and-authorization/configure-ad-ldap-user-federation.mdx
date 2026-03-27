@@ -1,7 +1,7 @@
 ---
-title: Configure AD/LDAP user federation in Keycloak
+title: Configure AD/LDAP user federation in Keycloak UI
 sidebar:
-  order: 3.020
+  order: 3.021
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -20,9 +20,10 @@ You'll connect an Active Directory or LDAP directory service to Keycloak as a us
 
 ## Before you begin
 
-UDS Core deploys Keycloak with two pre-configured groups in the UDS realm: `/UDS Core/Admin` (platform administrators) and `/UDS Core/Auditor` (read-only access). This guide maps AD group memberships to those groups so that directory users automatically receive the correct platform role on first login.
+> [!TIP]
+> The recommended approach for configuring LDAP user federation is OpenTofu. Use this guide only if OpenTofu is not available in your environment. See [Configure AD/LDAP user federation with OpenTofu](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation-with-opentofu/).
 
-LDAP user federation has no pre-built `realmInitEnv` bundle override. You configure it either through the Keycloak Admin Console (covered in this guide) or programmatically using the OpenTofu Keycloak provider (see [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/)).
+UDS Core deploys Keycloak with two pre-configured groups in the `uds` realm: `/UDS Core/Admin` (platform administrators) and `/UDS Core/Auditor` (read-only access). This guide maps AD group memberships to those groups so that directory users automatically receive the correct platform role on first login.
 
 > [!CAUTION]
 > **Do not remove local admin accounts until you have fully verified LDAP login end-to-end.** If you misconfigure the federation and remove the local fallback, you will be locked out of Keycloak. Complete the verification step before removing any local accounts.
@@ -41,13 +42,13 @@ LDAP user federation has no pre-built `realmInitEnv` bundle override. You config
 
    Collect the following values from your AD administrator before starting. You will enter them into the Keycloak Admin Console in later steps.
 
-   | Setting | Description | Example |
-   |---|---|---|
-   | Connection URL | LDAP server URL (must use `ldaps://`, see warning below) | `ldaps://dc01.example.com:636` |
-   | Bind DN | Distinguished Name of the service account Keycloak uses to query the directory | `CN=svc-keycloak,OU=Service Accounts,DC=example,DC=com` |
-   | Bind credential | Password for the bind DN service account | (required) |
-   | Users DN | Base DN where user objects are located | `OU=Users,DC=example,DC=com` |
-   | Groups DN | Base DN where group objects are located | `OU=Groups,DC=example,DC=com` |
+   | Setting | Description |
+   |---|---|
+   | Connection URL | Must use `ldaps://` (e.g., `ldaps://dc01.example.com:636`), see warning below |
+   | Bind DN | Full distinguished name of the service account (e.g., `CN=svc-keycloak,OU=Service Accounts,DC=example,DC=com`) |
+   | Bind credential | Password for the bind DN service account |
+   | Users DN | Base DN containing user objects (e.g., `OU=Users,DC=example,DC=com`) |
+   | Groups DN | Base DN containing group objects (e.g., `OU=Groups,DC=example,DC=com`) |
 
    > [!WARNING]
    > Always use `ldaps://` (LDAP over TLS, port 636). Using `ldap://` (port 389) without STARTTLS transmits the bind credential in cleartext and is a compliance violation in FIPS 140-2 deployments. If you require STARTTLS instead of `ldaps://`, enable the **Enable StartTLS** toggle in the LDAP connection settings and set **Use Truststore SPI** to control which CA certificate store Keycloak uses to validate the server certificate. In either case, if your AD server uses a private CA, add the CA certificate to the Keycloak truststore first. See [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/).

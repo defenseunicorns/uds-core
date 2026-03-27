@@ -1,14 +1,14 @@
 ---
 title: Configure AD/LDAP user federation in Keycloak with OpenTofu
 sidebar:
-  order: 3.021
+  order: 3.020
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll declare AD/LDAP user federation in Keycloak's `uds` realm using HCL, producing the same outcome as [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/) but managed declaratively with OpenTofu. You'll create the federation provider, user attribute mappers, and group mappers that assign federated users to the pre-built `/UDS Core/Admin` and `/UDS Core/Auditor` groups.
+You'll declare AD/LDAP user federation in Keycloak's `uds` realm using HCL, managed declaratively with OpenTofu. You'll create the federation provider, user attribute mappers, and group mappers that assign federated users to the pre-built `/UDS Core/Admin` and `/UDS Core/Auditor` groups.
 
 ## Prerequisites
 
@@ -16,18 +16,20 @@ You'll declare AD/LDAP user federation in Keycloak's `uds` realm using HCL, prod
 - UDS Core deployed
 - Access to a Kubernetes cluster with `kubectl` or `uds zarf tools kubectl`
 - [OpenTofu](https://opentofu.org/docs/intro/install/) installed
-- `uds-opentofu-client` enabled and the Keycloak provider configured; see [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/)
+- `uds-opentofu-client` enabled and the Keycloak provider configured (see [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/))
 - LDAP service account credentials with read access to the directory
 - Network connectivity from the Keycloak pod(s) to the LDAP/AD server
 
 ## Before you begin
 
-This guide is the Infrastructure as Code companion to the [Admin Console-based AD/LDAP federation guide](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/). The UI guide covers LDAP concepts, connection settings, and group name matching behavior in depth; read it first if you are not yet familiar with how Keycloak LDAP user federation works.
+UDS Core deploys Keycloak with two pre-configured groups in the `uds` realm: `/UDS Core/Admin` (platform administrators) and `/UDS Core/Auditor` (read-only access). This guide declares the LDAP federation provider, attribute mappers, and group mapper that assign federated users to those groups based on their AD group membership.
+
+If you need to configure LDAP federation through the Keycloak Admin Console instead, see [Configure AD/LDAP user federation in the Keycloak UI](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/).
 
 Two behaviors to keep in mind before you apply:
 
 - **`tofu apply` does not trigger an immediate sync.** The federation provider and mappers are created, but users and groups are not imported until the configured sync schedule runs or you trigger a manual sync from the Admin Console (**User Federation → your provider → Action → Sync all users**).
-- **Group name matching is CN-exact.** An AD group with CN `Admin` maps to `/UDS Core/Admin`; a CN of `SuperAdmins` does not. If your AD group CNs do not match the pre-built Keycloak group names, see the troubleshooting section of the [UI guide](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/#problem-ad-group-cn-does-not-match-the-keycloak-group-name) for the recommended pattern.
+- **Group name matching is CN-exact.** An AD group with CN `Admin` maps to `/UDS Core/Admin`; a CN of `SuperAdmins` does not. If your AD group CNs do not match the pre-built Keycloak group names, see [Group assignments not working after sync](#problem-group-assignments-not-working-after-sync) below.
 
 > [!NOTE]
 > This guide assumes the OpenTofu provider block (`main.tf`) is already in place from the [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) setup. The HCL examples target the [keycloak/keycloak](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) Terraform provider configured in that guide. The provider configuration is not repeated here, and argument names may differ in other provider versions.
@@ -224,7 +226,7 @@ Two behaviors to keep in mind before you apply:
    ```
 
    > [!NOTE]
-   > The AD group CN must match the Keycloak group name exactly: CN `Admin` maps to `/UDS Core/Admin`, and CN `Auditor` maps to `/UDS Core/Auditor`. If your AD group CNs differ from these names, see the [UI guide's group name mismatch troubleshooting](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/#problem-ad-group-cn-does-not-match-the-keycloak-group-name).
+   > The AD group CN must match the Keycloak group name exactly: CN `Admin` maps to `/UDS Core/Admin`, and CN `Auditor` maps to `/UDS Core/Auditor`. If your AD group CNs differ, see [Group assignments not working after sync](#problem-group-assignments-not-working-after-sync) in the troubleshooting section below.
 
    > [!CAUTION]
    > Keep `drop_non_existing_groups_during_sync = false`. Setting this to `true` removes Keycloak groups that have no matching LDAP group during sync, which can inadvertently strip users from groups that are managed locally in Keycloak.
@@ -298,7 +300,16 @@ After `tofu apply` succeeds and you have triggered the initial sync:
 
 **Symptoms:** Users can authenticate but are not assigned to `/UDS Core/Admin` or `/UDS Core/Auditor` after sync.
 
-**Solution:** The most common cause is an AD group CN mismatch. Confirm your AD group CNs are `Admin` and `Auditor` exactly. If they differ, see the [UI guide's group name mismatch troubleshooting](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/#problem-ad-group-cn-does-not-match-the-keycloak-group-name) for resolution options.
+**Solution:** The most common cause is an AD group CN mismatch. The group mapper uses the AD group's CN as the Keycloak group name; there is no mapper-level rename. A group with CN `SuperAdmins` creates `/UDS Core/SuperAdmins`, not `/UDS Core/Admin`.
+
+Confirm your AD group CNs are `Admin` and `Auditor` exactly. If they differ, there are two ways to resolve this:
+
+1. **Rename the AD group.** Ask your AD administrator to set the group's CN to `Admin` (or `Auditor`). This requires no Keycloak or OpenTofu configuration changes.
+
+2. **Update your UDS Package group references.** If renaming the AD group is not feasible, accept the imported name and update any group-based access rules that reference `/UDS Core/Admin` to use the imported group name instead. See [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) for how group paths are used in the `Package` CR.
+
+> [!WARNING]
+> Renaming the imported group directly in the Keycloak Admin Console is **for testing only**. The next scheduled group sync will re-import the group using its original CN from AD, undoing the rename.
 
 ### Problem: `tofu apply` succeeds but no users appear in Keycloak
 
@@ -315,7 +326,7 @@ Verify that `users_dn` points to an OU containing user objects and that `search_
 ## Related documentation
 
 - [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - enable the `uds-opentofu-client` and configure the Keycloak provider
-- [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/) - Admin Console-based companion guide covering LDAP concepts and connection settings in depth
+- [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/) - Admin Console-based approach for environments where OpenTofu is not available
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict application access to users in specific Keycloak groups using the `Package` CR
 - [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) - add a private CA certificate so Keycloak can validate your AD server's TLS certificate for `ldaps://` connections
 - [keycloak_ldap_user_federation resource](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs/resources/ldap_user_federation) - upstream provider reference for all supported arguments
