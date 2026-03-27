@@ -224,7 +224,7 @@ spec:
           {{- if .Values.autoscaling.enabled }}
           {{- if ne (include "keycloak.postgresql.config" .) "true" -}}
               {{- fail "You must configure PostgreSQL when using Autoscaling (HA Mode)" -}}
-          {{- end -}}
+          {{- end }}
             # Use Infinispan distributes caches
             - name: KC_CACHE
               value: ispn

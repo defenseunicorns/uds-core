@@ -37,6 +37,15 @@ packages:
               value: true
             - path: schedules.udsbackup.template.snapshotVolumes
               value: true
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "###ZARF_VAR_VELERO_BUCKET###"
+                  config:
+                    region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+                    s3ForcePathStyle: true
+                    s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
             - path: configuration.volumeSnapshotLocation
               value:
                 - name: default

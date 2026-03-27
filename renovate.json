@@ -131,6 +131,11 @@
       "commitMessageTopic": "support-deps"
     },
     {
+      "matchDepNames": ["bottlerocket-os/bottlerocket"],
+      "allowedVersions": "<= 1.53.0",
+      "description": "Pin Bottlerocket until istio-cni FIPS compatibility is resolved (https://github.com/defenseunicorns/uds-core/issues/2490)"
+    },
+    {
       "matchPackageNames": [
         "@eslint/js"
       ],

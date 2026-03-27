@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,7 +11,12 @@ import { cleanupNamespace, enableIstio, IstioState, killPods } from "./namespace
 // Import the utility functions for direct testing
 // Note: These need to be exported in namespace.ts for testing
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
-import { applyNamespaceUpdates, getCurrentIstioState, getIstioLabels } from "./namespace";
+import {
+  applyNamespaceUpdates,
+  getCurrentIstioState,
+  getIstioLabels,
+  nsEntryIsOverClaimed,
+} from "./namespace";
 
 vi.mock("pepr", async () => {
   const originalModule = (await vi.importActual("pepr")) as object;
@@ -26,6 +31,7 @@ vi.mock("../../reconcilers", () => ({
 }));
 
 const mockApply = vi.fn();
+const mockPatch = vi.fn().mockResolvedValue({});
 const mockGet = vi.fn();
 const mockPodGet = vi.fn().mockResolvedValue({ items: [] });
 const mockPodDelete = vi.fn().mockResolvedValue({});
@@ -880,18 +886,19 @@ describe("applyNamespaceUpdates", () => {
     vi.clearAllMocks();
     (K8s as Mock).mockImplementation(resourceKind => {
       if (resourceKind === kind.Namespace) {
-        return { Apply: mockApply };
+        return { Apply: mockApply, Patch: mockPatch };
       }
       return { Get: vi.fn() };
     });
   });
 
-  test("applies updates when labels change", async () => {
+  test("applies updates when Istio label changes", async () => {
     const namespace = "test-ns";
-    const labels = { "new-label": "value" };
-    const annotations = { annotation: "value" };
-    const originalLabels = { "old-label": "value" };
-    const originalAnnotations = { annotation: "value" };
+    // Simulate switching from sidecar to ambient: new labels have ambient, original had injection
+    const labels = { "istio.io/dataplane-mode": "ambient", "non-pepr-label": "value" };
+    const annotations = { "uds.dev/pkg-my-app": "true", "non-pepr-annotation": "value" };
+    const originalLabels = { "istio-injection": "enabled", "non-pepr-label": "value" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true", "non-pepr-annotation": "value" };
 
     const result = await applyNamespaceUpdates(
       namespace,
@@ -899,6 +906,38 @@ describe("applyNamespaceUpdates", () => {
       annotations,
       originalLabels,
       originalAnnotations,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    // Patch must contain only Pepr-managed keys — non-pepr-label/annotation excluded
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio.io/dataplane-mode": "ambient" },
+          annotations: { "uds.dev/pkg-my-app": "true" },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("applies updates when package annotation changes", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    // New package added
+    const annotations = { "uds.dev/pkg-my-app": "true", "uds.dev/pkg-new-app": "true" };
+    const originalLabels = { "istio.io/dataplane-mode": "ambient" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      undefined,
     );
 
     expect(result).toBe(true);
@@ -906,20 +945,24 @@ describe("applyNamespaceUpdates", () => {
       {
         metadata: {
           name: namespace,
-          labels,
-          annotations,
+          labels: { "istio.io/dataplane-mode": "ambient" },
+          annotations: { "uds.dev/pkg-my-app": "true", "uds.dev/pkg-new-app": "true" },
         },
       },
       { force: true },
     );
   });
 
-  test("applies updates when annotations change", async () => {
+  test("doesn't apply updates when Pepr-managed keys are unchanged", async () => {
     const namespace = "test-ns";
-    const labels = { label: "value" };
-    const annotations = { "new-annotation": "value" };
-    const originalLabels = { label: "value" };
-    const originalAnnotations = { "old-annotation": "value" };
+    // Non-Pepr labels/annotations differ but Pepr-managed ones are the same
+    const labels = { "istio-injection": "enabled", "non-pepr-label": "new-value" };
+    const annotations = { "uds.dev/pkg-my-app": "true", "non-pepr-annotation": "new-value" };
+    const originalLabels = { "istio-injection": "enabled", "non-pepr-label": "old-value" };
+    const originalAnnotations = {
+      "uds.dev/pkg-my-app": "true",
+      "non-pepr-annotation": "old-value",
+    };
 
     const result = await applyNamespaceUpdates(
       namespace,
@@ -927,34 +970,7 @@ describe("applyNamespaceUpdates", () => {
       annotations,
       originalLabels,
       originalAnnotations,
-    );
-
-    expect(result).toBe(true);
-    expect(mockApply).toHaveBeenCalledWith(
-      {
-        metadata: {
-          name: namespace,
-          labels,
-          annotations,
-        },
-      },
-      { force: true },
-    );
-  });
-
-  test("doesn't apply updates when nothing changes", async () => {
-    const namespace = "test-ns";
-    const labels = { label: "value" };
-    const annotations = { annotation: "value" };
-    const originalLabels = { label: "value" };
-    const originalAnnotations = { annotation: "value" };
-
-    const result = await applyNamespaceUpdates(
-      namespace,
-      labels,
-      annotations,
-      originalLabels,
-      originalAnnotations,
+      undefined,
     );
 
     expect(result).toBe(false);
@@ -963,10 +979,10 @@ describe("applyNamespaceUpdates", () => {
 
   test("uses custom log message when provided", async () => {
     const namespace = "test-ns";
-    const labels = { "new-label": "value" };
-    const annotations = { annotation: "value" };
-    const originalLabels = { "old-label": "value" };
-    const originalAnnotations = { annotation: "value" };
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
     const logMessage = "Custom log message";
 
     // We can't easily test the log message, but we can verify the function behavior
@@ -976,10 +992,423 @@ describe("applyNamespaceUpdates", () => {
       annotations,
       originalLabels,
       originalAnnotations,
+      undefined,
       logMessage,
     );
 
     expect(result).toBe(true);
     expect(mockApply).toHaveBeenCalled();
+  });
+
+  test("applies when setting Istio label for the first time (fresh namespace)", async () => {
+    const namespace = "test-ns";
+    // Fresh namespace: no Istio labels originally
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = {
+      "uds.dev/pkg-my-app": "true",
+      "uds.dev/original-istio-state": "none",
+    };
+    const originalLabels = { "some-helm-label": "value" };
+    const originalAnnotations = {};
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio.io/dataplane-mode": "ambient" },
+          annotations: {
+            "uds.dev/pkg-my-app": "true",
+            "uds.dev/original-istio-state": "none",
+          },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("applies when removing an Istio label (cleanup to None state)", async () => {
+    const namespace = "test-ns";
+    // After getIstioLabels for None state, injection key is deleted from the map
+    const labels = { "some-helm-label": "value" }; // no Istio keys
+    const annotations = {};
+    const originalLabels = { "istio-injection": "enabled", "some-helm-label": "value" };
+    const originalAnnotations = {
+      "uds.dev/pkg-my-app": "true",
+      "uds.dev/original-istio-state": "none",
+    };
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    // Sparse patch has no Istio labels — SSA will remove the key from the live object
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: {},
+          annotations: {},
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("applies when removing a package annotation (last package cleaned up)", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    // Last package annotation removed; original-istio-state also deleted by cleanupNamespace
+    const annotations = {};
+    const originalLabels = { "istio.io/dataplane-mode": "ambient" };
+    const originalAnnotations = {
+      "uds.dev/pkg-my-app": "true",
+      "uds.dev/original-istio-state": "none",
+    };
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio.io/dataplane-mode": "ambient" },
+          annotations: {},
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("applies when adding the original-istio-state annotation", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio-injection": "enabled" };
+    const annotations = {
+      "uds.dev/pkg-my-app": "true",
+      "uds.dev/original-istio-state": "none",
+    };
+    const originalLabels = {};
+    const originalAnnotations = {};
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio-injection": "enabled" },
+          annotations: {
+            "uds.dev/pkg-my-app": "true",
+            "uds.dev/original-istio-state": "none",
+          },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("applies when originalLabels and originalAnnotations are undefined (brand-new namespace)", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = {
+      "uds.dev/pkg-my-app": "true",
+      "uds.dev/original-istio-state": "none",
+    };
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      undefined,
+      undefined,
+      undefined,
+    );
+
+    expect(result).toBe(true);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio.io/dataplane-mode": "ambient" },
+          annotations: {
+            "uds.dev/pkg-my-app": "true",
+            "uds.dev/original-istio-state": "none",
+          },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("strips over-claimed managedFields entry before applying when Pepr owns non-managed labels", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    // Pepr's entry owns a non-managed label (helm.sh/chart)
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      },
+    ];
+
+    await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      managedFields,
+    );
+
+    // Patch to strip over-claimed entry should be called before Apply
+    expect(mockPatch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
+      { op: "remove", path: "/metadata/managedFields/0" },
+    ]);
+    expect(mockApply).toHaveBeenCalled();
+  });
+
+  test("does not strip managedFields when Pepr entry only has managed labels", async () => {
+    const namespace = "test-ns";
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    // Pepr's entry only owns managed labels
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {} },
+            "f:annotations": { "f:uds.dev/pkg-my-app": {} },
+          },
+        },
+      },
+    ];
+
+    await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      managedFields,
+    );
+
+    expect(mockPatch).not.toHaveBeenCalled();
+    expect(mockApply).toHaveBeenCalled();
+  });
+
+  test("cleans up and re-applies when over-claimed but Pepr-managed values are unchanged", async () => {
+    const namespace = "test-ns";
+    // Same Istio label before and after — no value change
+    const labels = { "istio-injection": "enabled" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    // Pepr's entry over-claims a non-managed label
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      },
+    ];
+
+    const result = await applyNamespaceUpdates(
+      namespace,
+      labels,
+      annotations,
+      originalLabels,
+      originalAnnotations,
+      managedFields,
+    );
+
+    // Values didn't change, so return false (no pod cycling needed)
+    expect(result).toBe(false);
+    // But we still cleaned up and re-applied to fix SSA ownership
+    expect(mockPatch).toHaveBeenCalledWith([
+      { op: "test", path: "/metadata/managedFields/0/manager", value: "pepr" },
+      { op: "test", path: "/metadata/managedFields/0/operation", value: "Apply" },
+      { op: "remove", path: "/metadata/managedFields/0" },
+    ]);
+    expect(mockApply).toHaveBeenCalledWith(
+      {
+        metadata: {
+          name: namespace,
+          labels: { "istio-injection": "enabled" },
+          annotations: { "uds.dev/pkg-my-app": "true" },
+        },
+      },
+      { force: true },
+    );
+  });
+
+  test("throws and skips Apply when the managedFields Patch fails", async () => {
+    const namespace = "test-ns";
+    mockPatch.mockRejectedValueOnce(new Error("test op failed"));
+    const labels = { "istio.io/dataplane-mode": "ambient" };
+    const annotations = { "uds.dev/pkg-my-app": "true" };
+    const originalLabels = { "istio-injection": "enabled" };
+    const originalAnnotations = { "uds.dev/pkg-my-app": "true" };
+    const managedFields = [
+      {
+        manager: "pepr",
+        operation: "Apply",
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      },
+    ];
+
+    await expect(
+      applyNamespaceUpdates(
+        namespace,
+        labels,
+        annotations,
+        originalLabels,
+        originalAnnotations,
+        managedFields,
+      ),
+    ).rejects.toThrow("test op failed");
+
+    expect(mockPatch).toHaveBeenCalled();
+    // Apply must NOT run when cleanup fails — sparse Apply on stale ownership could drop fields
+    expect(mockApply).not.toHaveBeenCalled();
+  });
+});
+
+describe("nsEntryIsOverClaimed", () => {
+  test("returns false when fieldsV1 is empty", () => {
+    expect(nsEntryIsOverClaimed({ manager: "pepr", operation: "Apply", fieldsV1: {} })).toBe(false);
+  });
+
+  test("returns false when only managed labels are present", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:istio.io/dataplane-mode": {} },
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  test("returns false when only managed annotations are present", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:annotations": {
+              "f:uds.dev/original-istio-state": {},
+              "f:uds.dev/pkg-foo": {},
+              "f:uds.dev/pkg-bar": {},
+            },
+          },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  test("returns true when a non-managed label is present", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {}, "f:helm.sh/chart": {} },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns true when a non-managed annotation is present", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:annotations": {
+              "f:uds.dev/pkg-foo": {},
+              "f:kubectl.kubernetes.io/last-applied-configuration": {},
+            },
+          },
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns true when fieldsV1 has a top-level key beyond f:metadata", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {} },
+          },
+          "f:status": {},
+        },
+      }),
+    ).toBe(true);
+  });
+
+  test("returns true when f:metadata has an unexpected sub-key beyond f:labels and f:annotations", () => {
+    expect(
+      nsEntryIsOverClaimed({
+        fieldsV1: {
+          "f:metadata": {
+            "f:labels": { "f:istio-injection": {} },
+            "f:finalizers": {},
+          },
+        },
+      }),
+    ).toBe(true);
   });
 });

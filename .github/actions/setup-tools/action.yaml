@@ -14,13 +14,13 @@ runs:
         node-version: 24
 
     - name: Install uv
-      uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+      uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.10.10
+        version: 0.11.2
 
     - name: Install UDS CLI
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.29.0
+        version: v0.30.0
