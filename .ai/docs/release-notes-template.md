@@ -35,6 +35,7 @@ Files are named by version number with hyphens replacing dots: `X-Y.mdx`
 ```mdx
 ---
 title: <Product> X.Y
+description: UDS Core X.Y release notes summarizing the key changes. One sentence covering the most significant breaking change or headline feature is ideal. Used in llms.txt, search, and SEO; required on every page.
 sidebar:
   order: N.NNN
 ---
@@ -118,6 +119,10 @@ Summary of what changed in this version and why it matters to operators (2-3 sen
 - Include a full diff link comparing the latest patch of the previous minor version to the latest patch of the current one (e.g., `v0.60.2...v0.61.1`, not `v0.60.0...v0.61.0`)
 - In the dependency updates table, link the "Updated" version to the upstream release page (e.g., GitHub release or project release page). Leave unlinked for entries without a meaningful upstream release page (e.g., DoD CA Certs)
 - When a Helm chart version is bumped independently of the application version, include it in the same dependency table with a "Helm chart" suffix in the package name (e.g., "Falco Helm chart", "Grafana Helm chart"). Link the updated version to the chart's release page.
+
+### Frontmatter
+
+- `description:` is **required** on every page. Write 1 sentence summarizing the key change in the release, typically the most significant breaking change or headline feature. This drives `llms.txt` navigation, search snippets, and SEO. Example: "UDS Core 0.63 release notes: built-in uptime observability with recording rules, Core Uptime dashboard, and standalone CRDs functional layer."
 
 ### Naming
 
