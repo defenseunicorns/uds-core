@@ -94,53 +94,45 @@ Runbooks for upstream defaults are available at [runbooks.prometheus-operator.de
    UDS Core default probe alerts can be tuned or disabled as follows:
 
    ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         kube-prometheus-stack:
-           uds-prometheus-config:
-             values:
-               # Disable all UDS Core probe default alerts
-               - path: udsCoreDefaultAlerts.enabled
-                 value: false
-               # Disable Endpoint Down alert
-               - path: udsCoreDefaultAlerts.probeEndpointDown.enabled
-                 value: false
-               # Tune threshold and severity for TLS expiry warning alerts
-               - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.days
-                 value: 21
-               - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.severity
-                 value: warning
-               # Tune threshold and severity for TLS expiry critical alerts
-               - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.days
-                 value: 7
-               - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.severity
-                 value: critical
+   overrides:
+     kube-prometheus-stack:
+       uds-prometheus-config:
+         values:
+           # Disable all UDS Core probe default alerts
+           - path: udsCoreDefaultAlerts.enabled
+             value: false
+           # Disable Endpoint Down alert
+           - path: udsCoreDefaultAlerts.probeEndpointDown.enabled
+             value: false
+           # Tune threshold and severity for TLS expiry warning alerts
+           - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.days
+             value: 21
+           - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.severity
+             value: warning
+           # Tune threshold and severity for TLS expiry critical alerts
+           - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.days
+             value: 7
+           - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.severity
+             value: critical
    ```
 
    Upstream kube-prometheus-stack default rules can be disabled as follows:
 
    ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         kube-prometheus-stack:
-           kube-prometheus-stack:
-             values:
-               # Disable specific individual rules by name
-               - path: defaultRules.disabled
-                 value:
-                   KubeControllerManagerDown: true
-                   KubeSchedulerDown: true
-               # Disable entire rule groups with boolean toggles
-               - path: defaultRules.rules.kubeControllerManager
-                 value: false
-               - path: defaultRules.rules.kubeSchedulerAlerting
-                 value: false
+   overrides:
+     kube-prometheus-stack:
+       kube-prometheus-stack:
+         values:
+           # Disable specific individual rules by name
+           - path: defaultRules.disabled
+             value:
+               KubeControllerManagerDown: true
+               KubeSchedulerDown: true
+           # Disable entire rule groups with boolean toggles
+           - path: defaultRules.rules.kubeControllerManager
+             value: false
+           - path: defaultRules.rules.kubeSchedulerAlerting
+             value: false
    ```
 
    Use `defaultRules.disabled` for fine-tuned control over upstream individual rules. Use `defaultRules.rules.*` to disable upstream rule groups when broader changes are needed.
