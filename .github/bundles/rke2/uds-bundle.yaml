@@ -72,6 +72,16 @@ packages:
             - name: VELERO_IRSA_ROLE_ARN
               description: "IRSA ARN annotation to use for Velero"
               path: serviceAccount.server.annotations.irsa/role-arn
+          values:
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "###ZARF_VAR_VELERO_BUCKET###"
+                  config:
+                    region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+                    s3ForcePathStyle: true
+                    s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
       loki:
         loki:
           values:
