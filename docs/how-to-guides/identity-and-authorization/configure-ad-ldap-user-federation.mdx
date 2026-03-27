@@ -1,0 +1,289 @@
+---
+title: Configure AD/LDAP user federation in Keycloak
+sidebar:
+  order: 3.020
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll connect an Active Directory or LDAP directory service to Keycloak as a user federation provider so that directory users can authenticate to UDS Core applications using their existing credentials. You'll also configure group mappers that assign federated users to the pre-built `/UDS Core/Admin` and `/UDS Core/Auditor` Keycloak groups based on their AD group membership.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- UDS Core deployed
+- Access to a Kubernetes cluster with `kubectl` or `uds zarf tools kubectl`
+- LDAP service account (bind DN) with read-only access scoped to the Users DN and Groups DN (no replication rights, Domain Admin, or write permissions required)
+- Network connectivity from the Keycloak pod(s) to the LDAP/AD server
+
+## Before you begin
+
+UDS Core deploys Keycloak with two pre-configured groups in the UDS realm: `/UDS Core/Admin` (platform administrators) and `/UDS Core/Auditor` (read-only access). This guide maps AD group memberships to those groups so that directory users automatically receive the correct platform role on first login.
+
+LDAP user federation has no pre-built `realmInitEnv` bundle override. You configure it either through the Keycloak Admin Console (covered in this guide) or programmatically using the OpenTofu Keycloak provider (see [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/)).
+
+> [!CAUTION]
+> **Do not remove local admin accounts until you have fully verified LDAP login end-to-end.** If you misconfigure the federation and remove the local fallback, you will be locked out of Keycloak. Complete the verification step before removing any local accounts.
+
+> [!NOTE]
+> LDAP user federation is scoped to the **uds** realm. The master realm (used for the Keycloak admin console) is kept separate and should use a different authentication method such as [Azure AD SSO](/how-to-guides/identity-and-authorization/connect-azure-ad-idp/) or a local admin account.
+
+> [!WARNING]
+> Before enabling LDAP federation, audit existing local users in the **uds** realm for username conflicts. If a local user shares the same `sAMAccountName` as an AD user, Keycloak will attempt to link the accounts at sync time, which can result in the local user's identity being replaced by the LDAP-federated identity. This is especially dangerous for local admin accounts. Resolve any conflicts by renaming or removing the local account before proceeding.
+
+## Steps
+
+<Steps>
+
+1. **Gather your AD/LDAP connection information**
+
+   Collect the following values from your AD administrator before starting. You will enter them into the Keycloak Admin Console in later steps.
+
+   | Setting | Description | Example |
+   |---|---|---|
+   | Connection URL | LDAP server URL (must use `ldaps://`, see warning below) | `ldaps://dc01.example.com:636` |
+   | Bind DN | Distinguished Name of the service account Keycloak uses to query the directory | `CN=svc-keycloak,OU=Service Accounts,DC=example,DC=com` |
+   | Bind credential | Password for the bind DN service account | (required) |
+   | Users DN | Base DN where user objects are located | `OU=Users,DC=example,DC=com` |
+   | Groups DN | Base DN where group objects are located | `OU=Groups,DC=example,DC=com` |
+
+   > [!WARNING]
+   > Always use `ldaps://` (LDAP over TLS, port 636). Using `ldap://` (port 389) without STARTTLS transmits the bind credential in cleartext and is a compliance violation in FIPS 140-2 deployments. If you require STARTTLS instead of `ldaps://`, enable the **Enable StartTLS** toggle in the LDAP connection settings and set **Use Truststore SPI** to control which CA certificate store Keycloak uses to validate the server certificate. In either case, if your AD server uses a private CA, add the CA certificate to the Keycloak truststore first. See [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/).
+
+2. **Log in to the Keycloak Admin Console and switch to the UDS realm**
+
+   Open the Keycloak Admin Console at `keycloak.<admin_domain>` and log in with your admin credentials.
+
+   > [!NOTE]
+   > If UDS Core was deployed with `INSECURE_ADMIN_PASSWORD_GENERATION`, the username is `admin` and the password is stored in the `keycloak-admin-password` Kubernetes secret. Run the following to retrieve it:
+   >
+   > ```bash title="Retrieve the admin password"
+   > uds zarf tools kubectl get secret keycloak-admin-password \
+   >   -n keycloak -o jsonpath='{.data.password}' | base64 -d
+   > ```
+
+   In the top-left realm dropdown, select the **uds** realm.
+
+3. **Create the LDAP user federation provider**
+
+   In the **uds** realm, go to **User Federation** → **Add provider** → select **LDAP**.
+
+   Configure the following settings:
+
+   **General settings:**
+
+   | Setting | Value |
+   |---|---|
+   | UI display name | A descriptive label (e.g., `Active Directory`) |
+   | Vendor | `Active Directory` |
+   | Edit mode | `READ_ONLY` |
+
+   **Connection and authentication settings:**
+
+   | Setting | Value |
+   |---|---|
+   | Connection URL | Your `ldaps://` URL from step 1 |
+   | Bind type | `simple` |
+   | Bind DN | The service account DN from step 1 |
+   | Bind credential | The service account password from step 1 |
+
+   Click **Test connection** to confirm Keycloak can reach the LDAP server, then click **Test authentication** to verify the bind credentials.
+
+   > [!NOTE]
+   > UDS Core's default network policies block egress from the Keycloak pod to external hosts. If the connection test fails with a timeout, add an `additionalNetworkAllow` entry for port 636 to your `uds-bundle.yaml` using the same pattern as [Configure Kerberos/SPNEGO SSO, Step 3](/how-to-guides/identity-and-authorization/configure-kerberos-spnego-sso/#steps) before retrying.
+
+   **LDAP searching and updating:**
+
+   | Setting | Value |
+   |---|---|
+   | Users DN | The base DN for user objects from step 1 |
+   | Username LDAP attribute | `sAMAccountName` (Active Directory) |
+   | RDN LDAP attribute | `cn` |
+   | UUID LDAP attribute | `objectGUID` |
+   | User object classes | `person, organizationalPerson, user` |
+   | Search scope | `Subtree` (searches all sub-OUs under Users DN) |
+
+   > [!NOTE]
+   > `cn` is the standard RDN for AD user objects and matches the `CN=` prefix you see in user distinguished names (e.g., `CN=John Smith,OU=Users,...`). It is distinct from the Username LDAP attribute (`sAMAccountName`), which is used for login.
+
+   **Synchronization settings:**
+
+   | Setting | Recommended value |
+   |---|---|
+   | Import users | On |
+   | Sync registrations | Off |
+   | Periodic full sync | Enable and set an interval appropriate for your directory (e.g., `86400` seconds for daily) |
+   | Periodic changed users sync | Enable and set a shorter interval (e.g., `3600` seconds for hourly) |
+
+   > [!NOTE]
+   > These sync intervals control how quickly Keycloak reflects changes from AD. A disabled AD account remains accessible in Keycloak until the next changed-users sync. If your organization has strict account revocation requirements, lower the **Periodic changed users sync** interval (`changed_sync_period`) to reduce that window.
+
+   Click **Save**.
+
+   > [!WARNING]
+   > Keep **Edit mode** as `READ_ONLY` for all production deployments. `WRITABLE` mode allows Keycloak to modify user objects in Active Directory using the bind DN credentials. If Keycloak is compromised in `WRITABLE` mode, an attacker can modify directory attributes. Use `WRITABLE` only when you have explicitly scoped the bind DN's write permissions to the minimum required attributes.
+
+4. **Configure user attribute mappers**
+
+   After saving the provider, go to the **Mappers** tab of the LDAP provider you just created. Keycloak pre-generates several mappers when you select Active Directory as the vendor. Verify or add the following to ensure user profile fields are populated correctly:
+
+   | Mapper name | Mapper type | LDAP attribute | User model attribute |
+   |---|---|---|---|
+   | `first name` | `User Attribute` | `givenName` | `firstName` |
+   | `last name` | `User Attribute` | `sn` | `lastName` |
+   | `email` | `User Attribute` | `mail` | `email` |
+   | `username` | `User Attribute` | `sAMAccountName` | `username` |
+
+   Keycloak typically creates these mappers automatically when you set the **Vendor** to `Active Directory`. Review the existing mappers before adding duplicates.
+
+5. **Configure the LDAP group mapper**
+
+   This mapper reads group membership from AD and assigns federated users to Keycloak groups under `/UDS Core`. A single group mapper imports all AD groups found under the configured LDAP groups DN. At sync time, Keycloak names each imported group after the AD group's CN and places it under the configured groups path. An AD group with CN `Admin` becomes `/UDS Core/Admin`; a group with CN `Auditor` becomes `/UDS Core/Auditor`.
+
+   On the **Mappers** tab, click **Add mapper** and set:
+
+   | Setting | Value |
+   |---|---|
+   | Name | `group-mapper` |
+   | Mapper type | `Group mapper` (REST API ID: `group-ldap-mapper`) |
+   | LDAP groups DN | The base DN for groups from step 1 (e.g., `OU=Groups,DC=example,DC=com`) |
+   | Group name LDAP attribute | `cn` |
+   | Group object classes | `group` |
+   | Membership LDAP attribute | `member` |
+   | Membership attribute type | `DN` |
+   | Membership user LDAP attribute | `distinguishedName` |
+   | Mode | `LDAP_ONLY` |
+   | User groups retrieve strategy | `LOAD_GROUPS_BY_MEMBER_ATTRIBUTE` |
+   | Member-of LDAP attribute | `memberOf` |
+   | Mapped group attributes | (leave empty) |
+   | Drop non-existing groups during sync | Off |
+   | Preserve group inheritance | Off |
+   | Ignore missing groups | On |
+   | Groups path | `/UDS Core` |
+
+   Click **Save**.
+
+   After saving, return to the mapper and click **Sync LDAP groups to Keycloak** to import the AD groups immediately.
+
+   The mapper imports all AD groups found under the LDAP groups DN and creates Keycloak subgroups under `/UDS Core` named after each AD group's CN. For a user to be assigned to `/UDS Core/Admin`, their AD group must have the CN `Admin` exactly; for `/UDS Core/Auditor`, the CN must be `Auditor` exactly. If your AD group CNs differ, see the troubleshooting section below.
+
+   In the Keycloak Admin Console, go to **Groups** → expand `/UDS Core` and confirm the expected subgroups appear after the sync.
+
+   > [!TIP]
+   > In large enterprise directories, avoid pointing **LDAP groups DN** at the top-level Groups OU. Every group under that OU will be imported into Keycloak. Scope **LDAP groups DN** to a sub-OU that contains only the groups you want (for example, `OU=PlatformGroups,OU=Groups,DC=example,DC=com`) to limit the import to the relevant groups.
+
+   > [!CAUTION]
+   > **Do not enable "Drop non-existing groups during sync"** unless you have reviewed the full impact. This setting removes Keycloak groups that have no corresponding LDAP group, which can inadvertently strip users from groups that are managed locally in Keycloak (such as application-specific groups not sourced from AD).
+
+6. **Run initial user and group sync**
+
+   Trigger an on-demand sync to import users and group memberships immediately rather than waiting for the scheduled sync interval. Run both syncs in this order:
+
+   1. **Sync groups first:** If you did not already click **Sync LDAP groups to Keycloak** in step 5, do so now from the provider's **Mappers** tab before syncing users.
+   2. **Sync users second:** Go to **User Federation** → select your LDAP provider → click **Action** (top right) → **Sync all users**. This imports user records and resolves their group memberships based on the groups already imported in the previous step.
+
+   To verify the sync completed, go to **Users** and confirm that AD user accounts now appear in the list.
+
+7. **Test login with a federated user**
+
+   Before finalizing, verify that an AD user can authenticate and receives the expected group membership.
+
+   1. In a private/incognito browser window, navigate to `sso.<domain>`
+   2. Log in using AD credentials (username matching `sAMAccountName` and AD password)
+   3. After successful login, return to the Keycloak Admin Console
+   4. Go to **Users**, find the test user, open their record, and check the **Groups** tab
+   5. Confirm the user is a member of the expected `/UDS Core/Admin` or `/UDS Core/Auditor` group
+
+</Steps>
+
+## Verification
+
+Confirm LDAP federation is active and users are syncing.
+
+In the Keycloak Admin Console (uds realm):
+
+- **User Federation** → your LDAP provider shows **ENABLED** status
+- **Users** → federated users from AD appear in the list with a federation link icon
+- **Groups** → `/UDS Core/Admin` and `/UDS Core/Auditor` show the correct member count after sync
+
+## Troubleshooting
+
+### Problem: LDAP connection test fails
+
+**Symptoms:** "Test connection" returns an error in the Keycloak Admin Console when saving the LDAP provider.
+
+**Solution:** Verify the following:
+
+1. The connection URL uses `ldaps://hostname:636`; cleartext `ldap://` is not permitted in FIPS deployments
+2. The Keycloak pod can reach the LDAP server (check network policies and firewall rules)
+3. If using `ldaps://`, the AD server's TLS certificate is trusted by Keycloak. See [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) to add a private CA certificate
+
+### Problem: Authentication test fails after connection test succeeds
+
+**Symptoms:** "Test connection" succeeds but "Test authentication" returns an error.
+
+**Solution:** The bind DN or bind credential is incorrect. Verify:
+
+1. The bind DN is the full distinguished name, not just the username (e.g., `CN=svc-keycloak,OU=Service Accounts,DC=example,DC=com`)
+2. The service account password is current and the account is not locked or disabled in AD
+3. The service account has at least read permissions on the Users DN and Groups DN
+
+### Problem: Users do not appear after sync
+
+**Symptoms:** "Sync all users" completes without errors but no users appear under the **Users** tab in the uds realm.
+
+**Solution:**
+
+1. Verify the **Users DN** points to an OU that contains user objects; run an LDAP query against the DN to confirm
+2. Confirm **User object classes** includes all object classes your AD users have (e.g., `person, organizationalPerson, user`)
+3. Check **Search scope** is set to `Subtree` if users are in sub-OUs under the configured Users DN
+4. Review Keycloak logs for LDAP query errors:
+
+   ```bash title="Check Keycloak logs"
+   uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=200 | grep -i "ldap\|federation"
+   ```
+
+### Problem: Group mappings are not working (users authenticate but have no group membership)
+
+**Symptoms:** AD users can log in but are not assigned to `/UDS Core/Admin` or `/UDS Core/Auditor` after login.
+
+**Solution:**
+
+1. Confirm the LDAP Group Mapper was saved and the **Sync LDAP groups to Keycloak** action was run
+2. Verify the **LDAP groups DN** in the mapper is the correct base DN for the AD groups you want to import
+3. Confirm **Group name LDAP attribute** is set to `cn` and the AD group CNs match what you expect
+4. Check **Sync modes**: if set to `INHERIT`, it follows the federation provider's sync mode. Set to `FORCE` on the mapper to override user sync to always update group assignments
+5. Verify the user is actually a member of the AD group by checking directly in Active Directory
+
+### Problem: AD group CN does not match the Keycloak group name
+
+**Symptoms:** The AD group is named `SuperAdmins` but the expected Keycloak group is `/UDS Core/Admin`; users authenticate but are not assigned to it.
+
+**Solution:** The LDAP Group Mapper uses the AD group's CN as the Keycloak group name. Because `SuperAdmins` does not equal `Admin`, the mapper creates `/UDS Core/SuperAdmins` rather than mapping into the existing `/UDS Core/Admin` group. There is no mapper-level rename; the CN is the name.
+
+There are two ways to resolve this:
+
+1. **Rename the AD group.** Ask your AD administrator to set the group's CN to `Admin` (or `Auditor`). This is the cleanest fix and requires no Keycloak configuration changes.
+
+2. **Update your UDS Package group references.** If renaming the AD group is not feasible, accept the imported name and update any group-based access rules that reference `/UDS Core/Admin` to use `/UDS Core/SuperAdmins` instead. See [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) for how group paths are used in the `Package` CR.
+
+> [!WARNING]
+> Renaming the imported group directly in the Keycloak Admin Console is **for testing only**. The next scheduled group sync will re-import the group using its original CN from AD, undoing the rename.
+
+### Problem: Users are removed from Keycloak groups they should retain
+
+**Symptoms:** After a sync, users lose group memberships for groups that are not sourced from AD.
+
+**Solution:** Disable **Drop non-existing groups during sync** in the LDAP Group Mapper. This setting removes Keycloak groups that have no LDAP counterpart during sync, which can inadvertently remove locally-managed group assignments.
+
+## Related documentation
+
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict application access to users in specific Keycloak groups using the `Package` CR
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - configure LDAP user federation programmatically using the OpenTofu Keycloak provider
+- [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/) - add a private CA certificate so Keycloak can validate your AD server's TLS certificate for `ldaps://` connections
+- [Configure Keycloak authentication methods](/how-to-guides/identity-and-authorization/configure-authentication-flows/) - enable or disable authentication flows alongside federation
+- [Connect Azure AD as an identity provider](/how-to-guides/identity-and-authorization/connect-azure-ad-idp/) - SAML-based federation with Azure Entra ID as an alternative to LDAP user federation
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on how Keycloak groups and federation work in UDS Core
+- [Keycloak: LDAP and Active Directory](https://www.keycloak.org/docs/latest/server_admin/#_ldap) - upstream reference for all LDAP federation settings
