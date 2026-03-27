@@ -1,12 +1,14 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1ManagedFieldsEntry } from "@kubernetes/client-node";
 import { K8s, kind, R } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { PEPR_FIELD_MANAGER, removePeprManagedFieldsEntry } from "../ssa-field-cleanup";
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_ISTIO);
@@ -14,6 +16,7 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
+const MANAGED_LABEL_FIELDS = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
 
 export enum IstioState {
   Sidecar = Mode.Sidecar,
@@ -66,6 +69,7 @@ export async function enableIstio(pkg: UDSPackage) {
     annotations,
     sourceNS.metadata?.labels,
     sourceNS.metadata?.annotations,
+    sourceNS.metadata?.managedFields,
   );
 
   await restartPodsIfNeeded(pkg.metadata.namespace, result.shouldRestartPods, targetIstioState);
@@ -115,6 +119,7 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     annotations,
     sourceNS.metadata?.labels,
     sourceNS.metadata?.annotations,
+    sourceNS.metadata?.managedFields,
     `Updating namespace ${pkg.metadata.namespace}, removing ${pkg.metadata.name} state.`,
   );
 
@@ -195,6 +200,46 @@ export function getCurrentIstioState(labels: Record<string, string>): IstioState
 }
 
 /**
+ * Returns true if Pepr's managedFields entry contains labels or annotations beyond the set
+ * Pepr actually manages, indicating it previously over-claimed SSA ownership.
+ */
+export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
+  const v1 = (entry.fieldsV1 ?? {}) as Record<string, unknown>;
+  const meta = (v1["f:metadata"] as Record<string, unknown>) ?? {};
+  const labels = (meta["f:labels"] as Record<string, unknown>) ?? {};
+  const annotations = (meta["f:annotations"] as Record<string, unknown>) ?? {};
+
+  return (
+    Object.keys(v1).some(k => k !== "f:metadata") ||
+    Object.keys(meta).some(k => k !== "f:labels" && k !== "f:annotations") ||
+    Object.keys(labels).some(k => !MANAGED_LABEL_FIELDS.has(k)) ||
+    Object.keys(annotations).some(
+      k => k !== `f:${ISTIO_STATE_ANNOTATION}` && !k.startsWith("f:uds.dev/pkg-"),
+    )
+  );
+}
+
+// Pick only the label keys Pepr manages so the SSA patch doesn't claim ownership of
+// labels set by Helm or other field managers.
+function pickManagedLabels(labels: Record<string, string> | undefined): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (labels?.[INJECTION_LABEL] !== undefined) result[INJECTION_LABEL] = labels[INJECTION_LABEL];
+  if (labels?.[AMBIENT_LABEL] !== undefined) result[AMBIENT_LABEL] = labels[AMBIENT_LABEL];
+  return result;
+}
+
+// Pick only the annotation keys Pepr manages.
+function pickManagedAnnotations(
+  annotations: Record<string, string> | undefined,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(annotations || {}).filter(
+      ([k]) => k === ISTIO_STATE_ANNOTATION || k.startsWith("uds.dev/pkg-"),
+    ),
+  );
+}
+
+/**
  * Apply namespace updates if there are changes to labels or annotations
  *
  * @param namespace The namespace name
@@ -202,6 +247,8 @@ export function getCurrentIstioState(labels: Record<string, string>): IstioState
  * @param annotations The updated annotations
  * @param originalLabels The original labels
  * @param originalAnnotations The original annotations
+ * @param managedFields The current managedFields array from the namespace's metadata, used to
+ *   detect and clean up any over-claimed Pepr SSA entries
  * @param logMessage Optional log message
  * @returns Whether updates were applied
  */
@@ -211,24 +258,47 @@ export async function applyNamespaceUpdates(
   annotations: Record<string, string>,
   originalLabels: Record<string, string> | undefined,
   originalAnnotations: Record<string, string> | undefined,
+  managedFields: V1ManagedFieldsEntry[] | undefined,
   logMessage?: string,
 ): Promise<boolean> {
-  const updatedNamespace = {
-    metadata: {
-      name: namespace,
-      labels,
-      annotations,
-    },
-  };
+  const patchLabels = pickManagedLabels(labels);
+  const patchAnnotations = pickManagedAnnotations(annotations);
+  const valuesChanged =
+    !R.equals(pickManagedLabels(originalLabels), patchLabels) ||
+    !R.equals(pickManagedAnnotations(originalAnnotations), patchAnnotations);
 
-  if (!R.equals(originalLabels, labels) || !R.equals(originalAnnotations, annotations)) {
-    log.debug(logMessage || `Applying updates to namespace ${namespace}.`);
-    await K8s(kind.Namespace).Apply(updatedNamespace, { force: true });
-    return true;
-  } else {
-    log.debug(`No namespace updates needed for ${namespace}.`);
-    return false;
+  // Check for over-claiming unconditionally so stale entries are cleaned up even when
+  // label/annotation values haven't changed (e.g. first reconcile after upgrading from old code).
+  const peprEntry = managedFields?.find(
+    e => e.manager === PEPR_FIELD_MANAGER && e.operation === "Apply",
+  );
+  const overClaimed = peprEntry != null && nsEntryIsOverClaimed(peprEntry);
+
+  if (overClaimed) {
+    try {
+      await removePeprManagedFieldsEntry(kind.Namespace, namespace, undefined, managedFields!);
+    } catch (err) {
+      log.error(
+        { err, namespace },
+        "Failed to remove stale Pepr managedFields entry; aborting namespace apply to avoid dropping fields",
+      );
+      throw err;
+    }
   }
+
+  if (overClaimed || valuesChanged) {
+    log.debug(logMessage || `Applying updates to namespace ${namespace}.`);
+    await K8s(kind.Namespace).Apply(
+      { metadata: { name: namespace, labels: patchLabels, annotations: patchAnnotations } },
+      { force: true },
+    );
+    // Return true only when managed values changed — callers use this to decide pod cycling.
+    // A cleanup-only apply (overClaimed but no value change) does not require pod restarts.
+    return valuesChanged;
+  }
+
+  log.debug(`No namespace updates needed for ${namespace}.`);
+  return false;
 }
 
 /**

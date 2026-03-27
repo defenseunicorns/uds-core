@@ -6,6 +6,7 @@
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import {
+  SSA_CLEANUP_ANNOTATION,
   computeResourceChecksum,
   configMapChecksumCache,
   discoverConfigMapConsumers,
@@ -15,6 +16,7 @@ import {
   handleSecretDelete,
   handleSecretUpdate,
   parseSelectorString,
+  startupCleanupQueue,
 } from "./pod-reload";
 import * as utils from "./reload-utils";
 
@@ -58,6 +60,7 @@ vi.mock("pepr", async importOriginal => {
 vi.mock("./reload-utils", async () => {
   return {
     reloadPods: vi.fn(),
+    cleanupOverClaimedControllerFields: vi.fn(),
   };
 });
 
@@ -73,6 +76,8 @@ describe("pod-reload", () => {
 
   // Global mocks for K8s API
   const mockGet = vi.fn();
+  const mockApply = vi.fn();
+  const mockPatch = vi.fn().mockResolvedValue({});
   const mockWithLabel = vi.fn().mockReturnThis();
   const mockInNamespace = vi.fn().mockReturnThis();
 
@@ -85,6 +90,8 @@ describe("pod-reload", () => {
   function setupK8sMock(mockGetResponse: K8sResponse = { items: [] }) {
     // Reset the mocks
     mockGet.mockReset();
+    mockApply.mockReset();
+    mockPatch.mockReset().mockResolvedValue({});
     mockWithLabel.mockReset().mockReturnThis();
     mockInNamespace.mockReset().mockReturnThis();
 
@@ -101,10 +108,10 @@ describe("pod-reload", () => {
       Delete: vi.fn(),
       Evict: vi.fn(),
       Watch: vi.fn(),
-      Apply: vi.fn(),
+      Apply: mockApply,
       WithField: vi.fn().mockReturnThis(),
       Create: vi.fn(),
-      Patch: vi.fn(),
+      Patch: mockPatch,
       PatchStatus: vi.fn(),
       Raw: vi.fn(),
       Proxy: vi.fn(),
@@ -191,6 +198,83 @@ describe("pod-reload", () => {
 
       // Second call with the same data should not reload pods
       await handleSecretUpdate(secret as kind.Secret);
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("should call cleanupOverClaimedControllerFields on first observation and not reload pods", async () => {
+      const secret = {
+        metadata: { name: "test-secret", namespace: "default" },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
+
+      expect(utils.cleanupOverClaimedControllerFields).toHaveBeenCalledWith(
+        "default",
+        expect.any(Array),
+        expect.anything(),
+      );
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("should set the SSA cleanup annotation after first-observation cleanup when annotations exist", async () => {
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          annotations: { "existing.annotation/key": "value" },
+        },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
+
+      // Annotation is set via JSON Patch (not SSA Apply) to avoid affecting field ownership.
+      // When annotations already exist, only the single add op is needed.
+      expect(mockPatch).toHaveBeenCalledWith([
+        {
+          op: "add",
+          path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
+          value: "true",
+        },
+      ]);
+    });
+
+    it("should create the annotations map first when resource has no annotations", async () => {
+      const secret = {
+        metadata: { name: "test-secret", namespace: "default" },
+        data: { key: "dmFsdWU=" },
+        // No annotations field — patch would fail without first creating the map
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+      await startupCleanupQueue;
+
+      expect(mockPatch).toHaveBeenCalledWith([
+        { op: "add", path: "/metadata/annotations", value: {} },
+        {
+          op: "add",
+          path: `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/\//g, "~1")}`,
+          value: "true",
+        },
+      ]);
+    });
+
+    it("should skip cleanup on first observation when SSA cleanup annotation is already set", async () => {
+      const secret = {
+        metadata: {
+          name: "test-secret",
+          namespace: "default",
+          annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+        },
+        data: { key: "dmFsdWU=" },
+      };
+
+      await handleSecretUpdate(secret as kind.Secret);
+
+      expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
       expect(utils.reloadPods).not.toHaveBeenCalled();
     });
 
