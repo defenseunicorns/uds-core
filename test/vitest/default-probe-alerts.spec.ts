@@ -68,11 +68,14 @@ describe("UDS Core Default Alerts", { timeout: 180000, retry: 1 }, () => {
       5000,
     );
 
-  test.concurrent.each(alertRules)("alert rule %s should be loaded and healthy", async alertRule => {
-    const rule = await expectAlertRuleHealthy(alertRule);
-    expect(rule).not.toBeNull();
-    expect(rule?.name).toBe(alertRule);
-    expect(rule?.health).toBe("ok");
-    expect(rule?.state).toBe("inactive");
-  });
+  test.concurrent.each(alertRules)(
+    "alert rule %s should be loaded and healthy",
+    async alertRule => {
+      const rule = await expectAlertRuleHealthy(alertRule);
+      expect(rule).not.toBeNull();
+      expect(rule?.name).toBe(alertRule);
+      expect(rule?.health).toBe("ok");
+      expect(rule?.state).toBe("inactive");
+    },
+  );
 });
