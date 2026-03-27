@@ -79,6 +79,5 @@ tasks:
         dir: test/vitest
       - description: "Run Blackbox Exporter integration tests"
         cmd: |
-          echo "Running Blackbox Exporter integration tests..."
           npx vitest run "blackbox-exporter"
         dir: test/vitest

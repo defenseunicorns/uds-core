@@ -91,7 +91,7 @@ Runbooks for upstream defaults are available at [runbooks.prometheus-operator.de
 
    If default alerts are too noisy or not relevant to your environment, you can tune both upstream kube-prometheus-stack and UDS Core defaults through bundle overrides.
 
-   UDS Core default probe alerts can be tuned or disabled like so:
+   UDS Core default probe alerts can be tuned or disabled as follows:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -120,7 +120,7 @@ Runbooks for upstream defaults are available at [runbooks.prometheus-operator.de
                  value: critical
    ```
 
-   Upstream kube-prometheus-stack default rules can be disabled like so:
+   Upstream kube-prometheus-stack default rules can be disabled as follows:
 
    ```yaml title="uds-bundle.yaml"
    packages:

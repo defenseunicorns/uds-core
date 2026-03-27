@@ -23,9 +23,8 @@ Monitor HTTPS endpoint availability using Blackbox Exporter probes. Probes are c
 
 > [!NOTE]
 > Uptime checks for Authservice-protected applications are fully supported. The UDS Operator automatically creates a dedicated Keycloak service account client and configures OAuth2 authentication for the probe.
-
-> [!NOTE]
-> UDS Core ships default probe alerts through `PrometheusRule` resources in the `uds-prometheus-config` chart. By default, UDS Core creates `UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical` alerts. To tune or disable these defaults, reference [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/).
+>
+> UDS Core also ships default probe alerts (`UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical`) through `PrometheusRule` resources in the `uds-prometheus-config` chart. To tune or disable these defaults, see [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/).
 
 ## Steps
 
