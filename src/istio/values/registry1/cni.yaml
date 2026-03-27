@@ -3,3 +3,7 @@
 
 cni:
   image: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.29.1-fips
+
+# Tetrate's FIPS image sets GODEBUG in an incompatible way with native Go FIPS on some node types (Bottlerocket FIPS)
+env:
+  GODEBUG: ""

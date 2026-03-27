@@ -3,7 +3,7 @@
 
 locals {
   # renovate: datasource=github-releases depName=bottlerocket-os/bottlerocket
-  bottlerocket_ami_version = "v1.53.0"
+  bottlerocket_ami_version = "v1.56.0"
 }
 
 data "aws_ami" "eks_bottlerocket_ami" {
