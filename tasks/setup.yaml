@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -14,7 +14,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.73.1 --confirm"
+        cmd: "uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.74.0 --confirm"
 
   - name: ha-postgres
     actions:
