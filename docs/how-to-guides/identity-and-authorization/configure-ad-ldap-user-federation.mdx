@@ -252,7 +252,7 @@ In the Keycloak Admin Console (uds realm):
 
 **Solution:**
 
-1. Confirm the LDAP Group Mapper was saved and the **Sync LDAP groups to Keycloak** action was run
+1. Confirm the LDAP group mapper was saved and the **Sync LDAP groups to Keycloak** action was run
 2. Verify the **LDAP groups DN** in the mapper is the correct base DN for the AD groups you want to import
 3. Confirm **Group name LDAP attribute** is set to `cn` and the AD group CNs match what you expect
 4. Check **Sync modes**: if set to `INHERIT`, it follows the federation provider's sync mode. Set to `FORCE` on the mapper to override user sync to always update group assignments
