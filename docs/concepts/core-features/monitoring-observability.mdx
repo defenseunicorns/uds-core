@@ -28,13 +28,13 @@ By including monitoring as a platform layer, UDS Core provides:
 
 ## Uptime monitoring
 
-UDS Core monitors the availability of its own services through two mechanisms: Prometheus recording rules that track workload health (pod/deployment status), and Blackbox Exporter endpoint probes that verify HTTPS reachability from outside the service mesh. Together, these feed two built-in Grafana dashboards (**Core Uptime** and **Probe Uptime**), giving operators a single view of platform health.
+UDS Core monitors the availability of its own services through three built-in mechanisms: Prometheus recording rules that track workload health (pod and deployment status), Blackbox Exporter endpoint probes that verify HTTPS reachability from outside the service mesh, and default probe alert rules that notify you when endpoints go down or certificates approach expiry. Together, these feed two built-in Grafana dashboards (**Core Uptime** and **Probe Uptime**) and the default Alertmanager pipeline, giving operators a comprehensive view of platform health.
 
-For full details on available metrics, recording rules, probe configuration, and dashboard behavior, see the [Monitoring & Observability reference](/reference/configuration/monitoring-and-observability/).
+For full details on available metrics, recording rules, default probe alerts, probe configuration, and dashboard behavior, see the [Monitoring & Observability reference](/reference/configuration/monitoring-and-observability/).
 
 ## How application teams add metrics
 
-Applications declare their monitoring needs in the `Package` CR's `monitor` block. The UDS Operator automatically creates the appropriate [`ServiceMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor), [`PodMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor), and [`Probe`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources for Prometheus to scrape. Alert rules for application-specific conditions are expressed as [`PrometheusRule`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
+Applications declare their monitoring needs in the `Package` CR's `monitor` block. The UDS Operator automatically creates the appropriate [`ServiceMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.ServiceMonitor), [`PodMonitor`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor), and [`Probe`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.Probe) resources for Prometheus to scrape. UDS Core's built-in probe alert rules cover generic endpoint downtime and TLS certificate expiry. Additional application-specific alert needs are expressed as [`PrometheusRule`](https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PrometheusRule) CRDs deployed alongside the application, keeping alerting logic version-controlled with the application code.
 
 ## Alert routing principles
 
@@ -43,4 +43,4 @@ UDS Core follows the principle that alerts should be evaluated at the source, no
 This keeps alerting configuration declarative, version-controllable, and consistent across environments. The same `PrometheusRule` works whether it is deployed to a local development cluster or a production environment.
 
 > [!TIP]
-> For configuration details, defaults, and available metrics, see the [Monitoring & Observability reference](/reference/configuration/monitoring-and-observability/). For task-oriented guides, see the [Monitoring How-to Guides](/how-to-guides/monitoring-and-observability/overview/).
+> For configuration details, defaults, and available metrics, see the [Monitoring & Observability reference](/reference/configuration/monitoring-and-observability/). To create custom alerts or tune the shipped defaults, see [Create metric alerting rules](/how-to-guides/monitoring-and-observability/create-metric-alerting-rules/). For additional task-oriented guides, see the [Monitoring How-to Guides](/how-to-guides/monitoring-and-observability/overview/).
