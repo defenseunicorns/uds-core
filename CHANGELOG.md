@@ -5,6 +5,43 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.1.0](https://github.com/defenseunicorns/uds-core/compare/v1.0.0...v1.1.0) (2026-03-27)
+
+
+### Features
+
+* default uptime probe overrides ([#2520](https://github.com/defenseunicorns/uds-core/issues/2520)) ([0c80295](https://github.com/defenseunicorns/uds-core/commit/0c80295055e78c217238bd05bf3d4415cf21bbdc))
+
+
+### Bug Fixes
+
+* remove aggressive whitespace trimming in keycloak statefulset template ([#2539](https://github.com/defenseunicorns/uds-core/issues/2539)) ([231fa5c](https://github.com/defenseunicorns/uds-core/commit/231fa5cf6b9c0c1e06a9c43b0dcaa56d624d7c1c))
+
+
+### Miscellaneous
+
+* **ci:** ensure concurrency on all workflows ([#2527](https://github.com/defenseunicorns/uds-core/issues/2527)) ([3ccf9ef](https://github.com/defenseunicorns/uds-core/commit/3ccf9ef8458024116d1fd9c89652c7afa99cd079))
+* **deps-dev:** bump picomatch from 4.0.3 to 4.0.4 in /scripts/renovate ([#2538](https://github.com/defenseunicorns/uds-core/issues/2538)) ([ba0ed10](https://github.com/defenseunicorns/uds-core/commit/ba0ed10623f9a15c422684b7c2dee0520e2411d8))
+* **deps-dev:** bump picomatch from 4.0.3 to 4.0.4 in /scripts/root-ca-retriever ([#2537](https://github.com/defenseunicorns/uds-core/issues/2537)) ([7bfaaa0](https://github.com/defenseunicorns/uds-core/commit/7bfaaa0e1f839157abcfd1a26fc57994bdb27746))
+* **deps:** bump brace-expansion ([#2544](https://github.com/defenseunicorns/uds-core/issues/2544)) ([9cdc76e](https://github.com/defenseunicorns/uds-core/commit/9cdc76ea3e7ecf1bda57c33610ede8ca386b8b8d))
+* **deps:** bump flatted from 3.4.1 to 3.4.2 ([#2512](https://github.com/defenseunicorns/uds-core/issues/2512)) ([7c08658](https://github.com/defenseunicorns/uds-core/commit/7c08658627655c2dc4dbd091c2b9ca5cb802ecef))
+* **deps:** bump picomatch ([#2536](https://github.com/defenseunicorns/uds-core/issues/2536)) ([38baaa8](https://github.com/defenseunicorns/uds-core/commit/38baaa8609a9c037491eb10c4acd3cb6c02516ae))
+* **deps:** bump yaml from 2.8.2 to 2.8.3 in /scripts/renovate ([#2542](https://github.com/defenseunicorns/uds-core/issues/2542)) ([f78b6df](https://github.com/defenseunicorns/uds-core/commit/f78b6df50fd755eb00fda343bdba6d9868b758f9))
+* **deps:** update iac-support-deps ([#2534](https://github.com/defenseunicorns/uds-core/issues/2534)) ([5098a93](https://github.com/defenseunicorns/uds-core/commit/5098a939c7d04d1f920d6c9d10733d59fa66b0a9))
+* **deps:** update keycloak to v26.5.6 ([#2502](https://github.com/defenseunicorns/uds-core/issues/2502)) ([ba6a2c0](https://github.com/defenseunicorns/uds-core/commit/ba6a2c0fadf6b0e3f7adcb3c8afc1b4339091134))
+* **deps:** update prometheus-stack ([#2518](https://github.com/defenseunicorns/uds-core/issues/2518)) ([c9dfd05](https://github.com/defenseunicorns/uds-core/commit/c9dfd05b2b394677c7c351c8121381d23ed78fc6))
+* **deps:** update support dependencies to v4.35.1 ([#2545](https://github.com/defenseunicorns/uds-core/issues/2545)) ([a964617](https://github.com/defenseunicorns/uds-core/commit/a96461757efb1e47b039a194e31119e789513599))
+* **deps:** update UDS CLI to 0.30.0, Zarf init to 0.74.0 ([#2526](https://github.com/defenseunicorns/uds-core/issues/2526)) ([bb0fed5](https://github.com/defenseunicorns/uds-core/commit/bb0fed5e8daa9a16655422d164325b391b4b54b5))
+* **docs:** remove old doc images and diagrams ([#2521](https://github.com/defenseunicorns/uds-core/issues/2521)) ([7ef96c8](https://github.com/defenseunicorns/uds-core/commit/7ef96c87e53b35bfe39af8991d383d1f80c18093))
+* update contributing doc link in PR template ([#2532](https://github.com/defenseunicorns/uds-core/issues/2532)) ([0651180](https://github.com/defenseunicorns/uds-core/commit/0651180a2e5b70768412307434530b5c5e7a8505))
+
+
+### Documentation
+
+* cleanup old doc sites references;cleanup readme ([#2525](https://github.com/defenseunicorns/uds-core/issues/2525)) ([c980914](https://github.com/defenseunicorns/uds-core/commit/c9809148caa6c3c46412c294279395314aba0813))
+* fix incorrect link to configuration overview on reference overview ([#2533](https://github.com/defenseunicorns/uds-core/issues/2533)) ([32fe181](https://github.com/defenseunicorns/uds-core/commit/32fe18175809b28cec69e489c90d8a1a62713396))
+* loki storage configuration reference ([#2529](https://github.com/defenseunicorns/uds-core/issues/2529)) ([25bd0e7](https://github.com/defenseunicorns/uds-core/commit/25bd0e78568e6c738c14d7881d89644e950deb38))
+
 ## [1.0.0](https://github.com/defenseunicorns/uds-core/compare/v0.63.0...v1.0.0) (2026-03-23)
 
 
