@@ -9,7 +9,7 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
+    "typescript": "^6.0.0",
     "vitest": "^4.0.0",
     "@types/adm-zip": "^0.5.7",
     "adm-zip": "^0.5.16",
