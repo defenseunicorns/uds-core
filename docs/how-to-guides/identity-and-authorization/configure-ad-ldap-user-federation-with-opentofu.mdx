@@ -12,9 +12,11 @@ You'll declare AD/LDAP user federation in Keycloak's `uds` realm using HCL, mana
 
 ## Prerequisites
 
+Before you start, ensure you have the following:
+
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed
-- Access to a Kubernetes cluster with `kubectl` or `uds zarf tools kubectl`
+- Access to a Kubernetes cluster with `uds zarf tools kubectl`
 - [OpenTofu](https://opentofu.org/docs/intro/install/) installed
 - `uds-opentofu-client` enabled and the Keycloak provider configured (see [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/))
 - LDAP service account credentials with read access to the directory
@@ -32,7 +34,7 @@ Two behaviors to keep in mind before you apply:
 - **Group name matching is CN-exact.** An AD group with CN `Admin` maps to `/UDS Core/Admin`; a CN of `SuperAdmins` does not. If your AD group CNs do not match the pre-built Keycloak group names, see [Group assignments not working after sync](#problem-group-assignments-not-working-after-sync) below.
 
 > [!NOTE]
-> This guide assumes the OpenTofu provider block (`main.tf`) is already in place from the [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) setup. The HCL examples target the [keycloak/keycloak](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) Terraform provider configured in that guide. The provider configuration is not repeated here, and argument names may differ in other provider versions.
+> This guide assumes the OpenTofu provider block (`main.tf`) is already in place from the [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) setup. The HCL examples use the [`keycloak/keycloak`](https://registry.terraform.io/providers/keycloak/keycloak/latest/docs) provider configured in that guide; the provider block is not repeated here.
 
 ## Steps
 
@@ -88,6 +90,8 @@ Two behaviors to keep in mind before you apply:
    users_dn           = "OU=Users,DC=example,DC=com"
    groups_dn          = "OU=Groups,DC=example,DC=com"
    ```
+
+   Add a `.gitignore` to prevent secrets and state files from being committed:
 
    ```bash title=".gitignore"
    # Never commit secrets or state files
@@ -157,7 +161,7 @@ Two behaviors to keep in mind before you apply:
 
 3. **Configure user attribute mappers**
 
-   Add the four standard user attribute mappers to `ldap.tf` (or a separate `ldap-mappers.tf`). These map AD attributes to Keycloak user profile fields:
+   Add the five user attribute mappers to `ldap.tf` (or a separate `ldap-mappers.tf`). These map AD attributes to Keycloak user profile fields:
 
    ```hcl title="ldap.tf"
    resource "keycloak_ldap_user_attribute_mapper" "first_name" {
@@ -191,10 +195,18 @@ Two behaviors to keep in mind before you apply:
      ldap_attribute          = "sAMAccountName"
      user_model_attribute    = "username"
    }
+
+   resource "keycloak_ldap_user_attribute_mapper" "creation_date" {
+     realm_id                = "uds"
+     ldap_user_federation_id = keycloak_ldap_user_federation.active_directory.id
+     name                    = "creation date"
+     ldap_attribute          = "whenCreated"
+     user_model_attribute    = "createTimestamp"
+   }
    ```
 
    > [!NOTE]
-   > Keycloak auto-creates default mappers (first name, last name, email, username) when a federation provider is created with `vendor = "AD"`. The `delete_default_mappers = true` argument in the federation resource (step 2) instructs the provider to remove these auto-created mappers before the resources in this step are applied, preventing a conflict on first apply.
+   > Keycloak auto-creates four default mappers (first name, last name, email, username) when you create a federation provider with `vendor = "AD"`. The `delete_default_mappers = true` argument in the federation resource (step 2) removes these auto-created mappers before the resources in this step are applied, preventing a conflict on first apply. The `creation_date` mapper is not auto-created and does not conflict; it is an explicit addition.
 
 4. **Configure the LDAP group mapper**
 
@@ -286,12 +298,12 @@ After `tofu apply` succeeds and you have triggered the initial sync:
 
 **Symptoms:** `tofu apply` fails with a conflict error when creating user attribute mappers because Keycloak auto-generated mappers with the same names.
 
-**Solution:** This can occur if you are importing an existing federation provider that was created without `delete_default_mappers = true`, or if `delete_default_mappers` was accidentally omitted. You have two options:
+**Solution:** This occurs when you import an existing federation provider you created without `delete_default_mappers = true`, or when you omitted `delete_default_mappers` from the resource definition. You have two options:
 
 - **Import the auto-created mappers into OpenTofu state** using `tofu import` so OpenTofu manages the existing resources instead of creating new ones. Retrieve the mapper IDs from the Admin Console (**User Federation → your provider → Mappers**) or via the Keycloak API, then import each:
 
   ```bash title="Import an existing mapper into state"
-  tofu import keycloak_ldap_user_attribute_mapper.first_name <realm-id>/<federation-id>/<mapper-id>
+  tofu import keycloak_ldap_user_attribute_mapper.first_name uds/<federation-id>/<mapper-id>
   ```
 
 - **Delete the auto-created mappers** from the Admin Console before re-running `tofu apply`.

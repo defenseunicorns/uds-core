@@ -12,9 +12,11 @@ You'll connect an Active Directory or LDAP directory service to Keycloak as a us
 
 ## Prerequisites
 
+Before you start, ensure you have the following:
+
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed
-- Access to a Kubernetes cluster with `kubectl` or `uds zarf tools kubectl`
+- Access to a Kubernetes cluster with `uds zarf tools kubectl`
 - LDAP service account (bind DN) with read-only access scoped to the Users DN and Groups DN (no replication rights, Domain Admin, or write permissions required)
 - Network connectivity from the Keycloak pod(s) to the LDAP/AD server
 
@@ -136,8 +138,9 @@ UDS Core deploys Keycloak with two pre-configured groups in the `uds` realm: `/U
    | `last name` | `User Attribute` | `sn` | `lastName` |
    | `email` | `User Attribute` | `mail` | `email` |
    | `username` | `User Attribute` | `sAMAccountName` | `username` |
+   | `creation date` | `User Attribute` | `whenCreated` | `createTimestamp` |
 
-   Keycloak typically creates these mappers automatically when you set the **Vendor** to `Active Directory`. Review the existing mappers before adding duplicates.
+   Keycloak creates the first four mappers automatically when you set **Vendor** to `Active Directory`. Confirm they exist before adding them to avoid duplicates. The `creation date` mapper is not auto-created; add it manually.
 
 5. **Configure the LDAP group mapper**
 
@@ -262,7 +265,7 @@ In the Keycloak Admin Console (uds realm):
 
 **Symptoms:** The AD group is named `SuperAdmins` but the expected Keycloak group is `/UDS Core/Admin`; users authenticate but are not assigned to it.
 
-**Solution:** The LDAP Group Mapper uses the AD group's CN as the Keycloak group name. Because `SuperAdmins` does not equal `Admin`, the mapper creates `/UDS Core/SuperAdmins` rather than mapping into the existing `/UDS Core/Admin` group. There is no mapper-level rename; the CN is the name.
+**Solution:** The LDAP group mapper uses the AD group's CN as the Keycloak group name. Because `SuperAdmins` does not equal `Admin`, the mapper creates `/UDS Core/SuperAdmins` rather than mapping into the existing `/UDS Core/Admin` group. There is no mapper-level rename; the CN is the name.
 
 There are two ways to resolve this:
 
@@ -277,7 +280,7 @@ There are two ways to resolve this:
 
 **Symptoms:** After a sync, users lose group memberships for groups that are not sourced from AD.
 
-**Solution:** Disable **Drop non-existing groups during sync** in the LDAP Group Mapper. This setting removes Keycloak groups that have no LDAP counterpart during sync, which can inadvertently remove locally-managed group assignments.
+**Solution:** Disable **Drop non-existing groups during sync** in the LDAP group mapper. This setting removes Keycloak groups that have no LDAP counterpart during sync, which can inadvertently remove locally-managed group assignments.
 
 ## Related documentation
 

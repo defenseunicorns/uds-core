@@ -12,9 +12,11 @@ You'll configure Kerberos/SPNEGO single sign-on in UDS Core so that users on dom
 
 ## Prerequisites
 
+Before you start, ensure you have the following:
+
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed
-- Access to a Kubernetes cluster with `kubectl` or `uds zarf tools kubectl`
+- Access to a Kubernetes cluster with `uds zarf tools kubectl`
 - An HTTP service principal and keytab file for the Keycloak host, obtained from your KDC administrator
 - Network connectivity from the Keycloak pod to your Key Distribution Center (KDC) on port 88 (required); port 464 is only needed if Keycloak handles Kerberos password changes
 
@@ -22,12 +24,12 @@ You'll configure Kerberos/SPNEGO single sign-on in UDS Core so that users on dom
 
 Keycloak implements SPNEGO via its built-in `auth-spnego` authenticator. The `uds` realm uses a custom active flow called `UDS Authentication` (set via `browserFlow` in realm configuration), not the built-in `browser` flow. The `auth-spnego` entry that ships in the built-in `browser` flow is not active and enabling it there has no effect. This guide adds the **Kerberos** execution to the `Authentication` subflow inside `UDS Authentication` and attaches a Kerberos User Federation provider so Keycloak can validate tickets against your KDC.
 
-The Kerberos User Federation provider handles authentication only. The Kerberos provider does not import group memberships or user attributes from Active Directory. If you need group-based access controls (including `/UDS Core/Admin` assignment), configure LDAP User Federation alongside Kerberos. See [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/).
+The Kerberos User Federation provider handles authentication only. The Kerberos provider does not import group memberships or user attributes from Active Directory. If you need group-based access controls (including `/UDS Core/Admin` assignment), configure LDAP User Federation first, then add the Kerberos provider following this guide. Keycloak links Kerberos-authenticated identities to existing LDAP user records by username, inheriting the group memberships from the LDAP sync. See [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/).
 
-> [!CAUTION]
+> [!WARNING]
 > A Kerberos keytab is a credential equivalent to a password for the service principal. Store it only as a Kubernetes Secret. Never commit it to source control or embed it in a bundle artifact.
 
-> [!CAUTION]
+> [!IMPORTANT]
 > UDS Core runs Keycloak in FIPS 140-2 Strict Mode. The keytab must use AES-256 or AES-128 encryption types (etypes 18 or 17). RC4 (etype 23) and DES (etypes 1, 3) are rejected. Verify the keytab with `klist -kte /path/to/keytab` and confirm only AES entries are present. If your KDC defaults to RC4, coordinate with your AD administrator to enable AES encryption on the service account and regenerate the keytab before proceeding.
 
 ## Steps
@@ -142,11 +144,13 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
 
    > [!WARNING]
    > Because this mount uses `subPath`, Kubernetes does **not** automatically update the keytab file when the Secret changes. After rotating the keytab Secret, you must restart the Keycloak pods for the new keytab to take effect:
-   > ```bash
+   > ```bash title="Restart Keycloak pods"
    > uds zarf tools kubectl rollout restart statefulset -n keycloak keycloak
    > ```
 
 5. **Create and deploy your bundle**
+
+   Create and deploy the bundle to apply the network policy and volume mount overrides from steps 3 and 4:
 
    ```bash title="Deploy the bundle"
    uds create <path-to-bundle-dir>
@@ -192,7 +196,7 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
 
    Set **Allow password authentication** to `On` to allow users without a Kerberos ticket to authenticate with a username and password via the KDC (not via LDAP bind). If you have LDAP User Federation configured alongside Kerberos, set this to `Off`: the LDAP provider handles password authentication, and enabling it here creates a redundant KDC authentication path. Set **Debug** to `On` only when actively troubleshooting; it produces verbose logs that are collected by UDS Core's logging pipeline.
 
-   Save the provider. Keycloak does not validate the keytab at save time; the provider will save successfully even if the keytab is not yet mounted. Validation occurs when SPNEGO authentication is first attempted — if the keytab is absent or the principal name does not match, Keycloak will log a Kerberos initialization error at that point. If authentication fails after saving, verify the keytab file is present at the mounted path and that the principal name matches exactly what was exported.
+   Save the provider. Keycloak does not validate the keytab at save time; the provider will save successfully even if the keytab is not yet mounted. Validation occurs when SPNEGO authentication is first attempted. If the keytab is absent or the principal name does not match, Keycloak will log a Kerberos initialization error at that point. If authentication fails after saving, verify the keytab file is present at the mounted path and that the principal name matches exactly what was exported.
 
    > [!NOTE]
    > Keycloak's underlying Java GSSAPI stack uses `/etc/krb5.conf` inside the container to locate the KDC. If your environment does not publish DNS SRV records for `_kerberos._tcp.<REALM>`, you must mount a `krb5.conf` file into the pod as an additional ConfigMap volume (at `/etc/krb5.conf`). Verify after deployment with `uds zarf tools kubectl exec -n keycloak <pod> -- cat /etc/krb5.conf`. A missing or empty `krb5.conf` with no DNS SRV fallback will produce "Cannot locate KDC" errors during ticket validation.
@@ -321,12 +325,6 @@ Confirm a policy exists that permits egress on port 88. If using `remoteCidr`, c
 **Symptoms:** Users can log in via Kerberos SSO but cannot access applications that require group membership (e.g., applications gated on `/UDS Core/Admin`).
 
 **Solution:** The Kerberos User Federation provider handles authentication only. The Kerberos provider does not import group memberships or user attributes. Configure LDAP User Federation alongside Kerberos to sync group memberships from Active Directory. See [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/).
-
-## Using LDAP and Kerberos together
-
-Configure LDAP User Federation first (see [Configure AD/LDAP user federation in Keycloak](/how-to-guides/identity-and-authorization/configure-ad-ldap-user-federation/)), then add the Kerberos provider following the steps in this guide. When a user authenticates via SPNEGO, Keycloak links the Kerberos identity to the existing LDAP user record based on the username, inheriting the group memberships already synchronized from AD.
-
-If a user does not have a valid TGT (for example, from an unmanaged device), Keycloak falls back to the LDAP provider's password authentication (provided the browser flow is set to **Alternative** rather than **Required**). With LDAP configured, set **Allow password authentication** to `Off` in the Kerberos provider so that password fallback routes through LDAP bind rather than the KDC.
 
 ## Related documentation
 
