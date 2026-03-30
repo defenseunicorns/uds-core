@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -93,53 +93,84 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Get the requested service mesh mode, default to ambient if not specified
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
+  const ff = UDSConfig.featureFlags;
+
   // Ensure network policies are in place
-  const netPol = await networkPolicies(pkg, namespace!, istioMode);
-  const authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+  let netPol: Awaited<ReturnType<typeof networkPolicies>> = [];
+  if (ff.networkPolicies) {
+    netPol = await networkPolicies(pkg, namespace!, istioMode);
+  }
+
+  let authPol: Awaited<ReturnType<typeof generateAuthorizationPolicies>> = [];
+  if (ff.authorizationPolicies) {
+    authPol = await generateAuthorizationPolicies(pkg, namespace!, istioMode);
+  }
 
   // Enable Istio injection (this may restart pods in sidecar mode)
-  await enableIstio(pkg);
+  if (ff.istioInjection) {
+    await enableIstio(pkg);
+  }
 
   let endpoints: string[] = [];
   let ssoClients = new Map<string, Client>();
   let authserviceClients: AuthserviceClient[] = [];
 
-  if (UDSConfig.isIdentityDeployed) {
-    // Configure SSO
-    ssoClients = await keycloak(pkg);
-    authserviceClients = await authservice(pkg, ssoClients);
-  } else if (pkg.spec?.sso) {
-    log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
-    throw new Error(
-      "Identity & Authorization is not deployed, but the package has SSO configuration",
-    );
+  if (ff.sso) {
+    if (UDSConfig.isIdentityDeployed) {
+      // Configure SSO
+      ssoClients = await keycloak(pkg);
+      authserviceClients = await authservice(pkg, ssoClients);
+    } else if (pkg.spec?.sso) {
+      log.error("Identity & Authorization is not deployed, but the package has SSO configuration");
+      throw new Error(
+        "Identity & Authorization is not deployed, but the package has SSO configuration",
+      );
+    }
   }
 
   // Create the Istio ingress resources per the package configuration
-  endpoints = await istioResources(pkg, namespace!);
+  if (ff.istioIngress) {
+    endpoints = await istioResources(pkg, namespace!);
+  }
 
   // Reconcile egress resources separately to avoid cycles
-  await istioEgressResources(pkg, namespace!);
+  if (ff.istioEgress) {
+    await istioEgressResources(pkg, namespace!);
+  }
 
   // Configure the ServiceMonitors
   const monitors: string[] = [];
-  monitors.push(...(await podMonitor(pkg, namespace!)));
-  monitors.push(...(await serviceMonitor(pkg, namespace!)));
+  if (ff.podMonitors) {
+    monitors.push(...(await podMonitor(pkg, namespace!)));
+  }
+  if (ff.serviceMonitors) {
+    monitors.push(...(await serviceMonitor(pkg, namespace!)));
+  }
 
   // Configure the Uptime Probes
-  const { probeNames: probes, ssoClients: probeSsoClients } = await probe(pkg, namespace!);
+  let probes: string[] = [];
+  let probeSsoClients: string[] = [];
+  if (ff.uptimeProbes) {
+    ({ probeNames: probes, ssoClients: probeSsoClients } = await probe(pkg, namespace!));
+  }
 
   // Purge orphaned SSO clients now that both keycloak and probe clients are known
-  const allSsoClients = [...ssoClients.keys(), ...probeSsoClients];
-  try {
-    await purgeSSOClients(pkg, allSsoClients);
-  } catch (e) {
-    log.error(e, `Failed to purge orphaned SSO clients for ${pkg.metadata!.name!}: ${e}`);
+  if (ff.sso) {
+    const allSsoClients = [...ssoClients.keys(), ...probeSsoClients];
+    try {
+      await purgeSSOClients(pkg, allSsoClients);
+    } catch (e) {
+      log.error(e, `Failed to purge orphaned SSO clients for ${pkg.metadata!.name!}: ${e}`);
+    }
   }
 
   // Create the CA Bundle Config Map if needed
-  await caBundleConfigMap(pkg, namespace!);
+  if (ff.caBundle) {
+    await caBundleConfigMap(pkg, namespace!);
+  }
 
+  // TODO: when Go controller begins writing Package status, coordinate to avoid conflicts
+  // (e.g. separate status sub-fields per controller, or a merge strategy)
   await updateStatus(pkg, {
     phase: Phase.Ready,
     conditions: getReadinessConditions(true),

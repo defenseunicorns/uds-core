@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,6 +11,19 @@ export type CABundle = {
   publicCerts?: string; // Base64 encoded PEM bundle of public CA certificates
 };
 
+export type FeatureFlags = {
+  networkPolicies: boolean;
+  authorizationPolicies: boolean;
+  istioInjection: boolean;
+  istioIngress: boolean;
+  istioEgress: boolean;
+  sso: boolean; // keycloak + authservice + purgeSSOClients
+  podMonitors: boolean;
+  serviceMonitors: boolean;
+  uptimeProbes: boolean;
+  caBundle: boolean;
+};
+
 export type Config = {
   domain: string;
   adminDomain: string;
@@ -20,4 +33,5 @@ export type Config = {
   kubeApiCIDR: string;
   kubeNodeCIDRs: string[];
   isIdentityDeployed: boolean;
+  featureFlags: FeatureFlags;
 };

@@ -22,6 +22,16 @@ tasks:
             name: uds-controller
             namespace: uds-system
 
+  - name: update-pepr
+    description: Apply dev-flags.env to the Pepr watcher deployment and cycle the pod
+    actions:
+      - description: "Set feature flag env vars on the Pepr watcher and restart"
+        cmd: |
+          grep -v '^#' src/go-controller/dev-flags.env | grep -v '^[[:space:]]*$' | \
+            xargs uds zarf tools kubectl set env deployment/pepr-uds-core-watcher -n pepr-system
+          uds zarf tools kubectl rollout restart deployment/pepr-uds-core-watcher -n pepr-system
+          uds zarf tools kubectl rollout status deployment/pepr-uds-core-watcher -n pepr-system
+
   - name: update-controller
     description: Updates controller to latest code on an already running `dev-setup`
     actions:

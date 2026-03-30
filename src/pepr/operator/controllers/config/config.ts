@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -22,6 +22,11 @@ import { Config } from "./types";
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
+/** Returns true unless the env var is explicitly set to "false". */
+function boolEnv(name: string): boolean {
+  return process.env[name] !== "false";
+}
+
 // Set default UDSConfig for build time compiling
 export const UDSConfig: Config = {
   domain: "",
@@ -38,6 +43,18 @@ export const UDSConfig: Config = {
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
   isIdentityDeployed: false,
+  featureFlags: {
+    networkPolicies: boolEnv("UDS_OPERATOR_NETWORK_POLICIES_ENABLED"),
+    authorizationPolicies: boolEnv("UDS_OPERATOR_AUTHORIZATION_POLICIES_ENABLED"),
+    istioInjection: boolEnv("UDS_OPERATOR_ISTIO_INJECTION_ENABLED"),
+    istioIngress: boolEnv("UDS_OPERATOR_ISTIO_INGRESS_ENABLED"),
+    istioEgress: boolEnv("UDS_OPERATOR_ISTIO_EGRESS_ENABLED"),
+    sso: boolEnv("UDS_OPERATOR_SSO_ENABLED"),
+    podMonitors: boolEnv("UDS_OPERATOR_POD_MONITORS_ENABLED"),
+    serviceMonitors: boolEnv("UDS_OPERATOR_SERVICE_MONITORS_ENABLED"),
+    uptimeProbes: boolEnv("UDS_OPERATOR_UPTIME_PROBES_ENABLED"),
+    caBundle: boolEnv("UDS_OPERATOR_CA_BUNDLE_ENABLED"),
+  },
 };
 
 // Enums for tracking the config action and step of the action
