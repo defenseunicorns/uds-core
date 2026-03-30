@@ -37,6 +37,17 @@ tasks:
           uds zarf tools kubectl create ns istio-system
           uds zarf tools kubectl create ns pepr-system
 
+      - description: "Build and load the Go controller image"
+        cmd: |
+          docker build -t uds-core-controller:dev src/go-controller/
+          k3d image import uds-core-controller:dev -c uds
+
+      - description: "Deploy the Go controller"
+        cmd: |
+          uds zarf tools kubectl apply -f src/go-controller/manifests/namespace.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/rbac.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
+
       - description: "Deploy the UDS CRDs and apply all hack dev manifests"
         cmd: |
           uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/
@@ -56,6 +67,21 @@ tasks:
           echo "  - To test & develop the Pepr module, run 'npx pepr dev' from a Javascript debug terminal"
           echo "  - Otherwise run 'npx pepr deploy' to deploy the Pepr module to the cluster"
           echo "  - Additional source packages can be deployed with 'zarf dev deploy src/<package> --flavor upstream'"
+
+  - name: redeploy-go-controller
+    description: "Rebuild and redeploy the Go controller (requires existing k3d cluster)"
+    actions:
+      - description: "Build and load the Go controller image"
+        cmd: |
+          docker build -t uds-core-controller:dev src/go-controller/
+          k3d image import uds-core-controller:dev -c uds
+      - description: "Apply manifests and restart the deployment"
+        cmd: |
+          uds zarf tools kubectl apply -f src/go-controller/manifests/namespace.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/rbac.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
+          uds zarf tools kubectl rollout restart deployment/uds-controller -n uds-system
+          uds zarf tools kubectl rollout status deployment/uds-controller -n uds-system --timeout=60s
 
   - name: slim-dev
     actions:
