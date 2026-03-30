@@ -32,7 +32,7 @@ All Go commands must be run from this directory:
 ```bash
 cd src/go-controller
 
-go build ./...
+go build -o controller .
 go vet ./...
 ```
 
@@ -59,6 +59,15 @@ uds run -f src/go-controller/tasks.yaml update-controller
 ```
 
 Rebuilds the image, imports it into k3d, and cycles the deployment.
+
+### Generating clients (only if you made changes to api/)
+
+```bash
+cd src/go-controller
+uds run  gen-clients
+```
+
+Regenerates all client code that lives under `clients/`.
 
 ### Changing feature flags (shifting a controller from Pepr → Go)
 

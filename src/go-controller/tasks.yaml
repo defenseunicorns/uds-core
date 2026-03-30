@@ -13,6 +13,14 @@ tasks:
       - description: Generate ClusterConfig types from CRD YAML into scratch directory
         cmd: npx kubernetes-fluent-client@3.11.6 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l go src/go-controller/.generated/
 
+  - name: gen-clients
+    description: "generate crd definition files, deepcopy and clients"
+    actions:
+      - description: "vendor dependencies"
+        cmd: go mod vendor
+      - description: "generate clients and deepcopy"
+        cmd: ./hack/update-codegen.sh
+
   - name: validate
     actions:
       - description: Wait for uds-controller pod(s) to be ready
@@ -47,3 +55,4 @@ tasks:
           uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
           uds zarf tools kubectl rollout restart deployment/uds-controller -n uds-system
           uds zarf tools kubectl rollout status deployment/uds-controller -n uds-system
+

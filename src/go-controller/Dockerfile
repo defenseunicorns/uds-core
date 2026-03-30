@@ -1,7 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-FROM golang:1.24 AS builder
+FROM golang:1.25 AS builder
 
 WORKDIR /app
 COPY go.mod go.sum ./

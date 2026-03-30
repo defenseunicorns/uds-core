@@ -15,19 +15,23 @@ import (
 // SchemeGroupVersion is the group/version for the uds.dev API.
 var SchemeGroupVersion = schema.GroupVersion{Group: "uds.dev", Version: "v1alpha1"}
 
-// Package is the top-level Kubernetes resource type for a UDS Package.
-type Package struct {
+// +genclient
+// +genclient:nonNamespaced
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// UDSPackage is the top-level Kubernetes resource type for a UDS Package.
+type UDSPackage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 	Spec              Spec          `json:"spec,omitempty"`
 	Status            PackageStatus `json:"status,omitempty"`
 }
 
-// PackageList holds a list of Package resources.
-type PackageList struct {
+// UDSPackageList holds a list of Package resources.
+type UDSPackageList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Package `json:"items"`
+	Items           []UDSPackage `json:"items"`
 }
 
 // PackageStatus is an alias for the generated StatusClass type.

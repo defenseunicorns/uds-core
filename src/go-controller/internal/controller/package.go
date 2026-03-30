@@ -27,7 +27,7 @@ func NewPackageController() *PackageController {
 
 // Reconcile is called for every add and update event. It should bring the
 // cluster state into alignment with the desired state declared in pkg.
-func (c *PackageController) Reconcile(ctx context.Context, pkg *udstypes.Package) error {
+func (c *PackageController) Reconcile(ctx context.Context, pkg *udstypes.UDSPackage) error {
 	c.logger.Info("Reconciling package",
 		"namespace", pkg.Namespace,
 		"name", pkg.Name,
@@ -90,7 +90,7 @@ func (c *PackageController) HandleDelete(obj interface{}) {
 
 // parsePackage converts an informer object to a typed Package by marshaling through JSON.
 // Returns false if the object cannot be converted (e.g. wrong type).
-func parsePackage(obj interface{}) (*udstypes.Package, bool) {
+func parsePackage(obj interface{}) (*udstypes.UDSPackage, bool) {
 	marshaler, ok := obj.(json.Marshaler)
 	if !ok {
 		return nil, false
@@ -100,7 +100,7 @@ func parsePackage(obj interface{}) (*udstypes.Package, bool) {
 		slog.Error("Failed to marshal package object", "error", err)
 		return nil, false
 	}
-	var pkg udstypes.Package
+	var pkg udstypes.UDSPackage
 	if err := json.Unmarshal(raw, &pkg); err != nil {
 		slog.Error("Failed to unmarshal package object", "error", err)
 		return nil, false
