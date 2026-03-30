@@ -19,7 +19,9 @@ Define alerting conditions based on Prometheus metrics using PrometheusRule CRDs
 
 ## Before you begin
 
-UDS Core ships default alerting rules from the upstream kube-prometheus-stack chart covering cluster health, node conditions, and platform components. Runbooks for these default rules are available at [runbooks.prometheus-operator.dev](https://runbooks.prometheus-operator.dev/). This guide covers creating custom rules for your applications and optionally tuning the defaults.
+UDS Core ships default alerting rules from two sources. The upstream `kube-prometheus-stack` chart provides cluster and node health alerts, and UDS Core provides default probe alerts for endpoint downtime and TLS certificate expiry.
+
+Runbooks for upstream defaults are available at [runbooks.prometheus-operator.dev](https://runbooks.prometheus-operator.dev/). This guide covers creating custom rules for your applications and optionally tuning either default set.
 
 ## Steps
 
@@ -85,32 +87,55 @@ UDS Core ships default alerting rules from the upstream kube-prometheus-stack ch
 
    The Prometheus Operator picks up PrometheusRule CRs automatically.
 
-3. **Optional: Disable or tune default alert rules**
+3. **(Optional) Disable or tune default alert rules**
 
-   If default kube-prometheus-stack alerts are too noisy or not relevant to your environment, you can disable individual rules or entire rule groups through bundle overrides.
+   If default alerts are too noisy or not relevant to your environment, you can tune both upstream kube-prometheus-stack and UDS Core defaults through bundle overrides.
+
+   UDS Core default probe alerts can be tuned or disabled as follows:
 
    ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         kube-prometheus-stack:
-           kube-prometheus-stack:
-             values:
-               # Disable specific individual rules by name
-               - path: defaultRules.disabled
-                 value:
-                   KubeControllerManagerDown: true
-                   KubeSchedulerDown: true
-               # Disable entire rule groups with boolean toggles
-               - path: defaultRules.rules.kubeControllerManager
-                 value: false
-               - path: defaultRules.rules.kubeSchedulerAlerting
-                 value: false
+   overrides:
+     kube-prometheus-stack:
+       uds-prometheus-config:
+         values:
+           # Disable all UDS Core probe default alerts
+           - path: udsCoreDefaultAlerts.enabled
+             value: false
+           # Disable Endpoint Down alert
+           - path: udsCoreDefaultAlerts.probeEndpointDown.enabled
+             value: false
+           # Tune threshold and severity for TLS expiry warning alerts
+           - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.days
+             value: 21
+           - path: udsCoreDefaultAlerts.probeTLSExpiryWarning.severity
+             value: warning
+           # Tune threshold and severity for TLS expiry critical alerts
+           - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.days
+             value: 7
+           - path: udsCoreDefaultAlerts.probeTLSExpiryCritical.severity
+             value: critical
    ```
 
-   Use `defaultRules.disabled` for fine-tuned control over individual rules. Use `defaultRules.rules.*` to disable entire rule groups when broader changes are needed.
+   Upstream kube-prometheus-stack default rules can be disabled as follows:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     kube-prometheus-stack:
+       kube-prometheus-stack:
+         values:
+           # Disable specific individual rules by name
+           - path: defaultRules.disabled
+             value:
+               KubeControllerManagerDown: true
+               KubeSchedulerDown: true
+           # Disable entire rule groups with boolean toggles
+           - path: defaultRules.rules.kubeControllerManager
+             value: false
+           - path: defaultRules.rules.kubeSchedulerAlerting
+             value: false
+   ```
+
+   Use `defaultRules.disabled` for fine-tuned control over upstream individual rules. Use `defaultRules.rules.*` to disable upstream rule groups when broader changes are needed.
 
    Create and deploy your bundle:
 
