@@ -10,6 +10,8 @@ tasks:
     actions:
       - description: Generate Package types from CRD YAML into scratch directory
         cmd: npx kubernetes-fluent-client@3.11.6 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l go src/go-controller/.generated/
+      - description: Generate ClusterConfig types from CRD YAML into scratch directory
+        cmd: npx kubernetes-fluent-client@3.11.6 crd src/pepr/uds-cluster-crds/templates/clusterconfig.uds.dev.yaml -l go src/go-controller/.generated/
 
   - name: validate
     actions:
@@ -19,3 +21,19 @@ tasks:
             kind: Deployment
             name: uds-controller
             namespace: uds-system
+
+  - name: update-controller
+    description: Updates controller to latest code on an already running `dev-setup`
+    actions:
+      - description: "Build and load the Go controller image"
+        cmd: |
+          docker build -t uds-core-controller:dev src/go-controller/
+          k3d image import uds-core-controller:dev -c uds
+
+      - description: "Deploy the Go controller"
+        cmd: |
+          uds zarf tools kubectl apply -f src/go-controller/manifests/namespace.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/rbac.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
+          uds zarf tools kubectl rollout restart deployment/uds-controller -n uds-system
+          uds zarf tools kubectl rollout status deployment/uds-controller -n uds-system

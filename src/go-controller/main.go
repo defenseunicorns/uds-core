@@ -58,13 +58,22 @@ func main() {
 	})
 
 	// Dynamic informer for UDS custom resources
-	packageGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}
 	dynamicFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
+
+	packageGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}
 	packageCtrl := controller.NewPackageController()
 	dynamicFactory.ForResource(packageGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    packageCtrl.HandleAdd,
 		UpdateFunc: packageCtrl.HandleUpdate,
 		DeleteFunc: packageCtrl.HandleDelete,
+	})
+
+	clusterConfigGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "clusterconfig"}
+	clusterConfigCtrl := controller.NewClusterConfigController()
+	dynamicFactory.ForResource(clusterConfigGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    clusterConfigCtrl.HandleAdd,
+		UpdateFunc: clusterConfigCtrl.HandleUpdate,
+		// No DeleteFunc — deletion of the ClusterConfig singleton is not expected
 	})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
