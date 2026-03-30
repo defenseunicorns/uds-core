@@ -44,6 +44,11 @@ components:
     import:
       path: ../base
 
+  - name: uds-controller
+    required: true
+    import:
+      path: ../base
+
   - name: istio-controlplane
     required: true
     import:
