@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
@@ -34,7 +34,7 @@ tasks:
     actions:
       - description: Setup Custom ConfigMap for Core DNS
         cmd: |
-          uds zarf tools kubectl apply -f - <<EOF
+          ./uds zarf tools kubectl apply -f - <<EOF
           apiVersion: v1
           data:
             uds.override: |
@@ -49,13 +49,13 @@ tasks:
             name: coredns-custom
             namespace: kube-system
           EOF
-          uds zarf tools kubectl -n kube-system rollout restart deployment coredns
+          ./uds zarf tools kubectl -n kube-system rollout restart deployment coredns
 
   - name: eks-storageclass-setup
     actions:
       - description: Setup GP3 Storage Class
         cmd: |
-          uds zarf tools kubectl apply -f - <<EOF
+          ./uds zarf tools kubectl apply -f - <<EOF
             apiVersion: storage.k8s.io/v1
             kind: StorageClass
             metadata:
@@ -76,9 +76,9 @@ tasks:
     actions:
       - description: Fetch Admin Gateway IP Address
         cmd: |
-          IP_ADDR=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-          if [ -z $IP_ADDR ]; then
-            HOSTNAME=$(uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+          IP_ADDR=$(./uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z "$IP_ADDR" ]; then
+            HOSTNAME=$(./uds zarf tools kubectl get service -n istio-admin-gateway admin-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
             IP_ADDR=$(dig +short $HOSTNAME | head -n1)
           fi; echo $IP_ADDR
         mute: true
@@ -89,9 +89,9 @@ tasks:
     actions:
       - description: Fetch Tenant Gateway IP Address
         cmd: |
-          IP_ADDR=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
-          if [ -z $IP_ADDR ]; then
-            HOSTNAME=$(uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+          IP_ADDR=$(./uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z "$IP_ADDR" ]; then
+            HOSTNAME=$(./uds zarf tools kubectl get service -n istio-tenant-gateway tenant-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
             IP_ADDR=$(dig +short $HOSTNAME | head -n1)
           fi; echo $IP_ADDR
         mute: true
