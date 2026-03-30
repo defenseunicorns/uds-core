@@ -246,6 +246,10 @@ packages:
           values:
             - path: "falcosidekick.replicaCount"
               value: 1
+            - path: "resources.limits.memory"
+              value: "4Gi"
+            - path: "resources.requests.memory"
+              value: "1Gi"
         uds-falco-config:
           variables:
             - name: FALCO_SANDBOX_RULES_ENABLED

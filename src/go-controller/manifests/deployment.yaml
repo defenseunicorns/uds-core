@@ -1,0 +1,39 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uds-controller
+  namespace: uds-system
+  labels:
+    app: uds-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uds-controller
+  template:
+    metadata:
+      labels:
+        app: uds-controller
+    spec:
+      serviceAccountName: uds-controller
+      containers:
+        - name: controller
+          image: uds-core-controller:dev
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          securityContext:
+            runAsNonRoot: true
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL

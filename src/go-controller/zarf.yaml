@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-controller
+  description: "UDS Core Go Controller"
+
+components:
+  - name: uds-controller
+    required: true
+    charts:
+      - name: uds-controller
+        namespace: uds-system
+        version: 0.1.0
+        localPath: chart
+    images:
+      - ghcr.io/defenseunicorns/uds-core/controller:0.1.0

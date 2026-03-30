@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -91,6 +91,10 @@ tasks:
         if: ${{ eq .inputs.layer "standard" }}
       - task: pepr-build
         if: ${{ eq .inputs.layer "base" }}
+      - task: go-controller-build
+        if: ${{ eq .inputs.layer "standard" }}
+      - task: go-controller-build
+        if: ${{ eq .inputs.layer "base" }}
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Zarf Package"
@@ -132,3 +136,10 @@ tasks:
           rm -fr dist
           npm ci
           npx pepr build -z chart $PEPR_OVERRIDE_IMAGE
+
+  - name: go-controller-build
+    description: "Build the UDS Core Go Controller image"
+    actions:
+      - description: "Build the Go Controller Docker image"
+        cmd: |
+          docker build -t ghcr.io/defenseunicorns/uds-core/controller:0.1.0 src/go-controller/
