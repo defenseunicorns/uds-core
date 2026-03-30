@@ -2,6 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
+  - name: gen-crds
+    description: |
+      Generate raw Go types from CRD manifests into .generated/ for developer reference.
+      Output requires manual curation before incorporating into api/uds/v1alpha1/package.go
+      (add package declaration, move imports to top, add TypeMeta/ObjectMeta wrappers, etc.)
+    actions:
+      - description: Generate Package types from CRD YAML into scratch directory
+        cmd: npx kubernetes-fluent-client@3.11.6 crd src/pepr/uds-cluster-crds/templates/packages.uds.dev.yaml -l go src/go-controller/.generated/
+
   - name: validate
     actions:
       - description: Wait for uds-controller pod(s) to be ready

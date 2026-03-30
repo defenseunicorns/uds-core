@@ -11,10 +11,15 @@ import (
 	"syscall"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller"
 )
 
 func main() {
@@ -33,9 +38,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		slog.Error("Failed to create dynamic client", "error", err)
+		os.Exit(1)
+	}
+
+	// Standard informer for built-in resources
 	factory := informers.NewSharedInformerFactory(clientset, 0)
 	secretInformer := factory.Core().V1().Secrets().Informer()
-
 	secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			secret, ok := obj.(*corev1.Secret)
@@ -46,13 +57,25 @@ func main() {
 		},
 	})
 
+	// Dynamic informer for UDS custom resources
+	packageGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}
+	dynamicFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
+	packageCtrl := controller.NewPackageController()
+	dynamicFactory.ForResource(packageGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc:    packageCtrl.HandleAdd,
+		UpdateFunc: packageCtrl.HandleUpdate,
+		DeleteFunc: packageCtrl.HandleDelete,
+	})
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
 	slog.Info("Starting Go controller")
 	factory.Start(ctx.Done())
 	factory.WaitForCacheSync(ctx.Done())
-	slog.Info("Informer cache synced, watching for Secret events")
+	dynamicFactory.Start(ctx.Done())
+	dynamicFactory.WaitForCacheSync(ctx.Done())
+	slog.Info("Informer caches synced, watching for events")
 
 	<-ctx.Done()
 	slog.Info("Shutting down")

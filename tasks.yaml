@@ -36,7 +36,6 @@ tasks:
           uds zarf tools kubectl create ns uds-policy-exemptions
           uds zarf tools kubectl create ns istio-system
           uds zarf tools kubectl create ns pepr-system
-
       - description: "Build and load the Go controller image"
         cmd: |
           docker build -t uds-core-controller:dev src/go-controller/
