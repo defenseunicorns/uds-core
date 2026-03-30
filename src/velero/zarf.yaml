@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/velero/velero:1.17.2-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/velero/velero-plugin-for-aws:1.13.2-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.13.2-jammy-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero:1.18.0-noble-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-aws:1.14.0-noble-scratch-fips-rfcurated
+      - quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.14.0-noble-scratch-fips-rfcurated
