@@ -45,11 +45,20 @@ func (c *ClusterConfigController) Reconcile(ctx context.Context, cfg *udstypes.C
 	}
 
 	udscfg.Update(func(c *udscfg.Config) {
-		c.Domain = cfg.Spec.Expose.Domain
-		if cfg.Spec.Expose.AdminDomain != nil {
+		// Domain — fallback to "uds.dev" if empty or unresolved Zarf placeholder
+		domain := cfg.Spec.Expose.Domain
+		if domain == "" || domain == "###ZARF_VAR_DOMAIN###" {
+			domain = "uds.dev"
+		}
+		c.Domain = domain
+
+		// AdminDomain — fallback to "admin.<domain>" if not set or unresolved placeholder
+		if cfg.Spec.Expose.AdminDomain != nil &&
+			*cfg.Spec.Expose.AdminDomain != "" &&
+			*cfg.Spec.Expose.AdminDomain != "###ZARF_VAR_ADMIN_DOMAIN###" {
 			c.AdminDomain = *cfg.Spec.Expose.AdminDomain
 		} else {
-			c.AdminDomain = "admin." + cfg.Spec.Expose.Domain
+			c.AdminDomain = "admin." + domain
 		}
 
 		c.AllowAllNSExemptions = cfg.Spec.Policy.AllowAllNsExemptions
