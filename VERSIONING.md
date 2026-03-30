@@ -1,5 +1,6 @@
 ---
 title: Versioning
+description: UDS Core versioning policy defining what constitutes the API surface and what changes require a major version increment.
 sidebar:
   order: 2.1
 ---

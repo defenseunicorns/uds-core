@@ -26,6 +26,7 @@ How-to guides live under `docs/how-to-guides/<section>/` and are grouped by doma
 ```mdx
 ---
 title: Topic Name
+description: One or two sentences describing what this page covers or what the reader will accomplish. Used in llms.txt, search, and SEO; required on every page.
 sidebar:
   order: X.XXX
 ---
@@ -151,6 +152,9 @@ uds zarf tools kubectl get pods -n namespace
 - Always list: **UDS CLI installed** and **Access to a Kubernetes cluster** (with guide-specific qualifiers like "(**multi-node**, multi-AZ recommended)")
 - If the guide references `registry.defenseunicorns.com` packages (e.g., bundle YAML with `repository: registry.defenseunicorns.com/...`), include: **[UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token**
 - Guide-specific items: external dependencies (e.g., external PostgreSQL), credential requirements, knowledge prereqs (e.g., familiarity with bundle overrides)
+
+### Frontmatter
+- `description:` is **required** on every page. Write 1–2 sentences in active voice describing what the page covers or what the reader will accomplish. This drives `llms.txt` navigation, search snippets, and SEO. A good description for a how-to guide starts with a verb: "Configure...", "Enable...", "Set up..." Example: "Configure valid TLS certificates for UDS Core ingress gateways using cert-manager, manual secrets, or cloud-managed certificate options."
 
 ### General
 - Use an optional "Before you begin" section for context about defaults or architecture; keep steps action-only
