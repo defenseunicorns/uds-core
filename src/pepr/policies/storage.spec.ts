@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -23,6 +23,7 @@ describe("Storage Validation Tests", () => {
             },
           },
         },
+        { name: "image-vol", image: { reference: "busybox:latest", pullPolicy: "IfNotPresent" } },
         { name: "pvc", persistentVolumeClaim: { claimName: "test-pvc" } },
         { name: "projected", projected: { sources: [] } },
         { name: "secret-vol", secret: { secretName: "test-secret" } },
