@@ -30,19 +30,12 @@ func NewClusterConfigController() *ClusterConfigController {
 // It mirrors the handleCfg / shouldSkip logic in
 // src/pepr/operator/controllers/config/config.ts.
 func (c *ClusterConfigController) Reconcile(ctx context.Context, cfg *udstypes.ClusterConfig) error {
-	// Skip guard — mirrors Pepr's shouldSkip():
-	// 1. Phase == Pending: guards against infinite loop when status is patched to Pending
-	// 2. observedGeneration == generation: this generation was already processed
-	if cfg.Status.Phase != nil && *cfg.Status.Phase == udstypes.ConfigPhasePending {
-		c.logger.Debug("Skipping ClusterConfig reconcile: phase is Pending",
-			"name", cfg.Name, "generation", cfg.Generation)
-		return nil
-	}
-	if cfg.Status.ObservedGeneration != nil && cfg.Generation == *cfg.Status.ObservedGeneration {
-		c.logger.Debug("Skipping ClusterConfig reconcile: generation already processed",
-			"name", cfg.Name, "generation", cfg.Generation)
-		return nil
-	}
+	// Always load config into memory (even if generation is already processed).
+	// The skip guards only prevent re-patching status, not re-loading in-memory state.
+	// This is important on controller restart where the config must be re-loaded from the CR.
+	c.logger.Info("Loading ClusterConfig into memory",
+		"name", cfg.Name, "generation", cfg.Generation,
+		"domain", cfg.Spec.Expose.Domain)
 
 	udscfg.Update(func(c *udscfg.Config) {
 		// Domain — fallback to "uds.dev" if empty or unresolved Zarf placeholder

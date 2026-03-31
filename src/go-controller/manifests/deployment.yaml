@@ -23,6 +23,27 @@ spec:
         - name: controller
           image: uds-core-controller:dev
           imagePullPolicy: IfNotPresent
+          env:
+            - name: UDS_OPERATOR_NETWORK_POLICIES_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_AUTHORIZATION_POLICIES_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_ISTIO_INJECTION_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_ISTIO_INGRESS_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_ISTIO_EGRESS_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_SSO_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_POD_MONITORS_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_SERVICE_MONITORS_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_UPTIME_PROBES_ENABLED
+              value: "false"
+            - name: UDS_OPERATOR_CA_BUNDLE_ENABLED
+              value: "false"
           resources:
             requests:
               memory: "64Mi"

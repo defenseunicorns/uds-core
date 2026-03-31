@@ -10,20 +10,21 @@ import (
 	"os/signal"
 	"syscall"
 
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/featureflags"
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	slog.SetDefault(logger)
 
 	config, err := rest.InClusterConfig()
@@ -44,47 +45,64 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Standard informer for built-in resources
-	factory := informers.NewSharedInformerFactory(clientset, 0)
-	secretInformer := factory.Core().V1().Secrets().Informer()
-	secretInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			secret, ok := obj.(*corev1.Secret)
-			if !ok {
-				return
-			}
-			slog.Info("Secret created", "namespace", secret.Namespace, "name", secret.Name)
-		},
+	// Load feature flags (inverse of Pepr)
+	flags := featureflags.Load()
+	slog.Info("Feature flags loaded",
+		"networkPolicies", flags.NetworkPolicies,
+		"authorizationPolicies", flags.AuthorizationPolicies,
+		"istioInjection", flags.IstioInjection,
+		"istioIngress", flags.IstioIngress,
+		"istioEgress", flags.IstioEgress,
+		"sso", flags.SSO,
+		"podMonitors", flags.PodMonitors,
+		"serviceMonitors", flags.ServiceMonitors,
+		"uptimeProbes", flags.UptimeProbes,
+		"caBundle", flags.CABundle,
+	)
+
+	// Set up the Keycloak operator secret getter
+	sso.SetOperatorSecretGetter(func(ctx context.Context) (string, error) {
+		secret, err := clientset.CoreV1().Secrets("keycloak").Get(ctx, "keycloak-client-secrets", metav1.GetOptions{})
+		if err != nil {
+			return "", err
+		}
+		data, ok := secret.Data["uds-operator"]
+		if !ok {
+			return "", nil
+		}
+		return string(data), nil
 	})
 
 	// Dynamic informer for UDS custom resources
 	dynamicFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
 
+	// Package controller with workqueue
 	packageGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "packages"}
-	packageCtrl := controller.NewPackageController()
+	packageCtrl := controller.NewPackageController(clientset, dynamicClient, flags)
 	dynamicFactory.ForResource(packageGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    packageCtrl.HandleAdd,
 		UpdateFunc: packageCtrl.HandleUpdate,
 		DeleteFunc: packageCtrl.HandleDelete,
 	})
 
+	// ClusterConfig controller
 	clusterConfigGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "clusterconfig"}
 	clusterConfigCtrl := controller.NewClusterConfigController()
 	dynamicFactory.ForResource(clusterConfigGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc:    clusterConfigCtrl.HandleAdd,
 		UpdateFunc: clusterConfigCtrl.HandleUpdate,
-		// No DeleteFunc — deletion of the ClusterConfig singleton is not expected
 	})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
 	slog.Info("Starting Go controller")
-	factory.Start(ctx.Done())
-	factory.WaitForCacheSync(ctx.Done())
 	dynamicFactory.Start(ctx.Done())
 	dynamicFactory.WaitForCacheSync(ctx.Done())
 	slog.Info("Informer caches synced, watching for events")
+
+	// Start the package controller workqueue processor
+	go packageCtrl.Run(ctx, 2)
 
 	<-ctx.Done()
 	slog.Info("Shutting down")
