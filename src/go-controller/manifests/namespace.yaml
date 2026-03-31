@@ -5,3 +5,5 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: uds-system
+  labels:
+    zarf.dev/agent: ignore

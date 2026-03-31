@@ -41,3 +41,4 @@ coverage/**
 **/ca.crt
 
 go.work.sum
+pkg/

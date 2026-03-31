@@ -17,7 +17,8 @@ spec:
         - RestrictVolumeTypes
       matcher:
         namespace: falco
-        name: "falco-(?!falcosidekick-).*" # regex to match falco but not falcosidekick
+        # TODO: Exemption on main uses a negative lookahead that doesn't work with the current go code - changed to this for now
+        name: "^falco-" # regex to match falco daemonset pods (falcosidekick pods don't need these exemptions)
       title: "falco"
       description: "Falco requires elevated privileges and host access for runtime security monitoring.
           As a security monitoring tool, Falco needs to run with privileged access, use host namespaces,

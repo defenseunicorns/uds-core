@@ -73,15 +73,17 @@ When(a.Service)
   .WithName("kubernetes")
   .Reconcile(updateAPIServerCIDRFromService);
 
-// Watch for Service mutations to apply ambient waypoint labels
-When(a.Service)
-  .IsCreatedOrUpdated()
-  .Mutate(req => reconcileService(req.Raw));
+// Watch for Service/Pod mutations to apply ambient waypoint labels — only when Pepr owns SSO
+// When UDS_OPERATOR_SSO_ENABLED=false the Go controller registers equivalent webhooks instead
+if (UDSConfig.featureFlags.sso) {
+  When(a.Service)
+    .IsCreatedOrUpdated()
+    .Mutate(req => reconcileService(req.Raw));
 
-// Watch for Pod mutations to apply ambient waypoint labels
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(req => reconcilePod(req.Raw));
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(req => reconcilePod(req.Raw));
+}
 
 // Check if any Package reconciliation feature flag is enabled in Pepr
 const anyPkgFlagEnabled = Object.values(UDSConfig.featureFlags).some(v => v);

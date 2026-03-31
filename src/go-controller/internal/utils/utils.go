@@ -35,11 +35,14 @@ func SanitizeResourceName(name string) string {
 }
 
 // GetOwnerRef creates an owner reference slice pointing to the given UDSPackage.
+// TypeMeta fields (APIVersion/Kind) are stripped by the Kubernetes API machinery
+// when objects are retrieved via typed clients, so they are derived from the
+// package's registered SchemeGroupVersion and kind name.
 func GetOwnerRef(pkg *udstypes.UDSPackage) []metav1.OwnerReference {
 	return []metav1.OwnerReference{
 		{
-			APIVersion: pkg.APIVersion,
-			Kind:       pkg.Kind,
+			APIVersion: udstypes.SchemeGroupVersion.String(),
+			Kind:       "Package",
 			Name:       pkg.Name,
 			UID:        pkg.UID,
 		},

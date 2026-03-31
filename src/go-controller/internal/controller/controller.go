@@ -24,6 +24,7 @@ import (
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/udspackage"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/featureflags"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/store"
 	"github.com/defenseunicorns/uds-core/src/go-controller/webhook"
 )
 
@@ -96,10 +97,13 @@ func (c *Controller) Run(ctx context.Context) error {
 		sso.EnsureOperatorSecret(context.Background(), clientset.CoreV1())
 	}
 
+	// Waypoint store shared between package controller and webhook handlers
+	ws := store.NewWaypointStore()
+
 	// create controllers
 	packageCtrl := udspackage.NewController(udsClient.UdsV1alpha1(),
 		udsInformer.Uds().V1alpha1().UDSPackages(), clientset,
-		dynamicClient, flags)
+		dynamicClient, flags, ws)
 	clusterConfigCtrl := clusterconfig.NewClusterConfigController(udsClient.UdsV1alpha1(),
 		udsInformer.Uds().V1alpha1().ClusterConfig())
 
@@ -155,7 +159,13 @@ func (c *Controller) Run(ctx context.Context) error {
 		},
 	})
 
-	if err := webhook.StartWebhookServer(ctx, clientset, exemptions); err != nil {
+	// Start the dynamic factory and wait for exemption cache to sync before
+	// opening the webhook server — otherwise the store is empty on first admission.
+	dynamicFactory.Start(ctx.Done())
+	dynamicFactory.WaitForCacheSync(ctx.Done())
+	slog.Info("Exemption cache synced")
+
+	if err := webhook.StartWebhookServer(ctx, clientset, exemptions, ws); err != nil {
 		return fmt.Errorf("Failed to start webhook server: %w", err)
 	}
 

@@ -32,6 +32,7 @@ import (
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/probes"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/featureflags"
+	"github.com/defenseunicorns/uds-core/src/go-controller/internal/store"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/utils"
 )
 
@@ -48,14 +49,15 @@ type PackageController struct {
 	packageLister       udsv1alpha1lister.UDSPackageLister
 	packageListerSynced cache.InformerSynced
 
-	flags   featureflags.Flags
-	uidSeen map[string]bool
+	flags         featureflags.Flags
+	uidSeen       map[string]bool
+	waypointStore *store.WaypointStore
 }
 
 // NewController creates a new PackageController.
 func NewController(udsClient udsv1alpha1client.UdsV1alpha1Interface,
 	packageInformer udsv1alpha1informer.UDSPackageInformer, kubeClient kubernetes.Interface,
-	dynamicClient dynamic.Interface, flags featureflags.Flags) *PackageController {
+	dynamicClient dynamic.Interface, flags featureflags.Flags, ws *store.WaypointStore) *PackageController {
 	ctrl := &PackageController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
@@ -67,8 +69,9 @@ func NewController(udsClient udsv1alpha1client.UdsV1alpha1Interface,
 		kubeClient:    kubeClient,
 		dynamicClient: dynamicClient,
 
-		flags:   flags,
-		uidSeen: make(map[string]bool),
+		flags:         flags,
+		uidSeen:       make(map[string]bool),
+		waypointStore: ws,
 	}
 
 	packageInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -306,6 +309,8 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 	}
 
 	// 4. SSO (Keycloak + Authservice)
+	// Always clear the waypoint store entry first; it will be repopulated if conditions are met.
+	c.waypointStore.Delete(namespace)
 	if c.flags.SSO {
 		c.logger.Info("Checking SSO configuration", "package", pkg.Name, "ssoCount", len(pkg.Spec.Sso))
 		if isIdentityDeployed(ctx, c.udsClient) {
@@ -323,12 +328,38 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 			c.logger.Info("Keycloak clients reconciled", "clientCount", len(ssoClients), "package", pkg.Name)
 
 			c.logger.Debug("Reconciling authservice configuration", "package", pkg.Name)
-			ac, err := sso.ReconcileAuthservice(ctx, c.kubeClient.CoreV1(), pkg, ssoClients)
+			ac, err := sso.ReconcileAuthservice(ctx, c.kubeClient, pkg, ssoClients)
 			if err != nil {
 				return fmt.Errorf("authservice: %w", err)
 			}
 			authserviceClients = ac
 			c.logger.Info("Authservice clients reconciled", "clientCount", len(ac), "package", pkg.Name)
+
+			if c.flags.AuthorizationPolicies && len(ac) > 0 {
+				c.logger.Debug("Reconciling authservice Istio policies", "package", pkg.Name)
+				if err := sso.ReconcileAuthservicePolicies(ctx, c.dynamicClient, pkg, namespace, istioMode); err != nil {
+					return fmt.Errorf("authservice policies: %w", err)
+				}
+			}
+
+			if c.flags.IstioInjection && istioMode == udsv1alpha1.Ambient && len(ac) > 0 {
+				c.logger.Debug("Reconciling authservice waypoints", "package", pkg.Name)
+				if err := sso.ReconcileAuthserviceWaypoints(ctx, c.dynamicClient, c.kubeClient, pkg, namespace); err != nil {
+					return fmt.Errorf("authservice waypoints: %w", err)
+				}
+				// Populate the waypoint store so the mutating webhook can label new pods/services
+				var entries []store.WaypointEntry
+				for _, ssoSpec := range pkg.Spec.Sso {
+					if len(ssoSpec.EnableAuthserviceSelector) == 0 {
+						continue
+					}
+					entries = append(entries, store.WaypointEntry{
+						Selector:     ssoSpec.EnableAuthserviceSelector,
+						WaypointName: utils.SanitizeResourceName(ssoSpec.ClientID) + "-waypoint",
+					})
+				}
+				c.waypointStore.Set(namespace, entries)
+			}
 		} else if len(pkg.Spec.Sso) > 0 {
 			return fmt.Errorf("Identity & Authorization is not deployed, but the package has SSO configuration")
 		} else {
@@ -354,7 +385,7 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 	// 6. Istio Egress
 	if c.flags.IstioEgress {
 		c.logger.Info("Reconciling Istio egress resources", "namespace", namespace, "package", pkg.Name)
-		if err := istio.ReconcileEgress(ctx, c.dynamicClient, pkg, namespace); err != nil {
+		if err := istio.ReconcileEgress(ctx, c.dynamicClient, pkg, namespace, c.packageLister); err != nil {
 			return fmt.Errorf("istio egress: %w", err)
 		}
 		c.logger.Info("Istio egress resources reconciled", "namespace", namespace, "package", pkg.Name)
@@ -408,7 +439,7 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 		if err := sso.PurgeSSOClients(ctx, pkg, ssoClientNames); err != nil {
 			c.logger.Error("Failed to purge orphaned SSO clients", "error", err, "package", pkg.Name)
 		}
-		if err := sso.PurgeAuthserviceClients(ctx, c.kubeClient.CoreV1(), pkg); err != nil {
+		if err := sso.PurgeAuthserviceClients(ctx, c.kubeClient, pkg); err != nil {
 			c.logger.Error("Failed to purge authservice clients", "error", err, "package", pkg.Name)
 		}
 	}
@@ -563,14 +594,53 @@ func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha
 		if err := sso.PurgeSSOClients(ctx, pkg, nil); err != nil {
 			c.logger.Error("Failed to purge SSO clients during finalize", "error", err)
 		}
-		if err := sso.PurgeAuthserviceClients(ctx, c.kubeClient.CoreV1(), pkg); err != nil {
+		if err := sso.PurgeAuthserviceClients(ctx, c.kubeClient, pkg); err != nil {
 			c.logger.Error("Failed to purge authservice clients during finalize", "error", err)
 		}
+		if c.flags.AuthorizationPolicies {
+			sso.PurgeAuthservicePolicies(ctx, c.dynamicClient, pkg.Namespace, pkg.Name)
+		}
+		if c.flags.IstioInjection {
+			sso.PurgeAuthserviceWaypoints(ctx, c.dynamicClient, c.kubeClient, pkg, pkg.Namespace)
+		}
+	}
+
+	// Clear waypoint store so the mutating webhook stops labeling new pods/services
+	c.waypointStore.Delete(pkg.Namespace)
+
+	// Rebuild shared ambient egress resources excluding this (now-deleted) package.
+	// Shared SEs and APs in istio-egress-ambient have no owner refs so won't be GC'd automatically.
+	if c.flags.IstioEgress && pkg.Spec.GetServiceMeshMode() == udsv1alpha1.Ambient {
+		if err := istio.ReconcileEgress(ctx, c.dynamicClient, pkg, pkg.Namespace, c.packageLister); err != nil {
+			c.logger.Error("Failed to rebuild ambient egress during finalization", "error", err)
+		}
+	}
+
+	// Re-fetch the latest version before removing the finalizer.
+	// Multiple UpdateStatus calls above bump the resourceVersion; using the stale
+	// pkg object here causes a conflict error.
+	latest, err := c.udsClient.UDSPackages(pkg.Namespace).Get(ctx, pkg.Name, metav1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("re-fetch package before finalizer removal: %w", err)
+	}
+	latest.Finalizers = removeFinalizer(latest.Finalizers, "pepr.dev/finalizer")
+	if _, err := c.udsClient.UDSPackages(pkg.Namespace).Update(ctx, latest, metav1.UpdateOptions{}); err != nil {
+		return fmt.Errorf("removing finalizer: %w", err)
 	}
 
 	// Other resources are cleaned up via owner references
 	c.logger.Info("Package finalized successfully", "namespace", pkg.Namespace, "name", pkg.Name)
 	return nil
+}
+
+func removeFinalizer(finalizers []string, name string) []string {
+	result := make([]string, 0, len(finalizers))
+	for _, f := range finalizers {
+		if f != name {
+			result = append(result, f)
+		}
+	}
+	return result
 }
 
 func readinessConditions(ready bool) []udsv1alpha1.Condition {

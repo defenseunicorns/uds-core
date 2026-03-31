@@ -2,6 +2,8 @@
 
 A Go-based Kubernetes operator being built to replace the TypeScript [Pepr](../pepr/) operator. Reconciliation responsibilities are migrated one feature at a time using feature flags on the Pepr side.
 
+See [status.md](./status.md) for a current snapshot of what has moved to Go vs. what remains in Pepr.
+
 ## Structure
 
 ```
@@ -15,17 +17,25 @@ src/go-controller/
 ├── internal/
 │   ├── config/
 │   │   └── config.go                # In-memory cluster config singleton (mirrors Pepr's UDSConfig)
+│   ├── featureflags/
+│   │   └── flags.go                 # Reads UDS_OPERATOR_*_ENABLED env vars; true when Go owns a phase
+│   ├── resources/
+│   │   └── resources.go             # Server-side apply + orphan purge helpers
+│   ├── store/
+│   │   └── waypoint.go              # In-memory per-namespace waypoint store (used by webhook)
+│   ├── utils/
+│   │   └── utils.go                 # Shared helpers (name sanitization, owner refs, etc.)
 │   └── controller/
 │       ├── controller.go            # Shared controller wiring / base types
 │       ├── udspackage/              # UDSPackageController — watches UDSPackage CRs
 │       ├── clusterconfig/           # ClusterConfigController — watches ClusterConfig, populates config
 │       ├── authpolicy/              # Authorization policy reconciliation
 │       ├── cabundle/                # CA bundle ConfigMap reconciliation
-│       ├── istio/                   # Istio-related (ingress, egress, sidecar) reconciliation
+│       ├── istio/                   # Istio-related (ingress, egress, injection) reconciliation
 │       ├── monitoring/              # PodMonitor / ServiceMonitor reconciliation
 │       ├── network/                 # NetworkPolicy reconciliation
 │       ├── probes/                  # Uptime probe reconciliation
-│       └── sso/                     # Keycloak client  and AuthService chain reconciliation
+│       └── sso/                     # Keycloak client and AuthService chain reconciliation
 ├── webhook/                         # Mutating admission webhook
 ├── manifests/                       # Raw Kubernetes manifests (for dev iteration)
 └── chart/                           # Helm chart for production deployment
@@ -156,6 +166,20 @@ When a CRD changes: run `gen-crds`, diff `.generated/<crd>-v1alpha1.go` against 
 
 Controllers that need cluster config (domain, CA bundle, network CIDRs, etc.) call `config.Get()`.
 
+## Webhooks
+
+The webhook server (`webhook/`) handles admission requests for:
+
+| Path | Type | Purpose |
+|------|------|---------|
+| `/validate-pods` | Validating | Enforces non-root user requirements (example security policy) |
+| `/mutate-pods` | Mutating | Injects safe security context defaults |
+| `/mutate-pod-waypoint` | Mutating | Labels pods for ambient waypoint routing |
+| `/mutate-service-waypoint` | Mutating | Labels services for ambient waypoint routing |
+| `/validate-clusterconfig-delete` | Validating | Blocks deletion of the ClusterConfig CR |
+
+The pod/service waypoint webhooks are active when `UDS_OPERATOR_SSO_ENABLED=false` (i.e., Go owns SSO). Pepr's equivalent waypoint mutations are gated by the same flag and disabled in that case.
+
 ## Controller Pattern
 
 Each CRD gets its own controller file in `internal/controller/`. Controllers follow this pattern:
@@ -165,6 +189,9 @@ Each CRD gets its own controller file in `internal/controller/`. Controllers fol
 - `HandleDelete` — separate from reconcile; handles owned-resource cleanup (omitted where deletion is not expected, e.g. ClusterConfig)
 - A private `parse<Kind>(obj)` function that converts the dynamic informer's `*unstructured.Unstructured` to a typed struct via JSON marshal/unmarshal
 
-Skip guards in `Reconcile` mirror Pepr's `shouldSkip` logic:
-1. If `status.phase == Pending` — skip (guards against infinite loops when status is patched)
-2. If `status.observedGeneration == metadata.generation` — skip (already processed this version)
+Skip guards in `shouldSkip` mirror Pepr's logic:
+1. First time the UID is seen — always process (bootstraps new packages regardless of generation)
+2. If `status.phase == Retrying` — always process (error recovery overrides the generation check)
+3. If `status.phase == Removing` or `RemovalFailed`, or `DeletionTimestamp` is set — skip (routed to `handleFinalizer` instead)
+4. If `status.phase == Pending` — skip (guards against re-entrant loops while status is being patched)
+5. If `status.observedGeneration == metadata.generation` — skip (already processed this version)

@@ -4,15 +4,19 @@
 package sso
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sort"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
@@ -28,6 +32,7 @@ const (
 // AuthserviceConfig is the full authservice configuration.
 type AuthserviceConfig struct {
 	ListenAddress  string             `json:"listen_address"`
+	ListenPort     string             `json:"listen_port"`
 	LogLevel       string             `json:"log_level"`
 	DefaultOIDC    *DefaultOIDCConfig `json:"default_oidc_config,omitempty"`
 	Threads        int                `json:"threads"`
@@ -37,8 +42,31 @@ type AuthserviceConfig struct {
 
 // DefaultOIDCConfig is the default OIDC configuration.
 type DefaultOIDCConfig struct {
-	RedisSessionStoreConfig *RedisConfig `json:"redis_session_store_config,omitempty"`
+	SkipVerifyPeerCert      bool         `json:"skip_verify_peer_cert"`
+	AuthorizationURI        string       `json:"authorization_uri"`
+	TokenURI                string       `json:"token_uri"`
+	JWKSFetcher             *JWKSFetcher `json:"jwks_fetcher,omitempty"`
+	ClientID                string       `json:"client_id"`
+	ClientSecret            string       `json:"client_secret"`
+	IDToken                 *IDToken     `json:"id_token,omitempty"`
 	TrustedCA               string       `json:"trusted_certificate_authority,omitempty"`
+	Logout                  *LogoutConfig `json:"logout,omitempty"`
+	AbsoluteSessionTimeout  string       `json:"absolute_session_timeout,omitempty"`
+	IdleSessionTimeout      string       `json:"idle_session_timeout,omitempty"`
+	Scopes                  []string     `json:"scopes,omitempty"`
+	RedisSessionStoreConfig *RedisConfig `json:"redis_session_store_config,omitempty"`
+}
+
+// JWKSFetcher configures JWKS fetching.
+type JWKSFetcher struct {
+	JWKSURI               string `json:"jwks_uri"`
+	PeriodicFetchInterval int    `json:"periodic_fetch_interval_sec"`
+}
+
+// IDToken configures the ID token header injection.
+type IDToken struct {
+	Preamble string `json:"preamble"`
+	Header   string `json:"header"`
 }
 
 // RedisConfig for session store.
@@ -84,7 +112,8 @@ type LogoutConfig struct {
 
 // ReconcileAuthservice updates the authservice configuration for the package's
 // SSO clients and returns the list of authservice clients for status.
-func ReconcileAuthservice(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage, ssoClients map[string]Client) ([]udstypes.AuthserviceClient, error) {
+func ReconcileAuthservice(ctx context.Context, kubeClient kubernetes.Interface, pkg *udstypes.UDSPackage, ssoClients map[string]Client) ([]udstypes.AuthserviceClient, error) {
+	coreClient := kubeClient.CoreV1()
 	// Skip if no SSO clients with authservice selector
 	hasAuthserviceClients := false
 	for _, ssoSpec := range pkg.Spec.Sso {
@@ -138,16 +167,23 @@ func ReconcileAuthservice(ctx context.Context, coreClient corev1client.CoreV1Int
 		return authConfig.Chains[i].Name < authConfig.Chains[j].Name
 	})
 
-	// Write back the config
-	if err := updateAuthserviceConfig(ctx, coreClient, authConfig); err != nil {
+	// Write back the config, rolling out authservice if it changed
+	changed, err := updateAuthserviceConfig(ctx, coreClient, authConfig)
+	if err != nil {
 		return nil, fmt.Errorf("update authservice config: %w", err)
+	}
+	if changed {
+		if err := rolloutAuthservice(ctx, kubeClient); err != nil {
+			slog.Warn("Failed to rollout authservice after config update", "error", err)
+		}
 	}
 
 	return authserviceClients, nil
 }
 
 // PurgeAuthserviceClients removes authservice chains for clients that are no longer in the package.
-func PurgeAuthserviceClients(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage) error {
+func PurgeAuthserviceClients(ctx context.Context, kubeClient kubernetes.Interface, pkg *udstypes.UDSPackage) error {
+	coreClient := kubeClient.CoreV1()
 	if len(pkg.Status.AuthserviceClients) == 0 {
 		return nil
 	}
@@ -175,8 +211,11 @@ func PurgeAuthserviceClients(ctx context.Context, coreClient corev1client.CoreV1
 	}
 
 	if changed {
-		if err := updateAuthserviceConfig(ctx, coreClient, authConfig); err != nil {
+		if _, err := updateAuthserviceConfig(ctx, coreClient, authConfig); err != nil {
 			return fmt.Errorf("update authservice config after purge: %w", err)
+		}
+		if err := rolloutAuthservice(ctx, kubeClient); err != nil {
+			slog.Warn("Failed to rollout authservice after config purge", "error", err)
 		}
 	}
 
@@ -260,16 +299,46 @@ func removeChain(chains []AuthserviceChain, name string) []AuthserviceChain {
 	return result
 }
 
+func buildDefaultAuthserviceConfig(domain string) *AuthserviceConfig {
+	realm := "uds"
+	ssoBase := fmt.Sprintf("https://sso.%s/realms/%s/protocol/openid-connect", domain, realm)
+	return &AuthserviceConfig{
+		ListenAddress:  "0.0.0.0",
+		ListenPort:     "10003",
+		LogLevel:       "info",
+		Threads:        8,
+		AllowUnmatched: false,
+		DefaultOIDC: &DefaultOIDCConfig{
+			SkipVerifyPeerCert: false,
+			AuthorizationURI:   ssoBase + "/auth",
+			TokenURI:           ssoBase + "/token",
+			JWKSFetcher: &JWKSFetcher{
+				JWKSURI:               ssoBase + "/certs",
+				PeriodicFetchInterval: 60,
+			},
+			ClientID:     "global_id",
+			ClientSecret: "global_secret",
+			IDToken: &IDToken{
+				Preamble: "Bearer",
+				Header:   "Authorization",
+			},
+			Logout: &LogoutConfig{
+				Path:        "/globallogout",
+				RedirectURI: ssoBase + "/token/logout",
+			},
+			AbsoluteSessionTimeout: "0",
+			IdleSessionTimeout:     "0",
+			Scopes:                 []string{},
+		},
+		Chains: []AuthserviceChain{},
+	}
+}
+
 func getAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Interface) (*AuthserviceConfig, error) {
 	secret, err := coreClient.Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		return &AuthserviceConfig{
-			ListenAddress:  "0.0.0.0:10003",
-			LogLevel:       "info",
-			Threads:        8,
-			AllowUnmatched: true,
-			Chains:         []AuthserviceChain{},
-		}, nil
+		cfg := config.Get()
+		return buildDefaultAuthserviceConfig(cfg.Domain), nil
 	}
 	if err != nil {
 		return nil, err
@@ -287,10 +356,11 @@ func getAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Int
 	return &cfg, nil
 }
 
-func updateAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Interface, cfg *AuthserviceConfig) error {
+// updateAuthserviceConfig writes the config back to the secret and returns whether the content changed.
+func updateAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Interface, cfg *AuthserviceConfig) (bool, error) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("marshal authservice config: %w", err)
+		return false, fmt.Errorf("marshal authservice config: %w", err)
 	}
 
 	secret, err := coreClient.Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
@@ -305,13 +375,32 @@ func updateAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1
 			},
 		}
 		_, err = coreClient.Secrets(authserviceNamespace).Create(ctx, secret, metav1.CreateOptions{})
-		return err
+		return err == nil, err
 	}
 	if err != nil {
-		return err
+		return false, err
+	}
+
+	if bytes.Equal(secret.Data[authserviceSecretKey], data) {
+		return false, nil
 	}
 
 	secret.Data[authserviceSecretKey] = data
 	_, err = coreClient.Secrets(authserviceNamespace).Update(ctx, secret, metav1.UpdateOptions{})
-	return err
+	return err == nil, err
+}
+
+// rolloutAuthservice triggers a rolling restart of the authservice deployment by
+// annotating the pod template, so it picks up the updated config secret.
+func rolloutAuthservice(ctx context.Context, kubeClient kubernetes.Interface) error {
+	patch := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":%q}}}}}`,
+		time.Now().UTC().Format(time.RFC3339))
+	_, err := kubeClient.AppsV1().Deployments(authserviceNamespace).Patch(
+		ctx, "authservice", types.MergePatchType, []byte(patch), metav1.PatchOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("patch authservice deployment: %w", err)
+	}
+	slog.Info("Triggered authservice rollout after config update")
+	return nil
 }

@@ -65,6 +65,13 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 			"port", allow.Port,
 			"remoteGenerated", allow.RemoteGenerated,
 			"remoteHost", allow.RemoteHost)
+		// In ambient mode, redirect ingress selectors that match an authservice client to the waypoint pod
+		if allow.Direction == udstypes.Ingress && len(mergeSelectors(allow.Selector, allow.PodLabels)) > 0 {
+			if waypointName := findMatchingWaypoint(pkg, mergeSelectors(allow.Selector, allow.PodLabels), istioMode); waypointName != "" {
+				allow.Selector = waypointSelector(waypointName)
+				allow.PodLabels = nil
+			}
+		}
 		pol := generatePolicy(namespace, allow, istioMode)
 		policies = append(policies, pol)
 	}
@@ -89,18 +96,28 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 		slog.Debug("Generating monitor ingress policy",
 			"package", pkgName, "portName", monitor.PortName,
 			"targetPort", monitor.TargetPort)
-		pol := generateMonitorPolicy(namespace, monitor)
+		pol := generateMonitorPolicy(namespace, monitor, pkg, istioMode)
 		policies = append(policies, pol)
 	}
 
 	// 7. SSO/Authservice policies
 	for _, sso := range pkg.Spec.Sso {
-		if len(sso.EnableAuthserviceSelector) > 0 {
-			slog.Debug("Generating SSO authservice/keycloak policies",
-				"package", pkgName, "clientId", sso.ClientID,
-				"selector", sso.EnableAuthserviceSelector)
-			policies = append(policies, authserviceEgress(namespace, sso))
-			policies = append(policies, keycloakEgress(namespace, sso))
+		if len(sso.EnableAuthserviceSelector) == 0 {
+			continue
+		}
+		waypointName := sanitizeID(sso.ClientID) + waypointSuffix
+		slog.Debug("Generating SSO authservice/keycloak policies",
+			"package", pkgName, "clientId", sso.ClientID,
+			"selector", sso.EnableAuthserviceSelector)
+		policies = append(policies, authserviceEgress(namespace, sso, istioMode, waypointName))
+		policies = append(policies, keycloakEgress(namespace, sso, istioMode, waypointName))
+
+		// In ambient mode, add waypoint-specific network policies
+		if istioMode == udstypes.Ambient {
+			policies = append(policies, waypointIstiodEgress(namespace, waypointName))
+			policies = append(policies, waypointToAppEgress(namespace, waypointName, sso.EnableAuthserviceSelector))
+			policies = append(policies, appFromWaypointIngress(namespace, waypointName, sso.EnableAuthserviceSelector))
+			policies = append(policies, waypointMonitoringIngress(namespace, waypointName))
 		}
 	}
 
@@ -388,9 +405,14 @@ func generateExposePolicy(namespace string, expose udstypes.Expose, pkg *udstype
 		port = int32(*expose.TargetPort)
 	}
 
-	selector := mergeSelectors(expose.Selector, expose.PodLabels)
+	appSelector := mergeSelectors(expose.Selector, expose.PodLabels)
+	// In ambient mode, redirect ingress to the waypoint pod if the selector matches an authservice client
+	selector := appSelector
+	if waypointName := findMatchingWaypoint(pkg, appSelector, istioMode); waypointName != "" {
+		selector = waypointSelector(waypointName)
+	}
 
-	desc := fmt.Sprintf("%d-%s Istio %s gateway", port, joinMapValues(selector), gateway)
+	desc := fmt.Sprintf("%d-%s Istio %s gateway", port, joinMapValues(appSelector), gateway)
 	portVal := intstr.FromInt32(port)
 
 	return &networkingv1.NetworkPolicy{
@@ -428,10 +450,14 @@ func generateExposePolicy(namespace string, expose udstypes.Expose, pkg *udstype
 	}
 }
 
-func generateMonitorPolicy(namespace string, monitor udstypes.Monitor) *networkingv1.NetworkPolicy {
+func generateMonitorPolicy(namespace string, monitor udstypes.Monitor, pkg *udstypes.UDSPackage, istioMode udstypes.Mode) *networkingv1.NetworkPolicy {
 	port := intstr.FromInt32(int32(monitor.TargetPort))
-	selector := monitor.Selector
-	desc := fmt.Sprintf("%d-%s Metrics", int32(monitor.TargetPort), joinMapValues(selector))
+	selector := mergeSelectors(monitor.PodSelector, monitor.Selector)
+	// In ambient mode, redirect to waypoint pod if this monitor selector matches an authservice client
+	if waypointName := findMatchingWaypoint(pkg, selector, istioMode); waypointName != "" {
+		selector = waypointSelector(waypointName)
+	}
+	desc := fmt.Sprintf("%d-%s Metrics", int32(monitor.TargetPort), joinMapValues(mergeSelectors(monitor.PodSelector, monitor.Selector)))
 
 	return &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
@@ -468,9 +494,11 @@ func generateMonitorPolicy(namespace string, monitor udstypes.Monitor) *networki
 	}
 }
 
-func authserviceEgress(namespace string, sso udstypes.Sso) *networkingv1.NetworkPolicy {
+func authserviceEgress(namespace string, sso udstypes.Sso, istioMode udstypes.Mode, waypointName string) *networkingv1.NetworkPolicy {
 	port := intstr.FromInt32(10003)
 	desc := utils.SanitizeResourceName(sso.ClientID) + " authservice egress"
+	// In ambient mode the waypoint makes the egress connection, so select the waypoint pod
+	podSel := podSelectorForSSO(sso.EnableAuthserviceSelector, istioMode, waypointName)
 	return &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.SanitizeResourceName(desc),
@@ -478,9 +506,7 @@ func authserviceEgress(namespace string, sso udstypes.Sso) *networkingv1.Network
 			Labels:    make(map[string]string),
 		},
 		Spec: networkingv1.NetworkPolicySpec{
-			PodSelector: metav1.LabelSelector{
-				MatchLabels: sso.EnableAuthserviceSelector,
-			},
+			PodSelector: metav1.LabelSelector{MatchLabels: podSel},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
 			Egress: []networkingv1.NetworkPolicyEgressRule{
 				{
@@ -494,18 +520,18 @@ func authserviceEgress(namespace string, sso udstypes.Sso) *networkingv1.Network
 							},
 						},
 					},
-					Ports: []networkingv1.NetworkPolicyPort{
-						{Port: &port},
-					},
+					Ports: []networkingv1.NetworkPolicyPort{{Port: &port}},
 				},
 			},
 		},
 	}
 }
 
-func keycloakEgress(namespace string, sso udstypes.Sso) *networkingv1.NetworkPolicy {
+func keycloakEgress(namespace string, sso udstypes.Sso, istioMode udstypes.Mode, waypointName string) *networkingv1.NetworkPolicy {
 	port := intstr.FromInt32(8080)
 	desc := utils.SanitizeResourceName(sso.ClientID) + " keycloak JWKS egress"
+	// In ambient mode the waypoint makes the egress connection, so select the waypoint pod
+	podSel := podSelectorForSSO(sso.EnableAuthserviceSelector, istioMode, waypointName)
 	return &networkingv1.NetworkPolicy{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      utils.SanitizeResourceName(desc),
@@ -513,9 +539,7 @@ func keycloakEgress(namespace string, sso udstypes.Sso) *networkingv1.NetworkPol
 			Labels:    make(map[string]string),
 		},
 		Spec: networkingv1.NetworkPolicySpec{
-			PodSelector: metav1.LabelSelector{
-				MatchLabels: sso.EnableAuthserviceSelector,
-			},
+			PodSelector: metav1.LabelSelector{MatchLabels: podSel},
 			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
 			Egress: []networkingv1.NetworkPolicyEgressRule{
 				{
@@ -529,13 +553,170 @@ func keycloakEgress(namespace string, sso udstypes.Sso) *networkingv1.NetworkPol
 							},
 						},
 					},
-					Ports: []networkingv1.NetworkPolicyPort{
-						{Port: &port},
+					Ports: []networkingv1.NetworkPolicyPort{{Port: &port}},
+				},
+			},
+		},
+	}
+}
+
+// waypointIstiodEgress allows the waypoint pod to reach istiod (required for control-plane registration).
+func waypointIstiodEgress(namespace, waypointName string) *networkingv1.NetworkPolicy {
+	port := intstr.FromInt32(15012)
+	desc := fmt.Sprintf("%s istiod egress", waypointName)
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.SanitizeResourceName(desc),
+			Namespace: namespace,
+			Labels:    make(map[string]string),
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: waypointSelector(waypointName)},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To: []networkingv1.NetworkPolicyPeer{
+						{
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"kubernetes.io/metadata.name": "istio-system"},
+							},
+							PodSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"istio": "pilot"},
+							},
+						},
+					},
+					Ports: []networkingv1.NetworkPolicyPort{{Port: &port}},
+				},
+			},
+		},
+	}
+}
+
+// waypointToAppEgress allows the waypoint pod to forward traffic to the protected app pods.
+func waypointToAppEgress(namespace, waypointName string, appSelector map[string]string) *networkingv1.NetworkPolicy {
+	desc := fmt.Sprintf("Allow traffic from %s to app", waypointName)
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.SanitizeResourceName(desc),
+			Namespace: namespace,
+			Labels:    make(map[string]string),
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: waypointSelector(waypointName)},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeEgress},
+			Egress: []networkingv1.NetworkPolicyEgressRule{
+				{
+					To: []networkingv1.NetworkPolicyPeer{
+						{PodSelector: &metav1.LabelSelector{MatchLabels: appSelector}},
 					},
 				},
 			},
 		},
 	}
+}
+
+// appFromWaypointIngress allows the app pods to receive traffic forwarded by the waypoint.
+func appFromWaypointIngress(namespace, waypointName string, appSelector map[string]string) *networkingv1.NetworkPolicy {
+	desc := fmt.Sprintf("Allow traffic from %s to app pods", waypointName)
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.SanitizeResourceName(desc),
+			Namespace: namespace,
+			Labels:    make(map[string]string),
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: appSelector},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+			Ingress: []networkingv1.NetworkPolicyIngressRule{
+				{
+					From: []networkingv1.NetworkPolicyPeer{
+						{PodSelector: &metav1.LabelSelector{MatchLabels: waypointSelector(waypointName)}},
+					},
+				},
+			},
+		},
+	}
+}
+
+// waypointMonitoringIngress allows prometheus to scrape the waypoint's metrics endpoint.
+func waypointMonitoringIngress(namespace, waypointName string) *networkingv1.NetworkPolicy {
+	port := intstr.FromInt32(15020)
+	desc := fmt.Sprintf("Allow health checks from monitoring to %s", waypointName)
+	return &networkingv1.NetworkPolicy{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      utils.SanitizeResourceName(desc),
+			Namespace: namespace,
+			Labels:    make(map[string]string),
+		},
+		Spec: networkingv1.NetworkPolicySpec{
+			PodSelector: metav1.LabelSelector{MatchLabels: waypointSelector(waypointName)},
+			PolicyTypes: []networkingv1.PolicyType{networkingv1.PolicyTypeIngress},
+			Ingress: []networkingv1.NetworkPolicyIngressRule{
+				{
+					From: []networkingv1.NetworkPolicyPeer{
+						{
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"kubernetes.io/metadata.name": "monitoring"},
+							},
+							PodSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{"app": "prometheus"},
+							},
+						},
+					},
+					Ports: []networkingv1.NetworkPolicyPort{{Port: &port}},
+				},
+			},
+		},
+	}
+}
+
+// waypointSuffix matches the constant used in the sso package.
+const waypointSuffix = "-waypoint"
+
+// waypointSelector returns the label selector that identifies a waypoint pod by name.
+func waypointSelector(waypointName string) map[string]string {
+	return map[string]string{"istio.io/gateway-name": waypointName}
+}
+
+// podSelectorForSSO returns the waypoint pod selector in ambient mode, the app selector otherwise.
+func podSelectorForSSO(appSelector map[string]string, istioMode udstypes.Mode, waypointName string) map[string]string {
+	if istioMode == udstypes.Ambient {
+		return waypointSelector(waypointName)
+	}
+	return appSelector
+}
+
+// sanitizeID mirrors utils.SanitizeResourceName for building waypoint names.
+func sanitizeID(id string) string {
+	return utils.SanitizeResourceName(id)
+}
+
+// findMatchingWaypoint returns the waypoint name if the given selector matches an authservice
+// client in the package (ambient mode only). Returns "" if no match or not in ambient mode.
+// istioMode must be the already-resolved mode (from pkg.Spec.GetServiceMeshMode()).
+func findMatchingWaypoint(pkg *udstypes.UDSPackage, selector map[string]string, istioMode udstypes.Mode) string {
+	if istioMode != udstypes.Ambient || len(selector) == 0 {
+		return ""
+	}
+	for _, sso := range pkg.Spec.Sso {
+		if len(sso.EnableAuthserviceSelector) == 0 {
+			continue
+		}
+		if labelsMatchAll(selector, sso.EnableAuthserviceSelector) {
+			return sanitizeID(sso.ClientID) + waypointSuffix
+		}
+	}
+	return ""
+}
+
+// labelsMatchAll returns true if every key/value in required is present in target.
+func labelsMatchAll(target, required map[string]string) bool {
+	for k, v := range required {
+		if target[k] != v {
+			return false
+		}
+	}
+	return true
 }
 
 // --- Helpers ---

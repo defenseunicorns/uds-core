@@ -88,12 +88,54 @@ func collectContainers(pod *corev1.Pod) []namedSecurityContext {
 		result = append(result, namedSecurityContext{name: c.Name, ctx: c.SecurityContext})
 	}
 	for _, c := range pod.Spec.InitContainers {
+		if isIstioInitContainer(pod, &c) {
+			continue
+		}
 		result = append(result, namedSecurityContext{name: c.Name, ctx: c.SecurityContext})
 	}
 	for _, c := range pod.Spec.EphemeralContainers {
 		result = append(result, namedSecurityContext{name: c.Name, ctx: c.SecurityContext})
 	}
 	return result
+}
+
+// isIstioInitContainer mirrors pepr's logic: skip istio-init when the pod has the
+// sidecar.istio.io/status annotation, has an istio-proxy in initContainers (native
+// sidecar mode), and the container is the known istio-init iptables container.
+func isIstioInitContainer(pod *corev1.Pod, c *corev1.Container) bool {
+	if _, ok := pod.Annotations["sidecar.istio.io/status"]; !ok {
+		return false
+	}
+	// Native sidecar mode: istio-proxy appears as an init container
+	hasSidecar := false
+	for _, ic := range pod.Spec.InitContainers {
+		if isIstioProxyContainer(&ic) {
+			hasSidecar = true
+			break
+		}
+	}
+	if !hasSidecar {
+		return false
+	}
+	return c.Name == "istio-init" &&
+		len(c.Args) > 0 && c.Args[0] == "istio-iptables" &&
+		len(c.Command) == 0
+}
+
+// isIstioProxyContainer mirrors pepr's logic: name is istio-proxy, has the
+// http-envoy-prom port, args[0] is "proxy", and no explicit command.
+func isIstioProxyContainer(c *corev1.Container) bool {
+	if c.Name != "istio-proxy" {
+		return false
+	}
+	hasPromPort := false
+	for _, p := range c.Ports {
+		if p.Name == "http-envoy-prom" {
+			hasPromPort = true
+			break
+		}
+	}
+	return hasPromPort && len(c.Args) > 0 && c.Args[0] == "proxy" && len(c.Command) == 0
 }
 
 func formatViolationMessage(violations []containerViolation) string {

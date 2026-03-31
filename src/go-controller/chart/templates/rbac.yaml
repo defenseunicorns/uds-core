@@ -206,6 +206,7 @@ rules:
       - get
       - list
       - patch
+      - update
       - watch
 
   # CRD management
@@ -228,6 +229,17 @@ rules:
     resourceNames:
       - uds-controller-clusterconfig
       - uds-controller-pods
+    verbs:
+      - get
+      - patch
+
+  # MutatingWebhookConfiguration (for patching caBundle)
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    resourceNames:
+      - uds-controller-waypoint
     verbs:
       - get
       - patch

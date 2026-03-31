@@ -71,3 +71,35 @@ webhooks:
             - kube-system
             - uds-system
             - pepr-system
+            - istio-system
+            - zarf
+  - name: validate-pods-istio-system.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-pods
+        port: 443
+      caBundle: ""
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values:
+            - istio-system

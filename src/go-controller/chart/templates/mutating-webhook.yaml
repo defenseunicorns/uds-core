@@ -4,57 +4,27 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: uds-controller-pods
+  name: uds-controller-waypoint
   labels:
     app: uds-controller
 webhooks:
-  - name: mutate-pods.uds.dev
-    admissionReviewVersions:
-      - v1
-    sideEffects: None
-    failurePolicy: Fail
-    matchPolicy: Equivalent
-    reinvocationPolicy: IfNeeded
-    clientConfig:
-      service:
-        name: uds-controller
-        namespace: {{ .Release.Namespace }}
-        path: /mutate-pods
-        port: 443
-      caBundle: ""
-    rules:
-      - apiGroups:
-          - ""
-        apiVersions:
-          - v1
-        resources:
-          - pods
-        operations:
-          - CREATE
-          - UPDATE
-        scope: "Namespaced"
-    namespaceSelector:
-      matchExpressions:
-        - key: kubernetes.io/metadata.name
-          operator: NotIn
-          values:
-            - kube-system
-            - uds-system
-            - pepr-system
-            - istio-system
-            - zarf
-  - name: mutate-pods-istio-system.uds.dev
+  - name: pods.waypoint.uds.dev
     admissionReviewVersions:
       - v1
     sideEffects: None
     failurePolicy: Ignore
     matchPolicy: Equivalent
-    reinvocationPolicy: IfNeeded
+    namespaceSelector:
+      matchExpressions:
+        - key: istio.io/dataplane-mode
+          operator: In
+          values:
+            - ambient
     clientConfig:
       service:
         name: uds-controller
         namespace: {{ .Release.Namespace }}
-        path: /mutate-pods
+        path: /mutate-pod-waypoint
         port: 443
       caBundle: ""
     rules:
@@ -66,11 +36,34 @@ webhooks:
           - pods
         operations:
           - CREATE
-          - UPDATE
-        scope: "Namespaced"
+        scope: Namespaced
+  - name: services.waypoint.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
     namespaceSelector:
       matchExpressions:
-        - key: kubernetes.io/metadata.name
+        - key: istio.io/dataplane-mode
           operator: In
           values:
-            - istio-system
+            - ambient
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /mutate-service-waypoint
+        port: 443
+      caBundle: ""
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - services
+        operations:
+          - CREATE
+          - UPDATE
+        scope: Namespaced

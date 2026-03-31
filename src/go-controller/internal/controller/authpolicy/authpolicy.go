@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,7 +25,10 @@ var authPolicyGVR = schema.GroupVersionResource{
 	Group: "security.istio.io", Version: "v1beta1", Resource: "authorizationpolicies",
 }
 
-const prometheusPrincipal = "cluster.local/ns/monitoring/sa/monitoring-monitoring-kube-prometheus"
+const (
+	prometheusPrincipal = "cluster.local/ns/monitoring/sa/kube-prometheus-stack-prometheus"
+	waypointSuffix      = "-waypoint"
+)
 
 // Reconcile creates Istio AuthorizationPolicies and returns the count of policies.
 func Reconcile(ctx context.Context, client dynamic.Interface, pkg *udstypes.UDSPackage, namespace string, istioMode udstypes.Mode) (int, error) {
@@ -50,9 +54,18 @@ func Reconcile(ctx context.Context, client dynamic.Interface, pkg *udstypes.UDSP
 		source := buildAllowSource(allow, namespace)
 		ports := getAllowPorts(allow)
 
-		name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s", pkgName, generateAllowName(allow)))
-		pol := buildAuthPolicy(name, namespace, generation, ownerRefs, selector, source, ports, pkgName, istioMode)
-		policies = append(policies, pol)
+		sso := findMatchingSsoClient(pkg, selector, istioMode)
+		if sso != nil {
+			waypointName := utils.SanitizeResourceName(sso.ClientID) + waypointSuffix
+			waypointSelector := map[string]string{"istio.io/gateway-name": waypointName}
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-allow-%s-%s", pkgName, generateAllowName(allow), waypointName))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, waypointSelector, source, ports, pkgName, istioMode)
+			policies = append(policies, pol)
+		} else {
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s", pkgName, generateAllowName(allow)))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, selector, source, ports, pkgName, istioMode)
+			policies = append(policies, pol)
+		}
 	}
 
 	// Process expose rules
@@ -83,25 +96,54 @@ func Reconcile(ctx context.Context, client dynamic.Interface, pkg *udstypes.UDSP
 			},
 		}
 
-		desc := fmt.Sprintf("%d-%s-%s-gateway", port, joinMapValues(selector), gateway)
-		name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s", pkgName, desc))
-
-		pol := buildAuthPolicy(name, namespace, generation, ownerRefs, selector, source, []string{fmt.Sprintf("%d", port)}, pkgName, istioMode)
-		policies = append(policies, pol)
+		sso := findMatchingSsoClient(pkg, selector, istioMode)
+		if sso != nil {
+			// Ambient + SSO: target the waypoint instead of the app pod.
+			// Use expose.Port (not targetPort) to match Pepr behavior.
+			exposePort := int32(443)
+			if expose.Port != nil {
+				exposePort = int32(*expose.Port)
+			}
+			waypointName := utils.SanitizeResourceName(sso.ClientID) + waypointSuffix
+			waypointSelector := map[string]string{"istio.io/gateway-name": waypointName}
+			labelString := joinSelectorKeyValue(selector)
+			desc := fmt.Sprintf("ingress-%d-%s-%s", exposePort, labelString, waypointName)
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s", pkgName, desc))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, waypointSelector, source, []string{fmt.Sprintf("%d", exposePort)}, pkgName, istioMode)
+			policies = append(policies, pol)
+		} else {
+			desc := fmt.Sprintf("%d-%s-%s-gateway", port, joinMapValues(selector), gateway)
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s", pkgName, desc))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, selector, source, []string{fmt.Sprintf("%d", port)}, pkgName, istioMode)
+			policies = append(policies, pol)
+		}
 	}
 
 	// Process monitor rules
 	for _, monitor := range pkg.Spec.Monitor {
-		selector := monitor.Selector
+		monitorSelector := monitor.Selector
+		if len(monitor.PodSelector) > 0 {
+			monitorSelector = monitor.PodSelector
+		}
 		port := fmt.Sprintf("%d", int32(monitor.TargetPort))
 
 		source := map[string]interface{}{
 			"principals": []interface{}{prometheusPrincipal},
 		}
 
-		name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s-%s-metrics", pkgName, port, joinMapValues(selector)))
-		pol := buildAuthPolicy(name, namespace, generation, ownerRefs, selector, source, []string{port}, pkgName, istioMode)
-		policies = append(policies, pol)
+		sso := findMatchingSsoClient(pkg, monitorSelector, istioMode)
+		if sso != nil {
+			waypointName := utils.SanitizeResourceName(sso.ClientID) + waypointSuffix
+			waypointSelector := map[string]string{"istio.io/gateway-name": waypointName}
+			monitorName := generateMonitorName(monitor)
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-monitor-%s-%s", pkgName, monitorName, waypointName))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, waypointSelector, source, []string{port}, pkgName, istioMode)
+			policies = append(policies, pol)
+		} else {
+			name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-%s-%s-metrics", pkgName, port, joinMapValues(monitorSelector)))
+			pol := buildAuthPolicy(name, namespace, generation, ownerRefs, monitorSelector, source, []string{port}, pkgName, istioMode)
+			policies = append(policies, pol)
+		}
 	}
 
 	// Sidecar mode: allow Prometheus to scrape sidecar metrics on 15020
@@ -112,6 +154,19 @@ func Reconcile(ctx context.Context, client dynamic.Interface, pkg *udstypes.UDSP
 		name := utils.SanitizeResourceName(fmt.Sprintf("protect-%s-sidecar-metrics", pkgName))
 		pol := buildAuthPolicy(name, namespace, generation, ownerRefs, nil, source, []string{"15020"}, pkgName, istioMode)
 		policies = append(policies, pol)
+	}
+
+	// Ambient mode: deny all traffic to app pods except from their waypoint,
+	// enforced at the ztunnel L4 layer for each authservice-protected SSO client.
+	if istioMode == udstypes.Ambient {
+		for _, ssoSpec := range pkg.Spec.Sso {
+			if len(ssoSpec.EnableAuthserviceSelector) == 0 {
+				continue
+			}
+			waypointName := utils.SanitizeResourceName(ssoSpec.ClientID) + waypointSuffix
+			denyPol := buildDenyWaypointPolicy(waypointName, namespace, generation, ownerRefs, ssoSpec.EnableAuthserviceSelector, pkgName, istioMode)
+			policies = append(policies, denyPol)
+		}
 	}
 
 	// Apply all policies
@@ -272,4 +327,130 @@ func toInterfaceMap(m map[string]string) map[string]interface{} {
 		result[k] = v
 	}
 	return result
+}
+
+// joinSelectorKeyValue joins map entries as "key-value" pairs, sorted for stability.
+func joinSelectorKeyValue(m map[string]string) string {
+	if len(m) == 0 {
+		return "all"
+	}
+	// Sort keys for deterministic output
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(m))
+	for _, k := range keys {
+		parts = append(parts, k+"-"+m[k])
+	}
+	return strings.Join(parts, "-")
+}
+
+// generateMonitorName mirrors Pepr's generateMonitorName.
+func generateMonitorName(monitor udstypes.Monitor) string {
+	selector := monitor.Selector
+	if len(monitor.PodSelector) > 0 {
+		selector = monitor.PodSelector
+	}
+	portPart := fmt.Sprintf("%d", int32(monitor.TargetPort))
+
+	if v, ok := selector["app"]; ok {
+		return fmt.Sprintf("monitor-%s-%s", portPart, strings.TrimSuffix(v, "-pod"))
+	}
+	if v, ok := selector["app.kubernetes.io/name"]; ok {
+		return fmt.Sprintf("monitor-%s-%s-workload", portPart, strings.TrimSuffix(v, "-pod"))
+	}
+	if len(selector) > 0 {
+		return fmt.Sprintf("monitor-%s-%s", portPart, joinMapValues(selector))
+	}
+	return fmt.Sprintf("monitor-%s-workload", portPart)
+}
+
+// findMatchingSsoClient returns the first SSO spec whose enableAuthserviceSelector
+// is a subset of the given selector. Only applies in Ambient mode.
+func findMatchingSsoClient(pkg *udstypes.UDSPackage, selector map[string]string, istioMode udstypes.Mode) *udstypes.Sso {
+	if istioMode != udstypes.Ambient || selector == nil {
+		return nil
+	}
+	for i := range pkg.Spec.Sso {
+		sso := &pkg.Spec.Sso[i]
+		if len(sso.EnableAuthserviceSelector) == 0 {
+			continue
+		}
+		match := true
+		for k, v := range sso.EnableAuthserviceSelector {
+			if selector[k] != v {
+				match = false
+				break
+			}
+		}
+		if match {
+			return sso
+		}
+	}
+	return nil
+}
+
+// buildDenyWaypointPolicy creates a DENY AuthorizationPolicy that blocks all traffic
+// to the app pods except traffic originating from the waypoint service account.
+func buildDenyWaypointPolicy(waypointName, namespace, generation string, ownerRefs []metav1.OwnerReference, appSelector map[string]string, pkgName string, istioMode udstypes.Mode) *unstructured.Unstructured {
+	name := utils.SanitizeResourceName("deny-all-except-waypoint-" + waypointName)
+
+	spec := map[string]interface{}{
+		"action": "DENY",
+		"rules": []interface{}{
+			map[string]interface{}{
+				"from": []interface{}{
+					map[string]interface{}{
+						"source": map[string]interface{}{
+							"notPrincipals": []interface{}{
+								fmt.Sprintf("cluster.local/ns/%s/sa/%s", namespace, waypointName),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if len(appSelector) > 0 {
+		spec["selector"] = map[string]interface{}{
+			"matchLabels": toInterfaceMap(appSelector),
+		}
+	}
+
+	pol := &unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"apiVersion": "security.istio.io/v1beta1",
+			"kind":       "AuthorizationPolicy",
+			"metadata": map[string]interface{}{
+				"name":      name,
+				"namespace": namespace,
+				"labels": map[string]interface{}{
+					"uds/package":          pkgName,
+					"uds/generation":       generation,
+					"uds/for":              "network",
+					"uds/mesh-mode":        string(istioMode),
+					"uds/ambient-waypoint": waypointName,
+				},
+			},
+			"spec": spec,
+		},
+	}
+
+	if len(ownerRefs) > 0 {
+		var refMaps []interface{}
+		for _, ref := range ownerRefs {
+			refMaps = append(refMaps, map[string]interface{}{
+				"apiVersion": ref.APIVersion,
+				"kind":       ref.Kind,
+				"name":       ref.Name,
+				"uid":        string(ref.UID),
+			})
+		}
+		unstructured.SetNestedSlice(pol.Object, refMaps, "metadata", "ownerReferences")
+	}
+
+	return pol
 }

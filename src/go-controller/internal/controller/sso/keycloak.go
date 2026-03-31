@@ -208,6 +208,23 @@ func convertSsoToClient(sso udstypes.Sso) Client {
 		client.Secret = *sso.Secret
 	}
 
+	// Ensure attributes map exists and set defaults
+	if client.Attributes == nil {
+		client.Attributes = make(map[string]string)
+	}
+	// Mirror Pepr behavior: default logout.confirmation.enabled to "true"
+	// unless the user has already specified it.
+	if _, ok := client.Attributes["logout.confirmation.enabled"]; !ok {
+		client.Attributes["logout.confirmation.enabled"] = "true"
+	}
+	// Mirror Pepr behavior: encode groups into uds.core.groups attribute.
+	if sso.Groups != nil && len(sso.Groups.AnyOf) > 0 {
+		groupsJSON, _ := json.Marshal(sso.Groups)
+		client.Attributes["uds.core.groups"] = string(groupsJSON)
+	} else {
+		client.Attributes["uds.core.groups"] = ""
+	}
+
 	for _, pm := range sso.ProtocolMappers {
 		mapper := ProtocolMapper{
 			Name:           pm.Name,

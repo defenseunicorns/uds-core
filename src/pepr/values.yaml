@@ -264,3 +264,24 @@ admission:
       value: "false"
     - name: "LOG_LEVEL"
       value: "info"
+    # Feature flags: disable Package reconciliation in Pepr (Go controller handles it)
+    - name: UDS_OPERATOR_NETWORK_POLICIES_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_AUTHORIZATION_POLICIES_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_ISTIO_INJECTION_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_ISTIO_INGRESS_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_ISTIO_EGRESS_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_SSO_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_POD_MONITORS_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_SERVICE_MONITORS_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_UPTIME_PROBES_ENABLED
+      value: "false"
+    - name: UDS_OPERATOR_CA_BUNDLE_ENABLED
+      value: "false"
