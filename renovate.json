@@ -119,7 +119,8 @@
         "defenseunicorns/pepr"
       ],
       "groupName": "pepr",
-      "commitMessageTopic": "pepr"
+      "commitMessageTopic": "pepr",
+      "minimumReleaseAge": null
     },
     {
       "matchPackageNames": [
