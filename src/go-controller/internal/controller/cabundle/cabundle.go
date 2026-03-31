@@ -14,7 +14,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -24,7 +24,7 @@ import (
 const caBundleLabel = "uds/ca-bundle"
 
 // Reconcile creates or updates the CA bundle ConfigMap for the package.
-func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage, namespace string) error {
+func Reconcile(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage, namespace string) error {
 	slog.Debug("CA bundle reconcile started",
 		"package", pkg.Name, "namespace", namespace,
 		"hasCaBundle", pkg.Spec.CABundle != nil)
@@ -89,18 +89,17 @@ func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstype
 		},
 	}
 
-	cmClient := clientset.CoreV1().ConfigMaps(namespace)
-	existing, err := cmClient.Get(ctx, cmName, metav1.GetOptions{})
+	existing, err := coreClient.ConfigMaps(namespace).Get(ctx, cmName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		slog.Debug("Creating new CA bundle ConfigMap",
 			"name", cmName, "namespace", namespace)
-		_, err = cmClient.Create(ctx, cm, metav1.CreateOptions{})
+		_, err = coreClient.ConfigMaps(namespace).Create(ctx, cm, metav1.CreateOptions{})
 	} else if err == nil {
 		slog.Debug("Updating existing CA bundle ConfigMap",
 			"name", cmName, "namespace", namespace,
 			"existingResourceVersion", existing.ResourceVersion)
 		cm.ResourceVersion = existing.ResourceVersion
-		_, err = cmClient.Update(ctx, cm, metav1.UpdateOptions{})
+		_, err = coreClient.ConfigMaps(namespace).Update(ctx, cm, metav1.UpdateOptions{})
 	}
 	if err != nil {
 		return fmt.Errorf("apply CA bundle ConfigMap %s: %w", cmName, err)
@@ -110,7 +109,7 @@ func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstype
 		"name", cmName, "namespace", namespace, "package", pkgName)
 
 	// Purge orphans
-	purgeOrphans(ctx, clientset, namespace, pkgName, generation)
+	purgeOrphans(ctx, coreClient, namespace, pkgName, generation)
 
 	return nil
 }
@@ -150,14 +149,13 @@ func buildCABundleContent() string {
 	return result
 }
 
-func purgeOrphans(ctx context.Context, clientset kubernetes.Interface, namespace, pkgName, generation string) {
-	cmClient := clientset.CoreV1().ConfigMaps(namespace)
+func purgeOrphans(ctx context.Context, coreClient corev1client.CoreV1Interface, namespace, pkgName, generation string) {
 	selector := fmt.Sprintf("uds/package=%s,%s=true", pkgName, caBundleLabel)
 	slog.Debug("Purging orphaned CA bundle ConfigMaps",
 		"namespace", namespace, "package", pkgName,
 		"currentGeneration", generation, "selector", selector)
 
-	list, err := cmClient.List(ctx, metav1.ListOptions{
+	list, err := coreClient.ConfigMaps(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: selector,
 	})
 	if err != nil {
@@ -173,7 +171,7 @@ func purgeOrphans(ctx context.Context, clientset kubernetes.Interface, namespace
 				"name", cm.Name, "namespace", namespace,
 				"orphanGeneration", cm.Labels["uds/generation"],
 				"currentGeneration", generation)
-			if err := cmClient.Delete(ctx, cm.Name, metav1.DeleteOptions{}); err != nil {
+			if err := coreClient.ConfigMaps(namespace).Delete(ctx, cm.Name, metav1.DeleteOptions{}); err != nil {
 				slog.Error("Failed to delete orphaned ConfigMap", "name", cm.Name, "error", err)
 			}
 		}

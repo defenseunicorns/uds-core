@@ -13,18 +13,18 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 )
 
 // EnableIstio configures the package namespace for the requested service mesh mode.
 // It mirrors enableIstio in src/pepr/operator/controllers/istio/namespace.ts.
-func EnableIstio(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage) error {
+func EnableIstio(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage) error {
 	namespace := pkg.Namespace
 	istioMode := pkg.Spec.GetServiceMeshMode()
 
-	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	ns, err := coreClient.Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get namespace %s: %w", namespace, err)
 	}
@@ -73,7 +73,7 @@ func EnableIstio(ctx context.Context, clientset kubernetes.Interface, pkg *udsty
 	if err != nil {
 		return fmt.Errorf("marshal namespace patch: %w", err)
 	}
-	_, err = clientset.CoreV1().Namespaces().Patch(ctx, namespace, types.MergePatchType, patchData, metav1.PatchOptions{})
+	_, err = coreClient.Namespaces().Patch(ctx, namespace, types.MergePatchType, patchData, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("patch namespace %s labels: %w", namespace, err)
 	}
@@ -83,10 +83,10 @@ func EnableIstio(ctx context.Context, clientset kubernetes.Interface, pkg *udsty
 }
 
 // CleanupNamespace restores the original Istio injection state for the namespace.
-func CleanupNamespace(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage) error {
+func CleanupNamespace(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage) error {
 	namespace := pkg.Namespace
 
-	ns, err := clientset.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
+	ns, err := coreClient.Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("get namespace %s: %w", namespace, err)
 	}
@@ -132,7 +132,7 @@ func CleanupNamespace(ctx context.Context, clientset kubernetes.Interface, pkg *
 	if err != nil {
 		return fmt.Errorf("marshal namespace patch: %w", err)
 	}
-	_, err = clientset.CoreV1().Namespaces().Patch(ctx, namespace, types.MergePatchType, patchData, metav1.PatchOptions{})
+	_, err = coreClient.Namespaces().Patch(ctx, namespace, types.MergePatchType, patchData, metav1.PatchOptions{})
 	if err != nil {
 		return fmt.Errorf("patch namespace %s: %w", namespace, err)
 	}

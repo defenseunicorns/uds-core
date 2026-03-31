@@ -17,7 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes"
+	networkingv1client "k8s.io/client-go/kubernetes/typed/networking/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -26,7 +26,8 @@ import (
 
 // Reconcile creates all NetworkPolicies for the given package and returns
 // the count of policies created.
-func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage, namespace string, istioMode udstypes.Mode) (int, error) {
+func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Interface, pkg *udstypes.UDSPackage,
+	namespace string, istioMode udstypes.Mode) (int, error) {
 	pkgName := pkg.Name
 	generation := utils.PkgGeneration(pkg)
 	ownerRefs := utils.GetOwnerRef(pkg)
@@ -131,13 +132,12 @@ func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstype
 	}
 
 	// Apply all policies using server-side apply (patch)
-	netClient := clientset.NetworkingV1().NetworkPolicies(namespace)
 	for _, pol := range policies {
 		data, err := json.Marshal(pol)
 		if err != nil {
 			return 0, fmt.Errorf("marshal network policy %s: %w", pol.Name, err)
 		}
-		_, err = netClient.Patch(ctx, pol.Name, types.ApplyPatchType, data, metav1.PatchOptions{
+		_, err = netClient.NetworkPolicies(namespace).Patch(ctx, pol.Name, types.ApplyPatchType, data, metav1.PatchOptions{
 			FieldManager: "uds-controller",
 			Force:        boolPtr(true),
 		})
@@ -148,16 +148,15 @@ func Reconcile(ctx context.Context, clientset kubernetes.Interface, pkg *udstype
 	}
 
 	// Purge orphaned policies from previous generations
-	if err := purgeOrphans(ctx, clientset, namespace, pkgName, generation); err != nil {
+	if err := purgeOrphans(ctx, netClient, namespace, pkgName, generation); err != nil {
 		slog.Error("Failed to purge orphaned network policies", "error", err)
 	}
 
 	return len(policies), nil
 }
 
-func purgeOrphans(ctx context.Context, clientset kubernetes.Interface, namespace, pkgName, generation string) error {
-	netClient := clientset.NetworkingV1().NetworkPolicies(namespace)
-	list, err := netClient.List(ctx, metav1.ListOptions{
+func purgeOrphans(ctx context.Context, netClient networkingv1client.NetworkingV1Interface, namespace, pkgName, generation string) error {
+	list, err := netClient.NetworkPolicies(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("uds/package=%s", pkgName),
 	})
 	if err != nil {
@@ -168,7 +167,7 @@ func purgeOrphans(ctx context.Context, clientset kubernetes.Interface, namespace
 		genLabel := pol.Labels["uds/generation"]
 		if genLabel != generation {
 			slog.Debug("Deleting orphaned NetworkPolicy", "name", pol.Name, "namespace", namespace)
-			if err := netClient.Delete(ctx, pol.Name, metav1.DeleteOptions{}); err != nil {
+			if err := netClient.NetworkPolicies(namespace).Delete(ctx, pol.Name, metav1.DeleteOptions{}); err != nil {
 				slog.Error("Failed to delete orphan", "name", pol.Name, "error", err)
 			}
 		}

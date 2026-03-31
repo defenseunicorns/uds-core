@@ -13,7 +13,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -27,12 +27,12 @@ const (
 
 // AuthserviceConfig is the full authservice configuration.
 type AuthserviceConfig struct {
-	ListenAddress  string              `json:"listen_address"`
-	LogLevel       string              `json:"log_level"`
-	DefaultOIDC    *DefaultOIDCConfig  `json:"default_oidc_config,omitempty"`
-	Threads        int                 `json:"threads"`
-	AllowUnmatched bool                `json:"allow_unmatched_requests"`
-	Chains         []AuthserviceChain  `json:"chains"`
+	ListenAddress  string             `json:"listen_address"`
+	LogLevel       string             `json:"log_level"`
+	DefaultOIDC    *DefaultOIDCConfig `json:"default_oidc_config,omitempty"`
+	Threads        int                `json:"threads"`
+	AllowUnmatched bool               `json:"allow_unmatched_requests"`
+	Chains         []AuthserviceChain `json:"chains"`
 }
 
 // DefaultOIDCConfig is the default OIDC configuration.
@@ -48,8 +48,8 @@ type RedisConfig struct {
 
 // AuthserviceChain represents a single authservice chain.
 type AuthserviceChain struct {
-	Name    string            `json:"name"`
-	Match   AuthserviceMatch  `json:"match"`
+	Name    string              `json:"name"`
+	Match   AuthserviceMatch    `json:"match"`
 	Filters []AuthserviceFilter `json:"filters"`
 }
 
@@ -66,14 +66,14 @@ type AuthserviceFilter struct {
 
 // OIDCOverride is the OIDC configuration override for a chain.
 type OIDCOverride struct {
-	AuthorizationURI string       `json:"authorization_uri"`
-	TokenURI         string       `json:"token_uri"`
-	CallbackURI      string       `json:"callback_uri"`
-	ClientID         string       `json:"client_id"`
-	ClientSecret     string       `json:"client_secret"`
-	Scopes           []string     `json:"scopes"`
+	AuthorizationURI string        `json:"authorization_uri"`
+	TokenURI         string        `json:"token_uri"`
+	CallbackURI      string        `json:"callback_uri"`
+	ClientID         string        `json:"client_id"`
+	ClientSecret     string        `json:"client_secret"`
+	Scopes           []string      `json:"scopes"`
 	Logout           *LogoutConfig `json:"logout,omitempty"`
-	CookieNamePrefix string       `json:"cookie_name_prefix"`
+	CookieNamePrefix string        `json:"cookie_name_prefix"`
 }
 
 // LogoutConfig represents logout settings.
@@ -84,7 +84,7 @@ type LogoutConfig struct {
 
 // ReconcileAuthservice updates the authservice configuration for the package's
 // SSO clients and returns the list of authservice clients for status.
-func ReconcileAuthservice(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage, ssoClients map[string]Client) ([]udstypes.AuthserviceClient, error) {
+func ReconcileAuthservice(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage, ssoClients map[string]Client) ([]udstypes.AuthserviceClient, error) {
 	// Skip if no SSO clients with authservice selector
 	hasAuthserviceClients := false
 	for _, ssoSpec := range pkg.Spec.Sso {
@@ -104,7 +104,7 @@ func ReconcileAuthservice(ctx context.Context, clientset kubernetes.Interface, p
 	var authserviceClients []udstypes.AuthserviceClient
 
 	// Get current authservice config
-	authConfig, err := getAuthserviceConfig(ctx, clientset)
+	authConfig, err := getAuthserviceConfig(ctx, coreClient)
 	if err != nil {
 		return nil, fmt.Errorf("get authservice config: %w", err)
 	}
@@ -139,7 +139,7 @@ func ReconcileAuthservice(ctx context.Context, clientset kubernetes.Interface, p
 	})
 
 	// Write back the config
-	if err := updateAuthserviceConfig(ctx, clientset, authConfig); err != nil {
+	if err := updateAuthserviceConfig(ctx, coreClient, authConfig); err != nil {
 		return nil, fmt.Errorf("update authservice config: %w", err)
 	}
 
@@ -147,7 +147,7 @@ func ReconcileAuthservice(ctx context.Context, clientset kubernetes.Interface, p
 }
 
 // PurgeAuthserviceClients removes authservice chains for clients that are no longer in the package.
-func PurgeAuthserviceClients(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage) error {
+func PurgeAuthserviceClients(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage) error {
 	if len(pkg.Status.AuthserviceClients) == 0 {
 		return nil
 	}
@@ -160,7 +160,7 @@ func PurgeAuthserviceClients(ctx context.Context, clientset kubernetes.Interface
 		}
 	}
 
-	authConfig, err := getAuthserviceConfig(ctx, clientset)
+	authConfig, err := getAuthserviceConfig(ctx, coreClient)
 	if err != nil {
 		return fmt.Errorf("get authservice config for purge: %w", err)
 	}
@@ -175,7 +175,7 @@ func PurgeAuthserviceClients(ctx context.Context, clientset kubernetes.Interface
 	}
 
 	if changed {
-		if err := updateAuthserviceConfig(ctx, clientset, authConfig); err != nil {
+		if err := updateAuthserviceConfig(ctx, coreClient, authConfig); err != nil {
 			return fmt.Errorf("update authservice config after purge: %w", err)
 		}
 	}
@@ -260,8 +260,8 @@ func removeChain(chains []AuthserviceChain, name string) []AuthserviceChain {
 	return result
 }
 
-func getAuthserviceConfig(ctx context.Context, clientset kubernetes.Interface) (*AuthserviceConfig, error) {
-	secret, err := clientset.CoreV1().Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
+func getAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Interface) (*AuthserviceConfig, error) {
+	secret, err := coreClient.Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		return &AuthserviceConfig{
 			ListenAddress:  "0.0.0.0:10003",
@@ -287,13 +287,13 @@ func getAuthserviceConfig(ctx context.Context, clientset kubernetes.Interface) (
 	return &cfg, nil
 }
 
-func updateAuthserviceConfig(ctx context.Context, clientset kubernetes.Interface, cfg *AuthserviceConfig) error {
+func updateAuthserviceConfig(ctx context.Context, coreClient corev1client.CoreV1Interface, cfg *AuthserviceConfig) error {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return fmt.Errorf("marshal authservice config: %w", err)
 	}
 
-	secret, err := clientset.CoreV1().Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
+	secret, err := coreClient.Secrets(authserviceNamespace).Get(ctx, authserviceSecretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		secret = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -304,7 +304,7 @@ func updateAuthserviceConfig(ctx context.Context, clientset kubernetes.Interface
 				authserviceSecretKey: data,
 			},
 		}
-		_, err = clientset.CoreV1().Secrets(authserviceNamespace).Create(ctx, secret, metav1.CreateOptions{})
+		_, err = coreClient.Secrets(authserviceNamespace).Create(ctx, secret, metav1.CreateOptions{})
 		return err
 	}
 	if err != nil {
@@ -312,6 +312,6 @@ func updateAuthserviceConfig(ctx context.Context, clientset kubernetes.Interface
 	}
 
 	secret.Data[authserviceSecretKey] = data
-	_, err = clientset.CoreV1().Secrets(authserviceNamespace).Update(ctx, secret, metav1.UpdateOptions{})
+	_, err = coreClient.Secrets(authserviceNamespace).Update(ctx, secret, metav1.UpdateOptions{})
 	return err
 }

@@ -21,7 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/utils"
@@ -73,7 +73,7 @@ type ProtocolMapper struct {
 }
 
 // ReconcileKeycloak creates/updates Keycloak clients and returns a map of clientID->Client.
-func ReconcileKeycloak(ctx context.Context, clientset kubernetes.Interface, pkg *udstypes.UDSPackage) (map[string]Client, error) {
+func ReconcileKeycloak(ctx context.Context, coreClient corev1client.CoreV1Interface, pkg *udstypes.UDSPackage) (map[string]Client, error) {
 	pkgName := pkg.Name
 	namespace := pkg.Namespace
 	generation := utils.PkgGeneration(pkg)
@@ -112,7 +112,7 @@ func ReconcileKeycloak(ctx context.Context, clientset kubernetes.Interface, pkg 
 		if !syncedClient.PublicClient && syncedClient.Secret != "" {
 			slog.Debug("Creating K8s secret for SSO client",
 				"package", pkgName, "clientId", syncedClient.ClientID)
-			if err := createClientSecret(ctx, clientset, ssoSpec, syncedClient, namespace, pkgName, generation, ownerRefs); err != nil {
+			if err := createClientSecret(ctx, coreClient, ssoSpec, syncedClient, namespace, pkgName, generation, ownerRefs); err != nil {
 				return nil, fmt.Errorf("create secret for client %s: %w", syncedClient.ClientID, err)
 			}
 			slog.Debug("K8s secret created for SSO client",
@@ -127,7 +127,7 @@ func ReconcileKeycloak(ctx context.Context, clientset kubernetes.Interface, pkg 
 	// Purge orphaned secrets
 	slog.Debug("Purging orphaned SSO secrets",
 		"package", pkgName, "namespace", namespace, "generation", generation)
-	purgeOrphanSecrets(ctx, clientset, namespace, pkgName, generation)
+	purgeOrphanSecrets(ctx, coreClient, namespace, pkgName, generation)
 
 	return clients, nil
 }
@@ -157,11 +157,11 @@ func PurgeSSOClients(ctx context.Context, pkg *udstypes.UDSPackage, currentClien
 
 func convertSsoToClient(sso udstypes.Sso) Client {
 	client := Client{
-		ClientID:    sso.ClientID,
-		Name:        sso.Name,
+		ClientID:     sso.ClientID,
+		Name:         sso.Name,
 		RedirectUris: sso.RedirectUris,
-		WebOrigins:  sso.WebOrigins,
-		Attributes:  sso.Attributes,
+		WebOrigins:   sso.WebOrigins,
+		Attributes:   sso.Attributes,
 	}
 
 	if sso.StandardFlowEnabled != nil {
@@ -250,7 +250,7 @@ func syncClient(ctx context.Context, client Client) (Client, error) {
 	return created, nil
 }
 
-func createClientSecret(ctx context.Context, clientset kubernetes.Interface, ssoSpec udstypes.Sso, client Client, namespace, pkgName, generation string, ownerRefs []metav1.OwnerReference) error {
+func createClientSecret(ctx context.Context, coreClient corev1client.CoreV1Interface, ssoSpec udstypes.Sso, client Client, namespace, pkgName, generation string, ownerRefs []metav1.OwnerReference) error {
 	secretName := fmt.Sprintf("sso-client-%s", utils.SanitizeResourceName(client.ClientID))
 	if ssoSpec.SecretName != nil {
 		secretName = *ssoSpec.SecretName
@@ -322,17 +322,17 @@ func createClientSecret(ctx context.Context, clientset kubernetes.Interface, sso
 		Data: data,
 	}
 
-	_, err := clientset.CoreV1().Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
+	_, err := coreClient.Secrets(namespace).Get(ctx, secretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
-		_, err = clientset.CoreV1().Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
+		_, err = coreClient.Secrets(namespace).Create(ctx, secret, metav1.CreateOptions{})
 	} else if err == nil {
-		_, err = clientset.CoreV1().Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
+		_, err = coreClient.Secrets(namespace).Update(ctx, secret, metav1.UpdateOptions{})
 	}
 	return err
 }
 
-func purgeOrphanSecrets(ctx context.Context, clientset kubernetes.Interface, namespace, pkgName, generation string) {
-	secrets, err := clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{
+func purgeOrphanSecrets(ctx context.Context, coreClient corev1client.CoreV1Interface, namespace, pkgName, generation string) {
+	secrets, err := coreClient.Secrets(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("uds/package=%s", pkgName),
 	})
 	if err != nil {
@@ -342,7 +342,7 @@ func purgeOrphanSecrets(ctx context.Context, clientset kubernetes.Interface, nam
 	for _, s := range secrets.Items {
 		if s.Labels["uds/generation"] != generation {
 			slog.Debug("Deleting orphaned secret", "name", s.Name, "namespace", namespace)
-			if err := clientset.CoreV1().Secrets(namespace).Delete(ctx, s.Name, metav1.DeleteOptions{}); err != nil {
+			if err := coreClient.Secrets(namespace).Delete(ctx, s.Name, metav1.DeleteOptions{}); err != nil {
 				slog.Error("Failed to delete orphaned secret", "name", s.Name, "error", err)
 			}
 		}
@@ -364,7 +364,6 @@ func resolveTemplate(tmpl string, client Client) string {
 
 	return tmpl
 }
-
 
 // --- Keycloak API Operations ---
 
@@ -428,16 +427,14 @@ func SetOperatorSecretGetter(fn func(ctx context.Context) (string, error)) {
 // EnsureOperatorSecret ensures the keycloak-client-secrets Secret exists with the
 // uds-operator key populated. This is called during SSO reconciliation to handle
 // the case where the Go controller started before the keycloak namespace existed.
-func EnsureOperatorSecret(ctx context.Context, clientset kubernetes.Interface) {
+func EnsureOperatorSecret(ctx context.Context, coreClient corev1client.CoreV1Interface) {
 	const (
 		secretNamespace = "keycloak"
 		secretName      = "keycloak-client-secrets"
 		secretKey       = "uds-operator"
 	)
 
-	secretClient := clientset.CoreV1().Secrets(secretNamespace)
-
-	secret, err := secretClient.Get(ctx, secretName, metav1.GetOptions{})
+	secret, err := coreClient.Secrets(secretNamespace).Get(ctx, secretName, metav1.GetOptions{})
 	if errors.IsNotFound(err) {
 		slog.Info("Keycloak clients secret does not exist yet, creating it",
 			"namespace", secretNamespace, "name", secretName)
@@ -450,7 +447,7 @@ func EnsureOperatorSecret(ctx context.Context, clientset kubernetes.Interface) {
 				secretKey: []byte(uuid.New().String()),
 			},
 		}
-		if _, err := secretClient.Create(ctx, newSecret, metav1.CreateOptions{}); err != nil {
+		if _, err := coreClient.Secrets(secretNamespace).Create(ctx, newSecret, metav1.CreateOptions{}); err != nil {
 			slog.Error("Failed to create Keycloak clients secret", "error", err)
 		} else {
 			slog.Info("Created Keycloak clients secret with operator key",
@@ -470,7 +467,7 @@ func EnsureOperatorSecret(ctx context.Context, clientset kubernetes.Interface) {
 			secret.Data = make(map[string][]byte)
 		}
 		secret.Data[secretKey] = []byte(uuid.New().String())
-		if _, err := secretClient.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
+		if _, err := coreClient.Secrets(secretNamespace).Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
 			slog.Error("Failed to update Keycloak clients secret", "error", err)
 		} else {
 			slog.Info("Updated Keycloak clients secret with operator key",
