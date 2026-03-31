@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -22,6 +22,11 @@ import {
 import { exemptionAnnotationPrefix, isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
+
+/** Returns true unless the env var is explicitly set to "false". */
+function boolEnv(name: string): boolean {
+  return process.env[name] !== "false";
+}
 
 // @lulaStart ede53ec3-fdb5-4cd5-a2b1-abcbe338b285
 /**
@@ -111,45 +116,47 @@ export function validatePrivilegeEscalation(containers: Ctx[]): Ctx[] {
  *
  * @related https://repo1.dso.mil/big-bang/product/packages/kyverno-policies/-/blob/main/chart/templates/require-non-root-user.yaml
  */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(request => {
-    markExemption(Policy.RequireNonRootUser)(request);
-    if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.RequireNonRootUser}`)) {
-      return;
-    }
+if (boolEnv("UDS_POLICY_REQUIRE_NON_ROOT_USER_ENABLED")) {
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(request => {
+      markExemption(Policy.RequireNonRootUser)(request);
+      if (request.HasAnnotation(`${exemptionAnnotationPrefix}.${Policy.RequireNonRootUser}`)) {
+        return;
+      }
 
-    setNonRootUserSettings(request.Raw.spec!, request.Raw.metadata!);
-    annotateMutation(request, Policy.RequireNonRootUser);
-  })
-  .Validate(request => {
-    if (isExempt(request, Policy.RequireNonRootUser)) {
-      return request.Approve();
-    }
+      setNonRootUserSettings(request.Raw.spec!, request.Raw.metadata!);
+      annotateMutation(request, Policy.RequireNonRootUser);
+    })
+    .Validate(request => {
+      if (isExempt(request, Policy.RequireNonRootUser)) {
+        return request.Approve();
+      }
 
-    // Check pod securityContext
-    const podCtx = request.Raw.spec?.securityContext || {};
-    if (isRootSecurityContext(podCtx)) {
-      return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
-    }
+      // Check pod securityContext
+      const podCtx = request.Raw.spec?.securityContext || {};
+      if (isRootSecurityContext(podCtx)) {
+        return request.Deny("Pod level securityContext does not meet the non-root user requirement.");
+      }
 
-    // Check container securityContext, filter out istio-init containers
-    const violations = securityContextContainers(request, true).filter(c =>
-      isRootSecurityContext(c.ctx),
-    );
-
-    if (violations.length) {
-      return request.Deny(
-        securityContextMessage(
-          "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups",
-          ["runAsNonRoot = true", "runAsUser > 0", "supplementalGroups must not include 0"],
-          violations,
-        ),
+      // Check container securityContext, filter out istio-init containers
+      const violations = securityContextContainers(request, true).filter(c =>
+        isRootSecurityContext(c.ctx),
       );
-    }
 
-    return request.Approve();
-  });
+      if (violations.length) {
+        return request.Deny(
+          securityContextMessage(
+            "Unauthorized container securityContext. Containers must not run as root or have root-level supplemental groups",
+            ["runAsNonRoot = true", "runAsUser > 0", "supplementalGroups must not include 0"],
+            violations,
+          ),
+        );
+      }
+
+      return request.Approve();
+    });
+}
 
 /**
  * Configures the pod security context to ensure it runs as a non-root user

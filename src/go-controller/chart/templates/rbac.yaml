@@ -219,13 +219,15 @@ rules:
       - list
       - patch
 
-  # ValidatingWebhookConfiguration (for patching caBundle)
+  # Webhook configurations (for patching caBundle)
   - apiGroups:
       - admissionregistration.k8s.io
     resources:
       - validatingwebhookconfigurations
+      - mutatingwebhookconfigurations
     resourceNames:
       - uds-controller-clusterconfig
+      - uds-controller-pods
     verbs:
       - get
       - patch

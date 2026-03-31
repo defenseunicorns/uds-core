@@ -30,20 +30,22 @@ const (
 )
 
 // StartWebhookServer generates a self-signed TLS certificate, patches the caBundle into the
-// ValidatingWebhookConfiguration, and starts an HTTPS server on port 9443. The server shuts
-// down when ctx is cancelled.
-func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface) error {
+// ValidatingWebhookConfiguration and MutatingWebhookConfiguration resources, and starts an
+// HTTPS server on port 9443. The server shuts down when ctx is cancelled.
+func StartWebhookServer(ctx context.Context, clientset kubernetes.Interface, exemptions *ExemptionStore) error {
 	tlsCert, caPEM, err := generateSelfSignedCert()
 	if err != nil {
 		return fmt.Errorf("generating self-signed cert: %w", err)
 	}
 
-	if err := patchCABundle(ctx, clientset, caPEM); err != nil {
+	if err := patchAllCABundles(ctx, clientset, caPEM); err != nil {
 		return fmt.Errorf("patching caBundle: %w", err)
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/validate-clusterconfig-delete", DenyClusterConfigDeletion())
+	mux.HandleFunc("/validate-pods", ValidateNonRootUser(exemptions))
+	mux.HandleFunc("/mutate-pods", MutateNonRootUser(exemptions))
 
 	server := &http.Server{
 		Addr:    webhookPort,
@@ -120,7 +122,7 @@ func generateSelfSignedCert() (tls.Certificate, []byte, error) {
 	return tlsCert, certPEM, nil
 }
 
-func patchCABundle(ctx context.Context, clientset kubernetes.Interface, caPEM []byte) error {
+func patchAllCABundles(ctx context.Context, clientset kubernetes.Interface, caPEM []byte) error {
 	patch := []map[string]interface{}{
 		{
 			"op":    "replace",
@@ -133,17 +135,25 @@ func patchCABundle(ctx context.Context, clientset kubernetes.Interface, caPEM []
 		return fmt.Errorf("marshaling patch: %w", err)
 	}
 
-	_, err = clientset.AdmissionregistrationV1().ValidatingWebhookConfigurations().Patch(
-		ctx,
-		webhookConfigName,
-		types.JSONPatchType,
-		patchBytes,
-		metav1.PatchOptions{},
-	)
-	if err != nil {
-		return fmt.Errorf("patching webhook configuration: %w", err)
+	// Patch ValidatingWebhookConfigurations
+	for _, name := range []string{webhookConfigName, "uds-controller-pods"} {
+		_, err := clientset.AdmissionregistrationV1().ValidatingWebhookConfigurations().Patch(
+			ctx, name, types.JSONPatchType, patchBytes, metav1.PatchOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("patching ValidatingWebhookConfiguration %s: %w", name, err)
+		}
+		slog.Info("Patched caBundle", "kind", "ValidatingWebhookConfiguration", "name", name)
 	}
 
-	slog.Info("Patched caBundle into ValidatingWebhookConfiguration", "name", webhookConfigName)
+	// Patch MutatingWebhookConfiguration
+	_, err = clientset.AdmissionregistrationV1().MutatingWebhookConfigurations().Patch(
+		ctx, "uds-controller-pods", types.JSONPatchType, patchBytes, metav1.PatchOptions{},
+	)
+	if err != nil {
+		return fmt.Errorf("patching MutatingWebhookConfiguration uds-controller-pods: %w", err)
+	}
+	slog.Info("Patched caBundle", "kind", "MutatingWebhookConfiguration", "name", "uds-controller-pods")
+
 	return nil
 }

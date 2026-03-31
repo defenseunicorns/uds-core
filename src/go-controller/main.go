@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
@@ -101,18 +102,60 @@ func main() {
 		UpdateFunc: clusterConfigCtrl.HandleUpdate,
 	})
 
+	// Exemption store for webhook policy enforcement
+	exemptions := webhook.NewExemptionStore()
+	exemptionGVR := schema.GroupVersionResource{Group: "uds.dev", Version: "v1alpha1", Resource: "exemptions"}
+	dynamicFactory.ForResource(exemptionGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				return
+			}
+			uid, entries, err := webhook.ParseExemptionEntries(u.Object)
+			if err != nil {
+				slog.Error("Failed to parse exemption", "error", err)
+				return
+			}
+			slog.Info("Loaded exemption", "uid", uid, "entries", len(entries))
+			exemptions.Set(uid, entries)
+		},
+		UpdateFunc: func(_, obj interface{}) {
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				return
+			}
+			uid, entries, err := webhook.ParseExemptionEntries(u.Object)
+			if err != nil {
+				slog.Error("Failed to parse exemption", "error", err)
+				return
+			}
+			slog.Info("Updated exemption", "uid", uid, "entries", len(entries))
+			exemptions.Set(uid, entries)
+		},
+		DeleteFunc: func(obj interface{}) {
+			u, ok := obj.(*unstructured.Unstructured)
+			if !ok {
+				return
+			}
+			uid, _, _ := webhook.ParseExemptionEntries(u.Object)
+			slog.Info("Removed exemption", "uid", uid)
+			exemptions.Remove(uid)
+		},
+	})
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
-
-	if err := webhook.StartWebhookServer(ctx, clientset); err != nil {
-		slog.Error("Failed to start webhook server", "error", err)
-		os.Exit(1)
-	}
 
 	slog.Info("Starting Go controller")
 	dynamicFactory.Start(ctx.Done())
 	dynamicFactory.WaitForCacheSync(ctx.Done())
 	slog.Info("Informer caches synced, watching for events")
+
+	// Start webhook server after cache sync so exemptions are loaded
+	if err := webhook.StartWebhookServer(ctx, clientset, exemptions); err != nil {
+		slog.Error("Failed to start webhook server", "error", err)
+		os.Exit(1)
+	}
 
 	// Start the package controller workqueue processor
 	go packageCtrl.Run(ctx, 2)
@@ -120,4 +163,3 @@ func main() {
 	<-ctx.Done()
 	slog.Info("Shutting down")
 }
-

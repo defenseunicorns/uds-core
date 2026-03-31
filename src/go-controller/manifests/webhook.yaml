@@ -31,3 +31,43 @@ webhooks:
         operations:
           - DELETE
         scope: "Cluster"
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: uds-controller-pods
+  labels:
+    app: uds-controller
+webhooks:
+  - name: validate-pods.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Equivalent
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: uds-system
+        path: /validate-pods
+        port: 443
+      caBundle: ""
+    rules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+        operations:
+          - CREATE
+          - UPDATE
+        scope: "Namespaced"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - uds-system
+            - pepr-system
