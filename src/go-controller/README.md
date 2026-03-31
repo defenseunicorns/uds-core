@@ -8,21 +8,27 @@ A Go-based Kubernetes operator being built to replace the TypeScript [Pepr](../p
 src/go-controller/
 ├── main.go                          # Wiring: clients, informers, startup
 ├── dev-flags.env                    # Feature flag toggles for local dev (see below)
-├── api/uds/v1alpha1/                # Go types for UDS CRDs
-│   ├── package.go                   # Package CR types (generated + curated)
-│   └── clusterconfig.go             # ClusterConfig CR types (hand-written)
+...
+├── api/uds/v1alpha1/                # Go types for UDS CRDs along with helpers and registration logic used for client generation
+├── client/                          # Generated typed clients (do not edit by hand)
+├── hack/                            # Code generation scripts and tooling
 ├── internal/
 │   ├── config/
 │   │   └── config.go                # In-memory cluster config singleton (mirrors Pepr's UDSConfig)
 │   └── controller/
-│       ├── package.go               # PackageController — watches Package CRs
-│       └── clusterconfig.go         # ClusterConfigController — watches ClusterConfig, populates config
+│       ├── controller.go            # Shared controller wiring / base types
+│       ├── udspackage/              # UDSPackageController — watches UDSPackage CRs
+│       ├── clusterconfig/           # ClusterConfigController — watches ClusterConfig, populates config
+│       ├── authpolicy/              # Authorization policy reconciliation
+│       ├── cabundle/                # CA bundle ConfigMap reconciliation
+│       ├── istio/                   # Istio-related (ingress, egress, sidecar) reconciliation
+│       ├── monitoring/              # PodMonitor / ServiceMonitor reconciliation
+│       ├── network/                 # NetworkPolicy reconciliation
+│       ├── probes/                  # Uptime probe reconciliation
+│       └── sso/                     # Keycloak client  and AuthService chain reconciliation
+├── webhook/                         # Mutating admission webhook
 ├── manifests/                       # Raw Kubernetes manifests (for dev iteration)
-│   ├── deployment.yaml
-│   ├── namespace.yaml
-│   └── rbac.yaml
-├── chart/                           # Helm chart for production deployment
-└── tasks.yaml                       # UDS task definitions (see below)
+└── chart/                           # Helm chart for production deployment
 ```
 
 ## Building
@@ -69,7 +75,7 @@ cd src/go-controller
 uds run gen-clients
 ```
 
-Regenerates all client code that lives under `clients/`.
+Regenerates all client code that lives under `client/`.
 
 ### Changing feature flags (shifting a controller from Pepr → Go)
 
@@ -120,7 +126,7 @@ uds run -f src/go-controller/tasks.yaml gen-crds
 
 ### Migrating a phase to Go
 
-1. Implement the phase in `PackageController.Reconcile()` (`internal/controller/package.go`)
+1. Implement the phase in `PackageController.syncHandler()` (`internal/controller/udspackage/udspackage.go`)
 2. Set its flag to `false` in `dev-flags.env`
 3. Run `update-pepr` and `update-controller` to disable on Pepr and enable on Go
 4. Apply a Package CR and verify the phase runs in Go logs and is absent from Pepr watcher logs
