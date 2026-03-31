@@ -18,9 +18,8 @@ type UDSPackageLister interface {
 	// List lists all UDSPackages in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*udsv1alpha1.UDSPackage, err error)
-	// Get retrieves the UDSPackage from the index for a given name.
-	// Objects returned here must be treated as read-only.
-	Get(name string) (*udsv1alpha1.UDSPackage, error)
+	// UDSPackages returns an object that can list and get UDSPackages.
+	UDSPackages(namespace string) UDSPackageNamespaceLister
 	UDSPackageListerExpansion
 }
 
@@ -32,4 +31,27 @@ type uDSPackageLister struct {
 // NewUDSPackageLister returns a new UDSPackageLister.
 func NewUDSPackageLister(indexer cache.Indexer) UDSPackageLister {
 	return &uDSPackageLister{listers.New[*udsv1alpha1.UDSPackage](indexer, udsv1alpha1.Resource("udspackage"))}
+}
+
+// UDSPackages returns an object that can list and get UDSPackages.
+func (s *uDSPackageLister) UDSPackages(namespace string) UDSPackageNamespaceLister {
+	return uDSPackageNamespaceLister{listers.NewNamespaced[*udsv1alpha1.UDSPackage](s.ResourceIndexer, namespace)}
+}
+
+// UDSPackageNamespaceLister helps list and get UDSPackages.
+// All objects returned here must be treated as read-only.
+type UDSPackageNamespaceLister interface {
+	// List lists all UDSPackages in the indexer for a given namespace.
+	// Objects returned here must be treated as read-only.
+	List(selector labels.Selector) (ret []*udsv1alpha1.UDSPackage, err error)
+	// Get retrieves the UDSPackage from the indexer for a given namespace and name.
+	// Objects returned here must be treated as read-only.
+	Get(name string) (*udsv1alpha1.UDSPackage, error)
+	UDSPackageNamespaceListerExpansion
+}
+
+// uDSPackageNamespaceLister implements the UDSPackageNamespaceLister
+// interface.
+type uDSPackageNamespaceLister struct {
+	listers.ResourceIndexer[*udsv1alpha1.UDSPackage]
 }

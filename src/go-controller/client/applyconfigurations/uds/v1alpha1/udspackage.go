@@ -24,9 +24,10 @@ type UDSPackageApplyConfiguration struct {
 
 // UDSPackage constructs a declarative configuration of the UDSPackage type for use with
 // apply.
-func UDSPackage(name string) *UDSPackageApplyConfiguration {
+func UDSPackage(name, namespace string) *UDSPackageApplyConfiguration {
 	b := &UDSPackageApplyConfiguration{}
 	b.WithName(name)
+	b.WithNamespace(namespace)
 	b.WithKind("UDSPackage")
 	b.WithAPIVersion("uds/v1alpha1")
 	return b

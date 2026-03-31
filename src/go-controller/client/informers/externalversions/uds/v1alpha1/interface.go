@@ -28,5 +28,5 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 
 // UDSPackages returns a UDSPackageInformer.
 func (v *version) UDSPackages() UDSPackageInformer {
-	return &uDSPackageInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+	return &uDSPackageInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }

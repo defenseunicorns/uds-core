@@ -15,8 +15,8 @@ type FakeUdsV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeUdsV1alpha1) UDSPackages() v1alpha1.UDSPackageInterface {
-	return newFakeUDSPackages(c)
+func (c *FakeUdsV1alpha1) UDSPackages(namespace string) v1alpha1.UDSPackageInterface {
+	return newFakeUDSPackages(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate

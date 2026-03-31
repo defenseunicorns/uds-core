@@ -23,8 +23,8 @@ type UdsV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *UdsV1alpha1Client) UDSPackages() UDSPackageInterface {
-	return newUDSPackages(c)
+func (c *UdsV1alpha1Client) UDSPackages(namespace string) UDSPackageInterface {
+	return newUDSPackages(c, namespace)
 }
 
 // NewForConfig creates a new UdsV1alpha1Client for the given config.

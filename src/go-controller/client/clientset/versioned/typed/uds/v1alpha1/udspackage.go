@@ -20,7 +20,7 @@ import (
 // UDSPackagesGetter has a method to return a UDSPackageInterface.
 // A group's client should implement this interface.
 type UDSPackagesGetter interface {
-	UDSPackages() UDSPackageInterface
+	UDSPackages(namespace string) UDSPackageInterface
 }
 
 // UDSPackageInterface has methods to work with UDSPackage resources.
@@ -47,13 +47,13 @@ type uDSPackages struct {
 }
 
 // newUDSPackages returns a UDSPackages
-func newUDSPackages(c *UdsV1alpha1Client) *uDSPackages {
+func newUDSPackages(c *UdsV1alpha1Client, namespace string) *uDSPackages {
 	return &uDSPackages{
 		gentype.NewClientWithListAndApply[*udsv1alpha1.UDSPackage, *udsv1alpha1.UDSPackageList, *applyconfigurationsudsv1alpha1.UDSPackageApplyConfiguration](
 			"udspackages",
 			c.RESTClient(),
 			scheme.ParameterCodec,
-			"",
+			namespace,
 			func() *udsv1alpha1.UDSPackage { return &udsv1alpha1.UDSPackage{} },
 			func() *udsv1alpha1.UDSPackageList { return &udsv1alpha1.UDSPackageList{} },
 		),

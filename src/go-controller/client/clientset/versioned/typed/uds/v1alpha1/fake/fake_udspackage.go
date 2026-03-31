@@ -18,11 +18,11 @@ type fakeUDSPackages struct {
 	Fake *FakeUdsV1alpha1
 }
 
-func newFakeUDSPackages(fake *FakeUdsV1alpha1) typedudsv1alpha1.UDSPackageInterface {
+func newFakeUDSPackages(fake *FakeUdsV1alpha1, namespace string) typedudsv1alpha1.UDSPackageInterface {
 	return &fakeUDSPackages{
 		gentype.NewFakeClientWithListAndApply[*v1alpha1.UDSPackage, *v1alpha1.UDSPackageList, *udsv1alpha1.UDSPackageApplyConfiguration](
 			fake.Fake,
-			"",
+			namespace,
 			v1alpha1.SchemeGroupVersion.WithResource("udspackages"),
 			v1alpha1.SchemeGroupVersion.WithKind("UDSPackage"),
 			func() *v1alpha1.UDSPackage { return &v1alpha1.UDSPackage{} },

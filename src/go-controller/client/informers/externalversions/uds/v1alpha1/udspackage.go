@@ -29,44 +29,45 @@ type UDSPackageInformer interface {
 type uDSPackageInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
 	tweakListOptions internalinterfaces.TweakListOptionsFunc
+	namespace        string
 }
 
 // NewUDSPackageInformer constructs a new informer for UDSPackage type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewUDSPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
-	return NewFilteredUDSPackageInformer(client, resyncPeriod, indexers, nil)
+func NewUDSPackageInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
+	return NewFilteredUDSPackageInformer(client, namespace, resyncPeriod, indexers, nil)
 }
 
 // NewFilteredUDSPackageInformer constructs a new informer for UDSPackage type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
-func NewFilteredUDSPackageInformer(client versioned.Interface, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
+func NewFilteredUDSPackageInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
 	return cache.NewSharedIndexInformer(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UdsV1alpha1().UDSPackages().List(context.Background(), options)
+				return client.UdsV1alpha1().UDSPackages(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UdsV1alpha1().UDSPackages().Watch(context.Background(), options)
+				return client.UdsV1alpha1().UDSPackages(namespace).Watch(context.Background(), options)
 			},
 			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UdsV1alpha1().UDSPackages().List(ctx, options)
+				return client.UdsV1alpha1().UDSPackages(namespace).List(ctx, options)
 			},
 			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.UdsV1alpha1().UDSPackages().Watch(ctx, options)
+				return client.UdsV1alpha1().UDSPackages(namespace).Watch(ctx, options)
 			},
 		}, client),
 		&apiudsv1alpha1.UDSPackage{},
@@ -76,7 +77,7 @@ func NewFilteredUDSPackageInformer(client versioned.Interface, resyncPeriod time
 }
 
 func (f *uDSPackageInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewFilteredUDSPackageInformer(client, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
+	return NewFilteredUDSPackageInformer(client, f.namespace, resyncPeriod, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, f.tweakListOptions)
 }
 
 func (f *uDSPackageInformer) Informer() cache.SharedIndexInformer {

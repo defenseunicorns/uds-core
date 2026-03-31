@@ -8,3 +8,7 @@ package v1alpha1
 // UDSPackageListerExpansion allows custom methods to be added to
 // UDSPackageLister.
 type UDSPackageListerExpansion interface{}
+
+// UDSPackageNamespaceListerExpansion allows custom methods to be added to
+// UDSPackageNamespaceLister.
+type UDSPackageNamespaceListerExpansion interface{}

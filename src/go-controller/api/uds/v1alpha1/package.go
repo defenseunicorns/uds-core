@@ -16,7 +16,6 @@ import (
 var SchemeGroupVersion = schema.GroupVersion{Group: "uds.dev", Version: "v1alpha1"}
 
 // +genclient
-// +genclient:nonNamespaced
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // UDSPackage is the top-level Kubernetes resource type for a UDS Package.
