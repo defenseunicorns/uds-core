@@ -1,0 +1,38 @@
+---
+title: UDS Core 1.1
+description: UDS Core 1.1 release notes covering default endpoint probe and TLS expiry alerts, image volume policy support, uptime probe overrides, and Velero 1.18.
+sidebar:
+  order: 3.994
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.1 adds built-in alerting for endpoint downtime and TLS certificate expiry, extends security policy to support Kubernetes image volumes, and introduces Helm-configurable overrides for default uptime probes. This release also fixes a Keycloak templating bug that produced invalid Quarkus configuration when both debug mode and autoscaling were enabled.
+
+### Notable features
+
+- **Default endpoint probe and TLS expiry alerts:** adds `UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical` alert rules with Helm-configurable thresholds, durations, and severities ([#2530](https://github.com/defenseunicorns/uds-core/pull/2530))
+- **Image volume support in policy:** allows Kubernetes image volumes as a permitted volume type in UDS security policies, aligning with Zarf's [full image volume support](https://docs.zarf.dev/best-practices/data-injections-migration/) ([#2552](https://github.com/defenseunicorns/uds-core/pull/2552))
+- **Default uptime probe overrides:** adds Helm values to disable or override the default uptime probes for Keycloak and Grafana ([#2520](https://github.com/defenseunicorns/uds-core/pull/2520))
+- **UDS CLI 0.30.0 and Zarf init 0.74.0:** updates to UDS CLI 0.30.0 with server-side apply (SSA) support, including operator changes to clean up overmanaged fields and perform sparse applies for compatible Helm upgrades ([#2526](https://github.com/defenseunicorns/uds-core/pull/2526))
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| Keycloak | 26.5.5 | [26.5.6](https://github.com/keycloak/keycloak/releases/tag/26.5.6) |
+| Prometheus Operator | 0.90.0 | [0.90.1](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.90.1) |
+| Velero | 1.17.2 | [1.18.0](https://github.com/vmware-tanzu/velero/releases/tag/v1.18.0) |
+| kube-prometheus-stack Helm chart | 82.13.5 | [82.15.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-82.15.0) |
+| Prometheus Blackbox Exporter Helm chart | 11.9.0 | [11.9.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.9.1) |
+| prometheus-operator-crds Helm chart | 28.0.0 | [28.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-28.0.1) |
+| UDS CLI | 0.29.0 | [0.30.0](https://github.com/defenseunicorns/uds-cli/releases/tag/v0.30.0) |
+| Zarf init | 0.73.1 | [0.74.0](https://github.com/zarf-dev/zarf/releases/tag/v0.74.0) |
+| Velero Helm chart | 11.3.2 | [12.0.0](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.0.0) |
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.1.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#110-2026-03-31) - full changelog
+- [Full diff (1.0.0...1.1.0)](https://github.com/defenseunicorns/uds-core/compare/v1.0.0...v1.1.0) - all changes between versions
