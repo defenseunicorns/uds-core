@@ -11,8 +11,8 @@ import (
 
 // Interface provides access to all the informers in this group version.
 type Interface interface {
-	// ClusterConfigs returns a ClusterConfigInformer.
-	ClusterConfigs() ClusterConfigInformer
+	// ClusterConfig returns a ClusterConfigInformer.
+	ClusterConfig() ClusterConfigInformer
 	// UDSPackages returns a UDSPackageInformer.
 	UDSPackages() UDSPackageInformer
 }
@@ -28,8 +28,8 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 	return &version{factory: f, namespace: namespace, tweakListOptions: tweakListOptions}
 }
 
-// ClusterConfigs returns a ClusterConfigInformer.
-func (v *version) ClusterConfigs() ClusterConfigInformer {
+// ClusterConfig returns a ClusterConfigInformer.
+func (v *version) ClusterConfig() ClusterConfigInformer {
 	return &clusterConfigInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 

@@ -50,7 +50,7 @@ type uDSPackages struct {
 func newUDSPackages(c *ClusterV1alpha1Client, namespace string) *uDSPackages {
 	return &uDSPackages{
 		gentype.NewClientWithListAndApply[*udsv1alpha1.UDSPackage, *udsv1alpha1.UDSPackageList, *applyconfigurationsudsv1alpha1.UDSPackageApplyConfiguration](
-			"udspackages",
+			"packages",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,

@@ -52,6 +52,8 @@ uds run dev-setup
 npx pepr deploy --yes
 ```
 
+If the above fails with `Cannot find package...` run `npm install` in the repo root directory.
+
 ### Iterating on Go controller code
 
 ```bash

@@ -15,6 +15,9 @@ import (
 // with apply.
 //
 // UDSPackage is the top-level Kubernetes resource type for a UDS Package.
+// TODO(maciej): I had to use UDSPackage, since just Package causes the
+// client-gen to generate package variable, which then fails compilation
+// because it's a golang reserved word
 type UDSPackageApplyConfiguration struct {
 	v1.TypeMetaApplyConfiguration    `json:",inline"`
 	*v1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`

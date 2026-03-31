@@ -101,7 +101,7 @@ func (c *Controller) Run(ctx context.Context) error {
 		udsInformer.Cluster().V1alpha1().UDSPackages(), clientset,
 		dynamicClient, flags)
 	clusterConfigCtrl := clusterconfig.NewClusterConfigController(udsClient.ClusterV1alpha1(),
-		udsInformer.Cluster().V1alpha1().ClusterConfigs())
+		udsInformer.Cluster().V1alpha1().ClusterConfig())
 
 	// start informers
 	udsInformer.Start(ctx.Done())

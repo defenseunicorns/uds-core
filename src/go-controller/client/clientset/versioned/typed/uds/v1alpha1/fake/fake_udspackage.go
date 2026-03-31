@@ -23,7 +23,7 @@ func newFakeUDSPackages(fake *FakeClusterV1alpha1, namespace string) typedudsv1a
 		gentype.NewFakeClientWithListAndApply[*v1alpha1.UDSPackage, *v1alpha1.UDSPackageList, *udsv1alpha1.UDSPackageApplyConfiguration](
 			fake.Fake,
 			namespace,
-			v1alpha1.SchemeGroupVersion.WithResource("udspackages"),
+			v1alpha1.SchemeGroupVersion.WithResource("packages"),
 			v1alpha1.SchemeGroupVersion.WithKind("UDSPackage"),
 			func() *v1alpha1.UDSPackage { return &v1alpha1.UDSPackage{} },
 			func() *v1alpha1.UDSPackageList { return &v1alpha1.UDSPackageList{} },

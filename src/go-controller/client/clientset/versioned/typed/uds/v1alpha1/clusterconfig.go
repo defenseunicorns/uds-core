@@ -17,10 +17,10 @@ import (
 	gentype "k8s.io/client-go/gentype"
 )
 
-// ClusterConfigsGetter has a method to return a ClusterConfigInterface.
+// ClusterConfigGetter has a method to return a ClusterConfigInterface.
 // A group's client should implement this interface.
-type ClusterConfigsGetter interface {
-	ClusterConfigs(namespace string) ClusterConfigInterface
+type ClusterConfigGetter interface {
+	ClusterConfig(namespace string) ClusterConfigInterface
 }
 
 // ClusterConfigInterface has methods to work with ClusterConfig resources.
@@ -41,16 +41,16 @@ type ClusterConfigInterface interface {
 	ClusterConfigExpansion
 }
 
-// clusterConfigs implements ClusterConfigInterface
-type clusterConfigs struct {
+// clusterConfig implements ClusterConfigInterface
+type clusterConfig struct {
 	*gentype.ClientWithListAndApply[*udsv1alpha1.ClusterConfig, *udsv1alpha1.ClusterConfigList, *applyconfigurationsudsv1alpha1.ClusterConfigApplyConfiguration]
 }
 
-// newClusterConfigs returns a ClusterConfigs
-func newClusterConfigs(c *ClusterV1alpha1Client, namespace string) *clusterConfigs {
-	return &clusterConfigs{
+// newClusterConfig returns a ClusterConfig
+func newClusterConfig(c *ClusterV1alpha1Client, namespace string) *clusterConfig {
+	return &clusterConfig{
 		gentype.NewClientWithListAndApply[*udsv1alpha1.ClusterConfig, *udsv1alpha1.ClusterConfigList, *applyconfigurationsudsv1alpha1.ClusterConfigApplyConfiguration](
-			"clusterconfigs",
+			"clusterconfig",
 			c.RESTClient(),
 			scheme.ParameterCodec,
 			namespace,

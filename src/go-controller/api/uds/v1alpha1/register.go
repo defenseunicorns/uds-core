@@ -13,7 +13,7 @@ import (
 
 var (
 	// GroupName defines the API group name for the cluster resources.
-	GroupName = "cluster.uds.dev"
+	GroupName = "uds.dev"
 	// SchemeGroupVersion is group version used to register these objects.
 	SchemeGroupVersion = schema.GroupVersion{Group: GroupName, Version: "v1alpha1"}
 )
@@ -40,6 +40,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&UDSPackage{},
 		&UDSPackageList{},
+		&ClusterConfig{},
+		&ClusterConfigList{},
 	)
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 

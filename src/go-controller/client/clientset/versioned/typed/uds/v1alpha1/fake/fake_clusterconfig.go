@@ -12,18 +12,18 @@ import (
 	gentype "k8s.io/client-go/gentype"
 )
 
-// fakeClusterConfigs implements ClusterConfigInterface
-type fakeClusterConfigs struct {
+// fakeClusterConfig implements ClusterConfigInterface
+type fakeClusterConfig struct {
 	*gentype.FakeClientWithListAndApply[*v1alpha1.ClusterConfig, *v1alpha1.ClusterConfigList, *udsv1alpha1.ClusterConfigApplyConfiguration]
 	Fake *FakeClusterV1alpha1
 }
 
-func newFakeClusterConfigs(fake *FakeClusterV1alpha1, namespace string) typedudsv1alpha1.ClusterConfigInterface {
-	return &fakeClusterConfigs{
+func newFakeClusterConfig(fake *FakeClusterV1alpha1, namespace string) typedudsv1alpha1.ClusterConfigInterface {
+	return &fakeClusterConfig{
 		gentype.NewFakeClientWithListAndApply[*v1alpha1.ClusterConfig, *v1alpha1.ClusterConfigList, *udsv1alpha1.ClusterConfigApplyConfiguration](
 			fake.Fake,
 			namespace,
-			v1alpha1.SchemeGroupVersion.WithResource("clusterconfigs"),
+			v1alpha1.SchemeGroupVersion.WithResource("clusterconfig"),
 			v1alpha1.SchemeGroupVersion.WithKind("ClusterConfig"),
 			func() *v1alpha1.ClusterConfig { return &v1alpha1.ClusterConfig{} },
 			func() *v1alpha1.ClusterConfigList { return &v1alpha1.ClusterConfigList{} },

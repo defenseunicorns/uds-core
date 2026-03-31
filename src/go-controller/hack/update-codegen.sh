@@ -22,5 +22,6 @@ kube::codegen::gen_client \
     --applyconfig-name "applyconfigurations" \
     --output-dir "${SCRIPT_ROOT}/client" \
     --output-pkg "github.com/defenseunicorns/uds-core/src/go-controller/client" \
+    --plural-exceptions "ClusterConfig:ClusterConfig" \
     --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
     "${SCRIPT_ROOT}/api"

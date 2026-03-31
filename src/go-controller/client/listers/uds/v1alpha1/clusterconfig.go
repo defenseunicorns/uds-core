@@ -12,14 +12,14 @@ import (
 	cache "k8s.io/client-go/tools/cache"
 )
 
-// ClusterConfigLister helps list ClusterConfigs.
+// ClusterConfigLister helps list ClusterConfig.
 // All objects returned here must be treated as read-only.
 type ClusterConfigLister interface {
-	// List lists all ClusterConfigs in the indexer.
+	// List lists all ClusterConfig in the indexer.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*udsv1alpha1.ClusterConfig, err error)
-	// ClusterConfigs returns an object that can list and get ClusterConfigs.
-	ClusterConfigs(namespace string) ClusterConfigNamespaceLister
+	// ClusterConfig returns an object that can list and get ClusterConfig.
+	ClusterConfig(namespace string) ClusterConfigNamespaceLister
 	ClusterConfigListerExpansion
 }
 
@@ -33,15 +33,15 @@ func NewClusterConfigLister(indexer cache.Indexer) ClusterConfigLister {
 	return &clusterConfigLister{listers.New[*udsv1alpha1.ClusterConfig](indexer, udsv1alpha1.Resource("clusterconfig"))}
 }
 
-// ClusterConfigs returns an object that can list and get ClusterConfigs.
-func (s *clusterConfigLister) ClusterConfigs(namespace string) ClusterConfigNamespaceLister {
+// ClusterConfig returns an object that can list and get ClusterConfig.
+func (s *clusterConfigLister) ClusterConfig(namespace string) ClusterConfigNamespaceLister {
 	return clusterConfigNamespaceLister{listers.NewNamespaced[*udsv1alpha1.ClusterConfig](s.ResourceIndexer, namespace)}
 }
 
-// ClusterConfigNamespaceLister helps list and get ClusterConfigs.
+// ClusterConfigNamespaceLister helps list and get ClusterConfig.
 // All objects returned here must be treated as read-only.
 type ClusterConfigNamespaceLister interface {
-	// List lists all ClusterConfigs in the indexer for a given namespace.
+	// List lists all ClusterConfig in the indexer for a given namespace.
 	// Objects returned here must be treated as read-only.
 	List(selector labels.Selector) (ret []*udsv1alpha1.ClusterConfig, err error)
 	// Get retrieves the ClusterConfig from the indexer for a given namespace and name.

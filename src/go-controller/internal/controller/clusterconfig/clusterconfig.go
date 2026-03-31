@@ -151,7 +151,7 @@ func (c *ClusterConfigController) syncHandler(ctx context.Context, key string) e
 		return err
 	}
 
-	sharedClusterConfig, err := c.clusterConfigLister.ClusterConfigs(namespace).Get(name)
+	sharedClusterConfig, err := c.clusterConfigLister.ClusterConfig(namespace).Get(name)
 	if err != nil {
 		c.logger.Info("Error retrieving cluster config", "error", err)
 		return nil

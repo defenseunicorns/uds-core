@@ -20,7 +20,7 @@ import (
 )
 
 // ClusterConfigInformer provides access to a shared informer and lister for
-// ClusterConfigs.
+// ClusterConfig.
 type ClusterConfigInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() udsv1alpha1.ClusterConfigLister
@@ -49,25 +49,25 @@ func NewFilteredClusterConfigInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfigs(namespace).List(context.Background(), options)
+				return client.ClusterV1alpha1().ClusterConfig(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfigs(namespace).Watch(context.Background(), options)
+				return client.ClusterV1alpha1().ClusterConfig(namespace).Watch(context.Background(), options)
 			},
 			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfigs(namespace).List(ctx, options)
+				return client.ClusterV1alpha1().ClusterConfig(namespace).List(ctx, options)
 			},
 			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfigs(namespace).Watch(ctx, options)
+				return client.ClusterV1alpha1().ClusterConfig(namespace).Watch(ctx, options)
 			},
 		}, client),
 		&apiudsv1alpha1.ClusterConfig{},
