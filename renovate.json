@@ -104,7 +104,6 @@
         "**/package-lock.json"
       ],
       "groupName": "support-deps",
-      "matchDepTypes": ["devDependencies"],
       "commitMessageTopic": "support dependencies",
       "minimumReleaseAge": "5 days"
     },
