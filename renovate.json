@@ -100,8 +100,8 @@
       "matchFileNames": [
         "package.json",
         "package-lock.json",
-        "docs/.c4/package.json",
-        "docs/.c4/package-lock.json"
+        "**/package.json",
+        "**/package-lock.json"
       ],
       "groupName": "support-deps",
       "matchDepTypes": ["devDependencies"],
