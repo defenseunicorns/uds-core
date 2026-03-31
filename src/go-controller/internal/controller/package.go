@@ -252,6 +252,9 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsty
 	if c.flags.SSO {
 		c.logger.Info("Checking SSO configuration", "package", pkg.Name, "ssoCount", len(pkg.Spec.Sso))
 		if isIdentityDeployed(ctx, c.dynamicClient) {
+			// Ensure the operator secret exists before reconciling Keycloak clients.
+			// This handles the case where the Go controller started before the keycloak namespace existed.
+			sso.EnsureOperatorSecret(ctx, c.clientset)
 			c.logger.Info("Identity is deployed, reconciling Keycloak clients", "package", pkg.Name)
 			ssoClients, err := sso.ReconcileKeycloak(ctx, c.clientset, pkg)
 			if err != nil {

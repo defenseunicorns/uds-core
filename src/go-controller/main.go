@@ -73,6 +73,13 @@ func main() {
 		return string(data), nil
 	})
 
+	// Best-effort: ensure the Keycloak operator secret exists at startup.
+	// If the keycloak namespace doesn't exist yet, this will fail gracefully
+	// and the secret will be ensured during SSO reconciliation instead.
+	if flags.SSO {
+		sso.EnsureOperatorSecret(context.Background(), clientset)
+	}
+
 	// Dynamic informer for UDS custom resources
 	dynamicFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, 0)
 
@@ -107,3 +114,4 @@ func main() {
 	<-ctx.Done()
 	slog.Info("Shutting down")
 }
+

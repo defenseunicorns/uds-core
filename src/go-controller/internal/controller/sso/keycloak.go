@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -421,6 +422,60 @@ var operatorSecretGetter func(ctx context.Context) (string, error)
 // SetOperatorSecretGetter sets the function used to retrieve the Keycloak operator secret.
 func SetOperatorSecretGetter(fn func(ctx context.Context) (string, error)) {
 	operatorSecretGetter = fn
+}
+
+// EnsureOperatorSecret ensures the keycloak-client-secrets Secret exists with the
+// uds-operator key populated. This is called during SSO reconciliation to handle
+// the case where the Go controller started before the keycloak namespace existed.
+func EnsureOperatorSecret(ctx context.Context, clientset kubernetes.Interface) {
+	const (
+		secretNamespace = "keycloak"
+		secretName      = "keycloak-client-secrets"
+		secretKey       = "uds-operator"
+	)
+
+	secretClient := clientset.CoreV1().Secrets(secretNamespace)
+
+	secret, err := secretClient.Get(ctx, secretName, metav1.GetOptions{})
+	if errors.IsNotFound(err) {
+		slog.Info("Keycloak clients secret does not exist yet, creating it",
+			"namespace", secretNamespace, "name", secretName)
+		newSecret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      secretName,
+				Namespace: secretNamespace,
+			},
+			Data: map[string][]byte{
+				secretKey: []byte(uuid.New().String()),
+			},
+		}
+		if _, err := secretClient.Create(ctx, newSecret, metav1.CreateOptions{}); err != nil {
+			slog.Error("Failed to create Keycloak clients secret", "error", err)
+		} else {
+			slog.Info("Created Keycloak clients secret with operator key",
+				"namespace", secretNamespace, "name", secretName)
+		}
+		return
+	}
+	if err != nil {
+		slog.Error("Failed to get Keycloak clients secret", "error", err)
+		return
+	}
+
+	if _, ok := secret.Data[secretKey]; !ok {
+		slog.Info("Keycloak clients secret exists but missing operator key, adding it",
+			"namespace", secretNamespace, "name", secretName)
+		if secret.Data == nil {
+			secret.Data = make(map[string][]byte)
+		}
+		secret.Data[secretKey] = []byte(uuid.New().String())
+		if _, err := secretClient.Update(ctx, secret, metav1.UpdateOptions{}); err != nil {
+			slog.Error("Failed to update Keycloak clients secret", "error", err)
+		} else {
+			slog.Info("Updated Keycloak clients secret with operator key",
+				"namespace", secretNamespace, "name", secretName)
+		}
+	}
 }
 
 func getOperatorSecret(ctx context.Context) (string, error) {

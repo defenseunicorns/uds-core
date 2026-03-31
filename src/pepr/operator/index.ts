@@ -83,37 +83,52 @@ When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(req => reconcilePod(req.Raw));
 
-// Watch for changes to the UDSPackage CRD for processing
-When(UDSPackage)
-  .IsCreatedOrUpdated()
-  // Advanced CR validation
-  .Validate(validator)
-  // Enqueue the package for processing
-  .Reconcile(packageReconciler)
-  // Handle finalizer (deletions) for the package
-  .Finalize(packageFinalizer);
+// Check if any Package reconciliation feature flag is enabled in Pepr
+const anyPkgFlagEnabled = Object.values(UDSConfig.featureFlags).some(v => v);
+
+if (anyPkgFlagEnabled) {
+  // Watch for changes to the UDSPackage CRD for processing
+  When(UDSPackage)
+    .IsCreatedOrUpdated()
+    // Advanced CR validation
+    .Validate(validator)
+    // Enqueue the package for processing
+    .Reconcile(packageReconciler)
+    // Handle finalizer (deletions) for the package
+    .Finalize(packageFinalizer);
+} else {
+  log.info(
+    "All Package reconciliation feature flags are disabled in Pepr — Go controller handles Package CRs.",
+  );
+  // Still register the validator (validation is always done by Pepr)
+  When(UDSPackage).IsCreatedOrUpdated().Validate(validator);
+}
 
 // Watch for Exemptions and validate
 When(UDSExemption).IsCreatedOrUpdated().Validate(exemptValidator);
 
-// Watch for Functional Layers and update config
-When(UDSPackage)
-  .IsCreatedOrUpdated()
-  .InNamespace("keycloak")
-  .WithName("keycloak")
-  .Watch(() => {
-    // todo: wait for keycloak and authservice to be running?
-    log.info("Identity and Authorization layer deployed, operator configured to handle SSO.");
-    UDSConfig.isIdentityDeployed = true;
-  });
-When(UDSPackage)
-  .IsDeleted()
-  .InNamespace("keycloak")
-  .WithName("keycloak")
-  .Watch(() => {
-    log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
-    UDSConfig.isIdentityDeployed = false;
-  });
+// Watch for Functional Layers and update config (only when Pepr handles SSO)
+if (UDSConfig.featureFlags.sso) {
+  When(UDSPackage)
+    .IsCreatedOrUpdated()
+    .InNamespace("keycloak")
+    .WithName("keycloak")
+    .Watch(() => {
+      // todo: wait for keycloak and authservice to be running?
+      log.info("Identity and Authorization layer deployed, operator configured to handle SSO.");
+      UDSConfig.isIdentityDeployed = true;
+    });
+  When(UDSPackage)
+    .IsDeleted()
+    .InNamespace("keycloak")
+    .WithName("keycloak")
+    .Watch(() => {
+      log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
+      UDSConfig.isIdentityDeployed = false;
+    });
+} else {
+  log.info("SSO feature flag disabled in Pepr, Go controller handles SSO.");
+}
 
 // Watch for changes to the Nodes and update the Node CIDR list
 if (UDSConfig.kubeNodeCIDRs.length === 0) {
@@ -145,12 +160,14 @@ When(a.ConfigMap)
   .WithName("uds-ca-certs")
   .Reconcile(handleUDSCACertsConfigMapUpdate);
 
-// Watch the Kubernetes Clients Secret
-When(a.Secret)
-  .IsCreatedOrUpdated()
-  .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
-  .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
-  .Reconcile(s => updateKeycloakClientsSecret(s, false));
+// Watch the Kubernetes Clients Secret (only when Pepr handles SSO)
+if (UDSConfig.featureFlags.sso) {
+  When(a.Secret)
+    .IsCreatedOrUpdated()
+    .InNamespace(KEYCLOAK_CLIENTS_SECRET_NAMESPACE)
+    .WithName(KEYCLOAK_CLIENTS_SECRET_NAME)
+    .Reconcile(s => updateKeycloakClientsSecret(s, false));
+}
 
 // Watch for secrets with the uds.dev/pod-reload label for pod reload
 When(a.Secret)
