@@ -15,7 +15,7 @@ UDS Core 1.1 adds built-in alerting for endpoint downtime and TLS certificate ex
 - **Default endpoint probe and TLS expiry alerts:** adds `UDSProbeEndpointDown`, `UDSProbeTLSExpiryWarning`, and `UDSProbeTLSExpiryCritical` alert rules with Helm-configurable thresholds, durations, and severities ([#2530](https://github.com/defenseunicorns/uds-core/pull/2530))
 - **Image volume support in policy:** allows Kubernetes image volumes as a permitted volume type in UDS security policies, aligning with Zarf's [full image volume support](https://docs.zarf.dev/best-practices/data-injections-migration/) ([#2552](https://github.com/defenseunicorns/uds-core/pull/2552))
 - **Default uptime probe overrides:** adds Helm values to disable or override the default uptime probes for Keycloak and Grafana ([#2520](https://github.com/defenseunicorns/uds-core/pull/2520))
-- **UDS CLI 0.30.0 and Zarf init 0.74.0:** updates to UDS CLI 0.30.0 with server-side apply (SSA) support, including operator changes to clean up overmanaged fields and perform sparse applies for compatible Helm upgrades ([#2526](https://github.com/defenseunicorns/uds-core/pull/2526))
+- **UDS CLI 0.30.0 / Zarf 0.74.0 compatibility:** CI testing now validates against UDS CLI 0.30.0 and Zarf 0.74.0, confirming full compatibility with server-side apply (SSA) based deployments ([#2526](https://github.com/defenseunicorns/uds-core/pull/2526))
 
 ### Dependency updates
 
@@ -28,8 +28,6 @@ UDS Core 1.1 adds built-in alerting for endpoint downtime and TLS certificate ex
 | kube-prometheus-stack Helm chart | 82.13.5 | [82.15.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-82.15.0) |
 | Prometheus Blackbox Exporter Helm chart | 11.9.0 | [11.9.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.9.1) |
 | prometheus-operator-crds Helm chart | 28.0.0 | [28.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-28.0.1) |
-| UDS CLI | 0.29.0 | [0.30.0](https://github.com/defenseunicorns/uds-cli/releases/tag/v0.30.0) |
-| Zarf init | 0.73.1 | [0.74.0](https://github.com/zarf-dev/zarf/releases/tag/v0.74.0) |
 | Velero Helm chart | 11.3.2 | [12.0.0](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.0.0) |
 
 ## Related documentation
