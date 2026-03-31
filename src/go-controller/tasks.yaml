@@ -53,6 +53,9 @@ tasks:
           uds zarf tools kubectl apply -f src/go-controller/manifests/namespace.yaml
           uds zarf tools kubectl apply -f src/go-controller/manifests/rbac.yaml
           uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/mutatingwebhook.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/service.yaml
+          uds zarf tools kubectl apply -f src/go-controller/manifests/webhook.yaml
           uds zarf tools kubectl rollout restart deployment/uds-controller -n uds-system
           uds zarf tools kubectl rollout status deployment/uds-controller -n uds-system
 
