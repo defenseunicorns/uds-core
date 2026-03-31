@@ -25,6 +25,7 @@ spec:
         - source:
             notNamespaces:
               - istio-admin-gateway
+              - uds-system
               - "pepr-system"
     - to:
         - operation:
@@ -46,6 +47,7 @@ spec:
         - source:
             notNamespaces:
               - pepr-system
+              - uds-system
               - istio-admin-gateway
     - when:
         - key: request.headers[istio-mtls-client-certificate]

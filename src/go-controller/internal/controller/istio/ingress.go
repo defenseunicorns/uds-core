@@ -34,6 +34,7 @@ func ReconcileIngress(ctx context.Context, client dynamic.Interface, pkg *udstyp
 	generation := utils.PkgGeneration(pkg)
 	ownerRefs := utils.GetOwnerRef(pkg)
 
+	endpointSet := map[string]struct{}{}
 	var endpoints []string
 
 	slog.Debug("Istio ingress reconcile started",
@@ -43,7 +44,10 @@ func ReconcileIngress(ctx context.Context, client dynamic.Interface, pkg *udstyp
 
 	for _, expose := range pkg.Spec.GetExpose() {
 		fqdn := getFqdn(expose)
-		endpoints = append(endpoints, fqdn)
+		if _, seen := endpointSet[fqdn]; !seen {
+			endpointSet[fqdn] = struct{}{}
+			endpoints = append(endpoints, fqdn)
+		}
 
 		gateway := normalizeGateway(expose.Gateway)
 		service := utils.DerefString(expose.Service)
@@ -101,7 +105,9 @@ func buildVirtualService(expose udstypes.Expose, pkgName, namespace, generation 
 
 	sanitizedHost := utils.SanitizeResourceName(expose.Host)
 	nameParts := []string{pkgName, gateway, sanitizedHost, fmt.Sprintf("%d", port), service}
-	if matchHash != "" {
+	if expose.Description != nil && *expose.Description != "" {
+		nameParts = append(nameParts, utils.SanitizeResourceName(*expose.Description))
+	} else if matchHash != "" {
 		nameParts = append(nameParts, matchHash)
 	}
 	name := utils.SanitizeResourceName(strings.Join(nameParts, "-"))

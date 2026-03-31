@@ -91,28 +91,6 @@ components:
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
-  - name: uds-go-controller
-    required: true
-    description: "Go-based controller that handles Package CR reconciliation"
-    charts:
-      - name: uds-controller
-        namespace: uds-system
-        version: 0.1.0
-        localPath: ../go-controller/chart
-    images:
-      - ghcr.io/defenseunicorns/uds-core/controller:0.1.0
-    actions:
-      onDeploy:
-        after:
-          - description: Wait for Go controller to be ready
-            maxTotalSeconds: 120
-            wait:
-              cluster:
-                kind: Deployment
-                name: uds-controller
-                namespace: uds-system
-                condition: Available
-
   - name: pepr-uds-core
     required: true
     import:

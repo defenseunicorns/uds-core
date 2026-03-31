@@ -331,22 +331,6 @@ func createClientSecret(ctx context.Context, clientset kubernetes.Interface, sso
 	return err
 }
 
-func resolveTemplate(tmpl string, client Client) string {
-	// Simple template resolution for clientField(fieldName)
-	tmpl = strings.ReplaceAll(tmpl, "clientField(clientId)", client.ClientID)
-	tmpl = strings.ReplaceAll(tmpl, "clientField(secret)", client.Secret)
-	tmpl = strings.ReplaceAll(tmpl, "clientField(rootUrl)", client.RootUrl)
-	tmpl = strings.ReplaceAll(tmpl, "clientField(baseUrl)", client.BaseUrl)
-	tmpl = strings.ReplaceAll(tmpl, "clientField(adminUrl)", client.AdminUrl)
-
-	if strings.Contains(tmpl, "clientField(attributes).json()") {
-		attrJSON, _ := json.Marshal(client.Attributes)
-		tmpl = strings.ReplaceAll(tmpl, "clientField(attributes).json()", string(attrJSON))
-	}
-
-	return tmpl
-}
-
 func purgeOrphanSecrets(ctx context.Context, clientset kubernetes.Interface, namespace, pkgName, generation string) {
 	secrets, err := clientset.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("uds/package=%s", pkgName),
@@ -364,6 +348,23 @@ func purgeOrphanSecrets(ctx context.Context, clientset kubernetes.Interface, nam
 		}
 	}
 }
+
+func resolveTemplate(tmpl string, client Client) string {
+	// Simple template resolution for clientField(fieldName)
+	tmpl = strings.ReplaceAll(tmpl, "clientField(clientId)", client.ClientID)
+	tmpl = strings.ReplaceAll(tmpl, "clientField(secret)", client.Secret)
+	tmpl = strings.ReplaceAll(tmpl, "clientField(rootUrl)", client.RootUrl)
+	tmpl = strings.ReplaceAll(tmpl, "clientField(baseUrl)", client.BaseUrl)
+	tmpl = strings.ReplaceAll(tmpl, "clientField(adminUrl)", client.AdminUrl)
+
+	if strings.Contains(tmpl, "clientField(attributes).json()") {
+		attrJSON, _ := json.Marshal(client.Attributes)
+		tmpl = strings.ReplaceAll(tmpl, "clientField(attributes).json()", string(attrJSON))
+	}
+
+	return tmpl
+}
+
 
 // --- Keycloak API Operations ---
 

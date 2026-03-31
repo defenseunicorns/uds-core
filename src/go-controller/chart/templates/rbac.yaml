@@ -24,6 +24,7 @@ rules:
       - get
       - list
       - patch
+      - update
       - watch
 
   # Endpoints and events

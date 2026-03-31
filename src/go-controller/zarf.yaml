@@ -16,3 +16,13 @@ components:
         localPath: chart
     images:
       - ghcr.io/defenseunicorns/uds-core/controller:0.1.0
+    actions:
+      onDeploy:
+        after:
+          - description: "Ensure Istio Ambient is enabled for controller"
+            cmd: |
+              echo "Setting Ambient mode for uds-system..."
+              ./zarf tools kubectl label namespace uds-system "istio.io/dataplane-mode"="ambient" --overwrite
+
+              echo "Disabling istio-injection on uds-system..."
+              ./zarf tools kubectl label namespace uds-system istio-injection=disabled --overwrite
