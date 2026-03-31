@@ -1,5 +1,6 @@
 ---
 title: Policy Violations
+description: Diagnose and resolve UDS admission policy violations that are blocking Kubernetes resource creation.
 sidebar:
   order: 1.004
 ---
@@ -88,7 +89,7 @@ The error message format varies by policy; some include `Authorized: [...] Found
 | `Privilege escalation is disallowed. Authorized: [...]` | Remove `privileged: true` and set `allowPrivilegeEscalation: false` in `securityContext` |
 | `Sharing the host namespaces is disallowed` | Remove `hostNetwork`, `hostPID`, and `hostIPC` from the pod spec |
 | `NodePort services are not allowed` | Change service type to `ClusterIP` and use the [service mesh gateway](/how-to-guides/networking/expose-apps-on-gateways/) for external access |
-| `Volume <name> has a disallowed volume type` | Use only allowed volume types (`configMap`, `csi`, `downwardAPI`, `emptyDir`, `ephemeral`, `persistentVolumeClaim`, `projected`, `secret`) |
+| `Volume <name> has a disallowed volume type` | Use only allowed volume types (`configMap`, `csi`, `downwardAPI`, `emptyDir`, `ephemeral`, `image`, `persistentVolumeClaim`, `projected`, `secret`) |
 | `Host ports are not allowed` | Remove `hostPort` from container port definitions |
 | `Unauthorized container capabilities in securityContext.capabilities.add` | Remove capabilities beyond `NET_BIND_SERVICE` from `securityContext.capabilities.add` |
 | `Unauthorized container DROP capabilities` | Ensure `securityContext.capabilities.drop` includes `ALL` |

@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "additionalNetworkAllow": {
+      "type": "array",
+      "description": "Additional entries merged into the UDS Package spec.network.allow list. Ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow",
+      "items": {
+        "type": "object"
+      }
+    },
+    "rke2CorednsNetpol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the extra network policy needed for RKE2 CoreDNS deployments."
+        }
+      }
+    },
+    "udsCoreDefaultAlerts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable the UDS Core default probe alert rules shipped with this chart."
+        },
+        "probeEndpointDown": {
+          "$ref": "#/definitions/alertConfig"
+        },
+        "probeTLSExpiryWarning": {
+          "$ref": "#/definitions/tlsAlertConfig"
+        },
+        "probeTLSExpiryCritical": {
+          "$ref": "#/definitions/tlsAlertConfig"
+        }
+      }
+    }
+  },
+  "definitions": {
+    "alertConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "for": {
+          "type": "string",
+          "description": "The duration for which the condition must remain true before the alert fires."
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity label applied to the rendered alert."
+        }
+      }
+    },
+    "tlsAlertConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "for": {
+          "type": "string",
+          "description": "The duration for which the condition must remain true before the alert fires."
+        },
+        "days": {
+          "type": "integer",
+          "description": "The certificate expiry threshold, in days."
+        },
+        "severity": {
+          "type": "string",
+          "description": "Severity label applied to the rendered alert."
+        }
+      }
+    }
+  }
+}

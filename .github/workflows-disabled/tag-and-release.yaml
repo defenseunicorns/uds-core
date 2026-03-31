@@ -45,19 +45,6 @@ jobs:
     secrets: inherit
   # @lulaEnd d364a8e6-95ab-448c-bb97-9f456c85b54f
 
-  scan-release:
-    needs: publish-uds-core-release
-    if: ${{ github.ref == 'refs/heads/main' }}
-    permissions:
-      contents: read
-      packages: read
-      id-token: write
-      issues: write
-    uses: ./.github/workflows/cve-scan.yaml
-    with:
-      release: true
-    secrets: inherit
-
   checkpoint-uds-core-release:
     needs: publish-uds-core-release
     permissions:

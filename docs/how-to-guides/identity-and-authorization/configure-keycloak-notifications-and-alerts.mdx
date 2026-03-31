@@ -1,5 +1,6 @@
 ---
 title: Configure Keycloak notifications and alerts
+description: Enable Prometheus alerting rules for Keycloak realm and user account changes, routing notifications through Alertmanager.
 sidebar:
   order: 3.019
 ---
@@ -62,7 +63,7 @@ Because logging and dashboards are enabled by default, you can already view Keyc
    | `KeycloakSystemAdminModificationsDetected` | **critical:** Fires on system administrator membership changes within a 5-minute window |
 
    > [!NOTE]
-   > `KeycloakSystemAdminModificationsDetected` uses two detection branches. When `JSONLogEventListenerProvider` is active, it filters specifically on `/UDS Core/Admin` group membership changes. When the standard `org.keycloak.events` logger is active, it matches all `USER|GROUP_MEMBERSHIP` resource changes — that logger does not expose group paths, so narrower filtering is not possible.
+   > `KeycloakSystemAdminModificationsDetected` uses two detection branches. When `JSONLogEventListenerProvider` is active, it filters specifically on `/UDS Core/Admin` group membership changes. When the standard `org.keycloak.events` logger is active, it matches all `USER|GROUP_MEMBERSHIP` resource changes; that logger does not expose group paths, so narrower filtering is not possible.
 
    > [!NOTE]
    > All three alerts have a 1-minute pending period (`for: 1m`). An alert stays in `PENDING` state for up to 60 seconds after the condition first evaluates true before transitioning to `FIRING` and notifying Alertmanager.
