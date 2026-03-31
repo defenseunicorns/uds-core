@@ -23,6 +23,10 @@ spec:
         - name: controller
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: webhook
+              containerPort: 9443
+              protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           securityContext:

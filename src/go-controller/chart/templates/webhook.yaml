@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: uds-controller-clusterconfig
+  labels:
+    app: uds-controller
+webhooks:
+  - name: clusterconfig.uds.dev
+    admissionReviewVersions:
+      - v1
+    sideEffects: None
+    failurePolicy: Fail
+    matchPolicy: Exact
+    clientConfig:
+      service:
+        name: uds-controller
+        namespace: {{ .Release.Namespace }}
+        path: /validate-clusterconfig-delete
+        port: 443
+      caBundle: ""
+    rules:
+      - apiGroups:
+          - uds.dev
+        apiVersions:
+          - "*"
+        resources:
+          - clusterconfig
+        operations:
+          - DELETE
+        scope: "Cluster"

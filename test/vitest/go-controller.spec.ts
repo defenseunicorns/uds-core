@@ -8,6 +8,7 @@ import * as k8s from "@kubernetes/client-node";
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
 const appsApi = kc.makeApiClient(k8s.AppsV1Api);
+const customApi = kc.makeApiClient(k8s.CustomObjectsApi);
 
 describe("Go Controller", () => {
   test("uds-controller deployment should be available", async () => {
@@ -16,5 +17,19 @@ describe("Go Controller", () => {
       namespace: "uds-system",
     });
     expect(deployment.status?.availableReplicas).toBeGreaterThanOrEqual(1);
+  });
+
+  test("should deny deletion of ClusterConfig", async () => {
+    const err = await customApi
+      .deleteClusterCustomObject({
+        group: "uds.dev",
+        version: "v1alpha1",
+        plural: "clusterconfig",
+        name: "uds-cluster-config",
+      })
+      .catch((e: unknown) => e);
+
+    expect(err).toBeDefined();
+    expect(String(err)).toContain("Deletion of ClusterConfig is not allowed");
   });
 });

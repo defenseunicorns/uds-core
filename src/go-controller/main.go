@@ -21,6 +21,7 @@ import (
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/controller/sso"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/featureflags"
+	"github.com/defenseunicorns/uds-core/src/go-controller/webhook"
 )
 
 func main() {
@@ -95,6 +96,11 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
+
+	if err := webhook.StartWebhookServer(ctx, clientset); err != nil {
+		slog.Error("Failed to start webhook server", "error", err)
+		os.Exit(1)
+	}
 
 	slog.Info("Starting Go controller")
 	dynamicFactory.Start(ctx.Done())
