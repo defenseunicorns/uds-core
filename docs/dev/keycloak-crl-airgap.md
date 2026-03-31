@@ -131,30 +131,7 @@ Copy the Keycloak CRL Path from the generated crl paths text file into the uds-b
     ref: local
 ```
 
-### 1.3) Add Exemption for ImageVolume
-```yaml
-  - name: core-base
-    path: ../../build/
-    ref: x.x.x
-    overrides:
-      uds-exemptions:
-        uds-exemptions:
-          values:
-            - path: exemptions.custom
-              value:
-                - name: keycloak-imagevolume-exemption
-                  exemptions:
-                    - policies:
-                        - RestrictVolumeTypes
-                      matcher:
-                        namespace: keycloak
-                        name: "^keycloak-.*"
-                        kind: pod
-                      title: "Allow Keycloak ImageVolume for CRLs"
-                      description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed) in slim-dev."
-```
-
-### 1.4) Configure CA trust via bundle and bundle config
+### 1.3) Configure CA trust via bundle and bundle config
 
 **Add CA cert to bundle**
 
