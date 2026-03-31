@@ -49,25 +49,25 @@ func NewFilteredClusterConfigInformer(client versioned.Interface, namespace stri
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfig(namespace).List(context.Background(), options)
+				return client.UdsV1alpha1().ClusterConfig(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfig(namespace).Watch(context.Background(), options)
+				return client.UdsV1alpha1().ClusterConfig(namespace).Watch(context.Background(), options)
 			},
 			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfig(namespace).List(ctx, options)
+				return client.UdsV1alpha1().ClusterConfig(namespace).List(ctx, options)
 			},
 			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().ClusterConfig(namespace).Watch(ctx, options)
+				return client.UdsV1alpha1().ClusterConfig(namespace).Watch(ctx, options)
 			},
 		}, client),
 		&apiudsv1alpha1.ClusterConfig{},

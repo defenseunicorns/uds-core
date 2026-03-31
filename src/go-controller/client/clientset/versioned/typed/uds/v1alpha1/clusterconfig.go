@@ -47,7 +47,7 @@ type clusterConfig struct {
 }
 
 // newClusterConfig returns a ClusterConfig
-func newClusterConfig(c *ClusterV1alpha1Client, namespace string) *clusterConfig {
+func newClusterConfig(c *UdsV1alpha1Client, namespace string) *clusterConfig {
 	return &clusterConfig{
 		gentype.NewClientWithListAndApply[*udsv1alpha1.ClusterConfig, *udsv1alpha1.ClusterConfigList, *applyconfigurationsudsv1alpha1.ClusterConfigApplyConfiguration](
 			"clusterconfig",

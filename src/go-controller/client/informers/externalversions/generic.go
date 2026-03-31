@@ -39,11 +39,11 @@ func (f *genericInformer) Lister() cache.GenericLister {
 // TODO extend this to unknown resources with a client pool
 func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource) (GenericInformer, error) {
 	switch resource {
-	// Group=cluster.uds.dev, Version=v1alpha1
+	// Group=uds.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithResource("clusterconfig"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Cluster().V1alpha1().ClusterConfig().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Uds().V1alpha1().ClusterConfig().Informer()}, nil
 	case v1alpha1.SchemeGroupVersion.WithResource("packages"):
-		return &genericInformer{resource: resource.GroupResource(), informer: f.Cluster().V1alpha1().UDSPackages().Informer()}, nil
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Uds().V1alpha1().UDSPackages().Informer()}, nil
 
 	}
 

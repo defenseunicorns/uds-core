@@ -97,11 +97,11 @@ func (c *Controller) Run(ctx context.Context) error {
 	}
 
 	// create controllers
-	packageCtrl := udspackage.NewController(udsClient.ClusterV1alpha1(),
-		udsInformer.Cluster().V1alpha1().UDSPackages(), clientset,
+	packageCtrl := udspackage.NewController(udsClient.UdsV1alpha1(),
+		udsInformer.Uds().V1alpha1().UDSPackages(), clientset,
 		dynamicClient, flags)
-	clusterConfigCtrl := clusterconfig.NewClusterConfigController(udsClient.ClusterV1alpha1(),
-		udsInformer.Cluster().V1alpha1().ClusterConfig())
+	clusterConfigCtrl := clusterconfig.NewClusterConfigController(udsClient.UdsV1alpha1(),
+		udsInformer.Uds().V1alpha1().ClusterConfig())
 
 	// start informers
 	udsInformer.Start(ctx.Done())

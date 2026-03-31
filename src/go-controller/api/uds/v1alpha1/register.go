@@ -1,8 +1,6 @@
 // Copyright 2026 Defense Unicorns
 // SPDX-License-Identifier: LicenseRef-Defense-Unicorns-Commercial
 
-// +groupName=cluster.uds.dev
-
 package v1alpha1
 
 import (
@@ -37,12 +35,14 @@ var (
 
 // Adds the list of known types to api.Scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(SchemeGroupVersion,
-		&UDSPackage{},
-		&UDSPackageList{},
-		&ClusterConfig{},
-		&ClusterConfigList{},
-	)
+	// Use AddKnownTypeWithName for UDSPackage/UDSPackageList because the Go struct names
+	// have a "UDS" prefix (to avoid the reserved word "package"), but the CRD declares
+	// kind: Package / listKind: PackageList. The scheme must match the CRD kind names so
+	// that API server responses can be decoded correctly.
+	scheme.AddKnownTypeWithName(SchemeGroupVersion.WithKind("Package"), &UDSPackage{})
+	scheme.AddKnownTypeWithName(SchemeGroupVersion.WithKind("PackageList"), &UDSPackageList{})
+	scheme.AddKnownTypeWithName(SchemeGroupVersion.WithKind("ClusterConfig"), &ClusterConfig{})
+	scheme.AddKnownTypeWithName(SchemeGroupVersion.WithKind("ClusterConfigList"), &ClusterConfigList{})
 	metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 
 	return nil

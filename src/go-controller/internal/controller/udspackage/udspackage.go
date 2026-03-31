@@ -44,7 +44,7 @@ type PackageController struct {
 	kubeClient    kubernetes.Interface
 	dynamicClient dynamic.Interface
 
-	udsClient           udsv1alpha1client.ClusterV1alpha1Interface
+	udsClient           udsv1alpha1client.UdsV1alpha1Interface
 	packageLister       udsv1alpha1lister.UDSPackageLister
 	packageListerSynced cache.InformerSynced
 
@@ -53,7 +53,7 @@ type PackageController struct {
 }
 
 // NewController creates a new PackageController.
-func NewController(udsClient udsv1alpha1client.ClusterV1alpha1Interface,
+func NewController(udsClient udsv1alpha1client.UdsV1alpha1Interface,
 	packageInformer udsv1alpha1informer.UDSPackageInformer, kubeClient kubernetes.Interface,
 	dynamicClient dynamic.Interface, flags featureflags.Flags) *PackageController {
 	ctrl := &PackageController{
@@ -591,7 +591,7 @@ func readinessConditions(ready bool) []udsv1alpha1.Condition {
 	}
 }
 
-func isIdentityDeployed(ctx context.Context, pkgClient udsv1alpha1client.ClusterV1alpha1Interface) bool {
+func isIdentityDeployed(ctx context.Context, pkgClient udsv1alpha1client.UdsV1alpha1Interface) bool {
 	// Check if the keycloak Package CR exists in the keycloak namespace
 	_, err := pkgClient.UDSPackages("keycloak").Get(ctx, "keycloak", metav1.GetOptions{})
 	return err == nil

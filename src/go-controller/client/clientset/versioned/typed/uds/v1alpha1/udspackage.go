@@ -47,7 +47,7 @@ type uDSPackages struct {
 }
 
 // newUDSPackages returns a UDSPackages
-func newUDSPackages(c *ClusterV1alpha1Client, namespace string) *uDSPackages {
+func newUDSPackages(c *UdsV1alpha1Client, namespace string) *uDSPackages {
 	return &uDSPackages{
 		gentype.NewClientWithListAndApply[*udsv1alpha1.UDSPackage, *udsv1alpha1.UDSPackageList, *applyconfigurationsudsv1alpha1.UDSPackageApplyConfiguration](
 			"packages",

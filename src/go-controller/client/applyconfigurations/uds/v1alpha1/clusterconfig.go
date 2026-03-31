@@ -30,7 +30,7 @@ func ClusterConfig(name, namespace string) *ClusterConfigApplyConfiguration {
 	b.WithName(name)
 	b.WithNamespace(namespace)
 	b.WithKind("ClusterConfig")
-	b.WithAPIVersion("cluster.uds.dev/v1alpha1")
+	b.WithAPIVersion("uds.dev/v1alpha1")
 	return b
 }
 

@@ -29,19 +29,14 @@ type ClusterConfigController struct {
 
 	logger *slog.Logger
 
-	udsClient                 udsv1alpha1client.ClusterV1alpha1Interface
+	udsClient                 udsv1alpha1client.UdsV1alpha1Interface
 	clusterConfigLister       udsv1alpha1lister.ClusterConfigLister
 	clusterConfigListerSynced cache.InformerSynced
 }
 
 // NewClusterConfigController creates a new ClusterConfigController.
-func NewClusterConfigController(udsClient udsv1alpha1client.ClusterV1alpha1Interface,
+func NewClusterConfigController(udsClient udsv1alpha1client.UdsV1alpha1Interface,
 	clusterConfigInformer udsv1alpha1informer.ClusterConfigInformer) *ClusterConfigController {
-	// dynamicFactory.ForResource(clusterConfigGVR).Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-	// 	AddFunc:    clusterConfigCtrl.HandleAdd,
-	// 	UpdateFunc: clusterConfigCtrl.HandleUpdate,
-	// })
-
 	ctrl := &ClusterConfigController{
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),

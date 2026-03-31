@@ -49,25 +49,25 @@ func NewFilteredUDSPackageInformer(client versioned.Interface, namespace string,
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().UDSPackages(namespace).List(context.Background(), options)
+				return client.UdsV1alpha1().UDSPackages(namespace).List(context.Background(), options)
 			},
 			WatchFunc: func(options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().UDSPackages(namespace).Watch(context.Background(), options)
+				return client.UdsV1alpha1().UDSPackages(namespace).Watch(context.Background(), options)
 			},
 			ListWithContextFunc: func(ctx context.Context, options v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().UDSPackages(namespace).List(ctx, options)
+				return client.UdsV1alpha1().UDSPackages(namespace).List(ctx, options)
 			},
 			WatchFuncWithContext: func(ctx context.Context, options v1.ListOptions) (watch.Interface, error) {
 				if tweakListOptions != nil {
 					tweakListOptions(&options)
 				}
-				return client.ClusterV1alpha1().UDSPackages(namespace).Watch(ctx, options)
+				return client.UdsV1alpha1().UDSPackages(namespace).Watch(ctx, options)
 			},
 		}, client),
 		&apiudsv1alpha1.UDSPackage{},

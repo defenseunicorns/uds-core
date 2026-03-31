@@ -32,7 +32,7 @@ func UDSPackage(name, namespace string) *UDSPackageApplyConfiguration {
 	b.WithName(name)
 	b.WithNamespace(namespace)
 	b.WithKind("UDSPackage")
-	b.WithAPIVersion("cluster.uds.dev/v1alpha1")
+	b.WithAPIVersion("uds.dev/v1alpha1")
 	return b
 }
 

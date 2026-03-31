@@ -16,7 +16,8 @@ import (
 // UDSPackage is the top-level Kubernetes resource type for a UDS Package.
 // TODO(maciej): I had to use UDSPackage, since just Package causes the
 // client-gen to generate package variable, which then fails compilation
-// because it's a golang reserved word
+// because it's a golang reserved word. We are mapping this to the proper
+// CRD name above with the rest of gen-tags.
 type UDSPackage struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -24,7 +25,6 @@ type UDSPackage struct {
 	Status            PackageStatus `json:"status,omitempty"`
 }
 
-// +resourceName=packages
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // UDSPackageList holds a list of Package resources.

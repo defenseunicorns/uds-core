@@ -8,8 +8,8 @@ package fake
 import (
 	applyconfigurations "github.com/defenseunicorns/uds-core/src/go-controller/client/applyconfigurations"
 	clientset "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned"
-	clusterv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned/typed/uds/v1alpha1"
-	fakeclusterv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned/typed/uds/v1alpha1/fake"
+	udsv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned/typed/uds/v1alpha1"
+	fakeudsv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned/typed/uds/v1alpha1/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
@@ -123,7 +123,7 @@ var (
 	_ testing.FakeClient  = &Clientset{}
 )
 
-// ClusterV1alpha1 retrieves the ClusterV1alpha1Client
-func (c *Clientset) ClusterV1alpha1() clusterv1alpha1.ClusterV1alpha1Interface {
-	return &fakeclusterv1alpha1.FakeClusterV1alpha1{Fake: &c.Fake}
+// UdsV1alpha1 retrieves the UdsV1alpha1Client
+func (c *Clientset) UdsV1alpha1() udsv1alpha1.UdsV1alpha1Interface {
+	return &fakeudsv1alpha1.FakeUdsV1alpha1{Fake: &c.Fake}
 }

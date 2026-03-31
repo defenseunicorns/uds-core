@@ -15,10 +15,10 @@ import (
 // fakeClusterConfig implements ClusterConfigInterface
 type fakeClusterConfig struct {
 	*gentype.FakeClientWithListAndApply[*v1alpha1.ClusterConfig, *v1alpha1.ClusterConfigList, *udsv1alpha1.ClusterConfigApplyConfiguration]
-	Fake *FakeClusterV1alpha1
+	Fake *FakeUdsV1alpha1
 }
 
-func newFakeClusterConfig(fake *FakeClusterV1alpha1, namespace string) typedudsv1alpha1.ClusterConfigInterface {
+func newFakeClusterConfig(fake *FakeUdsV1alpha1, namespace string) typedudsv1alpha1.ClusterConfigInterface {
 	return &fakeClusterConfig{
 		gentype.NewFakeClientWithListAndApply[*v1alpha1.ClusterConfig, *v1alpha1.ClusterConfigList, *udsv1alpha1.ClusterConfigApplyConfiguration](
 			fake.Fake,
