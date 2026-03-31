@@ -2,8 +2,7 @@
   "extends": [
     "github>defenseunicorns/uds-common//config/renovate.json5",
     ":semanticCommits",
-    ":semanticCommitTypeAll(chore)",
-    "security:minimumReleaseAgeNpm"
+    ":semanticCommitTypeAll(chore)"
   ],
   "ignorePresets": [":ignoreModulesAndTests"],
   "branchConcurrentLimit": 0,
@@ -106,7 +105,8 @@
       ],
       "groupName": "support-deps",
       "matchDepTypes": ["devDependencies"],
-      "commitMessageTopic": "support dependencies"
+      "commitMessageTopic": "support dependencies",
+      "minimumReleaseAge": "5 days"
     },
     {
       "matchFileNames": [
