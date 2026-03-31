@@ -5,6 +5,14 @@
 
 package v1alpha1
 
+// ClusterConfigListerExpansion allows custom methods to be added to
+// ClusterConfigLister.
+type ClusterConfigListerExpansion interface{}
+
+// ClusterConfigNamespaceListerExpansion allows custom methods to be added to
+// ClusterConfigNamespaceLister.
+type ClusterConfigNamespaceListerExpansion interface{}
+
 // UDSPackageListerExpansion allows custom methods to be added to
 // UDSPackageLister.
 type UDSPackageListerExpansion interface{}

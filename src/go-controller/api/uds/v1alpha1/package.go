@@ -29,9 +29,6 @@ type UDSPackageList struct {
 	Items           []UDSPackage `json:"items"`
 }
 
-// PackageStatus is an alias for the generated StatusClass type.
-type PackageStatus = StatusClass
-
 type Spec struct {
 	// CA bundle configuration for the package
 	CABundle *CABundle `json:"caBundle,omitempty"`
@@ -470,7 +467,7 @@ type SecretConfig struct {
 	Template map[string]string `json:"template,omitempty"`
 }
 
-type StatusClass struct {
+type PackageStatus struct {
 	AuthorizationPolicyCount *int64              `json:"authorizationPolicyCount,omitempty"`
 	AuthserviceClients       []AuthserviceClient `json:"authserviceClients,omitempty"`
 	// Status conditions following Kubernetes-style conventions

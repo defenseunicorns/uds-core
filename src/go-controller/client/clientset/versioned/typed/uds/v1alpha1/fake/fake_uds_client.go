@@ -15,6 +15,10 @@ type FakeClusterV1alpha1 struct {
 	*testing.Fake
 }
 
+func (c *FakeClusterV1alpha1) ClusterConfigs(namespace string) v1alpha1.ClusterConfigInterface {
+	return newFakeClusterConfigs(c, namespace)
+}
+
 func (c *FakeClusterV1alpha1) UDSPackages(namespace string) v1alpha1.UDSPackageInterface {
 	return newFakeUDSPackages(c, namespace)
 }

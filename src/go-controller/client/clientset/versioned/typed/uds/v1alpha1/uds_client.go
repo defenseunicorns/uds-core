@@ -15,12 +15,17 @@ import (
 
 type ClusterV1alpha1Interface interface {
 	RESTClient() rest.Interface
+	ClusterConfigsGetter
 	UDSPackagesGetter
 }
 
 // ClusterV1alpha1Client is used to interact with features provided by the cluster.uds.dev group.
 type ClusterV1alpha1Client struct {
 	restClient rest.Interface
+}
+
+func (c *ClusterV1alpha1Client) ClusterConfigs(namespace string) ClusterConfigInterface {
+	return newClusterConfigs(c, namespace)
 }
 
 func (c *ClusterV1alpha1Client) UDSPackages(namespace string) UDSPackageInterface {

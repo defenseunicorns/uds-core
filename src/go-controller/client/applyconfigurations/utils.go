@@ -37,6 +37,22 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &udsv1alpha1.CABundleApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Checks"):
 		return &udsv1alpha1.ChecksApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfig"):
+		return &udsv1alpha1.ClusterConfigApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigAttributes"):
+		return &udsv1alpha1.ClusterConfigAttributesApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigCABundle"):
+		return &udsv1alpha1.ClusterConfigCABundleApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigExpose"):
+		return &udsv1alpha1.ClusterConfigExposeApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigNetworking"):
+		return &udsv1alpha1.ClusterConfigNetworkingApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigPolicy"):
+		return &udsv1alpha1.ClusterConfigPolicyApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigSpec"):
+		return &udsv1alpha1.ClusterConfigSpecApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("ClusterConfigStatus"):
+		return &udsv1alpha1.ClusterConfigStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Condition"):
 		return &udsv1alpha1.ConditionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ConfigMap"):
@@ -61,6 +77,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &udsv1alpha1.MonitorApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Network"):
 		return &udsv1alpha1.NetworkApplyConfiguration{}
+	case v1alpha1.SchemeGroupVersion.WithKind("PackageStatus"):
+		return &udsv1alpha1.PackageStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("ProtocolMapper"):
 		return &udsv1alpha1.ProtocolMapperApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Redirect"):
@@ -77,8 +95,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &udsv1alpha1.SpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("Sso"):
 		return &udsv1alpha1.SsoApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("StatusClass"):
-		return &udsv1alpha1.StatusClassApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("StringMatch"):
 		return &udsv1alpha1.StringMatchApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("UDSPackage"):

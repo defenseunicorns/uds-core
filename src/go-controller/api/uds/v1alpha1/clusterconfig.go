@@ -9,6 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // ClusterConfig is the cluster-scoped singleton resource for UDS cluster configuration.
 // Only one instance is allowed, named "uds-cluster-config".
 type ClusterConfig struct {
@@ -17,6 +20,8 @@ type ClusterConfig struct {
 	Spec              ClusterConfigSpec   `json:"spec"`
 	Status            ClusterConfigStatus `json:"status,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ClusterConfigList holds a list of ClusterConfig resources.
 type ClusterConfigList struct {

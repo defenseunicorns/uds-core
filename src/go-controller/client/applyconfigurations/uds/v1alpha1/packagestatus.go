@@ -9,11 +9,9 @@ import (
 	udsv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 )
 
-// StatusClassApplyConfiguration represents a declarative configuration of the StatusClass type for use
+// PackageStatusApplyConfiguration represents a declarative configuration of the PackageStatus type for use
 // with apply.
-//
-// PackageStatus is an alias for the generated StatusClass type.
-type StatusClassApplyConfiguration struct {
+type PackageStatusApplyConfiguration struct {
 	AuthorizationPolicyCount *int64                                `json:"authorizationPolicyCount,omitempty"`
 	AuthserviceClients       []AuthserviceClientApplyConfiguration `json:"authserviceClients,omitempty"`
 	// Status conditions following Kubernetes-style conventions
@@ -30,16 +28,16 @@ type StatusClassApplyConfiguration struct {
 	SsoClients         []string           `json:"ssoClients,omitempty"`
 }
 
-// StatusClassApplyConfiguration constructs a declarative configuration of the StatusClass type for use with
+// PackageStatusApplyConfiguration constructs a declarative configuration of the PackageStatus type for use with
 // apply.
-func StatusClass() *StatusClassApplyConfiguration {
-	return &StatusClassApplyConfiguration{}
+func PackageStatus() *PackageStatusApplyConfiguration {
+	return &PackageStatusApplyConfiguration{}
 }
 
 // WithAuthorizationPolicyCount sets the AuthorizationPolicyCount field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the AuthorizationPolicyCount field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithAuthorizationPolicyCount(value int64) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithAuthorizationPolicyCount(value int64) *PackageStatusApplyConfiguration {
 	b.AuthorizationPolicyCount = &value
 	return b
 }
@@ -47,7 +45,7 @@ func (b *StatusClassApplyConfiguration) WithAuthorizationPolicyCount(value int64
 // WithAuthserviceClients adds the given value to the AuthserviceClients field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the AuthserviceClients field.
-func (b *StatusClassApplyConfiguration) WithAuthserviceClients(values ...*AuthserviceClientApplyConfiguration) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithAuthserviceClients(values ...*AuthserviceClientApplyConfiguration) *PackageStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithAuthserviceClients")
@@ -60,7 +58,7 @@ func (b *StatusClassApplyConfiguration) WithAuthserviceClients(values ...*Authse
 // WithConditions adds the given value to the Conditions field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Conditions field.
-func (b *StatusClassApplyConfiguration) WithConditions(values ...*ConditionApplyConfiguration) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithConditions(values ...*ConditionApplyConfiguration) *PackageStatusApplyConfiguration {
 	for i := range values {
 		if values[i] == nil {
 			panic("nil value passed to WithConditions")
@@ -73,7 +71,7 @@ func (b *StatusClassApplyConfiguration) WithConditions(values ...*ConditionApply
 // WithEndpoints adds the given value to the Endpoints field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Endpoints field.
-func (b *StatusClassApplyConfiguration) WithEndpoints(values ...string) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithEndpoints(values ...string) *PackageStatusApplyConfiguration {
 	for i := range values {
 		b.Endpoints = append(b.Endpoints, values[i])
 	}
@@ -83,7 +81,7 @@ func (b *StatusClassApplyConfiguration) WithEndpoints(values ...string) *StatusC
 // WithMeshMode sets the MeshMode field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the MeshMode field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithMeshMode(value udsv1alpha1.Mode) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithMeshMode(value udsv1alpha1.Mode) *PackageStatusApplyConfiguration {
 	b.MeshMode = &value
 	return b
 }
@@ -91,7 +89,7 @@ func (b *StatusClassApplyConfiguration) WithMeshMode(value udsv1alpha1.Mode) *St
 // WithMonitors adds the given value to the Monitors field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Monitors field.
-func (b *StatusClassApplyConfiguration) WithMonitors(values ...string) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithMonitors(values ...string) *PackageStatusApplyConfiguration {
 	for i := range values {
 		b.Monitors = append(b.Monitors, values[i])
 	}
@@ -101,7 +99,7 @@ func (b *StatusClassApplyConfiguration) WithMonitors(values ...string) *StatusCl
 // WithNetworkPolicyCount sets the NetworkPolicyCount field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the NetworkPolicyCount field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithNetworkPolicyCount(value int64) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithNetworkPolicyCount(value int64) *PackageStatusApplyConfiguration {
 	b.NetworkPolicyCount = &value
 	return b
 }
@@ -109,7 +107,7 @@ func (b *StatusClassApplyConfiguration) WithNetworkPolicyCount(value int64) *Sta
 // WithObservedGeneration sets the ObservedGeneration field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the ObservedGeneration field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithObservedGeneration(value int64) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithObservedGeneration(value int64) *PackageStatusApplyConfiguration {
 	b.ObservedGeneration = &value
 	return b
 }
@@ -117,7 +115,7 @@ func (b *StatusClassApplyConfiguration) WithObservedGeneration(value int64) *Sta
 // WithPhase sets the Phase field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Phase field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithPhase(value udsv1alpha1.Phase) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithPhase(value udsv1alpha1.Phase) *PackageStatusApplyConfiguration {
 	b.Phase = &value
 	return b
 }
@@ -125,7 +123,7 @@ func (b *StatusClassApplyConfiguration) WithPhase(value udsv1alpha1.Phase) *Stat
 // WithProbes adds the given value to the Probes field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the Probes field.
-func (b *StatusClassApplyConfiguration) WithProbes(values ...string) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithProbes(values ...string) *PackageStatusApplyConfiguration {
 	for i := range values {
 		b.Probes = append(b.Probes, values[i])
 	}
@@ -135,7 +133,7 @@ func (b *StatusClassApplyConfiguration) WithProbes(values ...string) *StatusClas
 // WithRetryAttempt sets the RetryAttempt field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the RetryAttempt field is set to the value of the last call.
-func (b *StatusClassApplyConfiguration) WithRetryAttempt(value int64) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithRetryAttempt(value int64) *PackageStatusApplyConfiguration {
 	b.RetryAttempt = &value
 	return b
 }
@@ -143,7 +141,7 @@ func (b *StatusClassApplyConfiguration) WithRetryAttempt(value int64) *StatusCla
 // WithSsoClients adds the given value to the SsoClients field in the declarative configuration
 // and returns the receiver, so that objects can be build by chaining "With" function invocations.
 // If called multiple times, values provided by each call will be appended to the SsoClients field.
-func (b *StatusClassApplyConfiguration) WithSsoClients(values ...string) *StatusClassApplyConfiguration {
+func (b *PackageStatusApplyConfiguration) WithSsoClients(values ...string) *PackageStatusApplyConfiguration {
 	for i := range values {
 		b.SsoClients = append(b.SsoClients, values[i])
 	}
