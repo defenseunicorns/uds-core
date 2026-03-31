@@ -18,7 +18,7 @@ import (
 // apply configuration type exists for the given GroupVersionKind.
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
-	// Group=uds, Version=v1alpha1
+	// Group=cluster.uds.dev, Version=v1alpha1
 	case v1alpha1.SchemeGroupVersion.WithKind("AdvancedHTTP"):
 		return &udsv1alpha1.AdvancedHTTPApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("AdvancedHTTPMatch"):

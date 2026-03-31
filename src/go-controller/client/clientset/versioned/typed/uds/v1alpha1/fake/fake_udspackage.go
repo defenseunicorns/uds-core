@@ -15,10 +15,10 @@ import (
 // fakeUDSPackages implements UDSPackageInterface
 type fakeUDSPackages struct {
 	*gentype.FakeClientWithListAndApply[*v1alpha1.UDSPackage, *v1alpha1.UDSPackageList, *udsv1alpha1.UDSPackageApplyConfiguration]
-	Fake *FakeUdsV1alpha1
+	Fake *FakeClusterV1alpha1
 }
 
-func newFakeUDSPackages(fake *FakeUdsV1alpha1, namespace string) typedudsv1alpha1.UDSPackageInterface {
+func newFakeUDSPackages(fake *FakeClusterV1alpha1, namespace string) typedudsv1alpha1.UDSPackageInterface {
 	return &fakeUDSPackages{
 		gentype.NewFakeClientWithListAndApply[*v1alpha1.UDSPackage, *v1alpha1.UDSPackageList, *udsv1alpha1.UDSPackageApplyConfiguration](
 			fake.Fake,

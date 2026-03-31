@@ -6,16 +6,15 @@
 package v1alpha1
 
 import (
-	time "time"
-
 	udsv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // ConditionApplyConfiguration represents a declarative configuration of the Condition type for use
 // with apply.
 type ConditionApplyConfiguration struct {
 	// The last time the condition transitioned from one status to another
-	LastTransitionTime *time.Time `json:"lastTransitionTime,omitempty"`
+	LastTransitionTime *v1.Time `json:"lastTransitionTime,omitempty"`
 	// A human-readable message indicating details about the transition
 	Message *string `json:"message,omitempty"`
 	// Represents the .metadata.generation that the condition was set based upon
@@ -37,7 +36,7 @@ func Condition() *ConditionApplyConfiguration {
 // WithLastTransitionTime sets the LastTransitionTime field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the LastTransitionTime field is set to the value of the last call.
-func (b *ConditionApplyConfiguration) WithLastTransitionTime(value time.Time) *ConditionApplyConfiguration {
+func (b *ConditionApplyConfiguration) WithLastTransitionTime(value v1.Time) *ConditionApplyConfiguration {
 	b.LastTransitionTime = &value
 	return b
 }

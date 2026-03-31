@@ -242,9 +242,9 @@ type SharedInformerFactory interface {
 	// client.
 	InformerFor(obj runtime.Object, newFunc internalinterfaces.NewInformerFunc) cache.SharedIndexInformer
 
-	Uds() uds.Interface
+	Cluster() uds.Interface
 }
 
-func (f *sharedInformerFactory) Uds() uds.Interface {
+func (f *sharedInformerFactory) Cluster() uds.Interface {
 	return uds.New(f, f.namespace, f.tweakListOptions)
 }

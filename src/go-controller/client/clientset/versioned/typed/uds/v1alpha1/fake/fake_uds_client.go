@@ -11,17 +11,17 @@ import (
 	testing "k8s.io/client-go/testing"
 )
 
-type FakeUdsV1alpha1 struct {
+type FakeClusterV1alpha1 struct {
 	*testing.Fake
 }
 
-func (c *FakeUdsV1alpha1) UDSPackages(namespace string) v1alpha1.UDSPackageInterface {
+func (c *FakeClusterV1alpha1) UDSPackages(namespace string) v1alpha1.UDSPackageInterface {
 	return newFakeUDSPackages(c, namespace)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *FakeUdsV1alpha1) RESTClient() rest.Interface {
+func (c *FakeClusterV1alpha1) RESTClient() rest.Interface {
 	var ret *rest.RESTClient
 	return ret
 }

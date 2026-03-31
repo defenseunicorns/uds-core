@@ -6,14 +6,8 @@
 package v1alpha1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
-
-// SchemeGroupVersion is the group/version for the uds.dev API.
-var SchemeGroupVersion = schema.GroupVersion{Group: "uds.dev", Version: "v1alpha1"}
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -25,6 +19,8 @@ type UDSPackage struct {
 	Spec              Spec          `json:"spec,omitempty"`
 	Status            PackageStatus `json:"status,omitempty"`
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // UDSPackageList holds a list of Package resources.
 type UDSPackageList struct {
@@ -75,7 +71,7 @@ type Monitor struct {
 	FallbackScrapeProtocol *FallbackScrapeProtocol `json:"fallbackScrapeProtocol,omitempty"`
 	// The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
 	// default.
-	Kind *Kind `json:"kind,omitempty"`
+	Kind *MonitorKind `json:"kind,omitempty"`
 	// HTTP path from which to scrape for metrics, defaults to `/metrics`
 	Path *string `json:"path,omitempty"`
 	// Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
@@ -498,7 +494,7 @@ type AuthserviceClient struct {
 
 type Condition struct {
 	// The last time the condition transitioned from one status to another
-	LastTransitionTime time.Time `json:"lastTransitionTime"`
+	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
 	// A human-readable message indicating details about the transition
 	Message string `json:"message"`
 	// Represents the .metadata.generation that the condition was set based upon
@@ -525,11 +521,11 @@ const (
 
 // The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
 // default.
-type Kind string
+type MonitorKind string
 
 const (
-	PodMonitor     Kind = "PodMonitor"
-	ServiceMonitor Kind = "ServiceMonitor"
+	PodMonitor     MonitorKind = "PodMonitor"
+	ServiceMonitor MonitorKind = "ServiceMonitor"
 )
 
 // The direction of the traffic

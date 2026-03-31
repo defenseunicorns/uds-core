@@ -64,7 +64,7 @@ Rebuilds the image, imports it into k3d, and cycles the deployment.
 
 ```bash
 cd src/go-controller
-uds run  gen-clients
+uds run gen-clients
 ```
 
 Regenerates all client code that lives under `clients/`.

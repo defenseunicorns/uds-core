@@ -13,24 +13,24 @@ import (
 	rest "k8s.io/client-go/rest"
 )
 
-type UdsV1alpha1Interface interface {
+type ClusterV1alpha1Interface interface {
 	RESTClient() rest.Interface
 	UDSPackagesGetter
 }
 
-// UdsV1alpha1Client is used to interact with features provided by the uds group.
-type UdsV1alpha1Client struct {
+// ClusterV1alpha1Client is used to interact with features provided by the cluster.uds.dev group.
+type ClusterV1alpha1Client struct {
 	restClient rest.Interface
 }
 
-func (c *UdsV1alpha1Client) UDSPackages(namespace string) UDSPackageInterface {
+func (c *ClusterV1alpha1Client) UDSPackages(namespace string) UDSPackageInterface {
 	return newUDSPackages(c, namespace)
 }
 
-// NewForConfig creates a new UdsV1alpha1Client for the given config.
+// NewForConfig creates a new ClusterV1alpha1Client for the given config.
 // NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
 // where httpClient was generated with rest.HTTPClientFor(c).
-func NewForConfig(c *rest.Config) (*UdsV1alpha1Client, error) {
+func NewForConfig(c *rest.Config) (*ClusterV1alpha1Client, error) {
 	config := *c
 	setConfigDefaults(&config)
 	httpClient, err := rest.HTTPClientFor(&config)
@@ -40,21 +40,21 @@ func NewForConfig(c *rest.Config) (*UdsV1alpha1Client, error) {
 	return NewForConfigAndClient(&config, httpClient)
 }
 
-// NewForConfigAndClient creates a new UdsV1alpha1Client for the given config and http client.
+// NewForConfigAndClient creates a new ClusterV1alpha1Client for the given config and http client.
 // Note the http client provided takes precedence over the configured transport values.
-func NewForConfigAndClient(c *rest.Config, h *http.Client) (*UdsV1alpha1Client, error) {
+func NewForConfigAndClient(c *rest.Config, h *http.Client) (*ClusterV1alpha1Client, error) {
 	config := *c
 	setConfigDefaults(&config)
 	client, err := rest.RESTClientForConfigAndClient(&config, h)
 	if err != nil {
 		return nil, err
 	}
-	return &UdsV1alpha1Client{client}, nil
+	return &ClusterV1alpha1Client{client}, nil
 }
 
-// NewForConfigOrDie creates a new UdsV1alpha1Client for the given config and
+// NewForConfigOrDie creates a new ClusterV1alpha1Client for the given config and
 // panics if there is an error in the config.
-func NewForConfigOrDie(c *rest.Config) *UdsV1alpha1Client {
+func NewForConfigOrDie(c *rest.Config) *ClusterV1alpha1Client {
 	client, err := NewForConfig(c)
 	if err != nil {
 		panic(err)
@@ -62,9 +62,9 @@ func NewForConfigOrDie(c *rest.Config) *UdsV1alpha1Client {
 	return client
 }
 
-// New creates a new UdsV1alpha1Client for the given RESTClient.
-func New(c rest.Interface) *UdsV1alpha1Client {
-	return &UdsV1alpha1Client{c}
+// New creates a new ClusterV1alpha1Client for the given RESTClient.
+func New(c rest.Interface) *ClusterV1alpha1Client {
+	return &ClusterV1alpha1Client{c}
 }
 
 func setConfigDefaults(config *rest.Config) {
@@ -80,7 +80,7 @@ func setConfigDefaults(config *rest.Config) {
 
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
-func (c *UdsV1alpha1Client) RESTClient() rest.Interface {
+func (c *ClusterV1alpha1Client) RESTClient() rest.Interface {
 	if c == nil {
 		return nil
 	}

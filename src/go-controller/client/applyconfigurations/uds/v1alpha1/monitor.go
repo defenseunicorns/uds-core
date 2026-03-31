@@ -21,7 +21,7 @@ type MonitorApplyConfiguration struct {
 	FallbackScrapeProtocol *udsv1alpha1.FallbackScrapeProtocol `json:"fallbackScrapeProtocol,omitempty"`
 	// The type of monitor to create; PodMonitor or ServiceMonitor. ServiceMonitor is the
 	// default.
-	Kind *udsv1alpha1.Kind `json:"kind,omitempty"`
+	Kind *udsv1alpha1.MonitorKind `json:"kind,omitempty"`
 	// HTTP path from which to scrape for metrics, defaults to `/metrics`
 	Path *string `json:"path,omitempty"`
 	// Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
@@ -68,7 +68,7 @@ func (b *MonitorApplyConfiguration) WithFallbackScrapeProtocol(value udsv1alpha1
 // WithKind sets the Kind field in the declarative configuration to the given value
 // and returns the receiver, so that objects can be built by chaining "With" function invocations.
 // If called multiple times, the Kind field is set to the value of the last call.
-func (b *MonitorApplyConfiguration) WithKind(value udsv1alpha1.Kind) *MonitorApplyConfiguration {
+func (b *MonitorApplyConfiguration) WithKind(value udsv1alpha1.MonitorKind) *MonitorApplyConfiguration {
 	b.Kind = &value
 	return b
 }
