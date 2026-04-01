@@ -125,6 +125,13 @@ tasks:
       - cmd: tofu apply -auto-approve
         dir: .github/test-infra/${CLOUD}/${K8S_DISTRO}
 
+  - name: aks-konnectivity-restart
+    actions:
+      - description: Restart konnectivity-agent pods and wait for rollout to complete
+        cmd: |
+          ./uds zarf tools kubectl rollout restart deployment/konnectivity-agent -n kube-system
+          ./uds zarf tools kubectl rollout status deployment/konnectivity-agent -n kube-system --timeout=120s
+
   - name: eks-get-kubeconfig
     actions:
       - cmd: |

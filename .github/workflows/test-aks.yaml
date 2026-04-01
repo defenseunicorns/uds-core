@@ -7,6 +7,26 @@ on:
   schedule:
     - cron: "0 0 * * 0" # Every Sunday Midnight (UTC) / Saturday 5pm MT
   workflow_call: {}
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - ".github/workflows/test-aks.yaml"
+      - ".github/bundles/aks/**"
+      - ".github/test-infra/azure/**"
+      - "tasks/iac.yaml"
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: "Flavor to test (upstream, registry1, unicorn, or all)"
+        type: choice
+        options:
+          - all
+          - upstream
+          - registry1
+          - unicorn
+        default: all
 
 permissions:
   id-token: write
@@ -18,7 +38,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flavor: [upstream, registry1, unicorn]
+        flavor: ${{ (github.event_name == 'workflow_dispatch' && inputs.flavor != 'all') && fromJson(format('["{0}"]', inputs.flavor)) || fromJson('["upstream", "registry1", "unicorn"]') }}
     runs-on: ubuntu-latest
     name: test-aks
     permissions:
@@ -93,6 +113,9 @@ jobs:
 
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
+
+      - name: Restart konnectivity agents
+        run: uds run -f tasks/iac.yaml aks-konnectivity-restart --no-progress
 
       - name: Deploy Core Bundle
         env:
