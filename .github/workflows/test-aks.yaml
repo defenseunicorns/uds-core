@@ -94,9 +94,6 @@ jobs:
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
-      - name: Restart konnectivity agents
-        run: uds run -f tasks/iac.yaml aks-konnectivity-restart --no-progress
-
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
