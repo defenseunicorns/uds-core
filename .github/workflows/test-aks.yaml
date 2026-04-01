@@ -35,6 +35,9 @@ permissions:
 
 jobs:
   test-aks-install:
+    concurrency:
+      group: aks-${{ matrix.flavor }}-${{ github.ref }}
+      cancel-in-progress: true
     strategy:
       fail-fast: false
       matrix:

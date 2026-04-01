@@ -127,8 +127,11 @@ tasks:
 
   - name: aks-konnectivity-restart
     actions:
-      - description: Restart konnectivity-agent pods and wait for rollout to complete
+      - description: Patch konnectivity autoscaler to 1:1 node ratio then restart and wait for rollout
         cmd: |
+          ./uds zarf tools kubectl patch configmap konnectivity-agent-autoscaler -n kube-system \
+            --type=merge \
+            -p '{"data":{"linear":"{\"coresPerReplica\":0,\"nodesPerReplica\":1,\"min\":3,\"max\":3,\"preventSinglePointOfFailure\":false}"}}'
           ./uds zarf tools kubectl rollout restart deployment/konnectivity-agent -n kube-system
           ./uds zarf tools kubectl rollout status deployment/konnectivity-agent -n kube-system --timeout=120s
 
