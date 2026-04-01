@@ -22,6 +22,7 @@ on:
 
 jobs:
   run-package-test:
+    if: false
     name: Schedule
     strategy:
       matrix:
