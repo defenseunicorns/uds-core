@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	networkingv1client "k8s.io/client-go/kubernetes/typed/networking/v1"
+	"k8s.io/utils/ptr"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -61,7 +62,7 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 		slog.Debug("Generating custom allow policy",
 			"package", pkgName, "index", i,
 			"direction", allow.Direction,
-			"description", utils.DerefString(allow.Description),
+			"description", ptr.Deref(allow.Description, ""),
 			"port", allow.Port,
 			"remoteGenerated", allow.RemoteGenerated,
 			"remoteHost", allow.RemoteHost)
@@ -85,7 +86,7 @@ func Reconcile(ctx context.Context, netClient networkingv1client.NetworkingV1Int
 		}
 		slog.Debug("Generating expose ingress policy",
 			"package", pkgName, "host", expose.Host,
-			"gateway", utils.DerefString(expose.Gateway),
+			"gateway", ptr.Deref(expose.Gateway, ""),
 			"port", expose.Port)
 		pol := generateExposePolicy(namespace, expose, pkg, istioMode)
 		policies = append(policies, pol)
@@ -391,7 +392,7 @@ func generatePolicy(namespace string, allow udstypes.Allow, istioMode udstypes.M
 }
 
 func generateExposePolicy(namespace string, expose udstypes.Expose, pkg *udstypes.UDSPackage, istioMode udstypes.Mode) *networkingv1.NetworkPolicy {
-	gateway := utils.DerefString(expose.Gateway)
+	gateway := ptr.Deref(expose.Gateway, "")
 	if gateway == "" {
 		gateway = "tenant"
 	}

@@ -19,6 +19,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
+	"k8s.io/utils/ptr"
 
 	udsv1alpha1 "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	udsv1alpha1client "github.com/defenseunicorns/uds-core/src/go-controller/client/clientset/versioned/typed/uds/v1alpha1"
@@ -243,7 +244,7 @@ func (c *PackageController) reconcile(ctx context.Context, pkg *udsv1alpha1.UDSP
 	}
 
 	pkg.Status = udsv1alpha1.PackageStatus{
-		Phase:      utils.Ptr(udsv1alpha1.PhasePending),
+		Phase:      ptr.To(udsv1alpha1.PhasePending),
 		Conditions: readinessConditions(false),
 	}
 	pkg, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{})
@@ -460,7 +461,7 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 	netPolCount64 := int64(netPolCount)
 
 	pkg.Status = udsv1alpha1.PackageStatus{
-		Phase:                    utils.Ptr(udsv1alpha1.PhaseReady),
+		Phase:                    ptr.To(udsv1alpha1.PhaseReady),
 		Conditions:               readinessConditions(true),
 		ObservedGeneration:       &pkg.Generation,
 		MeshMode:                 &istioMode,
@@ -471,7 +472,7 @@ func (c *PackageController) reconcilePackageFlow(ctx context.Context, pkg *udsv1
 		Probes:                   probeNames,
 		NetworkPolicyCount:       &netPolCount64,
 		AuthorizationPolicyCount: &authPolCountWithAuthservice,
-		RetryAttempt:             utils.Ptr(int64(0)),
+		RetryAttempt:             ptr.To(int64(0)),
 	}
 	_, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{})
 	return err
@@ -532,7 +533,7 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 		)
 
 		pkg.Status = udsv1alpha1.PackageStatus{
-			Phase:        utils.Ptr(udsv1alpha1.PhaseRetrying),
+			Phase:        ptr.To(udsv1alpha1.PhaseRetrying),
 			Conditions:   readinessConditions(false),
 			RetryAttempt: &nextRetry,
 		}
@@ -548,7 +549,7 @@ func (c *PackageController) handleFailure(ctx context.Context, pkg *udsv1alpha1.
 	)
 	zero := int64(0)
 	pkg.Status = udsv1alpha1.PackageStatus{
-		Phase:              utils.Ptr(udsv1alpha1.PhaseFailed),
+		Phase:              ptr.To(udsv1alpha1.PhaseFailed),
 		Conditions:         readinessConditions(false),
 		ObservedGeneration: &pkg.Generation,
 		RetryAttempt:       &zero,
@@ -573,7 +574,7 @@ func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha
 	c.logger.Info("Finalizing package", "namespace", pkg.Namespace, "name", pkg.Name)
 
 	pkg.Status = udsv1alpha1.PackageStatus{
-		Phase: utils.Ptr(udsv1alpha1.PhaseRemoving),
+		Phase: ptr.To(udsv1alpha1.PhaseRemoving),
 	}
 	if _, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{}); err != nil {
 		return err
@@ -583,7 +584,7 @@ func (c *PackageController) handleFinalizer(ctx context.Context, pkg *udsv1alpha
 	if c.flags.IstioInjection {
 		if err := istio.CleanupNamespace(ctx, c.kubeClient.CoreV1(), pkg); err != nil {
 			c.logger.Error("Failed to cleanup Istio injection", "error", err)
-			pkg.Status = udsv1alpha1.PackageStatus{Phase: utils.Ptr(udsv1alpha1.PhaseRemovalFailed)}
+			pkg.Status = udsv1alpha1.PackageStatus{Phase: ptr.To(udsv1alpha1.PhaseRemovalFailed)}
 			_, err := c.udsClient.UDSPackages(pkg.Namespace).UpdateStatus(ctx, pkg, metav1.UpdateOptions{})
 			return err
 		}

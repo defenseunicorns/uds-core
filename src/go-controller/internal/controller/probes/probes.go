@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/utils/ptr"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -48,7 +49,7 @@ func Reconcile(ctx context.Context, client dynamic.Interface, pkg *udstypes.UDSP
 			continue
 		}
 
-		gateway := utils.DerefString(expose.Gateway)
+		gateway := ptr.Deref(expose.Gateway, "")
 		if gateway == "" {
 			gateway = "tenant"
 		}

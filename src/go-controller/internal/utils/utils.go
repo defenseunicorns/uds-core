@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	nonAlphaNum    = regexp.MustCompile(`[^a-z0-9]+`)
-	leadingNonAlpha = regexp.MustCompile(`^[^a-z]+`)
+	nonAlphaNum      = regexp.MustCompile(`[^a-z0-9]+`)
+	leadingNonAlpha  = regexp.MustCompile(`^[^a-z]+`)
 	trailingNonAlpha = regexp.MustCompile(`[^a-z]+$`)
 )
 
@@ -60,33 +60,4 @@ func StandardLabels(pkgName, generation string) map[string]string {
 		"uds/package":    pkgName,
 		"uds/generation": generation,
 	}
-}
-
-// Ptr returns a pointer to the given value.
-func Ptr[T any](v T) *T {
-	return &v
-}
-
-// DerefString safely dereferences a *string, returning "" if nil.
-func DerefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-// DerefFloat safely dereferences a *float64, returning 0 if nil.
-func DerefFloat(f *float64) float64 {
-	if f == nil {
-		return 0
-	}
-	return *f
-}
-
-// DerefInt64 safely dereferences a *int64, returning 0 if nil.
-func DerefInt64(i *int64) int64 {
-	if i == nil {
-		return 0
-	}
-	return *i
 }

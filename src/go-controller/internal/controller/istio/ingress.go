@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/utils/ptr"
 
 	udstypes "github.com/defenseunicorns/uds-core/src/go-controller/api/uds/v1alpha1"
 	"github.com/defenseunicorns/uds-core/src/go-controller/internal/config"
@@ -50,7 +51,7 @@ func ReconcileIngress(ctx context.Context, client dynamic.Interface, pkg *udstyp
 		}
 
 		gateway := normalizeGateway(expose.Gateway)
-		service := utils.DerefString(expose.Service)
+		service := ptr.Deref(expose.Service, "")
 		slog.Debug("Processing expose entry",
 			"package", pkgName, "host", expose.Host, "fqdn", fqdn,
 			"gateway", gateway, "service", service,
@@ -89,7 +90,7 @@ func ReconcileIngress(ctx context.Context, client dynamic.Interface, pkg *udstyp
 func buildVirtualService(expose udstypes.Expose, pkgName, namespace, generation string, ownerRefs []metav1.OwnerReference, fqdn string) *unstructured.Unstructured {
 	gateway := normalizeGateway(expose.Gateway)
 	port := getPort(expose)
-	service := utils.DerefString(expose.Service)
+	service := ptr.Deref(expose.Service, "")
 	if service == "" {
 		service = expose.Host
 	}
