@@ -60,3 +60,7 @@ Pepr validates all CRDs on admission: UDSPackage, UDSExemption, and ClusterConfi
 ### No typed clients for Istio or Prometheus
 
 All Istio resources (VirtualService, ServiceEntry, AuthorizationPolicy, Sidecar, etc.) and Prometheus resources (PodMonitor, ServiceMonitor, Probe) are managed via `dynamic.Interface` using `unstructured.Unstructured`. Upstream typed clients or controller-gen-produced clients are not used. This is future work.
+
+### No unit tests
+
+Prior Pepr code included comprehensive unit testing across all policies and operator behavior. The go code has not yet been unit tested (due to dash days time limitations). Adding unit tests would likely help identify any edge cases that have not been properly handled already.
