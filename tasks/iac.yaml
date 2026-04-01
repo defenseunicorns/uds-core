@@ -135,6 +135,7 @@ tasks:
           ./uds zarf tools kubectl rollout restart deployment/konnectivity-agent -n kube-system
           ./uds zarf tools kubectl rollout status deployment/konnectivity-agent -n kube-system --timeout=120s
 
+
   - name: eks-get-kubeconfig
     actions:
       - cmd: |
