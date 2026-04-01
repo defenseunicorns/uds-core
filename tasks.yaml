@@ -54,6 +54,7 @@ tasks:
           ./uds zarf tools kubectl apply -f src/go-controller/manifests/deployment.yaml
           ./uds zarf tools kubectl apply -f src/go-controller/manifests/webhook.yaml
           ./uds zarf tools kubectl apply -f src/go-controller/manifests/mutatingwebhook.yaml
+          ./uds zarf tools kubectl apply -f src/go-controller/manifests/mutating-webhook.yaml
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"

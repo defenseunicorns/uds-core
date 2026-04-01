@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -12,6 +12,13 @@ import { isExempt, markExemption } from "./exemptions";
 
 const { containers } = sdk;
 
+/** Returns true unless the env var is explicitly set to "false". */
+function boolEnv(name: string): boolean {
+  return process.env[name] !== "false";
+}
+
+const istioPoliciesEnabled = boolEnv("UDS_POLICY_ISTIO_POLICIES_ENABLED");
+
 /**
  * This policy prevents the usage of Istio annotations to override sidecar behavior/configuration.
  *
@@ -19,24 +26,26 @@ const { containers } = sdk;
  * security vulnerabilities or misconfigurations. This policy ensures that annotations that can
  * potentially override secure sidecar behavior are not used on pods.
  */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioSidecarOverrides))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioSidecarOverrides)) {
+if (istioPoliciesEnabled) {
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(markExemption(Policy.RestrictIstioSidecarOverrides))
+    .Validate(request => {
+      if (isExempt(request, Policy.RestrictIstioSidecarOverrides)) {
+        return request.Approve();
+      }
+
+      const violations = checkIstioSidecarOverrides(request.Raw);
+
+      if (violations.length > 0) {
+        return request.Deny(
+          `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
+        );
+      }
+
       return request.Approve();
-    }
-
-    const violations = checkIstioSidecarOverrides(request.Raw);
-
-    if (violations.length > 0) {
-      return request.Deny(
-        `The following istio annotations can modify secure sidecar configuration and are not allowed: ${violations.join(", ")}`,
-      );
-    }
-
-    return request.Approve();
-  });
+    });
+}
 
 export function checkIstioSidecarOverrides(pod: V1Pod) {
   // ref: https://istio.io/latest/docs/reference/config/annotations/
@@ -64,27 +73,29 @@ export function checkIstioSidecarOverrides(pod: V1Pod) {
  * lead to security bypasses or unintended network paths. This policy ensures that annotations or labels that
  * can potentially bypass secure networking controls are not used on pods.
  */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioTrafficOverrides))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioTrafficOverrides)) {
+if (istioPoliciesEnabled) {
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(markExemption(Policy.RestrictIstioTrafficOverrides))
+    .Validate(request => {
+      if (isExempt(request, Policy.RestrictIstioTrafficOverrides)) {
+        return request.Approve();
+      }
+
+      const podContainers = containers(request);
+
+      // Combine all violations and sort
+      const violations = checkIstioTrafficInterceptionOverrides(podContainers, request.Raw);
+
+      if (violations.length > 0) {
+        return request.Deny(
+          `The following istio annotations or labels can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
+        );
+      }
+
       return request.Approve();
-    }
-
-    const podContainers = containers(request);
-
-    // Combine all violations and sort
-    const violations = checkIstioTrafficInterceptionOverrides(podContainers, request.Raw);
-
-    if (violations.length > 0) {
-      return request.Deny(
-        `The following istio annotations or labels can modify secure traffic interception are not allowed: ${violations.join(", ")}`,
-      );
-    }
-
-    return request.Approve();
-  });
+    });
+}
 
 export function checkIstioTrafficInterceptionOverrides(podContainers: V1Container[], pod: V1Pod) {
   const namespace = pod.metadata?.namespace || "default";
@@ -161,24 +172,26 @@ export function checkIstioTrafficInterceptionOverrides(podContainers: V1Containe
  * Istio allows some annotations to be used to override default secure ambient mesh behavior, such as traffic interception
  * This policy blocks all such annotations to prevent security vulnerabilities or misconfigurations.
  */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioAmbientOverrides))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioAmbientOverrides)) {
+if (istioPoliciesEnabled) {
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(markExemption(Policy.RestrictIstioAmbientOverrides))
+    .Validate(request => {
+      if (isExempt(request, Policy.RestrictIstioAmbientOverrides)) {
+        return request.Approve();
+      }
+
+      const violations = checkIstioAmbientOverrides(request.Raw);
+
+      if (violations.length > 0) {
+        return request.Deny(
+          `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
+        );
+      }
+
       return request.Approve();
-    }
-
-    const violations = checkIstioAmbientOverrides(request.Raw);
-
-    if (violations.length > 0) {
-      return request.Deny(
-        `The following istio ambient annotations that can modify secure mesh behavior are not allowed: ${violations.join(", ")}`,
-      );
-    }
-
-    return request.Approve();
-  });
+    });
+}
 
 export function checkIstioAmbientOverrides(pod: V1Pod) {
   const annotations = pod.metadata?.annotations || {};
@@ -196,32 +209,34 @@ export function checkIstioAmbientOverrides(pod: V1Pod) {
  * It allows specific Istio components (waypoints, ztunnel, and sidecars) to use these IDs.
  * This prevents unauthorized pods from running with elevated privileges that could be used to bypass security controls.
  */
-When(a.Pod)
-  .IsCreatedOrUpdated()
-  .Mutate(markExemption(Policy.RestrictIstioUser))
-  .Validate(request => {
-    if (isExempt(request, Policy.RestrictIstioUser)) {
+if (istioPoliciesEnabled) {
+  When(a.Pod)
+    .IsCreatedOrUpdated()
+    .Mutate(markExemption(Policy.RestrictIstioUser))
+    .Validate(request => {
+      if (isExempt(request, Policy.RestrictIstioUser)) {
+        return request.Approve();
+      }
+
+      // Check pod-level security context for UID/GID 1337
+      if (isPodUsingIstioUserID(request.Raw)) {
+        return request.Deny(
+          "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
+        );
+      }
+
+      const podContainers = containers(request);
+
+      const violatingContainer = findContainerUsingIstioUserID(podContainers);
+      if (violatingContainer) {
+        return request.Deny(
+          `Container '${violatingContainer}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
+        );
+      }
+
       return request.Approve();
-    }
-
-    // Check pod-level security context for UID/GID 1337
-    if (isPodUsingIstioUserID(request.Raw)) {
-      return request.Deny(
-        "Pods cannot use UID/GID 1337 (Istio proxy) unless they are trusted Istio components",
-      );
-    }
-
-    const podContainers = containers(request);
-
-    const violatingContainer = findContainerUsingIstioUserID(podContainers);
-    if (violatingContainer) {
-      return request.Deny(
-        `Container '${violatingContainer}' cannot use UID/GID 1337 (Istio proxy) as it is not a trusted Istio component`,
-      );
-    }
-
-    return request.Approve();
-  });
+    });
+}
 
 export function isPodUsingIstioUserID(pod: V1Pod) {
   const podSecurityCtx = pod.spec?.securityContext || ({} as V1PodSecurityContext);

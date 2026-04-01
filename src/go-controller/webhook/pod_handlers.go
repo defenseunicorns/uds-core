@@ -15,10 +15,30 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const policyRequireNonRootUser = "RequireNonRootUser"
+const (
+	policyRequireNonRootUser            = "RequireNonRootUser"
+	policyRestrictIstioUser             = "RestrictIstioUser"
+	policyRestrictIstioSidecarOverrides = "RestrictIstioSidecarOverrides"
+	policyRestrictIstioTrafficOverrides = "RestrictIstioTrafficOverrides"
+	policyRestrictIstioAmbientOverrides = "RestrictIstioAmbientOverrides"
+)
 
-// ValidateNonRootUser returns an HTTP handler that denies pods running as root.
-func ValidateNonRootUser(exemptions *ExemptionStore) http.HandlerFunc {
+// podValidator pairs a policy name with its validation function.
+type podValidator struct {
+	policy   string
+	validate func(*corev1.Pod) (bool, string)
+}
+
+// ValidatePod returns an HTTP handler that runs all pod validation policies.
+func ValidatePod(exemptions *ExemptionStore) http.HandlerFunc {
+	validators := []podValidator{
+		{policyRequireNonRootUser, validateNonRootUser},
+		{policyRestrictIstioUser, validateIstioUser},
+		{policyRestrictIstioSidecarOverrides, validateIstioSidecarOverrides},
+		{policyRestrictIstioTrafficOverrides, validateIstioTrafficOverrides},
+		{policyRestrictIstioAmbientOverrides, validateIstioAmbientOverrides},
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		review, req, err := decodeAdmissionReview(r)
 		if err != nil {
@@ -42,17 +62,19 @@ func ValidateNonRootUser(exemptions *ExemptionStore) http.HandlerFunc {
 			pod.Name = req.Name
 		}
 
-		response := &admissionv1.AdmissionResponse{UID: req.UID}
+		response := &admissionv1.AdmissionResponse{UID: req.UID, Allowed: true}
 
-		if exemptions.IsExempt(pod, policyRequireNonRootUser) {
-			slog.Info("Pod exempt from RequireNonRootUser", "name", pod.Name, "namespace", pod.Namespace)
-			response.Allowed = true
-		} else {
-			allowed, message := validateNonRootUser(pod)
-			response.Allowed = allowed
+		for _, v := range validators {
+			if exemptions.IsExempt(pod, v.policy) {
+				slog.Info("Pod exempt from policy", "policy", v.policy, "name", pod.Name, "namespace", pod.Namespace)
+				continue
+			}
+			allowed, message := v.validate(pod)
 			if !allowed {
-				slog.Info("Denying pod: RequireNonRootUser", "name", pod.Name, "namespace", pod.Namespace, "reason", message)
+				slog.Info("Denying pod", "policy", v.policy, "name", pod.Name, "namespace", pod.Namespace, "reason", message)
+				response.Allowed = false
 				response.Result = &metav1.Status{Message: message}
+				break
 			}
 		}
 
