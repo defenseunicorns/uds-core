@@ -97,6 +97,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     load_balancer_sku   = "standard"
     network_data_plane  = "azure"
     network_plugin      = "azure"
+    network_plugin_mode = "overlay"
     network_policy      = "azure"
     outbound_type       = var.outbound_type
   }

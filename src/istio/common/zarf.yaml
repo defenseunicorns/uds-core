@@ -96,11 +96,11 @@ components:
             setVariables:
               - name: CNI_BIN_DIR
         after:
-          - description: "Ensure Istio Ambient is disabled for Pepr"
+          - description: "Ensure Istio Ambient is enabled for Pepr"
             cmd: |
               # This is a duplicate of the action in src/pepr/zarf.yaml, just to ensure the labels are still correct after Istio installs
-              echo "Setting dataplane-mode to none for pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="none" --overwrite
+              echo "Setting Ambient mode for pepr-system..."
+              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
 
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
