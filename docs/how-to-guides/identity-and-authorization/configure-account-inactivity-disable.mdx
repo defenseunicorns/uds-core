@@ -1,0 +1,117 @@
+---
+title: Configure automatic account inactivity disable
+description: Configure Keycloak to automatically disable non-admin user accounts after a set number of days of inactivity, satisfying APSC-DV-000320 (ASD STIG).
+sidebar:
+  order: 3.020
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll configure UDS Core's Keycloak to automatically disable non-admin user accounts that have not authenticated for a configurable number of days. This satisfies **APSC-DV-000320** (ASD STIG), which requires applications to automatically disable accounts after 35 days of inactivity. Accounts belonging to realm administrators are excluded and are never automatically disabled.
+
+## Prerequisites
+
+- UDS Core deployed (Keycloak 26.5+)
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+
+## Before you begin
+
+UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) preview feature to track `user-authenticated` events per user and trigger a `disable-user` action after the configured inactivity window. The workflow is seeded into the uds realm on initial deployment and is disabled by default (`accountInactivityDays: 0`).
+
+**What counts as activity:** The workflow tracks `user-authenticated` events. Any successful login through UDS Core SSO, including logins via federated identity providers (Azure AD, Google SAML), resets the inactivity timer.
+
+**Newly provisioned accounts:** Accounts that have never logged in do not generate a `user-authenticated` event and therefore never start a workflow instance. Accounts provisioned before this feature was enabled are also not retroactively evaluated. Run a one-time audit of last-login timestamps after enabling via **Keycloak Admin Console** → **Users**.
+
+**Admin accounts excluded:** Users with the `realm-management/realm-admin` role are never disabled by this workflow.
+
+> [!NOTE]
+> Keycloak Workflows is a [preview feature](https://www.keycloak.org/docs/latest/server_admin/index.html#preview-features). UDS Core enables it by default via `--features=preview,fips`. Preview features may change in future Keycloak releases.
+
+## Steps
+
+<Steps>
+
+1. **Set `accountInactivityDays` in your bundle override**
+
+   Add the override to your `uds-bundle.yaml`. Set the value to the number of days of inactivity after which a non-admin account is disabled. The STIG-required value is `35`.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: realmConfig.accountInactivityDays
+                 value: 35
+   ```
+
+   Setting the value to `0` (the default) leaves the workflow disabled.
+
+   > [!NOTE]
+   > This setting is applied during initial realm import. If Keycloak is already running, the workflow state is not updated by changing this value alone. Use the Keycloak Admin Console to enable or update the workflow on a running instance.
+
+2. **Create and deploy your bundle**
+
+   ```bash
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+</Steps>
+
+## Verification
+
+After deployment, confirm the workflow is active:
+
+1. Log in to the Keycloak Admin Console at `keycloak.<admin_domain>`
+2. Switch to the **uds** realm
+3. In the left sidebar under **Configure**, click **Workflows**
+4. Confirm the `disable-inactive-users` workflow is listed and **Enabled** is toggled on
+5. Log in as a non-admin test user through UDS Core SSO
+6. Return to the Admin Console, open the workflow, and click **View active instances** — a new instance should appear for the test user with a `disable-user` step scheduled at 35 days
+
+> [!NOTE]
+> No instance appears for accounts that have not logged in since the workflow was created. Those accounts must be audited manually.
+
+## Troubleshooting
+
+### Problem: Workflow shows as disabled after deployment
+
+**Symptom:** The `disable-inactive-users` workflow exists in the Admin Console but **Enabled** is off.
+
+**Solution:** The `accountInactivityDays` value was `0` at deploy time or was not applied. Verify the bundle override was included and the value is greater than `0`. To enable on a running instance without redeploying, toggle **Enabled** directly in the Admin Console and set the **after** duration on the `disable-user` step.
+
+### Problem: No workflow instances appear after user login
+
+**Symptom:** A non-admin user logged in successfully but no active workflow instance appears.
+
+**Solution:** Confirm the login fired a `user-authenticated` event. In the Admin Console, navigate to **Manage** → **Events**, filter by event type `LOGIN`, and confirm the user's event is present. Federated logins via an IdP also fire this event as long as the user authenticated through Keycloak.
+
+### Problem: A disabled account needs to be re-enabled
+
+**Symptom:** A user cannot log in and their account shows as disabled.
+
+**Solution:** An administrator must manually re-enable the account in the Keycloak Admin Console:
+
+1. Navigate to **Users** and find the affected user
+2. Click the user to open their profile
+3. On the **Details** tab, toggle **Enabled** to **On**
+4. Save
+
+### Problem: Admin account was disabled
+
+**Symptom:** A user with admin privileges was automatically disabled.
+
+**Solution:** The workflow excludes users with the `realm-management/realm-admin` client role. If an admin account was disabled, it was not assigned that role. Re-enable the account manually and assign the role via **Users** → select user → **Role Mapping** → assign `realm-admin` under `realm-management`.
+
+## Related documentation
+
+- [Keycloak: Managing workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) - upstream reference for the Workflows preview feature
+- [Configure Keycloak account lockout](/how-to-guides/identity-and-authorization/configure-account-lockout/) - configure brute-force lockout thresholds alongside inactivity disable
+- [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/) - set password policy, email verification, and other account-level security settings
