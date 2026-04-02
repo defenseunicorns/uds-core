@@ -227,6 +227,8 @@ watcher:
     - name: "LOG_LEVEL"
       value: "info"
 admission:
+  podLabels:
+    istio.io/dataplane-mode: none
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
   env:
