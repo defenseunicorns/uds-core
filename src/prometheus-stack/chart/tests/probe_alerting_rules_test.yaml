@@ -1,0 +1,147 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: UDS Prometheus probe alerting rules
+templates:
+  - probe-alerting-rules.yaml
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1
+
+tests:
+  - it: should render probe alerting PrometheusRule by default
+    template: probe-alerting-rules.yaml
+    asserts:
+      - isKind:
+          of: PrometheusRule
+      - equal:
+          path: metadata.name
+          value: uds-prometheus-stack-probe-alerts
+      - equal:
+          path: spec.groups[0].name
+          value: uds-monitoring-probe-alerts
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")]
+
+  - it: should not render probe alerts when top-level toggle is disabled
+    set:
+      udsCoreDefaultAlerts:
+        enabled: false
+    template: probe-alerting-rules.yaml
+    asserts:
+      - notExists: {}
+
+  - it: should not render probe alerts when all individual alerts are disabled
+    set:
+      udsCoreDefaultAlerts:
+        enabled: true
+        probeEndpointDown:
+          enabled: false
+        probeTLSExpiryWarning:
+          enabled: false
+        probeTLSExpiryCritical:
+          enabled: false
+    template: probe-alerting-rules.yaml
+    asserts:
+      - notExists: {}
+
+  - it: should not render endpoint down alert when probeEndpointDown is disabled
+    set:
+      udsCoreDefaultAlerts:
+        probeEndpointDown:
+          enabled: false
+    template: probe-alerting-rules.yaml
+    asserts:
+      - notExists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")]
+
+  - it: should not render tls warning alert when probeTLSExpiryWarning is disabled
+    set:
+      udsCoreDefaultAlerts:
+        probeTLSExpiryWarning:
+          enabled: false
+    template: probe-alerting-rules.yaml
+    asserts:
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")]
+      - notExists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")]
+
+  - it: should not render tls critical alert when probeTLSExpiryCritical is disabled
+    set:
+      udsCoreDefaultAlerts:
+        probeTLSExpiryCritical:
+          enabled: false
+    template: probe-alerting-rules.yaml
+    asserts:
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")]
+      - exists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")]
+      - notExists:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")]
+
+  - it: should render override values for probeEndpointDown
+    set:
+      udsCoreDefaultAlerts:
+        probeEndpointDown:
+          for: 7m
+          severity: critical
+    template: probe-alerting-rules.yaml
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")].for
+          value: 7m
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeEndpointDown")].labels.severity
+          value: critical
+
+  - it: should render override values for probeTLSExpiryWarning
+    set:
+      udsCoreDefaultAlerts:
+        probeTLSExpiryWarning:
+          for: 3m
+          days: 21
+          severity: info
+    template: probe-alerting-rules.yaml
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")].for
+          value: 3m
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")].labels.severity
+          value: info
+      - matchRegex:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryWarning")].expr
+          pattern: "< 21"
+
+  - it: should render override values for probeTLSExpiryCritical
+    set:
+      udsCoreDefaultAlerts:
+        probeTLSExpiryCritical:
+          for: 2m
+          days: 7
+          severity: high
+    template: probe-alerting-rules.yaml
+    asserts:
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")].for
+          value: 2m
+      - equal:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")].labels.severity
+          value: high
+      - matchRegex:
+          path: spec.groups[0].rules[?(@.alert == "UDSProbeTLSExpiryCritical")].expr
+          pattern: "< 7"

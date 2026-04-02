@@ -6,7 +6,7 @@ metadata:
   name: uds-core-eks-nightly
   description: A UDS bundle for deploying EKS and UDS Core
   # x-release-please-start-version
-  version: "1.0.0"
+  version: "1.1.0"
   # x-release-please-end
 
 packages:
@@ -17,7 +17,7 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 1.0.0
+    ref: 1.1.0
     # x-release-please-end
     optionalComponents:
       - metrics-server # note: metrics-server is not available as an EKS addon in govcloud
@@ -37,6 +37,15 @@ packages:
               value: true
             - path: schedules.udsbackup.template.snapshotVolumes
               value: true
+            - path: configuration.backupStorageLocation
+              value:
+                - name: default
+                  provider: aws
+                  bucket: "###ZARF_VAR_VELERO_BUCKET###"
+                  config:
+                    region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+                    s3ForcePathStyle: true
+                    s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
             - path: configuration.volumeSnapshotLocation
               value:
                 - name: default

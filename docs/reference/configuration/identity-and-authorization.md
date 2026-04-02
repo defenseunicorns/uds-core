@@ -1,7 +1,8 @@
 ---
 title: Identity & Authorization
+description: Complete reference for UDS Core identity and authorization configuration, covering Keycloak Helm values, realmInitEnv variables, theme and plugin settings, and SSO defaults.
 sidebar:
-  order: 4.000
+  order: 3.001
 ---
 
 UDS Core provides identity and access management through Keycloak, configured by the `uds-identity-config` component. This page documents the UDS-specific configuration surfaces exposed to bundle operators: the Helm chart paths, environment variables, and defaults that control realm behavior, authentication flows, themes, plugins, and account security.

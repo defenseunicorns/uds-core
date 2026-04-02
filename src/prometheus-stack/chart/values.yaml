@@ -1,9 +1,9 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Support for custom `network.allow` entries on the Package CR
 additionalNetworkAllow: []
-# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+# ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
 #       app.kubernetes.io/name: alertmanager
@@ -12,3 +12,21 @@ additionalNetworkAllow: []
 #     port: 443
 rke2CorednsNetpol:
   enabled: false
+
+# UDS Core opinionated default alerts shipped with this chart.
+udsCoreDefaultAlerts:
+  enabled: true
+  probeEndpointDown:
+    enabled: true
+    for: 5m
+    severity: warning
+  probeTLSExpiryWarning:
+    enabled: true
+    for: 10m
+    days: 30
+    severity: warning
+  probeTLSExpiryCritical:
+    enabled: true
+    for: 10m
+    days: 14
+    severity: critical

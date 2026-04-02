@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 domain: "###ZARF_VAR_DOMAIN###"
@@ -37,7 +37,7 @@ sso:
 
 # Support for custom `network.allow` entries on the Package CR, useful for extra datasources
 additionalNetworkAllow: []
-# ref: https://uds.defenseunicorns.com/reference/configuration/custom-resources/packages-v1alpha1-cr/#allow
+# ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow
 #   - direction: Egress
 #     selector:
 #       app.kubernetes.io/name: grafana
@@ -46,3 +46,7 @@ additionalNetworkAllow: []
 #       app: thanos
 #     description: "Thanos Query"
 #     port: 9090
+
+# Enable default uptime monitoring probes for Grafana endpoints
+uptime:
+  enabled: true

@@ -4,4 +4,4 @@ to the Istio mesh. `authservice` is compatible with any standard OIDC Provider a
 including [Authentication Policy](https://istio.io/docs/tasks/security/authn-policy/) and [RBAC](https://istio.io/docs/tasks/security/rbac-groups/).
 Together, they allow developers to protect their APIs and web apps without any application code required.
 
-See the [Authservice Protection documentation](https://uds.defenseunicorns.com/reference/configuration/single-sign-on/auth-service/) for guidance on using the [UDS Package](https://uds.defenseunicorns.com/reference/configuration/uds-operator/package/) custom resource to generate Authservice chains.
+See the [Authservice Protection documentation](https://docs.defenseunicorns.com/core/how-to-guides/identity--authorization/protect-apps-with-authservice/) for guidance on using the [UDS Package](https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/) custom resource to generate Authservice chains.

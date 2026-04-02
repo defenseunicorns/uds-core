@@ -100,12 +100,12 @@
       "matchFileNames": [
         "package.json",
         "package-lock.json",
-        "docs/.c4/package.json",
-        "docs/.c4/package-lock.json"
+        "**/package.json",
+        "**/package-lock.json"
       ],
       "groupName": "support-deps",
-      "matchDepTypes": ["devDependencies"],
-      "commitMessageTopic": "support dependencies"
+      "commitMessageTopic": "support dependencies",
+      "minimumReleaseAge": "5 days"
     },
     {
       "matchFileNames": [
@@ -119,7 +119,8 @@
         "defenseunicorns/pepr"
       ],
       "groupName": "pepr",
-      "commitMessageTopic": "pepr"
+      "commitMessageTopic": "pepr",
+      "minimumReleaseAge": null
     },
     {
       "matchPackageNames": [
@@ -129,6 +130,11 @@
       ],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
+    },
+    {
+      "matchDepNames": ["bottlerocket-os/bottlerocket"],
+      "allowedVersions": "<= 1.53.0",
+      "description": "Pin Bottlerocket until istio-cni FIPS compatibility is resolved (https://github.com/defenseunicorns/uds-core/issues/2490)"
     },
     {
       "matchPackageNames": [
