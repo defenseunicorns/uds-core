@@ -10,7 +10,21 @@ import { Steps } from '@astrojs/starlight/components';
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-### Identity Config updates
+UDS Core 1.2 introduces automatic account inactivity disable via Keycloak Workflows, satisfying APSC-DV-000320 (ASD STIG). Non-admin user accounts are automatically disabled after a configurable number of days without a successful login. Existing deployments upgrading to this version need a one-time manual workflow import if a full realm re-import is not possible.
+
+### Notable features
+
+- **Account inactivity disable:** automatically disables non-admin user accounts after a configurable number of days of inactivity, satisfying APSC-DV-000320 (ASD STIG). Controlled via `realmConfig.accountInactivityDays` in your bundle override. See [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) for details.
+
+### Dependency updates
+
+| Package | Previous | Updated |
+|---------|----------|---------|
+| UDS Identity Config | 0.25.0 | [0.26.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.26.0) |
+
+## Upgrade considerations
+
+### Identity Config updates (0.26)
 
 This release upgrades UDS Identity Config and introduces the `disable-inactive-users` workflow, which automatically disables non-admin accounts after a configurable number of days of inactivity. This satisfies APSC-DV-000320 (ASD STIG).
 
@@ -63,7 +77,7 @@ The workflow is seeded into the `uds` realm on fresh deployments. Existing realm
 
 2. **Enable the workflow**
 
-   Navigate to **Configure** → **Workflows** and click **disable-inactive-users**. Confirm the **after** duration on the **disable-user-step** is set to your desired number of days — if it reads `0d`, update it before enabling. Toggle **Enabled** to **On** and save.
+   Navigate to **Configure** → **Workflows** and click **disable-inactive-users**. Confirm the **after** duration on the **disable-user-step** is set to your desired number of days. If it reads `0d`, update it before enabling. Toggle **Enabled** to **On** and save.
 
 </Steps>
 
@@ -74,3 +88,4 @@ The workflow is seeded into the `uds` realm on fresh deployments. Existing realm
 
 - [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) - full configuration reference
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Identity Config 0.26.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0260-) - full changelog
