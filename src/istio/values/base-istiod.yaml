@@ -1,7 +1,11 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 profile: ambient
+
+global:
+  networkPolicy:
+    enabled: true
 
 meshConfig:
   # @lulaStart 98a6ad94-c638-4a31-8519-e823db7457f3

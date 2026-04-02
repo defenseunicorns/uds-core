@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -101,6 +101,8 @@ components:
         version: 1.29.1
         releaseName: admin-ingressgateway
         namespace: istio-admin-gateway
+        valuesFiles:
+          - "values/base-gateway.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
@@ -116,6 +118,8 @@ components:
         version: 1.29.1
         releaseName: tenant-ingressgateway
         namespace: istio-tenant-gateway
+        valuesFiles:
+          - "values/base-gateway.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
@@ -131,6 +135,8 @@ components:
         version: 1.29.1
         releaseName: passthrough-ingressgateway
         namespace: istio-passthrough-gateway
+        valuesFiles:
+          - "values/base-gateway.yaml"
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config

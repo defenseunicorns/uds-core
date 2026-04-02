@@ -1,7 +1,11 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 profile: ambient
+
+global:
+  networkPolicy:
+    enabled: true
 
 cniConfDir: ###ZARF_VAR_CNI_CONF_DIR###
 cniBinDir: ###ZARF_VAR_CNI_BIN_DIR###
