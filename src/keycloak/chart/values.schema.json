@@ -374,6 +374,10 @@
       "properties": {
         "maxInFlightLoginsPerUser": {
           "type": "number"
+        },
+        "accountInactivityDays": {
+          "type": "integer",
+          "minimum": 0
         }
       }
     },
