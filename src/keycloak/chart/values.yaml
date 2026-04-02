@@ -377,7 +377,9 @@ autoscaling:
 # Istio waypoint configuration
 waypoint:
   deployment:
+    # Additional annotations to add to the waypoint pods
     podAnnotations: {}
+    # Additional labels to add to the waypoint pods
     podLabels: {}
     # Larger requests by default since Keycloak manages all SSO for the cluster
     requests:
