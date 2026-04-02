@@ -17,6 +17,7 @@
     "uuid": "uds-core",
     "onError": "reject",
     "logLevel": "info",
+    "webhookTimeout": 30,
     "alwaysIgnore": {
       "namespaces": []
     },
