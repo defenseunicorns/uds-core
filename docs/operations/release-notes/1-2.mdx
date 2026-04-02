@@ -1,0 +1,76 @@
+---
+title: UDS Core 1.2
+description: UDS Core 1.2 release notes.
+sidebar:
+  order: 3.993
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+### Identity Config updates
+
+This release upgrades UDS Identity Config and introduces the `disable-inactive-users` workflow, which automatically disables non-admin accounts after a configurable number of days of inactivity. This satisfies APSC-DV-000320 (ASD STIG).
+
+The workflow is seeded into the `uds` realm on fresh deployments. Existing realms require a manual one-time import to add the workflow. If you cannot perform a full realm re-import, follow these steps in the Keycloak Admin Console:
+
+<Steps>
+
+1. **Import the workflow via partial import**
+
+   Log in to the Keycloak Admin Console at `keycloak.<admin_domain>`, switch to the **uds** realm, and navigate to **Realm Settings** → **Action** (top-right menu) → **Partial import**. Paste the following JSON and click **Import**:
+
+   ```json
+   {
+     "components": {
+       "org.keycloak.models.workflow.WorkflowProvider": [
+         {
+           "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+           "name": "disable-inactive-users",
+           "providerId": "default",
+           "subComponents": {
+             "org.keycloak.models.workflow.WorkflowStepProvider": [
+               {
+                 "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                 "name": "disable-user-step",
+                 "providerId": "disable-user",
+                 "subComponents": {},
+                 "config": {
+                   "uses": ["disable-user"],
+                   "after": ["35d"],
+                   "priority": ["0"]
+                 }
+               }
+             ]
+           },
+           "config": {
+             "name": ["disable-inactive-users"],
+             "on": ["user-authenticated"],
+             "enabled": ["false"],
+             "restart-in-progress": ["true"],
+             "supports": ["USERS"],
+             "conditions": ["NOT has-role(\"realm-management/realm-admin\")"]
+           }
+         }
+       ]
+     }
+   }
+   ```
+
+   The workflow is imported in a disabled state. The `after` value defaults to `35d`. You can edit it before importing or update it afterward via the Admin Console.
+
+2. **Enable the workflow**
+
+   Navigate to **Configure** → **Workflows** and click **disable-inactive-users**. Confirm the **after** duration on the **disable-user-step** is set to your desired number of days — if it reads `0d`, update it before enabling. Toggle **Enabled** to **On** and save.
+
+</Steps>
+
+> [!NOTE]
+> The workflow is disabled by default. To enable it at deploy time on a fresh install, set `realmConfig.accountInactivityDays` in your bundle override. See [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) for full configuration details.
+
+## Related documentation
+
+- [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) - full configuration reference
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists

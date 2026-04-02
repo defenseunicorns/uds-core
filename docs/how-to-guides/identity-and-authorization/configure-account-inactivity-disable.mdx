@@ -54,7 +54,7 @@ UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/serv
    Setting the value to `0` (the default) leaves the workflow disabled.
 
    > [!NOTE]
-   > This setting is applied during initial realm import. If Keycloak is already running, the workflow state is not updated by changing this value alone. Use the Keycloak Admin Console to enable or update the workflow on a running instance.
+   > This setting is applied during initial realm import only. Changing `accountInactivityDays` in a bundle re-deploy updates the Kubernetes Secret but does **not** update the live workflow — Keycloak only reads the value during the first realm import. To update a running instance, use the Keycloak Admin Console to toggle **Enabled** on the `disable-inactive-users` workflow and set the **after** duration on the `disable-user` step to match your desired value. Setting the duration to `0` will disable accounts immediately on the next login — always confirm the duration is correct before enabling.
 
 2. **Create and deploy your bundle**
 
@@ -74,18 +74,21 @@ After deployment, confirm the workflow is active:
 3. In the left sidebar under **Configure**, click **Workflows**
 4. Confirm the `disable-inactive-users` workflow is listed and **Enabled** is toggled on
 5. Log in as a non-admin test user through UDS Core SSO
-6. Return to the Admin Console, open the workflow, and click **View active instances** — a new instance should appear for the test user with a `disable-user` step scheduled at 35 days
+6. Return to the Admin Console, open the workflow, and click **View active instances** — a new instance should appear for the test user with a `disable-user` step scheduled at the number of days you configured (e.g., 35 days if you used the STIG-required value)
 
 > [!NOTE]
 > No instance appears for accounts that have not logged in since the workflow was created. Those accounts must be audited manually.
 
 ## Troubleshooting
 
+> [!NOTE]
+> If you upgraded UDS Core and the `disable-inactive-users` workflow does not exist in your realm, see the [UDS Core 1.2 release notes](/operations/release-notes/1-2/) for the manual partial import steps.
+
 ### Problem: Workflow shows as disabled after deployment
 
 **Symptom:** The `disable-inactive-users` workflow exists in the Admin Console but **Enabled** is off.
 
-**Solution:** The `accountInactivityDays` value was `0` at deploy time or was not applied. Verify the bundle override was included and the value is greater than `0`. To enable on a running instance without redeploying, toggle **Enabled** directly in the Admin Console and set the **after** duration on the `disable-user` step.
+**Solution:** The `accountInactivityDays` value was `0` at deploy time or was not applied. Verify the bundle override was included and the value is greater than `0`. To enable on a running instance without redeploying, toggle **Enabled** directly in the Admin Console and verify the **after** duration on the `disable-user` step is set to your desired number of days. If the value reads `0`, update it before enabling — a `0d` duration will disable accounts immediately on their next login.
 
 ### Problem: No workflow instances appear after user login
 

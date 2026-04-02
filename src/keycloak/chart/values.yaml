@@ -477,4 +477,3 @@ detailedObservability:
 # Enable default uptime monitoring probes for Keycloak endpoints
 uptime:
   enabled: true
-

@@ -371,13 +371,15 @@
     },
     "realmConfig": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "maxInFlightLoginsPerUser": {
-          "type": "number"
+          "type": "integer"
         },
         "accountInactivityDays": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 3650
         }
       }
     },

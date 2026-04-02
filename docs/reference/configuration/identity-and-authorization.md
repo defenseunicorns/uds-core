@@ -82,7 +82,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmAuthFlows
 
 ## Runtime configuration
 
-Variables under the `realmConfig` and `themeCustomizations.settings` paths take effect at runtime and do not require redeployment of the Keycloak package.
+Variables under the `realmConfig` and `themeCustomizations.settings` paths take effect at runtime and do not require redeployment of the Keycloak package, except where noted.
 
 ### realmConfig
 
@@ -91,6 +91,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmConfig`
 | Field                      | Default | Description                                          |
 | -------------------------- | ------- | ---------------------------------------------------- |
 | `maxInFlightLoginsPerUser` | `300`   | Maximum concurrent in-flight login attempts per user |
+| `accountInactivityDays`    | `0`     | Days of inactivity before a non-admin account is automatically disabled. `0` disables the feature. Satisfies APSC-DV-000320 (ASD STIG). **Applied at initial realm import only** — changes to a running instance require manual update via the Keycloak Admin Console. |
 
 ### themeCustomizations.settings
 
