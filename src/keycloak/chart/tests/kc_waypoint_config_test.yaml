@@ -107,6 +107,35 @@ tests:
                       whenUnsatisfiable: DoNotSchedule
                   priorityClassName: most-urgent
 
+  - it: should render deployment with custom pod annotations and labels
+    set:
+      waypoint.deployment.podAnnotations:
+        my-annotation: foo
+      waypoint.deployment.podLabels:
+        my-label: bar
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  annotations:
+                    my-annotation: foo
+                  labels:
+                    my-label: bar
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+
   - it: should not render horizontalPodAutoscaler when disabled
     set:
       waypoint.horizontalPodAutoscaler.enabled: false
