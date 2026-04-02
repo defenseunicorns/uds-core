@@ -83,10 +83,10 @@ components:
     actions:
       onDeploy:
         after:
-          - description: "Ensure Istio Ambient is enabled for Pepr"
+          - description: "Ensure Istio Ambient is disabled for Pepr"
             cmd: |
-              echo "Setting Ambient mode for pepr-system..."
-              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
+              echo "Setting dataplane-mode to none for pepr-system..."
+              ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="none" --overwrite
 
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
