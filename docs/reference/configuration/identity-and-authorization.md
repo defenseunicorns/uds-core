@@ -91,7 +91,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmConfig`
 | Field                      | Default | Description                                          |
 | -------------------------- | ------- | ---------------------------------------------------- |
 | `maxInFlightLoginsPerUser` | `300`   | Maximum concurrent in-flight login attempts per user |
-| `accountInactivityDays`    | `0`     | Days of inactivity before a non-admin account is automatically disabled. `0` disables the feature. Set to `35` to satisfy APSC-DV-000320 (ASD STIG). **Applied at initial realm import only.** Changes to a running instance require manual update via the Keycloak Admin Console. |
+| `accountInactivityDays`    | `0`     | Days of inactivity before a non-admin account is automatically disabled. `0` disables the feature. **Applied at initial realm import only.** Changes to a running instance require manual update via the Keycloak Admin Console. |
 
 ### themeCustomizations.settings
 

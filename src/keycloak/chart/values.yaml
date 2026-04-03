@@ -63,7 +63,7 @@ realmConfig:
   # Maximum number of in-flight (ongoing) login attempts per user to prevent login storms.
   maxInFlightLoginsPerUser: 300
   # Number of days of inactivity after which a non-admin user account is automatically disabled (0 = disabled).
-  # Satisfies APSC-DV-000320 (ASD STIG). Requires Keycloak 26.5+ (Workflows preview feature).
+  # Requires Keycloak 26.5+ (Workflows preview feature).
   accountInactivityDays: 0
 
 # UDS Identity Config Authentication Flows Environment Variables. More info here: https://github.com/defenseunicorns/uds-identity-config/blob/main/docs/reference/uds-core/idam/customization.md#templated-realm-values
