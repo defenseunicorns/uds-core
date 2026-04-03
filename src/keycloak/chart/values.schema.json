@@ -371,7 +371,6 @@
     },
     "realmConfig": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "maxInFlightLoginsPerUser": {
           "type": "integer"
