@@ -40,7 +40,41 @@ Two behaviors to keep in mind before you apply:
 
 <Steps>
 
-1. **Define variables for sensitive and environment-specific values**
+1. **Configure network egress for LDAP access**
+
+   UDS network policies block all traffic by default. Before Keycloak can query your LDAP/AD server, add an `additionalNetworkAllow` override to your bundle to permit egress from the Keycloak pods:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               - path: additionalNetworkAllow
+                 value:
+                   - description: "AD/LDAP user federation"
+                     direction: Egress
+                     selector:
+                       app.kubernetes.io/name: keycloak
+                     remoteCidr: "<LDAP_SERVER_IP>/32"  # replace with your AD/LDAP server's IP address
+                     ports:
+                       - 636  # LDAPS; change to 3269 for Global Catalog over LDAPS
+   ```
+
+   Deploy the bundle (or redeploy if UDS Core is already running) to apply this policy before proceeding:
+
+   ```bash title="Deploy the bundle"
+   uds create <path-to-bundle-dir>
+   uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
+   ```
+
+   > [!NOTE]
+   > Replace `<LDAP_SERVER_IP>/32` with your AD/LDAP server's IP address. If Keycloak must reach multiple domain controllers, add a separate entry for each. Port 636 is standard LDAPS; use 3269 if your configuration targets the Global Catalog over LDAPS.
+
+2. **Define variables for sensitive and environment-specific values**
 
    Declare input variables for all connection information so no environment-specific values are hardcoded in your HCL. Create a `variables.tf` in your working directory:
 
@@ -93,7 +127,7 @@ Two behaviors to keep in mind before you apply:
 
    Add a `.gitignore` to prevent secrets and state files from being committed:
 
-   ```bash title=".gitignore"
+   ```text title=".gitignore"
    # Never commit secrets or state files
    *.auto.tfvars
    *.tfstate
@@ -108,7 +142,7 @@ Two behaviors to keep in mind before you apply:
    > [!WARNING]
    > The OpenTofu state file (`terraform.tfstate`) contains all resource attributes in cleartext after `tofu apply`, including the LDAP bind credential. Use a remote backend with encryption (such as S3 with KMS) for production deployments. Never store `.tfstate` on shared filesystems.
 
-2. **Create the LDAP user federation provider**
+3. **Create the LDAP user federation provider**
 
    Create an `ldap.tf` file with the `keycloak_ldap_user_federation` resource targeting the `uds` realm:
 
@@ -148,10 +182,10 @@ Two behaviors to keep in mind before you apply:
 
      # Timeouts
      connection_timeout = "5s"
-     read_timeout       = "10s"
+     read_timeout       = "30s"
 
      # Delete the default mappers Keycloak auto-creates for the AD vendor so the
-     # keycloak_ldap_user_attribute_mapper resources in step 3 can be created without conflict
+     # keycloak_ldap_user_attribute_mapper resources in step 4 can be created without conflict
      delete_default_mappers = true
    }
    ```
@@ -159,7 +193,7 @@ Two behaviors to keep in mind before you apply:
    > [!TIP]
    > `use_truststore_spi = "ONLY_FOR_LDAPS"` instructs Keycloak to use its truststore when the connection URL begins with `ldaps://`. If your AD server uses a private CA, add the CA certificate to the Keycloak truststore before applying. See [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/).
 
-3. **Configure user attribute mappers**
+4. **Configure user attribute mappers**
 
    Add the five user attribute mappers to `ldap.tf` (or a separate `ldap-mappers.tf`). These map AD attributes to Keycloak user profile fields:
 
@@ -206,9 +240,9 @@ Two behaviors to keep in mind before you apply:
    ```
 
    > [!NOTE]
-   > Keycloak auto-creates four default mappers (first name, last name, email, username) when you create a federation provider with `vendor = "AD"`. The `delete_default_mappers = true` argument in the federation resource (step 2) removes these auto-created mappers before the resources in this step are applied, preventing a conflict on first apply. The `creation_date` mapper is not auto-created and does not conflict; it is an explicit addition.
+   > Keycloak auto-creates four default mappers (first name, last name, email, username) when you create a federation provider with `vendor = "AD"`. The `delete_default_mappers = true` argument in the federation resource (step 3) removes these auto-created mappers before the resources in this step are applied, preventing a conflict on first apply. The `creation_date` mapper is not auto-created and does not conflict; it is an explicit addition.
 
-4. **Configure the LDAP group mapper**
+5. **Configure the LDAP group mapper**
 
    Add a `keycloak_ldap_group_mapper` resource to import AD groups into the `/UDS Core` Keycloak group hierarchy. A single mapper scans the configured `ldap_groups_dn` and imports all groups it finds. At sync time, Keycloak names each imported group after the AD group's CN and places it under `groups_path`. An AD group with CN `Admin` lands in `/UDS Core/Admin`; a group with CN `Auditor` lands in `/UDS Core/Auditor`. No additional mappers are needed; CN matching at sync time handles the role assignment for all groups under the DN.
 
@@ -243,7 +277,7 @@ Two behaviors to keep in mind before you apply:
    > [!CAUTION]
    > Keep `drop_non_existing_groups_during_sync = false`. Setting this to `true` removes Keycloak groups that have no matching LDAP group during sync, which can inadvertently strip users from groups that are managed locally in Keycloak.
 
-5. **Plan and apply**
+6. **Plan and apply**
 
    If this is a new working directory, initialize it first to download the provider. You only need to run this once per directory:
 

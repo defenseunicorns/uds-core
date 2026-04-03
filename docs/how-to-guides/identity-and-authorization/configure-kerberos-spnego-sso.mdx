@@ -17,6 +17,7 @@ Before you start, ensure you have the following:
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - UDS Core deployed
 - Access to a Kubernetes cluster with `uds zarf tools kubectl`
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
 - An HTTP service principal and keytab file for the Keycloak host, obtained from your KDC administrator
 - Network connectivity from the Keycloak pod to your Key Distribution Center (KDC) on port 88 (required); port 464 is only needed if Keycloak handles Kerberos password changes
 
@@ -62,43 +63,9 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
    uds zarf tools kubectl get secret keycloak-kerberos-keytab -n keycloak
    ```
 
-3. **Configure network egress for KDC access**
+3. **Configure Keycloak bundle overrides**
 
-   Keycloak must reach your KDC on the standard Kerberos ports. Add an `additionalNetworkAllow` override to your bundle so UDS Network Policies permit this egress.
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         keycloak:
-           keycloak:
-             values:
-               - path: additionalNetworkAllow
-                 value:
-                   - description: "Kerberos KDC authentication"
-                     direction: Egress
-                     selector:
-                       app.kubernetes.io/name: keycloak
-                     remoteCidr: "<KDC_IP>/32"  # replace with your KDC's IP address
-                     ports:
-                       - 88
-                   - description: "Kerberos password change (omit if not needed)"
-                     direction: Egress
-                     selector:
-                       app.kubernetes.io/name: keycloak
-                     remoteCidr: "<KDC_IP>/32"
-                     ports:
-                       - 464
-   ```
-
-   > [!NOTE]
-   > Replace `<KDC_IP>/32` with your KDC's IP address. UDS network policies enforce TCP only; Kerberos defaults to UDP on port 88, so your KDC must accept TCP connections on port 88 (all modern AD Domain Controllers do). Port 464 (kpasswd) is only needed if Keycloak handles password changes; omit that entry if not required.
-
-4. **Mount the keytab into the Keycloak pod**
-
-   Add `extraVolumes` and `extraVolumeMounts` overrides so the Secret created in step 2 appears at `/opt/keycloak/conf/kerberos.keytab` inside the container. These overrides can be combined with the `additionalNetworkAllow` override from step 3 in the same `uds-bundle.yaml`.
+   Keycloak must reach your KDC on the standard Kerberos ports, and the keytab Secret must be mounted into the pod. Add the `additionalNetworkAllow`, `extraVolumes`, and `extraVolumeMounts` overrides to your bundle. Include the `ca-certs` volume alongside the keytab to preserve Keycloak's CA trust bundle, which is required for `ldaps://` connections and TLS certificate validation.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -127,17 +94,27 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
                        - 464
                - path: extraVolumes
                  value:
+                   - name: ca-certs
+                     configMap:
+                       name: uds-trust-bundle
+                       optional: true
                    - name: keytab
                      secret:
                        secretName: keycloak-kerberos-keytab
                        defaultMode: 0400  # restrict keytab to owner-read only
                - path: extraVolumeMounts
                  value:
+                   - name: ca-certs
+                     mountPath: /tmp/ca-certs
+                     readOnly: true
                    - name: keytab
                      mountPath: /opt/keycloak/conf/kerberos.keytab  # path referenced in the Kerberos User Federation provider settings
                      subPath: krb5.keytab  # key name inside the Secret from step 2
                      readOnly: true
    ```
+
+   > [!NOTE]
+   > Replace `<KDC_IP>/32` with your KDC's IP address. UDS network policies enforce TCP only; Kerberos defaults to UDP on port 88, so your KDC must accept TCP connections on port 88 (all modern AD Domain Controllers do). Port 464 (kpasswd) is only needed if Keycloak handles password changes; omit that entry if not required.
 
    > [!NOTE]
    > The Secret must exist in the `keycloak` namespace before you deploy the bundle. If the Secret is absent, the Keycloak StatefulSet will fail to schedule its pods.
@@ -148,9 +125,9 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
    > uds zarf tools kubectl rollout restart statefulset -n keycloak keycloak
    > ```
 
-5. **Create and deploy your bundle**
+4. **Create and deploy your bundle**
 
-   Create and deploy the bundle to apply the network policy and volume mount overrides from steps 3 and 4:
+   Create and deploy the bundle to apply the overrides from step 3:
 
    ```bash title="Deploy the bundle"
    uds create <path-to-bundle-dir>
@@ -163,7 +140,7 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
    uds zarf tools kubectl get pods -n keycloak
    ```
 
-6. **Add the Kerberos execution to the Authentication subflow**
+5. **Add the Kerberos execution to the Authentication subflow**
 
    The `uds` realm's active browser flow is **UDS Authentication**. It delegates credential evaluation to an inner subflow called **Authentication**, which contains the cookie check, IdP redirect, X.509, and username/password executions. The Kerberos execution must be added inside this **Authentication** subflow alongside the other credential methods.
 
@@ -181,7 +158,7 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
    > [!CAUTION]
    > Test SPNEGO authentication with a non-admin account before changing the requirement to **Required**. If all users are forced to use Kerberos and a configuration error exists, no one will be able to log in.
 
-7. **Add the Kerberos User Federation provider**
+6. **Add the Kerberos User Federation provider**
 
    In the Keycloak Admin Console, switch to the **uds** realm and go to **User Federation** → **Add provider** → **Kerberos**. Configure the provider with these settings:
 
@@ -201,7 +178,7 @@ The Kerberos User Federation provider handles authentication only. The Kerberos 
    > [!NOTE]
    > Keycloak's underlying Java GSSAPI stack uses `/etc/krb5.conf` inside the container to locate the KDC. If your environment does not publish DNS SRV records for `_kerberos._tcp.<REALM>`, you must mount a `krb5.conf` file into the pod as an additional ConfigMap volume (at `/etc/krb5.conf`). Verify after deployment with `uds zarf tools kubectl exec -n keycloak <pod> -- cat /etc/krb5.conf`. A missing or empty `krb5.conf` with no DNS SRV fallback will produce "Cannot locate KDC" errors during ticket validation.
 
-8. **Configure browser clients for Kerberos negotiation**
+7. **Configure browser clients for Kerberos negotiation**
 
    SPNEGO requires the browser to trust the Keycloak host for Kerberos negotiation. Without this, the browser will not send the `Authorization: Negotiate` header and will never attempt SPNEGO.
 
@@ -290,7 +267,7 @@ If the Secret is missing, create it as shown in step 2, then redeploy the bundle
 
 **Symptoms:** The Keycloak Admin Console shows a warning that Kerberos is not configured, or SPNEGO is not attempted during login.
 
-**Solution:** The **Kerberos** execution has not been added to the active flow, or was added at the wrong level. Follow step 6 to add the **Kerberos** execution inside the **Authentication** subflow of **UDS Authentication** and set it to **Alternative**. Adding it at the top level of **UDS Authentication** (rather than inside the **Authentication** subflow) will have no effect since the top-level executions are all REQUIRED and evaluated sequentially, not as credential alternatives.
+**Solution:** The **Kerberos** execution has not been added to the active flow, or was added at the wrong level. Follow step 5 to add the **Kerberos** execution inside the **Authentication** subflow of **UDS Authentication** and set it to **Alternative**. Adding it at the top level of **UDS Authentication** (rather than inside the **Authentication** subflow) will have no effect since the top-level executions are all REQUIRED and evaluated sequentially, not as credential alternatives.
 
 ### Problem: SPNEGO negotiation fails (401 loop or no Kerberos prompt)
 
@@ -298,7 +275,7 @@ If the Secret is missing, create it as shown in step 2, then redeploy the bundle
 
 **Solution:** Two common causes:
 
-1. **Browser not configured for Kerberos negotiation.** Confirm the browser trusts `sso.<domain>` for Negotiate authentication (step 8). On Windows, verify the site is in the Local Intranet zone. In Firefox, verify `network.negotiate-auth.trusted-uris`.
+1. **Browser not configured for Kerberos negotiation.** Confirm the browser trusts `sso.<domain>` for Negotiate authentication (step 7). On Windows, verify the site is in the Local Intranet zone. In Firefox, verify `network.negotiate-auth.trusted-uris`.
 
 2. **Service principal name mismatch.** The principal in the keytab must exactly match the **Server principal** field in the Kerberos User Federation provider. Verify with:
 
