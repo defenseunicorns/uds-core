@@ -240,6 +240,11 @@ admission:
       value: "###ZARF_REGISTRY###"
     - name: "PINO_TIME_STAMP"
       value: "iso"
+    # keepAliveTimeout must exceed the API server's connection reuse idle gap
+    - name: "PEPR_KEEP_ALIVE_TIMEOUT"
+      value: "75000"
+    - name: "PEPR_HEADERS_TIMEOUT"
+      value: "76000"
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"

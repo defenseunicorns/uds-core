@@ -80,6 +80,8 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
+        env:
+          PEPR_CUSTOM_IMAGE: ttl.sh/pepr-keepalive-fix-55de7a7:24h
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
