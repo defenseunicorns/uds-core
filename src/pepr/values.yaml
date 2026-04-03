@@ -240,11 +240,6 @@ admission:
       value: "###ZARF_REGISTRY###"
     - name: "PINO_TIME_STAMP"
       value: "iso"
-    # keepAliveTimeout must exceed upstream proxy keepalives (e.g. konnectivity-agent uses 30s)
-    - name: "PEPR_KEEP_ALIVE_TIMEOUT"
-      value: "75000"
-    - name: "PEPR_HEADERS_TIMEOUT"
-      value: "76000"
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
