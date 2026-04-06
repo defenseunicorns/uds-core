@@ -34,7 +34,7 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
 | 1.35+ | Enabled by default; no feature gate configuration needed |
 
 > [!NOTE]
-> ImageVolumes are currently blocked by UDS policies. You will need to add a policy exemption as part of this guide.
+> If you are running UDS Core < 1.1.0, `image` volumes are blocked by the `RestrictVolumeTypes` policy. Add a `RestrictVolumeTypes` `Exemption` targeting Keycloak pods to allow them. See [Configure infrastructure exemptions](/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/) for the exemption format.
 
 > [!TIP]
 > If you are running on `uds-k3d` with Kubernetes < 1.35, you must enable the `ImageVolume` feature gate. Add the following to your `uds-config.yaml`:
@@ -145,34 +145,7 @@ This guide uses a **Kubernetes ImageVolume** to mount an OCI image containing th
        ref: x.x.x
    ```
 
-4. **Add a policy exemption for ImageVolumes**
-
-   UDS policies currently block `ImageVolume` volume types. Add an exemption targeting Keycloak pods:
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         uds-exemptions:
-           uds-exemptions:
-             values:
-               - path: exemptions.custom
-                 value:
-                   - name: keycloak-imagevolume-exemption
-                     exemptions:
-                       - policies:
-                           - RestrictVolumeTypes
-                         matcher:
-                           namespace: keycloak
-                           name: "^keycloak-.*"
-                           kind: pod
-                         title: "Allow Keycloak ImageVolume for CRLs"
-                         description: "Allow Keycloak pods to mount CRLs via Kubernetes ImageVolume (OCI-backed)."
-   ```
-
-5. **Create and deploy your bundle**
+4. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -214,9 +187,7 @@ Use your normal mTLS or browser client certificate flow and confirm Keycloak val
 
 **Symptom:** The Keycloak pod fails to start with a policy violation error referencing `image` volume type.
 
-**Solution:** The UDS policy exemption was not applied or did not match the pod. Verify:
-- The exemption is included in the deployed bundle
-- The namespace is `keycloak` and the pod matcher `^keycloak-.*` matches the Keycloak pod name
+**Solution:** `image` volumes are allowed by default in UDS Core 1.1.0 and later. If you are running an older version, add a `RestrictVolumeTypes` `Exemption` targeting Keycloak pods. See [Configure infrastructure exemptions](/how-to-guides/policy-and-compliance/configure-infrastructure-exemptions/) for the exemption format.
 
 ### Problem: "Failed to pull image … not found"
 
