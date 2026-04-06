@@ -107,7 +107,57 @@ tests:
                       whenUnsatisfiable: DoNotSchedule
                   priorityClassName: most-urgent
 
-  - it: should render deployment with custom pod annotations and labels
+  - it: should render deployment with only pod annotations
+    set:
+      waypoint.deployment.podAnnotations:
+        my-annotation: foo
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  annotations:
+                    my-annotation: foo
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+
+  - it: should render deployment with only pod labels
+    set:
+      waypoint.deployment.podLabels:
+        my-label: bar
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  labels:
+                    my-label: bar
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+
+  - it: should render deployment with both pod annotations and labels
     set:
       waypoint.deployment.podAnnotations:
         my-annotation: foo
