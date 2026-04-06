@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # action.yml
@@ -7,35 +7,46 @@ description: "UDS Environment Setup"
 inputs:
   ghToken:
     description: "GITHUB_TOKEN"
-    required: true
+    required: false
+    default: ''
   registry1Username:
     description: "IRON_BANK_ROBOT_USERNAME"
-    required: true
+    required: false
+    default: ''
   registry1Password:
     description: "IRON_BANK_ROBOT_PASSWORD"
-    required: true
+    required: false
+    default: ''
   rapidfortUsername:
     description: "RAPIDFORT_USERNAME"
-    required: true
+    required: false
+    default: ''
   rapidfortPassword:
     description: "RAPIDFORT_PASSWORD"
-    required: true
+    required: false
+    default: ''
+  installUv:
+    description: "Whether to install uv"
+    required: false
+    default: 'false'
+  installK3d:
+    description: "Whether to install k3d"
+    required: false
+    default: 'false'
+  installHelmUnittest:
+    description: "Whether to install the helm unittest plugin"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
   steps:
     - name: Setup Tools
       uses: ./.github/actions/setup-tools
-
-    - name: Install k3d
-      shell: bash
-      # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.8.3 bash
-
-    - name: Install helm unittest plugin
-      shell: bash
-      # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: export HELM_UNITTEST_VERSION="v1.0.3" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
+      with:
+        installUv: ${{ inputs.installUv }}
+        installK3d: ${{ inputs.installK3d }}
+        installHelmUnittest: ${{ inputs.installHelmUnittest }}
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' }}

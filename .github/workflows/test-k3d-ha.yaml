@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: HA k3d Testing
@@ -49,11 +49,12 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+          registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
+          registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
+          rapidfortUsername: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_USERNAME || '' }}
+          rapidfortPassword: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_PASSWORD || '' }}
+          installK3d: 'true'
 
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}

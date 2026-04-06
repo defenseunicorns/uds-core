@@ -53,11 +53,8 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+          installK3d: 'true'
 
       # Override the CLI installed by setup with the install-phase version (old CLI)
       - name: Install CLI for install phase
@@ -108,11 +105,8 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+          installK3d: 'true'
 
       # Override the CLI installed by setup with the old CLI to verify current branch installs cleanly without new CLI
       # Intentionally frozen — represents the last compatible CLI version
