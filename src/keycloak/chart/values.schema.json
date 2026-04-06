@@ -157,6 +157,12 @@
         "deployment": {
           "type": "object",
           "properties": {
+            "podAnnotations": {
+              "type": "object"
+            },
+            "podLabels": {
+              "type": "object"
+            },
             "requests": {
               "$ref": "#/definitions/resourcesSchema"
             },

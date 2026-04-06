@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
@@ -106,6 +106,85 @@ tests:
                       topologyKey: zone
                       whenUnsatisfiable: DoNotSchedule
                   priorityClassName: most-urgent
+
+  - it: should render deployment with only pod annotations
+    set:
+      waypoint.deployment.podAnnotations:
+        my-annotation: foo
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  annotations:
+                    my-annotation: foo
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+
+  - it: should render deployment with only pod labels
+    set:
+      waypoint.deployment.podLabels:
+        my-label: bar
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  labels:
+                    my-label: bar
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
+
+  - it: should render deployment with both pod annotations and labels
+    set:
+      waypoint.deployment.podAnnotations:
+        my-annotation: foo
+      waypoint.deployment.podLabels:
+        my-label: bar
+    template: waypoint-config.yaml
+    asserts:
+      - equal:
+          path: data.deployment
+          value: |
+            spec:
+              template:
+                metadata:
+                  annotations:
+                    my-annotation: foo
+                  labels:
+                    my-label: bar
+                spec:
+                  containers:
+                  - name: istio-proxy
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: 2
+                        memory: 1Gi
 
   - it: should not render horizontalPodAutoscaler when disabled
     set:
