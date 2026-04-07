@@ -1,0 +1,74 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - OpenTofu Client Integration
+templates:
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should set REALM_OPENTOFU_CLIENT_ENABLED to false by default
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_ENABLED
+          # base64("false")
+          value: "ZmFsc2U="
+
+  - it: should set REALM_OPENTOFU_CLIENT_TRUSTED_SUBJECT to default service account
+    asserts:
+      - isKind:
+          of: Secret
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_TRUSTED_SUBJECT
+          # base64("system:serviceaccount:keycloak:keycloak")
+          value: "c3lzdGVtOnNlcnZpY2VhY2NvdW50OmtleWNsb2FrOmtleWNsb2Fr"
+
+  - it: should enable OpenTofu client via thirdPartyIntegration
+    set:
+      thirdPartyIntegration:
+        openTofu:
+          enabled: true
+    asserts:
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_ENABLED
+          # base64("true")
+          value: "dHJ1ZQ=="
+
+  - it: should allow custom trustedSubject via thirdPartyIntegration
+    set:
+      thirdPartyIntegration:
+        openTofu:
+          trustedSubject: "system:serviceaccount:custom-ns:custom-sa"
+    asserts:
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_TRUSTED_SUBJECT
+          # base64("system:serviceaccount:custom-ns:custom-sa")
+          value: "c3lzdGVtOnNlcnZpY2VhY2NvdW50OmN1c3RvbS1uczpjdXN0b20tc2E="
+
+  - it: should let realmInitEnv.OPENTOFU_CLIENT_ENABLED override thirdPartyIntegration
+    set:
+      realmInitEnv:
+        GOOGLE_IDP_ENABLED: false
+        OPENTOFU_CLIENT_ENABLED: true
+      thirdPartyIntegration:
+        openTofu:
+          enabled: false
+    asserts:
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_ENABLED
+          # base64("true") from realmInitEnv taking priority
+          value: "dHJ1ZQ=="
+
+  - it: should always use thirdPartyIntegration for trustedSubject regardless of realmInitEnv
+    set:
+      thirdPartyIntegration:
+        openTofu:
+          trustedSubject: "system:serviceaccount:custom-ns:custom-sa"
+    asserts:
+      - equal:
+          path: data.REALM_OPENTOFU_CLIENT_TRUSTED_SUBJECT
+          # base64("system:serviceaccount:custom-ns:custom-sa")
+          value: "c3lzdGVtOnNlcnZpY2VhY2NvdW50OmN1c3RvbS1uczpjdXN0b20tc2E="

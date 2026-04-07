@@ -650,6 +650,18 @@
     "thirdPartyIntegration": {
       "type": "object",
       "properties": {
+        "openTofu": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "trustedSubject": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
         "tls": {
           "type": "object",
           "properties": {
