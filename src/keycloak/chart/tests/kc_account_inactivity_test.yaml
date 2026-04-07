@@ -3,54 +3,37 @@
 
 # yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
 
-suite: Keycloak - realmConfig.accountInactivityDays propagation
+suite: Keycloak - realmInitEnv.ACCOUNT_INACTIVITY_DAYS propagation
 templates:
   - secret-kc-realm.yaml
 
 tests:
-  - it: should not include ACCOUNT_INACTIVITY_DAYS and set ENABLED to false when accountInactivityDays is 0
-    set:
-      realmConfig:
-        accountInactivityDays: 0
+  - it: should not include REALM_ACCOUNT_INACTIVITY_DAYS and set ENABLED to false when ACCOUNT_INACTIVITY_DAYS is not set
     asserts:
       - isKind:
           of: Secret
       - hasDocuments:
           count: 1
       - notExists:
-          path: data.ACCOUNT_INACTIVITY_DAYS
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS
       - equal:
-          path: data.ACCOUNT_INACTIVITY_DAYS_ENABLED
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS_ENABLED
           # base64("false")
           value: "ZmFsc2U="
 
-  - it: should include ACCOUNT_INACTIVITY_DAYS and set ENABLED to true when accountInactivityDays is positive
+  - it: should include REALM_ACCOUNT_INACTIVITY_DAYS and set ENABLED to true when ACCOUNT_INACTIVITY_DAYS is set to a positive value
     set:
-      realmConfig:
-        accountInactivityDays: 35
+      realmInitEnv.ACCOUNT_INACTIVITY_DAYS: "35"
     asserts:
       - isKind:
           of: Secret
       - hasDocuments:
           count: 1
       - equal:
-          path: data.ACCOUNT_INACTIVITY_DAYS
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS
           # base64("35")
           value: "MzU="
       - equal:
-          path: data.ACCOUNT_INACTIVITY_DAYS_ENABLED
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS_ENABLED
           # base64("true")
           value: "dHJ1ZQ=="
-
-  - it: should not include ACCOUNT_INACTIVITY_DAYS when accountInactivityDays is not set (uses default of 0)
-    asserts:
-      - isKind:
-          of: Secret
-      - hasDocuments:
-          count: 1
-      - notExists:
-          path: data.ACCOUNT_INACTIVITY_DAYS
-      - equal:
-          path: data.ACCOUNT_INACTIVITY_DAYS_ENABLED
-          # base64("false")
-          value: "ZmFsc2U="
