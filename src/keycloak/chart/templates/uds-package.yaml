@@ -49,6 +49,14 @@ spec:
           - 80
         remoteGenerated: Anywhere
 
+      # Kubernetes API access for JWKS endpoint (federated-jwt client authentication)
+      - description: "Kubernetes API for JWKS verification"
+        direction: Egress
+        selector:
+          app.kubernetes.io/name: keycloak
+        port: 6443
+        remoteGenerated: Anywhere
+
       {{- if .Values.smtp.enabled }}
       - description: "SMTP access"
         direction: Egress
