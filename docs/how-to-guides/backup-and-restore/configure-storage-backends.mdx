@@ -119,7 +119,148 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
 
            IRSA (IAM Roles for Service Accounts) lets Velero assume an IAM role without storing credentials in the cluster. The Amazon EKS OIDC webhook injects temporary credentials that the AWS SDK uses automatically.
 
-           For full configuration steps, including IAM policy and role setup, see [Configure Velero with IRSA on Amazon EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/).
+           Before configuring your bundle, provision the required IAM resources. The examples below use [OpenTofu](https://opentofu.org/docs/intro/install/) and assume an `aws` provider is already configured in your workspace.
+
+           Create the S3 access policy:
+
+           ```hcl title="velero-s3-policy.tf"
+           # Velero S3 backup storage policy
+           # Reference: https://github.com/vmware-tanzu/velero-plugin-for-aws?tab=readme-ov-file#set-permissions-for-velero
+           data "aws_iam_policy_document" "velero_s3" {
+             statement {
+               effect  = "Allow"
+               actions = [
+                 "s3:GetObject",
+                 "s3:DeleteObject",
+                 "s3:PutObject",
+                 "s3:AbortMultipartUpload",
+                 "s3:ListMultipartUploadParts",
+               ]
+               resources = ["arn:aws:s3:::YOUR_VELERO_BUCKET/*"]
+             }
+
+             statement {
+               effect  = "Allow"
+               actions = [
+                 "s3:ListBucket",
+                 "s3:GetBucketLocation",
+                 "s3:ListBucketMultipartUploads",
+               ]
+               resources = ["arn:aws:s3:::YOUR_VELERO_BUCKET"]
+             }
+           }
+
+           resource "aws_iam_policy" "velero_s3" {
+             name   = "velero-s3-policy"
+             policy = data.aws_iam_policy_document.velero_s3.json
+           }
+           ```
+
+           > [!NOTE]
+           > Replace `YOUR_VELERO_BUCKET` with your backup bucket name. If the bucket uses SSE-KMS encryption, also grant `kms:Decrypt`, `kms:GenerateDataKey`, and `kms:DescribeKey` on the KMS key ARN.
+
+           Create a role that the `velero-server` service account in the `velero` namespace can assume:
+
+           ```hcl title="velero-irsa-role.tf"
+           # The OIDC provider URL for your EKS cluster, without the https:// prefix.
+           # Example: oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE1234567890
+           variable "oidc_provider" {
+             description = "EKS cluster OIDC provider URL (without https://)"
+           }
+
+           # Look up the OIDC provider already registered in IAM for this cluster
+           data "aws_iam_openid_connect_provider" "eks" {
+             url = "https://${var.oidc_provider}"
+           }
+
+           data "aws_iam_policy_document" "velero_irsa_trust" {
+             statement {
+               effect = "Allow"
+
+               principals {
+                 type        = "Federated"
+                 identifiers = [data.aws_iam_openid_connect_provider.eks.arn]
+               }
+
+               actions = ["sts:AssumeRoleWithWebIdentity"]
+
+               condition {
+                 test     = "StringEquals"
+                 variable = "${var.oidc_provider}:sub"
+                 # Scopes the role to the velero-server service account in the velero namespace
+                 values   = ["system:serviceaccount:velero:velero-server"]
+               }
+
+               condition {
+                 test     = "StringEquals"
+                 variable = "${var.oidc_provider}:aud"
+                 values   = ["sts.amazonaws.com"]
+               }
+             }
+           }
+
+           resource "aws_iam_role" "velero" {
+             name               = "velero-backup-role"
+             assume_role_policy = data.aws_iam_policy_document.velero_irsa_trust.json
+           }
+
+           resource "aws_iam_role_policy_attachment" "velero_s3" {
+             role       = aws_iam_role.velero.name
+             policy_arn = aws_iam_policy.velero_s3.arn
+           }
+           ```
+
+           Place both `.tf` files in the same directory. Supply `oidc_provider` via a `-var` flag or a `terraform.tfvars` file, then apply:
+
+           ```bash
+           tofu init
+           tofu plan
+           tofu apply
+           ```
+
+           > [!NOTE]
+           > If you use Terraform instead of OpenTofu, replace `tofu` with `terraform`: the commands are identical.
+
+           Add the overrides below to your bundle. Setting `credentials.useSecret: false` tells Velero not to mount a credentials file, so the AWS SDK uses the web identity token the IRSA webhook injects. The `configuration.backupStorageLocation` override replaces the default UDS Core configuration, which includes a credential `Secret` reference incompatible with IRSA.
+
+           ```yaml title="uds-bundle.yaml"
+           packages:
+             - name: core
+               repository: registry.defenseunicorns.com/public/core
+               ref: x.x.x-upstream
+               overrides:
+                 velero:
+                   velero:
+                     variables:
+                       # IRSA role ARN annotated on the Velero service account
+                       - name: VELERO_IRSA_ROLE_ARN
+                         path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
+                     values:
+                       # Disable the credentials Secret; Velero uses the web identity token from the IRSA webhook
+                       - path: credentials.useSecret
+                         value: false
+                       # Override the backup storage location to remove the credential reference
+                       # used by the default static-key configuration
+                       - path: configuration.backupStorageLocation
+                         value:
+                           - name: default
+                             provider: aws
+                             bucket: "<your-bucket-name>"
+                             config:
+                               region: "<your-region>"
+                               s3ForcePathStyle: false
+           ```
+
+           Supply the role ARN in your `uds-config.yaml`:
+
+           ```yaml title="uds-config.yaml"
+           variables:
+             core:
+               VELERO_IRSA_ROLE_ARN: "arn:aws:iam::123456789012:role/velero-backup-role"
+           ```
+
+           > [!IMPORTANT]
+           > Replace `<your-bucket-name>` and `<your-region>` with your actual values directly in the bundle YAML. Unlike the static-credential approach, these cannot be set in `uds-config.yaml` because the entire `configuration.backupStorageLocation` array must be overridden to remove the credential `Secret` reference incompatible with IRSA. Set `s3ForcePathStyle: false` for AWS S3; use `true` only for MinIO or other providers that require path-style access.
 
          </TabItem>
        </Tabs>
