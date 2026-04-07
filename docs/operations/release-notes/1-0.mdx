@@ -35,6 +35,7 @@ This release removes the following deprecated fields: the legacy `CA_CERT` Zarf 
 | Package | Previous | Updated |
 |---------|----------|---------|
 | Grafana | 12.4.0 | [12.4.1](https://github.com/grafana/grafana/releases/tag/v12.4.1) |
+| Keycloak | 26.5.3 | [26.5.7](https://github.com/keycloak/keycloak/releases/tag/26.5.7) |
 | Istio | 1.28.3 | [1.29.1](https://istio.io/latest/news/releases/1.29.x/announcing-1.29.1/) |
 | Pepr | 1.1.2 | [1.1.4](https://github.com/defenseunicorns/pepr/releases/tag/v1.1.4) |
 | Prometheus Operator | 0.89.0 | [0.90.0](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.90.0) |
@@ -48,6 +49,17 @@ This release removes the following deprecated fields: the legacy `CA_CERT` Zarf 
 | Vector Helm chart | 0.50.0 | [0.51.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.51.0) |
 
 ## Upgrade considerations
+
+> [!IMPORTANT]
+> Upgrade directly to v1.0.1 to pick up a Keycloak security fix. Keycloak 26.5.7 addresses vulnerabilities disclosed in the [Keycloak 26.5.7 release announcement](https://www.keycloak.org/2026/04/keycloak-2657-released). The bundle reference below targets v1.0.1.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    # Upgrade to 1.0.1 (includes Keycloak 26.5.7 security fix)
+    ref: 1.0.1-upstream
+```
 
 ### Pre-upgrade steps
 

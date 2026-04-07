@@ -21,7 +21,7 @@ UDS Core 1.1 adds built-in alerting for endpoint downtime and TLS certificate ex
 
 | Package | Previous | Updated |
 |---------|----------|---------|
-| Keycloak | 26.5.5 | [26.5.6](https://github.com/keycloak/keycloak/releases/tag/26.5.6) |
+| Keycloak | 26.5.5 | [26.5.7](https://github.com/keycloak/keycloak/releases/tag/26.5.7) |
 | Pepr | 1.1.4 | [1.1.5](https://github.com/defenseunicorns/pepr/releases/tag/v1.1.5) |
 | Prometheus Operator | 0.90.0 | [0.90.1](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.90.1) |
 | Velero | 1.17.2 | [1.18.0](https://github.com/vmware-tanzu/velero/releases/tag/v1.18.0) |
@@ -29,6 +29,19 @@ UDS Core 1.1 adds built-in alerting for endpoint downtime and TLS certificate ex
 | Prometheus Blackbox Exporter Helm chart | 11.9.0 | [11.9.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.9.1) |
 | prometheus-operator-crds Helm chart | 28.0.0 | [28.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-28.0.1) |
 | Velero Helm chart | 11.3.2 | [12.0.0](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.0.0) |
+
+## Upgrade considerations
+
+> [!IMPORTANT]
+> Upgrade directly to v1.1.1 to pick up a Keycloak security fix. Keycloak 26.5.7 addresses vulnerabilities disclosed in the [Keycloak 26.5.7 release announcement](https://www.keycloak.org/2026/04/keycloak-2657-released). The bundle reference below targets v1.1.1.
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    repository: registry.defenseunicorns.com/public/core
+    # Upgrade to 1.1.1 (includes Keycloak 26.5.7 security fix)
+    ref: 1.1.1-upstream
+```
 
 ## Related documentation
 
