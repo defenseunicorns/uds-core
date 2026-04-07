@@ -142,7 +142,7 @@ module "eks" {
   # EKS Addons
   addons = {
     vpc-cni = {
-      most_recent    = true
+      most_recent    = false // use the default version rather than the latest version
       before_compute = true
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
