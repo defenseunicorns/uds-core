@@ -452,6 +452,8 @@ extraVolumeMounts:
 truststorePaths:
   # Default path for UDS trust bundle certificates
   - "/tmp/ca-certs"
+  # Kubernetes service account CA certificate, needed for Kubernetes identity provider (federated JWT)
+  - "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 
 # HTTP retry configuration for outgoing Keycloak requests
 # This configures retry behavior for transient network errors and temporary service unavailability

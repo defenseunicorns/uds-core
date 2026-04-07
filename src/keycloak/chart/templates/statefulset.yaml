@@ -101,7 +101,7 @@ spec:
             - "--import-realm"
             # @lulaStart e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             - "--features=preview,fips"
-            - "--fips-mode=strict"
+            - "--fips-mode=non-strict"
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             {{- if .Values.truststorePaths }}
             - "--truststore-paths={{ join "," .Values.truststorePaths }}"
