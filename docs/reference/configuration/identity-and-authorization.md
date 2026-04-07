@@ -51,6 +51,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 | `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""` | Comma-separated additional Protocol Mappers to allow in the UDS client policy |
 | `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | `""` | Comma-separated additional Client Scopes to allow in the UDS client policy |
 | `DISPLAY_NAME` | `"Unicorn Delivery Service"` | The display name for the realm. |
+| `ACCOUNT_INACTIVITY_DAYS` | unset | Days of inactivity before a non-admin user account is automatically disabled. When unset, the feature is disabled. |
 
 > [!NOTE]
 > The default `PASSWORD_POLICY` value is: `hashAlgorithm(pbkdf2-sha256) and forceExpiredPasswordChange(60) and specialChars(2) and digits(1) and lowerCase(1) and upperCase(1) and passwordHistory(5) and length(15) and notUsername(undefined)`.
@@ -82,7 +83,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmAuthFlows
 
 ## Runtime configuration
 
-Variables under the `realmConfig` and `themeCustomizations.settings` paths take effect at runtime and do not require redeployment of the Keycloak package, except where noted.
+Variables under the `realmConfig` and `themeCustomizations.settings` paths take effect at runtime and do not require redeployment of the Keycloak package.
 
 ### realmConfig
 
@@ -91,7 +92,6 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmConfig`
 | Field                      | Default | Description                                          |
 | -------------------------- | ------- | ---------------------------------------------------- |
 | `maxInFlightLoginsPerUser` | `300`   | Maximum concurrent in-flight login attempts per user |
-| `accountInactivityDays`    | `0`     | Days of inactivity before a non-admin account is automatically disabled. `0` disables the feature. **Applied at initial realm import only.** Changes to a running instance require manual update via the Keycloak Admin Console. |
 
 ### themeCustomizations.settings
 

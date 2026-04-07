@@ -1,6 +1,6 @@
 ---
 title: Configure automatic account inactivity disable
-description: Configure Keycloak to automatically disable non-admin user accounts after a set number of days of inactivity, satisfying APSC-DV-000320 (ASD STIG).
+description: Configure Keycloak to automatically disable non-admin user accounts after a set number of days of inactivity.
 sidebar:
   order: 3.020
 ---
@@ -9,7 +9,7 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll configure UDS Core's Keycloak to automatically disable non-admin user accounts that have not authenticated for a configurable number of days. This satisfies **APSC-DV-000320** (ASD STIG), which requires applications to automatically disable accounts after 35 days of inactivity. Accounts belonging to realm administrators are excluded and are never automatically disabled.
+You'll configure UDS Core's Keycloak to automatically disable non-admin user accounts that have not authenticated for a configurable number of days. Accounts belonging to realm administrators are excluded and are never automatically disabled.
 
 ## Prerequisites
 
@@ -19,7 +19,7 @@ You'll configure UDS Core's Keycloak to automatically disable non-admin user acc
 
 ## Before you begin
 
-UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) preview feature to track `user-authenticated` events per user and trigger a `disable-user` action after the configured inactivity window. The workflow is seeded into the uds realm on initial deployment and is disabled by default (`accountInactivityDays: 0`).
+UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) preview feature to track `user-authenticated` events per user and trigger a `disable-user` action after the configured inactivity window. The workflow is seeded into the uds realm on initial deployment and is disabled by default (`ACCOUNT_INACTIVITY_DAYS` unset).
 
 **What counts as activity:** The workflow tracks `user-authenticated` events. Any successful login through UDS Core SSO, including logins via federated identity providers (Azure AD, Google SAML), resets the inactivity timer.
 
@@ -27,16 +27,13 @@ UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/serv
 
 **Admin accounts excluded:** Users with the `realm-management/realm-admin` role are never disabled by this workflow.
 
-> [!NOTE]
-> Keycloak Workflows is a [preview feature](https://www.keycloak.org/docs/latest/server_admin/index.html#preview-features). UDS Core enables it by default via `--features=preview,fips`. Preview features may change in future Keycloak releases.
-
 ## Steps
 
 <Steps>
 
-1. **Set `accountInactivityDays` in your bundle override**
+1. **Set `ACCOUNT_INACTIVITY_DAYS` in your bundle override**
 
-   Add the override to your `uds-bundle.yaml`. Set the value to the number of days of inactivity after which a non-admin account is disabled. The STIG-required value is `35`.
+   Add the override to your `uds-bundle.yaml`. Set the value to the number of days of inactivity after which you want non-admin accounts to be disabled.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -47,17 +44,15 @@ UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/serv
          keycloak:
            keycloak:
              values:
-               - path: realmConfig.accountInactivityDays
-                 value: 35
+               - path: realmInitEnv
+                 value:
+                   ACCOUNT_INACTIVITY_DAYS: "35"
    ```
 
-   Setting the value to `0` (the default) leaves the workflow disabled.
+   Omitting `ACCOUNT_INACTIVITY_DAYS` (the default) leaves the workflow disabled.
 
    > [!IMPORTANT]
-   > This setting is applied during initial realm import only. Changing `accountInactivityDays` in a bundle re-deploy updates the Kubernetes Secret but does **not** update the live workflow. Keycloak only reads the value during the first realm import. To update a running instance, use the Keycloak Admin Console to toggle **Enabled** on the `disable-inactive-users` workflow and set the **after** duration on the `disable-user` step to match your desired value.
-
-   > [!WARNING]
-   > Setting the **after** duration to `0` will disable non-admin accounts immediately on their next login. Always confirm the duration is correct before enabling the workflow.
+   > This setting is applied during initial realm import only. Changing `ACCOUNT_INACTIVITY_DAYS` in a bundle re-deploy updates the Kubernetes Secret but does **not** update the live workflow. Keycloak only reads the value during the first realm import. To update the inactivity window on a running instance, see step 3 below.
 
 2. **Create and deploy your bundle**
 
@@ -65,6 +60,21 @@ UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/serv
    uds create <path-to-bundle-dir>
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
+
+3. **Optional: Update the inactivity window on a running instance**
+
+   If you need to change the inactivity window after initial deployment, update the workflow directly in the Keycloak Admin Console:
+
+   1. Log in to the Keycloak Admin Console at `keycloak.<admin_domain>`
+   2. Switch to the **uds** realm
+   3. In the left sidebar under **Configure**, click **Workflows**
+   4. Open the `disable-inactive-users` workflow
+   5. Click the `disable-user` step and update the **after** duration to your desired number of days
+   6. Toggle **Enabled** to **On** if not already enabled
+   7. Click **Save**
+
+   > [!WARNING]
+   > In the Admin Console, setting the **after** duration to `0` days will disable non-admin accounts immediately on their next login. Always confirm the duration is correct before enabling the workflow.
 
 </Steps>
 
@@ -77,7 +87,7 @@ After deployment, confirm the workflow is active:
 3. In the left sidebar under **Configure**, click **Workflows**
 4. Confirm the `disable-inactive-users` workflow is listed and **Enabled** is toggled on
 5. Log in as a non-admin test user through UDS Core SSO
-6. Return to the Admin Console, open the workflow, and click **View active instances**. A new instance should appear for the test user with a `disable-user` step scheduled at the number of days you configured (e.g., 35 days if you used the STIG-required value)
+6. Return to the Admin Console, open the workflow, and click **View active instances**. A new instance should appear for the test user with a `disable-user` step scheduled at the number of days you configured
 
 > [!NOTE]
 > No instance appears for accounts that have not logged in since the workflow was created. Those accounts must be audited manually.
@@ -88,7 +98,7 @@ After deployment, confirm the workflow is active:
 
 **Symptom:** The `disable-inactive-users` workflow exists in the Admin Console but **Enabled** is off.
 
-**Solution:** The `accountInactivityDays` value was `0` at deploy time or was not applied. Verify the bundle override was included and the value is greater than `0`. To enable on a running instance without redeploying, toggle **Enabled** directly in the Admin Console and verify the **after** duration on the `disable-user` step is set to your desired number of days. If the value reads `0`, update it before enabling. A `0d` duration will disable accounts immediately on their next login.
+**Solution:** `ACCOUNT_INACTIVITY_DAYS` was not set or was not applied. Verify the bundle override was included and the value is set to a positive integer. To enable on a running instance without redeploying, toggle **Enabled** directly in the Admin Console and verify the **after** duration on the `disable-user` step is set to your desired number of days. If the value reads `0`, update it before enabling. A `0d` duration will disable accounts immediately on their next login.
 
 ### Problem: No workflow instances appear after user login
 
