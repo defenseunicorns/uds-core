@@ -1,6 +1,6 @@
 ---
 title: Configure Velero storage backends
-description: Configure Velero's backup storage destination, credentials, and retention schedule for a UDS Core deployment.
+description: Configure Velero's backup storage destination using S3-compatible storage or Azure Blob Storage, with options for static credentials, existing Kubernetes Secrets, or IRSA on Amazon EKS.
 sidebar:
   order: 7.001
 ---
@@ -48,63 +48,222 @@ S3-compatible storage is configured through **Zarf variables** set in your `uds-
    <Tabs>
      <TabItem label="S3-compatible storage">
 
-       Add the following variables to your `uds-config.yaml`:
+       Choose the authentication method that matches your environment.
 
-       ```yaml title="uds-config.yaml"
-       variables:
-         core:
-           VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
-           VELERO_BUCKET: "my-velero-backups"
-           VELERO_BUCKET_REGION: "us-east-1"
-           VELERO_BUCKET_KEY: "<your-access-key>"
-           VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
-       ```
+       <Tabs>
+         <TabItem label="Static access keys">
 
-       The full set of available variables:
+           Add the following variables to your `uds-config.yaml`:
 
-       | Variable | Description | Default |
-       |---|---|---|
-       | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
-       | `VELERO_BUCKET` | Bucket name | `uds` |
-       | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
-       | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
-       | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
-       | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
-       | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
+           ```yaml title="uds-config.yaml"
+           variables:
+             core:
+               VELERO_BUCKET_PROVIDER_URL: "https://s3.us-east-1.amazonaws.com"
+               VELERO_BUCKET: "my-velero-backups"
+               VELERO_BUCKET_REGION: "us-east-1"
+               VELERO_BUCKET_KEY: "<your-access-key>"
+               VELERO_BUCKET_KEY_SECRET: "<your-secret-key>"
+           ```
 
-       > [!NOTE]
-       > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
+           The full set of available variables:
 
-       **(Optional) Use an existing credentials Secret:** If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+           | Variable | Description | Default |
+           |---|---|---|
+           | `VELERO_BUCKET_PROVIDER_URL` | S3 endpoint URL | `http://minio.uds-dev-stack.svc.cluster.local:9000` |
+           | `VELERO_BUCKET` | Bucket name | `uds` |
+           | `VELERO_BUCKET_REGION` | Bucket region | `uds-dev-stack` |
+           | `VELERO_BUCKET_KEY` | Access key ID | `uds` |
+           | `VELERO_BUCKET_KEY_SECRET` | Secret access key | `uds-secret` |
+           | `VELERO_BUCKET_CREDENTIAL_NAME` | Kubernetes Secret name for credentials | `velero-bucket-credentials` |
+           | `VELERO_BUCKET_CREDENTIAL_KEY` | Key within the credentials Secret | `cloud` |
 
-       ```yaml title="uds-bundle.yaml"
-       packages:
-         - name: core
-           repository: registry.defenseunicorns.com/public/core
-           ref: x.x.x-upstream
-           overrides:
-             velero:
-               velero:
-                 values:
-                   - path: credentials.existingSecret
-                     value: "velero-bucket-credentials"
-       ```
+           > [!NOTE]
+           > The defaults point to an in-cluster MinIO instance used for local development. For production, set all values to match your S3-compatible storage provider.
 
-       The Secret must follow this format:
+         </TabItem>
+         <TabItem label="Existing Kubernetes Secret">
 
-       ```yaml
-       apiVersion: v1
-       kind: Secret
-       metadata:
-         name: velero-bucket-credentials
-         namespace: velero
-       type: Opaque
-       stringData:
-         cloud: |
-           [default]
-           aws_access_key_id=<your-access-key>
-           aws_secret_access_key=<your-secret-key>
-       ```
+           If your environment pre-provisions Kubernetes Secrets (for example, via an external secrets operator), you can reference an existing Secret instead of having Zarf create one:
+
+           ```yaml title="uds-bundle.yaml"
+           packages:
+             - name: core
+               repository: registry.defenseunicorns.com/public/core
+               ref: x.x.x-upstream
+               overrides:
+                 velero:
+                   velero:
+                     values:
+                       - path: credentials.existingSecret
+                         value: "velero-bucket-credentials"
+           ```
+
+           The Secret must follow this format:
+
+           ```yaml
+           apiVersion: v1
+           kind: Secret
+           metadata:
+             name: velero-bucket-credentials
+             namespace: velero
+           type: Opaque
+           stringData:
+             cloud: |
+               [default]
+               aws_access_key_id=<your-access-key>
+               aws_secret_access_key=<your-secret-key>
+           ```
+
+         </TabItem>
+         <TabItem label="IRSA on Amazon EKS">
+
+           IRSA (IAM Roles for Service Accounts) lets Velero assume an IAM role without storing credentials in the cluster. The Amazon EKS OIDC webhook injects temporary credentials that the AWS SDK uses automatically.
+
+           Before configuring your bundle, provision the required IAM resources. The examples below use [OpenTofu](https://opentofu.org/docs/intro/install/) and assume an `aws` provider is already configured in your workspace.
+
+           Create the S3 access policy:
+
+           ```hcl title="velero-s3-policy.tf"
+           # Velero S3 backup storage policy
+           # Reference: https://github.com/vmware-tanzu/velero-plugin-for-aws?tab=readme-ov-file#set-permissions-for-velero
+           data "aws_iam_policy_document" "velero_s3" {
+             statement {
+               effect  = "Allow"
+               actions = [
+                 "s3:GetObject",
+                 "s3:DeleteObject",
+                 "s3:PutObject",
+                 "s3:AbortMultipartUpload",
+                 "s3:ListMultipartUploadParts",
+               ]
+               resources = ["arn:aws:s3:::YOUR_VELERO_BUCKET/*"]
+             }
+
+             statement {
+               effect  = "Allow"
+               actions = [
+                 "s3:ListBucket",
+                 "s3:GetBucketLocation",
+                 "s3:ListBucketMultipartUploads",
+               ]
+               resources = ["arn:aws:s3:::YOUR_VELERO_BUCKET"]
+             }
+           }
+
+           resource "aws_iam_policy" "velero_s3" {
+             name   = "velero-s3-policy"
+             policy = data.aws_iam_policy_document.velero_s3.json
+           }
+           ```
+
+           > [!NOTE]
+           > Replace `YOUR_VELERO_BUCKET` with your backup bucket name. If the bucket uses SSE-KMS encryption, also grant `kms:Decrypt`, `kms:GenerateDataKey`, and `kms:DescribeKey` on the KMS key ARN.
+
+           Create a role that the `velero-server` service account in the `velero` namespace can assume:
+
+           ```hcl title="velero-irsa-role.tf"
+           # The OIDC provider URL for your EKS cluster, without the https:// prefix.
+           # Example: oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE1234567890
+           variable "oidc_provider" {
+             description = "EKS cluster OIDC provider URL (without https://)"
+           }
+
+           # Look up the OIDC provider already registered in IAM for this cluster
+           data "aws_iam_openid_connect_provider" "eks" {
+             url = "https://${var.oidc_provider}"
+           }
+
+           data "aws_iam_policy_document" "velero_irsa_trust" {
+             statement {
+               effect = "Allow"
+
+               principals {
+                 type        = "Federated"
+                 identifiers = [data.aws_iam_openid_connect_provider.eks.arn]
+               }
+
+               actions = ["sts:AssumeRoleWithWebIdentity"]
+
+               condition {
+                 test     = "StringEquals"
+                 variable = "${var.oidc_provider}:sub"
+                 # Scopes the role to the velero-server service account in the velero namespace
+                 values   = ["system:serviceaccount:velero:velero-server"]
+               }
+
+               condition {
+                 test     = "StringEquals"
+                 variable = "${var.oidc_provider}:aud"
+                 values   = ["sts.amazonaws.com"]
+               }
+             }
+           }
+
+           resource "aws_iam_role" "velero" {
+             name               = "velero-backup-role"
+             assume_role_policy = data.aws_iam_policy_document.velero_irsa_trust.json
+           }
+
+           resource "aws_iam_role_policy_attachment" "velero_s3" {
+             role       = aws_iam_role.velero.name
+             policy_arn = aws_iam_policy.velero_s3.arn
+           }
+           ```
+
+           Place both `.tf` files in the same directory. Supply `oidc_provider` via a `-var` flag or a `terraform.tfvars` file, then apply:
+
+           ```bash
+           tofu init
+           tofu plan
+           tofu apply
+           ```
+
+           > [!NOTE]
+           > If you use Terraform instead of OpenTofu, replace `tofu` with `terraform`: the commands are identical.
+
+           Add the overrides below to your bundle. Setting `credentials.useSecret: false` tells Velero not to mount a credentials file, so the AWS SDK uses the web identity token the IRSA webhook injects. The `configuration.backupStorageLocation` override replaces the default UDS Core configuration, which includes a credential `Secret` reference incompatible with IRSA.
+
+           ```yaml title="uds-bundle.yaml"
+           packages:
+             - name: core
+               repository: registry.defenseunicorns.com/public/core
+               ref: x.x.x-upstream
+               overrides:
+                 velero:
+                   velero:
+                     variables:
+                       # IRSA role ARN annotated on the Velero service account
+                       - name: VELERO_IRSA_ROLE_ARN
+                         path: serviceAccount.server.annotations.eks\.amazonaws\.com/role-arn
+                     values:
+                       # Disable the credentials Secret; Velero uses the web identity token from the IRSA webhook
+                       - path: credentials.useSecret
+                         value: false
+                       # Override the backup storage location to remove the credential reference
+                       # used by the default static-key configuration
+                       - path: configuration.backupStorageLocation
+                         value:
+                           - name: default
+                             provider: aws
+                             bucket: "<your-bucket-name>"
+                             config:
+                               region: "<your-region>"
+                               s3ForcePathStyle: false
+           ```
+
+           Supply the role ARN in your `uds-config.yaml`:
+
+           ```yaml title="uds-config.yaml"
+           variables:
+             core:
+               VELERO_IRSA_ROLE_ARN: "arn:aws:iam::123456789012:role/velero-backup-role"
+           ```
+
+           > [!IMPORTANT]
+           > Replace `<your-bucket-name>` and `<your-region>` with your actual values directly in the bundle YAML. Unlike the static-credential approach, these cannot be set in `uds-config.yaml` because the entire `configuration.backupStorageLocation` array must be overridden to remove the credential `Secret` reference incompatible with IRSA. Set `s3ForcePathStyle: false` for AWS S3; use `true` only for MinIO or other providers that require path-style access.
+
+         </TabItem>
+       </Tabs>
 
      </TabItem>
      <TabItem label="Azure Blob Storage">
@@ -274,6 +433,7 @@ Common causes include malformed credential Secrets and missing required configur
 - [Velero: Backup Storage Locations](https://velero.io/docs/latest/api-types/backupstoragelocation/) - BSL configuration reference
 - [Velero Helm Chart](https://github.com/vmware-tanzu/helm-charts/tree/main/charts/velero) - full list of upstream Helm values
 - [Backup & restore concepts](/concepts/core-features/backup-restore/) - how Velero fits into UDS Core
-- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - Capture persistent volume data using AWS EBS snapshots on EKS clusters.
-- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - Capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
-- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - Verify your scheduled backups are running and trigger a manual backup on demand.
+- [Configure Velero with IRSA on Amazon EKS](/how-to-guides/backup-and-restore/configure-velero-irsa/) - authenticate Velero to S3 using IAM Roles for Service Accounts instead of static access keys.
+- [Enable volume snapshots (AWS EBS)](/how-to-guides/backup-and-restore/enable-volume-snapshots-aws-ebs/) - capture persistent volume data using AWS EBS snapshots on EKS clusters.
+- [Enable volume snapshots (vSphere CSI)](/how-to-guides/backup-and-restore/enable-volume-snapshots-vsphere/) - capture persistent volume data using vSphere CSI snapshots on RKE2 clusters.
+- [Perform a manual backup](/how-to-guides/backup-and-restore/perform-backup/) - verify your scheduled backups are running and trigger a manual backup on demand.
