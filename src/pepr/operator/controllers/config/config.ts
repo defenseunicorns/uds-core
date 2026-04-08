@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -18,7 +18,7 @@ import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { registerWatchEventHandlers, watchCfg } from "../utils";
-import { Config } from "./types";
+import { Config, KeycloakClientMode } from "./types";
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 
@@ -34,6 +34,7 @@ export const UDSConfig: Config = {
     publicCerts: "",
   },
   authserviceRedisUri: "",
+  keycloakClientMode: KeycloakClientMode.AUTO,
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
@@ -174,6 +175,18 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
     if (updateClusterResources) {
       await performAuthserviceUpdate("change to Redis URI");
     }
+  }
+
+  // Handle KEYCLOAK_CLIENT_MODE
+  const clientMode =
+    (decodedCfgData.KEYCLOAK_CLIENT_MODE as KeycloakClientMode) || KeycloakClientMode.AUTO;
+  if (Object.values(KeycloakClientMode).includes(clientMode)) {
+    UDSConfig.keycloakClientMode = clientMode;
+  } else {
+    configLog.warn(
+      `Invalid KEYCLOAK_CLIENT_MODE: ${decodedCfgData.KEYCLOAK_CLIENT_MODE}, defaulting to AUTO`,
+    );
+    UDSConfig.keycloakClientMode = KeycloakClientMode.AUTO;
   }
 
   configLog.info(getConfigLogMessage(action, ConfigStep.FINISH, resourceName));

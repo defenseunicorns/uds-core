@@ -31,6 +31,8 @@ Applications deployed on regulated platforms cannot each maintain their own user
 - Creates a Keycloak OIDC client with the correct redirect URIs
 - Stores the client credentials in a Kubernetes secret in the application namespace
 
+The operator authenticates to Keycloak using Federated Signed JWTs backed by projected Kubernetes Service Account tokens. This eliminates the need for a shared client secret between the operator and Keycloak. The authentication method is configurable via the `KEYCLOAK_CLIENT_MODE` setting in the `uds-operator-config` Secret.
+
 From there, how SSO works depends on whether the application supports OIDC natively.
 
 <Tabs>
