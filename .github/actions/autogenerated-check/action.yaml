@@ -8,7 +8,7 @@ runs:
   using: composite
   steps:
     - name: Environment setup
-      uses: ./.github/actions/setup
+      uses: ./.github/actions/setup-tools
 
     - name: Autogenerate Files
       shell: bash

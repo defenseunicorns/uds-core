@@ -142,7 +142,7 @@ module "eks" {
   # EKS Addons
   addons = {
     vpc-cni = {
-      most_recent    = true
+      most_recent    = false // use the default version rather than the latest version
       before_compute = true
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
@@ -167,7 +167,7 @@ module "eks" {
                   lameduck 5s
               }
               ready
-              kubernetes cluster.local cluster.local in-addr.arpa ip6.arpa {
+              kubernetes cluster.local in-addr.arpa ip6.arpa {
                   pods insecure
                   fallthrough in-addr.arpa ip6.arpa
                   ttl 30

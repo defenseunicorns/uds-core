@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: Test packages
@@ -57,11 +57,12 @@ jobs:
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
-          registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
-          registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
           ghToken: ${{ secrets.GITHUB_TOKEN }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+          registry1Username: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
+          registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
+          rapidfortUsername: ${{ (inputs.flavor == 'unicorn') && secrets.RAPIDFORT_USERNAME || '' }}
+          rapidfortPassword: ${{ (inputs.flavor == 'unicorn') && secrets.RAPIDFORT_PASSWORD || '' }}
+          installK3d: 'true'
 
       - name: Test a single layer package
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
