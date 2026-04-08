@@ -30,7 +30,6 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 ## Packaging lifecycle and configuration
 
 - **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-and-observability/capture-application-metrics/)
-- **MUST** be versioned using the UDS Package [Versioning scheme](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#versioning).
 - **MUST** contain documentation under a `docs` folder at the root that describes how to configure the package and outlines package dependencies.
 - **MUST** include application [metadata for UDS Registry](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/metadata-guidelines.md) publishing.
 - **SHOULD** expose all configuration (`uds.dev` CRs, additional `Secrets`/`ConfigMaps`, etc) through a Helm chart (ideally in a `chart` or `charts` directory).
@@ -59,16 +58,39 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Testing
 
-- **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
-- **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/testing-guidelines.md))
+- **MUST** implement Journey testing, covering the basic user flows and features of the application. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
+- **MUST** implement Upgrade Testing to ensure that the current development package works when deployed over the previously released one. (see [Testing Guidelines](/how-to-guides/packaging-applications/package-testing/))
 
 ## Package maintenance
 
-- **MUST** be actively maintained by the package maintainers identified in CODEOWNERS. [See CODEOWNERS guidance](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/requirements/uds-package-requirements.md#codeowners)
+- **MUST** be actively maintained by the package maintainers identified in CODEOWNERS.
 - **MUST** have a dependency management bot (such as renovate) configured to open PRs to update the core package and support dependencies.
 - **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
 - **SHOULD** lint their configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
+
+## Versioning
+
+- **MUST** use the versioning scheme described below. If the scheme does not apply (for example, a monorepo like [UDS Core](https://github.com/defenseunicorns/uds-core)), use [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.html) instead.
+- **MUST** version consistently across flavors. Flavors should differ in image bases or builds, not application versions.
+- **SHOULD** prepend `git` tags with a `v` to distinguish them from other tags, while leaving OCI tags as the raw version.
+
+<details>
+<summary>Example versioning scheme</summary>
+
+Versions follow the format `<upstream-app-version>-uds.<uds-sub-version>`.
+
+- `upstream-app-version` -- the version of the application itself.
+- `uds-sub-version` -- the UDS release number, it starts at `0` and increments with each release that doesn't change the app version.
+
+Example where App Version for Reference package is `0.1.0` and the App Version stays the same:
+	•	First UDS release `0.1.0-uds.0`
+	•	Second UDS release `0.1.0-uds.1`
+
+Example where App Version increments from `0.1.0` -> `0.2.0`:
+  •	First UDS release `0.2.0-uds.0`
+
+</details>
 
 > [!TIP]
 > Ready to create your own package? See the [Packaging Applications](/how-to-guides/packaging-applications/overview/) how-to guides for step-by-step guidance.
