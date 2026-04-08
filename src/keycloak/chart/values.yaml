@@ -5,7 +5,7 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.5.6"
+  tag: "26.5.7"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
@@ -377,6 +377,10 @@ autoscaling:
 # Istio waypoint configuration
 waypoint:
   deployment:
+    # Additional annotations to add to the waypoint pods
+    podAnnotations: {}
+    # Additional labels to add to the waypoint pods
+    podLabels: {}
     # Larger requests by default since Keycloak manages all SSO for the cluster
     requests:
       cpu: 250m
