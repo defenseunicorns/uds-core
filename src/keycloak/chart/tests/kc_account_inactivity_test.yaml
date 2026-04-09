@@ -1,0 +1,39 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - realmInitEnv.ACCOUNT_INACTIVITY_DAYS propagation
+templates:
+  - secret-kc-realm.yaml
+
+tests:
+  - it: should not include REALM_ACCOUNT_INACTIVITY_DAYS and set ENABLED to false when ACCOUNT_INACTIVITY_DAYS is not set
+    asserts:
+      - isKind:
+          of: Secret
+      - hasDocuments:
+          count: 1
+      - notExists:
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS
+      - equal:
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS_ENABLED
+          # base64("false")
+          value: "ZmFsc2U="
+
+  - it: should include REALM_ACCOUNT_INACTIVITY_DAYS and set ENABLED to true when ACCOUNT_INACTIVITY_DAYS is set to a positive value
+    set:
+      realmInitEnv.ACCOUNT_INACTIVITY_DAYS: "35"
+    asserts:
+      - isKind:
+          of: Secret
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS
+          # base64("35")
+          value: "MzU="
+      - equal:
+          path: data.REALM_ACCOUNT_INACTIVITY_DAYS_ENABLED
+          # base64("true")
+          value: "dHJ1ZQ=="
