@@ -23,18 +23,20 @@ UDS Core 1.2 replaces the UDS Operator's client secret-based Keycloak authentica
 
 This release upgrades UDS Identity Config to a version that introduces a Kubernetes Identity Provider in Keycloak and updates the `uds-operator` client to use `federated-jwt` authentication.
 
-When deploying the new UDS Core version with the updated Identity Config, the realm import handles all Keycloak changes automatically:
+**Fresh installs** receive all Keycloak changes automatically through the realm import:
 
 - Creates the `kubernetes` Identity Provider
 - Updates the `uds-operator` client's `clientAuthenticatorType` to `federated-jwt`
 - Adds `jwt.credential.sub` and `jwt.credential.issuer` attributes to the `uds-operator` client
 - Adds the `federated-jwt` authenticator to the UDS Client Credentials authentication flow
 
-The Pepr operator deployments are updated automatically with a projected Service Account token volume.
+**Upgraded clusters** require manual realm changes. You must apply the changes below through the Keycloak Admin Console.
 
-### Manual realm changes
+The Pepr operator deployments are updated automatically with a projected Service Account token volume in both cases.
 
-If automatic realm re-import is not available, apply these changes manually through the Keycloak Admin Console.
+### Manual realm changes (upgraded clusters)
+
+If you are upgrading an upgraded cluster, apply these changes manually through the Keycloak Admin Console.
 
 <Steps>
 
@@ -92,7 +94,13 @@ overrides:
 ```
 
 > [!CAUTION]
-> When using `CLIENT_SECRET` mode, the `uds-operator` client's **Client Authenticator** setting in Keycloak must be set to **Client ID and Secret** (not **Signed JWT - Federated**). The UDS Client Credentials authentication flow accepts both methods as alternatives, but the client-level authenticator setting determines which method Keycloak enforces for that client.
+> `CLIENT_SECRET` mode requires the `uds-operator` client authenticator in Keycloak to be set to **Client ID and Secret**. It will not work when the authenticator is set to **Signed JWT - Federated**, which is the default for:
+> - Fresh installs (the new Identity Config sets this automatically)
+> - Upgraded clusters where you have already applied the [manual realm changes](#manual-realm-changes-upgraded-clusters)
+>
+> To use `CLIENT_SECRET` mode in these cases, change the client authenticator to **Client ID and Secret** in the Keycloak Admin Console under **UDS realm > Clients > uds-operator > Credentials**.
+>
+> On upgraded clusters where you have not yet applied the realm changes, `CLIENT_SECRET` mode continues to work without modifications.
 
 ### Post-upgrade verification
 

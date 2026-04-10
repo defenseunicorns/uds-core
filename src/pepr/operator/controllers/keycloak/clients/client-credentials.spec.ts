@@ -80,6 +80,12 @@ describe("readServiceAccountToken", () => {
     expect(token).toBe("mock-sa-token");
   });
 
+  it("should trim trailing whitespace from the token", async () => {
+    vi.mocked(fs.promises.readFile).mockResolvedValueOnce("mock-sa-token\n");
+    const token = await readServiceAccountToken("/mock/path");
+    expect(token).toBe("mock-sa-token");
+  });
+
   it("should throw a descriptive error when the file does not exist", async () => {
     vi.mocked(fs.promises.readFile).mockRejectedValueOnce(
       new Error("ENOENT: no such file or directory"),
@@ -342,9 +348,9 @@ describe("credentialsGetAccessToken", () => {
       );
     });
 
-    it("should fall back to client secret when signed JWT fails", async () => {
+    it("should fall back to client secret on 401 auth error", async () => {
       mockFetch
-        .mockResolvedValueOnce(errorResponse(400, "Bad Request"))
+        .mockResolvedValueOnce(errorResponse(401, "Unauthorized"))
         .mockResolvedValueOnce(okTokenResponse("auto-cs-token"));
       mockK8sGet.mockResolvedValue({
         data: { "uds-operator": Buffer.from("secret").toString("base64") },
@@ -356,30 +362,48 @@ describe("credentialsGetAccessToken", () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    it("should fall back to client secret when SA token file is missing", async () => {
-      vi.mocked(fs.promises.readFile).mockRejectedValueOnce(
-        new Error("ENOENT: no such file or directory"),
-      );
+    it("should fall back to client secret on 403 auth error", async () => {
+      mockFetch
+        .mockResolvedValueOnce(errorResponse(403, "Forbidden"))
+        .mockResolvedValueOnce(okTokenResponse("auto-cs-token"));
       mockK8sGet.mockResolvedValue({
         data: { "uds-operator": Buffer.from("secret").toString("base64") },
       });
-      mockFetch.mockResolvedValue(okTokenResponse("fallback-token"));
 
       const token = await credentialsGetAccessToken();
 
-      expect(token).toBe("fallback-token");
+      expect(token).toBe("auto-cs-token");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("should throw on non-auth HTTP errors without falling back", async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(500, "Internal Server Error"));
+
+      await expect(credentialsGetAccessToken()).rejects.toThrow("500");
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          body: expect.stringContaining("client_secret=secret"),
-        }),
+    });
+
+    it("should throw on 400 without falling back", async () => {
+      mockFetch.mockResolvedValueOnce(errorResponse(400, "Bad Request"));
+
+      await expect(credentialsGetAccessToken()).rejects.toThrow("400");
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it("should throw when SA token file is missing without falling back", async () => {
+      vi.mocked(fs.promises.readFile).mockRejectedValueOnce(
+        new Error("ENOENT: no such file or directory"),
       );
+
+      await expect(credentialsGetAccessToken()).rejects.toThrow(
+        "Failed to read service account token",
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it("should throw when both methods fail", async () => {
       mockFetch
-        .mockResolvedValueOnce(errorResponse(400, "Bad Request"))
+        .mockResolvedValueOnce(errorResponse(401, "Unauthorized"))
         .mockResolvedValueOnce(errorResponse(401, "Unauthorized"));
       mockK8sGet.mockResolvedValue({
         data: { "uds-operator": Buffer.from("secret").toString("base64") },

@@ -8,7 +8,7 @@ import { fetch, K8s, kind } from "pepr";
 import { UDSConfig } from "../../config/config";
 import { KeycloakClientMode } from "../../config/types";
 import { Client } from "../types";
-import { baseUrl, log, throwErrorIfNeeded } from "./common";
+import { baseUrl, isAuthError, log, throwErrorIfNeeded } from "./common";
 
 export interface ClientWithId extends Client {
   id: string;
@@ -56,7 +56,7 @@ export function isCachedTokenValid(): boolean {
 
 export async function readServiceAccountToken(path: string = SA_TOKEN_PATH): Promise<string> {
   try {
-    return await fs.promises.readFile(path, "utf-8");
+    return (await fs.promises.readFile(path, "utf-8")).trim();
   } catch (e) {
     throw new Error(
       `Failed to read service account token at ${path}. Is the projected volume mounted?`,
@@ -110,7 +110,8 @@ function cacheToken(token: string) {
   cachedToken = token;
   try {
     cachedTokenExp = parseKeycloakToken(token).exp;
-  } catch {
+  } catch (e) {
+    log.warn(e, "Failed to parse token expiry, token will not be cached");
     cachedTokenExp = 0;
   }
 }
@@ -138,6 +139,9 @@ async function refreshToken(): Promise<string> {
         cacheToken(token);
         return token;
       } catch (e) {
+        if (!isAuthError(e)) {
+          throw e;
+        }
         log.warn(e, "Signed JWT authentication failed, falling back to client secret");
         const token = await getClientSecretToken();
         cacheToken(token);
