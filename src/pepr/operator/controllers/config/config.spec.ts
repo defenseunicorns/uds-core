@@ -12,6 +12,7 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+import { KeycloakClientMode } from "./types";
 import {
   ConfigAction,
   ConfigStep,
@@ -590,6 +591,59 @@ describe("handleUDSConfig", () => {
       await handleCfgSecret(emptyRedisURI, ConfigAction.UPDATE);
 
       expect(reconcileAuthservice).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("KEYCLOAK_CLIENT_MODE handling", () => {
+    it("should default to AUTO when key is missing", async () => {
+      UDSConfig.keycloakClientMode = KeycloakClientMode.CLIENT_SECRET;
+      const secretWithoutMode = { ...mockSecret, data: { AUTHSERVICE_REDIS_URI: btoa("uri") } };
+
+      await handleCfgSecret(secretWithoutMode, ConfigAction.LOAD);
+
+      expect(UDSConfig.keycloakClientMode).toBe(KeycloakClientMode.AUTO);
+    });
+
+    it("should set SIGNED_JWT when provided", async () => {
+      const secretWithMode = {
+        ...mockSecret,
+        data: {
+          AUTHSERVICE_REDIS_URI: btoa("uri"),
+          KEYCLOAK_CLIENT_MODE: btoa("SIGNED_JWT"),
+        },
+      };
+
+      await handleCfgSecret(secretWithMode, ConfigAction.LOAD);
+
+      expect(UDSConfig.keycloakClientMode).toBe(KeycloakClientMode.SIGNED_JWT);
+    });
+
+    it("should set CLIENT_SECRET when provided", async () => {
+      const secretWithMode = {
+        ...mockSecret,
+        data: {
+          AUTHSERVICE_REDIS_URI: btoa("uri"),
+          KEYCLOAK_CLIENT_MODE: btoa("CLIENT_SECRET"),
+        },
+      };
+
+      await handleCfgSecret(secretWithMode, ConfigAction.LOAD);
+
+      expect(UDSConfig.keycloakClientMode).toBe(KeycloakClientMode.CLIENT_SECRET);
+    });
+
+    it("should default to AUTO for invalid value", async () => {
+      const secretWithBadMode = {
+        ...mockSecret,
+        data: {
+          AUTHSERVICE_REDIS_URI: btoa("uri"),
+          KEYCLOAK_CLIENT_MODE: btoa("INVALID"),
+        },
+      };
+
+      await handleCfgSecret(secretWithBadMode, ConfigAction.LOAD);
+
+      expect(UDSConfig.keycloakClientMode).toBe(KeycloakClientMode.AUTO);
     });
   });
 

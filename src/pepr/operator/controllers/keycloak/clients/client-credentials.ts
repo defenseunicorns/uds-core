@@ -1,11 +1,14 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import fs from "fs";
 import { fetch, K8s, kind } from "pepr";
+import { UDSConfig } from "../../config/config";
+import { KeycloakClientMode } from "../../config/types";
 import { Client } from "../types";
-import { baseUrl, log, throwErrorIfNeeded } from "./common";
+import { baseUrl, isAuthError, log, throwErrorIfNeeded } from "./common";
 
 export interface ClientWithId extends Client {
   id: string;
@@ -23,8 +26,11 @@ const clientsAdminUrl = `${baseUrl}/admin/realms/uds/clients`;
 const clientCredentialsUrl = `${baseUrl}/realms/uds/protocol/openid-connect/token`;
 const SECRET_NAMESPACE = "keycloak";
 const SECRET_NAME = "keycloak-client-secrets";
-const UDS_OPERATOR_CLIENT_ID = "uds-operator";
+export const UDS_OPERATOR_CLIENT_ID = "uds-operator";
+export const SA_TOKEN_PATH = "/var/run/secrets/keycloak/token";
 let cachedToken: string | null = null;
+let cachedTokenExp: number = 0;
+let tokenRefreshPromise: Promise<string> | null = null;
 
 export interface KeycloakToken {
   exp: number;
@@ -40,21 +46,32 @@ export interface KeycloakToken {
 
 export function resetCachedToken() {
   cachedToken = null;
+  cachedTokenExp = 0;
 }
 
-export async function credentialsGetAccessToken() {
-  if (cachedToken) {
-    try {
-      const jwt = parseKeycloakToken(cachedToken);
-      if (jwt.exp && jwt.exp > Math.floor(Date.now() / 1000) + 5) return cachedToken;
-    } catch (e) {
-      log.error(e, "Failed to parse cached token");
-      cachedToken = null;
-    }
-  }
+export function isCachedTokenValid(): boolean {
+  if (!cachedToken) return false;
+  return cachedTokenExp > Math.floor(Date.now() / 1000) + 5;
+}
 
-  const secret = await K8s(kind.Secret).InNamespace(SECRET_NAMESPACE).Get(SECRET_NAME);
-  if (!secret) throw new Error("Missing secret");
+export async function readServiceAccountToken(path: string = SA_TOKEN_PATH): Promise<string> {
+  try {
+    return (await fs.promises.readFile(path, "utf-8")).trim();
+  } catch (e) {
+    throw new Error(
+      `Failed to read service account token at ${path}. Is the projected volume mounted?`,
+      { cause: e },
+    );
+  }
+}
+
+export async function getClientSecretToken(): Promise<string> {
+  let secret;
+  try {
+    secret = await K8s(kind.Secret).InNamespace(SECRET_NAMESPACE).Get(SECRET_NAME);
+  } catch (e) {
+    throw new Error(`Failed to retrieve secret ${SECRET_NAMESPACE}/${SECRET_NAME}`, { cause: e });
+  }
   const encodedSecret = secret.data?.[UDS_OPERATOR_CLIENT_ID];
   if (!encodedSecret) throw new Error("Missing client secret");
 
@@ -70,12 +87,83 @@ export async function credentialsGetAccessToken() {
     body: params.toString(),
   });
   await throwErrorIfNeeded(response);
-  cachedToken = response.data.access_token;
-  return cachedToken;
+  return response.data.access_token;
+}
+
+export async function getSignedJwtToken(): Promise<string> {
+  const saToken = await readServiceAccountToken();
+  const params = new URLSearchParams();
+  params.append("grant_type", "client_credentials");
+  params.append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+  params.append("client_assertion", saToken);
+
+  const response = await fetch<KeycloakAccessTokenResponse>(clientCredentialsUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+  await throwErrorIfNeeded(response);
+  return response.data.access_token;
+}
+
+function cacheToken(token: string) {
+  cachedToken = token;
+  try {
+    cachedTokenExp = parseKeycloakToken(token).exp;
+  } catch (e) {
+    log.warn(e, "Failed to parse token expiry, token will not be cached");
+    cachedTokenExp = 0;
+  }
+}
+
+async function refreshToken(): Promise<string> {
+  const mode = UDSConfig.keycloakClientMode;
+
+  switch (mode) {
+    case KeycloakClientMode.SIGNED_JWT: {
+      const token = await getSignedJwtToken();
+      cacheToken(token);
+      return token;
+    }
+
+    case KeycloakClientMode.CLIENT_SECRET: {
+      const token = await getClientSecretToken();
+      cacheToken(token);
+      return token;
+    }
+
+    case KeycloakClientMode.AUTO:
+    default:
+      try {
+        const token = await getSignedJwtToken();
+        cacheToken(token);
+        return token;
+      } catch (e) {
+        if (!isAuthError(e)) {
+          throw e;
+        }
+        log.warn(e, "Signed JWT authentication failed, falling back to client secret");
+        const token = await getClientSecretToken();
+        cacheToken(token);
+        return token;
+      }
+  }
+}
+
+export async function credentialsGetAccessToken(): Promise<string> {
+  if (isCachedTokenValid()) return cachedToken!;
+
+  if (tokenRefreshPromise) return tokenRefreshPromise;
+
+  tokenRefreshPromise = refreshToken().finally(() => {
+    tokenRefreshPromise = null;
+  });
+
+  return tokenRefreshPromise;
 }
 
 export async function credentialsCreateOrUpdate(client: Partial<Client>) {
-  log.info(`credentialsCreateOrUpdate: creating/updating client ${JSON.stringify(client)}`);
+  log.info(`credentialsCreateOrUpdate: creating/updating client ${client.clientId}`);
   const existingClient = await credentialsGet(client);
   if (existingClient) {
     return credentialsUpdate(client);
@@ -85,7 +173,7 @@ export async function credentialsCreateOrUpdate(client: Partial<Client>) {
 }
 
 export async function credentialsCreate(client: Partial<Client>) {
-  log.info(`credentialsCreate: creating client ${JSON.stringify(client)}`);
+  log.info(`credentialsCreate: creating client ${client.clientId}`);
   const token = await credentialsGetAccessToken();
   const response = await fetch(clientsAdminUrl, {
     method: "POST",
@@ -99,7 +187,7 @@ export async function credentialsCreate(client: Partial<Client>) {
 }
 
 export async function credentialsGet(client: Partial<Client>) {
-  log.info(`credentialsGet: retrieving client ${JSON.stringify(client)}`);
+  log.info(`credentialsGet: retrieving client ${client.clientId}`);
   const token = await credentialsGetAccessToken();
   const url = `${clientsAdminUrl}?clientId=${encodeURIComponent(client.clientId!)}`;
   // There's no Client GET REST endpoint that obtains a client based on client_id (the logical client name, like uds-operator).
@@ -117,7 +205,7 @@ export async function credentialsGet(client: Partial<Client>) {
 }
 
 export async function credentialsUpdate(client: Partial<Client>) {
-  log.info(`credentialsUpdate: updating client ${JSON.stringify(client)}`);
+  log.info(`credentialsUpdate: updating client ${client.clientId}`);
   const token = await credentialsGetAccessToken();
   const existing = await credentialsGet(client);
   if (!existing || !existing.id) {
@@ -136,7 +224,7 @@ export async function credentialsUpdate(client: Partial<Client>) {
 }
 
 export async function credentialsDelete(client: Partial<Client>) {
-  log.info(`credentialsDelete: deleting client ${JSON.stringify(client)}`);
+  log.info(`credentialsDelete: deleting client ${client.clientId}`);
   const token = await credentialsGetAccessToken();
   const existing = await credentialsGet(client);
   if (!existing || !existing.id) {

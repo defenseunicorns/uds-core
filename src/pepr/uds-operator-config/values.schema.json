@@ -10,6 +10,11 @@
         "AUTHSERVICE_REDIS_URI": {
           "type": "string",
           "description": "Redis URI for the auth service."
+        },
+        "KEYCLOAK_CLIENT_MODE": {
+          "type": "string",
+          "enum": ["AUTO", "CLIENT_SECRET", "SIGNED_JWT"],
+          "description": "Authentication mode for the UDS Operator Keycloak client. AUTO tries signed JWT first, then falls back to client secret."
         }
       }
     },

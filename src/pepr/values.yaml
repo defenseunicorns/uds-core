@@ -212,6 +212,18 @@ rbac:
 watcher:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
+  extraVolumeMounts:
+    - name: keycloak-token
+      mountPath: /var/run/secrets/keycloak
+      readOnly: true
+  extraVolumes:
+    - name: keycloak-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 600
+              audience: http://keycloak-http.keycloak.svc.cluster.local/realms/uds
   env:
     - name: UDS_LOG_LEVEL
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
@@ -229,6 +241,18 @@ watcher:
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
+  extraVolumeMounts:
+    - name: keycloak-token
+      mountPath: /var/run/secrets/keycloak
+      readOnly: true
+  extraVolumes:
+    - name: keycloak-token
+      projected:
+        sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 600
+              audience: http://keycloak-http.keycloak.svc.cluster.local/realms/uds
   env:
     - name: UDS_LOG_LEVEL
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
