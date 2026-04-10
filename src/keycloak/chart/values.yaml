@@ -57,6 +57,9 @@ realmInitEnv:
   SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS: ""
   SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES: ""
   # DISPLAY_NAME: "Unicorn Delivery Service"
+  # Number of days of inactivity after which a non-admin user account is automatically disabled.
+  # When unset, the workflow is disabled. Set to a positive integer to enable (e.g., 35).
+  # ACCOUNT_INACTIVITY_DAYS: "35"
 
 # Realm-level configuration
 realmConfig:
