@@ -5,7 +5,7 @@ loki:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/grafana/loki
-    tag: 3.6.7
+    tag: 3.7.1
   podSecurityContext:
     fsGroup: 10001
     runAsGroup: 10001
@@ -22,7 +22,7 @@ gateway:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/nginx/nginx-alpine
-    tag: 1.29.6
+    tag: 1.29.7
 memcached:
   image:
     repository: registry1.dso.mil/ironbank/opensource/memcached/memcached
@@ -31,4 +31,4 @@ memcached:
 sidecar:
   image:
     repository: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar
-    tag: 2.5.0
+    tag: 2.6.0
