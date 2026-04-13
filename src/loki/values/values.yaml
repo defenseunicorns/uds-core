@@ -210,6 +210,10 @@ gateway:
     labels:
       prometheus.io/service-monitor: "false"
 
+  # Metrics support requires additional image: https://github.com/grafana-community/helm-charts/pull/190
+  metrics:
+    enabled: false
+
 read:
   # Remove default anti-affinity to support single node
   affinity: null
