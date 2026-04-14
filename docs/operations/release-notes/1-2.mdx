@@ -1,0 +1,32 @@
+---
+title: UDS Core 1.2
+description: UDS Core 1.2 release notes covering upstream Istio network policies and Keycloak waypoint overrides.
+sidebar:
+  order: 3.993
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.2 adds upstream Istio network policies for all Istio components and also brings Keycloak waypoint pod annotation and label overrides for easier integration with service mesh tooling.
+
+### Notable features
+
+- **Upstream Istio network policies:** enables the upstream Istio Helm chart NetworkPolicies for all Istio components (istiod, istio-cni, ztunnel, and all gateways), restricting ingress to known ports while allowing all egress ([#2564](https://github.com/defenseunicorns/uds-core/pull/2564))
+- **Keycloak waypoint annotation/label overrides:** adds `waypoint.deployment.podAnnotations` and `waypoint.deployment.podLabels` Helm values for the Keycloak waypoint pod ([#2565](https://github.com/defenseunicorns/uds-core/pull/2565))
+
+### Dependency updates
+
+| Package            | Previous | Updated                                                                                |
+| ------------------ | -------- | -------------------------------------------------------------------------------------- |
+| Grafana            | 12.4.1   | [12.4.2](https://github.com/grafana/grafana/releases/tag/v12.4.2)                      |
+| Keycloak           | 26.5.6   | [26.5.7](https://github.com/keycloak/keycloak/releases/tag/26.5.7)                     |
+| Loki               | 3.6.7    | [3.7.1](https://github.com/grafana/loki/releases/tag/v3.7.1)                           |
+| Grafana Helm chart | 11.3.3   | [11.6.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.6.0) |
+| Loki Helm chart    | 6.57.0   | [11.6.4](https://github.com/grafana-community/helm-charts/releases/tag/loki-11.6.4)    |
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.2.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#120-2026-04-14) - full changelog
+- [Full diff (1.1.0...1.2.0)](https://github.com/defenseunicorns/uds-core/compare/v1.1.0...v1.2.0) - all changes between versions
