@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 
@@ -109,9 +109,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     snapshot_controller_enabled = true
   }
 
-  oidc_issuer_enabled = true
-  support_plan        = "KubernetesOfficial"
-  sku_tier            = var.sku_tier
+  oidc_issuer_enabled     = true
+  support_plan            = "KubernetesOfficial"
+  sku_tier                = var.sku_tier
+  node_os_upgrade_channel = "None"
 
   default_node_pool {
     name                        = var.default_node_pool_name
