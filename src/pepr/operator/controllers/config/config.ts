@@ -34,7 +34,7 @@ export const UDSConfig: Config = {
     publicCerts: "",
   },
   authserviceRedisUri: "",
-  keycloakClientMode: KeycloakClientMode.AUTO,
+  keycloakClientMode: KeycloakClientMode.CLIENT_SECRET,
   allowAllNSExemptions: false,
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
@@ -179,14 +179,14 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
 
   // Handle KEYCLOAK_CLIENT_MODE
   const clientMode =
-    (decodedCfgData.KEYCLOAK_CLIENT_MODE as KeycloakClientMode) || KeycloakClientMode.AUTO;
+    (decodedCfgData.KEYCLOAK_CLIENT_MODE as KeycloakClientMode) || KeycloakClientMode.CLIENT_SECRET;
   if (Object.values(KeycloakClientMode).includes(clientMode)) {
     UDSConfig.keycloakClientMode = clientMode;
   } else {
     configLog.warn(
-      `Invalid KEYCLOAK_CLIENT_MODE: ${decodedCfgData.KEYCLOAK_CLIENT_MODE}, defaulting to AUTO`,
+      `Invalid KEYCLOAK_CLIENT_MODE: ${decodedCfgData.KEYCLOAK_CLIENT_MODE}, defaulting to CLIENT_SECRET`,
     );
-    UDSConfig.keycloakClientMode = KeycloakClientMode.AUTO;
+    UDSConfig.keycloakClientMode = KeycloakClientMode.CLIENT_SECRET;
   }
 
   configLog.info(getConfigLogMessage(action, ConfigStep.FINISH, resourceName));
