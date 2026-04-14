@@ -1,6 +1,6 @@
 ---
 title: UDS Core 1.2
-description: UDS Core 1.2 release notes covering signed JWT operator authentication, upstream Istio network policies, user account inactivity disable, and Keycloak waypoint overrides.
+description: UDS Core 1.2 release notes covering upstream Istio network policies and Keycloak waypoint overrides.
 sidebar:
   order: 3.993
 ---
@@ -8,24 +8,22 @@ sidebar:
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.2 adds signed JWT client authentication for the UDS Operator's Keycloak communication, upstream Istio network policies for all Istio components, and automatic user account disable after configurable inactivity. This release also brings Keycloak waypoint pod annotation and label overrides for easier integration with service mesh tooling.
+UDS Core 1.2 adds upstream Istio network policies for all Istio components and also brings Keycloak waypoint pod annotation and label overrides for easier integration with service mesh tooling.
 
 ### Notable features
 
-- **Signed JWT operator authentication:** the UDS Operator now supports signed JWT client authentication for Keycloak API calls, with an automatic fallback to client secret. The default mode is `CLIENT_SECRET`; opt in via the `KEYCLOAK_CLIENT_MODE` operator config value set to `SIGNED_JWT` or `AUTO` ([#2580](https://github.com/defenseunicorns/uds-core/pull/2580))
 - **Upstream Istio network policies:** enables the upstream Istio Helm chart NetworkPolicies for all Istio components (istiod, istio-cni, ztunnel, and all gateways), restricting ingress to known ports while allowing all egress ([#2564](https://github.com/defenseunicorns/uds-core/pull/2564))
-- **User account inactivity disable:** adds a `realmConfig.accountInactivityDays` setting that automatically disables non-admin user accounts after a configurable period of inactivity. Set to `0` to disable this feature ([#2566](https://github.com/defenseunicorns/uds-core/pull/2566))
 - **Keycloak waypoint annotation/label overrides:** adds `waypoint.deployment.podAnnotations` and `waypoint.deployment.podLabels` Helm values for the Keycloak waypoint pod ([#2565](https://github.com/defenseunicorns/uds-core/pull/2565))
 
 ### Dependency updates
 
-| Package | Previous | Updated |
-|---------|----------|---------|
-| Grafana | 12.4.1 | [12.4.2](https://github.com/grafana/grafana/releases/tag/v12.4.2) |
-| Keycloak | 26.5.6 | [26.5.7](https://github.com/keycloak/keycloak/releases/tag/26.5.7) |
-| Loki | 3.6.7 | [3.7.1](https://github.com/grafana/loki/releases/tag/v3.7.1) |
-| Grafana Helm chart | 11.3.3 | [11.6.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.6.0) |
-| Loki Helm chart | 6.57.0 | [11.6.4](https://github.com/grafana-community/helm-charts/releases/tag/loki-11.6.4) |
+| Package            | Previous | Updated                                                                                |
+| ------------------ | -------- | -------------------------------------------------------------------------------------- |
+| Grafana            | 12.4.1   | [12.4.2](https://github.com/grafana/grafana/releases/tag/v12.4.2)                      |
+| Keycloak           | 26.5.6   | [26.5.7](https://github.com/keycloak/keycloak/releases/tag/26.5.7)                     |
+| Loki               | 3.6.7    | [3.7.1](https://github.com/grafana/loki/releases/tag/v3.7.1)                           |
+| Grafana Helm chart | 11.3.3   | [11.6.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.6.0) |
+| Loki Helm chart    | 6.57.0   | [11.6.4](https://github.com/grafana-community/helm-charts/releases/tag/loki-11.6.4)    |
 
 ## Related documentation
 
