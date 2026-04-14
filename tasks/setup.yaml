@@ -14,7 +14,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.74.0 --confirm"
+        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.74.2 --confirm"
 
   - name: ha-postgres
     actions:
