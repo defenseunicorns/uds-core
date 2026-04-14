@@ -41,6 +41,7 @@ jobs:
           echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
+          echo "TF_VAR_enable_control_plane_logs=true" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
           echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
           echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
@@ -88,6 +89,10 @@ jobs:
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
+      - name: Get Resource Group Name
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
+        working-directory: .github/test-infra/azure/aks
+
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
@@ -113,6 +118,7 @@ jobs:
         with:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
+          resource_group: ${{ env.AKS_RESOURCE_GROUP }}
 
       - name: Remove UDS Core
         if: always()

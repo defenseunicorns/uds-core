@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: save-logs
@@ -13,6 +13,10 @@ inputs:
     description: "Kubernetes distribution used in this CI run"
     required: false
     default: "k3d"
+  resource_group:
+    description: "Azure resource group name (required for AKS log collection)"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -67,6 +71,43 @@ runs:
       shell: bash
 
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - name: AKS Control Plane Logs
+      if: ${{ inputs.distro == 'aks' && inputs.resource_group != '' }}
+      timeout-minutes: 5
+      run: |
+        echo "::group::Collecting AKS control plane logs"
+        mkdir -p /tmp/control-plane-logs
+
+        # Find the Log Analytics workspace in the resource group
+        WORKSPACE_ID=$(az monitor log-analytics workspace list \
+          --resource-group "${{ inputs.resource_group }}" \
+          --query "[0].customerId" -o tsv)
+
+        if [ -z "$WORKSPACE_ID" ]; then
+          echo "No Log Analytics workspace found in resource group ${{ inputs.resource_group }}"
+          echo "{ \"error\": \"No Log Analytics workspace found\" }" > /tmp/control-plane-logs/all-diagnostics.json
+        else
+          echo "Found workspace: $WORKSPACE_ID"
+
+          # Query all control plane diagnostic logs
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | order by TimeGenerated desc" \
+            --output json > /tmp/control-plane-logs/all-diagnostics.json 2>/dev/null || echo "[]" > /tmp/control-plane-logs/all-diagnostics.json
+
+          # Query specifically for webhook and connection errors across all categories
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | where log_s has_any ('webhook', 'connection reset', 'EOF', 'timeout', 'TLS handshake') | order by TimeGenerated desc" \
+            --output json > /tmp/control-plane-logs/webhook-errors.json 2>/dev/null || echo "[]" > /tmp/control-plane-logs/webhook-errors.json
+
+          echo "All diagnostics size: $(wc -c < /tmp/control-plane-logs/all-diagnostics.json) bytes"
+          echo "Webhook errors size: $(wc -c < /tmp/control-plane-logs/webhook-errors.json) bytes"
+        fi
+        echo "::endgroup::"
+      shell: bash
+
+    - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: debug-log${{ inputs.suffix }}
         retention-days: 7
@@ -76,6 +117,7 @@ runs:
           /tmp/maru-*.log
           /tmp/debug-*.log
           /tmp/pod-logs
+          /tmp/control-plane-logs
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
           /tmp/playwright/output
