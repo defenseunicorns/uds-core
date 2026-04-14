@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.2.0](https://github.com/defenseunicorns/uds-core/compare/v1.1.0...v1.2.0) (2026-04-14)
+
+
+### Features
+
+* add upstream istio network policies ([#2564](https://github.com/defenseunicorns/uds-core/issues/2564)) ([bd1f2e4](https://github.com/defenseunicorns/uds-core/commit/bd1f2e4acdb2945ac1887e81668227291f183018))
+* add user account disabled with inactivity ([#2566](https://github.com/defenseunicorns/uds-core/issues/2566)) ([5e2d206](https://github.com/defenseunicorns/uds-core/commit/5e2d206bedfbcfd191a0627bc8277afdce7eccde))
+* allow annotation/label overrides for keycloak waypoint pod ([#2565](https://github.com/defenseunicorns/uds-core/issues/2565)) ([ad2b20e](https://github.com/defenseunicorns/uds-core/commit/ad2b20ef5e0cd0630960cf134e4eb0997b4a4fce))
+* signed jwts for the uds operator ([#2580](https://github.com/defenseunicorns/uds-core/issues/2580)) ([4305e80](https://github.com/defenseunicorns/uds-core/commit/4305e80e468b6cee7b101a8a0fe4ea2c727f2b36))
+
+
+### Miscellaneous
+
+* **ci:** ensure minimal tool and cred usage in workflows ([#2572](https://github.com/defenseunicorns/uds-core/issues/2572)) ([1bdb83e](https://github.com/defenseunicorns/uds-core/commit/1bdb83e4e5806d42b7917a4fd2df6b5bff4a1fa5))
+* **deps-dev:** bump lodash from 4.17.23 to 4.18.1 in /test/vitest ([#2574](https://github.com/defenseunicorns/uds-core/issues/2574)) ([d714fcc](https://github.com/defenseunicorns/uds-core/commit/d714fcc04e140dcc8b555026405faaaeb569559c))
+* **deps-dev:** bump vite from 7.1.12 to 8.0.5 in /scripts/renovate ([#2570](https://github.com/defenseunicorns/uds-core/issues/2570)) ([5ee3fe7](https://github.com/defenseunicorns/uds-core/commit/5ee3fe791bfa29cb80f43dad67561d116cbf0d5b))
+* **deps-dev:** bump vite from 7.1.12 to 8.0.5 in /test/vitest ([#2569](https://github.com/defenseunicorns/uds-core/issues/2569)) ([11d333b](https://github.com/defenseunicorns/uds-core/commit/11d333b5971efc808927fb990ebd8a7d6759a1dd))
+* **deps-dev:** bump vite from 7.2.2 to 8.0.5 in /scripts/root-ca-retriever ([#2571](https://github.com/defenseunicorns/uds-core/issues/2571)) ([78cdd72](https://github.com/defenseunicorns/uds-core/commit/78cdd72ebe787abd363da4e9cd28d82231a3d3e7))
+* **deps-dev:** bump vite from 7.3.1 to 7.3.2 in /docs/.c4 ([#2573](https://github.com/defenseunicorns/uds-core/issues/2573)) ([c880699](https://github.com/defenseunicorns/uds-core/commit/c8806990862c052fc3ecce622e63d311fc15c436))
+* **deps:** bump identity config to v0.26.0 ([#2588](https://github.com/defenseunicorns/uds-core/issues/2588)) ([3f375de](https://github.com/defenseunicorns/uds-core/commit/3f375de7ae781162cf6a4353e2766f6854a9c25f))
+* **deps:** bump lodash from 4.17.23 to 4.18.1 ([#2575](https://github.com/defenseunicorns/uds-core/issues/2575)) ([be72da8](https://github.com/defenseunicorns/uds-core/commit/be72da8e03dcaeedd8870f22d3794dbc72edc12c))
+* **deps:** bump vite from 8.0.3 to 8.0.5 ([#2568](https://github.com/defenseunicorns/uds-core/issues/2568)) ([a385ff7](https://github.com/defenseunicorns/uds-core/commit/a385ff7b7b85bac5ad5514de28d1cb167ae6a121))
+* **deps:** update grafana from 12.4.1 to 12.4.2 ([#2517](https://github.com/defenseunicorns/uds-core/issues/2517)) ([3c40a8a](https://github.com/defenseunicorns/uds-core/commit/3c40a8a62f015e37e746c1a5878ed66ca7e14304))
+* **deps:** update keycloak from 26.5.6 to 26.5.7 ([#2563](https://github.com/defenseunicorns/uds-core/issues/2563)) ([43e8f11](https://github.com/defenseunicorns/uds-core/commit/43e8f113fbcf6f5d4e385b9fcc78c126bc339d57))
+* **deps:** update support-deps ([#2559](https://github.com/defenseunicorns/uds-core/issues/2559)) ([3d476e0](https://github.com/defenseunicorns/uds-core/commit/3d476e0bc9e2eb2d89b12b32ce1348a0deb8849f))
+* **docs:** add cloud specific guidance docs for IRSA config ([#2528](https://github.com/defenseunicorns/uds-core/issues/2528)) ([b79df89](https://github.com/defenseunicorns/uds-core/commit/b79df89e08f830628e5366be9213acaec2c03cfa))
+* **docs:** add release notes for 1.2.0 ([#2591](https://github.com/defenseunicorns/uds-core/issues/2591)) ([79b69be](https://github.com/defenseunicorns/uds-core/commit/79b69be420170b6ff939d07ddf8bf591656fde3f))
+* **docs:** enable release branch versioned docs ([#2583](https://github.com/defenseunicorns/uds-core/issues/2583)) ([421aad2](https://github.com/defenseunicorns/uds-core/commit/421aad29b5108683ac9acaff1fc9f3bfda2375e1))
+* **docs:** removed old uds common links ([#2557](https://github.com/defenseunicorns/uds-core/issues/2557)) ([d1d69cf](https://github.com/defenseunicorns/uds-core/commit/d1d69cf6483e24f9068bdee6b0c6a6a4ad7f5652))
+* fix helper CI scripts by adding node types ([#2558](https://github.com/defenseunicorns/uds-core/issues/2558)) ([4f98b44](https://github.com/defenseunicorns/uds-core/commit/4f98b4427d8dce9484fbb60b24767175bd9b4a9d))
+
 ## [1.1.0](https://github.com/defenseunicorns/uds-core/compare/v1.0.0...v1.1.0) (2026-03-31)
 
 
