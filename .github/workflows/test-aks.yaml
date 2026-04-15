@@ -98,9 +98,6 @@ jobs:
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
-      - name: Wait for AKS to complete initial control plane setup
-        run: sleep 900
-
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
@@ -113,6 +110,10 @@ jobs:
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
+
+      - name: Wait for Log Analytics ingestion
+        if: failure()
+        run: sleep 300
 
       - name: Azure login (refresh token for log collection)
         if: always()
