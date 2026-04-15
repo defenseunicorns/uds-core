@@ -140,6 +140,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     upgrade_settings {
       max_surge = "10%"
     }
+
+    linux_os_config {
+      sysctl_config {
+        fs_nr_open       = 12000500
+        fs_file_max      = 12000500
+        vm_max_map_count = 262144
+      }
+    }
   }
 }
 

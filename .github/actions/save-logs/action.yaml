@@ -83,10 +83,7 @@ runs:
           --query "[0].customerId" -o tsv 2>"$WORKSPACE_ERR") || true
 
         if [ -z "$WORKSPACE_ID" ]; then
-          WORKSPACE_ERR_MSG=$(cat "$WORKSPACE_ERR")
-          echo "::warning::Failed to find Log Analytics workspace in ${{ inputs.resource_group }}: ${WORKSPACE_ERR_MSG:-no workspace exists}"
-          echo "{ \"error\": \"Failed to find Log Analytics workspace\", \"details\": \"${WORKSPACE_ERR_MSG:-no workspace exists}\" }" > /tmp/control-plane-logs/all-diagnostics.json
-          echo "{ \"error\": \"Failed to find Log Analytics workspace\" }" > /tmp/control-plane-logs/webhook-errors.json
+          echo "::warning::Failed to find Log Analytics workspace in ${{ inputs.resource_group }}: $(cat "$WORKSPACE_ERR" || echo 'no workspace exists')"
         else
           echo "Found workspace: $WORKSPACE_ID"
 
@@ -94,26 +91,22 @@ runs:
           az monitor log-analytics query \
             --workspace "$WORKSPACE_ID" \
             --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | order by TimeGenerated desc" \
-            --output json > /tmp/control-plane-logs/all-diagnostics.json 2>/tmp/control-plane-logs/all-diagnostics.err \
+            --output json > /tmp/control-plane-logs/all-diagnostics.json 2>&1 \
             || {
               echo "::warning::Failed to query all-diagnostics from Log Analytics"
-              cat /tmp/control-plane-logs/all-diagnostics.err
-              echo "{ \"error\": \"az monitor log-analytics query failed\", \"details\": \"$(cat /tmp/control-plane-logs/all-diagnostics.err)\" }" > /tmp/control-plane-logs/all-diagnostics.json
+              rm -f /tmp/control-plane-logs/all-diagnostics.json
             }
 
           # Query specifically for webhook and connection errors across all categories
           az monitor log-analytics query \
             --workspace "$WORKSPACE_ID" \
             --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | where log_s has_any ('webhook', 'connection reset', 'EOF', 'timeout', 'TLS handshake') | order by TimeGenerated desc" \
-            --output json > /tmp/control-plane-logs/webhook-errors.json 2>/tmp/control-plane-logs/webhook-errors.err \
+            --output json > /tmp/control-plane-logs/webhook-errors.json 2>&1 \
             || {
               echo "::warning::Failed to query webhook-errors from Log Analytics"
-              cat /tmp/control-plane-logs/webhook-errors.err
-              echo "{ \"error\": \"az monitor log-analytics query failed\", \"details\": \"$(cat /tmp/control-plane-logs/webhook-errors.err)\" }" > /tmp/control-plane-logs/webhook-errors.json
+              rm -f /tmp/control-plane-logs/webhook-errors.json
             }
 
-          echo "All diagnostics size: $(wc -c < /tmp/control-plane-logs/all-diagnostics.json) bytes"
-          echo "Webhook errors size: $(wc -c < /tmp/control-plane-logs/webhook-errors.json) bytes"
         fi
         echo "::endgroup::"
       shell: bash

@@ -121,7 +121,10 @@ jobs:
 
       - name: Install log-analytics extension
         if: always()
-        run: az extension add --name log-analytics --allow-preview true --yes 2>/dev/null || true
+        run: |
+          if ! az extension add --name log-analytics --allow-preview true --yes; then
+            echo "::warning::Failed to install Azure CLI log-analytics extension; control plane log collection may be incomplete."
+          fi
 
       - name: Save logs
         if: always()
