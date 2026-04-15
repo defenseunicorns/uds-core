@@ -181,5 +181,19 @@ describe("istio-configmap-sync restartGatewayPods", () => {
       await restartGatewayPods(buildTopology({ proxyProtocol: { someFutureField: "v2" } }));
       expect(reloadPodsMock).toHaveBeenCalledTimes(2);
     });
+
+    it("retries next reconcile when reloadPods throws (no premature lastSeen advance)", async () => {
+      // Regression guard: if reloadPods throws mid-way, lastSeenMeshConfig must
+      // not be advanced, or the same ConfigMap would be skipped on retry and a
+      // gateway would silently run stale config.
+      const cm = buildTopology({ numTrustedProxies: 1 });
+      reloadPodsMock.mockRejectedValueOnce(new Error("API timeout"));
+
+      await expect(restartGatewayPods(cm)).rejects.toThrow("API timeout");
+      reloadPodsMock.mockClear();
+
+      await restartGatewayPods(cm);
+      expect(reloadPodsMock).toHaveBeenCalledTimes(2);
+    });
   });
 });

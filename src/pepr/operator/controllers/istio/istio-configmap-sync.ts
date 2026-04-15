@@ -47,8 +47,6 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
         lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.forwardClientCertDetails ||
       newProxyProtocol !== oldProxyProtocol
     ) {
-      lastSeenMeshConfig = meshConfig;
-
       const tenantGatewayPods = await K8s(kind.Pod).InNamespace(TENANT_GATEWAY_NAMESPACE).Get();
       const adminGatewayPods = await K8s(kind.Pod).InNamespace(ADMIN_GATEWAY_NAMESPACE).Get();
 
@@ -69,6 +67,9 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
         log,
         "ConfigMapChanged",
       );
+
+      // Advance only after both reloads succeed — a throw leaves lastSeen unchanged so the next reconcile retries.
+      lastSeenMeshConfig = meshConfig;
     }
   }
 }
