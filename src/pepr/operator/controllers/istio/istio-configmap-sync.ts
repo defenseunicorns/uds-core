@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -19,6 +19,10 @@ interface IstioConfiguration {
     gatewayTopology?: {
       forwardClientCertDetails?: string;
       numTrustedProxies?: number;
+      // proxyProtocol is a ProxyProtocolConfiguration message in Istio's ProxyConfig.
+      // Its presence enables PROXY v2 parsing on gateway listeners. Structure is an
+      // object so we deep-compare via JSON.stringify to catch any future sub-fields.
+      proxyProtocol?: Record<string, unknown>;
     };
   };
 }
@@ -30,11 +34,18 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
 
   if (mesh) {
     const meshConfig = yaml.load(mesh) as IstioConfiguration;
+    const newProxyProtocol = JSON.stringify(
+      meshConfig.defaultConfig?.gatewayTopology?.proxyProtocol,
+    );
+    const oldProxyProtocol = JSON.stringify(
+      lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.proxyProtocol,
+    );
     if (
       meshConfig.defaultConfig?.gatewayTopology?.numTrustedProxies !==
         lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.numTrustedProxies ||
       meshConfig.defaultConfig?.gatewayTopology?.forwardClientCertDetails !==
-        lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.forwardClientCertDetails
+        lastSeenMeshConfig?.defaultConfig?.gatewayTopology?.forwardClientCertDetails ||
+      newProxyProtocol !== oldProxyProtocol
     ) {
       lastSeenMeshConfig = meshConfig;
 
