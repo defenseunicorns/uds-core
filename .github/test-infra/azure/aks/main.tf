@@ -109,10 +109,11 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     snapshot_controller_enabled = true
   }
 
-  oidc_issuer_enabled     = true
-  support_plan            = "KubernetesOfficial"
-  sku_tier                = var.sku_tier
-  node_os_upgrade_channel = "None"
+  oidc_issuer_enabled       = true
+  support_plan              = "KubernetesOfficial"
+  sku_tier                  = var.sku_tier
+  automatic_upgrade_channel = "none"
+  node_os_upgrade_channel   = "None"
 
   default_node_pool {
     name                        = var.default_node_pool_name

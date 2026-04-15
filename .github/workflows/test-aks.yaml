@@ -98,6 +98,9 @@ jobs:
       - name: Wait for cluster ready
         run: uds run -f tasks/iac.yaml cluster-ready --no-progress
 
+      - name: Wait for AKS to complete initial control plane setup
+        run: sleep 900
+
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
