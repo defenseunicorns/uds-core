@@ -41,7 +41,6 @@ jobs:
           echo "TF_VAR_location=${UDS_REGION}" >> $GITHUB_ENV
           echo "TF_VAR_cluster_name=uds-ci-${{ matrix.flavor }}-${SHA:0:7}" >> $GITHUB_ENV
           echo "TF_VAR_resource_group_name=uds-ci-${{ matrix.flavor }}" >> $GITHUB_ENV
-          echo "TF_VAR_enable_control_plane_logs=true" >> $GITHUB_ENV
           echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
           echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
           echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV

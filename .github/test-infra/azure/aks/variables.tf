@@ -27,7 +27,7 @@ variable "log_analytics_retention_days" {
 variable "enable_control_plane_logs" {
   description = "Enable control plane diagnostic logs to Log Analytics."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "control_plane_log_categories" {
