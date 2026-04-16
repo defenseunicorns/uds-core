@@ -43,6 +43,21 @@ resource "azurerm_subnet" "postgres_subnet" {
   }
 }
 
+resource "azurerm_subnet" "cluster_api_subnet" {
+  name                 = "${local.cluster_name}-api-subnet"
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.cluster-vnet.name
+  address_prefixes     = ["10.0.48.0/24"]
+  delegation {
+    name = "api"
+    service_delegation {
+      name = "Microsoft.ContainerService/managedClusters"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+      ]
+    }
+  }
+}
 
 resource "azurerm_private_dns_zone" "cluster_dns_zone" {
   name                = "${local.cluster_name}.postgres.database.azure.com"

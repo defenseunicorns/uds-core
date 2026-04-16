@@ -94,7 +94,7 @@ variable "network_dns_service_ip" {
 
 variable "network_service_cidr" {
   description = "Specifies the service CIDR"
-  default     = "10.2.0.0/24"
+  default     = "10.2.0.0/16"
   type        = string
 }
 
@@ -142,7 +142,7 @@ variable "tags" {
 variable "azure_rbac_enabled" {
   description = "Whether or not to use Azure Role Based Access Control to control access to cluster resources."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "username" {
