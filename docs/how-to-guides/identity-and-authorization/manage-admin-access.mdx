@@ -1,0 +1,149 @@
+---
+title: Manage Keycloak admin access
+description: Create, rotate, and remove the Keycloak master realm admin account using `uds zarf connect keycloak` or the headless `insecureAdminPasswordGeneration` bundle override.
+sidebar:
+  order: 3.001
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+You'll create, use, and remove a Keycloak admin account in the master realm as a just-in-time credential. UDS Core ships without a default admin, so you must bootstrap one before you can access the admin console at `https://keycloak.<admin_domain>/`. This guide covers the two supported bootstrap methods and the recommended lifecycle for keeping admin credentials out of the cluster.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with `kubectl` permissions in the `keycloak` namespace
+- For the headless option, familiarity with bundle overrides
+
+## Before you begin
+
+UDS Core does not create a default admin user in any realm. You must create the first admin in the **master realm** (Keycloak's built-in admin realm) before you can manage the `uds` realm or any of its clients. Two bootstrap methods are supported:
+
+- `uds zarf connect keycloak` opens a port-forward to the Keycloak HTTP service so you can register an admin through the browser-based first-run form. This is the preferred method for all interactive installs.
+- `insecureAdminPasswordGeneration` is a Helm value that provisions an admin user from a Kubernetes Secret at chart install time. Use this method only when you cannot run the interactive flow (for example, fully automated installs with no browser access).
+
+Treat every admin account as a break-glass credential. The goal is to have no standing admin user when administrative work is not in progress:
+
+- **Do not keep a long-lived admin.** Create an account for a specific change window, delete it when the work is complete, and bootstrap a fresh one the next time you need admin access.
+- **Do not share** admin credentials across users. Each operator should create their own individually-named account so that audit logs clearly attribute actions.
+- **Do not leave credentials in the cluster.** The `keycloak-admin-password` Secret created by the headless option is an initial bootstrap only. Rotate the password and delete the Secret as soon as you have logged in.
+
+> [!CAUTION]
+> A standing admin account or a leftover `keycloak-admin-password` Secret is equivalent to a cluster-wide superuser credential that anyone with `get secret` access in the `keycloak` namespace can read. Remove both as soon as your administrative task is complete.
+
+## Steps
+
+<Steps>
+
+1. **Bootstrap an admin user for the task at hand**
+
+   Pick one of the following methods. Run this step only when you have administrative work to do, and plan to delete the account once the work is complete.
+
+   <Tabs>
+   <TabItem label="Interactive (zarf connect)">
+
+   Run `uds zarf connect keycloak` from a machine with browser access. The command opens a port-forward to the Keycloak HTTP service (labeled `zarf.dev/connect-name: keycloak`) and prints a local tunnel URL:
+
+   ```bash
+   uds zarf connect keycloak
+   ```
+
+   Example output:
+
+   ```console
+   2026-04-16 17:11:00 INF Tunnel established, waiting for user to interrupt (ctrl-c to end) urls=http://127.0.0.1:56641
+   ```
+
+   Open the URL shown next to `urls=` in a browser to reach Keycloak's first-run admin form. Fill in every field (**Username**, **Password**, **Email**, **First name**, **Last name**) and submit to create the master realm admin user. Leave the terminal running until you have submitted the form; pressing **Ctrl-C** closes the tunnel.
+
+   > [!TIP]
+   > Use a username tied to the individual performing the work (for example, `firstname.lastname`). Avoid generic names like `admin` or `root` so the account cannot be reused as a shared credential and so audit logs clearly attribute actions.
+
+   </TabItem>
+   <TabItem label="Headless (bundle override)">
+
+   Enable `insecureAdminPasswordGeneration` in your bundle when the cluster has no route to the Keycloak UI. The chart generates a 32-character random password at install time and stores it in the `keycloak-admin-password` Secret in the `keycloak` namespace. Keycloak reads `KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` from that Secret as bootstrap environment variables on first startup.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         keycloak:
+           keycloak:
+             values:
+               # Generates the master realm admin from a cluster Secret.
+               # Intended for headless installs only; rotate the password and delete the Secret immediately after first login.
+               - path: insecureAdminPasswordGeneration.enabled
+                 value: true
+               # Optional: override the generated username. Defaults to `admin`.
+               - path: insecureAdminPasswordGeneration.username
+                 value: admin
+   ```
+
+   After deploy, retrieve the generated password:
+
+   ```bash
+   uds zarf tools kubectl get secret -n keycloak keycloak-admin-password -o go-template='{{ .data.password | base64decode }}'
+   ```
+
+   > [!WARNING]
+   > The generated password is stored in a cluster Secret. Anyone with `get secret` access in the `keycloak` namespace can read it. Rotate the password and delete the Secret as soon as you have logged in once.
+   </TabItem>
+   </Tabs>
+
+2. **Rotate the bootstrap password and clear the in-cluster Secret if needed**
+
+   Log in to `https://keycloak.<admin_domain>/` with the bootstrap credentials, then change the password immediately:
+
+   1. Keycloak opens in the **master** realm by default. Click the menu icon in the top-left and select **Users**.
+   2. Select your admin user, then open the **Credentials** tab.
+   3. Click **Reset password** and set a new strong password. Clear the **Temporary** toggle if you want the new password to persist.
+
+   If you used the headless method, the rotated password is known only to you; the `keycloak-admin-password` Secret still holds the original generated value and should now be treated as stale. Delete it so that old credentials are not left behind in the cluster:
+
+   ```bash
+   uds zarf tools kubectl delete secret -n keycloak keycloak-admin-password
+   ```
+
+   > [!IMPORTANT]
+   > Deleting the Secret does not remove or alter the admin user in Keycloak. It only clears the plaintext copy of the initial password from the cluster. The `KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` environment variables are only read on first startup, so deleting the Secret has no runtime effect after the initial bootstrap.
+
+3. **Delete the admin user when the work is complete**
+
+   After you finish the administrative task, remove the account so that no standing admin credential exists. Bootstrap a fresh one the next time you need admin access.
+
+   1. In the Keycloak admin console, click the menu icon in the top-left and select **Users**.
+   2. Select the admin user you created, click the three-dot menu, and choose **Delete**.
+
+   > [!NOTE]
+   > Once a master realm admin has existed, the `uds zarf connect keycloak` first-run form will not reappear and `insecureAdminPasswordGeneration` only fires on the initial install. To bootstrap a replacement admin later, follow the [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) runbook, which walks through `kc.sh bootstrap-admin` to create a temporary admin.
+
+</Steps>
+
+## Verification
+
+Log in at `https://keycloak.<admin_domain>/` with your admin credentials and confirm you can view **Users**, **Clients**, and **Realm settings** in the master realm.
+
+## Troubleshooting
+
+### Problem: `uds zarf connect keycloak` does not show the first-run form
+
+**Symptom:** The tunnel URL loads the Keycloak sign-in page rather than the "Create administrative user" first-run form.
+
+**Solution:** A master realm admin already exists or did previously. Log in with those credentials, or follow the [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) runbook to bootstrap a temporary admin.
+
+### Problem: `keycloak-admin-password` Secret is missing
+
+**Symptom:** The Secret does not exist in the `keycloak` namespace.
+
+**Solution:** The chart only generates the Secret on initial install when `insecureAdminPasswordGeneration.enabled: true` is set in the bundle. Enabling the override on an existing deployment does not create it retroactively. If you did not set the override at install time, use the interactive `uds zarf connect keycloak` method to create the admin instead.
+
+## Related documentation
+
+- [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) - Recover access when admin credentials are lost.
+- [Keycloak Admin bootstrap and recovery](https://www.keycloak.org/server/bootstrap-admin-recovery) - Upstream reference for the `kc.sh bootstrap-admin` command.

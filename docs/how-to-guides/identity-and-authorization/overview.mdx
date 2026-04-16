@@ -15,6 +15,16 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
 
 <CardGrid>
   <LinkCard
+    title="Manage Keycloak admin access"
+    description="Bootstrap a temporary Keycloak admin user, then remove it when the work is complete."
+    href="/how-to-guides/identity-and-authorization/manage-admin-access/"
+  />
+  <LinkCard
+    title="Register and customize SSO clients"
+    description="Register native OIDC or SAML clients, customize secrets, add protocol mappers, and configure client attributes."
+    href="/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/"
+  />
+  <LinkCard
     title="Protect non-OIDC apps with SSO"
     description="Add SSO protection to applications that have no native OIDC support."
     href="/how-to-guides/identity-and-authorization/protect-apps-with-authservice/"
@@ -23,36 +33,6 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     title="Enforce group-based access controls"
     description="Restrict application access to users in specific Keycloak groups using the `Package` CR."
     href="/how-to-guides/identity-and-authorization/enforce-group-based-access/"
-  />
-  <LinkCard
-    title="Configure Keycloak authentication methods"
-    description="Enable or disable username/password, X.509/CAC, WebAuthn, OTP, and social login via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
-  />
-  <LinkCard
-    title="Connect Azure AD as an identity provider"
-    description="Configure Azure Entra ID as a SAML IdP so users authenticate via Azure instead of local Keycloak accounts."
-    href="/how-to-guides/identity-and-authorization/connect-azure-ad-idp/"
-  />
-  <LinkCard
-    title="Configure Google SAML as an identity provider"
-    description="Connect Google SAML using realmInitEnv bundle overrides, with no admin UI required."
-    href="/how-to-guides/identity-and-authorization/configure-google-idp/"
-  />
-  <LinkCard
-    title="Configure Keycloak login policies"
-    description="Set session timeouts, concurrent session limits, and logout behavior via bundle overrides."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
-  />
-  <LinkCard
-    title="Configure Keycloak HTTP retries"
-    description="Enable and tune retry behavior for Keycloak outbound HTTP requests to external services."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-http-retries/"
-  />
-  <LinkCard
-    title="Configure the CA truststore"
-    description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
-    href="/how-to-guides/identity-and-authorization/configure-truststore/"
   />
   <LinkCard
     title="Configure service account clients"
@@ -65,6 +45,16 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-and-authorization/configure-device-flow/"
   />
   <LinkCard
+    title="Configure Keycloak authentication methods"
+    description="Enable or disable username/password, X.509/CAC, WebAuthn, OTP, and social login via bundle overrides."
+    href="/how-to-guides/identity-and-authorization/configure-authentication-flows/"
+  />
+  <LinkCard
+    title="Configure Keycloak login policies"
+    description="Set session timeouts, concurrent session limits, and logout behavior via bundle overrides."
+    href="/how-to-guides/identity-and-authorization/configure-keycloak-login-policies/"
+  />
+  <LinkCard
     title="Configure Keycloak account lockout"
     description="Set temporary and permanent lockout thresholds for brute-force protection."
     href="/how-to-guides/identity-and-authorization/configure-account-lockout/"
@@ -75,29 +65,39 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/"
   />
   <LinkCard
-    title="Customize Keycloak login page branding"
-    description="Replace the default logos, background, and Terms & Conditions content via bundle overrides and ConfigMaps."
-    href="/how-to-guides/identity-and-authorization/customize-branding/"
-  />
-  <LinkCard
-    title="Build a custom Keycloak configuration image"
-    description="Build, publish, and deploy a custom configuration image to UDS Core for theme or truststore changes."
-    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
-  />
-  <LinkCard
     title="Configure user accounts and security policies"
     description="Set password complexity, enable email verification, and extend security hardening allow lists via bundle overrides."
     href="/how-to-guides/identity-and-authorization/configure-user-account-settings/"
   />
   <LinkCard
-    title="Manage Keycloak with OpenTofu"
-    description="Enable the built-in OpenTofu client and use it to programmatically manage Keycloak resources."
-    href="/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/"
+    title="Customize Keycloak login page branding"
+    description="Replace the default logos, background, and Terms & Conditions content via bundle overrides and ConfigMaps."
+    href="/how-to-guides/identity-and-authorization/customize-branding/"
   />
   <LinkCard
-    title="Upgrade to FIPS 140-2 mode"
-    description="Migrate an existing non-FIPS deployment to FIPS 140-2 Strict Mode before upgrading UDS Core."
-    href="/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/"
+    title="Configure Keycloak HTTP retries"
+    description="Enable and tune retry behavior for Keycloak outbound HTTP requests to external services."
+    href="/how-to-guides/identity-and-authorization/configure-keycloak-http-retries/"
+  />
+  <LinkCard
+    title="Configure Keycloak notifications and alerts"
+    description="Enable Prometheus alerting rules so Keycloak realm, user, and admin changes trigger Alertmanager notifications."
+    href="/how-to-guides/identity-and-authorization/configure-keycloak-notifications-and-alerts/"
+  />
+  <LinkCard
+    title="Connect Azure AD as an identity provider"
+    description="Configure Azure Entra ID as a SAML IdP so users authenticate via Azure instead of local Keycloak accounts."
+    href="/how-to-guides/identity-and-authorization/connect-azure-ad-idp/"
+  />
+  <LinkCard
+    title="Configure Google SAML as an identity provider"
+    description="Connect Google SAML using realmInitEnv bundle overrides, with no admin UI required."
+    href="/how-to-guides/identity-and-authorization/configure-google-idp/"
+  />
+  <LinkCard
+    title="Configure the CA truststore"
+    description="Replace the default DoD CA bundle with a custom certificate authority for X.509/CAC authentication."
+    href="/how-to-guides/identity-and-authorization/configure-truststore/"
   />
   <LinkCard
     title="Configure CRL-based certificate revocation in an airgap"
@@ -105,13 +105,18 @@ For background on how Keycloak, Authservice, and SSO work together, see [Identit
     href="/how-to-guides/identity-and-authorization/configure-x509-crl-airgap/"
   />
   <LinkCard
-    title="Register and customize SSO clients"
-    description="Register native OIDC or SAML clients, customize secrets, add protocol mappers, and configure client attributes."
-    href="/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/"
+    title="Build a custom Keycloak configuration image"
+    description="Build, publish, and deploy a custom configuration image to UDS Core for theme or truststore changes."
+    href="/how-to-guides/identity-and-authorization/build-deploy-custom-image/"
   />
   <LinkCard
-    title="Configure Keycloak notifications and alerts"
-    description="Enable Prometheus alerting rules so Keycloak realm, user, and admin changes trigger Alertmanager notifications."
-    href="/how-to-guides/identity-and-authorization/configure-keycloak-notifications-and-alerts/"
+    title="Upgrade to FIPS 140-2 mode"
+    description="Migrate an existing non-FIPS deployment to FIPS 140-2 Strict Mode before upgrading UDS Core."
+    href="/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/"
+  />
+  <LinkCard
+    title="Manage Keycloak with OpenTofu"
+    description="Enable the built-in OpenTofu client and use it to programmatically manage Keycloak resources."
+    href="/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/"
   />
 </CardGrid>
