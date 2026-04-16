@@ -87,10 +87,10 @@ runs:
         else
           echo "Found workspace: $WORKSPACE_ID"
 
-          # Query all control plane diagnostic logs
+          # Query all control plane diagnostic logs (raise row limit to 50k to avoid silent truncation)
           az monitor log-analytics query \
             --workspace "$WORKSPACE_ID" \
-            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | order by TimeGenerated desc" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | order by TimeGenerated desc | take 50000" \
             --output json > /tmp/control-plane-logs/all-diagnostics.json 2>&1 \
             || {
               echo "::warning::Failed to query all-diagnostics from Log Analytics"
@@ -100,13 +100,64 @@ runs:
           # Query specifically for webhook and connection errors across all categories
           az monitor log-analytics query \
             --workspace "$WORKSPACE_ID" \
-            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(2h) | where log_s has_any ('webhook', 'connection reset', 'EOF', 'timeout', 'TLS handshake') | order by TimeGenerated desc" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where log_s has_any ('webhook', 'connection reset', 'EOF', 'timeout', 'TLS handshake') | order by TimeGenerated desc | take 50000" \
             --output json > /tmp/control-plane-logs/webhook-errors.json 2>&1 \
             || {
               echo "::warning::Failed to query webhook-errors from Log Analytics"
               rm -f /tmp/control-plane-logs/webhook-errors.json
             }
 
+          # Apiserver-only logs (no audit noise) for lifecycle analysis
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where Category == 'kube-apiserver' | order by TimeGenerated desc | take 50000" \
+            --output json > /tmp/control-plane-logs/kube-apiserver.json 2>&1 \
+            || {
+              echo "::warning::Failed to query kube-apiserver logs from Log Analytics"
+              rm -f /tmp/control-plane-logs/kube-apiserver.json
+            }
+
+          # Webhook call audit events with response codes and latency
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where Category has 'kube-audit' | where log_s has 'webhook' | order by TimeGenerated desc | take 50000" \
+            --output json > /tmp/control-plane-logs/webhook-audit.json 2>&1 \
+            || {
+              echo "::warning::Failed to query webhook audit logs from Log Analytics"
+              rm -f /tmp/control-plane-logs/webhook-audit.json
+            }
+
+          # API server error responses (429s, 5xx) for throttle/overload evidence
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where Category has 'kube-audit' | where log_s has_any ('\"code\":429', '\"code\":500', '\"code\":502', '\"code\":503', '\"code\":504') | order by TimeGenerated desc | take 50000" \
+            --output json > /tmp/control-plane-logs/apiserver-errors.json 2>&1 \
+            || {
+              echo "::warning::Failed to query apiserver error logs from Log Analytics"
+              rm -f /tmp/control-plane-logs/apiserver-errors.json
+            }
+
+          # Summary stats for quick triage
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "
+              AzureDiagnostics
+              | where TimeGenerated > ago(3h)
+              | summarize
+                  total_events = count(),
+                  apiserver_events = countif(Category == 'kube-apiserver'),
+                  etcd_dns_errors = countif(Category == 'kube-apiserver' and log_s has 'lookup etcd'),
+                  webhook_rst = countif(log_s has 'connection reset by peer' and log_s has 'webhook'),
+                  throttle_429 = countif(log_s has '\"code\":429'),
+                  server_5xx = countif(log_s has_any ('\"code\":500', '\"code\":502', '\"code\":503', '\"code\":504'))
+                  by bin(TimeGenerated, 1m)
+              | order by TimeGenerated desc
+            " \
+            --output json > /tmp/control-plane-logs/summary-stats.json 2>&1 \
+            || {
+              echo "::warning::Failed to query summary stats from Log Analytics"
+              rm -f /tmp/control-plane-logs/summary-stats.json
+            }
         fi
         echo "::endgroup::"
       shell: bash

@@ -108,11 +108,11 @@ jobs:
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
 
       - name: Debug Output
-        if: ${{ always() }}
+        if: always()
         uses: ./.github/actions/debug-output
 
       - name: Wait for Log Analytics ingestion
-        if: failure()
+        if: always()
         run: sleep 300
 
       - name: Azure login (refresh token for log collection)
