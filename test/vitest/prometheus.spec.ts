@@ -1,4 +1,5 @@
 /**
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -43,6 +44,21 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   test("prometheus web ui should be responsive via the internal service address", async () => {
     const response = await fetch(`${prometheusProxy.url}`);
     expect(response.status).toBe(200);
+  });
+
+  test("prometheus should use EndpointSlice service discovery", async () => {
+    const response = await fetch(`${prometheusProxy.url}/api/v1/status/config`);
+    expect(response.status).toBe(200);
+
+    const body = (await response.json()) as {
+      data: { yaml: string };
+    };
+
+    const config = body.data.yaml;
+
+    // Verify scrape configs use the endpointslice SD role (not the deprecated endpoints role)
+    expect(config).toContain("role: endpointslice");
+    expect(config).not.toContain("role: endpoints\n");
   });
 
   test("all prometheus targets should be up", { timeout: 220000 }, async () => {
