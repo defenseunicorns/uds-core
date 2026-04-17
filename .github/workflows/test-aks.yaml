@@ -80,6 +80,9 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
+        env:
+          # TEMP: dev Pepr controller image (keep-alive fix). Push locally-built image here. Remove before merge.
+          PEPR_CUSTOM_IMAGE: ghcr.io/mjnagel/pepr-dev:keepalive
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
