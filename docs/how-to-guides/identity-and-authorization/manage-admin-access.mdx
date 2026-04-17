@@ -34,6 +34,9 @@ Treat every admin account as a break-glass credential. The goal is to have no st
 > [!CAUTION]
 > A standing admin account or a leftover `keycloak-admin-password` Secret is equivalent to a cluster-wide superuser credential that anyone with `get secret` access in the `keycloak` namespace can read. Remove both as soon as your administrative task is complete.
 
+> [!NOTE]
+> Use this guide only to bootstrap the **first** master realm admin on a cluster. Once an admin has existed, the `uds zarf connect keycloak` first-run form will not reappear and `insecureAdminPasswordGeneration` only fires on the initial install. To bootstrap a replacement admin later, follow the [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) runbook, which walks through `kc.sh bootstrap-admin` to create a temporary admin.
+
 ## Steps
 
 <Steps>
@@ -119,9 +122,6 @@ Treat every admin account as a break-glass credential. The goal is to have no st
 
    1. In the Keycloak admin console, click the menu icon in the top-left and select **Users**.
    2. Select the admin user you created, click the three-dot menu, and choose **Delete**.
-
-   > [!NOTE]
-   > Once a master realm admin has existed, the `uds zarf connect keycloak` first-run form will not reappear and `insecureAdminPasswordGeneration` only fires on the initial install. To bootstrap a replacement admin later, follow the [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) runbook, which walks through `kc.sh bootstrap-admin` to create a temporary admin.
 
 </Steps>
 
