@@ -113,9 +113,9 @@ Treat every admin account as a break-glass credential. The goal is to have no st
    > [!IMPORTANT]
    > Deleting the Secret does not remove or alter the admin user in Keycloak. It only clears the plaintext copy of the initial password from the cluster. The `KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` environment variables are only read on first startup, so deleting the Secret has no runtime effect after the initial bootstrap.
 
-3. **Delete the admin user when the work is complete**
+3. **(Optional) Delete the admin user when the work is complete**
 
-   After you finish the administrative task, remove the account so that no standing admin credential exists. Bootstrap a fresh one the next time you need admin access.
+   Removing the account after you finish the administrative task is recommended for security: no standing admin credential exists, and you bootstrap a fresh one the next time you need admin access. This step is optional; retain the account if your operational model requires a persistent master realm admin.
 
    1. In the Keycloak admin console, click the menu icon in the top-left and select **Users**.
    2. Select the admin user you created, click the three-dot menu, and choose **Delete**.
