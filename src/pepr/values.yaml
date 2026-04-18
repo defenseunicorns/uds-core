@@ -236,8 +236,9 @@ watcher:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for AKS reconcile stall investigation. Revert to info before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
@@ -265,5 +266,6 @@ admission:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for AKS reconcile stall investigation. Revert to info before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
