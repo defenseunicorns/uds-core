@@ -46,7 +46,7 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "1.1.5"
+    "pepr": "file:.github/test-infra/pepr-dev/pepr.tgz"
   },
   "devDependencies": {
     "@commitlint/cli": "20.5.0",
