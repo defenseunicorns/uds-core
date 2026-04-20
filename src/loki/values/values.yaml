@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Sets the global DNS service to the service created in this chart
@@ -221,6 +221,10 @@ read:
 write:
   # Remove default anti-affinity to support single node
   affinity: null
+  # Use shared loki SA instead of creating a write-specific one
+  # https://github.com/grafana-community/helm-charts/issues/390
+  serviceAccount:
+    create: false
 
 backend:
   # Remove default anti-affinity to support single node
