@@ -21,4 +21,6 @@ cluster:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
     kubeApiCIDR: ""
-    kubeNodeCIDRs: []
+    kubeNodeCIDRs:
+      - "10.0.0.0/20"
+      - "10.0.16.0/20"

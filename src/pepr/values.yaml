@@ -236,9 +236,8 @@ watcher:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
-    # TEMP: debug log level for AKS reconcile stall investigation. Revert to info before merge.
     - name: "LOG_LEVEL"
-      value: "debug"
+      value: "info"
     # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
     # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
     # a full LIST on every low-traffic CRD watch every 5 min.
@@ -273,9 +272,8 @@ admission:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
-    # TEMP: debug log level for AKS reconcile stall investigation. Revert to info before merge.
     - name: "LOG_LEVEL"
-      value: "debug"
+      value: "info"
     # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
     # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
     # a full LIST on every low-traffic CRD watch every 5 min.
