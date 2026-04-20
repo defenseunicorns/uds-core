@@ -8,7 +8,7 @@ sidebar:
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.2 adds upstream Istio network policies for all Istio components and also brings Keycloak waypoint pod annotation and label overrides for easier integration with service mesh tooling. The v1.2.1 patch restores the original Loki write service account name to prevent breakage for deployments using IRSA for object storage auth.
+UDS Core 1.2 adds upstream Istio network policies for all Istio components and also brings Keycloak waypoint pod annotation and label overrides for easier integration with service mesh tooling. The v1.2.1 patch restores the original Loki write service account name to prevent breakage for deployments that reference it by name.
 
 ### Notable features
 
