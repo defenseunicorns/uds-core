@@ -9,7 +9,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll create, use, and remove a Keycloak admin account in the master realm as a just-in-time credential. UDS Core ships without a default admin, so you must bootstrap one before you can access the admin console at `https://keycloak.<admin_domain>/`. This guide covers the two supported bootstrap methods and the recommended lifecycle for keeping admin credentials out of the cluster.
+You'll create, use, and remove a Keycloak admin account in the master realm. UDS Core ships without a default admin, so you must bootstrap one before you can access the admin console at `https://keycloak.<admin_domain>/`. This guide covers the two supported bootstrap methods and the recommended lifecycle for keeping admin credentials out of the cluster.
 
 ## Prerequisites
 
@@ -22,7 +22,7 @@ You'll create, use, and remove a Keycloak admin account in the master realm as a
 
 UDS Core does not create a default admin user in any realm. You must create the first admin in the **master realm** (Keycloak's built-in admin realm) before you can manage the `uds` realm or any of its clients. Two bootstrap methods are supported:
 
-- `uds zarf connect keycloak` opens a port-forward to the Keycloak HTTP service so you can register an admin through the browser-based first-run form. This is the preferred method for all interactive installs.
+- `uds zarf connect keycloak` opens a port-forward to the Keycloak HTTP service so you can register an admin through the browser-based Welcome Page. This is the preferred method for all interactive installs.
 - `insecureAdminPasswordGeneration` is a Helm value that provisions an admin user from a Kubernetes Secret at chart install time. Use this method only when you cannot run the interactive flow (for example, fully automated installs with no browser access).
 
 Treat every admin account as a break-glass credential. The goal is to have no standing admin user when administrative work is not in progress:
@@ -60,7 +60,7 @@ Treat every admin account as a break-glass credential. The goal is to have no st
    2026-04-16 17:11:00 INF Tunnel established, waiting for user to interrupt (ctrl-c to end) urls=http://127.0.0.1:56641
    ```
 
-   Open the URL shown next to `urls=` in a browser to reach Keycloak's first-run admin form. Fill in every field (**Username**, **Password**, **Email**, **First name**, **Last name**) and submit to create the master realm admin user. Leave the terminal running until you have submitted the form; pressing **Ctrl-C** closes the tunnel.
+   Open the URL shown next to `urls=` in a browser to reach Keycloak's Welcome Page. Fill in every field (**Username**, **Password**, **Email**, **First name**, **Last name**) and submit to create the master realm admin user. Leave the terminal running until you have submitted the form; pressing **Ctrl-C** closes the tunnel.
 
    > [!TIP]
    > Use a username tied to the individual performing the work (for example, `firstname.lastname`). Avoid generic names like `admin` or `root` so the account cannot be reused as a shared credential and so audit logs clearly attribute actions.
@@ -131,9 +131,9 @@ Log in at `https://keycloak.<admin_domain>/` with your admin credentials and con
 
 ## Troubleshooting
 
-### Problem: `uds zarf connect keycloak` does not show the first-run form
+### Problem: `uds zarf connect keycloak` does not show the Welcome Page
 
-**Symptom:** The tunnel URL loads the Keycloak sign-in page rather than the "Create administrative user" first-run form.
+**Symptom:** The tunnel URL loads the Keycloak sign-in page rather than the "Create administrative user" Welcome Page.
 
 **Solution:** A master realm admin already exists or did previously. Log in with those credentials, or follow the [Keycloak Credential Recovery](/operations/troubleshooting-and-runbooks/keycloak-credential-recovery/) runbook to bootstrap a temporary admin.
 
