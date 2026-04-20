@@ -236,8 +236,9 @@ watcher:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
     # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
     # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
     # a full LIST on every low-traffic CRD watch every 5 min.
@@ -272,8 +273,9 @@ admission:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
     # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
     # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
     # a full LIST on every low-traffic CRD watch every 5 min.
