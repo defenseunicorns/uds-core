@@ -25,8 +25,13 @@ UDS Core 1.2 adds upstream Istio network policies for all Istio components and a
 | Grafana Helm chart | 11.3.3   | [11.6.0](https://github.com/grafana-community/helm-charts/releases/tag/grafana-11.6.0) |
 | Loki Helm chart    | 6.57.0   | [11.6.4](https://github.com/grafana-community/helm-charts/releases/tag/loki-11.6.4)    |
 
+## Upgrade considerations
+
+> [!IMPORTANT]
+> Skip v1.2.0 and upgrade directly to v1.2.1. The v1.2.0 release inherited an upstream Helm chart change that renamed the Loki write service account, breaking deployments that reference the `loki` service account by name for object storage auth (e.g. IRSA). v1.2.1 restores the shared `loki` service account for write pods ([#2599](https://github.com/defenseunicorns/uds-core/pull/2599), upstream [grafana-community/helm-charts#390](https://github.com/grafana-community/helm-charts/issues/390)).
+
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [UDS Core 1.2.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#120-2026-04-14) - full changelog
-- [Full diff (1.1.0...1.2.0)](https://github.com/defenseunicorns/uds-core/compare/v1.1.0...v1.2.0) - all changes between versions
+- [Full diff (1.1.0...1.2.1)](https://github.com/defenseunicorns/uds-core/compare/v1.1.0...v1.2.1) - all changes between versions
