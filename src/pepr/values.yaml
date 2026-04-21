@@ -249,6 +249,10 @@ watcher:
 admission:
   serviceMonitor:
     enabled: ###ZARF_VAR_PEPR_SERVICE_MONITORS###
+  # TEMP: opt admission pods out of ambient mesh at pod level to isolate
+  # whether ztunnel contributes to webhook proxy 500s
+  podLabels:
+    istio.io/dataplane-mode: none
   extraVolumeMounts:
     - name: keycloak-token
       mountPath: /var/run/secrets/keycloak
