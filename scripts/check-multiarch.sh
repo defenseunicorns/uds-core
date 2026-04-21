@@ -1,11 +1,35 @@
 #!/bin/bash
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 set -e  # Exit on error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SRC_DIR="${1:-$SCRIPT_DIR/../src}"
+
+# Retry crane manifest against transient registry failures.
+MAX_ATTEMPTS="${CRANE_MAX_ATTEMPTS:-2}"
+RETRY_DELAY="${CRANE_RETRY_DELAY:-3}"
+
+fetch_manifest() {
+    local image="$1"
+    local attempt=1
+    local manifest=""
+    local delay="$RETRY_DELAY"
+    while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
+        if manifest=$(crane manifest "$image" 2>/dev/null) && [ -n "$manifest" ]; then
+            printf '%s' "$manifest"
+            return 0
+        fi
+        if [ "$attempt" -lt "$MAX_ATTEMPTS" ]; then
+            echo "  retry $attempt/$((MAX_ATTEMPTS - 1)) after ${delay}s" >&2
+            sleep "$delay"
+            delay=$((delay * 2))
+        fi
+        attempt=$((attempt + 1))
+    done
+    return 1
+}
 
 # Create temporary files and ensure cleanup no matter script outcome
 TEMP_IMAGES=$(mktemp)
@@ -32,10 +56,10 @@ cat "$TEMP_IMAGES" | while read -r IMAGE; do
     COUNT=$((COUNT + 1))
     echo "[$COUNT/$TOTAL] $IMAGE"
 
-    MANIFEST=$(crane manifest "$IMAGE" 2>/dev/null || echo "")
+    MANIFEST=$(fetch_manifest "$IMAGE" || echo "")
 
     if [ -z "$MANIFEST" ]; then
-        echo "  ERROR: Failed to fetch"
+        echo "  ERROR: Failed to fetch after $MAX_ATTEMPTS attempts"
         echo "$IMAGE" >> "$TEMP_MISSING"
         continue
     fi
