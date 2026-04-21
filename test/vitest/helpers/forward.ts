@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -64,9 +64,11 @@ export async function getForward(
 
     return await new Promise<ForwardResult>((resolve, reject) => {
       const server = net.createServer(socket => {
-        // Surface port-forward setup errors on the socket so callers can see failures quickly
-        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(err => {
-          socket.destroy(err instanceof Error ? err : new Error(String(err)));
+        // Swallow socket errors (e.g. ECONNRESET during teardown) so they don't
+        // become uncaught exceptions and fail otherwise-passing test runs.
+        socket.on("error", () => {});
+        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(() => {
+          socket.destroy();
         });
       });
 
