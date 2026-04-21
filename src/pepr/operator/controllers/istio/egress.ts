@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
@@ -203,7 +203,7 @@ export async function performEgressReconciliationWithMutex(): Promise<void> {
     await reconcileInFlight;
   } catch (e) {
     // Log the error and re-throw to maintain error propagation
-    log.error("Egress reconciliation failed", e);
+    log.error({ err: e }, "Egress reconciliation failed");
     throw e;
   } finally {
     // Clear the mutex when done

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { V1OwnerReference } from "@kubernetes/client-node";
@@ -70,8 +70,8 @@ export async function purgeSidecarEgressResources(generation: string) {
     );
   } catch (e) {
     const errText = `Failed to purge orphaned sidecar egress resources`;
-    log.error(`Failed to purge orphaned sidecar egress resources`, e);
-    throw errText;
+    log.error({ err: e }, errText);
+    throw e instanceof Error ? e : new Error(errText);
   }
 }
 
@@ -125,8 +125,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
         await K8s(IstioGateway).Apply(gateway, { force: true });
       } catch (e) {
         const errText = `Failed to apply Gateway for host ${host}`;
-        log.error(errText, e);
-        throw new Error(errText);
+        log.error({ err: e }, errText);
+        throw e instanceof Error ? e : new Error(errText);
       }
     })();
     resourcePromises.push(gatewayPromise);
@@ -142,8 +142,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
         await K8s(IstioVirtualService).Apply(virtualService, { force: true });
       } catch (e) {
         const errText = `Failed to apply Virtual Service for host ${host}`;
-        log.error(errText, e);
-        throw new Error(errText);
+        log.error({ err: e }, errText);
+        throw e instanceof Error ? e : new Error(errText);
       }
     })();
     resourcePromises.push(virtualServicePromise);
@@ -156,8 +156,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
         await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
       } catch (e) {
         const errText = `Failed to apply Service Entry for host ${host}`;
-        log.error(errText, e);
-        throw new Error(errText);
+        log.error({ err: e }, errText);
+        throw e instanceof Error ? e : new Error(errText);
       }
     })();
     resourcePromises.push(serviceEntryPromise);
@@ -165,7 +165,10 @@ async function applyHostResources(host: string, resource: EgressResource, genera
     // Wait for all resource applications to complete
     await Promise.all(resourcePromises);
   } catch (e) {
-    log.error(`Failed to apply egress resources for host ${host} of generation ${generation}`, e);
+    log.error(
+      { err: e },
+      `Failed to apply egress resources for host ${host} of generation ${generation}`,
+    );
     throw e;
   }
 }

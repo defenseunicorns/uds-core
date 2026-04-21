@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { GenericClass } from "kubernetes-fluent-client";
@@ -357,7 +357,7 @@ export async function purgeAmbientEgressResources(
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
-    log.error(`Failed to purge orphaned ambient egress resources`, e);
-    throw errText;
+    log.error({ err: e }, errText);
+    throw e instanceof Error ? e : new Error(errText);
   }
 }
