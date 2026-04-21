@@ -2,7 +2,7 @@
 title: Connect Azure AD as an identity provider
 description: Configure Azure Entra ID as a SAML identity provider in Keycloak so users authenticate via Azure instead of local Keycloak accounts.
 sidebar:
-  order: 3.004
+  order: 3.015
 ---
 
 import { Steps } from '@astrojs/starlight/components';
@@ -74,7 +74,7 @@ You will configure two App Registrations in Azure (one per Keycloak realm) and t
    Log in to the Keycloak admin UI at `keycloak.<admin_domain>`.
 
    > [!NOTE]
-   > If UDS Core was deployed with `INSECURE_ADMIN_PASSWORD_GENERATION`, the username is `admin` and the password is in the `keycloak-admin-password` Kubernetes secret. Otherwise, register an admin user via `zarf connect keycloak`.
+   > If UDS Core was deployed with `INSECURE_ADMIN_PASSWORD_GENERATION`, the username is `admin` and the password is in the `keycloak-admin-password` Kubernetes secret. Otherwise, register an admin user via `uds zarf connect keycloak`.
 
    **Disable required actions** so Azure-federated users are not prompted to configure local credentials:
    1. Go to **Authentication** → **Required actions**

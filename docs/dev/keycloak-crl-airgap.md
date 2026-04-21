@@ -170,7 +170,7 @@ uds run create:k3d-slim-dev-bundle
 UDS_CONFIG=bundles/k3d-slim-dev/uds-config.yaml uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-*.tar.zst --confirm --no-progress
 
 # Connect Keycloak Admin Portal
-zarf connect keycloak
+uds zarf connect keycloak
 ```
 
 ---
