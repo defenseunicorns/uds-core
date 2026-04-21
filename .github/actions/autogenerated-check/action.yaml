@@ -62,6 +62,8 @@ runs:
         fi
 
         if [ "${DIFFS}" = "true" ]; then
+          git status -s
+          git --no-pager diff
           echo -e "\033[31m❌ ERROR: Ensure that all generated file changes are up to date and committed (see warnings above).\033[0m"
           exit 1
         fi
