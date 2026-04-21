@@ -9,6 +9,7 @@ import { GenericKind } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { buildMigratedAuthserviceStatus } from "../crd/migrate";
+import { retryWithDelay } from "../controllers/utils";
 import {
   AuthserviceClient,
   StatusObject as Status,
@@ -84,13 +85,20 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
   }
 
   // Update the status of the CRD
-  await K8s(UDSPackage).PatchStatus({
-    metadata: {
-      name: cr.metadata!.name,
-      namespace: cr.metadata!.namespace,
+  await retryWithDelay(
+    async function patchPackageStatus() {
+      await K8s(UDSPackage).PatchStatus({
+        metadata: {
+          name: cr.metadata!.name,
+          namespace: cr.metadata!.namespace,
+        },
+        status: migratedStatus,
+      });
     },
-    status: migratedStatus,
-  });
+    log,
+    5,
+    1000,
+  );
 
   // Track the UID of the CRD to know if it has been seen before
   uidSeen.add(cr.metadata!.uid!);

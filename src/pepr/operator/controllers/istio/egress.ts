@@ -230,8 +230,12 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile sidecar egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const cause =
+      e instanceof Error
+        ? { name: e.name, message: e.message, stack: e.stack }
+        : { raw: JSON.stringify(e) };
+    log.error({ err: cause }, errText);
+    errors.push(new Error(`${errText}: ${cause.message ?? cause.raw}`));
   }
 
   // Reconcile ambient egress resources if namespace is found
@@ -248,8 +252,12 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const cause =
+      e instanceof Error
+        ? { name: e.name, message: e.message, stack: e.stack }
+        : { raw: JSON.stringify(e) };
+    log.error({ err: cause }, errText);
+    errors.push(new Error(`${errText}: ${cause.message ?? cause.raw}`));
   }
 
   // If any errors occurred, aggregate them and throw
