@@ -56,6 +56,9 @@ tasks:
             fi
           done
       - description: "Generate Gateway CRD types via KFC"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           OUT_DIR="src/pepr/operator/crd/generated/k8s"
 
