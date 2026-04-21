@@ -1,11 +1,11 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { K8s, kind } from "pepr";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1";
 import {
   updateAPIServerCIDR,
   updateKubeAPIAuthorizationPolicies,

@@ -1,12 +1,12 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { K8s } from "pepr";
 import { describe, expect, Mock, test, vi } from "vitest";
 import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import {
@@ -1094,7 +1094,7 @@ describe("createDenyAllExceptWaypointPolicy", () => {
     const policy = createDenyAllExceptWaypointPolicy(pkg, waypointName, appSelector);
 
     // Verify basic policy structure
-    expect(policy.apiVersion).toBe("security.istio.io/v1beta1");
+    expect(policy.apiVersion).toBe("security.istio.io/v1");
     expect(policy.kind).toBe("AuthorizationPolicy");
     expect(policy.metadata?.name).toContain("deny-all-except-waypoint-test-waypoint");
     expect(policy.metadata?.namespace).toBe("test-ns");

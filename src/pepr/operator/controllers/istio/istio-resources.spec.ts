@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -82,7 +82,7 @@ describe("istio-resources (ingress)", () => {
       (_expose, ns, pkgName, gen): IstioVirtualService => {
         const name = `vs-${++vsIdx}`;
         return {
-          apiVersion: "networking.istio.io/v1beta1",
+          apiVersion: "networking.istio.io/v1",
           kind: "VirtualService",
           metadata: {
             name,
@@ -99,7 +99,7 @@ describe("istio-resources (ingress)", () => {
       (_expose, ns, pkgName, gen): IstioServiceEntry => {
         const name = `se-${++seIdx}`;
         return {
-          apiVersion: "networking.istio.io/v1beta1",
+          apiVersion: "networking.istio.io/v1",
           kind: "ServiceEntry",
           metadata: {
             name,

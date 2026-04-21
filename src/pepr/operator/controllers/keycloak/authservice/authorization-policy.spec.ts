@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns
  */
 
@@ -9,7 +9,7 @@ import type {
   Operation as IstioOperation,
   Rule as IstioRule,
   To as IstioTo,
-} from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+} from "../../../crd/generated/istio/authorizationpolicy-v1";
 import { PROMETHEUS_PRINCIPAL } from "../../utils";
 import {
   authNRequestAuthentication,
