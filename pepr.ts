@@ -8,6 +8,7 @@ import { PeprModule } from "pepr";
 import cfg from "./package.json";
 
 import { Component, setupLogger } from "./src/pepr/logger";
+import { configureUndici } from "./src/pepr/undici-config";
 import { operator } from "./src/pepr/operator";
 import { loadUDSConfig, startConfigWatch } from "./src/pepr/operator/controllers/config/config";
 import { setupAuthserviceSecret } from "./src/pepr/operator/controllers/keycloak/authservice/config";
@@ -23,6 +24,8 @@ import { prometheus } from "./src/pepr/prometheus";
 const log = setupLogger(Component.STARTUP);
 
 (async () => {
+  // Configure undici fetch timeouts before any K8s calls
+  configureUndici();
   // Load the UDS Config
   await loadUDSConfig();
   // KFC watch for cluster config, exemptions, and packages
