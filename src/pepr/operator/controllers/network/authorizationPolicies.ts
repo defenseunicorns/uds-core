@@ -20,6 +20,7 @@ import {
   getAuthserviceClients,
   getOwnerRef,
   purgeOrphans,
+  retryWithDelay,
   sanitizeResourceName,
 } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
@@ -220,11 +221,17 @@ async function cleanupMismatchedMeshModePolicies(
 
   try {
     // Get all AuthorizationPolicies for this package in the namespace
-    const policies = await K8s(AuthorizationPolicy)
-      .InNamespace(pkgNamespace)
-      .WithLabel("uds/package", pkgName)
-      .WithLabel("uds/for", "network")
-      .Get();
+    const policies = await retryWithDelay(
+      () =>
+        K8s(AuthorizationPolicy)
+          .InNamespace(pkgNamespace)
+          .WithLabel("uds/package", pkgName)
+          .WithLabel("uds/for", "network")
+          .Get(),
+      log,
+      5,
+      1000,
+    );
 
     for (const policy of policies.items) {
       const policyMeshMode = policy.metadata?.labels?.["uds/mesh-mode"];
@@ -235,11 +242,14 @@ async function cleanupMismatchedMeshModePolicies(
           `Deleting AuthorizationPolicy ${policy.metadata?.name} with mismatched mesh-mode: ` +
             `current=${currentMeshMode}, policy=${policyMeshMode || "undefined"}`,
         );
-        await K8s(AuthorizationPolicy).Delete(policy);
+        await retryWithDelay(() => K8s(AuthorizationPolicy).Delete(policy), log, 5, 1000);
       }
     }
   } catch (err) {
-    log.error(err, `Error cleaning up mismatched mesh-mode policies in namespace ${pkgNamespace}`);
+    log.error(
+      { err },
+      `Error cleaning up mismatched mesh-mode policies in namespace ${pkgNamespace}`,
+    );
     throw err;
   }
 }
@@ -438,7 +448,14 @@ export async function generateAuthorizationPolicies(
   // Apply policies concurrently.
   for (const policy of policies) {
     try {
-      await K8s(AuthorizationPolicy).Apply(policy, { force: true });
+      await retryWithDelay(
+        async function applyAuthorizationPolicy() {
+          await K8s(AuthorizationPolicy).Apply(policy, { force: true });
+        },
+        log,
+        5,
+        1000,
+      );
       log.trace(
         `Applied AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
       );

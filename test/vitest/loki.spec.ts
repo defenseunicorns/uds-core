@@ -115,11 +115,13 @@ const validateLogInQuery = (
 // Vitest test cases
 describe("Loki Tests", () => {
   beforeAll(async () => {
-    lokiBackend = await getForward("loki-backend", "loki", 3100);
-    lokiRead = await getForward("loki-read", "loki", 3100);
-    lokiWrite = await getForward("loki-write", "loki", 3100);
-    lokiGateway = await getForward("loki-gateway", "loki", 8080);
-  });
+    [lokiBackend, lokiRead, lokiWrite, lokiGateway] = await Promise.all([
+      getForward("loki-backend", "loki", 3100),
+      getForward("loki-read", "loki", 3100),
+      getForward("loki-write", "loki", 3100),
+      getForward("loki-gateway", "loki", 8080),
+    ]);
+  }, 30000);
 
   afterAll(async () => {
     await closeForward(lokiBackend.server);

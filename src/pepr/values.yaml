@@ -224,8 +224,14 @@ watcher:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for deeper diagnostics on AKS. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
+    # TEMP: raise KFC watch staleness/relist intervals to prevent LIST storms during deploy
+    - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"
+      value: "3600"
+    - name: "PEPR_RELIST_INTERVAL_SECONDS"
+      value: "3600"
 admission:
   podLabels:
     istio.io/dataplane-mode: none
@@ -248,5 +254,11 @@ admission:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
+    # TEMP: debug log level for deeper diagnostics on AKS. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "info"
+      value: "debug"
+    # TEMP: raise KFC watch staleness/relist intervals to prevent LIST storms during deploy
+    - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"
+      value: "3600"
+    - name: "PEPR_RELIST_INTERVAL_SECONDS"
+      value: "3600"

@@ -9,6 +9,7 @@ import { GenericKind } from "kubernetes-fluent-client";
 import { Component, setupLogger } from "../../logger";
 import { Phase, PkgStatus, UDSPackage } from "../crd";
 import { buildMigratedAuthserviceStatus } from "../crd/migrate";
+import { retryWithDelay } from "../controllers/utils";
 import {
   AuthserviceClient,
   StatusObject as Status,
@@ -84,13 +85,20 @@ export async function updateStatus(cr: UDSPackage, status: PkgStatus) {
   }
 
   // Update the status of the CRD
-  await K8s(UDSPackage).PatchStatus({
-    metadata: {
-      name: cr.metadata!.name,
-      namespace: cr.metadata!.namespace,
+  await retryWithDelay(
+    async function patchPackageStatus() {
+      await K8s(UDSPackage).PatchStatus({
+        metadata: {
+          name: cr.metadata!.name,
+          namespace: cr.metadata!.namespace,
+        },
+        status: migratedStatus,
+      });
     },
-    status: migratedStatus,
-  });
+    log,
+    5,
+    1000,
+  );
 
   // Track the UID of the CRD to know if it has been seen before
   uidSeen.add(cr.metadata!.uid!);
@@ -135,7 +143,12 @@ export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>
  * @param cr The custom resource that failed
  */
 export async function handleFailure(
-  err: { status: number; message: string; data?: { message?: string; reason?: string } },
+  err: {
+    status: number;
+    message?: string;
+    statusText?: string;
+    data?: { message?: string; reason?: string };
+  },
   cr: UDSPackage,
 ) {
   const metadata = cr.metadata!;
@@ -149,7 +162,9 @@ export async function handleFailure(
   }
 
   // Extract the most detailed error message available
-  const detailedMessage = err.data?.message || err.message;
+  // KFC wraps network errors as {ok: false, status: 400, statusText: 'fetch failed'} with no message field
+  const detailedMessage =
+    err.data?.message || err.message || err.statusText || `HTTP ${err.status} error`;
 
   const retryAttempt = cr.status?.retryAttempt || 0;
 
@@ -178,7 +193,7 @@ export async function handleFailure(
   await writeEvent(cr, { message: detailedMessage });
 
   // Update the status of the package with the error
-  updateStatus(cr, status).catch(finalErr => {
+  await updateStatus(cr, status).catch(finalErr => {
     // If the status update fails, write log the error and and try to write an event
     log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
     void writeEvent(cr, { message: finalErr.message });

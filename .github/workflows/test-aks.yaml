@@ -81,7 +81,8 @@ jobs:
 
       - name: Create UDS Core Package
         env:
-          PEPR_CUSTOM_IMAGE: ttl.sh/pepr-keepalive-fix-55de7a7:24h
+          # TEMP: dev Pepr controller image (keep-alive + async logger). Remove before merge.
+          PEPR_CUSTOM_IMAGE: ghcr.io/mjnagel/pepr-dev:kfc-tune
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
@@ -90,11 +91,15 @@ jobs:
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
+      - name: Get Resource Group Name
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
+        working-directory: .github/test-infra/azure/aks
+
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
       - name: Wait for cluster ready
-        run: uds run -f tasks/iac.yaml cluster-ready --no-progress
+        run: uds run -f tasks/iac.yaml aks-cluster-ready --no-progress
 
       - name: Deploy Core Bundle
         env:
@@ -106,8 +111,27 @@ jobs:
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
 
       - name: Debug Output
-        if: ${{ always() }}
+        if: always()
         uses: ./.github/actions/debug-output
+
+      - name: Wait for Log Analytics ingestion
+        if: always()
+        run: sleep 300
+
+      - name: Azure login (refresh token for log collection)
+        if: always()
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install log-analytics extension
+        if: always()
+        run: |
+          if ! az extension add --name log-analytics --allow-preview true --yes; then
+            echo "::warning::Failed to install Azure CLI log-analytics extension; control plane log collection may be incomplete."
+          fi
 
       - name: Save logs
         if: always()
@@ -115,6 +139,7 @@ jobs:
         with:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
+          resource_group: ${{ env.AKS_RESOURCE_GROUP }}
 
       - name: Remove UDS Core
         if: always()

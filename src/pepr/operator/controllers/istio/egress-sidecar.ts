@@ -12,7 +12,7 @@ import {
   IstioVirtualService,
 } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { purgeOrphans, validateNamespace } from "../utils";
+import { purgeOrphans, retryWithDelay, validateNamespace } from "../utils";
 import { generateEgressGateway, warnMatchingExistingGateways } from "./gateway";
 import { log } from "./istio-resources";
 import { generateLocalEgressServiceEntry, generateSharedServiceEntry } from "./service-entry";
@@ -70,8 +70,8 @@ export async function purgeSidecarEgressResources(generation: string) {
     );
   } catch (e) {
     const errText = `Failed to purge orphaned sidecar egress resources`;
-    log.error(`Failed to purge orphaned sidecar egress resources`, e);
-    throw errText;
+    log.error({ err: e }, errText);
+    throw e instanceof Error ? e : new Error(errText);
   }
 }
 
@@ -122,7 +122,14 @@ async function applyHostResources(host: string, resource: EgressResource, genera
       try {
         const gateway = generateEgressGateway(host, resource, generation);
         log.debug(gateway, `Applying Egress Gateway ${gateway.metadata?.name}`);
-        await K8s(IstioGateway).Apply(gateway, { force: true });
+        await retryWithDelay(
+          async function applyEgressGateway() {
+            await K8s(IstioGateway).Apply(gateway, { force: true });
+          },
+          log,
+          5,
+          1000,
+        );
       } catch (e) {
         const errText = `Failed to apply Gateway for host ${host}`;
         log.error(errText, e);
@@ -139,7 +146,14 @@ async function applyHostResources(host: string, resource: EgressResource, genera
           virtualService,
           `Applying Egress Virtual Service ${virtualService.metadata?.name}`,
         );
-        await K8s(IstioVirtualService).Apply(virtualService, { force: true });
+        await retryWithDelay(
+          async function applyEgressVirtualService() {
+            await K8s(IstioVirtualService).Apply(virtualService, { force: true });
+          },
+          log,
+          5,
+          1000,
+        );
       } catch (e) {
         const errText = `Failed to apply Virtual Service for host ${host}`;
         log.error(errText, e);
@@ -153,7 +167,14 @@ async function applyHostResources(host: string, resource: EgressResource, genera
       try {
         const serviceEntry = generateSharedServiceEntry(host, resource, generation);
         log.debug(serviceEntry, `Applying Service Entry ${serviceEntry.metadata?.name}`);
-        await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+        await retryWithDelay(
+          async function applyEgressServiceEntry() {
+            await K8s(IstioServiceEntry).Apply(serviceEntry, { force: true });
+          },
+          log,
+          5,
+          1000,
+        );
       } catch (e) {
         const errText = `Failed to apply Service Entry for host ${host}`;
         log.error(errText, e);
@@ -174,7 +195,14 @@ async function applyHostResources(host: string, resource: EgressResource, genera
 export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
   // Error if egress gateway is not enabled in the cluster
   try {
-    await validateNamespace(sidecarEgressNamespace);
+    await retryWithDelay(
+      async function validateEgressNamespace() {
+        await validateNamespace(sidecarEgressNamespace);
+      },
+      log,
+      5,
+      1000,
+    );
   } catch (e) {
     let errText = `Unable to get the egress gateway namespace ${sidecarEgressNamespace}.`;
     if (e?.status === 404) {
@@ -185,7 +213,14 @@ export async function validateEgressGateway(hostResourceMap: HostResourceMap) {
   }
 
   // Check the desired ports are exposed by the service
-  const service = await K8s(kind.Service).InNamespace(sidecarEgressNamespace).Get("egressgateway");
+  const service = await retryWithDelay(
+    async function getEgressGatewayService() {
+      return K8s(kind.Service).InNamespace(sidecarEgressNamespace).Get("egressgateway");
+    },
+    log,
+    5,
+    1000,
+  );
 
   const ports = service.spec?.ports ?? [];
   for (const host in hostResourceMap) {

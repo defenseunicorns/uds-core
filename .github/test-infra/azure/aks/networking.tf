@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 resource "azurerm_virtual_network" "cluster-vnet" {
@@ -36,22 +36,6 @@ resource "azurerm_subnet" "postgres_subnet" {
     name = "fs"
     service_delegation {
       name = "Microsoft.DBforPostgreSQL/flexibleServers"
-      actions = [
-        "Microsoft.Network/virtualNetworks/subnets/join/action",
-      ]
-    }
-  }
-}
-
-resource "azurerm_subnet" "cluster_api_subnet" {
-  name                 = "${local.cluster_name}-api-subnet"
-  resource_group_name  = azurerm_resource_group.this.name
-  virtual_network_name = azurerm_virtual_network.cluster-vnet.name
-  address_prefixes     = ["10.0.48.0/24"]
-  delegation {
-    name = "api"
-    service_delegation {
-      name = "Microsoft.ContainerService/managedClusters"
       actions = [
         "Microsoft.Network/virtualNetworks/subnets/join/action",
       ]

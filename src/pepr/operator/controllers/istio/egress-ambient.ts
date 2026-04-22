@@ -5,7 +5,7 @@
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import { purgeOrphans, retryWithDelay } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
@@ -308,11 +308,17 @@ export async function purgeAmbientEgressResources(
       entry.rules.some(rule => rule.kind === "host"),
     );
 
-    const currentGenGateways = await K8s(K8sGateway)
-      .InNamespace(ambientEgressNamespace)
-      .WithLabel("uds/package", sharedEgressPkgId)
-      .WithLabel("uds/generation", generation)
-      .Get();
+    const currentGenGateways = await retryWithDelay(
+      () =>
+        K8s(K8sGateway)
+          .InNamespace(ambientEgressNamespace)
+          .WithLabel("uds/package", sharedEgressPkgId)
+          .WithLabel("uds/generation", generation)
+          .Get(),
+      log,
+      5,
+      1000,
+    );
 
     const currentGenGatewayCount =
       (currentGenGateways as { items?: unknown[] } | undefined)?.items?.length ?? 0;
@@ -324,11 +330,17 @@ export async function purgeAmbientEgressResources(
       return;
     }
 
-    const currentGenServiceEntries = await K8s(IstioServiceEntry)
-      .InNamespace(ambientEgressNamespace)
-      .WithLabel("uds/package", sharedEgressPkgId)
-      .WithLabel("uds/generation", generation)
-      .Get();
+    const currentGenServiceEntries = await retryWithDelay(
+      () =>
+        K8s(IstioServiceEntry)
+          .InNamespace(ambientEgressNamespace)
+          .WithLabel("uds/package", sharedEgressPkgId)
+          .WithLabel("uds/generation", generation)
+          .Get(),
+      log,
+      5,
+      1000,
+    );
 
     const currentGenServiceEntryCount =
       (currentGenServiceEntries as { items?: unknown[] } | undefined)?.items?.length ?? 0;
@@ -357,7 +369,7 @@ export async function purgeAmbientEgressResources(
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
-    log.error(`Failed to purge orphaned ambient egress resources`, e);
-    throw errText;
+    log.error({ err: e }, errText);
+    throw e instanceof Error ? e : new Error(errText);
   }
 }

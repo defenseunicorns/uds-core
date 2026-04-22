@@ -5,7 +5,7 @@
 
 import { UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { getOwnerRef, validateNamespace } from "../utils";
+import { getOwnerRef, retryWithDelay, validateNamespace } from "../utils";
 import {
   createHostResourceMap,
   egressRequestedFromNetwork,
@@ -34,7 +34,14 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
     if (istioMode === Mode.Ambient) {
       // Validate existing egress waypoint namespace
       try {
-        await validateNamespace(ambientEgressNamespace);
+        await retryWithDelay(
+          async function validateAmbientEgressNamespace() {
+            await validateNamespace(ambientEgressNamespace);
+          },
+          log,
+          5,
+          1000,
+        );
       } catch (e: unknown) {
         let errText = `Unable to get the egress waypoint namespace ${ambientEgressNamespace}.`;
         const status = (e as { status?: number } | undefined)?.status;
@@ -69,7 +76,7 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
       istioMode,
     );
   } catch (e) {
-    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
+    log.error({ err: e }, `Failed to reconcile shared egress resources for package ${pkgId}`);
     throw e;
   }
 }

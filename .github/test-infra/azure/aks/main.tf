@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 
@@ -52,7 +52,7 @@ resource "azurerm_role_assignment" "aks_network_role" {
   scope                = azurerm_resource_group.this.id
 }
 
-## Cluster user assigned identity. Required for API server vnet integration
+## Cluster user assigned identity
 resource "azurerm_user_assigned_identity" "cluster_identity" {
   location            = var.location
   name                = "${local.cluster_name}-identity"
@@ -82,8 +82,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   node_resource_group = "${local.cluster_name}-managed-rg"
 
   api_server_access_profile {
-    virtual_network_integration_enabled = true
-    subnet_id                           = azurerm_subnet.cluster_api_subnet.id
+    virtual_network_integration_enabled = false
   }
 
   local_account_disabled            = false
@@ -108,9 +107,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     snapshot_controller_enabled = true
   }
 
-  oidc_issuer_enabled = true
-  support_plan        = "KubernetesOfficial"
-  sku_tier            = var.sku_tier
+  oidc_issuer_enabled     = true
+  support_plan            = "KubernetesOfficial"
+  sku_tier                = var.sku_tier
+  node_os_upgrade_channel = "None"
 
   default_node_pool {
     name                        = var.default_node_pool_name
@@ -137,6 +137,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
     upgrade_settings {
       max_surge = "10%"
+    }
+
+    linux_os_config {
+      sysctl_config {
+        fs_nr_open       = 12000500
+        fs_file_max      = 12000500
+        vm_max_map_count = 262144
+      }
     }
   }
 }
