@@ -96,12 +96,12 @@ variable "network_service_cidr" {
 }
 
 variable "outbound_type" {
-  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting. Defaults to loadBalancer."
+  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer, userAssignedNATGateway, and userDefinedRouting. Defaults to userAssignedNATGateway."
   type        = string
-  default     = "loadBalancer"
+  default     = "userAssignedNATGateway"
 
   validation {
-    condition     = contains(["loadBalancer", "userDefinedRouting"], var.outbound_type)
+    condition     = contains(["loadBalancer", "userAssignedNATGateway", "userDefinedRouting"], var.outbound_type)
     error_message = "The outbound type is invalid."
   }
 }
@@ -115,7 +115,7 @@ variable "default_node_pool_name" {
 variable "default_node_pool_max_pods" {
   description = "(Optional) The maximum number of pods that can run on each agent. Changing this forces a new resource to be created."
   type        = number
-  default     = 50
+  default     = 110
 }
 
 variable "default_node_pool_os_disk_type" {
