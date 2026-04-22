@@ -83,6 +83,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
   api_server_access_profile {
     virtual_network_integration_enabled = false
+    # subnet_id                           = azurerm_subnet.cluster_api_subnet.id
   }
 
   local_account_disabled            = false
