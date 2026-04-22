@@ -11,10 +11,10 @@ const log = setupLogger(Component.STARTUP);
 let configured = false;
 
 /**
- * Configure undici's global dispatcher with tight timeouts so K8s API calls
- * fail fast when the underlying socket dies silently (apiserver pod rolled,
- * konnectivity tunnel dropped, HCP churn). Without these, a fetch can hang
- * for minutes on a dead TCP connection before throwing, eating retry budgets.
+ * Configure undici's global dispatcher with explicit timeouts so K8s API calls
+ * fail before the OS TCP timeout (~2min) when a socket dies silently
+ * (apiserver rolled, tunnel dropped, etc.). Node/undici defaults (300s+) are
+ * long enough to eat a full reconciliation budget on a dead connection.
  *
  * Values overridable via env vars for tuning.
  */
@@ -22,10 +22,10 @@ export function configureUndici(): void {
   if (configured) return;
   configured = true;
 
-  const connectTimeoutMs = parseInt(process.env.PEPR_UNDICI_CONNECT_TIMEOUT_MS ?? "10000", 10);
-  const headersTimeoutMs = parseInt(process.env.PEPR_UNDICI_HEADERS_TIMEOUT_MS ?? "15000", 10);
-  const bodyTimeoutMs = parseInt(process.env.PEPR_UNDICI_BODY_TIMEOUT_MS ?? "30000", 10);
-  const keepAliveTimeoutMs = parseInt(process.env.PEPR_UNDICI_KEEP_ALIVE_TIMEOUT_MS ?? "10000", 10);
+  const connectTimeoutMs = parseInt(process.env.PEPR_UNDICI_CONNECT_TIMEOUT_MS ?? "15000", 10);
+  const headersTimeoutMs = parseInt(process.env.PEPR_UNDICI_HEADERS_TIMEOUT_MS ?? "60000", 10);
+  const bodyTimeoutMs = parseInt(process.env.PEPR_UNDICI_BODY_TIMEOUT_MS ?? "120000", 10);
+  const keepAliveTimeoutMs = parseInt(process.env.PEPR_UNDICI_KEEP_ALIVE_TIMEOUT_MS ?? "30000", 10);
 
   try {
     setGlobalDispatcher(

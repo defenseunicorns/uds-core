@@ -71,7 +71,8 @@ export async function purgeSidecarEgressResources(generation: string) {
   } catch (e) {
     const errText = `Failed to purge orphaned sidecar egress resources`;
     log.error({ err: e }, errText);
-    throw e instanceof Error ? e : new Error(errText);
+    const msg = e instanceof Error ? e.message : String(e);
+    throw new Error(`${errText}: ${msg}`, { cause: e });
   }
 }
 
@@ -126,7 +127,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
       } catch (e) {
         const errText = `Failed to apply Gateway for host ${host}`;
         log.error({ err: e }, errText);
-        throw e instanceof Error ? e : new Error(errText);
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`${errText}: ${msg}`, { cause: e });
       }
     })();
     resourcePromises.push(gatewayPromise);
@@ -143,7 +145,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
       } catch (e) {
         const errText = `Failed to apply Virtual Service for host ${host}`;
         log.error({ err: e }, errText);
-        throw e instanceof Error ? e : new Error(errText);
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`${errText}: ${msg}`, { cause: e });
       }
     })();
     resourcePromises.push(virtualServicePromise);
@@ -157,7 +160,8 @@ async function applyHostResources(host: string, resource: EgressResource, genera
       } catch (e) {
         const errText = `Failed to apply Service Entry for host ${host}`;
         log.error({ err: e }, errText);
-        throw e instanceof Error ? e : new Error(errText);
+        const msg = e instanceof Error ? e.message : String(e);
+        throw new Error(`${errText}: ${msg}`, { cause: e });
       }
     })();
     resourcePromises.push(serviceEntryPromise);

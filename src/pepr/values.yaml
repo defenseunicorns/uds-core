@@ -239,9 +239,8 @@ watcher:
     # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
       value: "debug"
-    # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
-    # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
-    # a full LIST on every low-traffic CRD watch every 5 min.
+    # KFC watch staleness/relist intervals. Pepr defaults are 300s/600s; bump
+    # to 1h so low-traffic CRDs don't trigger a full LIST every 5 min.
     - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"
       value: "3600"
     - name: "PEPR_RELIST_INTERVAL_SECONDS"
@@ -276,9 +275,8 @@ admission:
     # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
       value: "debug"
-    # TEMP: raise KFC watch staleness/relist intervals far above apiserver's own
-    # 5-10 min watch timeout so the 300s "no data seen" firestorm stops triggering
-    # a full LIST on every low-traffic CRD watch every 5 min.
+    # KFC watch staleness/relist intervals. Pepr defaults are 300s/600s; bump
+    # to 1h so low-traffic CRDs don't trigger a full LIST every 5 min.
     - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"
       value: "3600"
     - name: "PEPR_RELIST_INTERVAL_SECONDS"

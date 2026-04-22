@@ -80,9 +80,6 @@ jobs:
           tofu_wrapper: false
 
       - name: Create UDS Core Package
-        env:
-          # TEMP: dev Pepr controller image (keep-alive timeouts). Remove before merge.
-          PEPR_CUSTOM_IMAGE: ghcr.io/mjnagel/pepr-dev:kfc-tune
         run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
 
       - name: Create Core Bundle
@@ -115,7 +112,7 @@ jobs:
         uses: ./.github/actions/debug-output
 
       - name: Wait for Log Analytics ingestion
-        if: always()
+        if: failure()
         run: sleep 300
 
       - name: Azure login (refresh token for log collection)

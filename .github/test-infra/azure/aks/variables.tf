@@ -37,11 +37,8 @@ variable "control_plane_log_categories" {
     "kube-apiserver",
     "kube-controller-manager",
     "kube-scheduler",
-    "cluster-autoscaler",
-    "guard",
     "cloud-controller-manager",
     "kube-audit",
-    "kube-audit-admin",
   ]
 }
 
@@ -142,7 +139,7 @@ variable "tags" {
 variable "azure_rbac_enabled" {
   description = "Whether or not to use Azure Role Based Access Control to control access to cluster resources."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "username" {

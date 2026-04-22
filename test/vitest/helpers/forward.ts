@@ -64,11 +64,9 @@ export async function getForward(
 
     return await new Promise<ForwardResult>((resolve, reject) => {
       const server = net.createServer(socket => {
-        // Swallow socket errors (e.g. ECONNRESET during teardown) so they don't
-        // become uncaught exceptions and fail otherwise-passing test runs.
-        socket.on("error", () => {});
-        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(() => {
-          socket.destroy();
+        // Surface port-forward setup errors on the socket so callers can see failures quickly
+        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(err => {
+          socket.destroy(err instanceof Error ? err : new Error(String(err)));
         });
       });
 
