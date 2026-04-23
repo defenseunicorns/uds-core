@@ -20,7 +20,6 @@ import {
   getAuthserviceClients,
   getOwnerRef,
   purgeOrphans,
-  retryWithDelay,
   sanitizeResourceName,
 } from "../utils";
 import { META_IP } from "./generators/cloudMetadata";
@@ -439,14 +438,7 @@ export async function generateAuthorizationPolicies(
   // Apply policies concurrently.
   for (const policy of policies) {
     try {
-      await retryWithDelay(
-        async function applyAuthorizationPolicy() {
-          await K8s(AuthorizationPolicy).Apply(policy, { force: true });
-        },
-        log,
-        5,
-        1000,
-      );
+      await K8s(AuthorizationPolicy).Apply(policy, { force: true });
       log.trace(
         `Applied AuthorizationPolicy ${policy.metadata?.name} in namespace ${policy.metadata?.namespace}`,
       );

@@ -1,11 +1,11 @@
 /**
- * Copyright 2025-2026 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans, retryWithDelay } from "../utils";
+import { purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
@@ -308,17 +308,11 @@ export async function purgeAmbientEgressResources(
       entry.rules.some(rule => rule.kind === "host"),
     );
 
-    const currentGenGateways = await retryWithDelay(
-      () =>
-        K8s(K8sGateway)
-          .InNamespace(ambientEgressNamespace)
-          .WithLabel("uds/package", sharedEgressPkgId)
-          .WithLabel("uds/generation", generation)
-          .Get(),
-      log,
-      5,
-      1000,
-    );
+    const currentGenGateways = await K8s(K8sGateway)
+      .InNamespace(ambientEgressNamespace)
+      .WithLabel("uds/package", sharedEgressPkgId)
+      .WithLabel("uds/generation", generation)
+      .Get();
 
     const currentGenGatewayCount =
       (currentGenGateways as { items?: unknown[] } | undefined)?.items?.length ?? 0;
@@ -330,17 +324,11 @@ export async function purgeAmbientEgressResources(
       return;
     }
 
-    const currentGenServiceEntries = await retryWithDelay(
-      () =>
-        K8s(IstioServiceEntry)
-          .InNamespace(ambientEgressNamespace)
-          .WithLabel("uds/package", sharedEgressPkgId)
-          .WithLabel("uds/generation", generation)
-          .Get(),
-      log,
-      5,
-      1000,
-    );
+    const currentGenServiceEntries = await K8s(IstioServiceEntry)
+      .InNamespace(ambientEgressNamespace)
+      .WithLabel("uds/package", sharedEgressPkgId)
+      .WithLabel("uds/generation", generation)
+      .Get();
 
     const currentGenServiceEntryCount =
       (currentGenServiceEntries as { items?: unknown[] } | undefined)?.items?.length ?? 0;

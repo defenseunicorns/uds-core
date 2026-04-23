@@ -10,13 +10,7 @@ import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../cr
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
-import {
-  getAuthserviceClients,
-  getOwnerRef,
-  purgeOrphans,
-  retryWithDelay,
-  sanitizeResourceName,
-} from "../utils";
+import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
 import { allowEgressIstiod } from "./defaults/allow-egress-istiod";
 import { allowIngressSidecarMonitoring } from "./defaults/allow-ingress-sidecar-monitoring";
@@ -301,14 +295,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
     // Apply the NetworkPolicy and force overwrite any existing policy
     try {
-      await retryWithDelay(
-        async function applyNetworkPolicy() {
-          await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
-        },
-        log,
-        5,
-        1000,
-      );
+      await K8s(kind.NetworkPolicy).Apply(policy, { force: true });
     } catch (err) {
       let message = err.data?.message || "Unknown error while applying network policies";
       if (
