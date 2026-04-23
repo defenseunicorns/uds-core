@@ -115,7 +115,14 @@ jobs:
       - name: Test UDS Core
         env:
           VITEST_RETRY: "1"
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
+        # Retry once on failure to ride out transient AKS apiserver/ztunnel webhook
+        # disruptions during test-app deploy, playwright, or vitest phases.
+        run: |
+          if ! uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
+            echo "Tests failed; sleeping 30s before retry..."
+            sleep 30
+            uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
+          fi
 
       - name: Debug Output
         if: always()
