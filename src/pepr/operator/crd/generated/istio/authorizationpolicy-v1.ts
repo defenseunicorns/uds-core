@@ -334,7 +334,7 @@ export interface Type {
 
 RegisterKind(AuthorizationPolicy, {
   group: "security.istio.io",
-  version: "v1beta1",
+  version: "v1",
   kind: "AuthorizationPolicy",
   plural: "authorizationpolicies",
 });

@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Have to pre-create the namespace and also patch it with the istio-injection label later because
@@ -10,7 +10,7 @@ metadata:
   labels:
     istio.io/dataplane-mode: ambient
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: PeerAuthentication
 metadata:
   name: permissive-pepr-webhook
@@ -25,7 +25,7 @@ spec:
     "3000":
       mode: PERMISSIVE
 ---
-apiVersion: "security.istio.io/v1beta1"
+apiVersion: "security.istio.io/v1"
 kind: PeerAuthentication
 metadata:
   name: permissive-pepr-webhook-watcher

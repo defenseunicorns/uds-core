@@ -79,7 +79,7 @@ This example configures SSH ingress, but the same process applies to any TCP pro
    In your application's Zarf package, create a Gateway CR that tells Istio to listen on the new port for your host:
 
    ```yaml title="gateway.yaml"
-   apiVersion: networking.istio.io/v1beta1
+   apiVersion: networking.istio.io/v1
    kind: Gateway
    metadata:
      name: example-ssh-gateway
@@ -101,7 +101,7 @@ This example configures SSH ingress, but the same process applies to any TCP pro
    Route incoming TCP traffic from the gateway to your application service:
 
    ```yaml title="virtualservice.yaml"
-   apiVersion: networking.istio.io/v1beta1
+   apiVersion: networking.istio.io/v1
    kind: VirtualService
    metadata:
      name: example-ssh

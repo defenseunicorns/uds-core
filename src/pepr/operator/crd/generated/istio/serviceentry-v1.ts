@@ -231,7 +231,7 @@ export interface Type {
 
 RegisterKind(ServiceEntry, {
   group: "networking.istio.io",
-  version: "v1beta1",
+  version: "v1",
   kind: "ServiceEntry",
   plural: "serviceentries",
 });

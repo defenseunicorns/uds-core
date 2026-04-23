@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -48,7 +48,7 @@ export {
   HTTPRoute as IstioHTTPRoute,
   Tl as IstioTLS,
   VirtualService as IstioVirtualService,
-} from "./generated/istio/virtualservice-v1beta1";
+} from "./generated/istio/virtualservice-v1";
 
 export {
   Endpoint as IstioEndpoint,
@@ -56,7 +56,7 @@ export {
   Port as IstioPort,
   Resolution as IstioResolution,
   ServiceEntry as IstioServiceEntry,
-} from "./generated/istio/serviceentry-v1beta1";
+} from "./generated/istio/serviceentry-v1";
 
 export {
   PodMetricsEndpoint as PodMonitorEndpoint,
@@ -75,7 +75,7 @@ export { Probe as PrometheusProbe } from "./generated/prometheus/probe-v1";
 export {
   Action as IstioAction,
   AuthorizationPolicy as IstioAuthorizationPolicy,
-} from "./generated/istio/authorizationpolicy-v1beta1";
+} from "./generated/istio/authorizationpolicy-v1";
 export { RequestAuthentication as IstioRequestAuthentication } from "./generated/istio/requestauthentication-v1";
 
 export {
