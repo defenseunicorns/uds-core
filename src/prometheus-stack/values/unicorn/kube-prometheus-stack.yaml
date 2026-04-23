@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: quay.io
       repository: rfcurated/prometheus/alertmanager
-      tag: 0.31.1-jammy-fips-rfcurated-rfhardened
+      tag: 0.32.0-jammy-fips-rfcurated-rfhardened
 kube-state-metrics:
   image:
     registry: quay.io
@@ -23,12 +23,12 @@ prometheus:
     image:
       registry: quay.io
       repository: rfcurated/prometheus
-      tag: 3.10.0-jammy-fips-rfcurated-rfhardened
+      tag: 3.11.2-jammy-fips-rfcurated-rfhardened
 prometheus-node-exporter:
   image:
     registry: quay.io
     repository: rfcurated/prometheus/node-exporter
-    tag: 1.10.2-jammy-scratch-fips-rfcurated
+    tag: 1.11.1-jammy-scratch-fips-rfcurated
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
