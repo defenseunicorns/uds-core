@@ -101,28 +101,40 @@ jobs:
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
-        # Retry once on failure to ride out transient AKS apiserver restart windows
-        # that can fail install with webhook proxy errors (caused by apiserver/konnectivity instability)
+        # Retry up to 2 times on failure to ride out transient AKS apiserver restart
+        # windows that cause webhook proxy errors. --force-conflicts on retries works
+        # around zarf issue 4771 (field-manager conflicts on partial re-apply).
         run: |
-          if ! uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; then
-            echo "Deploy failed; sleeping 30s before retry..."
-            sleep 30
-            # --force-conflicts works around zarf issue 4771 where AKS adds webhook fields that cause field conflicts.
-            uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm --force-conflicts
-          fi
+          for attempt in 1 2 3; do
+            FORCE=""
+            [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
+            if uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm $FORCE; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
+              sleep 30
+            fi
+          done
+          exit 1
         timeout-minutes: 40
 
       - name: Test UDS Core
         env:
           VITEST_RETRY: "1"
-        # Retry once on failure to ride out transient AKS apiserver/ztunnel webhook
-        # disruptions during test-app deploy, playwright, or vitest phases.
+        # Retry up to 2 times on failure to ride out transient AKS apiserver
+        # webhook disruptions during test-app deploy, playwright, or vitest phases.
         run: |
-          if ! uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
-            echo "Tests failed; sleeping 30s before retry..."
-            sleep 30
-            uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
-          fi
+          for attempt in 1 2 3; do
+            if uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
+              sleep 30
+            fi
+          done
+          exit 1
 
       - name: Debug Output
         if: always()
