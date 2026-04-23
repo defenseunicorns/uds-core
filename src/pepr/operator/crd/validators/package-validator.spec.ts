@@ -1045,9 +1045,7 @@ describe("Test validation of Package CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
-    expect(mockReq.Deny).toHaveBeenCalledWith(
-      expect.stringContaining("enableAuthserviceSelector"),
-    );
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("enableAuthserviceSelector"));
     UDSConfig.allowPublicClients = false;
   });
 
