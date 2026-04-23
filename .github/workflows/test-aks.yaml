@@ -101,7 +101,14 @@ jobs:
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
-        run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+        # Retry once on failure to ride out transient AKS apiserver restart windows
+        # that can fail webhook-fronted helm chart installs.
+        run: |
+          if ! uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; then
+            echo "Deploy failed; sleeping 30s before retry..."
+            sleep 30
+            uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+          fi
         timeout-minutes: 40
 
       - name: Test UDS Core
@@ -146,7 +153,7 @@ jobs:
             LATEST=$(az monitor log-analytics query \
               --workspace "$WORKSPACE_ID" \
               --analytics-query "AzureDiagnostics | summarize max(TimeGenerated)" \
-              -o tsv 2>/dev/null | head -1) || true
+              -o tsv 2>/dev/null | awk 'NF{print $NF; exit}') || true
             if [ -n "$LATEST" ]; then
               LATEST_SEC=$(date -u -d "$LATEST" +%s 2>/dev/null || echo 0)
               if [ "$LATEST_SEC" -ge "$TARGET" ]; then
