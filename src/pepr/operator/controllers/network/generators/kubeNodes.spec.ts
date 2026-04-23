@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,7 +7,7 @@ import { beforeAll, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 
 import { V1NetworkPolicyList } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1";
 import { anywhere } from "./anywhere";
 import {
   initAllNodesTarget,
@@ -65,7 +65,7 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
   it("should update AuthorizationPolicy if ipBlocks differ", async () => {
     const authPol = {
-      apiVersion: "security.istio.io/v1beta1",
+      apiVersion: "security.istio.io/v1",
       kind: "AuthorizationPolicy",
       metadata: {
         name: "example-authpol",
@@ -95,7 +95,7 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
   it("should not update AuthorizationPolicy if ipBlocks match", async () => {
     const authPol = {
-      apiVersion: "security.istio.io/v1beta1",
+      apiVersion: "security.istio.io/v1",
       kind: "AuthorizationPolicy",
       metadata: {
         name: "authpol-match",
@@ -123,7 +123,7 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
   it("should create 'from' field if missing", async () => {
     const authPol = {
-      apiVersion: "security.istio.io/v1beta1",
+      apiVersion: "security.istio.io/v1",
       kind: "AuthorizationPolicy",
       metadata: {
         name: "authpol-nofrom",
@@ -148,7 +148,7 @@ describe("updateKubeNodesAuthorizationPolicies", () => {
 
   it("should skip policies missing rules", async () => {
     const authPol = {
-      apiVersion: "security.istio.io/v1beta1",
+      apiVersion: "security.istio.io/v1",
       kind: "AuthorizationPolicy",
       metadata: {
         name: "authpol-norules",

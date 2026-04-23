@@ -919,7 +919,7 @@ export interface Type {
 
 RegisterKind(VirtualService, {
   group: "networking.istio.io",
-  version: "v1beta1",
+  version: "v1",
   kind: "VirtualService",
   plural: "virtualservices",
 });

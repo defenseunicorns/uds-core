@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,7 +11,7 @@ import {
   AuthorizationPolicy,
   Rule,
   Source,
-} from "../../crd/generated/istio/authorizationpolicy-v1beta1";
+} from "../../crd/generated/istio/authorizationpolicy-v1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
@@ -180,7 +180,7 @@ function buildAuthPolicy(
   const generation = pkg.metadata?.generation?.toString() ?? "0";
 
   return {
-    apiVersion: "security.istio.io/v1beta1",
+    apiVersion: "security.istio.io/v1",
     kind: "AuthorizationPolicy",
     metadata: {
       name: policyName,
@@ -513,7 +513,7 @@ export function createDenyAllExceptWaypointPolicy(
 
   // Create the base policy with required fields
   const policy: AuthorizationPolicy = {
-    apiVersion: "security.istio.io/v1beta1",
+    apiVersion: "security.istio.io/v1",
     kind: "AuthorizationPolicy",
     metadata: {
       name: policyName,

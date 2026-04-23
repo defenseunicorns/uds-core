@@ -1,11 +1,11 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { V1CustomResourceDefinitionVersion, V1JSONSchemaProps } from "@kubernetes/client-node";
 
-import { advancedHTTP } from "../istio/virtualservice-v1beta1";
+import { advancedHTTP } from "../istio/virtualservice-v1";
 
 const AuthorizationSchema: V1JSONSchemaProps = {
   description: "Authorization settings.",

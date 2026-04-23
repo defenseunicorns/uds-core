@@ -14,7 +14,7 @@ import yaml from "js-yaml";
 import path from "path";
 
 const ISTIO_VERSION = process.env.ISTIO_VERSION;
-const CRD_VERSION = "v1beta1";
+const CRD_VERSION = "v1";
 if (!ISTIO_VERSION) throw new Error("ISTIO_VERSION env var is required (e.g., 1.28.3)");
 
 const CRD_URL = `https://raw.githubusercontent.com/istio/istio/refs/tags/${ISTIO_VERSION}/manifests/charts/base/files/crd-all.gen.yaml`;
