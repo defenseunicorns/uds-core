@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -16,6 +16,7 @@ import {
   Sso,
   UDSPackage,
 } from "..";
+import { UDSConfig } from "../../controllers/config/config";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
@@ -794,6 +795,260 @@ describe("Test validation of Package CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  // ALLOW_PUBLIC_CLIENTS gate (UDSConfig.allowPublicClients).
+  // Device-flow-only public clients above are admitted regardless of the flag.
+  // Non-device-flow public clients are admitted only when the flag is on AND
+  // PKCE is set AND none of the forbidden option combinations are used.
+  it("denies non-device-flow public clients when ALLOW_PUBLIC_CLIENTS is off (default)", async () => {
+    UDSConfig.allowPublicClients = false;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("ALLOW_PUBLIC_CLIENTS"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("allows non-device-flow public clients with PKCE S256 when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("allows non-device-flow public clients with PKCE plain when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "plain" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    UDSConfig.allowPublicClients = false;
+  });
+
+  // The admission check only verifies that the attribute is set to a non-blank
+  // value. Keycloak is the authoritative gate for the specific method string
+  // per RFC 7636 (exact "plain" or "S256", case-sensitive), so a lowercase
+  // "s256" passes the operator but will be rejected at the Keycloak authorization endpoint.
+  it("allows non-device-flow public clients with a lowercase 's256' PKCE value (Keycloak enforces the exact string)", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "s256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients without PKCE when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("pkce.code.challenge.method"),
+    );
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with blank PKCE when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "   " },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies SAML public clients even with PKCE when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          protocol: Protocol.Saml,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("SAML"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with serviceAccountsEnabled when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          serviceAccountsEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("serviceAccountsEnabled"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with a secret when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          secret: "should-not-be-here",
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("secret"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with secretConfig when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          secretConfig: { name: "custom-secret" },
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("secretConfig"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with enableAuthserviceSelector when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          enableAuthserviceSelector: { app: "test" },
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S256" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("enableAuthserviceSelector"),
+    );
+    UDSConfig.allowPublicClients = false;
   });
 
   it("allows service account clients with standard flow disabled ", async () => {

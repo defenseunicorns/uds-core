@@ -1,11 +1,12 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { PeprValidateRequest } from "pepr";
 
 import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "..";
+import { UDSConfig } from "../../controllers/config/config";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
@@ -304,26 +305,86 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         `The client ID "${client.clientId}" must specify redirectUris if standardFlowEnabled is turned on (it is enabled by default)`,
       );
     }
-    // If serviceAccountsEnabled is true, do not allow standard flow
-    if (client.serviceAccountsEnabled && client.standardFlowEnabled) {
+
+    // Public client admission. Two shapes are allowed:
+    //   1. Device-flow-only (always accepted): standardFlowEnabled=false AND
+    //      oauth2.device.authorization.grant.enabled="true". PKCE does not apply to RFC 8628.
+    //   2. Other flows (gated by UDSConfig.allowPublicClients): require
+    //      pkce.code.challenge.method="S256" and forbid option combinations that
+    //      either make no sense for a public client or expand its attack surface.
+    if (client.publicClient) {
+      const isDeviceFlowOnly =
+        client.standardFlowEnabled === false &&
+        client.attributes?.["oauth2.device.authorization.grant.enabled"] === "true";
+
+      if (!isDeviceFlowOnly) {
+        if (!UDSConfig.allowPublicClients) {
+          return req.Deny(
+            `The client ID "${client.clientId}" is a public client. Non-device-flow ` +
+              `public clients are disabled by default. Set ALLOW_PUBLIC_CLIENTS="true" ` +
+              `in the uds-operator-config Secret to enable them.`,
+          );
+        }
+        // SAML public clients: PKCE is an OAuth 2.0 concept (RFC 7636) and does nothing
+        // on a SAML client, so we cannot rely on it as a mitigation.
+        if (client.protocol === Protocol.Saml) {
+          return req.Deny(
+            `The client ID "${client.clientId}" cannot be a SAML public client. PKCE does not apply to SAML.`,
+          );
+        }
+        if (client.serviceAccountsEnabled) {
+          return req.Deny(
+            `The client ID "${client.clientId}" is a public client and cannot set serviceAccountsEnabled`,
+          );
+        }
+        if (
+          client.secret !== undefined ||
+          client.secretConfig?.name !== undefined ||
+          client.secretConfig?.template !== undefined
+        ) {
+          return req.Deny(
+            `The client ID "${client.clientId}" is a public client and cannot set secret or secretConfig`,
+          );
+        }
+        if (client.enableAuthserviceSelector !== undefined) {
+          return req.Deny(
+            `The client ID "${client.clientId}" is a public client and cannot set enableAuthserviceSelector`,
+          );
+        }
+        // PKCE must be enabled. The admission check only verifies that
+        // pkce.code.challenge.method is set to a non-blank value (RFC 7636 defines
+        // "plain" and "S256"). Keycloak enforces the method string itself at the
+        // authorization endpoint, so we leave the specific method choice to the
+        // app owner and the Keycloak layer rather than pinning it here.
+        const pkceMethod = client.attributes?.["pkce.code.challenge.method"]?.trim();
+        if (!pkceMethod) {
+          return req.Deny(
+            `The client ID "${client.clientId}" is a public client and must set the ` +
+              `"pkce.code.challenge.method" attribute (for example "S256" per RFC 7636).`,
+          );
+        }
+      }
+
+      // Device-flow-only public clients retain the original hygiene rules: no standard
+      // flow, no serviceAccountsEnabled, no secret, no authservice, OIDC only.
+      if (
+        isDeviceFlowOnly &&
+        (client.serviceAccountsEnabled ||
+          client.secret !== undefined ||
+          client.secretConfig?.name !== undefined ||
+          client.secretConfig?.template !== undefined ||
+          client.enableAuthserviceSelector !== undefined ||
+          client.protocol === Protocol.Saml)
+      ) {
+        return req.Deny(
+          `The client ID "${client.clientId}" sets options incompatible with publicClient`,
+        );
+      }
+    }
+    // If serviceAccountsEnabled is true on a non-public client, do not allow standard flow
+    if (!client.publicClient && client.serviceAccountsEnabled && client.standardFlowEnabled) {
       return req.Deny(
         `The client ID "${client.clientId}" serviceAccountsEnabled is disallowed with standardFlowEnabled`,
-      );
-    }
-    // If this is a public client ensure that it only sets itself up as an OAuth Device Flow client
-    if (
-      client.publicClient &&
-      (client.standardFlowEnabled !== false /* default true */ ||
-        client.serviceAccountsEnabled /* default false */ ||
-        client.secret !== undefined ||
-        client.secretConfig?.name !== undefined ||
-        client.secretConfig?.template !== undefined ||
-        client.enableAuthserviceSelector !== undefined ||
-        client.protocol === Protocol.Saml ||
-        client.attributes?.["oauth2.device.authorization.grant.enabled"] !== "true")
-    ) {
-      return req.Deny(
-        `The client ID "${client.clientId}" sets options incompatible with publicClient`,
       );
     }
     // Check if client.attributes contain any disallowed attributes

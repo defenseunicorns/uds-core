@@ -256,7 +256,7 @@ If your application expects credentials in a specific format (JSON config file, 
    </Tabs>
 
    > [!NOTE]
-   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`. See [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
+   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`. The same mechanism gates non-device-flow public clients on the Keycloak side via `SECURITY_HARDENING_PUBLIC_CLIENTS_ENABLED`. See [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
 
 4. **(Optional) Configure client attributes**
 

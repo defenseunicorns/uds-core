@@ -4,6 +4,10 @@
 operator:
   AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
   KEYCLOAK_CLIENT_MODE: "CLIENT_SECRET"
+  # When "true", the UDS Operator admits SSO clients with publicClient: true that
+  # use flows beyond device flow (PKCE is required). Defaults to "false" so public
+  # clients other than device-flow-only are rejected at admission.
+  ALLOW_PUBLIC_CLIENTS: "false"
 
 cluster:
   attributes:
