@@ -16,6 +16,35 @@ resource "azurerm_subnet" "cluster_node_subnet" {
   address_prefixes     = ["10.0.0.0/20"]
 }
 
+resource "azurerm_public_ip" "nat" {
+  name                = "${local.cluster_name}-nat-pip"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  zones               = ["1", "2", "3"]
+  tags                = var.tags
+}
+
+resource "azurerm_nat_gateway" "this" {
+  name                    = "${local.cluster_name}-nat"
+  location                = azurerm_resource_group.this.location
+  resource_group_name     = azurerm_resource_group.this.name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  tags                    = var.tags
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "this" {
+  nat_gateway_id       = azurerm_nat_gateway.this.id
+  public_ip_address_id = azurerm_public_ip.nat.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "cluster_node_subnet" {
+  subnet_id      = azurerm_subnet.cluster_node_subnet.id
+  nat_gateway_id = azurerm_nat_gateway.this.id
+}
+
 resource "azurerm_subnet" "cluster_worker_node_subnet" {
   name                 = "${local.cluster_name}-worker-node-subnet"
   resource_group_name  = azurerm_resource_group.this.name

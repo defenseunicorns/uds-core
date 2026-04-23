@@ -63,7 +63,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   name                = local.cluster_name
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  depends_on = [azurerm_role_assignment.aks_network_role]
+  depends_on = [
+    azurerm_role_assignment.aks_network_role,
+    azurerm_subnet_nat_gateway_association.cluster_node_subnet,
+  ]
 
   tags = {
     Owner = "UDS Foundations"
@@ -100,10 +103,6 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     network_plugin_mode = "overlay"
     network_policy      = "azure"
     outbound_type       = var.outbound_type
-    nat_gateway_profile {
-      idle_timeout_in_minutes   = 10
-      managed_outbound_ip_count = 1
-    }
   }
 
   storage_profile {
