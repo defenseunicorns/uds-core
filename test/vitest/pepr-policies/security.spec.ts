@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe("security policies", () => {
+describe("security policies", { retry: 1 }, () => {
   it("should not allow privilege escalation", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({

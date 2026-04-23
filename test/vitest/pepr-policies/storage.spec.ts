@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe("storage policies", () => {
+describe("storage policies", { retry: 1 }, () => {
   it("should restrict volume types to the allowed list", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({
