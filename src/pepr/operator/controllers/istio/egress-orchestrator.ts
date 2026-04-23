@@ -1,5 +1,5 @@
 /**
- * Copyright 2025-2026 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -69,7 +69,7 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
       istioMode,
     );
   } catch (e) {
-    log.error({ err: e }, `Failed to reconcile shared egress resources for package ${pkgId}`);
+    log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
     throw e;
   }
 }

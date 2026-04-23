@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe("restrict istio sidecar configuration overrides", { retry: 1 }, () => {
+describe("restrict istio sidecar configuration overrides", () => {
   it("should prevent single dangerous istio sidecar configuration annotation", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({

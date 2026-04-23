@@ -236,9 +236,8 @@ watcher:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
-    # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "debug"
+      value: "info"
     # KFC watch staleness/relist intervals. Pepr defaults are 300s/600s; bump
     # to 1h so low-traffic CRDs don't trigger a full LIST every 5 min.
     - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"
@@ -272,9 +271,8 @@ admission:
     # Default envs from upstream
     - name: "PEPR_PRETTY_LOG"
       value: "false"
-    # TEMP: debug log level for deeper diagnostics on Pepr admission behavior. Revert before merge.
     - name: "LOG_LEVEL"
-      value: "debug"
+      value: "info"
     # KFC watch staleness/relist intervals. Pepr defaults are 300s/600s; bump
     # to 1h so low-traffic CRDs don't trigger a full LIST every 5 min.
     - name: "PEPR_LAST_SEEN_LIMIT_SECONDS"

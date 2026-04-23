@@ -1,5 +1,5 @@
 /**
- * Copyright 2025-2026 Defense Unicorns
+ * Copyright 2025 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
@@ -203,7 +203,7 @@ export async function performEgressReconciliationWithMutex(): Promise<void> {
     await reconcileInFlight;
   } catch (e) {
     // Log the error and re-throw to maintain error propagation
-    log.error({ err: e }, "Egress reconciliation failed");
+    log.error("Egress reconciliation failed", e);
     throw e;
   } finally {
     // Clear the mutex when done
@@ -230,12 +230,8 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile sidecar egress resources`;
-    const cause =
-      e instanceof Error
-        ? { name: e.name, message: e.message, stack: e.stack }
-        : { raw: JSON.stringify(e) };
-    log.error({ err: cause }, errText);
-    errors.push(new Error(`${errText}: ${cause.message ?? cause.raw}`));
+    log.error(errText, e);
+    errors.push(new Error(errText));
   }
 
   // Reconcile ambient egress resources if namespace is found
@@ -252,12 +248,8 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
-    const cause =
-      e instanceof Error
-        ? { name: e.name, message: e.message, stack: e.stack }
-        : { raw: JSON.stringify(e) };
-    log.error({ err: cause }, errText);
-    errors.push(new Error(`${errText}: ${cause.message ?? cause.raw}`));
+    log.error(errText, e);
+    errors.push(new Error(errText));
   }
 
   // If any errors occurred, aggregate them and throw

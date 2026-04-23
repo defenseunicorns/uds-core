@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 const failIfReached = () => expect(true).toBe(false);
 
-describe("network policies", { retry: 1 }, () => {
+describe("network policies", () => {
   it("should prevent pods from using the host network namespace", async () => {
     const expected = (e: Error) =>
       expect(e).toMatchObject({

@@ -18,7 +18,7 @@ const makeProbe = (name: string, namespace: string, module: string) => ({
   },
 });
 
-describe("probe validator", { retry: 1 }, () => {
+describe("probe validator", () => {
   it("should deny a probe that references an SSO module owned by a different namespace", async () => {
     await K8s(PrometheusProbe)
       .Apply(

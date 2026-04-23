@@ -369,8 +369,7 @@ export async function purgeAmbientEgressResources(
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
-    log.error({ err: e }, errText);
-    const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`${errText}: ${msg}`, { cause: e });
+    log.error(`Failed to purge orphaned ambient egress resources`, e);
+    throw errText;
   }
 }
