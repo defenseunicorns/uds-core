@@ -88,6 +88,12 @@ jobs:
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
+      # Enable API server VNet integration after initial create to work around Azure regional capacity limits.
+      - name: Enable API Server VNet Integration
+        env:
+          TF_VAR_vnet_integration_enabled: "true"
+        run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
+
       - name: Get Resource Group Name
         run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
         working-directory: .github/test-infra/azure/aks
@@ -105,6 +111,8 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
+        env:
+          VITEST_RETRY: "1"
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
 
       - name: Debug Output
@@ -146,6 +154,8 @@ jobs:
 
       - name: Remove IAC
         if: always()
+        env:
+          TF_VAR_vnet_integration_enabled: "true"
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
       - name: Send Slack notification

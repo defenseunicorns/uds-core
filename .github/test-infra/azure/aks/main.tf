@@ -52,7 +52,7 @@ resource "azurerm_role_assignment" "aks_network_role" {
   scope                = azurerm_resource_group.this.id
 }
 
-## Cluster user assigned identity
+## Cluster user assigned identity. Required for API server vnet integration
 resource "azurerm_user_assigned_identity" "cluster_identity" {
   location            = var.location
   name                = "${local.cluster_name}-identity"
@@ -85,8 +85,8 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   node_resource_group = "${local.cluster_name}-managed-rg"
 
   api_server_access_profile {
-    virtual_network_integration_enabled = false
-    # subnet_id                           = azurerm_subnet.cluster_api_subnet.id
+    virtual_network_integration_enabled = var.vnet_integration_enabled
+    subnet_id                           = var.vnet_integration_enabled ? azurerm_subnet.cluster_api_subnet[0].id : null
   }
 
   local_account_disabled            = false

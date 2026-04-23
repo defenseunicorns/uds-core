@@ -24,6 +24,12 @@ variable "log_analytics_retention_days" {
   default     = 30
 }
 
+variable "vnet_integration_enabled" {
+  description = "Enable API server VNet integration. Set true on a second apply after initial cluster creation to work around Azure regional capacity limits."
+  type        = bool
+  default     = false
+}
+
 variable "enable_control_plane_logs" {
   description = "Enable control plane diagnostic logs to Log Analytics."
   type        = bool
