@@ -102,12 +102,13 @@ jobs:
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
         # Retry once on failure to ride out transient AKS apiserver restart windows
-        # that can fail webhook-fronted helm chart installs.
+        # that can fail install with webhook proxy errors (caused by apiserver/konnectivity instability)
         run: |
           if ! uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; then
             echo "Deploy failed; sleeping 30s before retry..."
             sleep 30
-            uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+            # --force-conflicts works around zarf issue 4771 where AKS adds webhook fields that cause field conflicts.
+            uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm --force-conflicts
           fi
         timeout-minutes: 40
 
@@ -136,7 +137,7 @@ jobs:
           fi
 
       - name: Wait for Log Analytics ingestion
-        if: failure()
+        if: always()
         run: |
           TARGET=$(date -u +%s)
           DEADLINE=$((TARGET + 600))  # 10 min cap
