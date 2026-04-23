@@ -120,8 +120,6 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
-        env:
-          VITEST_RETRY: "1"
         # Retry up to 2 times on failure to ride out transient AKS apiserver
         # webhook disruptions during test-app deploy, playwright, or vitest phases.
         run: |

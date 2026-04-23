@@ -12,7 +12,6 @@ export default defineConfig({
     globalSetup: ['./vitest.setup.js'],
     include: ['**/*.spec.ts'],
     exclude: ['trust-bundle/**'],
-    retry: parseInt(process.env.VITEST_RETRY ?? '0', 10),
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
