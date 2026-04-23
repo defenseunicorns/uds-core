@@ -102,12 +102,12 @@ variable "network_service_cidr" {
 }
 
 variable "outbound_type" {
-  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer, userAssignedNATGateway, and userDefinedRouting. Defaults to userAssignedNATGateway."
+  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer, managedNATGateway, userAssignedNATGateway, and userDefinedRouting. Defaults to managedNATGateway."
   type        = string
-  default     = "userAssignedNATGateway"
+  default     = "managedNATGateway"
 
   validation {
-    condition     = contains(["loadBalancer", "userAssignedNATGateway", "userDefinedRouting"], var.outbound_type)
+    condition     = contains(["loadBalancer", "managedNATGateway", "userAssignedNATGateway", "userDefinedRouting"], var.outbound_type)
     error_message = "The outbound type is invalid."
   }
 }
