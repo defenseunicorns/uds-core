@@ -17,9 +17,9 @@
           "description": "Authentication mode for the UDS Operator Keycloak client. AUTO tries signed JWT first, then falls back to client secret."
         },
         "ALLOW_PUBLIC_CLIENTS": {
-          "type": "string",
-          "enum": ["true", "false"],
-          "description": "When 'true', the UDS Operator admits SSO clients with publicClient: true that use flows beyond OAuth 2.0 Device Authorization Grant (PKCE required). Defaults to 'false'."
+          "type": ["string", "boolean"],
+          "enum": ["true", "false", true, false],
+          "description": "When 'true', the UDS Operator admits SSO clients with publicClient: true that use flows beyond OAuth 2.0 Device Authorization Grant (PKCE required). Accepts 'true'/'false' strings or YAML booleans; Helm stringifies either into the Kubernetes Secret value. Defaults to 'false'."
         }
       }
     },
