@@ -3,7 +3,7 @@
 
 image:
   repository: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips
-  tag: "26.5.7-fips"
+  tag: "26.6.1-fips"
 podSecurityContext:
   fsGroup: 2000
 securityContext:
@@ -13,4 +13,4 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.25.0
+configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.26.0
