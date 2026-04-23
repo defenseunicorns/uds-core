@@ -113,10 +113,6 @@ jobs:
         if: always()
         uses: ./.github/actions/debug-output
 
-      - name: Wait for Log Analytics ingestion
-        if: failure()
-        run: sleep 300
-
       - name: Azure login (refresh token for log collection)
         if: always()
         uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3
@@ -131,6 +127,39 @@ jobs:
           if ! az extension add --name log-analytics --allow-preview true --yes; then
             echo "::warning::Failed to install Azure CLI log-analytics extension; control plane log collection may be incomplete."
           fi
+
+      - name: Wait for Log Analytics ingestion
+        if: failure()
+        run: |
+          TARGET=$(date -u +%s)
+          DEADLINE=$((TARGET + 600))  # 10 min cap
+
+          WORKSPACE_ID=$(az monitor log-analytics workspace list \
+            --resource-group "$AKS_RESOURCE_GROUP" \
+            --query "[0].customerId" -o tsv 2>/dev/null) || true
+          if [ -z "$WORKSPACE_ID" ]; then
+            echo "::warning::No Log Analytics workspace found; skipping ingestion wait."
+            exit 0
+          fi
+
+          while [ $(date +%s) -lt $DEADLINE ]; do
+            LATEST=$(az monitor log-analytics query \
+              --workspace "$WORKSPACE_ID" \
+              --analytics-query "AzureDiagnostics | summarize max(TimeGenerated)" \
+              -o tsv 2>/dev/null | head -1) || true
+            if [ -n "$LATEST" ]; then
+              LATEST_SEC=$(date -u -d "$LATEST" +%s 2>/dev/null || echo 0)
+              if [ "$LATEST_SEC" -ge "$TARGET" ]; then
+                echo "Ingestion caught up: latest=$LATEST"
+                exit 0
+              fi
+              echo "Latest ingested: $LATEST (target: $(date -u -d @$TARGET +%FT%TZ)); waiting..."
+            else
+              echo "No ingestion timestamp yet; waiting..."
+            fi
+            sleep 30
+          done
+          echo "::warning::Log Analytics ingestion did not catch up within 10m; log collection may be incomplete."
 
       - name: Save logs
         if: always()
