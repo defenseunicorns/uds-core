@@ -109,6 +109,7 @@ jobs:
             FORCE=""
             [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
             if uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm $FORCE; then
+              echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -116,6 +117,7 @@ jobs:
               sleep 30
             fi
           done
+          echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
           exit 1
         timeout-minutes: 40
 
@@ -125,6 +127,7 @@ jobs:
         run: |
           for attempt in 1 2 3; do
             if uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
+              echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
             if [ "$attempt" -lt 3 ]; then
@@ -132,7 +135,28 @@ jobs:
               sleep 30
             fi
           done
+          echo "TEST_ATTEMPTS=fail" >> $GITHUB_ENV
           exit 1
+
+      - name: Retry summary
+        if: always()
+        run: |
+          status() {
+            case "$1" in
+              1) echo "✅ $1 (first try)" ;;
+              2|3) echo "⚠️ $1 (retry needed)" ;;
+              "") echo "❔ not run" ;;
+              *) echo "❌ failed after 3 attempts" ;;
+            esac
+          }
+          {
+            echo "## Core Retry Summary"
+            echo ""
+            echo "| Step | Attempts |"
+            echo "|------|----------|"
+            echo "| Core deploy | $(status "${CORE_ATTEMPTS:-}") |"
+            echo "| Test UDS Core | $(status "${TEST_ATTEMPTS:-}") |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Debug Output
         if: always()
