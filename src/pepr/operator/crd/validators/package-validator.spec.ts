@@ -844,7 +844,7 @@ describe("Test validation of Package CRs", () => {
     UDSConfig.allowPublicClients = false;
   });
 
-  it("allows non-device-flow public clients with PKCE plain when ALLOW_PUBLIC_CLIENTS is on", async () => {
+  it("denies non-device-flow public clients with PKCE plain when ALLOW_PUBLIC_CLIENTS is on", async () => {
     UDSConfig.allowPublicClients = true;
     const mockReq = makeMockReq(
       {},
@@ -861,15 +861,15 @@ describe("Test validation of Package CRs", () => {
       [],
     );
     await validator(mockReq);
-    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("S256"));
     UDSConfig.allowPublicClients = false;
   });
 
-  // The admission check only verifies that the attribute is set to a non-blank
-  // value. Keycloak is the authoritative gate for the specific method string
-  // per RFC 7636 (exact "plain" or "S256", case-sensitive), so a lowercase
-  // "s256" passes the operator but will be rejected at the Keycloak authorization endpoint.
-  it("allows non-device-flow public clients with a lowercase 's256' PKCE value (Keycloak enforces the exact string)", async () => {
+  // RFC 7636 mandates case-sensitive method strings. The operator pins the exact
+  // value "S256"; a lowercase "s256" must be rejected at admission so that
+  // Mission Heroes cannot slip a non-compliant value past the gate.
+  it("denies non-device-flow public clients with a lowercase 's256' PKCE value", async () => {
     UDSConfig.allowPublicClients = true;
     const mockReq = makeMockReq(
       {},
@@ -886,7 +886,52 @@ describe("Test validation of Package CRs", () => {
       [],
     );
     await validator(mockReq);
-    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("S256"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with an unknown PKCE method when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": "S512" },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("S256"));
+    UDSConfig.allowPublicClients = false;
+  });
+
+  it("denies non-device-flow public clients with PKCE method surrounded by whitespace when ALLOW_PUBLIC_CLIENTS is on", async () => {
+    UDSConfig.allowPublicClients = true;
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [],
+      [
+        {
+          publicClient: true,
+          standardFlowEnabled: true,
+          redirectUris: ["https://app.uds.dev/callback"],
+          attributes: { "pkce.code.challenge.method": " S256 " },
+        },
+      ],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("S256"));
     UDSConfig.allowPublicClients = false;
   });
 

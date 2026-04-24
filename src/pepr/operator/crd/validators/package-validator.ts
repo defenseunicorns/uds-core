@@ -310,8 +310,11 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     //   1. Device-flow-only (always accepted): standardFlowEnabled=false AND
     //      oauth2.device.authorization.grant.enabled="true". PKCE does not apply to RFC 8628.
     //   2. Other flows (gated by UDSConfig.allowPublicClients): require
-    //      pkce.code.challenge.method="S256" and forbid option combinations that
-    //      either make no sense for a public client or expand its attack surface.
+    //      pkce.code.challenge.method="S256" (exact, case-sensitive per RFC 7636)
+    //      and forbid option combinations that either make no sense for a public
+    //      client or expand its attack surface. "plain" is rejected because it
+    //      transmits the challenge equal to the verifier and does not mitigate
+    //      authorization-code interception.
     if (client.publicClient) {
       const isDeviceFlowOnly =
         client.standardFlowEnabled === false &&
@@ -351,16 +354,17 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
             `The client ID "${client.clientId}" is a public client and cannot set enableAuthserviceSelector`,
           );
         }
-        // PKCE must be enabled. The admission check only verifies that
-        // pkce.code.challenge.method is set to a non-blank value (RFC 7636 defines
-        // "plain" and "S256"). Keycloak enforces the method string itself at the
-        // authorization endpoint, so we leave the specific method choice to the
-        // app owner and the Keycloak layer rather than pinning it here.
-        const pkceMethod = client.attributes?.["pkce.code.challenge.method"]?.trim();
-        if (!pkceMethod) {
+        // PKCE must be enabled and pinned to "S256" (exact, case-sensitive per
+        // RFC 7636). "plain" is rejected: it sends the challenge equal to the
+        // verifier on the wire, so a stolen authorization code can be redeemed
+        // directly, defeating the purpose of PKCE. App owners whose clients
+        // cannot emit S256 must be created outside the operator (Admin API or
+        // OpenTofu) as a conscious, out-of-band decision.
+        const pkceMethod = client.attributes?.["pkce.code.challenge.method"];
+        if (pkceMethod !== "S256") {
           return req.Deny(
-            `The client ID "${client.clientId}" is a public client and must set the ` +
-              `"pkce.code.challenge.method" attribute (for example "S256" per RFC 7636).`,
+            `The client ID "${client.clientId}" is a public client and must set ` +
+              `"pkce.code.challenge.method" to "S256" (RFC 7636, case-sensitive).`,
           );
         }
       }

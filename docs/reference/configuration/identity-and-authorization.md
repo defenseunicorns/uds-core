@@ -154,7 +154,7 @@ SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) a
 
 - **Device-flow-only public clients are always accepted.** A client with `standardFlowEnabled: false` and the `oauth2.device.authorization.grant.enabled` attribute set to `"true"` is admitted regardless of the `ALLOW_PUBLIC_CLIENTS` setting below. PKCE does not apply to RFC 8628 and is not required.
 
-- **Non-device-flow public clients are off by default.** To admit any other shape (for example, a single-page app using the standard flow with PKCE), set `ALLOW_PUBLIC_CLIENTS` to `"true"` in the `uds-operator-config` Secret. This is typically done via the `uds-operator-config` Helm chart values:
+- **Non-device-flow public clients are off by default.** To admit any other shape (for example, a single-page app using the standard flow with PKCE), set `ALLOW_PUBLIC_CLIENTS` to `true` in the `uds-operator-config` Secret. This is typically done via the `uds-operator-config` Helm chart values:
 
   ```yaml title="uds-bundle.yaml"
   packages:
@@ -166,17 +166,15 @@ SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) a
           uds-operator-config:
             values:
               - path: operator.ALLOW_PUBLIC_CLIENTS
-                value: "true"
+                value: true
   ```
 
   When the flag is enabled, admission still rejects a non-device-flow public client if any of the following are true:
-  - The `pkce.code.challenge.method` attribute is unset or blank. Set this to `S256` — it is the only RFC 7636 method that defends against authorization-code interception. `plain` is accepted by admission but sends the challenge equal to the verifier on the wire, so a stolen code can be redeemed directly.
+  - The `pkce.code.challenge.method` attribute is anything other than the exact, case-sensitive string `S256`. `plain` is rejected because it sends the challenge equal to the verifier on the wire, so a stolen authorization code can be redeemed directly. Clients that cannot emit `S256` must be created outside the UDS Operator (Admin API, OpenTofu) as a conscious, out-of-band decision.
   - `protocol` is `saml` (PKCE is OAuth only).
   - `serviceAccountsEnabled` is set.
   - `secret` or `secretConfig` is set.
   - `enableAuthserviceSelector` is set.
-
-  The specific PKCE method string is enforced by Keycloak at the authorization endpoint (case-sensitive per RFC 7636), so the operator deliberately does not pin `S256`. Always configure `S256` in your client.
 
 > [!WARNING]
 > Public clients cannot securely store client credentials, so any browser or device that runs the client can present its `client_id` without proof of identity. That makes public clients a common stepping stone for attacks: authorization code interception, redirect URI injection, token theft from browser storage, and open redirect abuse. Even with PKCE, a public client expands the attack surface compared with a confidential client. Prefer a confidential client for any application that can hold a secret. Enable this flag only when the application architecture makes a confidential client impossible (for example, a fully static single-page app with no server component).
