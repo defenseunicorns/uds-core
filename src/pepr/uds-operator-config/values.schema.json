@@ -18,7 +18,8 @@
         },
         "ALLOW_PUBLIC_CLIENTS": {
           "type": ["boolean", "string"],
-          "description": "When true, the UDS Operator admits SSO clients with publicClient: true that use flows beyond OAuth 2.0 Device Authorization Grant (PKCE S256 required). Defaults to false."
+          "enum": ["true", "false", true, false],
+          "description": "When true, the UDS Operator admits SSO clients with publicClient: true that use flows beyond OAuth 2.0 Device Authorization Grant (PKCE S256 required). Accepts YAML booleans or 'true'/'false' strings (Zarf variable substitution form); Helm stringifies either into the Kubernetes Secret value. Defaults to false."
         }
       }
     },
