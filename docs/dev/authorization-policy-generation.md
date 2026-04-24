@@ -66,7 +66,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-my-app-ingress-external-app
@@ -99,7 +99,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-my-app-ingress-frontend
@@ -132,7 +132,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-loki-ingress-all
@@ -160,7 +160,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-myapp-ingress-all
@@ -191,7 +191,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-my-app-ingress-9090-backend-istio-admin-gateway
@@ -228,7 +228,7 @@ spec:
 ```
 
 ```yaml
-apiVersion: security.istio.io/v1beta1
+apiVersion: security.istio.io/v1
 kind: AuthorizationPolicy
 metadata:
   name: protect-grafana-ingress-grafana-istio-tenant-gateway

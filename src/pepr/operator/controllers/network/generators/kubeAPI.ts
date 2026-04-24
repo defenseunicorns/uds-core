@@ -8,7 +8,7 @@ import { K8s, kind, R } from "pepr";
 
 import { Component, setupLogger } from "../../../../logger";
 import { RemoteGenerated } from "../../../crd";
-import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1beta1";
+import { AuthorizationPolicy } from "../../../crd/generated/istio/authorizationpolicy-v1";
 import { UDSConfig } from "../../config/config";
 import { retryWithDelay } from "../../utils";
 import { anywhere } from "./anywhere";

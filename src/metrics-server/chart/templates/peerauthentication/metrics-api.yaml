@@ -1,8 +1,8 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Capabilities.APIVersions.Has "security.istio.io/v1beta1" }}
-apiVersion: security.istio.io/v1beta1
+{{- if .Capabilities.APIVersions.Has "security.istio.io/v1" }}
+apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
   name: metrics-server-api-exception
