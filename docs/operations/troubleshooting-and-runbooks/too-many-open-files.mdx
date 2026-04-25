@@ -1,0 +1,151 @@
+---
+title: Too many open files
+description: Diagnose and resolve "too many open files" errors on pods (commonly `istio-cni` or `vector`), caused by low inotify or open file limits on the host kernel.
+sidebar:
+  order: 1.005
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## When to use this runbook
+
+Use this runbook when:
+
+- `istio-cni-node` pods crash loop on startup, or `ztunnel` pods stay stuck in `ContainerCreating`
+- `vector` pods fail to start or stop collecting logs from cluster workloads
+- Any pod logs `too many open files` or `watcher create: too many open files`
+
+**Example error from istio-cni pods:**
+
+```plaintext
+error   cni-agent       installer failed: create CNI config file: watcher create: too many open files
+Error: create CNI config file: watcher create: too many open files
+```
+
+## Overview
+
+This error means a process tried to create an `inotify` instance or open a file descriptor and hit a kernel limit. File watch-heavy components such as Istio CNI, `ztunnel`, and Vector consume `inotify` instances and watches quickly, so they trip these limits before most workloads do.
+
+This is typically caused by one of the following:
+
+1. **Low `fs.inotify.max_user_instances` on the host:** the kernel limit on `inotify` instances per UID is exhausted, so new watches fail to register
+2. **Low `fs.inotify.max_user_watches` on the host:** the per-UID watch count is exhausted, common when Vector tails many log files
+3. **Low `fs.file-max` or `fs.nr_open`:** the global or per-process open file descriptor limits are too low for the workloads running on the node
+
+> [!NOTE]
+> This is most common on virtualized Kubernetes environments such as `k3d` and `kind`, especially as cluster size and workload count grow on a single machine. References to "the host" in this runbook mean the machine running the container runtime; for example on macOS that is the Docker VM (Lima, Docker Desktop, Rancher Desktop), not the Mac itself.
+
+## Pre-checks
+
+<Steps>
+
+1. **Confirm the symptom in pod logs**
+
+   Check the logs of the affected pod for `too many open files`. For example, with `istio-cni`:
+
+   ```bash
+   uds zarf tools kubectl logs -n istio-system -l k8s-app=istio-cni-node --tail=50
+   ```
+
+   **Look for:** lines containing `too many open files` or `watcher create: too many open files`. Their presence confirms the kernel limit is the root cause.
+
+2. **Check current host limits**
+
+   On the host (see the [Overview](#overview) note), inspect the active values:
+
+   ```bash
+   sysctl fs.inotify.max_user_instances fs.inotify.max_user_watches fs.file-max fs.nr_open
+   ```
+
+   **What to look for:** values at or above the [Vector requirements](/getting-started/production/prerequisites/#vector-requirements) baseline. Anything significantly lower indicates the host needs to be tuned.
+
+   **Example of acceptable output:**
+
+   ```plaintext
+   fs.inotify.max_user_instances = 1024
+   fs.inotify.max_user_watches = 1048576
+   fs.file-max = 13181250
+   fs.nr_open = 13181250
+   ```
+
+</Steps>
+
+## Procedure
+
+Apply the kernel parameters from the [Vector requirements](/getting-started/production/prerequisites/#vector-requirements) on the host running the cluster.
+
+<Steps>
+
+1. **Raise the relevant `sysctl` values on the host**
+
+   On the host (see the [Overview](#overview) note), run the following as root (prefix with `sudo` if you are not running as root):
+
+   ```bash
+   declare -A sysctl_settings
+   # Max open files system-wide and per-process; raise so watch-heavy workloads don't exhaust descriptors
+   sysctl_settings["fs.nr_open"]=13181250
+   sysctl_settings["fs.file-max"]=13181250
+   # inotify instances per UID; Istio CNI and ztunnel each consume several
+   sysctl_settings["fs.inotify.max_user_instances"]=1024
+   # inotify watches per UID; Vector tails every log file in the cluster
+   sysctl_settings["fs.inotify.max_user_watches"]=1048576
+
+   for key in "${!sysctl_settings[@]}"; do
+     value="${sysctl_settings[$key]}"
+     sysctl -w "$key=$value"
+     echo "$key=$value" > "/etc/sysctl.d/$key.conf"
+   done
+   sysctl --system
+   ```
+
+2. **Restart affected pods**
+
+   Once the host limits are raised, recycle the failing pods so they can reinitialize. For example, with `istio-cni` and `ztunnel`:
+
+   ```bash
+   uds zarf tools kubectl rollout restart daemonset/istio-cni-node daemonset/ztunnel -n istio-system
+   ```
+
+   Restart any other workloads that were logging the error.
+
+</Steps>
+
+## Verification
+
+After applying the fix, confirm the affected pods recover. For example, with `istio-cni`:
+
+```bash
+uds zarf tools kubectl get pods -n istio-system
+```
+
+```bash
+uds zarf tools kubectl logs -n istio-system -l k8s-app=istio-cni-node --tail=50 | grep -i "too many open files" || echo "no matches"
+```
+
+**Success indicators:**
+
+- Affected pods are `Running` and ready
+- Their logs no longer contain `too many open files`
+
+## Additional help
+
+If this runbook doesn't resolve your issue:
+
+1. Capture current host limits and Istio CNI logs:
+
+   ```bash
+   sysctl fs.inotify.max_user_instances fs.inotify.max_user_watches fs.file-max fs.nr_open > host-limits.txt
+   ```
+
+   ```bash
+   uds zarf tools kubectl logs -n istio-system -l k8s-app=istio-cni-node > istio-cni.log
+   ```
+
+2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
+3. Open a new issue with the captured output attached
+
+## Related documentation
+
+- [Vector requirements](/getting-started/production/prerequisites/#vector-requirements) - sysctl values known to work well for UDS Core
+- [`inotify(7)` man page](https://man7.org/linux/man-pages/man7/inotify.7.html) - upstream reference for `inotify` instances, watches, and the `max_user_*` limits
+- [Linux kernel `/proc/sys/fs/` documentation](https://docs.kernel.org/admin-guide/sysctl/fs.html) - upstream reference for `fs.file-max`, `fs.nr_open`, and related sysctls
