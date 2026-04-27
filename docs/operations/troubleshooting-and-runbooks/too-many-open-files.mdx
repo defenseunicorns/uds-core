@@ -17,7 +17,7 @@ Use this runbook when:
 
 **Example error from istio-cni pods:**
 
-```plaintext
+```log
 error   cni-agent       installer failed: create CNI config file: watcher create: too many open files
 Error: create CNI config file: watcher create: too many open files
 ```
@@ -61,7 +61,7 @@ This is typically caused by one of the following:
 
    **Example of acceptable output:**
 
-   ```plaintext
+   ```bash
    fs.inotify.max_user_instances = 1024
    fs.inotify.max_user_watches = 1048576
    fs.file-max = 13181250
