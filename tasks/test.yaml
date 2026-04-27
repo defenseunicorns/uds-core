@@ -14,7 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.4/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.5/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 
@@ -239,8 +239,9 @@ tasks:
           group: "/UDS Core/Admin"
       - description: "Setup Authservice App for Testing"
         cmd: |
-          ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
+          ./uds zarf tools kubectl create namespace authservice-ambient-test-app || true # in case namespace exists
           ./uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
+          ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
