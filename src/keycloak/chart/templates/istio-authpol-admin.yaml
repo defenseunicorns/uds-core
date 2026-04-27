@@ -41,6 +41,13 @@ spec:
             ports:
               - "8080"
             paths:
+              # Block client registration on the public (tenant) API
+              - "/realms/{{ .Values.realm }}/clients-registrations/*"
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
               - "/admin/realms/{{ .Values.realm }}/clients"
       from:
         - source:
