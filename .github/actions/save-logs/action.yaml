@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: save-logs
@@ -13,6 +13,10 @@ inputs:
     description: "Kubernetes distribution used in this CI run"
     required: false
     default: "k3d"
+  resource_group:
+    description: "Azure resource group name (required for AKS log collection)"
+    required: false
+    default: ""
 
 runs:
   using: composite
@@ -66,6 +70,64 @@ runs:
         echo "::endgroup::"
       shell: bash
 
+    - name: AKS Control Plane Logs
+      if: ${{ inputs.distro == 'aks' && inputs.resource_group != '' }}
+      run: |
+        echo "::group::Collecting AKS control plane logs"
+        mkdir -p /tmp/control-plane-logs
+
+        # Find the Log Analytics workspace in the resource group
+        WORKSPACE_ERR=$(mktemp)
+        WORKSPACE_ID=$(az monitor log-analytics workspace list \
+          --resource-group "${{ inputs.resource_group }}" \
+          --query "[0].customerId" -o tsv 2>"$WORKSPACE_ERR") || true
+
+        if [ -z "$WORKSPACE_ID" ]; then
+          echo "::warning::Failed to find Log Analytics workspace in ${{ inputs.resource_group }}: $(cat "$WORKSPACE_ERR" || echo 'no workspace exists')"
+        else
+          echo "Found workspace: $WORKSPACE_ID"
+
+          # One file per control plane component for easy triage.
+          for cat in kube-apiserver kube-controller-manager kube-scheduler cloud-controller-manager kube-audit; do
+            az monitor log-analytics query \
+              --workspace "$WORKSPACE_ID" \
+              --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where Category == '$cat' | order by TimeGenerated desc | take 50000" \
+              --output json \
+              > /tmp/control-plane-logs/$cat.json \
+              2> /tmp/control-plane-logs/$cat.err \
+              || {
+                echo "::warning::Failed to query $cat logs from Log Analytics: $(cat /tmp/control-plane-logs/$cat.err || true)"
+                rm -f /tmp/control-plane-logs/$cat.json
+              }
+          done
+
+          # Summary stats for quick triage (1-minute bins).
+          az monitor log-analytics query \
+            --workspace "$WORKSPACE_ID" \
+            --analytics-query "
+              AzureDiagnostics
+              | where TimeGenerated > ago(3h)
+              | summarize
+                  total_events = count(),
+                  apiserver_events = countif(Category == 'kube-apiserver'),
+                  etcd_dns_errors = countif(Category == 'kube-apiserver' and log_s has 'lookup etcd'),
+                  webhook_rst = countif(log_s has 'connection reset by peer' and log_s has 'webhook'),
+                  throttle_429 = countif(log_s has '\"code\":429'),
+                  server_5xx = countif(log_s has_any ('\"code\":500', '\"code\":502', '\"code\":503', '\"code\":504'))
+                  by bin(TimeGenerated, 1m)
+              | order by TimeGenerated desc
+            " \
+            --output json \
+            > /tmp/control-plane-logs/summary-stats.json \
+            2> /tmp/control-plane-logs/summary-stats.err \
+            || {
+              echo "::warning::Failed to query summary stats from Log Analytics: $(cat /tmp/control-plane-logs/summary-stats.err || true)"
+              rm -f /tmp/control-plane-logs/summary-stats.json
+            }
+        fi
+        echo "::endgroup::"
+      shell: bash
+
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: debug-log${{ inputs.suffix }}
@@ -76,6 +138,7 @@ runs:
           /tmp/maru-*.log
           /tmp/debug-*.log
           /tmp/pod-logs
+          /tmp/control-plane-logs
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
           /tmp/playwright/output
