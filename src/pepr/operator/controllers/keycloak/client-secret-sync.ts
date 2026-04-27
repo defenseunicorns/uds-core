@@ -26,11 +26,20 @@ export async function updateKeycloakClientsSecret(
   config: kind.Secret,
   forceRotation: boolean = false,
 ) {
-  config.data = config.data || {};
+  const data = config.data || {};
 
-  if (!config.data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
+  if (!data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
     log.info("Generating new Keycloak client secret");
-    config.data[KEYCLOAK_CLIENT_SECRET_KEY] = Buffer.from(uuidv4()).toString("base64");
-    await K8s(kind.Secret).Apply(config, { force: true });
+    data[KEYCLOAK_CLIENT_SECRET_KEY] = Buffer.from(uuidv4()).toString("base64");
+    await K8s(kind.Secret).Apply(
+      {
+        metadata: {
+          name: config.metadata!.name,
+          namespace: config.metadata!.namespace,
+        },
+        data: data,
+      },
+      { force: true },
+    );
   }
 }
