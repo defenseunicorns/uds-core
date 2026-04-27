@@ -92,9 +92,11 @@ runs:
             az monitor log-analytics query \
               --workspace "$WORKSPACE_ID" \
               --analytics-query "AzureDiagnostics | where TimeGenerated > ago(3h) | where Category == '$cat' | order by TimeGenerated desc | take 50000" \
-              --output json > /tmp/control-plane-logs/$cat.json 2>&1 \
+              --output json \
+              > /tmp/control-plane-logs/$cat.json \
+              2> /tmp/control-plane-logs/$cat.err \
               || {
-                echo "::warning::Failed to query $cat logs from Log Analytics"
+                echo "::warning::Failed to query $cat logs from Log Analytics: $(cat /tmp/control-plane-logs/$cat.err || true)"
                 rm -f /tmp/control-plane-logs/$cat.json
               }
           done
@@ -115,9 +117,11 @@ runs:
                   by bin(TimeGenerated, 1m)
               | order by TimeGenerated desc
             " \
-            --output json > /tmp/control-plane-logs/summary-stats.json 2>&1 \
+            --output json \
+            > /tmp/control-plane-logs/summary-stats.json \
+            2> /tmp/control-plane-logs/summary-stats.err \
             || {
-              echo "::warning::Failed to query summary stats from Log Analytics"
+              echo "::warning::Failed to query summary stats from Log Analytics: $(cat /tmp/control-plane-logs/summary-stats.err || true)"
               rm -f /tmp/control-plane-logs/summary-stats.json
             }
         fi
