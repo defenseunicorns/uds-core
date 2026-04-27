@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 resource "azurerm_virtual_network" "cluster-vnet" {
@@ -14,6 +14,35 @@ resource "azurerm_subnet" "cluster_node_subnet" {
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.cluster-vnet.name
   address_prefixes     = ["10.0.0.0/20"]
+}
+
+resource "azurerm_public_ip" "nat" {
+  name                = "${local.cluster_name}-nat-pip"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  zones               = ["1", "2", "3"]
+  tags                = var.tags
+}
+
+resource "azurerm_nat_gateway" "this" {
+  name                    = "${local.cluster_name}-nat"
+  location                = azurerm_resource_group.this.location
+  resource_group_name     = azurerm_resource_group.this.name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  tags                    = var.tags
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "this" {
+  nat_gateway_id       = azurerm_nat_gateway.this.id
+  public_ip_address_id = azurerm_public_ip.nat.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "cluster_node_subnet" {
+  subnet_id      = azurerm_subnet.cluster_node_subnet.id
+  nat_gateway_id = azurerm_nat_gateway.this.id
 }
 
 resource "azurerm_subnet" "cluster_worker_node_subnet" {
@@ -44,6 +73,7 @@ resource "azurerm_subnet" "postgres_subnet" {
 }
 
 resource "azurerm_subnet" "cluster_api_subnet" {
+  count                = var.vnet_integration_enabled ? 1 : 0
   name                 = "${local.cluster_name}-api-subnet"
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.cluster-vnet.name

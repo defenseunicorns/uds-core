@@ -88,6 +88,10 @@ jobs:
       - name: Create IAC
         run: uds run -f tasks/iac.yaml apply-tofu --no-progress --set K8S_DISTRO=aks --set CLOUD=azure
 
+      - name: Get Resource Group Name
+        run: echo "AKS_RESOURCE_GROUP=$(tofu output -raw resource_group_name)" >> $GITHUB_ENV
+        working-directory: .github/test-infra/azure/aks
+
       - name: Configure Cluster DNS
         run: uds run -f tasks/utils.yaml aks-coredns-setup --no-progress
 
@@ -97,15 +101,114 @@ jobs:
       - name: Deploy Core Bundle
         env:
           UDS_CONFIG: .github/bundles/aks/uds-config.yaml
-        run: uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm
+        # Retry up to 2 times on failure to ride out transient AKS apiserver restart
+        # windows that cause webhook proxy errors. --force-conflicts on retries works
+        # around zarf issue 4771 (field-manager conflicts on partial re-apply).
+        run: |
+          for attempt in 1 2 3; do
+            FORCE=""
+            [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
+            if uds deploy .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm $FORCE; then
+              echo "CORE_ATTEMPTS=$attempt" >> $GITHUB_ENV
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
+              sleep 30
+            fi
+          done
+          echo "CORE_ATTEMPTS=fail" >> $GITHUB_ENV
+          exit 1
         timeout-minutes: 40
 
       - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"
+        # Retry up to 2 times on failure to ride out transient AKS apiserver
+        # webhook disruptions during test-app deploy, playwright, or vitest phases.
+        run: |
+          for attempt in 1 2 3; do
+            if uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
+              echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
+              sleep 30
+            fi
+          done
+          echo "TEST_ATTEMPTS=fail" >> $GITHUB_ENV
+          exit 1
+
+      - name: Retry summary
+        if: always()
+        run: |
+          status() {
+            case "$1" in
+              1) echo "✅ $1 (first try)" ;;
+              2|3) echo "⚠️ $1 (retry needed)" ;;
+              "") echo "❔ not run" ;;
+              *) echo "❌ failed after 3 attempts" ;;
+            esac
+          }
+          {
+            echo "## Core Retry Summary"
+            echo ""
+            echo "| Step | Attempts |"
+            echo "|------|----------|"
+            echo "| Core deploy | $(status "${CORE_ATTEMPTS:-}") |"
+            echo "| Test UDS Core | $(status "${TEST_ATTEMPTS:-}") |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Debug Output
-        if: ${{ always() }}
+        if: always()
         uses: ./.github/actions/debug-output
+
+      - name: Azure login (refresh token for log collection)
+        if: always()
+        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install log-analytics extension
+        if: always()
+        run: |
+          if ! az extension add --name log-analytics --allow-preview true --yes; then
+            echo "::warning::Failed to install Azure CLI log-analytics extension; control plane log collection may be incomplete."
+          fi
+
+      - name: Wait for Log Analytics ingestion
+        if: always()
+        run: |
+          TARGET=$(date -u +%s)
+          DEADLINE=$((TARGET + 600))  # 10 min cap
+
+          WORKSPACE_ID=$(az monitor log-analytics workspace list \
+            --resource-group "$AKS_RESOURCE_GROUP" \
+            --query "[0].customerId" -o tsv 2>/dev/null) || true
+          if [ -z "$WORKSPACE_ID" ]; then
+            echo "::warning::No Log Analytics workspace found; skipping ingestion wait."
+            exit 0
+          fi
+
+          while [ $(date +%s) -lt $DEADLINE ]; do
+            LATEST=$(az monitor log-analytics query \
+              --workspace "$WORKSPACE_ID" \
+              --analytics-query "AzureDiagnostics | summarize max(TimeGenerated)" \
+              -o tsv 2>/dev/null | awk 'NF{print $NF; exit}') || true
+            if [ -n "$LATEST" ]; then
+              LATEST_SEC=$(date -u -d "$LATEST" +%s 2>/dev/null || echo 0)
+              if [ "$LATEST_SEC" -ge "$TARGET" ]; then
+                echo "Ingestion caught up: latest=$LATEST"
+                exit 0
+              fi
+              echo "Latest ingested: $LATEST (target: $(date -u -d @$TARGET +%FT%TZ)); waiting..."
+            else
+              echo "No ingestion timestamp yet; waiting..."
+            fi
+            sleep 30
+          done
+          echo "::warning::Log Analytics ingestion did not catch up within 10m; log collection may be incomplete."
 
       - name: Save logs
         if: always()
@@ -113,6 +216,7 @@ jobs:
         with:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
+          resource_group: ${{ env.AKS_RESOURCE_GROUP }}
 
       - name: Remove UDS Core
         if: always()
