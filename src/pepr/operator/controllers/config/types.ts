@@ -27,4 +27,8 @@ export type Config = {
   kubeApiCIDR: string;
   kubeNodeCIDRs: string[];
   isIdentityDeployed: boolean;
+  // Gate for admitting SSO clients with publicClient: true that use flows beyond
+  // OAuth 2.0 Device Authorization Grant. Driven by the ALLOW_PUBLIC_CLIENTS key
+  // in the uds-operator-config Secret. Defaults to false.
+  allowPublicClients: boolean;
 };

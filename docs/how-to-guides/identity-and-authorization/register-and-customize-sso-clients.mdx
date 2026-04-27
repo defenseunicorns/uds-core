@@ -256,7 +256,7 @@ If your application expects credentials in a specific format (JSON config file, 
    </Tabs>
 
    > [!NOTE]
-   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`. See [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/).
+   > Custom protocol mappers and client scopes are subject to Keycloak's security hardening policy. If Keycloak rejects your mapper or scope, add it to the allow list via `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES`. Non-device-flow public clients are gated separately at the UDS Operator admission layer via `ALLOW_PUBLIC_CLIENTS` in the `uds-operator-config` Secret. See [Public clients](/reference/configuration/identity-and-authorization/#public-clients).
 
 4. **(Optional) Configure client attributes**
 
@@ -283,7 +283,7 @@ If your application expects credentials in a specific format (JSON config file, 
    | `access.token.lifespan` | Override the realm-level token lifespan (seconds) |
    | `client.session.idle.timeout` | Client-specific session idle timeout (seconds) |
    | `client.session.max.lifespan` | Client-specific maximum session lifespan (seconds) |
-   | `pkce.code.challenge.method` | Require PKCE (`S256` or `plain`) |
+   | `pkce.code.challenge.method` | Require PKCE. Public clients must set this to `S256` (RFC 7636, case-sensitive); `plain` is rejected by admission. |
    | `post.logout.redirect.uris` | Allowed post-logout redirect URIs |
    | `use.refresh.tokens` | Enable refresh tokens (`"true"` / `"false"`) |
    | `logout.confirmation.enabled` | Show logout confirmation page (defaults to `"true"`) |

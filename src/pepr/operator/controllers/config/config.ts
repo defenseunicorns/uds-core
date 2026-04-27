@@ -39,6 +39,7 @@ export const UDSConfig: Config = {
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
   isIdentityDeployed: false,
+  allowPublicClients: false,
 };
 
 // Enums for tracking the config action and step of the action
@@ -176,6 +177,9 @@ export async function handleCfgSecret(cfg: kind.Secret, action: ConfigAction) {
       await performAuthserviceUpdate("change to Redis URI");
     }
   }
+
+  // Handle ALLOW_PUBLIC_CLIENTS (operator-side gate for non-device-flow public clients)
+  UDSConfig.allowPublicClients = decodedCfgData.ALLOW_PUBLIC_CLIENTS === "true";
 
   // Handle KEYCLOAK_CLIENT_MODE
   const clientMode =

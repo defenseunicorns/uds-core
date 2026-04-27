@@ -21,9 +21,9 @@ You'll configure a UDS Package to use the [OAuth 2.0 Device Authorization Grant]
 
 The Device Authorization Grant is designed for applications that either have no browser or cannot handle redirect-based authentication (for example, CLI tools, IoT devices, or CI/CD pipelines where a browser redirect is impractical).
 
-This flow creates a **public client** (a client with no secret). Two important constraints apply to public clients in UDS Core:
+This flow creates a **public client** (a client with no secret). Two important constraints apply to device-flow public clients in UDS Core:
 
-- `standardFlowEnabled` must be explicitly set to `false`. The UDS operator will reject the `Package` CR if it is not. Public clients in UDS Core are restricted to device flow only.
+- `standardFlowEnabled` must be explicitly set to `false`. The UDS operator will reject the `Package` CR if it is not. Device-flow-only public clients are admitted by default; other public-client shapes require the cluster admin to enable `ALLOW_PUBLIC_CLIENTS` (see [Configure user accounts and security policies](/how-to-guides/identity-and-authorization/configure-user-account-settings/)).
 - `publicClient: true` is incompatible with `serviceAccountsEnabled: true`
 
 > [!NOTE]
