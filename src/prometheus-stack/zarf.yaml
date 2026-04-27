@@ -37,7 +37,7 @@ components:
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0"
       - "quay.io/prometheus/alertmanager:v0.32.0"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1"
-      - "quay.io/prometheus/prometheus:v3.11.2"
+      - "quay.io/prometheus/prometheus:v3.11.3"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
   - name: kube-prometheus-stack
