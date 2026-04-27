@@ -26,7 +26,7 @@ export async function updateKeycloakClientsSecret(
   config: kind.Secret,
   forceRotation: boolean = false,
 ) {
-  let data = config.data || {};
+  const data = config.data || {};
 
   if (!data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
     log.info("Generating new Keycloak client secret");
