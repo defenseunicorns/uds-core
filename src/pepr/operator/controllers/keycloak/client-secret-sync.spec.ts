@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { V1ManagedFieldsEntry } from "@kubernetes/client-node";
 import { describe, expect, it, vi } from "vitest";
 
 const applyMock = vi.fn().mockResolvedValue(undefined);
@@ -36,7 +37,7 @@ interface Config {
   metadata: {
     name: string;
     namespace: string;
-    managedFields?: unknown[];
+    managedFields?: V1ManagedFieldsEntry[];
   };
   data: {
     [key: string]: string;
