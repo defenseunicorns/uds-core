@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 
@@ -63,7 +63,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   name                = local.cluster_name
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  depends_on          = [azurerm_role_assignment.aks_network_role]
+  depends_on = [
+    azurerm_role_assignment.aks_network_role,
+    azurerm_subnet_nat_gateway_association.cluster_node_subnet,
+  ]
 
   tags = {
     Owner = "UDS Foundations"
@@ -82,8 +85,8 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   node_resource_group = "${local.cluster_name}-managed-rg"
 
   api_server_access_profile {
-    virtual_network_integration_enabled = true
-    subnet_id                           = azurerm_subnet.cluster_api_subnet.id
+    virtual_network_integration_enabled = var.vnet_integration_enabled
+    subnet_id                           = var.vnet_integration_enabled ? azurerm_subnet.cluster_api_subnet[0].id : null
   }
 
   local_account_disabled            = false
@@ -109,9 +112,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
     snapshot_controller_enabled = true
   }
 
-  oidc_issuer_enabled = true
-  support_plan        = "KubernetesOfficial"
-  sku_tier            = var.sku_tier
+  oidc_issuer_enabled     = true
+  support_plan            = "KubernetesOfficial"
+  sku_tier                = var.sku_tier
+  node_os_upgrade_channel = "None"
 
   default_node_pool {
     name                        = var.default_node_pool_name
@@ -138,6 +142,14 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
     upgrade_settings {
       max_surge = "10%"
+    }
+
+    linux_os_config {
+      sysctl_config {
+        fs_nr_open       = 12000500
+        fs_file_max      = 12000500
+        vm_max_map_count = 262144
+      }
     }
   }
 }
