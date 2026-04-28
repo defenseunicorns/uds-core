@@ -1,0 +1,45 @@
+---
+title: UDS Core 1.3
+description: UDS Core 1.3 release notes covering opt-in public Keycloak clients and gateway cycling on Istio proxyProtocol changes.
+sidebar:
+  order: 3.992
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.3 introduces opt-in support for public Keycloak clients (PKCE-enforced flows beyond device flow), automatic gateway pod cycling when Istio `gatewayTopology.proxyProtocol` changes, and an Identity Config workflow for disabling inactive non-admin users. This release also picks up the Prometheus 3.11.2 stored XSS fix (CVE-2026-40179) and rolls in routine dependency updates for Istio, Pepr, and the kube-prometheus-stack chart.
+
+### Notable features
+
+- **Opt-in public Keycloak clients:** adds an `ALLOW_PUBLIC_CLIENTS` operator config flag (default `false`) that gates admission of UDS Package SSO clients with `publicClient: true` for flows beyond device flow. Public clients still require PKCE S256, and the package validator now enforces it. See [ADR 0010](https://github.com/defenseunicorns/uds-core/blob/main/adrs/0010-allow-opt-in-public-clients.md) and [#2598](https://github.com/defenseunicorns/uds-core/pull/2598)
+- **Gateway cycling on `proxyProtocol` changes:** the Pepr operator now restarts gateway pods when `meshConfig.defaultConfig.gatewayTopology.proxyProtocol` is toggled. `proxyProtocol` is read at pod startup and is not pushed via xDS, so toggling it via a bundle override previously left gateway pods with stale configuration ([#2595](https://github.com/defenseunicorns/uds-core/pull/2595))
+- **Optional disabling of inactive users:** UDS Identity Config 0.26.0 adds the `disable-inactive-users` Keycloak workflow for automatically disabling non-admin accounts after a configurable inactivity window. The workflow is disabled by default and only activates when `ACCOUNT_INACTIVITY_DAYS` is set during initial realm import. See [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) for configuration and verification steps.
+
+### Dependency updates
+
+| Package                          | Previous | Updated                                                                                                   |
+| -------------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| Istio                            | 1.29.1   | [1.29.2](https://istio.io/latest/news/releases/1.29.x/announcing-1.29.2/)                                 |
+| Pepr                             | 1.1.5    | [1.1.7](https://github.com/defenseunicorns/pepr/releases/tag/v1.1.7)                                      |
+| Prometheus                       | v3.10.0  | [v3.11.2](https://github.com/prometheus/prometheus/releases/tag/v3.11.2)                                  |
+| Alertmanager                     | v0.31.1  | [v0.32.0](https://github.com/prometheus/alertmanager/releases/tag/v0.32.0)                                |
+| Node Exporter                    | v1.10.2  | [v1.11.1](https://github.com/prometheus/node_exporter/releases/tag/v1.11.1)                               |
+| UDS Identity Config              | 0.25.0   | [0.26.1](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.26.1)                     |
+| kube-prometheus-stack Helm chart | 82.15.0  | [84.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-84.0.0)   |
+| Velero Helm chart                | 12.0.0   | [12.0.1](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.0.1)                          |
+
+## Upgrade considerations
+
+### Identity Config updates (0.26.1)
+
+UDS Core 1.3.0 includes UDS Identity Config [0.26.1](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.26.1), which was also included in the 1.2.2 patch release. No breaking changes or manual realm steps are required.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configure automatic account inactivity disable](/how-to-guides/identity-and-authorization/configure-account-inactivity-disable/) - configure and verify inactive account disable behavior
+- [UDS Core 1.3.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#130-2026-04-28) - full changelog
+- [UDS Identity Config 0.26.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0260-2026-04-13) - full changelog
+- [UDS Identity Config 0.26.1 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0261-2026-04-27) - full changelog
+- [Full diff (1.2.2...1.3.0)](https://github.com/defenseunicorns/uds-core/compare/v1.2.2...v1.3.0) - all changes between versions

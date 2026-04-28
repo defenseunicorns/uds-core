@@ -4,7 +4,7 @@
   "contentDir": "core",
   "description": "The platform layer deployed onto a Kubernetes cluster. Bundles Istio (service mesh and ingress), Keycloak (identity and SSO), Authservice (SSO proxy for apps without native OIDC), Prometheus + Grafana + Alertmanager (monitoring), Vector + Loki (logging), Falco (runtime security), and Pepr (policy engine and operator framework). Exposes UDS Package, UDS Exemption, and UDS ClusterConfig CRDs for application and platform integration.",
   "versionSource": "branch",
-  "archiveCount": 3,
+  "archiveCount": 4,
   "sidebarOrder": [
     "getting-started",
     "concepts",
