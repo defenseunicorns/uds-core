@@ -5,8 +5,6 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: authservice-ambient-test-app
-  labels:
-    zarf.dev/agent: ignore
 ---
 apiVersion: uds.dev/v1alpha1
 kind: Package
