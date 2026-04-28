@@ -100,9 +100,7 @@ describe("updateKeycloakClientsSecret Tests", () => {
   it("should not pass metadata.managedFields through to Apply", async () => {
     applyMock.mockClear();
     const config = createConfig();
-    config.metadata.managedFields = [
-      { manager: "kubectl", operation: "Update", apiVersion: "v1" },
-    ];
+    config.metadata.managedFields = [{ manager: "kubectl", operation: "Update", apiVersion: "v1" }];
 
     await updateKeycloakClientsSecret(config, true);
 
