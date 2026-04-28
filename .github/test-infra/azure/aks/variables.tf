@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variable "cluster_name" {
@@ -24,10 +24,16 @@ variable "log_analytics_retention_days" {
   default     = 30
 }
 
+variable "vnet_integration_enabled" {
+  description = "Enable API server VNet integration. Set true on a second apply after initial cluster creation to work around Azure regional capacity limits."
+  type        = bool
+  default     = false
+}
+
 variable "enable_control_plane_logs" {
   description = "Enable control plane diagnostic logs to Log Analytics."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "control_plane_log_categories" {
@@ -37,11 +43,8 @@ variable "control_plane_log_categories" {
     "kube-apiserver",
     "kube-controller-manager",
     "kube-scheduler",
-    "cluster-autoscaler",
-    "guard",
     "cloud-controller-manager",
     "kube-audit",
-    "kube-audit-admin",
   ]
 }
 
@@ -94,17 +97,17 @@ variable "network_dns_service_ip" {
 
 variable "network_service_cidr" {
   description = "Specifies the service CIDR"
-  default     = "10.2.0.0/24"
+  default     = "10.2.0.0/16"
   type        = string
 }
 
 variable "outbound_type" {
-  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer and userDefinedRouting. Defaults to loadBalancer."
+  description = "(Optional) The outbound (egress) routing method which should be used for this Kubernetes Cluster. Possible values are loadBalancer, userAssignedNATGateway, and userDefinedRouting. Defaults to userAssignedNATGateway."
   type        = string
-  default     = "loadBalancer"
+  default     = "userAssignedNATGateway"
 
   validation {
-    condition     = contains(["loadBalancer", "userDefinedRouting"], var.outbound_type)
+    condition     = contains(["loadBalancer", "userAssignedNATGateway", "userDefinedRouting"], var.outbound_type)
     error_message = "The outbound type is invalid."
   }
 }
@@ -118,7 +121,7 @@ variable "default_node_pool_name" {
 variable "default_node_pool_max_pods" {
   description = "(Optional) The maximum number of pods that can run on each agent. Changing this forces a new resource to be created."
   type        = number
-  default     = 50
+  default     = 110
 }
 
 variable "default_node_pool_os_disk_type" {

@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 resource "local_sensitive_file" "uds_config" {
@@ -37,6 +37,6 @@ resource "local_sensitive_file" "uds_config" {
 }
 
 resource "local_sensitive_file" "kubeconfig" {
-  filename = "/home/runner/.kube/config"
+  filename = pathexpand("~/.kube/config")
   content  = azurerm_kubernetes_cluster.aks_cluster.kube_admin_config_raw
 }

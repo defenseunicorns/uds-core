@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -64,13 +64,26 @@ export async function getForward(
 
     return await new Promise<ForwardResult>((resolve, reject) => {
       const server = net.createServer(socket => {
-        // Surface port-forward setup errors on the socket so callers can see failures quickly
-        void forward.portForward(namespace, podName, [port], socket, null, socket).catch(err => {
-          socket.destroy(err instanceof Error ? err : new Error(String(err)));
+        socket.on("error", (err: Error) => {
+          console.error(
+            `port-forward socket error (${namespace}/${podName}:${port}): ${err.message}`,
+          );
         });
+        // Surface port-forward setup errors on the socket so callers can see failures quickly
+        void forward
+          .portForward(namespace, podName, [port], socket, null, socket)
+          .catch((err: unknown) => {
+            const msg =
+              err instanceof Error
+                ? err.message
+                : typeof err === "object" && err !== null && "message" in err
+                  ? String((err as { message: unknown }).message)
+                  : JSON.stringify(err);
+            socket.destroy(new Error(`portForward failed: ${msg}`));
+          });
       });
 
-      server.on("error", err => {
+      server.on("error", (err: unknown) => {
         if (err instanceof Error) {
           reject(new Error(`Error binding to local port for forward: ${err.message}`));
         } else {
@@ -111,7 +124,7 @@ export async function getForward(
 
 export function closeForward(server: net.Server): Promise<void> {
   return new Promise((resolve, reject) => {
-    server.close(err => {
+    server.close((err: unknown) => {
       // Type guard to check if `err` is an instance of `Error`
       if (err instanceof Error) {
         reject(new Error(`Failed to close server: ${err.message}`));
