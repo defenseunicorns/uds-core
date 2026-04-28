@@ -1,14 +1,16 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { describe, expect, it, vi } from "vitest";
 
+const applyMock = vi.fn().mockResolvedValue(undefined);
+
 // Mock pepr K8s API
 vi.mock("pepr", () => ({
   K8s: () => ({
-    Apply: vi.fn().mockResolvedValue(undefined),
+    Apply: applyMock,
   }),
   kind: {
     Secret: "Secret",
@@ -34,6 +36,7 @@ interface Config {
   metadata: {
     name: string;
     namespace: string;
+    managedFields?: unknown[];
   };
   data: {
     [key: string]: string;
@@ -69,6 +72,7 @@ describe("updateKeycloakClientsSecret Tests", () => {
   });
 
   it("should not generate a new secret if KEYCLOAK_CLIENT_SECRET_KEY exists and forceRotation is false", async () => {
+    applyMock.mockClear();
     const config = createConfig({
       [KEYCLOAK_CLIENT_SECRET_KEY]: "existing-secret",
     });
@@ -76,5 +80,36 @@ describe("updateKeycloakClientsSecret Tests", () => {
     await updateKeycloakClientsSecret(config);
 
     expect(config.data[KEYCLOAK_CLIENT_SECRET_KEY]).toBe("existing-secret");
+    expect(applyMock).not.toHaveBeenCalled();
+  });
+
+  it("should handle config with undefined data", async () => {
+    const config: Config = {
+      metadata: {
+        name: KEYCLOAK_CLIENTS_SECRET_NAME,
+        namespace: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+      },
+    } as Config;
+
+    await updateKeycloakClientsSecret(config);
+
+    expect(config.data).toBeDefined();
+    expect(config.data[KEYCLOAK_CLIENT_SECRET_KEY]).toBeTruthy();
+  });
+
+  it("should not pass metadata.managedFields through to Apply", async () => {
+    applyMock.mockClear();
+    const config = createConfig();
+    config.metadata.managedFields = [
+      { manager: "kubectl", operation: "Update", apiVersion: "v1" },
+    ];
+
+    await updateKeycloakClientsSecret(config, true);
+
+    expect(applyMock).toHaveBeenCalledTimes(1);
+    const applied = applyMock.mock.calls[0][0];
+    expect(applied.metadata.managedFields).toBeUndefined();
+    expect(applied.metadata.name).toBe(KEYCLOAK_CLIENTS_SECRET_NAME);
+    expect(applied.metadata.namespace).toBe(KEYCLOAK_CLIENTS_SECRET_NAMESPACE);
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -26,18 +26,18 @@ export async function updateKeycloakClientsSecret(
   config: kind.Secret,
   forceRotation: boolean = false,
 ) {
-  const data = config.data || {};
+  config.data = config.data || {};
 
-  if (!data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
+  if (!config.data[KEYCLOAK_CLIENT_SECRET_KEY] || forceRotation) {
     log.info("Generating new Keycloak client secret");
-    data[KEYCLOAK_CLIENT_SECRET_KEY] = Buffer.from(uuidv4()).toString("base64");
+    config.data[KEYCLOAK_CLIENT_SECRET_KEY] = Buffer.from(uuidv4()).toString("base64");
     await K8s(kind.Secret).Apply(
       {
         metadata: {
           name: config.metadata!.name,
           namespace: config.metadata!.namespace,
         },
-        data: data,
+        data: config.data,
       },
       { force: true },
     );
