@@ -88,16 +88,7 @@ jobs:
 
       - name: Deploy Checkpoint Package
         run: |
-          # Capture k3s server logs before k3d deletes the container on failure.
-          # Uses docker events for reliable detection (avoids polling race conditions).
-          (
-            docker events \
-              --filter 'event=start' \
-              --filter 'name=k3d-uds-server-0' \
-              --format '{{.Actor.Attributes.name}}' | while read -r name; do
-                docker logs -f k3d-uds-server-0 > /tmp/k3s-server-restore.log 2>&1 || true
-            done
-          ) &
+          (until docker inspect k3d-uds-server-0 > /dev/null 2>&1; do sleep 0.5; done; docker logs -f k3d-uds-server-0 > /tmp/k3s-server-restore.log 2>&1) &
           CAPTURE_PID=$!
           uds run -f tasks/deploy.yaml checkpoint-package --no-progress || DEPLOY_FAILED=1
           sleep 2
