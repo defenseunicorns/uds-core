@@ -97,8 +97,10 @@ spec:
             {{- else }}
             - "start"
             {{- end }}
+            {{- if .Values.realmImport.enabled }}
             # This will only import the realm if it does not exist
             - "--import-realm"
+            {{- end }}
             # @lulaStart e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             - "--features=preview,fips"
             - "--fips-mode=strict"
