@@ -28,10 +28,15 @@ UDS Core 1.2 adds upstream Istio network policies for all Istio components and a
 ## Upgrade considerations
 
 > [!IMPORTANT]
-> Skip v1.2.0 and upgrade directly to v1.2.1. The v1.2.0 release inherited an upstream Helm chart change that renamed the Loki write service account, breaking deployments that reference the `loki` service account by name for object storage auth (e.g. IRSA). v1.2.1 restores the shared `loki` service account for write pods ([#2599](https://github.com/defenseunicorns/uds-core/pull/2599), upstream [grafana-community/helm-charts#390](https://github.com/grafana-community/helm-charts/issues/390)).
+> Skip v1.2.0 and upgrade directly to v1.2.2. The v1.2.0 release inherited an upstream Helm chart change that renamed the Loki write service account, breaking deployments that reference the `loki` service account by name for object storage auth (e.g. IRSA). v1.2.1 restores the shared `loki` service account for write pods ([#2599](https://github.com/defenseunicorns/uds-core/pull/2599), upstream [grafana-community/helm-charts#390](https://github.com/grafana-community/helm-charts/issues/390)). v1.2.2 provides additional security fixes.
+
+### Identity Config updates (0.26.1)
+
+The 1.2.2 patch upgrades UDS Identity Config to [0.26.1](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.26.1). No breaking changes or manual realm steps are required.
 
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [UDS Core 1.2.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#120-2026-04-14) - full changelog
-- [Full diff (1.1.0...1.2.1)](https://github.com/defenseunicorns/uds-core/compare/v1.1.0...v1.2.1) - all changes between versions
+- [UDS Identity Config 0.26.1 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0261-2026-04-27) - full changelog
+- [Full diff (1.1.1...1.2.2)](https://github.com/defenseunicorns/uds-core/compare/v1.1.1...v1.2.2) - all changes between versions

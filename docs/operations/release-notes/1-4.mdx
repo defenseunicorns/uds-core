@@ -1,0 +1,60 @@
+---
+title: UDS Core 1.4
+description: UDS Core 1.4 release notes covering the Identity Config 0.27.0 bump and a recommended manual realm change to disable authenticated dynamic client registration in Keycloak.
+draft: true
+sidebar:
+  order: 3.991
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.4 bumps `uds-identity-config` to 0.27.0. As a defense-in-depth measure, operators upgrading to 0.27.0 or later should disable the authenticated Dynamic Client Registration endpoints in the `uds` realm by setting a `max-clients` policy with a limit of `0`. New installations pick up this configuration automatically.
+
+### Notable features
+
+- **Authenticated Dynamic Client Registration disabled by default for new installs:** Identity Config 0.27.0 ships with a `max-clients` policy that blocks authenticated Dynamic Client Registration in the `uds` realm. Existing clusters require a one-time manual realm change (see below).
+
+### Dependency updates
+
+| Package              | Previous | Updated                                                                                          |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| UDS Identity Config  | 0.26.1   | [0.27.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.27.0)            |
+
+## Upgrade considerations
+
+### Identity Config updates (0.27.0)
+
+Identity Config [0.27.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.27.0) hardens the `uds` realm by disabling authenticated Dynamic Client Registration. New installs apply this automatically. Existing clusters need a one-time manual change in the Keycloak admin console.
+
+#### Manual realm changes (Identity Config 0.27.0)
+
+Apply the following steps once per cluster after upgrading to UDS Core 1.4:
+
+<Steps>
+
+1. **Open the Keycloak admin console and switch to the `uds` realm**
+
+   Sign in with an admin account, then select the `uds` realm from the realm selector.
+
+2. **Navigate to the authenticated client registration policies**
+
+   In the left sidebar click **Clients**, select the **Client registration** tab, then select the **Authenticated access policies** tab.
+
+3. **Create a `max-clients` policy that blocks new client registrations**
+
+   Click **Create client policy**, choose **max-clients** as the provider, set the policy **Name** to `max-clients`, and set **Max Clients Per Realm** to `0`. Save the policy.
+
+</Steps>
+
+> [!TIP]
+> Setting **Max Clients Per Realm** to `0` prevents authenticated callers from registering new clients through the Dynamic Client Registration endpoint. UDS Core continues to manage clients through the Pepr operator and the `Package` CR, so this restriction does not affect normal application onboarding.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.4.0 Changelog](https://github.com/defenseunicorns/uds-core/releases/tag/v1.4.0) - full changelog
+- [UDS Identity Config 0.27.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.27.0) - identity-config changes
+- [Full diff (1.3.0...1.4.0)](https://github.com/defenseunicorns/uds-core/compare/v1.3.0...v1.4.0) - all changes between versions
