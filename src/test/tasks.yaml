@@ -1,4 +1,4 @@
-# Copyright 2024-2026 Defense Unicorns
+# Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -74,17 +74,6 @@ tasks:
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
-
-      - description: "Patch ambient waypoint service accounts with imagePullSecrets"
-        cmd: |
-          DOCKER_CREDS=$(uds zarf tools kubectl get secret private-registry -n zarf -o jsonpath='{.data.\.dockerconfigjson}')
-          uds zarf tools kubectl create secret generic private-registry -n authservice-ambient-test-app --type=kubernetes.io/dockerconfigjson "--from-literal=.dockerconfigjson=$(echo "$DOCKER_CREDS" | base64 -d)" || true
-          timeout 120 bash -c 'until uds zarf tools kubectl get sa uds-core-ambient-httpbin-waypoint uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app > /dev/null 2>&1; do sleep 2; done'
-          uds zarf tools kubectl patch serviceaccount uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
-          uds zarf tools kubectl patch serviceaccount uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
-          uds zarf tools kubectl rollout restart deployment/uds-core-ambient-httpbin-waypoint deployment/uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app
-          uds zarf tools kubectl rollout status deployment/uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app --timeout=120s
-          uds zarf tools kubectl rollout status deployment/uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app --timeout=120s
 
       - description: Verify the admin app is accessible
         wait:
