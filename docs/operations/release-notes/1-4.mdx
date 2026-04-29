@@ -52,6 +52,13 @@ Apply the following steps once per cluster after upgrading to UDS Core 1.4:
 > [!TIP]
 > Setting **Max Clients Per Realm** to `0` prevents authenticated callers from registering new clients through the Dynamic Client Registration endpoint. UDS Core continues to manage clients through the Pepr operator and the `Package` CR, so this restriction does not affect normal application onboarding.
 
+#### Defense in depth: Istio AuthorizationPolicy
+
+In addition to the realm-level `max-clients` policy, UDS Core ships an Istio `AuthorizationPolicy` (`keycloak-block-admin-access-from-public-gateway`) on the Keycloak waypoint that denies all traffic to `/realms/<realm>/clients-registrations/*` from the public (tenant) gateway. This is a defense-in-depth control layered on top of the Keycloak policy, so a misconfigured realm policy still leaves the endpoint blocked at the mesh.
+
+> [!IMPORTANT]
+> The Keycloak `max-clients` policy and the Istio `AuthorizationPolicy` cover the same endpoint at different layers. If you customize one (for example, to permit registrations from a specific workload), review the other to keep both layers consistent. Removing only one layer does not unblock the endpoint.
+
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
