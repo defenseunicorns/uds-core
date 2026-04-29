@@ -126,6 +126,6 @@ spec:
             # actually compares declared vs live and reconciles.
             - name: IMPORT_CACHE_ENABLED
               value: "false"
-            - name: LOGGING_LEVEL_KEYCLOAKCONFIGCLI
+            - name: LOGGING_LEVEL_DE_ADORSYS_KEYCLOAK_CONFIG
               value: "DEBUG"
 {{- end }}
