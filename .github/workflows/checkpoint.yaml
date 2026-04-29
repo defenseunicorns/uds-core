@@ -88,7 +88,30 @@ jobs:
 
       - name: Deploy Checkpoint Package
         run: |
-          uds run -f tasks/deploy.yaml checkpoint-package --no-progress
+          # Capture k3s server logs before k3d deletes the container on failure.
+          # Uses docker events for reliable detection (avoids polling race conditions).
+          (
+            docker events \
+              --filter 'event=start' \
+              --filter 'name=k3d-uds-server-0' \
+              --format '{{.Actor.Attributes.name}}' | while read -r name; do
+                docker logs -f k3d-uds-server-0 > /tmp/k3s-server-restore.log 2>&1 || true
+            done
+          ) &
+          CAPTURE_PID=$!
+          uds run -f tasks/deploy.yaml checkpoint-package --no-progress || DEPLOY_FAILED=1
+          sleep 2
+          kill $CAPTURE_PID 2>/dev/null || true
+          wait $CAPTURE_PID 2>/dev/null || true
+          [ "${DEPLOY_FAILED}" = "1" ] && exit 1 || true
+
+      - name: Show k3s restore logs
+        if: failure()
+        run: |
+          echo "=== k3s container logs ==="
+          cat /tmp/k3s-server-restore.log 2>/dev/null || echo "No container logs captured"
+          echo "=== dmesg (kernel/OOM/seccomp) ==="
+          sudo dmesg --since "-5min" 2>/dev/null | grep -iE "kill|oom|denied|k3s|k3d|containerd|seccomp" || echo "No relevant dmesg entries"
 
       - name: Test Checkpoint Package
         continue-on-error: ${{ matrix.architecture == 'arm64' }}
