@@ -204,9 +204,9 @@ packages:
             # so the admin domain is reachable only from inside the VPC.
             - path: service.annotations
               value:
-                service.beta.kubernetes.io/aws-load-balancer-type: "external"
-                service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+                # Configure to use an internal (not internet-facing) loadbalancer
                 service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+                # Add additional annotations as necessary for your configuration
 ```
 
 Use the equivalent annotations for your provider:
