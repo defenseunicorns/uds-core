@@ -1,9 +1,9 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
   - utils: ../../tasks/utils.yaml
-  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.4/tasks/setup.yaml
+  - uds-common: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.5/tasks/setup.yaml
 
 tasks:
   - name: validate
