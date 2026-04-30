@@ -46,6 +46,6 @@ components:
             wait:
               cluster:
                 kind: Pod
-                name: app.kubernetes.io/name=keycloak
+                name: app.kubernetes.io/name=keycloak,app.kubernetes.io/component!=realm-sync
                 condition: Ready
                 namespace: keycloak

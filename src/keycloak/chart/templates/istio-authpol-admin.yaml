@@ -26,6 +26,12 @@ spec:
             notNamespaces:
               - istio-admin-gateway
               - "pepr-system"
+            {{- if .Values.realmSync.enabled }}
+            # Realm sync Job's ServiceAccount is exempted by principal so it
+            # can reach /admin/* and /realms/master* on the in-cluster API.
+            notPrincipals:
+              - "cluster.local/ns/{{ .Release.Namespace }}/sa/{{ include "keycloak.fullname" . }}-realm-sync"
+            {{- end }}
     - to:
         - operation:
             ports:
@@ -54,6 +60,10 @@ spec:
             notNamespaces:
               - pepr-system
               - istio-admin-gateway
+            {{- if .Values.realmSync.enabled }}
+            notPrincipals:
+              - "cluster.local/ns/{{ .Release.Namespace }}/sa/{{ include "keycloak.fullname" . }}-realm-sync"
+            {{- end }}
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]

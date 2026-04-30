@@ -240,6 +240,31 @@
         }
       }
     },
+    "realmImport": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    },
+    "realmSync": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "backoffLimit": {
+          "type": "integer"
+        },
+        "realmFilePath": {
+          "type": "string"
+        },
+        "ttlSecondsAfterFinished": {
+          "type": ["integer", "string"]
+        }
+      }
+    },
     "jsonLogFormat": {
       "type": "boolean"
     },
