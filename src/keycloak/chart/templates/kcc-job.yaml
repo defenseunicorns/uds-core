@@ -121,6 +121,12 @@ spec:
             # Track ownership so Mission Hero customizations are preserved.
             - name: IMPORT_REMOTESTATE_ENABLED
               value: "true"
+            # Components include Keycloak-auto-managed entries (KeyProvider,
+            # WorkflowProvider, ClientRegistrationPolicy) that we do not
+            # declare in the curated baseline. no-delete means kcc adopts
+            # but never removes — Keycloak's auto-managed components survive.
+            - name: IMPORT_MANAGED_COMPONENT
+              value: "no-delete"
             # Default kcc cache skips reconcile when input file checksum
             # hasn't changed — that masks drift. Disable so every run
             # actually compares declared vs live and reconciles.
