@@ -127,6 +127,13 @@ spec:
             # but never removes — Keycloak's auto-managed components survive.
             - name: IMPORT_MANAGED_COMPONENT
               value: "no-delete"
+            # Authentication flows: Keycloak's --import-realm assigns
+            # execution priorities loosely (via JSON array order); kcc is
+            # strict. no-delete tells kcc to update flows in-place rather
+            # than delete+recreate, which preserves UUIDs and avoids login
+            # disruption while still applying field-level updates.
+            - name: IMPORT_MANAGED_AUTHENTICATION_FLOW
+              value: "no-delete"
             # Default kcc cache skips reconcile when input file checksum
             # hasn't changed — that masks drift. Disable so every run
             # actually compares declared vs live and reconciles.
