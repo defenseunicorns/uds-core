@@ -73,7 +73,7 @@ After completing this guide, your application will be accessible through one of 
 
 2. **Define a `Package` CR for your application**
 
-   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically.
+   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically. Use the **tenant** gateway for end-user traffic and the **admin** gateway for platform-administration interfaces. The root domain is served on the **tenant** gateway.
 
    <Tabs>
      <TabItem label="Tenant gateway">
@@ -121,7 +121,7 @@ After completing this guide, your application will be accessible through one of 
              port: 9090
      ```
 
-     This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.).
+     This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.). For the recommended pattern of restricting the admin gateway to internal networks at the load balancer layer, see [restrict the admin gateway to internal networks](/getting-started/production/build-your-bundle/#restrict-the-admin-gateway-to-internal-networks).
 
      </TabItem>
      <TabItem label="Root domain">
