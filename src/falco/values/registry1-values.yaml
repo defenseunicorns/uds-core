@@ -4,12 +4,12 @@
 image:
   registry: registry1.dso.mil
   repository: ironbank/opensource/falcosecurity/falco
-  tag: 0.43.0
+  tag: 0.43.1
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/falcosecurity/falcosidekick
-    tag: 2.32.0
+    tag: 2.33.0
     pullPolicy: IfNotPresent
