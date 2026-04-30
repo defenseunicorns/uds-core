@@ -14,7 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.4/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.5/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 
@@ -239,8 +239,18 @@ tasks:
           group: "/UDS Core/Admin"
       - description: "Setup Authservice App for Testing"
         cmd: |
+          ./uds zarf tools kubectl create namespace authservice-ambient-test-app || true
+          DOCKER_CREDS=$(./uds zarf tools kubectl get secret private-registry -n zarf -o jsonpath='{.data.\.dockerconfigjson}')
+          ./uds zarf tools kubectl create secret generic private-registry -n authservice-ambient-test-app --type=kubernetes.io/dockerconfigjson "--from-literal=.dockerconfigjson=$(echo "$DOCKER_CREDS" | base64 -d)" || true
+          ./uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore --overwrite
+          ./uds zarf tools kubectl create serviceaccount uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app || true
+          ./uds zarf tools kubectl create serviceaccount uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app || true
+          ./uds zarf tools kubectl patch serviceaccount uds-core-ambient-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
+          ./uds zarf tools kubectl patch serviceaccount uds-core-ambient2-httpbin-waypoint -n authservice-ambient-test-app -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant-package.yaml
-          ./uds zarf tools kubectl label namespace authservice-ambient-test-app zarf.dev/agent=ignore
           ./uds zarf tools kubectl apply -f src/test/app-ambient-authservice-tenant.yaml
+          ./uds zarf tools kubectl rollout status deployment httpbin -n authservice-ambient-test-app --timeout=60s
+          ./uds zarf tools kubectl rollout status deployment httpbin2 -n authservice-ambient-test-app --timeout=60s
+          ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
