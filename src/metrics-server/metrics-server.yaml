@@ -1,0 +1,41 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: metrics-server
+  description: "UDS Metrics Server"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-metrics-server.yaml
+    charts:
+      - name: metrics-server
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: registry.k8s.io/metrics-server/metrics-server:v0.8.1
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-metrics-server.yaml
+    charts:
+      - name: metrics-server
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.8.1
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-metrics-server.yaml
+    charts:
+      - name: metrics-server
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/metrics-server:0.8.1-jammy-scratch-fips-rfcurated-rfhardened

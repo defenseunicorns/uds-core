@@ -1,0 +1,31 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: test-apps
+component:
+  manifests:
+    - name: app-admin
+      files:
+        - app-admin.yaml
+    - name: app-tenant
+      files:
+        - app-tenant.yaml
+    - name: app-sidecar-authservice-tenant
+      files:
+        - app-sidecar-authservice-tenant.yaml
+    - name: app-ambient-authservice-tenant
+      files:
+        - app-ambient-authservice-tenant.yaml
+    - name: curl-test
+      files:
+        - app-curl.yaml
+    - name: egress-ambient-test
+      files:
+        - app-egress-ambient.yaml
+  images:
+    - name: docker.io/kong/httpbin:0.2.3
+    - name: hashicorp/http-echo:latest
+    - name: curlimages/curl:latest

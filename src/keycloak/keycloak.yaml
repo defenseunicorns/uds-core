@@ -1,0 +1,49 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: keycloak
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-keycloak.yaml
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: quay.io/keycloak/keycloak:26.5.7
+      - name: ghcr.io/defenseunicorns/uds/identity-config:0.26.1
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-keycloak.yaml
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.5.7-fips
+      - name: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.26.1
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-keycloak.yaml
+    charts:
+      - name: keycloak
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/keycloak:26.5.7-jammy-fips-rfcurated
+      - name: ghcr.io/defenseunicorns/uds/identity-config:0.26.1

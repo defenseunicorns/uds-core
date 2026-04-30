@@ -1,0 +1,44 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: prometheus-blackbox-exporter
+  description: "UDS Core Prometheus Blackbox Exporter"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-prometheus-blackbox-exporter.yaml
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - values/upstream/blackbox-exporter.yaml
+    images:
+      - name: quay.io/prometheus/blackbox-exporter:v0.28.0
+      - name: quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-prometheus-blackbox-exporter.yaml
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - values/registry1/blackbox-exporter.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0
+      - name: registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.90.1
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-prometheus-blackbox-exporter.yaml
+    charts:
+      - name: prometheus-blackbox-exporter
+        valuesFiles:
+          - values/unicorn/blackbox-exporter.yaml
+    images:
+      - name: quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.90.1-jammy-scratch-fips-rfcurated

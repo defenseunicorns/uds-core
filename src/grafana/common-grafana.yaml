@@ -1,0 +1,24 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: grafana
+  description: "Common content shared across all flavors of grafana"
+component:
+  charts:
+    - name: uds-grafana-config
+      namespace: grafana
+      local:
+        path: chart
+      valuesFiles:
+        - chart/values.yaml
+    - name: grafana
+      namespace: grafana
+      helmRepository:
+        url: https://grafana-community.github.io/helm-charts
+        name: grafana
+        version: 11.6.0
+      valuesFiles:
+        - values/values.yaml
