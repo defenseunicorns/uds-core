@@ -46,10 +46,10 @@ UDS Core deploys two required gateways and one optional gateway:
 | **Admin** | Yes | Admin-facing interfaces (Grafana, Keycloak admin console, etc.); independently configurable security controls |
 | **Passthrough** | No | TLS passed through to the application for its own termination; must be enabled explicitly in your bundle |
 
-This separation matters: the Tenant and Admin gateways are independently configurable, so operators can apply stricter controls on the admin plane (IP allowlisting, mTLS client certificates, etc.) without affecting end-user access patterns.
+The Tenant and Admin gateways are deployed as separate Istio gateways with their own load balancers and TLS configurations. This split exists so each gateway can have its own networking and access controls: end-user traffic and platform-administration traffic typically have different audiences, threat models, and exposure requirements.
 
-> [!TIP]
-> A common pattern is to expose the Tenant Gateway publicly (or broadly within a network) while keeping the Admin Gateway accessible only via private/internal networking, behind a VPN, bastion, or restricted subnet. This lets end users reach applications normally (including Keycloak for SSO, which is on the Tenant Gateway) while ensuring that admin interfaces like Grafana and the Keycloak admin console are never reachable from the public internet.
+> [!IMPORTANT]
+> The Admin Gateway should be reachable only from trusted networks. Expose the Tenant Gateway as your public (or broadly reachable) ingress and restrict the Admin Gateway to private/internal networking, a VPN, a bastion, or a restricted subnet. This pattern allows end users to still reach applications (including Keycloak for SSO), while ensuring that admin interfaces are never reachable from the public internet. This is typically configurable through loadbalancer controller specific annotations, the [build your bundle](/getting-started/production/build-your-bundle/#restrict-the-admin-gateway-to-internal-networks) guide provides examples and references for implementing this.
 
 By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration. See [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/).
 

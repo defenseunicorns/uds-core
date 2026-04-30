@@ -73,7 +73,7 @@ After completing this guide, your application will be accessible through one of 
 
 2. **Define a `Package` CR for your application**
 
-   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically.
+   Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically. Use the **tenant** gateway for end-user traffic and the **admin** gateway for platform-administration interfaces. The root domain is served on the **tenant** gateway.
 
    <Tabs>
      <TabItem label="Tenant gateway">
