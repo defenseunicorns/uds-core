@@ -443,9 +443,221 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq(
       {},
       [],
+      [{ remoteGenerated: RemoteGenerated.Anywhere, remoteHost: "example.com" }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteNamespace", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteHost: "example.com", remoteNamespace: "foo" }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteSelector", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteHost: "example.com", remoteSelector: { app: "x" } }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify remoteHost and remoteCidr", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteHost: "example.com", remoteCidr: "10.0.0.0/8" }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify TLS remoteProtocol with no remote target", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteProtocol: RemoteProtocol.TLS }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify HTTP remoteProtocol with no remote target", async () => {
+    const mockReq = makeMockReq({}, [], [{ remoteProtocol: RemoteProtocol.HTTP }], [], []);
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify UDP remoteProtocol with remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteProtocol: RemoteProtocol.UDP, remoteHost: "example.com", port: 53 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("UDP remoteProtocol cannot be combined with remoteHost"),
+    );
+  });
+
+  it("allows network policies that specify TCP remoteProtocol with remoteHost", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteHost: "example.com", remoteProtocol: RemoteProtocol.TCP, port: 443 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify UDP remoteProtocol with KubeAPI", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteGenerated: RemoteGenerated.KubeAPI, remoteProtocol: RemoteProtocol.UDP, port: 443 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("UDP remoteProtocol cannot be combined with remoteGenerated"),
+    );
+  });
+
+  it("denies network policies that specify UDP remoteProtocol with KubeNodes", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.KubeNodes,
+          remoteProtocol: RemoteProtocol.UDP,
+          port: 10250,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("UDP remoteProtocol cannot be combined with remoteGenerated"),
+    );
+  });
+
+  it("allows network policies that specify UDP remoteProtocol with remoteGenerated", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
       [
         {
           remoteGenerated: RemoteGenerated.Anywhere,
+          remoteProtocol: RemoteProtocol.UDP,
+          port: 5353,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies that specify TCP remoteProtocol with remoteNamespace and port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP, port: 5432 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies that specify TCP remoteProtocol with remoteGenerated and port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.Anywhere,
+          remoteProtocol: RemoteProtocol.TCP,
+          port: 443,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies that specify UDP remoteProtocol with remoteCidr and port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteCidr: "10.0.0.0/8", remoteProtocol: RemoteProtocol.UDP, port: 5353 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies that specify TCP remoteProtocol with remoteCidr and port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteCidr: "10.0.0.0/8", remoteProtocol: RemoteProtocol.TCP, port: 443 }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows network policies that specify UDP remoteProtocol with Ingress direction and remoteNamespace", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteNamespace: "foo",
+          remoteProtocol: RemoteProtocol.UDP,
+          port: 9000,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("denies network policies that specify HTTP remoteProtocol with Ingress direction", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteProtocol: RemoteProtocol.HTTP,
           remoteHost: "example.com",
         },
       ],
@@ -456,13 +668,43 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  it("denies network policies that specify remoteProtocol and not remoteHost", async () => {
+  it("denies network policies that specify TCP remoteProtocol without any port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
+    );
+  });
+
+  it("denies network policies that specify UDP remoteProtocol without any port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.UDP }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
+    );
+  });
+
+  it("denies network policies that specify remoteProtocol TLS with Ingress direction", async () => {
     const mockReq = makeMockReq(
       {},
       [],
       [
         {
+          direction: Direction.Ingress,
           remoteProtocol: RemoteProtocol.TLS,
+          remoteHost: "example.com",
         },
       ],
       [],

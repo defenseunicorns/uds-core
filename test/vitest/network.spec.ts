@@ -80,6 +80,8 @@ let curlPodNameEgressAmbient2 = "";
 let curlPodNameEgressAmbient3 = "";
 let curlPodNameEgress1 = "";
 let curlPodNameEgress2 = "";
+let udpServerPodName = "";
+let udpClientPodName = "";
 
 beforeAll(async () => {
   // Always fetch these pod names
@@ -90,6 +92,8 @@ beforeAll(async () => {
   curlPodNameEgressAmbient1 = await getPodName("egress-ambient-1", "app=curl");
   curlPodNameEgressAmbient2 = await getPodName("egress-ambient-2", "app=curl");
   curlPodNameEgressAmbient3 = await getPodName("egress-ambient-2", "app=another-curl");
+  udpServerPodName = await getPodName("curl-ns-udp-server", "app=udp-echo-server");
+  udpClientPodName = await getPodName("curl-ns-udp-allow", "app=udp-echo-client");
 
   // Only fetch egress pod names if egress tests will run
   if (runEgressTests) {
@@ -474,6 +478,98 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egressGatewayGoogleDenied2Debug = `Egress Gateway Google denied (egress-gw-2): stdout=${denied_google_response_2.stdout}, stderr=${denied_google_response_2.stderr}`;
     expect(isResponseError(denied_google_response_2), egressGatewayGoogleDenied2Debug).toBe(true);
   });
+});
+
+test(
+  "UDP NetworkPolicy - DNS allowed, TCP DNS blocked",
+  { concurrent: true, retry: 2 },
+  async () => {
+    // CoreDNS is the only in-cluster UDP service available without additional test resources.
+    // allowEgressDNS uses remoteProtocol: UDP on port 53. These tests verify:
+    // 1. UDP port 53 is allowed (DNS queries resolve), proving UDP NetworkPolicies are enforced.
+    // 2. TCP port 53 is blocked (only UDP 53 is permitted by allowEgressDNS), proving the
+    //    policy is protocol-specific and not a blanket port-53 allow.
+    const nslookupCommand = [
+      "sh",
+      "-c",
+      "nslookup kubernetes.default.svc.cluster.local > /dev/null 2>&1 && echo OK || echo FAIL",
+    ];
+
+    const udpDnsResult = await execInPod(
+      "curl-ns-deny-all-1",
+      curlPodName1,
+      "curl-pkg-deny-all-1",
+      nslookupCommand,
+    );
+    const udpDnsDebug = `UDP DNS (nslookup): stdout=${udpDnsResult.stdout}, stderr=${udpDnsResult.stderr}`;
+    expect(udpDnsResult.stdout.trim(), udpDnsDebug).toBe("OK");
+
+    // curl --connect-only establishes a raw TCP connection and exits 0 on success, non-zero on
+    // timeout or refusal. Unlike `telnet://`, it does not enter a protocol negotiation loop that
+    // always exits non-zero regardless of connectivity.
+    const tcpDnsCommand = [
+      "sh",
+      "-c",
+      "curl --max-time 3 --connect-only http://kube-dns.kube-system.svc.cluster.local:53/ 2>&1; echo EXIT:$?",
+    ];
+
+    const tcpDnsResult = await execInPod(
+      "curl-ns-deny-all-1",
+      curlPodName1,
+      "curl-pkg-deny-all-1",
+      tcpDnsCommand,
+    );
+    const tcpDnsDebug = `TCP DNS (blocked): stdout=${tcpDnsResult.stdout}, stderr=${tcpDnsResult.stderr}`;
+    expect(tcpDnsResult.stdout, tcpDnsDebug).not.toContain("EXIT:0");
+  },
+);
+
+test("UDP NetworkPolicy - custom allow and deny", { concurrent: true, retry: 2 }, async () => {
+  // Both execInPod calls run concurrently: the server nc blocks waiting for a UDP packet
+  // and the client sends after a short delay. We check the server's stdout to verify
+  // whether the packet arrived, with no echo mechanism required.
+
+  // Allowed: udp-echo-client (curl-ns-udp-allow) has remoteProtocol: UDP egress to server port 5000.
+  const [allowedServer] = await Promise.all([
+    execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+      "sh",
+      "-c",
+      "timeout 3 nc -u -l -p 5000",
+    ]),
+    (async () => {
+      await new Promise(r => setTimeout(r, 1500));
+      await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+        "sh",
+        "-c",
+        "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+      ]);
+    })(),
+  ]);
+
+  const allowedDebug = `UDP allowed: server stdout="${allowedServer.stdout}"`;
+  expect(allowedServer.stdout.trim(), allowedDebug).toBe("ping");
+
+  // Blocked: the packet is dropped at BOTH the client egress NetworkPolicy (curl-pkg-deny-all-1
+  // has no UDP egress to port 5000) AND the server ingress NetworkPolicy (curl-pkg-udp-server
+  // only permits ingress from curl-ns-udp-allow). Either enforcement alone would be sufficient.
+  const [deniedServer] = await Promise.all([
+    execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+      "sh",
+      "-c",
+      "timeout 3 nc -u -l -p 5000",
+    ]),
+    (async () => {
+      await new Promise(r => setTimeout(r, 1500));
+      await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
+        "sh",
+        "-c",
+        "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+      ]);
+    })(),
+  ]);
+
+  const deniedDebug = `UDP blocked: server stdout="${deniedServer.stdout}"`;
+  expect(deniedServer.stdout.trim(), deniedDebug).toBe("");
 });
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {

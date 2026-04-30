@@ -130,7 +130,10 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
    By default, workloads in the mesh cannot reach the internet. Choose the approach that fits your use case:
 
    > [!NOTE]
-   > The egress protocol defaults to TLS if not specified. Only HTTP and TLS protocols are currently supported.
+   > When `remoteHost` is specified, `remoteProtocol` defaults to `TLS` if omitted. Use `TLS` or `HTTP` for external HTTPS/HTTP egress via an Istio ServiceEntry. Use `TCP` for raw TCP egress to an external host.
+
+   > [!NOTE]
+   > Use `remoteProtocol: UDP` (without `remoteHost`) for in-cluster UDP traffic such as DNS. `UDP` cannot be combined with `remoteHost`. To allow the same port on both TCP and UDP, create two separate Allow entries.
 
    > [!NOTE]
    > Wildcards in host names are **not** supported. You must specify the exact hostname (e.g., `www.google.com`, not `*.google.com`).

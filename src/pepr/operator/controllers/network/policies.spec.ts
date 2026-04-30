@@ -1,12 +1,12 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { V1NetworkPolicy } from "@kubernetes/client-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { Gateway, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Direction, Gateway, UDSPackage } from "../../crd";
+import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { findMatchingClient, networkPolicies } from "./policies";
 
 // Mock dependencies
@@ -365,20 +365,23 @@ describe("networkPolicies", () => {
     const servicePolicies = [
       {
         name: "allow-test-pkg-Ingress-8080-frontend Istio tenant gateway",
-        ports: [8080, 15008],
+        ports: [{ port: 8080 }, { port: 15008, protocol: "TCP" }],
       },
       {
         name: "allow-test-pkg-Ingress-8080-backend Istio tenant gateway",
-        ports: [8080, 15008],
+        ports: [{ port: 8080 }, { port: 15008, protocol: "TCP" }],
       },
       {
         name: "allow-test-pkg-Ingress-3000-api Istio tenant gateway",
-        ports: [3000, 15008],
+        ports: [{ port: 3000 }, { port: 15008, protocol: "TCP" }],
       },
     ];
 
     // Helper function to validate common policy properties
-    const validatePolicy = (policy: V1NetworkPolicy, expectedPorts: number[]) => {
+    const validatePolicy = (
+      policy: V1NetworkPolicy,
+      expectedPorts: Array<{ port: number; protocol?: string }>,
+    ) => {
       // Verify namespace
       expect(policy.metadata?.namespace).toBe("test-ns");
 
@@ -403,8 +406,8 @@ describe("networkPolicies", () => {
       expect(policy.spec?.ingress).toBeDefined();
       const ports = policy.spec?.ingress?.[0]?.ports || [];
       expect(ports).toHaveLength(expectedPorts.length);
-      expectedPorts.forEach(port => {
-        expect(ports).toContainEqual({ port });
+      expectedPorts.forEach(portObj => {
+        expect(ports).toContainEqual(portObj);
       });
     };
 
@@ -917,5 +920,88 @@ describe("networkPolicies", () => {
       "app.kubernetes.io/instance": "test-instance",
       environment: "prod",
     });
+  });
+
+  it("should inject port 15008 into a TCP egress allow entry", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              description: "TCP egress allow",
+              remoteNamespace: "other-ns",
+              selector: { app: "test" },
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    const tcpPolicy = policies.find(p => p.metadata?.name?.includes("Egress-TCP egress allow"));
+
+    expect(tcpPolicy).toBeDefined();
+    const ports = tcpPolicy?.spec?.egress?.[0]?.ports ?? [];
+    expect(ports).toContainEqual({ port: 15008, protocol: "TCP" });
+  });
+
+  it("should not inject port 15008 into a UDP-only ingress allow entry", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              description: "UDP ingress only",
+              remoteNamespace: "some-ns",
+              selector: { app: "test" },
+              port: 9999,
+              remoteProtocol: RemoteProtocol.UDP,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    const udpPolicy = policies.find(p => p.metadata?.name?.includes("Ingress-UDP ingress only"));
+
+    expect(udpPolicy).toBeDefined();
+    const ports = udpPolicy?.spec?.ingress?.[0]?.ports ?? [];
+    expect(ports).toContainEqual({ port: 9999, protocol: "UDP" });
+    expect(ports.map(p => p.port)).not.toContain(15008);
+  });
+
+  it("should not inject port 15008 into a UDP-only egress allow entry", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              description: "UDP egress only",
+              remoteNamespace: "kube-system",
+              remoteSelector: { "k8s-app": "kube-dns" },
+              selector: { app: "test" },
+              port: 53,
+              remoteProtocol: RemoteProtocol.UDP,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    const udpPolicy = policies.find(p => p.metadata?.name?.includes("Egress-UDP egress only"));
+
+    expect(udpPolicy).toBeDefined();
+    const ports = udpPolicy?.spec?.egress?.[0]?.ports ?? [];
+    expect(ports).toContainEqual({ port: 53, protocol: "UDP" });
+    expect(ports.map(p => p.port)).not.toContain(15008);
   });
 });
