@@ -1,6 +1,10 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+# This is an implementation of the  "Variants Extend Base Component" alternative 
+# specified here  https://github.com/zarf-dev/proposals/pull/52/changes#diff-bcbe12162bddd5b89598d5a1633ff4a6c41fa16712fba247c2c2fa6c657f72adR636
+# This is the only file required for that alternative
+
 apiVersion: zarf.dev/v1beta1
 kind: ZarfComponentConfig
 metadata:
