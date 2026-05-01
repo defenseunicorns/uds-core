@@ -97,9 +97,10 @@ const allow = {
         description: "Remote host to allow traffic out to",
         type: "string",
       },
-      // TODO: remoteProtocol mixes L7 application protocols (TLS/HTTP, used to generate Istio
-      // ServiceEntry) with L4 transport protocols (TCP/UDP, used to set NetworkPolicy port
-      // protocol). Before v1 this should be split into separate fields.
+      // TODO(#ISSUE): remoteProtocol mixes L7 application protocols (TLS/HTTP, used to generate
+      // Istio ServiceEntry) with L4 transport protocols (TCP/UDP, used to set NetworkPolicy port
+      // protocol). Before v1 this should be split into separate fields (e.g. remoteProtocol for
+      // L7 and portProtocol for L4).
       remoteProtocol: {
         description:
           "The protocol for this Allow entry. " +

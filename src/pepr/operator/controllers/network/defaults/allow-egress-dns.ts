@@ -16,7 +16,7 @@ export const allowEgressDNS = (namespace: string) => {
       "k8s-app": "kube-dns",
     },
     port: 53,
-    // DNS uses UDP/53 per RFC 1035; TCP/53 (large responses, zone transfers) is not allowed by default.
+    // DNS uses both UDP/53 and TCP/53 per RFC 1035 §4.2; only UDP is allowed by default.
     remoteProtocol: RemoteProtocol.UDP,
   });
 };

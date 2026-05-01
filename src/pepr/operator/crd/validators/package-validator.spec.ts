@@ -696,6 +696,39 @@ describe("Test validation of Package CRs", () => {
     );
   });
 
+  it("denies network policies that specify TCP remoteProtocol with an empty ports array", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP, ports: [] }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
+    );
+  });
+
+  it("allows network policies that specify TCP remoteProtocol with Ingress direction and port", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          direction: Direction.Ingress,
+          remoteNamespace: "foo",
+          remoteProtocol: RemoteProtocol.TCP,
+          port: 8080,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that specify remoteProtocol TLS with Ingress direction", async () => {
     const mockReq = makeMockReq(
       {},

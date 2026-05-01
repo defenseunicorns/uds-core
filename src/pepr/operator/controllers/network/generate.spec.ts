@@ -9,7 +9,7 @@ import { Direction } from "../../crd";
 import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { generate } from "./generate";
 
-describe("network policy generate", () => {
+describe("network policy generate with remoteNamespace and remoteSelector", () => {
   it("should generate correct network policy", async () => {
     const policy = generate("test", {
       description: "test",

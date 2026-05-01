@@ -922,7 +922,35 @@ describe("networkPolicies", () => {
     });
   });
 
-  it("should inject port 15008 into a TCP egress allow entry", async () => {
+  it("should inject port 15008 into an unspecified-protocol egress allow entry", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              description: "unspecified egress allow",
+              remoteNamespace: "other-ns",
+              selector: { app: "test" },
+              port: 8080,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "test-ns", "sidecar");
+    const policy = policies.find(p =>
+      p.metadata?.name?.includes("Egress-unspecified egress allow"),
+    );
+
+    expect(policy).toBeDefined();
+    const ports = policy?.spec?.egress?.[0]?.ports ?? [];
+    expect(ports).toContainEqual({ port: 15008, protocol: "TCP" });
+  });
+
+  it("should inject port 15008 into a TCP remoteProtocol egress allow entry", async () => {
     const pkg: UDSPackage = {
       ...mockPkg,
       spec: {
@@ -934,6 +962,7 @@ describe("networkPolicies", () => {
               remoteNamespace: "other-ns",
               selector: { app: "test" },
               port: 8080,
+              remoteProtocol: RemoteProtocol.TCP,
             },
           ],
         },
@@ -945,6 +974,7 @@ describe("networkPolicies", () => {
 
     expect(tcpPolicy).toBeDefined();
     const ports = tcpPolicy?.spec?.egress?.[0]?.ports ?? [];
+    expect(ports).toContainEqual({ port: 8080, protocol: "TCP" });
     expect(ports).toContainEqual({ port: 15008, protocol: "TCP" });
   });
 

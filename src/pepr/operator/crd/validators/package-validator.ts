@@ -209,7 +209,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       );
     }
 
-    // Without ports, TCP/UDP remoteProtocol is a no-op (empty ports = all ports allowed, no protocol filter applied).
+    // Without ports, TCP/UDP remoteProtocol silently broadens the policy (all ports allowed, no protocol filter applied).
     if (
       (policy.remoteProtocol === RemoteProtocol.TCP ||
         policy.remoteProtocol === RemoteProtocol.UDP) &&

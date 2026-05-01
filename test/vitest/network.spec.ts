@@ -520,11 +520,11 @@ test(
       tcpDnsCommand,
     );
     const tcpDnsDebug = `TCP DNS (blocked): stdout=${tcpDnsResult.stdout}, stderr=${tcpDnsResult.stderr}`;
-    expect(tcpDnsResult.stdout, tcpDnsDebug).not.toContain("EXIT:0");
+    expect(tcpDnsResult.stdout, tcpDnsDebug).toMatch(/EXIT:[1-9]\d*$/);
   },
 );
 
-test("UDP NetworkPolicy - custom allow and deny", { concurrent: true, retry: 2 }, async () => {
+test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, async () => {
   // Both execInPod calls run concurrently: the server nc blocks waiting for a UDP packet
   // and the client sends after a short delay. We check the server's stdout to verify
   // whether the packet arrived, with no echo mechanism required.
@@ -537,7 +537,7 @@ test("UDP NetworkPolicy - custom allow and deny", { concurrent: true, retry: 2 }
       "timeout 3 nc -u -l -p 5000",
     ]),
     (async () => {
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 2500));
       await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
         "sh",
         "-c",
@@ -549,9 +549,10 @@ test("UDP NetworkPolicy - custom allow and deny", { concurrent: true, retry: 2 }
   const allowedDebug = `UDP allowed: server stdout="${allowedServer.stdout}"`;
   expect(allowedServer.stdout.trim(), allowedDebug).toBe("ping");
 
-  // Blocked: the packet is dropped at BOTH the client egress NetworkPolicy (curl-pkg-deny-all-1
-  // has no UDP egress to port 5000) AND the server ingress NetworkPolicy (curl-pkg-udp-server
-  // only permits ingress from curl-ns-udp-allow). Either enforcement alone would be sufficient.
+  // Blocked: the client's egress NetworkPolicy (curl-pkg-deny-all-1 has no UDP egress to
+  // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
+  // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
+  // Either policy alone would block the traffic.
   const [deniedServer] = await Promise.all([
     execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
       "sh",
@@ -559,7 +560,7 @@ test("UDP NetworkPolicy - custom allow and deny", { concurrent: true, retry: 2 }
       "timeout 3 nc -u -l -p 5000",
     ]),
     (async () => {
-      await new Promise(r => setTimeout(r, 1500));
+      await new Promise(r => setTimeout(r, 2500));
       await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
         "sh",
         "-c",

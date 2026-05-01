@@ -27,4 +27,14 @@ describe("allowEgressDNS", () => {
     const policy = allowEgressDNS("test-ns");
     expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 53, protocol: "UDP" }]);
   });
+
+  it("should use UDP protocol so that policies.ts does not inject port 15008", () => {
+    // policies.ts skips 15008 injection when ALL ports in the list are UDP.
+    // This test guards the contract: if allowEgressDNS ever loses the UDP stamp,
+    // port 15008 will be injected into the DNS policy, breaking UDP-only enforcement.
+    const policy = allowEgressDNS("test-ns");
+    const ports = policy.spec?.egress?.[0].ports ?? [];
+    expect(ports.every(p => p.protocol === "UDP")).toBe(true);
+    expect(ports.map(p => p.port)).not.toContain(15008);
+  });
 });

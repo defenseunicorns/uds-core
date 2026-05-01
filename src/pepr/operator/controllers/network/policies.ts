@@ -266,6 +266,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Skipped for UDP-only port lists; ztunnel uses TCP HBONE and cannot carry UDP.
     // generate.ts stamps protocol:"UDP" on ports when remoteProtocol is UDP; that stamping
     // is what makes the some() predicate below return false for UDP-only policies.
+    // Both ingress and egress are evaluated independently (not else-if) so a policy that
+    // has both spec.ingress and spec.egress (rare but valid) gets 15008 injected into both.
     if (policy.spec?.ingress) {
       for (const ingress of policy.spec.ingress) {
         if (ingress.ports && ingress.ports.some(port => port.protocol !== "UDP")) {
