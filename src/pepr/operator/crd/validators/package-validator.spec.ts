@@ -559,6 +559,26 @@ describe("Test validation of Package CRs", () => {
     );
   });
 
+  it("denies network policies that specify UDP remoteProtocol with CloudMetadata", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [
+        {
+          remoteGenerated: RemoteGenerated.CloudMetadata,
+          remoteProtocol: RemoteProtocol.UDP,
+          port: 80,
+        },
+      ],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("UDP remoteProtocol cannot be combined with remoteGenerated"),
+    );
+  });
+
   it("allows network policies that specify UDP remoteProtocol with remoteGenerated", async () => {
     const mockReq = makeMockReq(
       {},
