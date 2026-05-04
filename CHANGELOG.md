@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.4.0](https://github.com/defenseunicorns/uds-core/compare/v1.3.0...v1.4.0) (2026-05-04)
+
+
+### Miscellaneous
+
+* bump eks/aks/rke2 k8s to 1.35 ([#2626](https://github.com/defenseunicorns/uds-core/issues/2626)) ([13a088a](https://github.com/defenseunicorns/uds-core/commit/13a088a7a3fda994d0a29f72ba08e8e8d5e0be71))
+* **deps:** update falco ([#2419](https://github.com/defenseunicorns/uds-core/issues/2419)) ([dd5ea1c](https://github.com/defenseunicorns/uds-core/commit/dd5ea1c202e45f987905bee92bd4e345a5e78c9b))
+* **deps:** update prometheus-stack ([#2610](https://github.com/defenseunicorns/uds-core/issues/2610)) ([e419eb1](https://github.com/defenseunicorns/uds-core/commit/e419eb18fa913ebff253e008c079c905cd413ea5))
+* **deps:** update support-deps ([#2592](https://github.com/defenseunicorns/uds-core/issues/2592)) ([8ba3de2](https://github.com/defenseunicorns/uds-core/commit/8ba3de22b4fe6f8eb5e9e7cca945c4a18f524f5f))
+
+
+### Documentation
+
+* add more clarity around tenant/admin lbs ([#2636](https://github.com/defenseunicorns/uds-core/issues/2636)) ([c2fb0c5](https://github.com/defenseunicorns/uds-core/commit/c2fb0c5b3dcd904b5a92a1777123683e8f12a3ad))
+
 ## [1.3.0](https://github.com/defenseunicorns/uds-core/compare/v1.2.0...v1.3.0) (2026-04-28)
 
 
