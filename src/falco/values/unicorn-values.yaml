@@ -4,12 +4,12 @@
 image:
   registry: quay.io
   repository: rfcurated/falcosecurity/falco
-  tag: 0.43.0-jammy-scratch-fips-rfcurated
+  tag: 0.43.1-jammy-scratch-fips-rfcurated
   pullPolicy: IfNotPresent
 
 falcosidekick:
   image:
     registry: quay.io
     repository: rfcurated/falcosecurity/falcosidekick
-    tag: 2.32.0-jammy-scratch-fips-rfcurated
+    tag: 2.33.0-jammy-scratch-fips-rfcurated
     pullPolicy: IfNotPresent
