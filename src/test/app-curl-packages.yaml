@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -149,3 +149,50 @@ spec:
         ports:
           - 8080
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-ns-udp-server
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-pkg-udp-server
+  namespace: curl-ns-udp-server
+spec:
+  network:
+    allow:
+      - direction: Ingress
+        remoteNamespace: curl-ns-udp-allow
+        remoteSelector:
+          app: udp-echo-client
+        selector:
+          app: udp-echo-server
+        port: 5000
+        remoteProtocol: UDP
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    uds: curl-testing-namespace
+  name: curl-ns-udp-allow
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-pkg-udp-allow
+  namespace: curl-ns-udp-allow
+spec:
+  network:
+    allow:
+      - direction: Egress
+        remoteNamespace: curl-ns-udp-server
+        remoteSelector:
+          app: udp-echo-server
+        selector:
+          app: udp-echo-client
+        port: 5000
+        remoteProtocol: UDP

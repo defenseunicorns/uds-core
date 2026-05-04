@@ -1058,3 +1058,25 @@ describe("test purgeAmbientEgressResources", () => {
     );
   });
 });
+
+describe("getPortsForHostAllow", () => {
+  it("should throw for TCP remoteProtocol without any port", () => {
+    expect(() => getPortsForHostAllow({ remoteProtocol: RemoteProtocol.TCP })).toThrow(
+      "remoteProtocol TCP requires at least one port or ports entry",
+    );
+  });
+
+  it("should throw for UDP remoteProtocol without any port", () => {
+    expect(() => getPortsForHostAllow({ remoteProtocol: RemoteProtocol.UDP })).toThrow(
+      "remoteProtocol UDP requires at least one port or ports entry",
+    );
+  });
+
+  it("should default to 443 for TLS without explicit ports", () => {
+    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.TLS })).toEqual([443]);
+  });
+
+  it("should default to 80 for HTTP without explicit ports", () => {
+    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.HTTP })).toEqual([80]);
+  });
+});

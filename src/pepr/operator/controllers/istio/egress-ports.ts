@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -23,6 +23,13 @@ export function getPortsForHostAllow(allow: {
   const ports = getAllowedPorts(allow);
   if (ports) {
     return ports;
+  }
+  // TCP and UDP without ports are rejected by the validator; this branch should not be reached.
+  // TLS/HTTP (or omitted) default to 443/80 respectively for ServiceEntry generation.
+  if (allow.remoteProtocol === RemoteProtocol.TCP || allow.remoteProtocol === RemoteProtocol.UDP) {
+    throw new Error(
+      `remoteProtocol ${allow.remoteProtocol} requires at least one port or ports entry`,
+    );
   }
   return allow.remoteProtocol === RemoteProtocol.HTTP ? [80] : [443];
 }

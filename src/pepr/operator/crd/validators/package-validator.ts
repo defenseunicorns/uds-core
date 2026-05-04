@@ -5,7 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 
-import { Gateway, Protocol, RemoteGenerated, UDSPackage } from "..";
+import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
@@ -123,6 +123,10 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const networkPolicyNames = new Set<string>();
 
   for (const policy of networkPolicy) {
+    // TLS/HTTP drive Istio ServiceEntry generation; TCP/UDP set NetworkPolicy port protocol.
+    const isL7Protocol =
+      policy.remoteProtocol === RemoteProtocol.TLS || policy.remoteProtocol === RemoteProtocol.HTTP;
+
     // Every allow rule must specify at least one explicit remote target.
     // Note: remoteNamespace uses === undefined because "" is a valid wildcard meaning "any namespace in cluster".
     if (
@@ -137,74 +141,82 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       );
     }
 
-    // If 'remoteGenerated' is set, it cannot be combined with 'remoteNamespace', 'remoteSelector', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
+    // remoteGenerated cannot combine with namespace/selector/cidr/host or L7 protocols.
+    // TCP/UDP are permitted with remoteGenerated (except KubeAPI/KubeNodes/CloudMetadata for UDP).
     if (
       policy.remoteGenerated &&
       (policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteCidr ||
         policy.remoteHost ||
-        policy.remoteProtocol)
+        isL7Protocol)
     ) {
       return req.Deny(
-        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, remoteCidr, remoteHost, or remoteProtocol",
+        "remoteGenerated cannot be combined with remoteNamespace, remoteSelector, remoteCidr, remoteHost, or TLS/HTTP remoteProtocol",
       );
     }
 
-    // If either 'remoteNamespace' or 'remoteSelector' is set, they cannot be combined with 'remoteGenerated', 'remoteCidr', 'remoteHost', or 'remoteProtocol'.
+    // remoteNamespace/remoteSelector cannot combine with remoteGenerated/cidr/host or L7 protocols.
+    // TCP/UDP are permitted with remoteNamespace/remoteSelector to set NetworkPolicy port protocol.
     if (
       (policy.remoteNamespace !== undefined || policy.remoteSelector) &&
-      (policy.remoteGenerated || policy.remoteCidr || policy.remoteHost || policy.remoteProtocol)
+      (policy.remoteGenerated || policy.remoteCidr || policy.remoteHost || isL7Protocol)
     ) {
       return req.Deny(
-        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated, remoteCidr, remoteHost, or remoteProtocol",
+        "remoteNamespace and remoteSelector cannot be combined with remoteGenerated, remoteCidr, remoteHost, or TLS/HTTP remoteProtocol",
       );
     }
 
-    // If 'remoteCidr' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', 'remoteHost', or 'remoteProtocol'.
+    // remoteCidr cannot combine with remoteGenerated/ns/selector/host or L7 protocols.
+    // TCP/UDP are permitted with remoteCidr to set NetworkPolicy port protocol.
     if (
       policy.remoteCidr &&
       (policy.remoteGenerated ||
         policy.remoteNamespace !== undefined ||
         policy.remoteSelector ||
         policy.remoteHost ||
-        policy.remoteProtocol)
+        isL7Protocol)
     ) {
       return req.Deny(
-        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, remoteHost, or remoteProtocol",
+        "remoteCidr cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, remoteHost, or TLS/HTTP remoteProtocol",
       );
     }
 
-    // If 'remoteHost' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', or 'remoteCidr'.
+    // KubeAPI, KubeNodes, and CloudMetadata are TCP-only endpoints; UDP cannot reach them.
     if (
-      policy.remoteHost &&
-      (policy.remoteGenerated ||
-        policy.remoteNamespace !== undefined ||
-        policy.remoteSelector ||
-        policy.remoteCidr)
+      policy.remoteProtocol === RemoteProtocol.UDP &&
+      (policy.remoteGenerated === RemoteGenerated.KubeAPI ||
+        policy.remoteGenerated === RemoteGenerated.KubeNodes ||
+        policy.remoteGenerated === RemoteGenerated.CloudMetadata)
     ) {
       return req.Deny(
-        "remoteHost cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, or remoteCidr",
+        `UDP remoteProtocol cannot be combined with remoteGenerated KubeAPI, KubeNodes, or CloudMetadata (these endpoints are TCP-only); got: ${policy.remoteGenerated}`,
       );
     }
 
-    // If 'remoteProtocol' is set, it cannot be combined with 'remoteGenerated', 'remoteNamespace', 'remoteSelector', or 'remoteCidr'and must have 'remoteHost'.
+    // Istio ServiceEntry does not support UDP; use remoteNamespace/remoteSelector/remoteCidr instead.
+    if (policy.remoteProtocol === RemoteProtocol.UDP && policy.remoteHost) {
+      return req.Deny(
+        "UDP remoteProtocol cannot be combined with remoteHost (Istio ServiceEntry does not support UDP)",
+      );
+    }
+
+    // remoteHost and L7 protocols are Egress-only (they drive Istio ServiceEntry generation).
+    // TCP/UDP are valid on Ingress to set the NetworkPolicy port protocol.
+    if ((policy.remoteHost || isL7Protocol) && policy.direction === Direction.Ingress) {
+      return req.Deny(
+        "remoteHost and TLS/HTTP remoteProtocol cannot be combined with Ingress direction",
+      );
+    }
+
+    // Without ports, TCP/UDP remoteProtocol silently broadens the policy (all ports allowed, no protocol filter applied).
     if (
-      policy.remoteProtocol &&
-      (policy.remoteGenerated ||
-        policy.remoteNamespace !== undefined ||
-        policy.remoteSelector ||
-        policy.remoteCidr ||
-        !policy.remoteHost)
+      (policy.remoteProtocol === RemoteProtocol.TCP ||
+        policy.remoteProtocol === RemoteProtocol.UDP) &&
+      policy.port === undefined &&
+      !policy.ports?.length
     ) {
-      return req.Deny(
-        "remoteProtocol cannot be combined with remoteGenerated, remoteNamespace, remoteSelector, or remoteCidr and must have remoteHost",
-      );
-    }
-
-    // The 'remoteHost' and 'remoteProtocol' cannot be used with 'Ingress'.
-    if ((policy.remoteHost || policy.remoteProtocol) && policy.direction === "Ingress") {
-      return req.Deny("remoteHost and/or remoteProtocol cannot be used with Ingress");
+      return req.Deny("TCP/UDP remoteProtocol requires at least one port or ports entry");
     }
 
     // The 'remoteHost' does not support wildcard domains.
@@ -221,7 +233,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       const anywhereAllowed =
         isAmbient &&
         policy.remoteGenerated === RemoteGenerated.Anywhere &&
-        policy.direction === "Egress";
+        policy.direction === Direction.Egress;
       if (!hostAllowed && !anywhereAllowed) {
         return req.Deny(
           "serviceAccount is only valid for Ambient mode when using remoteHost or remoteGenerated: Anywhere on Egress rules",

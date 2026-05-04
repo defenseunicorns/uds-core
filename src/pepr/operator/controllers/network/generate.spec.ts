@@ -1,15 +1,15 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { kind } from "pepr";
 import { describe, expect, it } from "vitest";
 import { Direction } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { generate } from "./generate";
 
-describe("network policy generate", () => {
+describe("network policy generate with remoteNamespace and remoteSelector", () => {
   it("should generate correct network policy", async () => {
     const policy = generate("test", {
       description: "test",
@@ -46,7 +46,7 @@ describe("network policy generate", () => {
   });
 });
 
-describe("network policy generate", () => {
+describe("network policy generate with remoteNamespace only", () => {
   it("should generate correct network policy for just remoteNamespace", async () => {
     const policy = generate("test", {
       description: "test",
@@ -77,7 +77,7 @@ describe("network policy generate", () => {
   });
 });
 
-describe("network policy generate", () => {
+describe("network policy generate with wildcard remoteNamespace", () => {
   it("should generate correct network policy for empty string and wildcard remoteNamespace", async () => {
     const policy = generate("test", {
       description: "test",
@@ -99,23 +99,25 @@ describe("network policy generate", () => {
     } as kind.NetworkPolicy["spec"]);
   });
 
-  const policyWildcard = generate("test", {
-    description: "test",
-    direction: Direction.Egress,
-    selector: { app: "test" },
-    remoteNamespace: "*",
-  });
+  it("should generate correct network policy for wildcard remoteNamespace '*'", () => {
+    const policyWildcard = generate("test", {
+      description: "test",
+      direction: Direction.Egress,
+      selector: { app: "test" },
+      remoteNamespace: "*",
+    });
 
-  expect(policyWildcard.spec).toEqual({
-    egress: [
-      {
-        ports: [],
-        to: [{ namespaceSelector: {} }],
-      },
-    ],
-    podSelector: { matchLabels: { app: "test" } },
-    policyTypes: ["Egress"],
-  } as kind.NetworkPolicy["spec"]);
+    expect(policyWildcard.spec).toEqual({
+      egress: [
+        {
+          ports: [],
+          to: [{ namespaceSelector: {} }],
+        },
+      ],
+      podSelector: { matchLabels: { app: "test" } },
+      policyTypes: ["Egress"],
+    } as kind.NetworkPolicy["spec"]);
+  });
 });
 
 describe("network policy generate with remoteCidr", () => {
@@ -288,5 +290,83 @@ describe("network policy generate with remoteHost", () => {
       podSelector: { matchLabels: { app: "test-app" } },
       policyTypes: ["Egress"],
     } as kind.NetworkPolicy["spec"]);
+  });
+});
+
+describe("network policy generate with remoteProtocol", () => {
+  it("should set protocol: UDP on ports when remoteProtocol is UDP", () => {
+    const policy = generate("test", {
+      description: "test-udp",
+      direction: Direction.Egress,
+      remoteNamespace: "kube-system",
+      remoteSelector: { "k8s-app": "kube-dns" },
+      port: 53,
+      remoteProtocol: RemoteProtocol.UDP,
+    });
+
+    expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 53, protocol: "UDP" }]);
+  });
+
+  it("should set protocol: TCP on ports when remoteProtocol is TCP", () => {
+    const policy = generate("test", {
+      description: "test-tcp",
+      direction: Direction.Egress,
+      remoteNamespace: "kube-system",
+      port: 8080,
+      remoteProtocol: RemoteProtocol.TCP,
+    });
+
+    expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 8080, protocol: "TCP" }]);
+  });
+
+  it("should not set protocol on ports when remoteProtocol is TLS", () => {
+    const policy = generate("test", {
+      description: "test-tls",
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      port: 443,
+      remoteProtocol: RemoteProtocol.TLS,
+    });
+
+    expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 443 }]);
+  });
+
+  it("should not set protocol on ports when remoteProtocol is omitted", () => {
+    const policy = generate("test", {
+      description: "test-no-protocol",
+      direction: Direction.Ingress,
+      remoteNamespace: "foo",
+      port: 8080,
+    });
+
+    expect(policy.spec?.ingress?.[0].ports).toEqual([{ port: 8080 }]);
+  });
+
+  it("should apply remoteProtocol to both port and ports", () => {
+    const policy = generate("test", {
+      description: "test-udp-multi",
+      direction: Direction.Egress,
+      remoteNamespace: "kube-system",
+      port: 53,
+      ports: [5353],
+      remoteProtocol: RemoteProtocol.UDP,
+    });
+
+    expect(policy.spec?.egress?.[0].ports).toEqual([
+      { port: 5353, protocol: "UDP" },
+      { port: 53, protocol: "UDP" },
+    ]);
+  });
+
+  it("should set protocol: UDP on ingress ports when remoteProtocol is UDP", () => {
+    const policy = generate("test", {
+      description: "test-udp-ingress",
+      direction: Direction.Ingress,
+      remoteNamespace: "some-namespace",
+      port: 9999,
+      remoteProtocol: RemoteProtocol.UDP,
+    });
+
+    expect(policy.spec?.ingress?.[0].ports).toEqual([{ port: 9999, protocol: "UDP" }]);
   });
 });

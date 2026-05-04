@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -322,3 +322,73 @@ spec:
             - "-listen=:8080"
           ports:
             - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: udp-echo-server
+  namespace: curl-ns-udp-server
+spec:
+  ports:
+    - name: udp5000
+      port: 5000
+      targetPort: 5000
+      protocol: UDP
+  selector:
+    app: udp-echo-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udp-echo-server
+  namespace: curl-ns-udp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: udp-echo-server
+  template:
+    metadata:
+      labels:
+        app: udp-echo-server
+    spec:
+      containers:
+        - name: udp-echo-server
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: udp-echo-client
+  namespace: curl-ns-udp-allow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: udp-echo-client
+  template:
+    metadata:
+      labels:
+        app: udp-echo-client
+    spec:
+      containers:
+        - name: udp-echo-client
+          image: curlimages/curl
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "3600"]
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi

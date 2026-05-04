@@ -262,15 +262,20 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       policy.metadata.name = `allow-${pkgName}-${policy.metadata.name}`;
     }
 
-    // Loop through all ports in ingress/egress policies and add port 15008 for ztunnel
+    // Add port 15008 (ztunnel HBONE) to all ingress/egress port lists.
+    // Skipped for UDP-only port lists; ztunnel uses TCP HBONE and cannot carry UDP.
+    // generate.ts stamps protocol:"UDP" on ports when remoteProtocol is UDP; that stamping
+    // is what makes the some() predicate below return false for UDP-only policies.
+    // Both ingress and egress are evaluated independently (not else-if) so a policy that
+    // has both spec.ingress and spec.egress (rare but valid) gets 15008 injected into both.
     if (policy.spec?.ingress) {
       for (const ingress of policy.spec.ingress) {
-        // Only add the port if there is a port restriction
         if (ingress.ports && ingress.ports.some(port => port.protocol !== "UDP")) {
-          ingress.ports.push({ port: 15008 });
+          ingress.ports.push({ port: 15008, protocol: "TCP" });
         }
       }
-    } else if (policy.spec?.egress) {
+    }
+    if (policy.spec?.egress) {
       for (const egress of policy.spec.egress) {
         // Don't add port 15008 for egress destinations that we know are not in-mesh or not in-cluster
         if (
@@ -280,9 +285,8 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
         ) {
           continue;
         }
-        // Only add the port if there is a port restriction
         if (egress.ports && egress.ports.some(port => port.protocol !== "UDP")) {
-          egress.ports.push({ port: 15008 });
+          egress.ports.push({ port: 15008, protocol: "TCP" });
         }
       }
     }

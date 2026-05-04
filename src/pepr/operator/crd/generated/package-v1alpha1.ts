@@ -196,11 +196,13 @@ export interface Allow {
    */
   podLabels?: { [key: string]: string };
   /**
-   * The port to allow (protocol is always TCP)
+   * The port to allow (transport protocol defaults to TCP unless `remoteProtocol` is set to
+   * `TCP` or `UDP`)
    */
   port?: number;
   /**
-   * A list of ports to allow (protocol is always TCP)
+   * A list of ports to allow (transport protocol defaults to TCP unless `remoteProtocol` is
+   * set to `TCP` or `UDP`)
    */
   ports?: number[];
   /**
@@ -225,7 +227,13 @@ export interface Allow {
    */
   remotePodLabels?: { [key: string]: string };
   /**
-   * Protocol used for external connection
+   * The protocol for this Allow entry. `TLS` and `HTTP` control Istio ServiceEntry generation
+   * for egress entries with `remoteHost`; `TCP` also generates a TCP Istio ServiceEntry when
+   * combined with `remoteHost`. `TCP` and `UDP` explicitly set the transport protocol on the
+   * generated NetworkPolicy port. When omitted with `remoteHost`, defaults to TLS for
+   * ServiceEntry generation; otherwise NetworkPolicy ports carry no explicit protocol
+   * (Kubernetes defaults to TCP). `UDP` cannot be combined with `remoteHost`. To allow the
+   * same port on both TCP and UDP, use two separate Allow entries.
    */
   remoteProtocol?: RemoteProtocol;
   /**
@@ -269,11 +277,19 @@ export enum RemoteGenerated {
 }
 
 /**
- * Protocol used for external connection
+ * The protocol for this Allow entry. `TLS` and `HTTP` control Istio ServiceEntry generation
+ * for egress entries with `remoteHost`; `TCP` also generates a TCP Istio ServiceEntry when
+ * combined with `remoteHost`. `TCP` and `UDP` explicitly set the transport protocol on the
+ * generated NetworkPolicy port. When omitted with `remoteHost`, defaults to TLS for
+ * ServiceEntry generation; otherwise NetworkPolicy ports carry no explicit protocol
+ * (Kubernetes defaults to TCP). `UDP` cannot be combined with `remoteHost`. To allow the
+ * same port on both TCP and UDP, use two separate Allow entries.
  */
 export enum RemoteProtocol {
   HTTP = "HTTP",
+  TCP = "TCP",
   TLS = "TLS",
+  UDP = "UDP",
 }
 
 export interface Expose {
