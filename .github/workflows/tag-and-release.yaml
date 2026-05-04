@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Create release tag
         id: tag
-        uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5
         with:
           target-branch: ${{ github.ref_name }}
           config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
