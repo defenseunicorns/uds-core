@@ -1,0 +1,51 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: pepr-uds-core
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
+  - name: CA_BUNDLE_CERTS
+    description: "Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently trust. At a minimum this must at least include your Domain CA Cert if using Private PKI for your UDS Core Deployment"
+    default: ""
+  - name: CA_BUNDLE_INCLUDE_DOD_CERTS
+    description: "Whether to include DoD root and intermediate certificates in the cluster CA bundle"
+    default: "false"
+  - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
+    description: "Whether to include public root and intermediate certificates in the cluster CA bundle"
+    default: "false"
+  - name: UDS_LOG_LEVEL
+    description: "UDS Operator log level"
+    default: "debug"
+  - name: AUTHSERVICE_REDIS_URI
+    description: "UDS Authservice Redis URI"
+    default: ""
+  - name: PEPR_SERVICE_MONITORS
+    description: "Enables Service Monitors for Pepr services (watcher, admission)"
+    default: "true"
+  - name: ALLOW_ALL_NS_EXEMPTIONS
+    description: "Whether to allow exemptions to be created in all namespaces"
+    default: "false"
+component:
+  import:
+    path: ../../dist/module.yaml
+  charts:
+    - name: module
+      valuesFiles:
+        - values.yaml
+  actions:
+    onDeploy:
+      after:
+        - description: Validate ClusterConfig
+          maxTotalSeconds: 60
+          wait:
+            cluster:
+              kind: ClusterConfig
+              name: uds-cluster-config
+              condition: "'{.status.phase}'=Ready"

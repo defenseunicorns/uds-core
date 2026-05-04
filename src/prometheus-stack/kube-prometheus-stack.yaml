@@ -1,0 +1,59 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: kube-prometheus-stack
+  description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-kube-prometheus-stack.yaml
+    charts:
+      - name: kube-prometheus-stack
+        valuesFiles:
+          - values/upstream/kube-prometheus-stack.yaml
+    images:
+      - name: quay.io/prometheus/node-exporter:v1.11.1
+      - name: quay.io/prometheus-operator/prometheus-operator:v0.90.1
+      - name: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0
+      - name: quay.io/prometheus/alertmanager:v0.32.0
+      - name: quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1
+      - name: quay.io/prometheus/prometheus:v3.11.2
+      - name: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-kube-prometheus-stack.yaml
+    charts:
+      - name: kube-prometheus-stack
+        valuesFiles:
+          - values/registry1/kube-prometheus-stack.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.11.1
+      - name: registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.90.1
+      - name: registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.18.0
+      - name: registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.32.0
+      - name: registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.90.1
+      - name: registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.11.2
+      - name: registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.9
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-kube-prometheus-stack.yaml
+    charts:
+      - name: kube-prometheus-stack
+        valuesFiles:
+          - values/unicorn/kube-prometheus-stack.yaml
+    images:
+      - name: quay.io/rfcurated/prometheus/node-exporter:1.11.1-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/prometheus-operator:0.90.1-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/prometheus/alertmanager:0.32.0-jammy-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.90.1-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/prometheus:3.11.2-jammy-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.9-jammy-fips-rfcurated-rfhardened

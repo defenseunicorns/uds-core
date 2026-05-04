@@ -1,0 +1,44 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: falco
+  description: "Deploy Falco"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-falco.yaml
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: docker.io/falcosecurity/falco:0.43.0
+      - name: docker.io/falcosecurity/falcosidekick:2.32.0
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-falco.yaml
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.43.0
+      - name: registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.32.0
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-falco.yaml
+    charts:
+      - name: falco
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/falcosecurity/falco:0.43.0-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/falcosecurity/falcosidekick:2.32.0-jammy-scratch-fips-rfcurated

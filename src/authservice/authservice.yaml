@@ -1,0 +1,40 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: authservice
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-authservice.yaml
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: ghcr.io/istio-ecosystem/authservice/authservice:1.1.5
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-authservice.yaml
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/istio-ecosystem/authservice:1.1.5-fips
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-authservice.yaml
+    charts:
+      - name: authservice
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/istio-ecosystem/authservice:1.1.5-jammy-scratch-fips-rfcurated

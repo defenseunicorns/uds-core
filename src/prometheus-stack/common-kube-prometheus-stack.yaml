@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: kube-prometheus-stack
+  description: "Common content shared across all flavors of kube-prometheus-stack"
+component:
+  charts:
+    - name: uds-prometheus-config
+      namespace: monitoring
+      local:
+        path: chart
+    - name: kube-prometheus-stack
+      namespace: monitoring
+      helmRepository:
+        url: https://prometheus-community.github.io/helm-charts
+        name: kube-prometheus-stack
+        version: 84.0.0
+      valuesFiles:
+        - values/kube-prometheus-stack-values.yaml
