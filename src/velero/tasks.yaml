@@ -7,7 +7,7 @@ includes:
 variables:
   - name: VELERO_CRD_VERSION
     # renovate: datasource=github-tags depName=vmware-tanzu/helm-charts versioning=semver extractVersion=^velero-(?<version>.*)$
-    default: "12.0.0"  # Helm chart version, not app version
+    default: "12.0.1"  # Helm chart version, not app version
 
 tasks:
   - name: validate
