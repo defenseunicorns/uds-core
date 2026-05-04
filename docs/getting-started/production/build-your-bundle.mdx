@@ -187,6 +187,34 @@ variables:
     tenant_tls_key: "LS0t..."
 ```
 
+## Restrict the admin gateway to internal networks
+
+UDS Core deploys two ingress gateways by default: the Tenant Gateway for end-user application traffic and the Admin Gateway for platform-administration interfaces such as Grafana and the Keycloak admin console. The Admin Gateway should not be reachable from the public internet.
+
+To enforce this at the load balancer layer, most load balancer controllers require you to override service annotations. The exact annotations will vary depending on your cloud provider; the example below uses the AWS Load Balancer Controller to provision an internal NLB:
+
+```yaml title="uds-bundle.yaml"
+packages:
+  - name: core
+    overrides:
+      istio-admin-gateway:
+        gateway:
+          values:
+            # Provision the admin gateway's load balancer as an internal NLB
+            # so the admin domain is reachable only from inside the VPC.
+            - path: service.annotations
+              value:
+                # Configure to use an internal (not internet-facing) loadbalancer
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+                # Add additional annotations as necessary for your configuration
+```
+
+Use the equivalent annotations for your provider:
+- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/) - set `service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"`
+- [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/internal-lb) - set `service.beta.kubernetes.io/azure-load-balancer-internal: "true"`
+- [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing) - set `networking.gke.io/load-balancer-type: "Internal"`
+- [MetalLB](https://metallb.io/usage/#requesting-specific-ips) - set `metallb.io/address-pool: <pool-name>` to pin the gateway's load balancer IP to a dedicated internal address pool (configure the pool itself via `IPAddressPool`)
+
 ## Configure Keycloak database
 
 Disable Keycloak's embedded dev-mode database and connect it to your external database. Pass the connection details as variables.
