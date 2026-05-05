@@ -415,6 +415,8 @@ env: []
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
+  # Runs a privileged init container during `helm upgrade` to chown persistent volumes
+  upgradePermissions: false
 
 # Third-party integration settings, such as L7 Load Balancer support
 thirdPartyIntegration:

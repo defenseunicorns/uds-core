@@ -649,6 +649,9 @@
       "properties": {
         "deleteGeneratedTrustStore": {
           "type": "boolean"
+        },
+        "upgradePermissions": {
+          "type": "boolean"
         }
       }
     },

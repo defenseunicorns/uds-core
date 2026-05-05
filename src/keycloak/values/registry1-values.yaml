@@ -17,3 +17,4 @@ configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-ident
 
 migrations:
   deleteGeneratedTrustStore: true
+  upgradePermissions: true

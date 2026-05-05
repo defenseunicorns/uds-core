@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: keycloak-volume-permission-fix
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RequireNonRootUser
+        - RestrictCapabilities
+      matcher:
+        namespace: {{ .Release.Namespace }}
+        name: "^{{ include "keycloak.fullname" . }}-[0-9]+$"
+        kind: pod
+      title: "Keycloak volume permission migration"
+      description: "Allows the fix-volume-permissions init container to run as root and add the CHOWN capability to migrate persistent volume ownership from uid 2000 (pre-26.6) to uid 1000 during Keycloak upgrades. Gated on `migrations.upgradePermissions` and `Release.IsUpgrade`; defaults to disabled in subsequent releases."
+{{- end }}
