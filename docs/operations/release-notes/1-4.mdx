@@ -56,9 +56,6 @@ Apply the following steps once per cluster after upgrading to UDS Core 1.4:
 
 In addition to the realm-level `max-clients` policy, UDS Core ships an Istio `AuthorizationPolicy` (`keycloak-block-admin-access-from-public-gateway`) on the Keycloak waypoint that denies all traffic to `/realms/<realm>/clients-registrations/*` from the public (tenant) gateway. This is a defense-in-depth control layered on top of the Keycloak policy, so a misconfigured realm policy still leaves the endpoint blocked at the mesh.
 
-> [!IMPORTANT]
-> The Istio `AuthorizationPolicy` is shipped unconditionally with UDS Core and has no helm toggle, so this block stays in place on every cluster. The `max-clients` realm policy is the operator-tunable layer; adjusting it changes the Keycloak-side enforcement, but the Istio rule continues to deny `clients-registrations/*` traffic from the public gateway.
-
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
