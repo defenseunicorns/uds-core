@@ -41,7 +41,9 @@ echo "Scanning $SRC_DIR for unicorn and registry1 images..."
 # Extract all cgr.dev/defenseunicorns.com/ (unicorn) and registry1.dso.mil/ironbank/ (registry1) images
 find "$SRC_DIR" -name "zarf.yaml" -type f -exec grep -hE "cgr.dev/defenseunicorns.com/|registry1.dso.mil/ironbank/" {} \; | \
     sed 's/^[[:space:]]*-[[:space:]]*//' | \
+    sed 's/#.*//' | \
     sed 's/"//g' | \
+    sed 's/[[:space:]]*$//' | \
     sort -u > "$TEMP_IMAGES"
 
 TOTAL=$(wc -l < "$TEMP_IMAGES")
