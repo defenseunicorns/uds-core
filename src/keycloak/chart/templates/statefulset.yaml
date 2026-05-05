@@ -153,6 +153,10 @@ spec:
             - name: KC_METRICS_ENABLED
               value: "true"
 
+            # Ensure Keycloak is configured for running in container
+            - name: KC_RUN_IN_CONTAINER
+              value: "true"
+
             # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12
             - name: KC_EVENT_METRICS_USER_ENABLED
               value: "true"
