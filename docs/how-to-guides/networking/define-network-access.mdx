@@ -130,13 +130,13 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
    By default, workloads in the mesh cannot reach the internet. Choose the approach that fits your use case:
 
    > [!NOTE]
-   > When `remoteHost` is specified, `remoteProtocol` defaults to `TLS` if omitted. Use `TLS` or `HTTP` for external HTTPS/HTTP egress via an Istio ServiceEntry. Use `TCP` for raw TCP egress to an external host.
-
-   > [!CAUTION]
-   > Using `remoteProtocol: TCP` with `remoteHost` generates a TCP-mode Istio `ServiceEntry`. This disables SNI-based routing and Istio L7 `AuthorizationPolicy` enforcement for that host. Istio can only apply L4 controls (IP/port) in this mode. Prefer `TLS` unless the upstream service does not support TLS.
+   > When `remoteHost` is specified, `remoteProtocol` defaults to `TLS` if omitted. Use `TLS` for HTTPS/TLS egress or `HTTP` for plaintext HTTP egress via an Istio ServiceEntry.
 
    > [!NOTE]
-   > Use `remoteProtocol: UDP` (without `remoteHost`) for in-cluster UDP traffic such as DNS. `UDP` cannot be combined with `remoteHost`. To allow the same port on both TCP and UDP, create two separate Allow entries.
+   > Use `remoteProtocol: UDP` (without `remoteHost`) for in-cluster UDP traffic. `UDP` cannot be combined with `remoteHost`. To allow the same port on both TCP and UDP, create two separate Allow entries.
+
+   > [!CAUTION]
+   > UDP traffic is not encrypted by the service mesh. Unlike TCP, UDP is not tunneled through the ztunnel HBONE channel. Applications using UDP must implement their own transport-layer encryption (e.g. DTLS, QUIC).
 
    > [!NOTE]
    > Wildcards in host names are **not** supported. You must specify the exact hostname (e.g., `www.google.com`, not `*.google.com`).

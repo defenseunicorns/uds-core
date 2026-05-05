@@ -513,7 +513,7 @@ describe("Test validation of Package CRs", () => {
     );
   });
 
-  it("allows network policies that specify TCP remoteProtocol with remoteHost", async () => {
+  it("denies network policies that specify TCP remoteProtocol with remoteHost", async () => {
     const mockReq = makeMockReq(
       {},
       [],
@@ -522,7 +522,9 @@ describe("Test validation of Package CRs", () => {
       [],
     );
     await validator(mockReq);
-    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith(
+      expect.stringContaining("TCP remoteProtocol cannot be combined with remoteHost"),
+    );
   });
 
   it("denies network policies that specify UDP remoteProtocol with KubeAPI", async () => {
@@ -686,48 +688,6 @@ describe("Test validation of Package CRs", () => {
     );
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
-  });
-
-  it("denies network policies that specify TCP remoteProtocol without any port", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP }],
-      [],
-      [],
-    );
-    await validator(mockReq);
-    expect(mockReq.Deny).toHaveBeenCalledWith(
-      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
-    );
-  });
-
-  it("denies network policies that specify UDP remoteProtocol without any port", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.UDP }],
-      [],
-      [],
-    );
-    await validator(mockReq);
-    expect(mockReq.Deny).toHaveBeenCalledWith(
-      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
-    );
-  });
-
-  it("denies network policies that specify TCP remoteProtocol with an empty ports array", async () => {
-    const mockReq = makeMockReq(
-      {},
-      [],
-      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP, ports: [] }],
-      [],
-      [],
-    );
-    await validator(mockReq);
-    expect(mockReq.Deny).toHaveBeenCalledWith(
-      expect.stringContaining("TCP/UDP remoteProtocol requires at least one port"),
-    );
   });
 
   it("allows network policies that specify TCP remoteProtocol with Ingress direction and port", async () => {

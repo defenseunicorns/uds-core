@@ -194,11 +194,14 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       );
     }
 
-    // Istio ServiceEntry does not support UDP; use remoteNamespace/remoteSelector/remoteCidr instead.
+    // TCP + remoteHost (TCP-mode ServiceEntry) disables Istio L7 controls and is not currently supported.
+    if (policy.remoteProtocol === RemoteProtocol.TCP && policy.remoteHost) {
+      return req.Deny("TCP remoteProtocol cannot be combined with remoteHost; use TLS or HTTP for external egress");
+    }
+
+    // UDP does not support remoteHost.
     if (policy.remoteProtocol === RemoteProtocol.UDP && policy.remoteHost) {
-      return req.Deny(
-        "UDP remoteProtocol cannot be combined with remoteHost (Istio ServiceEntry does not support UDP)",
-      );
+      return req.Deny("UDP remoteProtocol cannot be combined with remoteHost");
     }
 
     // remoteHost and L7 protocols are Egress-only (they drive Istio ServiceEntry generation).
@@ -207,16 +210,6 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       return req.Deny(
         "remoteHost and TLS/HTTP remoteProtocol cannot be combined with Ingress direction",
       );
-    }
-
-    // Without ports, TCP/UDP remoteProtocol silently broadens the policy (all ports allowed, no protocol filter applied).
-    if (
-      (policy.remoteProtocol === RemoteProtocol.TCP ||
-        policy.remoteProtocol === RemoteProtocol.UDP) &&
-      policy.port === undefined &&
-      !policy.ports?.length
-    ) {
-      return req.Deny("TCP/UDP remoteProtocol requires at least one port or ports entry");
     }
 
     // The 'remoteHost' does not support wildcard domains.

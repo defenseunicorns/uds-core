@@ -100,11 +100,8 @@ const allow = {
       remoteProtocol: {
         description:
           "The protocol for this Allow entry. " +
-          "`TLS` and `HTTP` control Istio ServiceEntry generation for egress entries with `remoteHost`; " +
-          "`TCP` also generates a TCP Istio ServiceEntry when combined with `remoteHost`. " +
-          "`TCP` and `UDP` explicitly set the transport protocol on the generated NetworkPolicy port. " +
-          "When omitted with `remoteHost`, defaults to TLS for ServiceEntry generation; " +
-          "otherwise NetworkPolicy ports carry no explicit protocol (Kubernetes defaults to TCP). " +
+          "When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS` is the default if omitted. " +
+          "For all other remotes, use `TCP` or `UDP` based on the connection type; `TCP` is the default if omitted. " +
           "`UDP` cannot be combined with `remoteHost`. " +
           "To allow the same port on both TCP and UDP, use two separate Allow entries.",
         type: "string",
@@ -112,14 +109,14 @@ const allow = {
       },
       port: {
         description:
-          "The port to allow (transport protocol defaults to TCP unless `remoteProtocol` is set to `TCP` or `UDP`)",
+          "The port to allow (transport protocol defaults to TCP unless `remoteProtocol` is set)",
         minimum: 1,
         maximum: 65535,
         type: "number",
       },
       ports: {
         description:
-          "A list of ports to allow (transport protocol defaults to TCP unless `remoteProtocol` is set to `TCP` or `UDP`)",
+          "A list of ports to allow (transport protocol defaults to TCP unless `remoteProtocol` is set)",
         type: "array",
         items: {
           minimum: 1,

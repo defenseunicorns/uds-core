@@ -537,12 +537,15 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
       "timeout 3 nc -u -l -p 5000",
     ]),
     (async () => {
-      await new Promise(r => setTimeout(r, 2500));
-      await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
-        "sh",
-        "-c",
-        "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
-      ]);
+      // Retry sends at short intervals — UDP gives no feedback if the server isn't listening yet.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 600));
+        await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+          "sh",
+          "-c",
+          "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+        ]);
+      }
     })(),
   ]);
 
@@ -560,12 +563,15 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
       "timeout 3 nc -u -l -p 5000",
     ]),
     (async () => {
-      await new Promise(r => setTimeout(r, 2500));
-      await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
-        "sh",
-        "-c",
-        "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
-      ]);
+      // Retry sends at short intervals — UDP gives no feedback if the server isn't listening yet.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 600));
+        await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
+          "sh",
+          "-c",
+          "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+        ]);
+      }
     })(),
   ]);
 
