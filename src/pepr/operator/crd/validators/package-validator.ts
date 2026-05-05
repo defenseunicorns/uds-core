@@ -196,7 +196,9 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     // TCP + remoteHost (TCP-mode ServiceEntry) disables Istio L7 controls and is not currently supported.
     if (policy.remoteProtocol === RemoteProtocol.TCP && policy.remoteHost) {
-      return req.Deny("TCP remoteProtocol cannot be combined with remoteHost; use TLS or HTTP for external egress");
+      return req.Deny(
+        "TCP remoteProtocol cannot be combined with remoteHost; use TLS or HTTP for external egress",
+      );
     }
 
     // UDP does not support remoteHost.
