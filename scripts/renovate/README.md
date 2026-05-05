@@ -44,7 +44,7 @@ This script will:
 The scripts can apply the following labels to PRs:
 
 - `waiting on ironbank`: If a registry1 image is behind
-- `waiting on rapidfort`: If a rapidfort image is behind
+- `waiting on chainguard`: If a Chainguard image is behind
 - `helm-chart-only`: If a PR only contains a helm chart update
 - `needs-review`: If PR is NOT waiting on image updates
 - `major-helm-update`: If the PR contains a major chart version bump

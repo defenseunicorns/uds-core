@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -73,12 +73,12 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -87,12 +87,12 @@ describe("compareImagesAndCharts", () => {
           "1.25.3": [
             "docker.io/library/nginx:1.25.3",
             "registry1.dso.mil/ironbank/nginx:1.25.3",
-            "quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.25.3",
           ],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -145,12 +145,12 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -159,12 +159,12 @@ describe("compareImagesAndCharts", () => {
           "2.0.0": [
             "docker.io/library/nginx:2.0.0",
             "registry1.dso.mil/ironbank/nginx:2.0.0",
-            "quay.io/rfcurated/nginx:2.0.0-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:2.0.0",
           ],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -217,7 +217,7 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
@@ -226,7 +226,7 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
@@ -280,7 +280,7 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
@@ -289,7 +289,7 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
@@ -342,7 +342,7 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
@@ -350,7 +350,7 @@ describe("compareImagesAndCharts", () => {
         return {
           "1.25.3": [
             "docker.io/library/nginx:1.25.3",
-            "quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.25.3",
           ],
           "1.22.6": ["registry1.dso.mil/ironbank/nginx:1.22.6"],
         };
@@ -406,8 +406,8 @@ describe("compareImagesAndCharts", () => {
             "docker.io/library/curl:1.25.3",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
             "registry1.dso.mil/ironbank/curl:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
-            "quay.io/rfcurated/curl:1.21.6-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
+            "cgr.dev/defenseunicorns.com/curl-fips:1.21.6",
           ],
         };
       }
@@ -417,8 +417,8 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "registry1.dso.mil/ironbank/nginx:1.21.6",
             "registry1.dso.mil/ironbank/curl:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
-            "quay.io/rfcurated/curl:1.21.6-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
+            "cgr.dev/defenseunicorns.com/curl-fips:1.21.6",
           ],
         };
       }
@@ -428,7 +428,7 @@ describe("compareImagesAndCharts", () => {
     const result = await compareImagesAndCharts("old", "new");
 
     expect(result.labels).toContain("waiting on ironbank");
-    expect(result.labels).toContain("waiting on rapidfort");
+    expect(result.labels).toContain("waiting on chainguard");
 
     // Check for multiple Ironbank messages
     expect(result.changes).toContain(
@@ -438,16 +438,16 @@ describe("compareImagesAndCharts", () => {
       "Waiting on Ironbank to update registry1.dso.mil/ironbank/curl to version 1.25.3",
     );
 
-    // Check for multiple Rapidfort messages
+    // Check for multiple Chainguard messages
     expect(result.changes).toContain(
-      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
+      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
     expect(result.changes).toContain(
-      "Waiting on Rapidfort to update quay.io/rfcurated/curl to version 1.25.3",
+      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/curl-fips to version 1.25.3",
     );
   });
 
-  it("should detect waiting on rapidfort", async () => {
+  it("should detect waiting on chainguard", async () => {
     // Mock fs.readFileSync to return different content based on the file path
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "old/charts.yaml") {
@@ -485,14 +485,14 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
         };
       }
       if (content === "images-new") {
         return {
           "1.25.3": ["docker.io/library/nginx:1.25.3", "registry1.dso.mil/ironbank/nginx:1.25.3"],
-          "1.21.6": ["quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened"],
+          "1.21.6": ["cgr.dev/defenseunicorns.com/nginx-fips:1.21.6"],
         };
       }
       return {};
@@ -500,9 +500,9 @@ describe("compareImagesAndCharts", () => {
 
     const result = await compareImagesAndCharts("old", "new");
 
-    expect(result.labels).toEqual(["waiting on rapidfort"]);
+    expect(result.labels).toEqual(["waiting on chainguard"]);
     expect(result.changes).toContain(
-      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
+      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
   });
 
@@ -544,12 +544,12 @@ describe("compareImagesAndCharts", () => {
           "1.21.6": [
             "docker.io/library/nginx:1.21.6",
             "registry1.dso.mil/ironbank/nginx:1.21.6",
-            "quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened",
+            "cgr.dev/defenseunicorns.com/nginx-fips:1.21.6",
           ],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -557,11 +557,11 @@ describe("compareImagesAndCharts", () => {
         return {
           "1.25.3": ["docker.io/library/nginx:1.25.3"],
           "1.22.6": ["registry1.dso.mil/ironbank/nginx:1.22.6"],
-          "1.21.6": ["quay.io/rfcurated/nginx:1.21.6-slim-jammy-fips-rfcurated-rfhardened"],
+          "1.21.6": ["cgr.dev/defenseunicorns.com/nginx-fips:1.21.6"],
           "8.12.1": [
             "docker.io/curlimages/curl:8.12.1",
             "registry1.dso.mil/ironbank/curl:8.12.1",
-            "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+            "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
           ],
         };
       }
@@ -570,12 +570,12 @@ describe("compareImagesAndCharts", () => {
 
     const result = await compareImagesAndCharts("old", "new");
 
-    expect(result.labels).toEqual(["waiting on ironbank", "waiting on rapidfort"]);
+    expect(result.labels).toEqual(["waiting on ironbank", "waiting on chainguard"]);
     expect(result.changes).toContain(
       "Waiting on Ironbank to update registry1.dso.mil/ironbank/nginx to version 1.25.3",
     );
     expect(result.changes).toContain(
-      "Waiting on Rapidfort to update quay.io/rfcurated/nginx to version 1.25.3",
+      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
   });
 
@@ -895,82 +895,82 @@ describe("compareImagesAndCharts", () => {
     expect(result.changes).toContain("Major helm chart update detected for grafana");
     expect(result.changes).toContain("PR contains only helm chart updates");
   });
-});
 
-it("should detect wait for loki (regression test)", async () => {
-  // Mock fs.readFileSync to return different content based on the file path
-  (fs.readFileSync as Mock).mockImplementation(filePath => {
-    if (filePath === "old/charts.yaml") {
-      return "charts-old";
-    }
-    if (filePath === "new/charts.yaml") {
-      return "charts-new";
-    }
-    if (filePath === "old/images.yaml") {
-      return "images-old";
-    }
-    if (filePath === "new/images.yaml") {
-      return "images-new";
-    }
-    return "";
+  it("should detect wait for loki (regression test)", async () => {
+    // Mock fs.readFileSync to return different content based on the file path
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "old/charts.yaml") {
+        return "charts-old";
+      }
+      if (filePath === "new/charts.yaml") {
+        return "charts-new";
+      }
+      if (filePath === "old/images.yaml") {
+        return "images-old";
+      }
+      if (filePath === "new/images.yaml") {
+        return "images-new";
+      }
+      return "";
+    });
+
+    // Mock fs.existsSync to return true for all files
+    (fs.existsSync as Mock).mockReturnValue(true);
+
+    // Mock yaml.parse to return different content based on the input
+    (yaml.parse as Mock).mockImplementation(content => {
+      if (content === "charts-old") {
+        return {
+          "https://grafana.github.io/helm-charts/loki": "6.29.0",
+        };
+      }
+      if (content === "charts-new") {
+        return {
+          "https://grafana.github.io/helm-charts/loki": "6.29.0",
+        };
+      }
+      if (content === "images-old") {
+        return {
+          "3.4.3": [
+            "docker.io/grafana/loki:3.4.3",
+            "registry1.dso.mil/ironbank/opensource/grafana/loki:3.4.3",
+            "cgr.dev/defenseunicorns.com/loki-fips:3.4.3",
+          ],
+          "1.6.38": [
+            "docker.io/memcached:1.6.38-alpine",
+            "registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38",
+            "cgr.dev/defenseunicorns.com/memcached-fips:1.6.38",
+          ],
+          "1.27": ["docker.io/nginxinc/nginx-unprivileged:1.27-alpine"],
+          "1.26.3": ["registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3"],
+          "1.27.5": ["cgr.dev/defenseunicorns.com/nginx-fips:1.27.5"],
+        };
+      }
+      if (content === "images-new") {
+        return {
+          "1.27": ["docker.io/nginxinc/nginx-unprivileged:1.27-alpine"],
+          "3.4.3": ["cgr.dev/defenseunicorns.com/loki-fips:3.4.3"],
+          "1.6.38": [
+            "docker.io/memcached:1.6.38-alpine",
+            "registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38",
+            "cgr.dev/defenseunicorns.com/memcached-fips:1.6.38",
+          ],
+          "1.26.3": ["registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3"],
+          "1.27.5": ["cgr.dev/defenseunicorns.com/nginx-fips:1.27.5"],
+          "3.5.0": [
+            "docker.io/grafana/loki:3.5.0",
+            "registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.0",
+          ],
+        };
+      }
+      return {};
+    });
+
+    const result = await compareImagesAndCharts("old", "new");
+
+    expect(result.labels).toEqual(["waiting on chainguard"]);
+    expect(result.changes).toContain(
+      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/loki-fips to version 3.5.0",
+    );
   });
-
-  // Mock fs.existsSync to return true for all files
-  (fs.existsSync as Mock).mockReturnValue(true);
-
-  // Mock yaml.parse to return different content based on the input
-  (yaml.parse as Mock).mockImplementation(content => {
-    if (content === "charts-old") {
-      return {
-        "https://grafana.github.io/helm-charts/loki": "6.29.0",
-      };
-    }
-    if (content === "charts-new") {
-      return {
-        "https://grafana.github.io/helm-charts/loki": "6.29.0",
-      };
-    }
-    if (content === "images-old") {
-      return {
-        "3.4.3": [
-          "docker.io/grafana/loki:3.4.3",
-          "registry1.dso.mil/ironbank/opensource/grafana/loki:3.4.3",
-          "quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened",
-        ],
-        "1.6.38": [
-          "docker.io/memcached:1.6.38-alpine",
-          "registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38",
-          "quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened",
-        ],
-        "1.27": ["docker.io/nginxinc/nginx-unprivileged:1.27-alpine"],
-        "1.26.3": ["registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3"],
-        "1.27.5": ["quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened"],
-      };
-    }
-    if (content === "images-new") {
-      return {
-        "1.27": ["docker.io/nginxinc/nginx-unprivileged:1.27-alpine"],
-        "3.4.3": ["quay.io/rfcurated/grafana/loki:3.4.3-jammy-fips-rfcurated-rfhardened"],
-        "1.6.38": [
-          "docker.io/memcached:1.6.38-alpine",
-          "registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.38",
-          "quay.io/rfcurated/memcached:1.6.38-jammy-fips-rfcurated-rfhardened",
-        ],
-        "1.26.3": ["registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.26.3"],
-        "1.27.5": ["quay.io/rfcurated/nginx:1.27.5-slim-jammy-fips-rfcurated-rfhardened"],
-        "3.5.0": [
-          "docker.io/grafana/loki:3.5.0",
-          "registry1.dso.mil/ironbank/opensource/grafana/loki:3.5.0",
-        ],
-      };
-    }
-    return {};
-  });
-
-  const result = await compareImagesAndCharts("old", "new");
-
-  expect(result.labels).toEqual(["waiting on rapidfort"]);
-  expect(result.changes).toContain(
-    "Waiting on Rapidfort to update quay.io/rfcurated/grafana/loki to version 3.5.0",
-  );
 });

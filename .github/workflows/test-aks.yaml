@@ -69,8 +69,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
-          rapidfortUsername: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_USERNAME || '' }}
-          rapidfortPassword: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_PASSWORD || '' }}
+          chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
       - name: Setup Tofu
         uses: opentofu/setup-opentofu@fc711fa910b93cba0f3fbecaafc9f42fd0c411cb # v2.0.0

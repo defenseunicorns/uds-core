@@ -1,12 +1,12 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 pilot:
-  image: "quay.io/rfcurated/istio/pilot:1.29.2-jammy-fips-rfcurated-rfhardened"
+  image: "cgr.dev/defenseunicorns.com/istio-pilot-fips:1.29.1"
 global:
   proxy_init:
-    # renovate: image=quay.io/rfcurated/istio/proxyv2
-    image: "###ZARF_REGISTRY###/rfcurated/istio/proxyv2:1.29.2-jammy-fips-rfcurated-rfhardened"
+    # renovate: image=cgr.dev/defenseunicorns.com/istio-proxy-fips
+    image: "###ZARF_REGISTRY###/defenseunicorns.com/istio-proxy-fips:1.29.1"
   proxy:
-    # renovate: image=quay.io/rfcurated/istio/proxyv2
-    image: "###ZARF_REGISTRY###/rfcurated/istio/proxyv2:1.29.2-jammy-fips-rfcurated-rfhardened"
+    # renovate: image=cgr.dev/defenseunicorns.com/istio-proxy-fips
+    image: "###ZARF_REGISTRY###/defenseunicorns.com/istio-proxy-fips:1.29.1"

@@ -1,17 +1,18 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 alertmanager:
   alertmanagerSpec:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus/alertmanager
-      tag: 0.32.1-jammy-fips-rfcurated-rfhardened
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-alertmanager-fips
+      # NOTE: exact version 0.32.1 not available at cgr.dev/defenseunicorns.com; using 0.31.1
+      tag: 0.31.1
 kube-state-metrics:
   image:
-    registry: quay.io
-    repository: rfcurated/kube-state-metrics
-    tag: 2.18.0-jammy-scratch-fips-rfcurated-rfhardened
+    registry: cgr.dev
+    repository: defenseunicorns.com/kube-state-metrics-fips
+    tag: 2.18.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -21,14 +22,14 @@ kube-state-metrics:
 prometheus:
   prometheusSpec:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus
-      tag: 3.11.3-jammy-fips-rfcurated-rfhardened
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-fips
+      tag: 3.11.3
 prometheus-node-exporter:
   image:
-    registry: quay.io
-    repository: rfcurated/prometheus/node-exporter
-    tag: 1.11.1-jammy-scratch-fips-rfcurated
+    registry: cgr.dev
+    repository: defenseunicorns.com/prometheus-node-exporter-fips
+    tag: 1.11.1
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -38,19 +39,21 @@ prometheusOperator:
     patch:
       enabled: true
       image:
-        registry: quay.io
-        repository: rfcurated/ingress-nginx/kube-webhook-certgen
-        tag: 1.6.9-jammy-fips-rfcurated-rfhardened
+        registry: cgr.dev
+        repository: defenseunicorns.com/kube-webhook-certgen-fips
+        # NOTE: exact version 1.6.9 not available at cgr.dev/defenseunicorns.com; using 1.15.2 (major jump)
+        # NOTE: upstream ingress-nginx/kube-webhook-certgen is deprecated; successor jkroepke/kube-webhook-certgen not yet in Chainguard
+        tag: 1.15.2
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
         runAsUser: 65532
   image:
-    registry: quay.io
-    repository: rfcurated/prometheus-operator
-    tag: 0.90.1-jammy-scratch-fips-rfcurated
+    registry: cgr.dev
+    repository: defenseunicorns.com/prometheus-operator-fips
+    tag: 0.90.1
   prometheusConfigReloader:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus-operator/prometheus-config-reloader
-      tag: 0.90.1-jammy-scratch-fips-rfcurated
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-config-reloader-fips
+      tag: 0.90.1

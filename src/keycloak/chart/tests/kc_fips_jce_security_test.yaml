@@ -1,0 +1,100 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - FIPS JCE security override
+templates:
+  - statefulset.yaml
+  - configmap-fips-jce-security.yaml
+
+tests:
+  - it: should NOT render the fips-jce-security configmap when writeFipsJceSecurity is false
+    set:
+      migrations:
+        writeFipsJceSecurity: false
+    template: configmap-fips-jce-security.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render the fips-jce-security configmap when writeFipsJceSecurity is true
+    set:
+      migrations:
+        writeFipsJceSecurity: true
+    template: configmap-fips-jce-security.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+
+  - it: should include SunJCE provider in configmap data when writeFipsJceSecurity is true
+    set:
+      migrations:
+        writeFipsJceSecurity: true
+    template: configmap-fips-jce-security.yaml
+    asserts:
+      - matchRegex:
+          path: data["fips-sunjce.security"]
+          pattern: "security\\.provider\\.99=SunJCE"
+
+  - it: should NOT inject JAVA_OPTS_APPEND when writeFipsJceSecurity is false
+    set:
+      migrations:
+        writeFipsJceSecurity: false
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_OPTS_APPEND
+
+  - it: should inject JAVA_OPTS_APPEND with correct path when writeFipsJceSecurity is true
+    set:
+      migrations:
+        writeFipsJceSecurity: true
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: JAVA_OPTS_APPEND
+            value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
+
+  - it: should NOT add fips-jce-security volumeMount when writeFipsJceSecurity is false
+    set:
+      migrations:
+        writeFipsJceSecurity: false
+    template: statefulset.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: fips-jce-security
+
+  - it: should add fips-jce-security volumeMount when writeFipsJceSecurity is true
+    set:
+      migrations:
+        writeFipsJceSecurity: true
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: fips-jce-security
+            mountPath: /opt/keycloak/data/fips-sunjce.security
+            subPath: fips-sunjce.security
+            readOnly: true
+
+  - it: should fail render when writeFipsJceSecurity=true and env contains JAVA_OPTS_APPEND
+    set:
+      migrations:
+        writeFipsJceSecurity: true
+      env:
+        - name: JAVA_OPTS_APPEND
+          value: "-Xmx512m"
+    template: statefulset.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "migrations.writeFipsJceSecurity=true conflicts with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override"

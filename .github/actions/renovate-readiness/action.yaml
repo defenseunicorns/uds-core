@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: renovate-readiness
@@ -120,7 +120,7 @@ runs:
             echo "Upstream package.json is behind image versions - possible Pepr release issue"
             gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on upstream"
             gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
-            gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+            gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on chainguard" || true
           else
             gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on upstream" || true
 
@@ -131,9 +131,9 @@ runs:
             fi
 
             if [[ "$UNICORN_MISMATCH" == "true" ]]; then
-              gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on unicorn"
+              gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on chainguard"
             else
-              gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+              gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on chainguard" || true
             fi
           fi
 
@@ -142,7 +142,7 @@ runs:
           echo "All Pepr versions are in sync. Ready for review."
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on upstream" || true
           gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
-          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on chainguard" || true
           gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         fi
 
@@ -229,7 +229,7 @@ runs:
         echo "labels=$LABELS" >> $GITHUB_OUTPUT
 
         # Check if waiting on labels are present, or this is a helm chart update only
-        if [[ "$LABELS" == *"waiting on ironbank"* ]] || [[ "$LABELS" == *"waiting on rapidfort"* ]] || [[ "$LABELS" == *"helm-chart-only"* ]]; then
+        if [[ "$LABELS" == *"waiting on ironbank"* ]] || [[ "$LABELS" == *"waiting on chainguard"* ]] || [[ "$LABELS" == *"helm-chart-only"* ]]; then
           echo "waiting=true" >> $GITHUB_OUTPUT
         else
           echo "waiting=false" >> $GITHUB_OUTPUT
@@ -251,7 +251,7 @@ runs:
           echo "Current labels: $CURRENT_LABELS"
 
           # Define the managed labels we care about
-          MANAGED_LABELS=("waiting on upstream" "waiting on ironbank" "waiting on unicorn" "waiting on rapidfort" "needs-review" "helm-chart-only" "major-helm-update" "major-image-update")
+          MANAGED_LABELS=("waiting on upstream" "waiting on ironbank" "waiting on chainguard" "needs-review" "helm-chart-only" "major-helm-update" "major-image-update")
 
           # Remove labels that are currently on the PR but not in the new set
           for LABEL in "${MANAGED_LABELS[@]}"; do
