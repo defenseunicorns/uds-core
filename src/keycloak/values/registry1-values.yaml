@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
@@ -17,4 +17,6 @@ configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-ident
 
 migrations:
   deleteGeneratedTrustStore: true
+  # Enabled temporarily for the 26.5.7 -> 26.6.1 upgrade where the Keycloak user id changed
+  # Can be safely disabled during the next Keycloak minor version upgrade or sooner
   upgradePermissions: true
