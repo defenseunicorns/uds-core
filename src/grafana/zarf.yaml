@@ -65,4 +65,4 @@ components:
       - cgr.dev/defenseunicorns.com/grafana-fips:12.4.2
       - cgr.dev/defenseunicorns.com/busybox-fips:1.37.0
       - cgr.dev/defenseunicorns.com/curl-fips:8.19.0
-      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:2.5.1
+      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:2.7.1

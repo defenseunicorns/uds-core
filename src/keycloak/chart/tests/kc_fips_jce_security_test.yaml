@@ -9,19 +9,19 @@ templates:
   - configmap-fips-jce-security.yaml
 
 tests:
-  - it: should NOT render the fips-jce-security configmap when writeFipsJceSecurity is false
+  - it: should NOT render the fips-jce-security configmap when image.repository does not contain cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: false
+      image:
+        repository: quay.io/keycloak/keycloak
     template: configmap-fips-jce-security.yaml
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: should render the fips-jce-security configmap when writeFipsJceSecurity is true
+  - it: should render the fips-jce-security configmap when image.repository contains cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: true
+      image:
+        repository: cgr.dev/defenseunicorns.com/keycloak-fips
     template: configmap-fips-jce-security.yaml
     asserts:
       - hasDocuments:
@@ -29,20 +29,20 @@ tests:
       - isKind:
           of: ConfigMap
 
-  - it: should include SunJCE provider in configmap data when writeFipsJceSecurity is true
+  - it: should include SunJCE provider in configmap data when image.repository contains cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: true
+      image:
+        repository: cgr.dev/defenseunicorns.com/keycloak-fips
     template: configmap-fips-jce-security.yaml
     asserts:
       - matchRegex:
           path: data["fips-sunjce.security"]
           pattern: "security\\.provider\\.99=SunJCE"
 
-  - it: should NOT inject JAVA_OPTS_APPEND when writeFipsJceSecurity is false
+  - it: should NOT inject JAVA_OPTS_APPEND when image.repository does not contain cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: false
+      image:
+        repository: quay.io/keycloak/keycloak
     template: statefulset.yaml
     asserts:
       - notContains:
@@ -50,10 +50,10 @@ tests:
           content:
             name: JAVA_OPTS_APPEND
 
-  - it: should inject JAVA_OPTS_APPEND with correct path when writeFipsJceSecurity is true
+  - it: should inject JAVA_OPTS_APPEND with correct path when image.repository contains cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: true
+      image:
+        repository: cgr.dev/defenseunicorns.com/keycloak-fips
     template: statefulset.yaml
     asserts:
       - contains:
@@ -62,10 +62,10 @@ tests:
             name: JAVA_OPTS_APPEND
             value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
 
-  - it: should NOT add fips-jce-security volumeMount when writeFipsJceSecurity is false
+  - it: should NOT add fips-jce-security volumeMount when image.repository does not contain cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: false
+      image:
+        repository: quay.io/keycloak/keycloak
     template: statefulset.yaml
     asserts:
       - notContains:
@@ -73,10 +73,10 @@ tests:
           content:
             name: fips-jce-security
 
-  - it: should add fips-jce-security volumeMount when writeFipsJceSecurity is true
+  - it: should add fips-jce-security volumeMount when image.repository contains cgr.dev
     set:
-      migrations:
-        writeFipsJceSecurity: true
+      image:
+        repository: cgr.dev/defenseunicorns.com/keycloak-fips
     template: statefulset.yaml
     asserts:
       - contains:
@@ -87,14 +87,14 @@ tests:
             subPath: fips-sunjce.security
             readOnly: true
 
-  - it: should fail render when writeFipsJceSecurity=true and env contains JAVA_OPTS_APPEND
+  - it: should fail render when image.repository contains cgr.dev and env contains JAVA_OPTS_APPEND
     set:
-      migrations:
-        writeFipsJceSecurity: true
+      image:
+        repository: cgr.dev/defenseunicorns.com/keycloak-fips
       env:
         - name: JAVA_OPTS_APPEND
           value: "-Xmx512m"
     template: statefulset.yaml
     asserts:
       - failedTemplate:
-          errorMessage: "migrations.writeFipsJceSecurity=true conflicts with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override"
+          errorMessage: "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override"

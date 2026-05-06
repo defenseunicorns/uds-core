@@ -52,4 +52,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/defenseunicorns.com/vector-fips:0.54.0
+      - cgr.dev/defenseunicorns.com/vector-fips:0.55.0

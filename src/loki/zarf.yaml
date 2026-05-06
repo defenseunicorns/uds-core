@@ -59,7 +59,7 @@ components:
         valuesFiles:
           - ./values/unicorn-values.yaml
     images:
-      - cgr.dev/defenseunicorns.com/loki-fips:3.6.10 # NOTE: exact version 3.7.1 not available at cgr.dev/defenseunicorns.com; using 3.6.10
-      - cgr.dev/defenseunicorns.com/nginx-fips:1.29.8 # NOTE: exact version 1.29.7 not available at cgr.dev/defenseunicorns.com; using 1.29.8
+      - cgr.dev/defenseunicorns.com/loki-fips:3.7.1
+      - cgr.dev/defenseunicorns.com/nginx-fips:1.29.8
       - cgr.dev/defenseunicorns.com/memcached-fips:1.6.41
-      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:2.5.1 # NOTE: exact version 2.5.0 not available at cgr.dev/defenseunicorns.com; using 2.5.1
+      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:2.7.1

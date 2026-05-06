@@ -415,13 +415,6 @@ env: []
 migrations:
   # Deletes the generated truststore to enable recreating it by Keycloak
   deleteGeneratedTrustStore: false
-  # Mounts a JVM security properties override that adds SunJCE as provider.99.
-  # Required for cgr.dev keycloak-fips images, which omit SunJCE from java.security,
-  # causing Keycloak's hardcoded PKCS12 truststore creation to fail with
-  # "Algorithm HmacPBESHA256 not available". BC FIPS remains the primary provider.
-  # Remove this flag and configmap-fips-jce-security.yaml once Chainguard ships
-  # keycloak-fips with SunJCE included in java.security.
-  writeFipsJceSecurity: false
   # Runs a privileged init container during `helm upgrade` to chown persistent volumes
   upgradePermissions: false
 

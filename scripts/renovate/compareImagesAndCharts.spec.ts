@@ -428,7 +428,7 @@ describe("compareImagesAndCharts", () => {
     const result = await compareImagesAndCharts("old", "new");
 
     expect(result.labels).toContain("waiting on ironbank");
-    expect(result.labels).toContain("waiting on chainguard");
+    expect(result.labels).toContain("waiting on unicorn");
 
     // Check for multiple Ironbank messages
     expect(result.changes).toContain(
@@ -438,16 +438,16 @@ describe("compareImagesAndCharts", () => {
       "Waiting on Ironbank to update registry1.dso.mil/ironbank/curl to version 1.25.3",
     );
 
-    // Check for multiple Chainguard messages
+    // Check for multiple Unicorn messages
     expect(result.changes).toContain(
-      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
+      "Waiting on Unicorn to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
     expect(result.changes).toContain(
-      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/curl-fips to version 1.25.3",
+      "Waiting on Unicorn to update cgr.dev/defenseunicorns.com/curl-fips to version 1.25.3",
     );
   });
 
-  it("should detect waiting on chainguard", async () => {
+  it("should detect waiting on unicorn", async () => {
     // Mock fs.readFileSync to return different content based on the file path
     (fs.readFileSync as Mock).mockImplementation(filePath => {
       if (filePath === "old/charts.yaml") {
@@ -500,9 +500,9 @@ describe("compareImagesAndCharts", () => {
 
     const result = await compareImagesAndCharts("old", "new");
 
-    expect(result.labels).toEqual(["waiting on chainguard"]);
+    expect(result.labels).toEqual(["waiting on unicorn"]);
     expect(result.changes).toContain(
-      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
+      "Waiting on Unicorn to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
   });
 
@@ -570,12 +570,12 @@ describe("compareImagesAndCharts", () => {
 
     const result = await compareImagesAndCharts("old", "new");
 
-    expect(result.labels).toEqual(["waiting on ironbank", "waiting on chainguard"]);
+    expect(result.labels).toEqual(["waiting on ironbank", "waiting on unicorn"]);
     expect(result.changes).toContain(
       "Waiting on Ironbank to update registry1.dso.mil/ironbank/nginx to version 1.25.3",
     );
     expect(result.changes).toContain(
-      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
+      "Waiting on Unicorn to update cgr.dev/defenseunicorns.com/nginx-fips to version 1.25.3",
     );
   });
 
@@ -968,9 +968,9 @@ describe("compareImagesAndCharts", () => {
 
     const result = await compareImagesAndCharts("old", "new");
 
-    expect(result.labels).toEqual(["waiting on chainguard"]);
+    expect(result.labels).toEqual(["waiting on unicorn"]);
     expect(result.changes).toContain(
-      "Waiting on Chainguard to update cgr.dev/defenseunicorns.com/loki-fips to version 3.5.0",
+      "Waiting on Unicorn to update cgr.dev/defenseunicorns.com/loki-fips to version 3.5.0",
     );
   });
 });

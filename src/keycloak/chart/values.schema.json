@@ -650,11 +650,6 @@
         "deleteGeneratedTrustStore": {
           "type": "boolean"
         },
-        "writeFipsJceSecurity": {
-          "type": "boolean",
-          "default": false,
-          "description": "Mounts a JVM security properties override that adds SunJCE as provider.99. Required for cgr.dev keycloak-fips images, which omit SunJCE from java.security, causing PKCS12 truststore creation to fail with HmacPBESHA256 not available. Remove once Chainguard ships keycloak-fips with SunJCE included."
-        },
         "upgradePermissions": {
           "type": "boolean"
         }

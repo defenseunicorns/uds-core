@@ -41,8 +41,7 @@ prometheusOperator:
       image:
         registry: cgr.dev
         repository: defenseunicorns.com/kube-webhook-certgen-fips
-        # NOTE: exact version 1.6.9 not available at cgr.dev/defenseunicorns.com; using 1.15.2 (major jump)
-        # NOTE: upstream ingress-nginx/kube-webhook-certgen is deprecated; successor jkroepke/kube-webhook-certgen not yet in Chainguard
+        # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
         tag: 1.15.2
       securityContext:
         runAsGroup: 65532

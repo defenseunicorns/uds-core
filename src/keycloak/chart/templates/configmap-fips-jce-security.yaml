@@ -1,7 +1,7 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.migrations.writeFipsJceSecurity }}
+{{- if contains "cgr.dev" .Values.image.repository }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
