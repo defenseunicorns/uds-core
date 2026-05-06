@@ -126,11 +126,16 @@ tasks:
           # Download latest release bundle
           curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
-          # Update the bundle with the latest version using yq
+          # Read k3d ref from local bundle so the cluster matches the current branch's expected node OS
+          UDS_K3D_REF=$(./uds zarf tools yq '.packages[] | select(.name == "uds-k3d-dev") | .ref' bundles/k3d-standard/uds-bundle.yaml)
+
+          # Update the bundle: pin core to the latest release OCI ref, and k3d to the current branch's version
           ./uds zarf tools yq e -i "
             del(.packages[] | select(.name == \"core\").path) |
             .packages[] |= (select(.name == \"core\") |
-            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
+            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\") |
+            .packages[] |= (select(.name == \"uds-k3d-dev\") |
+            .ref = \"${UDS_K3D_REF}\")" \
             tmp/core-shim/uds-bundle.yaml
 
           # Create and deploy the bundle
