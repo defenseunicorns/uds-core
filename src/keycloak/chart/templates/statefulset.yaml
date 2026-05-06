@@ -79,6 +79,58 @@ spec:
             - name: data
               mountPath: /opt/keycloak/data
         {{- end }}
+        {{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
+        - name: fix-volume-permissions
+          image: "{{ .Values.configImage }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              {{- if or .Values.persistence.data.enabled .Values.devMode }}
+              chown -R 1000:1000 /opt/keycloak/data
+              {{- end }}
+              {{- if or .Values.persistence.themes.enabled .Values.devMode }}
+              chown -R 1000:1000 /opt/keycloak/themes
+              {{- end }}
+              {{- if .Values.persistence.conf.enabled }}
+              chown -R 1000:1000 /opt/keycloak/conf
+              {{- end }}
+              {{- if .Values.persistence.providers.enabled }}
+              chown -R 1000:1000 /opt/keycloak/providers
+              {{- end }}
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            {{- if or .Values.persistence.data.enabled .Values.devMode }}
+            - name: data
+              mountPath: /opt/keycloak/data
+            {{- end }}
+            {{- if or .Values.persistence.themes.enabled .Values.devMode }}
+            - name: themes
+              mountPath: /opt/keycloak/themes
+            {{- end }}
+            {{- if .Values.persistence.conf.enabled }}
+            - name: conf
+              mountPath: /opt/keycloak/conf
+            {{- end }}
+            {{- if .Values.persistence.providers.enabled }}
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            {{- end }}
+        {{- end }}
       containers:
         - name: keycloak
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -151,6 +203,10 @@ spec:
             - name: KC_HEALTH_ENABLED
               value: "true"
             - name: KC_METRICS_ENABLED
+              value: "true"
+
+            # Ensure Keycloak is configured for running in container
+            - name: KC_RUN_IN_CONTAINER
               value: "true"
 
             # @lulaStart e4ea044c-75fc-4acc-a552-8bba2aab1b12

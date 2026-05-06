@@ -12,7 +12,7 @@ on:
     # labeled is added to support renovate-ready labelling on PRs
     types: [milestoned, labeled, opened, reopened, synchronize]
     paths:
-      - ".github/workflows/upgrade-ha.yaml"
+      - ".github/workflows/test-k3d-ha.yaml"
       - "bundles/k3d-standard/**"
 
 concurrency:
