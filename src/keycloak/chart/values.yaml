@@ -5,7 +5,7 @@ image:
   # The Keycloak image repository
   repository: quay.io/keycloak/keycloak
   # Overrides the Keycloak image tag whose default is the chart appVersion
-  tag: "26.5.7"
+  tag: "26.6.1"
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
@@ -422,6 +422,8 @@ migrations:
   # Remove this flag and configmap-fips-jce-security.yaml once Chainguard ships
   # keycloak-fips with SunJCE included in java.security.
   writeFipsJceSecurity: false
+  # Runs a privileged init container during `helm upgrade` to chown persistent volumes
+  upgradePermissions: false
 
 # Third-party integration settings, such as L7 Load Balancer support
 thirdPartyIntegration:
