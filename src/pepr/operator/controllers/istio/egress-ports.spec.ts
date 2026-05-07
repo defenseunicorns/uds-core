@@ -44,11 +44,11 @@ describe("getPortsForHostAllow", () => {
     expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.HTTP })).toEqual([80]);
   });
 
-  it("should return empty array for TCP without ports (allowed by validator)", () => {
-    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.TCP })).toEqual([]);
+  it("should default to 443 for TCP without explicit ports", () => {
+    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.TCP })).toEqual([443]);
   });
 
-  it("should return empty array for UDP without ports (allowed by validator)", () => {
-    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.UDP })).toEqual([]);
+  it("should default to 443 for UDP without explicit ports", () => {
+    expect(getPortsForHostAllow({ remoteProtocol: RemoteProtocol.UDP })).toEqual([443]);
   });
 });
