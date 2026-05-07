@@ -22,7 +22,7 @@ Load this file before any review or writing pass and apply throughout.
 - Do not use `---` horizontal rule dividers between sections. Headings provide sufficient visual separation.
 - Include descriptive alt text for all images.
 - Use relative links for internal references.
-- Anchor lists with an introductory sentence. Avoid placing a list directly under a heading with no lead-in, except for simple link-list sections (for example, **Related documentation**) where the section is just a list of links.
+- Anchor lists with an introductory sentence. Avoid placing a list directly under a heading with no lead-in, except for structural list sections that follow a fixed convention (for example, **Prerequisites** and **Related documentation**), where the section is understood to be a list by convention and a lead-in adds noise.
 - Use second-person ("you") when addressing the reader. Avoid first-person pronouns.
 - Use "airgap" (one word). Use "the airgap" not "airgap environment".
 - Files use the `.md` extension unless Starlight components (Tabs, Steps, CardGrid, LinkCard) are needed, in which case use `.mdx`.
@@ -39,7 +39,7 @@ Load this file before any review or writing pass and apply throughout.
     - name: core
   ```
   ````
-- Include inline comments in code blocks to explain configuration fields, especially in YAML. Comment every non-obvious field so readers understand what each value does and why:
+- Include inline comments in code blocks to explain configuration fields whose purpose, syntax, or expected value is not evident from the field name alone. Fields with self-descriptive names (for example, `proxyProtocol.enabled: true`, `enableHttpsRedirect: false`) and conventional placeholder values (for example, `ref: x.x.x-upstream`, `version: "0.1.0"`) do **not** require comments. Focus comments on values that need context — units, defaults, escaped paths, or non-obvious side effects:
   ```yaml
   # Enable retention enforcement in the compactor
   - path: loki.compactor.retention_enabled
