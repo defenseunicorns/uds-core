@@ -1,0 +1,19 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: metrics-server
+component:
+  target:
+    flavor: registry1
+  import:
+    paths:
+      - common/metrics-server.yaml
+  charts:
+    - name: metrics-server
+      valuesFiles:
+        - values/registry1-values.yaml
+  images:
+    - name: registry1.dso.mil/ironbank/opensource/kubernetes-sigs/metrics-server:v0.8.1

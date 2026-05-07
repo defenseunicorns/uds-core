@@ -1,0 +1,24 @@
+# Copyright 2025-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: falco
+  description: "Deploy Falco"
+component:
+  charts:
+    - name: uds-falco-config
+      namespace: falco
+      local:
+        path: ../chart
+      valuesFiles:
+        - ../chart/values.yaml
+    - name: falco
+      namespace: falco
+      helmRepository:
+        url: https://falcosecurity.github.io/charts
+        name: falco
+        version: 8.0.2
+      valuesFiles:
+        - ../values/values.yaml
