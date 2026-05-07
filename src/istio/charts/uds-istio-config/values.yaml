@@ -61,5 +61,10 @@ rootDomain:
 # required for any deployment where in-cluster mesh traffic also reaches the
 # gateway (e.g. Grafana -> Keycloak), since mesh traffic does not carry a
 # PP2 header and a strict filter would reject it.
+#
+# Trust boundary: once enabled, Envoy trusts a PP2 header from any client that
+# can reach the listener. Restrict direct network access to the ingressgateway
+# pods to the upstream load balancer so untrusted in-cluster workloads cannot
+# spoof the source IP by sending their own PP2 header.
 proxyProtocol:
   enabled: false
