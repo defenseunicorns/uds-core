@@ -1,0 +1,20 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: keycloak
+component:
+  target:
+    flavor: upstream
+  import:
+    paths:
+      - ../common/keycloak.yaml
+  charts:
+    - name: keycloak
+      valuesFiles:
+        - ../values/upstream-values.yaml
+  images:
+    - name: quay.io/keycloak/keycloak:26.6.1
+    - name: ghcr.io/defenseunicorns/uds/identity-config:0.26.1

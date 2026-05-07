@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: grafana
+component:
+  target:
+    flavor: upstream
+  import:
+    paths:
+      - ../common/grafana.yaml
+  charts:
+    - name: grafana
+      valuesFiles:
+        - ../values/upstream-values.yaml
+  images:
+    - name: docker.io/grafana/grafana:12.4.2
+    - name: docker.io/curlimages/curl:8.19.0
+    - name: docker.io/library/busybox:1.37.0
+    - name: ghcr.io/kiwigrid/k8s-sidecar:2.5.0

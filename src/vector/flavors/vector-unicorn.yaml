@@ -1,0 +1,20 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: vector
+  description: "Deploy Vector"
+component:
+  target:
+    flavor: unicorn
+  import:
+    paths:
+      - ../common/vector.yaml
+  charts:
+    - name: vector
+      valuesFiles:
+        - ../values/unicorn-values.yaml
+  images:
+    - name: quay.io/rfcurated/vector:0.55.0-jammy-fips-rfcurated-rfhardened

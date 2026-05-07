@@ -1,0 +1,14 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfPackageConfig
+metadata:
+  name: vector
+components:
+  - name: vector
+    import:
+      paths:
+        - flavors/vector-upstream.yaml
+        - flavors/vector-registry1.yaml
+        - flavors/vector-unicorn.yaml

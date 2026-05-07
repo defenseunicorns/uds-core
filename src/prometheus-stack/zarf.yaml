@@ -1,0 +1,26 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfPackageConfig
+metadata:
+  name: prometheus-stack
+components:
+  - name: prometheus-operator-crds
+    import:
+      paths:
+        - prometheus-operator-crds.yaml
+
+  - name: kube-prometheus-stack
+    import:
+      paths:
+        - flavors/kube-prometheus-stack-upstream.yaml
+        - flavors/kube-prometheus-stack-registry1.yaml
+        - flavors/kube-prometheus-stack-unicorn.yaml
+
+  - name: prometheus-blackbox-exporter
+    import:
+      paths:
+        - flavors/prometheus-blackbox-exporter-upstream.yaml
+        - flavors/prometheus-blackbox-exporter-registry1.yaml
+        - flavors/prometheus-blackbox-exporter-unicorn.yaml

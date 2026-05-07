@@ -1,0 +1,21 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: velero
+component:
+  target:
+    flavor: unicorn
+  import:
+    paths:
+      - ../common/velero.yaml
+  charts:
+    - name: velero
+      valuesFiles:
+        - ../values/unicorn-values.yaml
+  images:
+    - name: quay.io/rfcurated/velero/velero:1.18.0-noble-scratch-fips-rfcurated
+    - name: quay.io/rfcurated/velero/velero-plugin-for-aws:1.14.0-noble-scratch-fips-rfcurated
+    - name: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.14.0-noble-scratch-fips-rfcurated

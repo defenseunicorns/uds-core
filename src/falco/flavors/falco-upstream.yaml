@@ -1,0 +1,21 @@
+# Copyright 2025-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: falco
+  description: "Deploy Falco"
+component:
+  target:
+    flavor: upstream
+  import:
+    paths:
+      - ../common/falco.yaml
+  charts:
+    - name: falco
+      valuesFiles:
+        - ../values/upstream-values.yaml
+  images:
+    - name: docker.io/falcosecurity/falco:0.43.1
+    - name: docker.io/falcosecurity/falcosidekick:2.33.0

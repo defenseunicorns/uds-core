@@ -1,0 +1,28 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: istio-controlplane
+component:
+  target:
+    flavor: upstream
+  import:
+    paths:
+      - ../common/istio-controlplane.yaml
+  charts:
+    - name: istiod
+      valuesFiles:
+        - ../values/upstream/istiod.yaml
+    - name: cni
+      valuesFiles:
+        - ../values/upstream/cni.yaml
+    - name: ztunnel
+      valuesFiles:
+        - ../values/upstream/ztunnel.yaml
+  images:
+    - name: docker.io/istio/pilot:1.29.2-distroless
+    - name: docker.io/istio/proxyv2:1.29.2-distroless
+    - name: docker.io/istio/install-cni:1.29.2-distroless
+    - name: docker.io/istio/ztunnel:1.29.2-distroless
