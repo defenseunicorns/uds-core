@@ -1,168 +1,44 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+apiVersion: zarf.dev/v1beta1
 kind: ZarfPackageConfig
 metadata:
-  # @lulaStart 5e1176a3-b894-4e67-9ad0-96ec84c3fff8
-  name: uds-core-istio
-  description: "UDS Core Istio package deploys Istio with admin, tenant and passthrough gateways."
-  url: https://istio.io/latest/
-  # @lulaEnd 5e1176a3-b894-4e67-9ad0-96ec84c3fff8
-
-variables:
-  - name: DOMAIN
-    description: "Cluster domain"
-    default: "uds.dev"
-
-  - name: ADMIN_DOMAIN
-    description: "Domain for admin services, defaults to `admin.DOMAIN`"
-
+  name: istio
 components:
   - name: istio-controlplane
-    required: true
-    only:
-      flavor: upstream
     import:
-      path: common
-    charts:
-      - name: istiod
-        valuesFiles:
-          - "values/upstream/istiod.yaml"
-      - name: cni
-        valuesFiles:
-          - "values/upstream/cni.yaml"
-      - name: ztunnel
-        valuesFiles:
-          - "values/upstream/ztunnel.yaml"
-    images:
-      - "docker.io/istio/pilot:1.29.2-distroless"
-      - "docker.io/istio/proxyv2:1.29.2-distroless"
-      - "docker.io/istio/install-cni:1.29.2-distroless"
-      - "docker.io/istio/ztunnel:1.29.2-distroless"
-
-  - name: istio-controlplane
-    required: true
-    only:
-      flavor: registry1
-    import:
-      path: common
-    charts:
-      - name: istiod
-        valuesFiles:
-          - "values/registry1/istiod.yaml"
-      - name: cni
-        valuesFiles:
-          - "values/registry1/cni.yaml"
-      - name: ztunnel
-        valuesFiles:
-          - "values/registry1/ztunnel.yaml"
-    # @lulaStart b4367e52-bef0-4463-a906-e5af6b4aa015
-    images:
-      - registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.29.2-fips
-      - registry1.dso.mil/ironbank/tetrate/istio/pilot:1.29.2-fips
-      - registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.29.2-fips
-      - registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.29.2-fips
-    # @lulaEnd b4367e52-bef0-4463-a906-e5af6b4aa015
-
-  - name: istio-controlplane
-    required: true
-    only:
-      flavor: unicorn
-    import:
-      path: common
-    charts:
-      - name: istiod
-        valuesFiles:
-          - "values/unicorn/istiod.yaml"
-      - name: cni
-        valuesFiles:
-          - "values/unicorn/cni.yaml"
-      - name: ztunnel
-        valuesFiles:
-          - "values/unicorn/ztunnel.yaml"
-    # @lulaStart b4367e52-bef0-4463-a906-e5af6b4aa015
-    images:
-      - quay.io/rfcurated/istio/pilot:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/proxyv2:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/install-cni:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/ztunnel:1.29.2-jammy-scratch-fips-rfcurated
-    # @lulaEnd b4367e52-bef0-4463-a906-e5af6b4aa015
+      paths:
+        - flavors/istio-controlplane-upstream.yaml
+        - flavors/istio-controlplane-registry1.yaml
+        - flavors/istio-controlplane-unicorn.yaml
 
   - name: gateway-api-crds
-    required: true
     import:
-      path: common
+      paths:
+        - common/gateway-api-crds.yaml
 
   - name: istio-admin-gateway
-    required: true
-    charts:
-      - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.2
-        releaseName: admin-ingressgateway
-        namespace: istio-admin-gateway
-        valuesFiles:
-          - "values/base-gateway.yaml"
-      - name: uds-istio-config
-        version: 0.2.0
-        localPath: charts/uds-istio-config
-        namespace: istio-admin-gateway
-        valuesFiles:
-          - "values/config-admin.yaml"
+    import:
+      paths:
+        - istio-admin-gateway.yaml
 
   - name: istio-tenant-gateway
-    required: true
-    charts:
-      - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.2
-        releaseName: tenant-ingressgateway
-        namespace: istio-tenant-gateway
-        valuesFiles:
-          - "values/base-gateway.yaml"
-      - name: uds-istio-config
-        version: 0.2.0
-        localPath: charts/uds-istio-config
-        namespace: istio-tenant-gateway
-        valuesFiles:
-          - "values/config-tenant.yaml"
+    import:
+      paths:
+        - istio-tenant-gateway.yaml
 
   - name: istio-passthrough-gateway
-    required: false
-    charts:
-      - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.2
-        releaseName: passthrough-ingressgateway
-        namespace: istio-passthrough-gateway
-        valuesFiles:
-          - "values/base-gateway.yaml"
-      - name: uds-istio-config
-        version: 0.2.0
-        localPath: charts/uds-istio-config
-        namespace: istio-passthrough-gateway
-        valuesFiles:
-          - "values/config-passthrough.yaml"
+    import:
+      paths:
+        - istio-passthrough-gateway.yaml
 
-  # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-ambient
-    required: true
-    # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
-    charts:
-      - name: uds-istio-egress-config
-        version: 0.1.0
-        localPath: charts/uds-istio-egress-config
-        namespace: istio-egress-ambient
+    import:
+      paths:
+        - istio-egress-ambient.yaml
 
-  # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-gateway
-    required: false
-    # @lulaEnd 643060b2-0ddf-4728-9582-ef38dca7447a
-    charts:
-      - name: gateway
-        url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.2
-        releaseName: egressgateway
-        namespace: istio-egress-gateway
-        valuesFiles:
-          - "values/base-egress.yaml"
+    import:
+      paths:
+        - istio-egress-gateway.yaml

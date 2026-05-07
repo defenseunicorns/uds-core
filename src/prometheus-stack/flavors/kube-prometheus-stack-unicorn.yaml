@@ -1,0 +1,26 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: kube-prometheus-stack
+  description: "Install kube-prometheus-stack using the helm chart https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack"
+component:
+  target:
+    flavor: unicorn
+  import:
+    paths:
+      - ../common/kube-prometheus-stack.yaml
+  charts:
+    - name: kube-prometheus-stack
+      valuesFiles:
+        - ../values/unicorn/kube-prometheus-stack.yaml
+  images:
+    - name: quay.io/rfcurated/prometheus/node-exporter:1.11.1-jammy-scratch-fips-rfcurated
+    - name: quay.io/rfcurated/prometheus-operator:0.90.1-jammy-scratch-fips-rfcurated
+    - name: quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened
+    - name: quay.io/rfcurated/prometheus/alertmanager:0.32.1-jammy-fips-rfcurated-rfhardened
+    - name: quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.90.1-jammy-scratch-fips-rfcurated
+    - name: quay.io/rfcurated/prometheus:3.11.3-jammy-fips-rfcurated-rfhardened
+    - name: quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.9-jammy-fips-rfcurated-rfhardened

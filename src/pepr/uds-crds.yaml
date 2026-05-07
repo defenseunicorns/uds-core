@@ -1,0 +1,32 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: uds-crds
+component:
+  charts:
+    - name: uds-cluster-crds
+      namespace: pepr-system
+      local:
+        path: uds-cluster-crds
+  actions:
+    onDeploy:
+      before:
+        - description: Handle Helm ownership metadata change on upgrade
+          cmd: |
+            # Update Helm ownership metadata for existing Packages and Exemptions CRDs
+            CRDS="packages.uds.dev exemptions.uds.dev"
+
+            for crd in $CRDS; do
+              if ./zarf tools kubectl get crd "$crd" >/dev/null 2>&1; then
+                ./zarf tools kubectl label crd "$crd" \
+                  app.kubernetes.io/managed-by=Helm --overwrite
+
+                ./zarf tools kubectl annotate crd "$crd" \
+                  meta.helm.sh/release-name="uds-cluster-crds" \
+                  meta.helm.sh/release-namespace="pepr-system" \
+                  --overwrite
+              fi
+            done

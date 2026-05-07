@@ -1,68 +1,14 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+apiVersion: zarf.dev/v1beta1
 kind: ZarfPackageConfig
 metadata:
-  # @lulaStart d3f0db2b-460d-453e-8f0f-121f29ac56a2
-  # @lulaStart d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
-  name: uds-core-grafana
-  # @lulaEnd d2a68ac7-ae8f-4be9-a5cf-ba368aa99ba8
-  # @lulaEnd d3f0db2b-460d-453e-8f0f-121f29ac56a2
-  description: "UDS Core Grafana"
-  url: https://grafana.com/grafana
-
-variables:
-  - name: DOMAIN
-    description: "Cluster domain"
-    default: "uds.dev"
-
-  - name: ADMIN_DOMAIN
-    description: "Domain for admin services, defaults to `admin.DOMAIN`"
-
+  name: grafana
 components:
   - name: grafana
-    required: true
-    only:
-      flavor: upstream
     import:
-      path: common
-    charts:
-      - name: grafana
-        valuesFiles:
-          - values/upstream-values.yaml
-    images:
-      - docker.io/grafana/grafana:12.4.2
-      - docker.io/curlimages/curl:8.19.0
-      - docker.io/library/busybox:1.37.0
-      - ghcr.io/kiwigrid/k8s-sidecar:2.5.0
-
-  - name: grafana
-    required: true
-    only:
-      flavor: registry1
-    import:
-      path: common
-    charts:
-      - name: grafana
-        valuesFiles:
-          - values/registry1-values.yaml
-    images:
-      - registry1.dso.mil/ironbank/opensource/grafana/grafana:12.4.2
-      - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.7
-      - registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.5.0
-
-  - name: grafana
-    required: true
-    only:
-      flavor: unicorn
-    import:
-      path: common
-    charts:
-      - name: grafana
-        valuesFiles:
-          - values/unicorn-values.yaml
-    images:
-      - quay.io/rfcurated/grafana:12.4.2-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/busybox:1.37.0-musl-rf.1-fips-rfcurated
-      - quay.io/rfcurated/curl:8.19.0-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/kiwigrid/k8s-sidecar:2.5.0-jammy-scratch-fips-rfcurated-rfhardened
+      paths:
+        - flavors/grafana-upstream.yaml
+        - flavors/grafana-registry1.yaml
+        - flavors/grafana-unicorn.yaml

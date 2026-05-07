@@ -2,16 +2,17 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # @lulaStart babb60a4-d745-426c-ab8e-9527fda629d6
+apiVersion: zarf.dev/v1beta1
 kind: ZarfPackageConfig
 metadata:
   name: core
   description: "UDS Core is a collection of several individual applications combined into a single Zarf Package, that establishes a secure baseline for secure cloud-native systems."
   # @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6
-  authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "1.3.0"
   # x-release-please-end
   annotations:
+    authors: "Defense Unicorns - Product"
     dev.uds.title: UDS Core
     dev.uds.tagline: Collection of packages that enable a secure baseline for cloud-native systems
     dev.uds.categories: UDS-Core
@@ -20,111 +21,136 @@ metadata:
 
 components:
   - name: uds-crds
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/pepr/uds-crds.yaml
 
   - name: prometheus-operator-crds
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/prometheus-stack/prometheus-operator-crds.yaml
 
   - name: uds-operator-config
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/pepr/uds-operator-config.yaml
 
   - name: pepr-uds-core
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/pepr/pepr-uds-core.yaml
 
   - name: uds-exemptions
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/pepr/uds-exemptions.yaml
 
   - name: istio-controlplane
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-controlplane-upstream.yaml
+        - ../../src/istio/istio-controlplane-registry1.yaml
+        - ../../src/istio/istio-controlplane-unicorn.yaml
 
   - name: gateway-api-crds
-    required: true
     import:
-      path: ../../src/istio/common
+      paths:
+        - ../../src/istio/common/gateway-api-crds.yaml
 
   - name: istio-admin-gateway
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-admin-gateway.yaml
 
   - name: istio-tenant-gateway
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-tenant-gateway.yaml
 
   - name: istio-passthrough-gateway
-    required: false
+    optional: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-passthrough-gateway.yaml
 
   - name: istio-egress-ambient
-    required: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-egress-ambient.yaml
 
   - name: istio-egress-gateway
-    required: false
+    optional: true
     import:
-      path: ../base
+      paths:
+        - ../../src/istio/istio-egress-gateway.yaml
 
   - name: metrics-server
-    required: false
+    optional: true
     import:
-      path: ../metrics-server
+      paths:
+        - ../../src/metrics-server/metrics-server-upstream.yaml
+        - ../../src/metrics-server/metrics-server-registry1.yaml
+        - ../../src/metrics-server/metrics-server-unicorn.yaml
 
   - name: keycloak
-    required: true
     import:
-      path: ../identity-authorization
+      paths:
+        - ../../src/keycloak/keycloak-upstream.yaml
+        - ../../src/keycloak/keycloak-registry1.yaml
+        - ../../src/keycloak/keycloak-unicorn.yaml
 
   - name: falco
-    required: true
     import:
-      path: ../runtime-security
+      paths:
+        - ../../src/falco/falco-upstream.yaml
+        - ../../src/falco/falco-registry1.yaml
+        - ../../src/falco/falco-unicorn.yaml
 
   - name: loki
-    required: true
     import:
-      path: ../logging
+      paths:
+        - ../../src/loki/loki-upstream.yaml
+        - ../../src/loki/loki-registry1.yaml
+        - ../../src/loki/loki-unicorn.yaml
 
   - name: kube-prometheus-stack
-    required: true
     import:
-      path: ../monitoring
+      paths:
+        - ../../src/prometheus-stack/kube-prometheus-stack-upstream.yaml
+        - ../../src/prometheus-stack/kube-prometheus-stack-registry1.yaml
+        - ../../src/prometheus-stack/kube-prometheus-stack-unicorn.yaml
 
   - name: prometheus-blackbox-exporter
-    required: true
     import:
-      path: ../monitoring
+      paths:
+        - ../../src/prometheus-stack/prometheus-blackbox-exporter-upstream.yaml
+        - ../../src/prometheus-stack/prometheus-blackbox-exporter-registry1.yaml
+        - ../../src/prometheus-stack/prometheus-blackbox-exporter-unicorn.yaml
 
   - name: vector
-    required: true
     import:
-      path: ../logging
+      paths:
+        - ../../src/vector/vector-upstream.yaml
+        - ../../src/vector/vector-registry1.yaml
+        - ../../src/vector/vector-unicorn.yaml
 
   - name: grafana
-    required: true
     import:
-      path: ../monitoring
+      paths:
+        - ../../src/grafana/grafana-upstream.yaml
+        - ../../src/grafana/grafana-registry1.yaml
+        - ../../src/grafana/grafana-unicorn.yaml
 
   - name: authservice
-    required: true
     import:
-      path: ../identity-authorization
+      paths:
+        - ../../src/authservice/authservice-upstream.yaml
+        - ../../src/authservice/authservice-registry1.yaml
+        - ../../src/authservice/authservice-unicorn.yaml
 
   - name: velero
-    required: true
     import:
-      path: ../backup-restore
+      paths:
+        - ../../src/velero/velero-upstream.yaml
+        - ../../src/velero/velero-registry1.yaml
+        - ../../src/velero/velero-unicorn.yaml

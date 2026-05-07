@@ -1,0 +1,28 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: istio-controlplane
+component:
+  target:
+    flavor: registry1
+  import:
+    paths:
+      - ../common/istio-controlplane.yaml
+  charts:
+    - name: istiod
+      valuesFiles:
+        - ../values/registry1/istiod.yaml
+    - name: cni
+      valuesFiles:
+        - ../values/registry1/cni.yaml
+    - name: ztunnel
+      valuesFiles:
+        - ../values/registry1/ztunnel.yaml
+  images:
+    - name: registry1.dso.mil/ironbank/tetrate/istio/proxyv2:1.29.2-fips
+    - name: registry1.dso.mil/ironbank/tetrate/istio/pilot:1.29.2-fips
+    - name: registry1.dso.mil/ironbank/tetrate/istio/install-cni:1.29.2-fips
+    - name: registry1.dso.mil/ironbank/tetrate/istio/ztunnel:1.29.2-fips

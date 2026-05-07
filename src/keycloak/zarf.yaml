@@ -1,63 +1,14 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# @lulaStart 4147b6a6-3339-4d5d-b10a-f16502b52206
-# @lulaStart 7db76183-fb97-4a13-ae1e-a2b45ddd4430
-# @lulaStart 9fbf58ca-572f-4a20-a161-a77418dfb1ab
+apiVersion: zarf.dev/v1beta1
 kind: ZarfPackageConfig
 metadata:
-  name: uds-core-keycloak
-  description: "Keycloak"
-# @lulaEnd 9fbf58ca-572f-4a20-a161-a77418dfb1ab
-# @lulaEnd 7db76183-fb97-4a13-ae1e-a2b45ddd4430
-# @lulaEnd 4147b6a6-3339-4d5d-b10a-f16502b52206
-variables:
-  - name: DOMAIN
-    description: "Cluster domain"
-    default: "uds.dev"
-
-  - name: ADMIN_DOMAIN
-    description: "Domain for admin services, defaults to `admin.DOMAIN`"
-
+  name: keycloak
 components:
   - name: keycloak
-    required: true
-    only:
-      flavor: upstream
     import:
-      path: common
-    charts:
-      - name: keycloak
-        valuesFiles:
-          - "values/upstream-values.yaml"
-    images:
-      - quay.io/keycloak/keycloak:26.6.1
-      - ghcr.io/defenseunicorns/uds/identity-config:0.26.1
-
-  - name: keycloak
-    required: true
-    only:
-      flavor: registry1
-    import:
-      path: common
-    charts:
-      - name: keycloak
-        valuesFiles:
-          - "values/registry1-values.yaml"
-    images:
-      - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.6.1-fips
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.26.1
-
-  - name: keycloak
-    required: true
-    only:
-      flavor: unicorn
-    import:
-      path: common
-    charts:
-      - name: keycloak
-        valuesFiles:
-          - "values/unicorn-values.yaml"
-    images:
-      - quay.io/rfcurated/keycloak:26.6.1-jammy-fips-rfcurated
-      - ghcr.io/defenseunicorns/uds/identity-config:0.26.1
+      paths:
+        - flavors/keycloak-upstream.yaml
+        - flavors/keycloak-registry1.yaml
+        - flavors/keycloak-unicorn.yaml

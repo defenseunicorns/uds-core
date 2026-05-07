@@ -1,0 +1,23 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: loki
+  description: "Install Loki using upstream (docker) images"
+component:
+  target:
+    flavor: upstream
+  import:
+    paths:
+      - ../common/loki.yaml
+  charts:
+    - name: loki
+      valuesFiles:
+        - ../values/upstream-values.yaml
+  images:
+    - name: docker.io/grafana/loki:3.7.1
+    - name: docker.io/nginxinc/nginx-unprivileged:1.29-alpine
+    - name: docker.io/memcached:1.6.41-alpine
+    - name: ghcr.io/kiwigrid/k8s-sidecar:2.5.0
