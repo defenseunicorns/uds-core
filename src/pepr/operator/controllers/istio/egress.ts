@@ -122,7 +122,7 @@ export async function reconcileSharedEgressResources(
   await performEgressReconciliationWithMutex();
 }
 
-function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
+export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
   const name = pkg.metadata?.name;
   const namespace = pkg.metadata?.namespace;
   if (!name || !namespace) {
@@ -137,6 +137,10 @@ function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
 
     // Anywhere participants (no host) used for AP sources.
     if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
+      // Skip UDP - UDP doesn't work with TLS/HTTP auth policies for fine-grained egress
+      if (allow.remoteProtocol === RemoteProtocol.UDP) {
+        continue;
+      }
       rules.push({
         kind: "anywhere",
         ports: getAllowedPorts(allow),

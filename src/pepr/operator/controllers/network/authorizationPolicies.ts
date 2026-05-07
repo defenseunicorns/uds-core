@@ -13,6 +13,7 @@ import {
   Source,
 } from "../../crd/generated/istio/authorizationpolicy-v1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
 import { getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import {
@@ -267,6 +268,8 @@ export async function generateAuthorizationPolicies(
   if (pkg.spec?.network?.allow) {
     for (const rule of pkg.spec.network.allow) {
       if (rule.direction === "Egress") continue;
+      // Skip UDP - UDP doesn't work with L7 authorization policies
+      if (rule.remoteProtocol === RemoteProtocol.UDP) continue;
 
       const sso = findMatchingSsoClient(pkg, rule.selector);
       const { source, ports } = processAllowRule(rule, pkgNamespace);
