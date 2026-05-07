@@ -275,7 +275,7 @@
         },
         "remoteProtocol": {
           "$ref": "#/definitions/RemoteProtocol",
-          "description": "The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS`\nis the default if omitted. For all other remotes, use `TCP` or `UDP` based on the\nconnection type; `TCP` is the default if omitted. `UDP` cannot be combined with\n`remoteHost`. To allow the same port on both TCP and UDP, use two separate Allow entries\nwith different descriptions."
+          "description": "The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS`\nis the default if omitted. For all other remotes, use `TCP` or `UDP` based on the\nconnection type; `TCP` is the default if omitted. `UDP` cannot be combined with\n`remoteHost`."
         },
         "remoteSelector": {
           "type": "object",
@@ -1316,7 +1316,7 @@
         "UDP"
       ],
       "title": "RemoteProtocol",
-      "description": "The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS` is the default if omitted. For all other remotes, use `TCP` or `UDP` based on the connection type; `TCP` is the default if omitted. `UDP` cannot be combined with `remoteHost`. To allow the same port on both TCP and UDP, use two separate Allow entries with different descriptions."
+      "description": "The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS` is the default if omitted. For all other remotes, use `TCP` or `UDP` based on the connection type; `TCP` is the default if omitted. `UDP` cannot be combined with `remoteHost`."
     },
     "UnmatchedPreflights": {
       "type": "string",

@@ -24,11 +24,5 @@ export function getPortsForHostAllow(allow: {
   if (ports) {
     return ports;
   }
-  // TLS/HTTP (or omitted) default to 443/80 respectively for ServiceEntry generation.
-  // TCP/UDP without ports return empty array (allowed by validator since NetworkPolicy
-  // can be port-less, and this function is only called when remoteHost is set).
-  if (allow.remoteProtocol === RemoteProtocol.TCP || allow.remoteProtocol === RemoteProtocol.UDP) {
-    return [];
-  }
   return allow.remoteProtocol === RemoteProtocol.HTTP ? [80] : [443];
 }

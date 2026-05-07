@@ -874,9 +874,7 @@ spec:
                               default if omitted. For all other remotes, use
                               `TCP` or `UDP` based on the connection type; `TCP`
                               is the default if omitted. `UDP` cannot be
-                              combined with `remoteHost`. To allow the same port
-                              on both TCP and UDP, use two separate Allow
-                              entries with different descriptions.
+                              combined with `remoteHost`.
                             type: string
                             enum:
                               - TLS
