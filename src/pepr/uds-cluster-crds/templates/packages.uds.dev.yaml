@@ -876,7 +876,7 @@ spec:
                               is the default if omitted. `UDP` cannot be
                               combined with `remoteHost`. To allow the same port
                               on both TCP and UDP, use two separate Allow
-                              entries.
+                              entries with different descriptions.
                             type: string
                             enum:
                               - TLS

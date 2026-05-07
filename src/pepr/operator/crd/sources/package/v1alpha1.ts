@@ -103,7 +103,7 @@ const allow = {
           "When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS` is the default if omitted. " +
           "For all other remotes, use `TCP` or `UDP` based on the connection type; `TCP` is the default if omitted. " +
           "`UDP` cannot be combined with `remoteHost`. " +
-          "To allow the same port on both TCP and UDP, use two separate Allow entries.",
+          "To allow the same port on both TCP and UDP, use two separate Allow entries with different descriptions.",
         type: "string",
         enum: ["TLS", "HTTP", "TCP", "UDP"],
       },
