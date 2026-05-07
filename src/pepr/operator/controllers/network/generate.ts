@@ -161,9 +161,14 @@ export function generateName(policy: Allow) {
         policy.remoteNamespace,
         Object.values(policy.remoteSelector || ["all pods"]),
       ],
+      // Include protocol in name for TCP/UDP to avoid duplicate NetworkPolicies
+      policy.remoteProtocol === RemoteProtocol.TCP || policy.remoteProtocol === RemoteProtocol.UDP
+        ? policy.remoteProtocol
+        : undefined,
     ]
       // Flatten the array
       .flat(1)
+      .filter(Boolean)
       .join("-");
 
   return `${policy.direction}-${name}`;

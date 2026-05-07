@@ -672,6 +672,42 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
 
+  it("allows TCP remoteProtocol without ports and remoteNamespace", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "foo", remoteProtocol: RemoteProtocol.TCP }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows UDP remoteProtocol without ports and remoteNamespace", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteNamespace: "bar", remoteProtocol: RemoteProtocol.UDP }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
+  it("allows TCP remoteProtocol without ports and remoteCidr", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [],
+      [{ remoteCidr: "10.0.0.0/8", remoteProtocol: RemoteProtocol.TCP }],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+  });
+
   it("denies network policies that specify HTTP remoteProtocol with Ingress direction", async () => {
     const mockReq = makeMockReq(
       {},

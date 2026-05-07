@@ -24,12 +24,11 @@ export function getPortsForHostAllow(allow: {
   if (ports) {
     return ports;
   }
-  // TCP and UDP without ports are rejected by the validator; this branch should not be reached.
   // TLS/HTTP (or omitted) default to 443/80 respectively for ServiceEntry generation.
+  // TCP/UDP without ports return empty array (allowed by validator since NetworkPolicy
+  // can be port-less, and this function is only called when remoteHost is set).
   if (allow.remoteProtocol === RemoteProtocol.TCP || allow.remoteProtocol === RemoteProtocol.UDP) {
-    throw new Error(
-      `remoteProtocol ${allow.remoteProtocol} requires at least one port or ports entry`,
-    );
+    return [];
   }
   return allow.remoteProtocol === RemoteProtocol.HTTP ? [80] : [443];
 }

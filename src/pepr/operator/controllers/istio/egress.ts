@@ -17,7 +17,6 @@ import {
   AmbientEgressRule,
   AmbientPackageEntry,
   AmbientPackageMap,
-  HostPortsProtocol,
   HostResourceMap,
   PackageAction,
   PackageHostMap,
@@ -398,9 +397,11 @@ export function createHostResourceMap(pkg: UDSPackage) {
 
 // Get the host, ports, and protocol from an Allow
 export function getHostPortsProtocol(allow: Allow) {
-  let hostPortsProtocol: HostPortsProtocol | undefined = undefined;
-
   const host = allow.remoteHost;
+  if (!host) {
+    return undefined;
+  }
+
   const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
 
   const ports = getPortsForHostAllow({
@@ -409,14 +410,7 @@ export function getHostPortsProtocol(allow: Allow) {
     remoteProtocol: protocol,
   });
 
-  if (host) {
-    hostPortsProtocol = {
-      host,
-      ports,
-      protocol,
-    };
-  }
-  return hostPortsProtocol;
+  return { host, ports, protocol };
 }
 
 // Remove resources from a given package map

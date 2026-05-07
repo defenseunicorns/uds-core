@@ -369,4 +369,37 @@ describe("network policy generate with remoteProtocol", () => {
 
     expect(policy.spec?.ingress?.[0].ports).toEqual([{ port: 9999, protocol: "UDP" }]);
   });
+
+  it("should include protocol in name for TCP to avoid duplicates", () => {
+    const policy = generate("test", {
+      direction: Direction.Egress,
+      remoteNamespace: "kube-system",
+      port: 53,
+      remoteProtocol: RemoteProtocol.TCP,
+    });
+
+    expect(policy.metadata?.name).toContain("TCP");
+  });
+
+  it("should include protocol in name for UDP to avoid duplicates", () => {
+    const policy = generate("test", {
+      direction: Direction.Egress,
+      remoteNamespace: "kube-system",
+      port: 53,
+      remoteProtocol: RemoteProtocol.UDP,
+    });
+
+    expect(policy.metadata?.name).toContain("UDP");
+  });
+
+  it("should not include protocol in name for TLS", () => {
+    const policy = generate("test", {
+      direction: Direction.Egress,
+      remoteHost: "example.com",
+      port: 443,
+      remoteProtocol: RemoteProtocol.TLS,
+    });
+
+    expect(policy.metadata?.name).not.toContain("TLS");
+  });
 });
