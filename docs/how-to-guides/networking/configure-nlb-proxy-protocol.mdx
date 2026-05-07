@@ -33,7 +33,7 @@ UDS Core gateways are addressed by both external clients (through an upstream NL
 
 This guide enables the `proxyProtocol.enabled` value on UDS Core's `uds-istio-config` chart, the per-gateway config chart used by the `istio-tenant-gateway`, `istio-admin-gateway`, and `istio-passthrough-gateway` components. When set, it renders an `EnvoyFilter` with `allow_requests_without_proxy_protocol: true`. External PP2 traffic is parsed; in-cluster traffic without a PP2 header is allowed through. The setting is per-gateway, so the admin and tenant gateways can be configured independently.
 
-> [!CAUTION]
+> [!WARNING]
 > **Security: source IP spoofing risk.** Once enabled, Envoy trusts a PROXY protocol v2 header from any client that can reach the gateway listener. A workload that can connect directly to the ingressgateway pods (bypassing the upstream load balancer) can forge any source IP by sending its own PP2 header. This affects anything keyed on client IP, such as access logs, IP-based access control, and rate limiting. It does not affect certificate-based authentication (for example, CAC), which is keyed off the TLS client certificate, not the source IP. Before enabling PP2, restrict direct network access to the gateway listener so only the upstream load balancer (or other trusted hops) can reach it.
 
 > [!CAUTION]
@@ -87,6 +87,10 @@ This guide enables the `proxyProtocol.enabled` value on UDS Core's `uds-istio-co
      istio-admin-gateway:
        gateway:
          values:
+           # Dots in the annotation key are escaped (`\.`) so the bundle override engine
+           # treats `service.beta.kubernetes.io/...` as a single key rather than a nested path.
+           # The value sets two AWS NLB target-group attributes: PP2 enabled, client-IP
+           # preservation disabled (the latter is what avoids hairpin blocking from in-cluster probes).
            - path: 'service.annotations.service\.beta\.kubernetes\.io/aws-load-balancer-target-group-attributes'
              value: "preserve_client_ip.enabled=false,proxy_protocol_v2.enabled=true"
    ```
@@ -135,7 +139,7 @@ Confirm in-cluster mesh traffic still works. For example, log into a UDS Core ap
 
 **Solution:** Add the same override under `istio-admin-gateway`:
 
-```yaml
+```yaml title="uds-bundle.yaml"
 overrides:
   istio-admin-gateway:
     uds-istio-config:
