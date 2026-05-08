@@ -1,0 +1,74 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: uds-istio-config - proxy-protocol EnvoyFilter
+templates:
+  - proxy-protocol-envoyfilter.yaml
+
+tests:
+  - it: should not render the EnvoyFilter when proxyProtocol.enabled is false
+    set:
+      name: tenant
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render the EnvoyFilter for the tenant gateway when enabled
+    set:
+      name: tenant
+      proxyProtocol:
+        enabled: true
+    release:
+      namespace: istio-tenant-gateway
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: EnvoyFilter
+      - equal:
+          path: metadata.name
+          value: tenant-proxy-protocol
+      - equal:
+          path: metadata.namespace
+          value: istio-tenant-gateway
+      - equal:
+          path: spec.workloadSelector.labels.app
+          value: tenant-ingressgateway
+      - equal:
+          path: spec.configPatches[0].applyTo
+          value: LISTENER_FILTER
+      - equal:
+          path: spec.configPatches[0].match.context
+          value: GATEWAY
+      - equal:
+          path: spec.configPatches[0].patch.operation
+          value: INSERT_FIRST
+      - equal:
+          path: spec.configPatches[0].patch.value.name
+          value: envoy.filters.listener.proxy_protocol
+      - equal:
+          path: spec.configPatches[0].patch.value.typed_config["@type"]
+          value: type.googleapis.com/envoy.extensions.filters.listener.proxy_protocol.v3.ProxyProtocol
+      - equal:
+          path: spec.configPatches[0].patch.value.typed_config.allow_requests_without_proxy_protocol
+          value: true
+
+  - it: should scope the filter to the admin gateway pod label when name is admin
+    set:
+      name: admin
+      proxyProtocol:
+        enabled: true
+    release:
+      namespace: istio-admin-gateway
+    asserts:
+      - equal:
+          path: metadata.name
+          value: admin-proxy-protocol
+      - equal:
+          path: metadata.namespace
+          value: istio-admin-gateway
+      - equal:
+          path: spec.workloadSelector.labels.app
+          value: admin-ingressgateway

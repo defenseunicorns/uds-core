@@ -1,0 +1,155 @@
+---
+title: Configure NLB proxy protocol
+description: Configure UDS Core gateways to parse PROXY protocol v2 from an upstream NLB while keeping in-cluster mesh traffic working.
+sidebar:
+  order: 2.011
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, your UDS Core gateway will parse PROXY protocol v2 (PP2) from upstream traffic that requires it (for example, an NLB with cross-VPC IP targets, or chained NLBs), while continuing to accept in-cluster mesh traffic that does not carry a PP2 header.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster with [prerequisites](/getting-started/production/prerequisites/) met
+- An L4 load balancer in front of the gateway (e.g. AWS NLB) that you can configure to send PROXY protocol v2
+
+## Before you begin
+
+A typical L4 load balancer that fronts the cluster directly already preserves the original client IP, so PP2 is not needed in that topology. Enable PP2 only when an upstream component rewrites the source address before traffic reaches the gateway, such as:
+
+- An NLB using **IP targets** rather than instance/node targets (common with cross-VPC, cross-account, transit-gateway, peered, or PrivateLink-style setups; equivalent constructs exist in other clouds).
+- Chained load balancers (for example, a private NLB fronting a cluster NLB). Without PP2, the inner load balancer sees the outer load balancer's address rather than the real client. Enabling PP2 on every hop recovers the original source IP at the gateway.
+- An NLB with **`preserve_client_ip` disabled**, used to avoid AWS NLB hairpin blocking when pods on the same nodes that back the NLB targets try to reach the NLB hostname. A common UDS case is `blackbox-exporter` probing the admin gateway URL from inside the cluster: with `preserve_client_ip=true`, the probe's source IP equals its destination IP and AWS drops the connection. Setting `preserve_client_ip=false` makes the NLB rewrite the source to its own ENI; PP2 is what carries the original client IP forward to the gateway.
+- Other hybrid topologies where the source IP is translated before reaching the gateway.
+
+In any of those cases, configure each upstream hop to send PP2 and enable parsing on the gateway as described below. The canonical example throughout this guide is an AWS NLB, but the same configuration applies to any L4 load balancer that supports PROXY protocol v2.
+
+UDS Core gateways are addressed by both external clients (through an upstream NLB) and in-cluster services (directly through the service mesh). External traffic carries a PP2 header injected by the NLB; in-cluster mesh traffic does not.
+
+This guide enables the `proxyProtocol.enabled` value on UDS Core's `uds-istio-config` chart, the per-gateway config chart used by the `istio-tenant-gateway`, `istio-admin-gateway`, and `istio-passthrough-gateway` components. When set, it renders an `EnvoyFilter` with `allow_requests_without_proxy_protocol: true`. External PP2 traffic is parsed; in-cluster traffic without a PP2 header is allowed through. The setting is per-gateway, so the admin and tenant gateways can be configured independently.
+
+> [!WARNING]
+> **Security: source IP spoofing risk.** Once enabled, Envoy trusts a PROXY protocol v2 header from any client that can reach the gateway listener. A workload that can connect directly to the ingressgateway pods (bypassing the upstream load balancer) can forge any source IP by sending its own PP2 header. This affects anything keyed on client IP, such as access logs, IP-based access control, and rate limiting. It does not affect certificate-based authentication (for example, CAC), which is keyed off the TLS client certificate, not the source IP. Before enabling PP2, restrict network access from outside the cluster (security groups, NACLs, VPC firewalls) so only the upstream load balancer can reach the gateway listener.
+
+> [!CAUTION]
+> Do not also set `meshConfig.defaultConfig.gatewayTopology.proxyProtocol` on the `istiod` chart (under the `istio-controlplane` component). The `uds-istio-config` chart already installs the `proxy_protocol` listener filter in permissive mode; the istiod global adds a second filter in **strict mode** behind it, which rejects in-cluster mesh traffic (no PP2 header) and breaks SSO for in-cluster services (for example, Grafana to Keycloak).
+
+## Steps
+
+<Steps>
+
+1. **Enable the proxy protocol filter on the gateway**
+
+   Add the override for each gateway that sits behind an NLB sending PP2. The example enables it on the tenant gateway only; uncomment the admin block if the admin gateway is also fronted by an NLB.
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: my-uds-core
+     description: UDS Core with PROXY protocol v2 on the tenant gateway
+     version: "0.1.0"
+
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-tenant-gateway:
+           uds-istio-config:
+             values:
+               - path: proxyProtocol.enabled
+                 value: true
+         # Uncomment if the admin gateway is also behind an NLB sending PP2:
+         # istio-admin-gateway:
+         #   uds-istio-config:
+         #     values:
+         #       - path: proxyProtocol.enabled
+         #         value: true
+   ```
+
+   | Setting | Default | Override Path |
+   |---|---|---|
+   | Enable permissive PP2 parsing | `false` | `proxyProtocol.enabled` |
+
+2. **Configure the NLB to send PROXY protocol v2**
+
+   Enable PP2 on the NLB target group that points at the gateway service. The exact step varies by provider; in Terraform, set `proxy_protocol_v2 = true` on the `aws_lb_target_group` resource.
+
+   When the NLB is provisioned via the AWS Load Balancer Controller, set the target group attributes through a Service annotation on the gateway. If you are also disabling `preserve_client_ip` to avoid hairpin blocking from in-cluster probes, set both attributes in the same annotation:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     istio-admin-gateway:
+       gateway:
+         values:
+           # Dots in the annotation key are escaped (`\.`) so the bundle override engine
+           # treats `service.beta.kubernetes.io/...` as a single key rather than a nested path.
+           # The value sets two AWS NLB target-group attributes: PP2 enabled, client-IP
+           # preservation disabled (the latter is what avoids hairpin blocking from in-cluster probes).
+           - path: 'service.annotations.service\.beta\.kubernetes\.io/aws-load-balancer-target-group-attributes'
+             value: "preserve_client_ip.enabled=false,proxy_protocol_v2.enabled=true"
+   ```
+
+   The `preserve_client_ip.enabled=false` half is what unblocks in-cluster clients (for example, `blackbox-exporter` probing the gateway URL); PP2 then carries the real client IP forward so logs and IP-based controls still work.
+
+   Without this step, in topologies that translate source IP (the cases listed in *Before you begin*) the gateway will see the upstream load balancer's address rather than the real client. External traffic still succeeds either way because the filter is permissive.
+
+3. **Create and deploy your bundle**
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Confirm the EnvoyFilter is present:
+
+```bash
+uds zarf tools kubectl get envoyfilter -n istio-tenant-gateway tenant-proxy-protocol -o yaml
+```
+
+Expected: `allow_requests_without_proxy_protocol: true` under `spec.configPatches[0].patch.value.typed_config`.
+
+Send external traffic through the NLB and confirm gateway access logs report the original client IP rather than the NLB IP:
+
+```bash
+uds zarf tools kubectl logs -n istio-tenant-gateway -l app=tenant-ingressgateway --tail=20
+```
+
+Confirm in-cluster mesh traffic still works. For example, log into a UDS Core app that authenticates via in-cluster routes to Keycloak (Grafana, the registry UI). If SSO completes without a 400, the permissive fallback is functioning.
+
+## Troubleshooting
+
+### Problem: In-cluster service returns 400 / SSO loops after enabling PP2
+
+**Symptom:** Grafana, registry, or any in-cluster service that authenticates through the gateway hostname starts returning HTTP 400 or fails the SSO redirect immediately after `proxyProtocol.enabled: true`.
+
+**Solution:** Confirm `meshConfig.defaultConfig.gatewayTopology.proxyProtocol` is **not** set on the `istiod` chart (under the `istio-controlplane` component) in your bundle or values overrides. That setting adds Istio's strict-mode filter behind the permissive filter from `uds-istio-config`, and the strict filter rejects in-cluster traffic regardless of the permissive one. Remove the meshConfig override and redeploy.
+
+### Problem: Need PP2 on the admin gateway
+
+**Symptom:** PP2 also needs to apply to the admin gateway (for example, the admin gateway is fronted by its own NLB sending PP2).
+
+**Solution:** Add the same override under `istio-admin-gateway`:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-admin-gateway:
+    uds-istio-config:
+      values:
+        - path: proxyProtocol.enabled
+          value: true
+```
+
+## Related documentation
+
+- [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - Background on the gateway architecture.
+- [istio/istio#52490](https://github.com/istio/istio/issues/52490) - Upstream issue tracking native permissive-mode support.
+- [Envoy proxy_protocol listener filter](https://www.envoyproxy.io/docs/envoy/latest/configuration/listeners/listener_filters/proxy_protocol) - Filter reference.
