@@ -97,6 +97,7 @@ UDS Core provides two layers of auditable security configuration:
    | Broad `remoteNamespace` without `remoteSelector` | Allows traffic from all pods in the remote namespace | Can this be narrowed to specific pods or a service account? |
    | Missing `port` on an allow rule | Allows traffic on all ports | Should specific ports be listed? |
    | `remoteHost` egress without justification | Opens egress to a specific external hostname | Is the hostname documented and expected? |
+   | `remoteProtocol: UDP` | UDP traffic is not encrypted by the mesh | Does the application implement its own transport-layer encryption (e.g. DTLS, QUIC)? |
 
    > [!IMPORTANT]
    > The UDS Operator does not warn about or block permissive configurations. It generates whatever NetworkPolicies and AuthorizationPolicies the `Package` CR requests. Audit is the only mechanism to catch overly broad rules.

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,7 +7,7 @@ import { V1NetworkPolicyPeer, V1NetworkPolicyPort } from "@kubernetes/client-nod
 import { kind } from "pepr";
 
 import { Allow, RemoteGenerated } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Direction, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { anywhere, anywhereInCluster } from "./generators/anywhere";
 import { cloudMetadata } from "./generators/cloudMetadata";
 import { intraNamespace } from "./generators/intraNamespace";
@@ -114,23 +114,28 @@ export function generate(namespace: string, policy: Allow, istioMode?: Mode): ki
   // Create the network policy peers
   const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioMode);
 
-  // Define the ports to allow from the ports property
-  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(port => ({ port }));
+  // NetworkPolicy ports should always carry an explicit L4 protocol.
+  // UDP/TCP map directly; TLS/HTTP resolve to TCP for Kubernetes NetworkPolicy.
+  // policies.ts ztunnel injection uses port.protocol to detect UDP-only policies; it skips
+  // port 15008 when all ports carry protocol:"UDP".
+  const protocol =
+    policy.remoteProtocol === RemoteProtocol.UDP || policy.remoteProtocol === RemoteProtocol.TCP
+      ? policy.remoteProtocol
+      : RemoteProtocol.TCP;
 
-  // Add the individual port if it exists
-  if (policy.port) {
-    ports.push({
-      port: policy.port,
-    });
-  }
+  const toPort = (port: number): V1NetworkPolicyPort => ({ port, protocol });
+
+  // Build the port list from the plural ports array and the singular port field
+  const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(toPort);
+  if (policy.port !== undefined) ports.push(toPort(policy.port));
 
   // Add the ingress or egress rule
   switch (policy.direction) {
-    case "Ingress":
+    case Direction.Ingress:
       generated.spec!.ingress = [{ from: peers, ports }];
       break;
 
-    case "Egress":
+    case Direction.Egress:
       generated.spec!.egress = [{ to: peers, ports }];
       break;
   }
@@ -156,9 +161,12 @@ export function generateName(policy: Allow) {
         policy.remoteNamespace,
         Object.values(policy.remoteSelector || ["all pods"]),
       ],
+      // Include protocol in name for consistency across explicit and implicit TCP and UDP
+      policy.remoteProtocol === RemoteProtocol.UDP ? RemoteProtocol.UDP : RemoteProtocol.TCP,
     ]
       // Flatten the array
       .flat(1)
+      .filter(Boolean)
       .join("-");
 
   return `${policy.direction}-${name}`;

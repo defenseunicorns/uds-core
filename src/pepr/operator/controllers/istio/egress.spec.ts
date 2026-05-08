@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi }
 import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
+  createAmbientPackageEntry,
   createHostResourceMap,
   egressRequestedFromNetwork,
   getHostPortsProtocol,
@@ -1149,6 +1150,45 @@ describe("test createHostResourceMap", () => {
 
     const hostResourceMap = createHostResourceMap(testPkg);
     expect(hostResourceMap).toBeUndefined();
+  });
+
+  it("should skip UDP Anywhere rules in ambient package entry", () => {
+    const allowMock = [
+      {
+        direction: Direction.Egress,
+        remoteGenerated: RemoteGenerated.Anywhere,
+        remoteProtocol: RemoteProtocol.UDP,
+        port: 53,
+        serviceAccount: "test-sa",
+      },
+      {
+        direction: Direction.Egress,
+        remoteGenerated: RemoteGenerated.Anywhere,
+        remoteProtocol: RemoteProtocol.TCP,
+        port: 8080,
+        serviceAccount: "test-sa",
+      },
+    ];
+
+    const testPkg = {
+      ...pkgMock,
+      spec: {
+        ...pkgMock.spec,
+        network: {
+          ...pkgMock.spec?.network,
+          allow: allowMock,
+        },
+      },
+    };
+
+    const entry = createAmbientPackageEntry(testPkg);
+    // Only TCP Anywhere rule should be present, UDP should be filtered out
+    expect(entry.rules).toHaveLength(1);
+    expect(entry.rules[0]).toEqual({
+      kind: "anywhere",
+      ports: [8080],
+      serviceAccount: "test-sa",
+    });
   });
 
   it("should handle empty package spec", () => {

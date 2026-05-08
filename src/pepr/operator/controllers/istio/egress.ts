@@ -17,7 +17,6 @@ import {
   AmbientEgressRule,
   AmbientPackageEntry,
   AmbientPackageMap,
-  HostPortsProtocol,
   HostResourceMap,
   PackageAction,
   PackageHostMap,
@@ -123,7 +122,7 @@ export async function reconcileSharedEgressResources(
   await performEgressReconciliationWithMutex();
 }
 
-function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
+export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
   const name = pkg.metadata?.name;
   const namespace = pkg.metadata?.namespace;
   if (!name || !namespace) {
@@ -138,6 +137,10 @@ function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
 
     // Anywhere participants (no host) used for AP sources.
     if (allow.remoteGenerated === RemoteGenerated.Anywhere) {
+      // Skip UDP - UDP doesn't work with TLS/HTTP auth policies for fine-grained egress
+      if (allow.remoteProtocol === RemoteProtocol.UDP) {
+        continue;
+      }
       rules.push({
         kind: "anywhere",
         ports: getAllowedPorts(allow),
@@ -398,9 +401,11 @@ export function createHostResourceMap(pkg: UDSPackage) {
 
 // Get the host, ports, and protocol from an Allow
 export function getHostPortsProtocol(allow: Allow) {
-  let hostPortsProtocol: HostPortsProtocol | undefined = undefined;
-
   const host = allow.remoteHost;
+  if (!host) {
+    return undefined;
+  }
+
   const protocol = allow.remoteProtocol ?? RemoteProtocol.TLS;
 
   const ports = getPortsForHostAllow({
@@ -409,14 +414,7 @@ export function getHostPortsProtocol(allow: Allow) {
     remoteProtocol: protocol,
   });
 
-  if (host) {
-    hostPortsProtocol = {
-      host,
-      ports,
-      protocol,
-    };
-  }
-  return hostPortsProtocol;
+  return { host, ports, protocol };
 }
 
 // Remove resources from a given package map
