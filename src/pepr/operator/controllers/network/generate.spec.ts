@@ -209,7 +209,7 @@ describe("network policy generate with remoteHost", () => {
               },
             },
           ],
-          ports: [{ port: 443 }],
+          ports: [{ port: 443, protocol: "TCP" }],
         },
       ],
       podSelector: { matchLabels: { app: "test-app" } },
@@ -249,7 +249,10 @@ describe("network policy generate with remoteHost", () => {
               },
             },
           ],
-          ports: [{ port: 80 }, { port: 8080 }],
+          ports: [
+            { port: 80, protocol: "TCP" },
+            { port: 8080, protocol: "TCP" },
+          ],
         },
       ],
       podSelector: { matchLabels: { app: "test-app" } },
@@ -319,7 +322,7 @@ describe("network policy generate with remoteProtocol", () => {
     expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 8080, protocol: "TCP" }]);
   });
 
-  it("should not set protocol on ports when remoteProtocol is TLS", () => {
+  it("should set protocol: TCP on ports when remoteProtocol is TLS", () => {
     const policy = generate("test", {
       description: "test-tls",
       direction: Direction.Egress,
@@ -328,10 +331,10 @@ describe("network policy generate with remoteProtocol", () => {
       remoteProtocol: RemoteProtocol.TLS,
     });
 
-    expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 443 }]);
+    expect(policy.spec?.egress?.[0].ports).toEqual([{ port: 443, protocol: "TCP" }]);
   });
 
-  it("should not set protocol on ports when remoteProtocol is omitted", () => {
+  it("should set protocol: TCP on ports when remoteProtocol is omitted", () => {
     const policy = generate("test", {
       description: "test-no-protocol",
       direction: Direction.Ingress,
@@ -339,7 +342,7 @@ describe("network policy generate with remoteProtocol", () => {
       port: 8080,
     });
 
-    expect(policy.spec?.ingress?.[0].ports).toEqual([{ port: 8080 }]);
+    expect(policy.spec?.ingress?.[0].ports).toEqual([{ port: 8080, protocol: "TCP" }]);
   });
 
   it("should apply remoteProtocol to both port and ports", () => {
@@ -392,7 +395,7 @@ describe("network policy generate with remoteProtocol", () => {
     expect(policy.metadata?.name).toContain("UDP");
   });
 
-  it("should not include protocol in name for TLS", () => {
+  it("should include protocol in name for TLS as TCP fallback", () => {
     const policy = generate("test", {
       direction: Direction.Egress,
       remoteHost: "example.com",
@@ -400,6 +403,7 @@ describe("network policy generate with remoteProtocol", () => {
       remoteProtocol: RemoteProtocol.TLS,
     });
 
+    expect(policy.metadata?.name).toContain("TCP");
     expect(policy.metadata?.name).not.toContain("TLS");
   });
 });

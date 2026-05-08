@@ -365,15 +365,24 @@ describe("networkPolicies", () => {
     const servicePolicies = [
       {
         name: "allow-test-pkg-Ingress-8080-frontend Istio tenant gateway",
-        ports: [{ port: 8080 }, { port: 15008, protocol: "TCP" }],
+        ports: [
+          { port: 8080, protocol: "TCP" },
+          { port: 15008, protocol: "TCP" },
+        ],
       },
       {
         name: "allow-test-pkg-Ingress-8080-backend Istio tenant gateway",
-        ports: [{ port: 8080 }, { port: 15008, protocol: "TCP" }],
+        ports: [
+          { port: 8080, protocol: "TCP" },
+          { port: 15008, protocol: "TCP" },
+        ],
       },
       {
         name: "allow-test-pkg-Ingress-3000-api Istio tenant gateway",
-        ports: [{ port: 3000 }, { port: 15008, protocol: "TCP" }],
+        ports: [
+          { port: 3000, protocol: "TCP" },
+          { port: 15008, protocol: "TCP" },
+        ],
       },
     ];
 
@@ -796,7 +805,10 @@ describe("networkPolicies", () => {
     expect(monitorPolicy?.spec?.ingress?.[0]?.from?.[0]?.podSelector?.matchLabels).toEqual({
       app: "prometheus",
     });
-    expect(monitorPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 9090 });
+    expect(monitorPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({
+      port: 9090,
+      protocol: "TCP",
+    });
   });
 
   it("should use podSelector when both selector and podSelector are provided", async () => {

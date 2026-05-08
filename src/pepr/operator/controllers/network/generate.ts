@@ -114,16 +114,16 @@ export function generate(namespace: string, policy: Allow, istioMode?: Mode): ki
   // Create the network policy peers
   const peers: V1NetworkPolicyPeer[] = getPeers(policy, istioMode);
 
-  // Only TCP/UDP map to NetworkPolicyPort.protocol; TLS/HTTP are Istio ServiceEntry concerns.
+  // NetworkPolicy ports should always carry an explicit L4 protocol.
+  // UDP/TCP map directly; TLS/HTTP resolve to TCP for Kubernetes NetworkPolicy.
   // policies.ts ztunnel injection uses port.protocol to detect UDP-only policies; it skips
-  // port 15008 when all ports carry protocol:"UDP". Do not remove this stamping without
-  // updating that condition.
+  // port 15008 when all ports carry protocol:"UDP".
   const protocol =
     policy.remoteProtocol === RemoteProtocol.UDP || policy.remoteProtocol === RemoteProtocol.TCP
       ? policy.remoteProtocol
-      : undefined;
+      : RemoteProtocol.TCP;
 
-  const toPort = (port: number): V1NetworkPolicyPort => (protocol ? { port, protocol } : { port });
+  const toPort = (port: number): V1NetworkPolicyPort => ({ port, protocol });
 
   // Build the port list from the plural ports array and the singular port field
   const ports: V1NetworkPolicyPort[] = (policy.ports ?? []).map(toPort);
@@ -161,10 +161,8 @@ export function generateName(policy: Allow) {
         policy.remoteNamespace,
         Object.values(policy.remoteSelector || ["all pods"]),
       ],
-      // Include protocol in name for TCP/UDP to avoid duplicate NetworkPolicies
-      policy.remoteProtocol === RemoteProtocol.TCP || policy.remoteProtocol === RemoteProtocol.UDP
-        ? policy.remoteProtocol
-        : undefined,
+      // Include protocol in name for consistency across explicit and implicit TCP and UDP
+      policy.remoteProtocol === RemoteProtocol.UDP ? RemoteProtocol.UDP : RemoteProtocol.TCP,
     ]
       // Flatten the array
       .flat(1)

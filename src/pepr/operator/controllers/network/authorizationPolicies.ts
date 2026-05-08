@@ -268,7 +268,7 @@ export async function generateAuthorizationPolicies(
   if (pkg.spec?.network?.allow) {
     for (const rule of pkg.spec.network.allow) {
       if (rule.direction === "Egress") continue;
-      // Skip UDP - UDP doesn't work with L7 authorization policies
+      // Skip UDP - authorization policies do not handle UDP traffic
       if (rule.remoteProtocol === RemoteProtocol.UDP) continue;
 
       const sso = findMatchingSsoClient(pkg, rule.selector);
