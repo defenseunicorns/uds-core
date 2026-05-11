@@ -59,5 +59,9 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
+<<<<<<< chance/core-522
       - cgr.dev/defenseunicorns.com/keycloak-fips:26.6.1
+=======
+      - quay.io/rfcurated/keycloak:26.6.1-jammy-fips-rfcurated
+>>>>>>> main
       - ghcr.io/defenseunicorns/uds/identity-config:0.27.0

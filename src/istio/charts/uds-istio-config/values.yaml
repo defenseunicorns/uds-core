@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # The gateway name prefix
@@ -55,3 +55,16 @@ rootDomain:
   #   cert: "BASE64_ENCODED_CERTIFICATE"    # Base64-encoded certificate data. For self-signed certs, cert and cacert are typically the same.
   #   key: "BASE64_ENCODED_PRIVATE_KEY"     # Base64-encoded private key.
   #   cacert: "BASE64_ENCODED_CERTIFICATE"  # Base64-encoded CA certificate (use the same as cert for self-signed).
+
+# Enable PROXY protocol v2 parsing on the gateway listener with a permissive
+# fallback (`allow_requests_without_proxy_protocol: true`). Permissive mode is
+# required for any deployment where in-cluster mesh traffic also reaches the
+# gateway (e.g. Grafana -> Keycloak), since mesh traffic does not carry a
+# PP2 header and a strict filter would reject it.
+#
+# Trust boundary: once enabled, Envoy trusts a PP2 header from any client that
+# can reach the listener. Restrict network access from outside the cluster
+# (security groups, NACLs, VPC firewalls) so only the upstream load balancer
+# can reach the gateway listener.
+proxyProtocol:
+  enabled: false

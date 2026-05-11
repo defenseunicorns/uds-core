@@ -196,11 +196,12 @@ export interface Allow {
    */
   podLabels?: { [key: string]: string };
   /**
-   * The port to allow (protocol is always TCP)
+   * The port to allow (transport protocol defaults to TCP unless `remoteProtocol` is set)
    */
   port?: number;
   /**
-   * A list of ports to allow (protocol is always TCP)
+   * A list of ports to allow (transport protocol defaults to TCP unless `remoteProtocol` is
+   * set)
    */
   ports?: number[];
   /**
@@ -225,7 +226,10 @@ export interface Allow {
    */
   remotePodLabels?: { [key: string]: string };
   /**
-   * Protocol used for external connection
+   * The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS`
+   * is the default if omitted. For all other remotes, use `TCP` or `UDP` based on the
+   * connection type; `TCP` is the default if omitted. `UDP` cannot be combined with
+   * `remoteHost`.
    */
   remoteProtocol?: RemoteProtocol;
   /**
@@ -269,11 +273,16 @@ export enum RemoteGenerated {
 }
 
 /**
- * Protocol used for external connection
+ * The protocol for this Allow entry. When using `remoteHost`, prefer `TLS` or `HTTP`; `TLS`
+ * is the default if omitted. For all other remotes, use `TCP` or `UDP` based on the
+ * connection type; `TCP` is the default if omitted. `UDP` cannot be combined with
+ * `remoteHost`.
  */
 export enum RemoteProtocol {
   HTTP = "HTTP",
+  TCP = "TCP",
   TLS = "TLS",
+  UDP = "UDP",
 }
 
 export interface Expose {

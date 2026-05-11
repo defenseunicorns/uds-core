@@ -5,7 +5,7 @@
 
 import { K8s } from "pepr";
 import { describe, expect, Mock, test, vi } from "vitest";
-import { Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
+import { Direction, Gateway, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Action, AuthorizationPolicy } from "../../crd/generated/istio/authorizationpolicy-v1";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { IstioState } from "../istio/namespace";
@@ -1384,5 +1384,35 @@ describe("findMatchingSsoClient", () => {
     expect(findMatchingSsoClient(pkg, { foo: "bar" })).toBeUndefined();
     // Empty provided selector has no keys -> no labels to match -> no match.
     expect(findMatchingSsoClient(pkg, {})).toBeUndefined();
+  });
+
+  test("should skip UDP allow rules in authorization policy generation", async () => {
+    const pkg: UDSPackage = {
+      metadata: { name: "udp-test", namespace: "test-ns", generation: 1 },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Ingress,
+              remoteProtocol: RemoteProtocol.UDP,
+              remoteNamespace: "foo",
+              port: 5000,
+              selector: { app: "my-app" },
+            },
+            {
+              direction: Direction.Ingress,
+              remoteNamespace: "bar",
+              port: 8080,
+              selector: { app: "my-app" },
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await generateAuthorizationPolicies(pkg, "test-ns", IstioState.Ambient);
+    // Only the TCP (default) rule should generate a policy, UDP should be skipped
+    expect(policies.length).toBe(1);
+    expect(policies[0].metadata?.name).toContain("bar");
   });
 });
