@@ -6,8 +6,7 @@ alertmanager:
     image:
       registry: cgr.dev
       repository: defenseunicorns.com/prometheus-alertmanager-fips
-      # NOTE: exact version 0.32.1 not available at cgr.dev/defenseunicorns.com; using 0.31.1
-      tag: 0.31.1
+      tag: 0.32.1
 kube-state-metrics:
   image:
     registry: cgr.dev
