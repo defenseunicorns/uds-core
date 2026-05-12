@@ -14,7 +14,7 @@ UDS Core 1.4 adds UDP support to `Package` Allow entries for generating NetworkP
 
 ### Notable features
 
-- **UDP support in Allow entries:** Allow entries on the `Package` CR can now generate NetworkPolicies for UDP workloads. UDP traffic does not flow through the Istio mesh, so it does not get the same encryption and security guarantees as TCP traffic in the mesh — apps using UDP must handle their own transport encryption (e.g. DTLS, QUIC) ([#2641](https://github.com/defenseunicorns/uds-core/pull/2641))
+- **UDP support in Allow entries:** Allow entries on the `Package` CR can now generate NetworkPolicies for UDP workloads. UDP traffic does not flow through the Istio mesh, so it does not get the same encryption and security guarantees as TCP traffic in the mesh. Apps using UDP must handle their own transport encryption (e.g. DTLS, QUIC) ([#2641](https://github.com/defenseunicorns/uds-core/pull/2641))
 - **Opt-in PROXY protocol v2 for Istio gateways:** adds a per-gateway `proxyProtocol.enabled` value on the `uds-istio-config` chart that installs an EnvoyFilter to parse PROXY protocol v2 in permissive mode. Permissive parsing lets external NLB traffic with a PP2 header coexist with in-cluster mesh traffic (e.g. Grafana → Keycloak) that does not carry a header. Use this instead of the global `meshConfig.defaultConfig.gatewayTopology.proxyProtocol` setting, which is strict-only and breaks intra-mesh SSO flows. See [Configure NLB proxy protocol](/how-to-guides/networking/configure-nlb-proxy-protocol/) and [#2660](https://github.com/defenseunicorns/uds-core/pull/2660)
 - **Authenticated Dynamic Client Registration disabled by default for new installs:** Identity Config 0.27.0 ships with a `max-clients` policy that blocks authenticated Dynamic Client Registration in the `uds` realm. Existing clusters require a one-time manual realm change (see below).
 - **Kubernetes 1.35 in CI:** EKS, AKS, RKE2, and k3d test matrices now run against Kubernetes 1.35 ([#2626](https://github.com/defenseunicorns/uds-core/pull/2626)).
@@ -74,5 +74,5 @@ In addition to the realm-level `max-clients` policy, UDS Core ships an Istio `Au
 - [Configure NLB proxy protocol](/how-to-guides/networking/configure-nlb-proxy-protocol/) - enable PROXY protocol v2 on a UDS Core gateway
 - [Define network access](/how-to-guides/networking/define-network-access/) - configure TCP/UDP Allow entries
 - [UDS Core 1.4.0 Changelog](https://github.com/defenseunicorns/uds-core/releases/tag/v1.4.0) - full changelog
-- [UDS Identity Config 0.27.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.27.0) - identity-config changes
+- [UDS Identity Config 0.27.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0270) - identity-config changes
 - [Full diff (1.3.1...1.4.0)](https://github.com/defenseunicorns/uds-core/compare/v1.3.1...v1.4.0) - all changes between versions
