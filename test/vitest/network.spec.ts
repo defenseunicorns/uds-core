@@ -536,51 +536,119 @@ test(
   },
 );
 
-test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, async () => {
-  // The server container runs nc in a persistent loop (see app-curl.yaml udp-echo-server),
-  // always listening on port 5000 and appending received data to /tmp/udp.log. This avoids
-  // the exec-startup race where the server nc might not be listening when the client sends.
+test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 }, async () => {
+  // Diagnostic test: tests both service DNS path (via kube-proxy DNAT → ClusterIP) and pod IP
+  // path (direct, no DNAT) to isolate whether failures are caused by kube-proxy/VPC CNI eBPF
+  // interaction with ClusterIP DNAT vs ambient CNI iptables enforcement on the direct pod path.
 
-  // Allowed: udp-echo-client (curl-ns-udp-allow) has remoteProtocol: UDP egress to server port 5000.
+  // Get server pod IP for direct path (no kube-proxy DNAT).
+  const serverPodList = await K8s(kind.Pod)
+    .InNamespace("curl-ns-udp-server")
+    .WithLabel("app=udp-echo-server")
+    .Get();
+  const serverPodIP = serverPodList.items[0].status?.podIP ?? "";
+
+  // Capture nc server listen status for inclusion in all assertion messages.
+  const listenCheck = await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+    "sh",
+    "-c",
+    "(ss -ulnp 2>/dev/null || netstat -ulnp 2>/dev/null) | grep 5000 && echo LISTENING || echo NOT_LISTENING",
+  ]);
+  const listenCtx = `nc-listen="${listenCheck.stdout.trim()}" pod-ip="${serverPodIP}"`;
+
+  // ── ALLOWED via service DNS (kube-proxy DNAT path) ──────────────────────────
+  // udp-echo-client has explicit UDP egress NetworkPolicy to server port 5000.
   await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
     "sh",
     "-c",
     "> /tmp/udp.log",
   ]);
-  await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+  const svcSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+    "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; echo nc-exit:$?",
   ]);
-  const allowedResult = await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+  await new Promise(r => setTimeout(r, 1000));
+  const allowedSvcLog = await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
     "sh",
     "-c",
     "cat /tmp/udp.log",
   ]);
-  const allowedDebug = `UDP allowed: server log="${allowedResult.stdout}"`;
-  expect(allowedResult.stdout.trim(), allowedDebug).toBe("ping");
+  expect(
+    allowedSvcLog.stdout.trim(),
+    `UDP allowed via service DNS: log="${allowedSvcLog.stdout}" nc="${svcSend.stdout}" ${listenCtx}`,
+  ).toBe("ping");
 
-  // Blocked: the client's egress NetworkPolicy (curl-pkg-deny-all-1 has no UDP egress to
-  // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
-  // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
-  // Either policy alone would block the traffic.
+  // ── ALLOWED via pod IP (no kube-proxy DNAT) ──────────────────────────────────
   await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
     "sh",
     "-c",
     "> /tmp/udp.log",
   ]);
-  await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
+  const podIPSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+    `echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
-  const deniedResult = await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+  await new Promise(r => setTimeout(r, 1000));
+  const allowedPodIPLog = await execInPod(
+    "curl-ns-udp-server",
+    udpServerPodName,
+    "udp-echo-server",
+    ["sh", "-c", "cat /tmp/udp.log"],
+  );
+  expect(
+    allowedPodIPLog.stdout.trim(),
+    `UDP allowed via pod IP: log="${allowedPodIPLog.stdout}" nc="${podIPSend.stdout}" ${listenCtx}`,
+  ).toBe("ping");
+
+  // ── DENIED via service DNS ───────────────────────────────────────────────────
+  // curl-pkg-deny-all-1 has no UDP egress to port 5000 (client-side enforcement).
+  // Server's ingress NetworkPolicy adds defense-in-depth.
+  await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+    "sh",
+    "-c",
+    "> /tmp/udp.log",
+  ]);
+  const deniedSvcSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
+    "sh",
+    "-c",
+    "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; echo nc-exit:$?",
+  ]);
+  await new Promise(r => setTimeout(r, 1000));
+  const deniedSvcLog = await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
     "sh",
     "-c",
     "cat /tmp/udp.log",
   ]);
-  const deniedDebug = `UDP blocked: server log="${deniedResult.stdout}"`;
-  expect(deniedResult.stdout.trim(), deniedDebug).toBe("");
+  expect(
+    deniedSvcLog.stdout.trim(),
+    `UDP blocked via service DNS: log="${deniedSvcLog.stdout}" nc="${deniedSvcSend.stdout}" ${listenCtx}`,
+  ).toBe("");
+
+  // ── DENIED via pod IP ────────────────────────────────────────────────────────
+  await execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+    "sh",
+    "-c",
+    "> /tmp/udp.log",
+  ]);
+  const deniedPodIPSend = await execInPod(
+    "curl-ns-deny-all-1",
+    curlPodName1,
+    "curl-pkg-deny-all-1",
+    ["sh", "-c", `echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`],
+  );
+  await new Promise(r => setTimeout(r, 1000));
+  const deniedPodIPLog = await execInPod(
+    "curl-ns-udp-server",
+    udpServerPodName,
+    "udp-echo-server",
+    ["sh", "-c", "cat /tmp/udp.log"],
+  );
+  expect(
+    deniedPodIPLog.stdout.trim(),
+    `UDP blocked via pod IP: log="${deniedPodIPLog.stdout}" nc="${deniedPodIPSend.stdout}" ${listenCtx}`,
+  ).toBe("");
 });
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {
