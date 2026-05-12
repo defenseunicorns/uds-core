@@ -136,7 +136,7 @@ After applying these changes, confirm every `Package` reconciles and that the UD
 > [!TIP]
 > If the UDS Operator logs `The client doesn't have the created-by=uds-operator attribute. Rejecting request`, temporarily disable the `UDS client policy`, wait for package reconciliation, then re-enable it. Some older deployments needed to disable `UDS client policy`, restart the Pepr watcher pod to force all `Package` resources to reconcile, wait for all packages to become ready, and then re-enable `UDS client policy`.
 
-If you need to allow additional protocol mappers or client scopes, see [Identity and authorization configuration](/reference/configuration/identity-and-authorization/#client-policy-enforcement).
+If you need to allow additional protocol mappers or client scopes, see [Identity and authorization configuration](/reference/configuration/identity-and-authorization/#security-hardening).
 
 ## MFA changes
 
