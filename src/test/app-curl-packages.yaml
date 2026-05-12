@@ -164,6 +164,10 @@ metadata:
   namespace: curl-ns-udp-server
 spec:
   network:
+    # Keep the custom UDP e2e on sidecar mode so it validates generated NetworkPolicy behavior
+    # without depending on ambient ztunnel implementation differences across image flavors.
+    serviceMesh:
+      mode: sidecar
     allow:
       - direction: Ingress
         remoteNamespace: curl-ns-udp-allow
@@ -188,6 +192,10 @@ metadata:
   namespace: curl-ns-udp-allow
 spec:
   network:
+    # Keep the custom UDP e2e on sidecar mode so it validates generated NetworkPolicy behavior
+    # without depending on ambient ztunnel implementation differences across image flavors.
+    serviceMesh:
+      mode: sidecar
     allow:
       - direction: Egress
         remoteNamespace: curl-ns-udp-server

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -43,6 +43,20 @@ describe("Test Resources Configuration", () => {
 
         expect(hasIstioProxy).toBe(false);
       }
+    });
+  });
+
+  describe("UDP Test Mesh Mode", () => {
+    test("UDP test namespaces should use sidecar mode", async () => {
+      const [udpServerNs, udpClientNs] = await Promise.all([
+        K8s(kind.Namespace).Get("curl-ns-udp-server"),
+        K8s(kind.Namespace).Get("curl-ns-udp-allow"),
+      ]);
+
+      expect(udpServerNs.metadata?.labels?.["istio-injection"]).toBe("enabled");
+      expect(udpServerNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBeUndefined();
+      expect(udpClientNs.metadata?.labels?.["istio-injection"]).toBe("enabled");
+      expect(udpClientNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBeUndefined();
     });
   });
 

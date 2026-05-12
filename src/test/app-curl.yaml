@@ -356,7 +356,12 @@ spec:
         - name: udp-echo-server
           image: curlimages/curl
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "while true; do nc -u -l -p 5000 >> /tmp/udp.log; done"]
+          command:
+            [
+              "sh",
+              "-c",
+              "if nc --help 2>&1 | grep -q -- ' -k'; then printf 'server-mode:nc-keep-open\\n' >> /tmp/udp.meta; exec nc -u -lk -p 5000 >> /tmp/udp.log; else printf 'server-mode:nc-loop\\n' >> /tmp/udp.meta; while true; do nc -u -l -p 5000 >> /tmp/udp.log; done; fi",
+            ]
           resources:
             limits:
               cpu: 50m
