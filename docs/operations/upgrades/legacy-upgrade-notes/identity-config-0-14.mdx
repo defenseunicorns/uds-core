@@ -1,0 +1,95 @@
+---
+title: Identity Config 0.14.0 to 0.14.1
+description: Legacy manual upgrade notes for UDS Identity Config 0.14.0 to 0.14.1, covering ambient mode SSL settings, Dynamic Client Registration removal, and FIPS preparation.
+sidebar:
+  order: 2.007
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## v0.14.1+: ambient mode SSL setting
+
+UDS Core v0.42.0 switched Keycloak to ambient mode. In AWS environments that use shared address space from [RFC 6598](https://www.rfc-editor.org/rfc/rfc6598), this could cause HTTP 403 responses unless the realm's **Require SSL** option was set to **None**.
+
+To update **Require SSL** manually:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Realm settings** > **General**.
+3. Set **Require SSL** to **None**.
+
+</Steps>
+
+## v0.14.0+: Dynamic Client Registration removal
+
+UDS Identity Config v0.14.0 removed Dynamic Client Registration. Existing deployments needed to remove old trusted hosts and add a `max-clients` policy that blocks authenticated client registration.
+
+To remove old trusted hosts:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Clients** > **Client registration** > **Trusted hosts**.
+3. Remove these trusted hosts:
+   - `*.keycloak.svc.cluster.local`
+   - `*.pepr-uds-core-watcher.pepr-system.svc.cluster.local`
+   - `127.0.0.6`
+4. Click **Save**.
+
+</Steps>
+
+To add the `max-clients` policy:
+
+<Steps>
+
+1. Go to **Clients** > **Client registration**.
+2. Click **Create client policy**.
+3. Select **max-clients**.
+4. Set **Name** to `max number of clients`.
+5. Set **Max Clients Per Realm** to `0`.
+6. Click **Save**.
+
+</Steps>
+
+## FIPS preparation
+
+UDS Core v0.41.0 fixed a critical FIPS mode issue in Keycloak. Earlier deployments could start Keycloak without FIPS restrictions because Bouncy Castle FIPS libraries were missing. Enabling FIPS mode changes password and hashing behavior:
+
+- Passwords must be at least 14 characters long, including database credentials and user passwords.
+- The `argon2` hashing algorithm is not available in FIPS mode.
+- Existing systems must migrate user credentials to `pbkdf2-sha512` before enabling FIPS mode in the `master` realm.
+
+> [!CAUTION]
+> If you enable FIPS mode before migrating the administrator credential hashing algorithm, you can lock the administrator account.
+
+To prepare the administrator account for FIPS mode:
+
+<Steps>
+
+1. Log in to Keycloak with the administrator account. If needed, use `uds zarf connect keycloak`.
+2. In the `master` realm, go to **Authentication** > **Policies** > **Password policy**.
+3. Click **Add policy**.
+4. Select **Hashing algorithm** and set it to `pbkdf2-sha512`.
+5. Click **Save**.
+6. Go to **Users** and select the administrator account.
+7. Open the **Credentials** tab and click **Reset password**.
+8. Enter a password of at least 14 characters. You can reuse the existing password if it meets the policy.
+9. Set **Temporary** to **Off**.
+10. Click **Save**.
+11. Return to the user's **Credentials** tab and click **Show data**.
+12. Confirm `algorithm` is set to `pbkdf2-sha512`.
+
+</Steps>
+
+For FIPS limitations, see [Keycloak FIPS 140-2 support](https://www.keycloak.org/server/fips).
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade to FIPS 140-2 mode](/how-to-guides/identity-and-authorization/upgrade-to-fips-mode/) - current FIPS upgrade guidance

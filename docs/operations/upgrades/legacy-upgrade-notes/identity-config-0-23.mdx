@@ -1,0 +1,34 @@
+---
+title: Identity Config 0.23.0+
+description: Legacy manual upgrade notes for UDS Identity Config 0.23.0+, covering logout confirmation for built-in Keycloak clients.
+sidebar:
+  order: 2.004
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## Logout confirmation
+
+Keycloak 26.5.0 introduced logout confirmation for built-in clients. Newer installs enable this by default. Existing deployments can update the default Keycloak clients manually.
+
+To enable logout confirmation:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Clients** > **account**.
+3. Set **Logout confirmation** to **On**.
+4. Click **Save**.
+5. Repeat these steps for the `account-console` and `security-admin-console` clients.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes

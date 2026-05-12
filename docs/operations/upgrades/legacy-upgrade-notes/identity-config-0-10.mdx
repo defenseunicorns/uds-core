@@ -1,0 +1,44 @@
+---
+title: Identity Config 0.10.0+
+description: Legacy manual upgrade notes for UDS Identity Config 0.10.0+, covering SAML mapper property changes after the Keycloak 26.1.0 upgrade.
+sidebar:
+  order: 2.009
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## SAML mapper properties
+
+UDS Identity Config v0.10.0 upgraded Keycloak to 26.1.0. That release added case sensitivity to Client SAML mappers, which could break SAML authentication flows if identity provider data no longer mapped into applications such as SonarQube or GitLab.
+
+To update affected SAML mappers:
+
+<Steps>
+
+1. Go to **Client scopes**.
+2. For each affected mapper, select the mapper and open the **Mappers** tab.
+3. Select the available mapper.
+4. Update the **Property** field to the exact lower-case or camel-case value.
+5. Click **Save** after each update.
+
+</Steps>
+
+Use these property mappings:
+
+| Mapper | Previous value | Required value |
+|---|---|---|
+| `mapper-saml-email-email` | `Email` | `email` |
+| `mapper-saml-firstname-first_name` | `FirstName` | `firstName` |
+| `mapper-saml-lastname-last_name` | `LastName` | `lastName` |
+| `mapper-saml-username-login` | `Username` | `username` |
+| `mapper-saml-username-name` | `Username` | `username` |
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes

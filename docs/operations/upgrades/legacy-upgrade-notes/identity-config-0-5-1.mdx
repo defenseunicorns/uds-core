@@ -1,0 +1,44 @@
+---
+title: Identity Config 0.5.1
+description: Legacy manual upgrade notes for UDS Identity Config 0.5.1, covering User Managed Attributes and STIG password rule changes.
+sidebar:
+  order: 2.012
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## User managed attributes
+
+UDS Identity Config v0.5.1 used Keycloak User Managed Attributes, which require Keycloak 24 or later.
+
+To update user managed attributes manually:
+
+<Steps>
+
+1. In **Realm settings** > **General**, turn **User-managed access** off.
+2. Set **Unmanaged attributes** to **Only administrators can write**.
+3. Go to **User profile**.
+4. Select the **JSON editor** tab.
+5. Copy the user attribute definition from the [v0.5.1 realm.json](https://github.com/defenseunicorns/uds-identity-config/blob/v0.5.1/src/realm.json#L1884-L1895).
+6. Click **Save**.
+
+</Steps>
+
+## STIG password and session rules
+
+This version also incorporated STIG password and session rules based on the Elasticsearch 8.0 hardening guides:
+
+- Passwords expire after 60 days.
+- Password complexity requires 2 special characters, 1 digit, 1 lowercase character, 1 uppercase character, and 15 characters minimum.
+- IDP session idle timeout is 10 minutes.
+- Maximum login attempts is 3.
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes

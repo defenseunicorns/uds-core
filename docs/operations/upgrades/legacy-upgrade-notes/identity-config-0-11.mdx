@@ -1,0 +1,199 @@
+---
+title: Identity Config 0.11.0
+description: Legacy manual upgrade notes for UDS Identity Config 0.11.0, covering client credentials, UDS client policy, MFA, and IDP redirector changes.
+sidebar:
+  order: 2.008
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## Client credentials grant
+
+UDS Identity Config v0.11.0 introduced Client Credentials Grant support for the UDS Operator. This replaced Dynamic Client Registration, improved reliability, and removed the need to store registration tokens in the Pepr Store.
+
+### Create the `uds-operator` client
+
+Create a Keycloak client for the UDS Operator:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Clients** > **Create**.
+3. Set **Client type** to `openid-connect`.
+4. Set **Client ID** to `uds-operator`.
+5. Set **Client name** to `uds-operator`.
+6. Click **Next**.
+7. Enable **Client authentication**.
+8. Disable all authentication flows except **Service account roles**.
+9. Click **Next**.
+10. Click **Save**.
+
+</Steps>
+
+Configure the client authenticator:
+
+<Steps>
+
+1. Go to **Clients** > **uds-operator** > **Credentials**.
+2. Set **Client authenticator** to **Client Id and Kubernetes Secret**.
+3. Click **Save**.
+
+</Steps>
+
+Configure service account roles:
+
+<Steps>
+
+1. Go to **Clients** > **uds-operator** > **Service account roles**.
+2. If `default-roles-uds` is assigned, open the row action menu and click **Unassign** > **Remove**.
+3. Click **Assign role**.
+4. Set the filter to **Filter by clients**.
+5. Select `realm-management: manage-clients`.
+6. Click **Assign**.
+
+</Steps>
+
+### Configure the UDS client policy
+
+The UDS client policy applies the UDS client profile to clients created for UDS packages.
+
+Create the client profile:
+
+<Steps>
+
+1. Go to **Realm settings** > **Client policies** > **Profiles**.
+2. Click **Create client profile**.
+3. Set **Name** to `uds-client-profile`.
+4. Set **Description** to `UDS Client Profile`.
+5. Click **Save**.
+6. Click **Add executor**.
+7. Select **uds-operator-permissions**.
+8. Click **Add**.
+
+</Steps>
+
+Create the client policy:
+
+<Steps>
+
+1. Go to **Realm settings** > **Client policies** > **Policies**.
+2. Click **Create client policy**.
+3. Set **Name** to `uds-client-policy`.
+4. Set **Description** to `UDS Client Policy`.
+5. Click **Save**.
+6. Click **Add condition**.
+7. Select **any-client**.
+8. Click **Add**.
+9. Click **Add client profile**.
+10. Select `uds-client-profile`.
+11. Click **Add**.
+
+</Steps>
+
+> [!NOTE]
+> Some older Keycloak UI versions appeared to select every client profile during this flow. Only the selected profile was applied.
+
+### Configure the client credentials authentication flow
+
+Create and bind the authentication flow:
+
+<Steps>
+
+1. Go to **Authentication** > **Flows**.
+2. Select the `clients` flow.
+3. Click **Actions** > **Duplicate**.
+4. Set **Name** to `UDS Client Credentials`.
+5. Set **Description** to `UDS Client Credentials`.
+6. Click **Duplicate**.
+7. Go to **Authentication** > **UDS Client Credentials**.
+8. Click **Add step** on pre-v0.40.0 UDS Core deployments, or **Add execution** on v0.40.0 and later.
+9. Select **Client Id and Kubernetes Secret**.
+10. Click **Add**.
+11. Set **Requirement** to **Alternative**.
+12. In the row action menu for **UDS Client Credentials**, select **Bind flows**.
+13. Select **Client authentication flow**.
+14. Click **Save**.
+
+</Steps>
+
+### Verify client credentials configuration
+
+Deploy or update a UDS package, then check the UDS Operator logs.
+
+Use this command to verify that the UDS Operator uses the client credentials flow:
+
+```bash
+uds zarf tools kubectl logs deploy/pepr-uds-core-watcher -n pepr-system | grep "Client Credentials Keycloak Client is available"
+```
+
+After applying these changes, confirm every `Package` reconciles and that the UDS Operator logs show no errors.
+
+> [!TIP]
+> If the UDS Operator logs `The client doesn't have the created-by=uds-operator attribute. Rejecting request`, temporarily disable the `UDS client policy`, wait for package reconciliation, then re-enable it. Some older deployments needed to disable `UDS client policy`, restart the Pepr watcher pod to force all `Package` resources to reconcile, wait for all packages to become ready, and then re-enable `UDS client policy`.
+
+If you need to allow additional protocol mappers or client scopes, see [Identity and authorization configuration](/reference/configuration/identity-and-authorization/#client-policy-enforcement).
+
+## MFA changes
+
+UDS Identity Config v0.11.0 also introduced MFA changes. Previous versions did not support MFA on the X.509 authentication flow. This version added support for X.509 MFA and WebAuthn MFA. Both options were disabled by default.
+
+If you need OTP and WebAuthn MFA everywhere, update required actions first:
+
+<Steps>
+
+1. Go to **Authentication** > **Required actions**.
+2. Enable these required actions, but do not set them as default actions:
+   - **Configure OTP**
+   - **Webauthn Register**
+   - **Delete Credential**
+3. Disable **WebAuthn Register Passwordless**. Do not disable **Webauthn Register**.
+
+</Steps>
+
+> [!CAUTION]
+> Authentication flow changes can break login. Confirm you have a tested administrator recovery path before changing the `UDS Authentication` flow.
+
+To update the `UDS Authentication` flow for X.509 MFA:
+
+<Steps>
+
+1. Go to **Authentication** > **Flows**.
+2. Select **UDS Authentication**.
+3. In the top-level **Authentication** sub-flow, add a sub-flow named `X509 Authentication`.
+4. Drag `X509 Authentication` directly below **Cookie** and **IDP Redirector**.
+5. Set `X509 Authentication` to **Alternative**.
+6. In `X509 Authentication`, add a sub-flow named `X509 Conditional OTP`.
+7. Set `X509 Conditional OTP` to **Required**.
+8. Add **Condition - user configured** to `X509 Conditional OTP` and set it to **Required**.
+9. Add **OTP Form** to `X509 Conditional OTP` and set it to **Required**.
+10. Add **WebAuthn Authenticator** to `X509 Conditional OTP`.
+11. Drag the existing **X509/Validate Username Form** step into the `X509 Authentication` sub-flow above `X509 Conditional OTP`.
+12. Set **X509/Validate Username Form** to **Required**.
+
+</Steps>
+
+## IDP redirector
+
+To add an IDP redirector option to `UDS Authentication`:
+
+<Steps>
+
+1. Go to **Authentication** > **Flows**.
+2. Select **UDS Authentication**.
+3. Under the **Authentication** sub-flow, add a new sub-flow named `idp redirector`.
+4. Drag `idp redirector` directly below **Cookie**.
+5. Set `idp redirector` to **Alternative**.
+6. Add **Identity Provider Redirector** to `idp redirector`.
+7. Set **Identity Provider Redirector** to **Required**.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - current Identity Config configuration reference
