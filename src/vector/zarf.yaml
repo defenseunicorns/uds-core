@@ -8,7 +8,7 @@ metadata:
 components:
   - name: vector
     import:
-      paths:
-        - flavors/vector-upstream.yaml
-        - flavors/vector-registry1.yaml
-        - flavors/vector-unicorn.yaml
+      local:
+        - path: ./flavors/vector-upstream.yaml
+        - path: ./flavors/vector-registry1.yaml
+        - path: ./flavors/vector-unicorn.yaml

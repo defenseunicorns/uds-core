@@ -8,20 +8,20 @@ metadata:
 components:
   - name: uds-crds
     import:
-      paths:
-        - uds-crds.yaml
+      local:
+        - path: ./uds-crds.yaml
 
   - name: uds-operator-config
     import:
-      paths:
-        - uds-operator-config.yaml
+      local:
+        - path: ./uds-operator-config.yaml
 
   - name: pepr-uds-core
     import:
-      paths:
-        - pepr-uds-core.yaml
+      local:
+        - path: ./pepr-uds-core.yaml
 
   - name: uds-exemptions
     import:
-      paths:
-        - uds-exemptions.yaml
+      local:
+        - path: ./uds-exemptions.yaml

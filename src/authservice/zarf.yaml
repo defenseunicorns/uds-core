@@ -8,7 +8,7 @@ metadata:
 components:
   - name: authservice
     import:
-      paths:
-        - flavors/authservice-upstream.yaml
-        - flavors/authservice-registry1.yaml
-        - flavors/authservice-unicorn.yaml
+      local:
+        - path: ./flavors/authservice-upstream.yaml
+        - path: ./flavors/authservice-registry1.yaml
+        - path: ./flavors/authservice-unicorn.yaml

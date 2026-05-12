@@ -8,7 +8,7 @@ metadata:
 components:
   - name: keycloak
     import:
-      paths:
-        - flavors/keycloak-upstream.yaml
-        - flavors/keycloak-registry1.yaml
-        - flavors/keycloak-unicorn.yaml
+      local:
+        - path: ./flavors/keycloak-upstream.yaml
+        - path: ./flavors/keycloak-registry1.yaml
+        - path: ./flavors/keycloak-unicorn.yaml

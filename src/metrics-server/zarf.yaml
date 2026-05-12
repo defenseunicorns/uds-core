@@ -8,7 +8,7 @@ metadata:
 components:
   - name: metrics-server
     import:
-      paths:
-        - flavors/metrics-server-upstream.yaml
-        - flavors/metrics-server-registry1.yaml
-        - flavors/metrics-server-unicorn.yaml
+      local:
+        - path: ./flavors/metrics-server-upstream.yaml
+        - path: ./flavors/metrics-server-registry1.yaml
+        - path: ./flavors/metrics-server-unicorn.yaml

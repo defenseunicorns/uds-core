@@ -8,7 +8,7 @@ metadata:
 components:
   - name: falco
     import:
-      paths:
-        - flavors/falco-upstream.yaml
-        - flavors/falco-registry1.yaml
-        - flavors/falco-unicorn.yaml
+      local:
+        - path: ./flavors/falco-upstream.yaml
+        - path: ./flavors/falco-registry1.yaml
+        - path: ./flavors/falco-unicorn.yaml

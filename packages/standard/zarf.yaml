@@ -22,135 +22,135 @@ metadata:
 components:
   - name: uds-crds
     import:
-      paths:
-        - ../../src/pepr/uds-crds.yaml
+      local:
+        - path: ./../../src/pepr/uds-crds.yaml
 
   - name: prometheus-operator-crds
     import:
-      paths:
-        - ../../src/prometheus-stack/prometheus-operator-crds.yaml
+      local:
+        - path: ./../../src/prometheus-stack/prometheus-operator-crds.yaml
 
   - name: uds-operator-config
     import:
-      paths:
-        - ../../src/pepr/uds-operator-config.yaml
+      local:
+        - path: ./../../src/pepr/uds-operator-config.yaml
 
   - name: pepr-uds-core
     import:
-      paths:
-        - ../../src/pepr/pepr-uds-core.yaml
+      local:
+        - path: ./../../src/pepr/pepr-uds-core.yaml
 
   - name: uds-exemptions
     import:
-      paths:
-        - ../../src/pepr/uds-exemptions.yaml
+      local:
+        - path: ./../../src/pepr/uds-exemptions.yaml
 
   - name: istio-controlplane
     import:
-      paths:
-        - ../../src/istio/istio-controlplane-upstream.yaml
-        - ../../src/istio/istio-controlplane-registry1.yaml
-        - ../../src/istio/istio-controlplane-unicorn.yaml
+      local:
+        - path: ./../../src/istio/istio-controlplane-upstream.yaml
+        - path: ./../../src/istio/istio-controlplane-registry1.yaml
+        - path: ./../../src/istio/istio-controlplane-unicorn.yaml
 
   - name: gateway-api-crds
     import:
-      paths:
-        - ../../src/istio/common/gateway-api-crds.yaml
+      local:
+        - path: ./../../src/istio/common/gateway-api-crds.yaml
 
   - name: istio-admin-gateway
     import:
-      paths:
-        - ../../src/istio/istio-admin-gateway.yaml
+      local:
+        - path: ./../../src/istio/istio-admin-gateway.yaml
 
   - name: istio-tenant-gateway
     import:
-      paths:
-        - ../../src/istio/istio-tenant-gateway.yaml
+      local:
+        - path: ./../../src/istio/istio-tenant-gateway.yaml
 
   - name: istio-passthrough-gateway
     optional: true
     import:
-      paths:
-        - ../../src/istio/istio-passthrough-gateway.yaml
+      local:
+        - path: ./../../src/istio/istio-passthrough-gateway.yaml
 
   - name: istio-egress-ambient
     import:
-      paths:
-        - ../../src/istio/istio-egress-ambient.yaml
+      local:
+        - path: ./../../src/istio/istio-egress-ambient.yaml
 
   - name: istio-egress-gateway
     optional: true
     import:
-      paths:
-        - ../../src/istio/istio-egress-gateway.yaml
+      local:
+        - path: ./../../src/istio/istio-egress-gateway.yaml
 
   - name: metrics-server
     optional: true
     import:
-      paths:
-        - ../../src/metrics-server/metrics-server-upstream.yaml
-        - ../../src/metrics-server/metrics-server-registry1.yaml
-        - ../../src/metrics-server/metrics-server-unicorn.yaml
+      local:
+        - path: ./../../src/metrics-server/metrics-server-upstream.yaml
+        - path: ./../../src/metrics-server/metrics-server-registry1.yaml
+        - path: ./../../src/metrics-server/metrics-server-unicorn.yaml
 
   - name: keycloak
     import:
-      paths:
-        - ../../src/keycloak/keycloak-upstream.yaml
-        - ../../src/keycloak/keycloak-registry1.yaml
-        - ../../src/keycloak/keycloak-unicorn.yaml
+      local:
+        - path: ./../../src/keycloak/keycloak-upstream.yaml
+        - path: ./../../src/keycloak/keycloak-registry1.yaml
+        - path: ./../../src/keycloak/keycloak-unicorn.yaml
 
   - name: falco
     import:
-      paths:
-        - ../../src/falco/falco-upstream.yaml
-        - ../../src/falco/falco-registry1.yaml
-        - ../../src/falco/falco-unicorn.yaml
+      local:
+        - path: ./../../src/falco/falco-upstream.yaml
+        - path: ./../../src/falco/falco-registry1.yaml
+        - path: ./../../src/falco/falco-unicorn.yaml
 
   - name: loki
     import:
-      paths:
-        - ../../src/loki/loki-upstream.yaml
-        - ../../src/loki/loki-registry1.yaml
-        - ../../src/loki/loki-unicorn.yaml
+      local:
+        - path: ./../../src/loki/loki-upstream.yaml
+        - path: ./../../src/loki/loki-registry1.yaml
+        - path: ./../../src/loki/loki-unicorn.yaml
 
   - name: kube-prometheus-stack
     import:
-      paths:
-        - ../../src/prometheus-stack/kube-prometheus-stack-upstream.yaml
-        - ../../src/prometheus-stack/kube-prometheus-stack-registry1.yaml
-        - ../../src/prometheus-stack/kube-prometheus-stack-unicorn.yaml
+      local:
+        - path: ./../../src/prometheus-stack/kube-prometheus-stack-upstream.yaml
+        - path: ./../../src/prometheus-stack/kube-prometheus-stack-registry1.yaml
+        - path: ./../../src/prometheus-stack/kube-prometheus-stack-unicorn.yaml
 
   - name: prometheus-blackbox-exporter
     import:
-      paths:
-        - ../../src/prometheus-stack/prometheus-blackbox-exporter-upstream.yaml
-        - ../../src/prometheus-stack/prometheus-blackbox-exporter-registry1.yaml
-        - ../../src/prometheus-stack/prometheus-blackbox-exporter-unicorn.yaml
+      local:
+        - path: ./../../src/prometheus-stack/prometheus-blackbox-exporter-upstream.yaml
+        - path: ./../../src/prometheus-stack/prometheus-blackbox-exporter-registry1.yaml
+        - path: ./../../src/prometheus-stack/prometheus-blackbox-exporter-unicorn.yaml
 
   - name: vector
     import:
-      paths:
-        - ../../src/vector/vector-upstream.yaml
-        - ../../src/vector/vector-registry1.yaml
-        - ../../src/vector/vector-unicorn.yaml
+      local:
+        - path: ./../../src/vector/vector-upstream.yaml
+        - path: ./../../src/vector/vector-registry1.yaml
+        - path: ./../../src/vector/vector-unicorn.yaml
 
   - name: grafana
     import:
-      paths:
-        - ../../src/grafana/grafana-upstream.yaml
-        - ../../src/grafana/grafana-registry1.yaml
-        - ../../src/grafana/grafana-unicorn.yaml
+      local:
+        - path: ./../../src/grafana/grafana-upstream.yaml
+        - path: ./../../src/grafana/grafana-registry1.yaml
+        - path: ./../../src/grafana/grafana-unicorn.yaml
 
   - name: authservice
     import:
-      paths:
-        - ../../src/authservice/authservice-upstream.yaml
-        - ../../src/authservice/authservice-registry1.yaml
-        - ../../src/authservice/authservice-unicorn.yaml
+      local:
+        - path: ./../../src/authservice/authservice-upstream.yaml
+        - path: ./../../src/authservice/authservice-registry1.yaml
+        - path: ./../../src/authservice/authservice-unicorn.yaml
 
   - name: velero
     import:
-      paths:
-        - ../../src/velero/velero-upstream.yaml
-        - ../../src/velero/velero-registry1.yaml
-        - ../../src/velero/velero-unicorn.yaml
+      local:
+        - path: ./../../src/velero/velero-upstream.yaml
+        - path: ./../../src/velero/velero-registry1.yaml
+        - path: ./../../src/velero/velero-unicorn.yaml

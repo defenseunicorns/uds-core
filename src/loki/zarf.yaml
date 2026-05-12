@@ -8,7 +8,7 @@ metadata:
 components:
   - name: loki
     import:
-      paths:
-        - flavors/loki-upstream.yaml
-        - flavors/loki-registry1.yaml
-        - flavors/loki-unicorn.yaml
+      local:
+        - path: ./flavors/loki-upstream.yaml
+        - path: ./flavors/loki-registry1.yaml
+        - path: ./flavors/loki-unicorn.yaml

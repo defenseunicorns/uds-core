@@ -8,7 +8,7 @@ metadata:
 components:
   - name: grafana
     import:
-      paths:
-        - flavors/grafana-upstream.yaml
-        - flavors/grafana-registry1.yaml
-        - flavors/grafana-unicorn.yaml
+      local:
+        - path: ./flavors/grafana-upstream.yaml
+        - path: ./flavors/grafana-registry1.yaml
+        - path: ./flavors/grafana-unicorn.yaml

@@ -8,37 +8,37 @@ metadata:
 components:
   - name: istio-controlplane
     import:
-      paths:
-        - flavors/istio-controlplane-upstream.yaml
-        - flavors/istio-controlplane-registry1.yaml
-        - flavors/istio-controlplane-unicorn.yaml
+      local:
+        - path: ./flavors/istio-controlplane-upstream.yaml
+        - path: ./flavors/istio-controlplane-registry1.yaml
+        - path: ./flavors/istio-controlplane-unicorn.yaml
 
   - name: gateway-api-crds
     import:
-      paths:
-        - common/gateway-api-crds.yaml
+      local:
+        - path: ./common/gateway-api-crds.yaml
 
   - name: istio-admin-gateway
     import:
-      paths:
-        - istio-admin-gateway.yaml
+      local:
+        - path: ./istio-admin-gateway.yaml
 
   - name: istio-tenant-gateway
     import:
-      paths:
-        - istio-tenant-gateway.yaml
+      local:
+        - path: ./istio-tenant-gateway.yaml
 
   - name: istio-passthrough-gateway
     import:
-      paths:
-        - istio-passthrough-gateway.yaml
+      local:
+        - path: ./istio-passthrough-gateway.yaml
 
   - name: istio-egress-ambient
     import:
-      paths:
-        - istio-egress-ambient.yaml
+      local:
+        - path: ./istio-egress-ambient.yaml
 
   - name: istio-egress-gateway
     import:
-      paths:
-        - istio-egress-gateway.yaml
+      local:
+        - path: ./istio-egress-gateway.yaml

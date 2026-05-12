@@ -8,19 +8,19 @@ metadata:
 components:
   - name: prometheus-operator-crds
     import:
-      paths:
-        - prometheus-operator-crds.yaml
+      local:
+        - path: ./prometheus-operator-crds.yaml
 
   - name: kube-prometheus-stack
     import:
-      paths:
-        - flavors/kube-prometheus-stack-upstream.yaml
-        - flavors/kube-prometheus-stack-registry1.yaml
-        - flavors/kube-prometheus-stack-unicorn.yaml
+      local:
+        - path: ./flavors/kube-prometheus-stack-upstream.yaml
+        - path: ./flavors/kube-prometheus-stack-registry1.yaml
+        - path: ./flavors/kube-prometheus-stack-unicorn.yaml
 
   - name: prometheus-blackbox-exporter
     import:
-      paths:
-        - flavors/prometheus-blackbox-exporter-upstream.yaml
-        - flavors/prometheus-blackbox-exporter-registry1.yaml
-        - flavors/prometheus-blackbox-exporter-unicorn.yaml
+      local:
+        - path: ./flavors/prometheus-blackbox-exporter-upstream.yaml
+        - path: ./flavors/prometheus-blackbox-exporter-registry1.yaml
+        - path: ./flavors/prometheus-blackbox-exporter-unicorn.yaml

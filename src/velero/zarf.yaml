@@ -8,7 +8,7 @@ metadata:
 components:
   - name: velero
     import:
-      paths:
-        - flavors/velero-upstream.yaml
-        - flavors/velero-registry1.yaml
-        - flavors/velero-unicorn.yaml
+      local:
+        - path: ./flavors/velero-upstream.yaml
+        - path: ./flavors/velero-registry1.yaml
+        - path: ./flavors/velero-unicorn.yaml
