@@ -126,6 +126,16 @@ async function waitForUdpLog(
   return { log, diagnostics: await getUdpServerState(serverPodName) };
 }
 
+function expectUdpPingLog(result: { log: PodExecResult; diagnostics: string }, message: string) {
+  const lines = result.log.stdout.trim().split("\n").filter(Boolean);
+
+  expect(lines.length > 0, `${message} lines=${JSON.stringify(lines)}`).toBe(true);
+  expect(
+    lines.every(line => line === "ping"),
+    `${message} lines=${JSON.stringify(lines)}`,
+  ).toBe(true);
+}
+
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 
@@ -625,10 +635,10 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 },
     "for i in 1 2 3; do echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; printf ' attempt:%s' \"$i\"; sleep 0.2; done; echo; echo nc-exit:$?",
   ]);
   const allowedSvc = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expect(
-    allowedSvc.log.stdout.trim(),
+  expectUdpPingLog(
+    allowedSvc,
     `UDP allowed via service DNS: log="${allowedSvc.log.stdout}" nc="${svcSend.stdout}" ${baseCtx} server-state="${allowedSvc.diagnostics}"`,
-  ).toBe("ping");
+  );
 
   // ── ALLOWED via pod IP (no kube-proxy DNAT) ──────────────────────────────────
   await clearUdpLog(udpServerPodName);
@@ -638,10 +648,10 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 },
     `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
   ]);
   const allowedPodIP = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expect(
-    allowedPodIP.log.stdout.trim(),
+  expectUdpPingLog(
+    allowedPodIP,
     `UDP allowed via pod IP: log="${allowedPodIP.log.stdout}" nc="${podIPSend.stdout}" ${baseCtx} server-state="${allowedPodIP.diagnostics}"`,
-  ).toBe("ping");
+  );
 
   // ── DENIED via service DNS ───────────────────────────────────────────────────
   // curl-pkg-deny-all-1 has no UDP egress to port 5000 (client-side enforcement).
