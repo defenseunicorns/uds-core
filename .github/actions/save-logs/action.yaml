@@ -70,6 +70,28 @@ runs:
         echo "::endgroup::"
       shell: bash
 
+    # aws-network-policy-agent writes per-flow verdicts (Accept/Deny) to
+    # /var/log/aws-routed-eni/ on the node, not container stdout. kubectl logs misses these,
+    # so exec into the aws-node container (which mounts the same hostPath) and cat each file.
+    - name: EKS VPC CNI logs
+      if: ${{ inputs.distro == 'eks' }}
+      run: |
+        echo "::group::Collecting aws-node hostPath logs from each node"
+        mkdir -p /tmp/eks-cni-logs
+        uds zarf tools kubectl get pods -n kube-system -l k8s-app=aws-node \
+          -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.nodeName}{"\n"}{end}' \
+          | while read pod node; do
+              [ -z "$pod" ] && continue
+              dest="/tmp/eks-cni-logs/${node}"
+              mkdir -p "$dest"
+              for f in network-policy-agent.log policy_endpoint_controller.log plugin.log ipamd.log egress-cni.log; do
+                uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
+                  cat "/var/log/aws-routed-eni/${f}" > "${dest}/${f}" 2>/dev/null || rm -f "${dest}/${f}"
+              done
+            done
+        echo "::endgroup::"
+      shell: bash
+
     - name: AKS Control Plane Logs
       if: ${{ inputs.distro == 'aks' && inputs.resource_group != '' }}
       run: |
@@ -138,6 +160,7 @@ runs:
           /tmp/maru-*.log
           /tmp/debug-*.log
           /tmp/pod-logs
+          /tmp/eks-cni-logs
           /tmp/control-plane-logs
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log
