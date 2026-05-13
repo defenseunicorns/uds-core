@@ -72,7 +72,8 @@ runs:
 
     # aws-network-policy-agent writes per-flow verdicts (Accept/Deny) to
     # /var/log/aws-routed-eni/ on the node, not container stdout. kubectl logs misses these,
-    # so exec into the aws-node container (which mounts the same hostPath) and cat each file.
+    # so exec into the aws-node container (which hostPath-mounts the node dir at
+    # /host/var/log/aws-routed-eni) and pull every file via tar.
     - name: EKS VPC CNI logs
       if: ${{ inputs.distro == 'eks' }}
       run: |
@@ -84,10 +85,11 @@ runs:
               [ -z "$pod" ] && continue
               dest="/tmp/eks-cni-logs/${node}"
               mkdir -p "$dest"
-              for f in network-policy-agent.log policy_endpoint_controller.log plugin.log ipamd.log egress-cni.log; do
-                uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
-                  cat "/var/log/aws-routed-eni/${f}" > "${dest}/${f}" 2>/dev/null || rm -f "${dest}/${f}"
-              done
+              uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
+                ls -la /host/var/log/aws-routed-eni/ > "${dest}/_listing.txt" 2>&1 || true
+              uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
+                tar -cf - -C /host/var/log/aws-routed-eni . 2>/dev/null \
+                | tar -xf - -C "${dest}/" 2>/dev/null || echo "tar failed for ${pod}" >> "${dest}/_listing.txt"
             done
         echo "::endgroup::"
       shell: bash
