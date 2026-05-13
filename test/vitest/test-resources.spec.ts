@@ -47,16 +47,14 @@ describe("Test Resources Configuration", () => {
   });
 
   describe("UDP Test Mesh Mode", () => {
-    test("UDP test namespaces should use sidecar mode", async () => {
+    test("UDP test namespaces should start with ambient mode", async () => {
       const [udpServerNs, udpClientNs] = await Promise.all([
         K8s(kind.Namespace).Get("curl-ns-udp-server"),
         K8s(kind.Namespace).Get("curl-ns-udp-allow"),
       ]);
 
-      expect(udpServerNs.metadata?.labels?.["istio-injection"]).toBe("enabled");
-      expect(udpServerNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBeUndefined();
-      expect(udpClientNs.metadata?.labels?.["istio-injection"]).toBe("enabled");
-      expect(udpClientNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBeUndefined();
+      expect(udpServerNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBe("ambient");
+      expect(udpClientNs.metadata?.labels?.["istio.io/dataplane-mode"]).toBe("ambient");
     });
   });
 

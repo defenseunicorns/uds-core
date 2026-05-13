@@ -151,6 +151,54 @@ let curlPodNameEgress2 = "";
 let udpServerPodName = "";
 let udpClientPodName = "";
 
+async function waitForPodByLabel(namespace: string, labelSelector: string): Promise<string> {
+  const deadline = Date.now() + 120000;
+
+  while (Date.now() < deadline) {
+    const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
+    const readyPod = pods.items.find(
+      pod =>
+        pod.status?.phase === "Running" &&
+        pod.status.containerStatuses?.every(status => status.ready) &&
+        !pod.metadata?.deletionTimestamp,
+    );
+
+    if (readyPod?.metadata?.name) {
+      return readyPod.metadata.name;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  throw new Error(`Timed out waiting for running pod in ${namespace} with label ${labelSelector}`);
+}
+
+async function restartUdpPods(): Promise<void> {
+  // Restart UDP server and client pods so they're fully settled before the test runs.
+  const serverPods = await K8s(kind.Pod)
+    .InNamespace("curl-ns-udp-server")
+    .WithLabel("app=udp-echo-server")
+    .Get();
+  for (const pod of serverPods.items) {
+    if (pod.metadata?.name) {
+      await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Delete(pod.metadata.name);
+    }
+  }
+
+  const clientPods = await K8s(kind.Pod)
+    .InNamespace("curl-ns-udp-allow")
+    .WithLabel("app=udp-echo-client")
+    .Get();
+  for (const pod of clientPods.items) {
+    if (pod.metadata?.name) {
+      await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Delete(pod.metadata.name);
+    }
+  }
+
+  udpServerPodName = await waitForPodByLabel("curl-ns-udp-server", "app=udp-echo-server");
+  udpClientPodName = await waitForPodByLabel("curl-ns-udp-allow", "app=udp-echo-client");
+}
+
 beforeAll(async () => {
   [
     curlPodName1,
@@ -605,24 +653,16 @@ test(
 );
 
 test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 }, async () => {
-  // This test uses dedicated sidecar-mode namespaces for the UDP client/server so it validates
-  // generated Kubernetes NetworkPolicy behavior without depending on flavor-specific ambient
-  // ztunnel behavior. It still tests both service DNS (ClusterIP DNAT) and direct pod IP paths
-  // to isolate service routing from raw pod-to-pod delivery.
+  // Restart UDP pods so they reach a settled state before the test asserts delivery.
+  await restartUdpPods();
 
   // Get server pod IP for direct path (no kube-proxy DNAT).
-  const serverPodList = await K8s(kind.Pod)
-    .InNamespace("curl-ns-udp-server")
-    .WithLabel("app=udp-echo-server")
-    .Get();
-  const serverPodIP = serverPodList.items[0].status?.podIP ?? "";
-  const serverNode = serverPodList.items[0].spec?.nodeName ?? "";
+  const serverPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Get(udpServerPodName);
+  const serverPodIP = serverPod.status?.podIP ?? "";
+  const serverNode = serverPod.spec?.nodeName ?? "";
 
-  const clientPodList = await K8s(kind.Pod)
-    .InNamespace("curl-ns-udp-allow")
-    .WithLabel("app=udp-echo-client")
-    .Get();
-  const clientNode = clientPodList.items[0].spec?.nodeName ?? "";
+  const clientPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Get(udpClientPodName);
+  const clientNode = clientPod.spec?.nodeName ?? "";
 
   const baseCtx = `pod-ip="${serverPodIP}" server-node="${serverNode}" client-node="${clientNode}"`;
 
