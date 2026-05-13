@@ -1,0 +1,100 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: istio-controlplane
+  description: "Common content shared across all flavors of the istio control plane"
+variables:
+  - name: CNI_CONF_DIR
+    description: "CNI configuration directory"
+    default: ""
+  - name: CNI_BIN_DIR
+    description: "CNI binary directory"
+    default: ""
+component:
+  charts:
+    - name: base
+      namespace: istio-system
+      # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
+      # This should be fixed in a future Istio version
+      serverSideApply: false
+      helmRepository:
+        url: https://istio-release.storage.googleapis.com/charts
+        name: base
+        version: 1.29.2
+    - name: istiod
+      namespace: istio-system
+      # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
+      # This should be fixed in a future Istio version
+      serverSideApply: false
+      helmRepository:
+        url: https://istio-release.storage.googleapis.com/charts
+        name: istiod
+        version: 1.29.2
+      valuesFiles:
+        - values/base-istiod.yaml
+    - name: uds-global-istio-config
+      namespace: istio-system
+      local:
+        path: common/chart
+      valuesFiles:
+        - common/chart/values.yaml
+    - name: cni
+      namespace: istio-system
+      helmRepository:
+        url: https://istio-release.storage.googleapis.com/charts
+        name: cni
+        version: 1.29.2
+      valuesFiles:
+        - values/base-cni.yaml
+    - name: ztunnel
+      namespace: istio-system
+      helmRepository:
+        url: https://istio-release.storage.googleapis.com/charts
+        name: ztunnel
+        version: 1.29.2
+      valuesFiles:
+        - values/base-ztunnel.yaml
+  actions:
+    onDeploy:
+      before:
+        - description: "Add helm ownership if necessary for clean helm upgrade"
+          mute: true
+          cmd: |
+            ./zarf tools kubectl annotate exemption istio -n uds-policy-exemptions "meta.helm.sh/release-name=uds-global-istio-config" --overwrite || true
+        - description: "Ensure CNI_CONF_DIR is set"
+          cmd: |
+            if [ \"${ZARF_VAR_CNI_CONF_DIR}\" = \"\" ]; then
+              if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                echo "/var/lib/rancher/k3s/agent/etc/cni/net.d"
+              else
+                echo "/etc/cni/net.d"
+              fi
+            else
+              echo "${ZARF_VAR_CNI_CONF_DIR}"
+            fi
+          setVariables:
+            - name: CNI_CONF_DIR
+        - description: "Ensure CNI_BIN_DIR is set"
+          cmd: |
+            if [ \"${ZARF_VAR_CNI_BIN_DIR}\" = \"\" ]; then
+              if ./zarf tools kubectl version -o json 2>/dev/null | ./zarf tools yq '.serverVersion.gitVersion' 2>/dev/null | grep -q "k3s"; then
+                echo "/var/lib/rancher/k3s/data/cni"
+              else
+                echo "/opt/cni/bin"
+              fi
+            else
+              echo "${ZARF_VAR_CNI_BIN_DIR}"
+            fi
+          setVariables:
+            - name: CNI_BIN_DIR
+      after:
+        - description: "Ensure Istio Ambient is enabled for Pepr"
+          cmd: |
+            echo "Setting Ambient mode for pepr-system..."
+            ./zarf tools kubectl label namespace pepr-system "istio.io/dataplane-mode"="ambient" --overwrite
+
+            echo "Disabling istio-injection on pepr-system..."
+            ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite

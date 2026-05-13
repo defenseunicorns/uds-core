@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: loki
+  description: "Common content shared across all flavors of loki"
+component:
+  charts:
+    - name: uds-loki-config
+      namespace: loki
+      local:
+        path: chart
+    - name: loki
+      namespace: loki
+      helmRepository:
+        url: https://grafana-community.github.io/helm-charts/
+        name: loki
+        version: 11.6.4
+      valuesFiles:
+        - values/values.yaml

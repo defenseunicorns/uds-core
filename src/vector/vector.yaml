@@ -1,0 +1,41 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: vector
+  description: "Deploy Vector"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-vector.yaml
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: timberio/vector:0.54.0-distroless-static
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-vector.yaml
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/timberio/vector:0.54.0
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-vector.yaml
+    charts:
+      - name: vector
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/vector:0.54.0-jammy-fips-rfcurated-rfhardened

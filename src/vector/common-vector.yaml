@@ -1,0 +1,21 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: vector
+  description: "Common content shared across all flavors of vector"
+component:
+  charts:
+    - name: uds-vector-config
+      namespace: vector
+      local:
+        path: chart
+    - name: vector
+      namespace: vector
+      git:
+        url: https://helm.vector.dev@0.51.0
+        path: charts/vector
+      valuesFiles:
+        - values/values.yaml

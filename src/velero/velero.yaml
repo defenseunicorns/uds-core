@@ -1,0 +1,47 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: velero
+  description: "UDS Core Velero"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-velero.yaml
+    charts:
+      - name: velero
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: velero/velero:v1.18.0
+      - name: velero/velero-plugin-for-aws:v1.14.0
+      - name: velero/velero-plugin-for-microsoft-azure:v1.14.0
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-velero.yaml
+    charts:
+      - name: velero
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/velero/velero:v1.18.0
+      - name: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.14.0
+      - name: registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.14.0
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-velero.yaml
+    charts:
+      - name: velero
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/velero/velero:1.18.0-noble-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/velero/velero-plugin-for-aws:1.14.0-noble-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.14.0-noble-scratch-fips-rfcurated

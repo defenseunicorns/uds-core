@@ -1,0 +1,50 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: loki
+  description: "UDS Core Loki"
+variants:
+  - target:
+      flavor: upstream
+    import:
+      path: common-loki.yaml
+    charts:
+      - name: loki
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: docker.io/grafana/loki:3.7.1
+      - name: docker.io/nginxinc/nginx-unprivileged:1.29-alpine
+      - name: docker.io/memcached:1.6.41-alpine
+      - name: ghcr.io/kiwigrid/k8s-sidecar:2.5.0
+
+  - target:
+      flavor: registry1
+    import:
+      path: common-loki.yaml
+    charts:
+      - name: loki
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/grafana/loki:3.7.1
+      - name: registry1.dso.mil/ironbank/opensource/nginx/nginx-alpine:1.29.7
+      - name: registry1.dso.mil/ironbank/opensource/memcached/memcached:1.6.41
+      - name: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.5.0
+
+  - target:
+      flavor: unicorn
+    import:
+      path: common-loki.yaml
+    charts:
+      - name: loki
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/grafana/loki:3.7.1-jammy-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/nginx:1.29.7-slim-jammy-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/memcached:1.6.41-jammy-fips-rfcurated-rfhardened
+      - name: quay.io/rfcurated/kiwigrid/k8s-sidecar:2.5.0-jammy-scratch-fips-rfcurated-rfhardened

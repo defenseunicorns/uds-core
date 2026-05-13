@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: podinfo
+component:
+  charts:
+    - name: uds-podinfo-config
+      namespace: podinfo
+      local:
+        path: ./chart
+    - name: podinfo
+      namespace: podinfo
+      git:
+        url: https://github.com/stefanprodan/podinfo.git@6.11.2
+        path: charts/podinfo
+      valuesFiles:
+        - ./podinfo-values.yaml
+  images:
+    - name: ghcr.io/stefanprodan/podinfo:6.11.2

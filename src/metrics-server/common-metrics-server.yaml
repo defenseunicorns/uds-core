@@ -1,0 +1,22 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: metrics-server
+  description: "Common content shared across all flavors of metrics-server"
+component:
+  charts:
+    - name: uds-metrics-server-config
+      namespace: metrics-server
+      local:
+        path: chart
+    - name: metrics-server
+      namespace: metrics-server
+      helmRepository:
+        url: https://kubernetes-sigs.github.io/metrics-server
+        name: metrics-server
+        version: 3.13.0
+      valuesFiles:
+        - values/values.yaml

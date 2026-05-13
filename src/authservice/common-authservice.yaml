@@ -1,0 +1,14 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: authservice
+  description: "Common content shared across all flavors of authservice"
+component:
+  charts:
+    - name: authservice
+      namespace: authservice
+      local:
+        path: chart

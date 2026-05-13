@@ -1,0 +1,52 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: falco
+  description: "Common content shared across all flavors of falco"
+variables:
+  - name: CLEANUP_LEGACY_NEUVECTOR
+    description: "Automatically cleanup previous Neuvector resources on upgrade"
+    default: "false"
+component:
+  charts:
+    - name: uds-falco-config
+      namespace: falco
+      local:
+        path: chart
+      valuesFiles:
+        - chart/values.yaml
+    - name: falco
+      namespace: falco
+      helmRepository:
+        url: https://falcosecurity.github.io/charts
+        name: falco
+        version: 8.0.0
+      valuesFiles:
+        - values/values.yaml
+  actions:
+    onDeploy:
+      before:
+        - description: "Optionally remove legacy NeuVector namespace (opt-in)"
+          cmd: |
+            if [ "${ZARF_VAR_CLEANUP_LEGACY_NEUVECTOR}" = "true" ]; then
+              echo "[cleanup] Removing legacy NeuVector namespace if present..."
+              ./zarf tools kubectl delete namespace neuvector --ignore-not-found
+            else
+              echo "[cleanup] Skipping NeuVector namespace cleanup (CLEANUP_LEGACY_NEUVECTOR=false)"
+            fi
+        - description: "Optionally remove legacy NeuVector CRDs (opt-in)"
+          cmd: |
+            if [ "${ZARF_VAR_CLEANUP_LEGACY_NEUVECTOR}" = "true" ]; then
+              echo "[cleanup] Removing legacy NeuVector CRDs if present..."
+              NV_CRDS="$(./zarf tools kubectl get crd -o name | grep -E '\.neuvector\.com$' || true)"
+              if [ -n "$NV_CRDS" ]; then
+                echo "$NV_CRDS" | xargs -r ./zarf tools kubectl delete
+              else
+                echo "[cleanup] No NeuVector CRDs found"
+              fi
+            else
+              echo "[cleanup] Skipping NeuVector CRD cleanup (CLEANUP_LEGACY_NEUVECTOR=false)"
+            fi

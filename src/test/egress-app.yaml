@@ -1,0 +1,17 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: egress-app
+component:
+  manifests:
+    - name: egress-pkg
+      files:
+        - app-egress-sidecar-package.yaml
+    - name: egress-app
+      files:
+        - app-egress-sidecar.yaml
+  images:
+    - name: curlimages/curl:latest

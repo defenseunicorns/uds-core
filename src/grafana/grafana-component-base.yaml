@@ -1,0 +1,69 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# This is an implementation of the  "Variants Extend Base Component" alternative 
+# specified here  https://github.com/zarf-dev/proposals/pull/52/changes#diff-bcbe12162bddd5b89598d5a1633ff4a6c41fa16712fba247c2c2fa6c657f72adR636
+# This is the only file required for that alternative
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: grafana
+  description: "UDS Core Grafana"
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
+component:
+  charts:
+    - name: uds-grafana-config
+      namespace: grafana
+      local:
+        path: chart
+      valuesFiles:
+        - chart/values.yaml
+    - name: grafana
+      namespace: grafana
+      helmRepository:
+        url: https://grafana-community.github.io/helm-charts
+        name: grafana
+        version: 11.6.0
+      valuesFiles:
+        - values/values.yaml
+variants:
+  - target:
+      flavor: upstream
+    charts:
+      - name: grafana
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - name: docker.io/grafana/grafana:12.4.2
+      - name: docker.io/curlimages/curl:8.19.0
+      - name: docker.io/library/busybox:1.37.0
+      - name: ghcr.io/kiwigrid/k8s-sidecar:2.5.0
+
+  - target:
+      flavor: registry1
+    charts:
+      - name: grafana
+        valuesFiles:
+          - values/registry1-values.yaml
+    images:
+      - name: registry1.dso.mil/ironbank/opensource/grafana/grafana:12.4.2
+      - name: registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.7
+      - name: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:2.5.0
+
+  - target:
+      flavor: unicorn
+    charts:
+      - name: grafana
+        valuesFiles:
+          - values/unicorn-values.yaml
+    images:
+      - name: quay.io/rfcurated/grafana:12.4.2-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/busybox:1.37.0-musl-rf.1-fips-rfcurated
+      - name: quay.io/rfcurated/curl:8.19.0-jammy-scratch-fips-rfcurated
+      - name: quay.io/rfcurated/kiwigrid/k8s-sidecar:2.5.0-jammy-scratch-fips-rfcurated-rfhardened

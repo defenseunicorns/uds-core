@@ -1,0 +1,24 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: istio-passthrough-gateway
+component:
+  charts:
+    - name: gateway
+      releaseName: passthrough-ingressgateway
+      namespace: istio-passthrough-gateway
+      helmRepository:
+        url: https://istio-release.storage.googleapis.com/charts
+        name: gateway
+        version: 1.29.2
+      valuesFiles:
+        - values/base-gateway.yaml
+    - name: uds-istio-config
+      namespace: istio-passthrough-gateway
+      local:
+        path: charts/uds-istio-config
+      valuesFiles:
+        - values/config-passthrough.yaml

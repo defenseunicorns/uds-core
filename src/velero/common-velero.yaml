@@ -1,0 +1,56 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: zarf.dev/v1beta1
+kind: ZarfComponentConfig
+metadata:
+  name: velero
+  description: "Common content shared across all flavors of velero"
+variables:
+  - name: VELERO_BUCKET_PROVIDER_URL
+    description: "S3 compatible object storage service for use with Velero"
+    default: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+  - name: VELERO_BUCKET
+    description: "S3 compatible object storage bucket for use with Velero"
+    default: "uds"
+  - name: VELERO_BUCKET_REGION
+    description: "Region of the bucket for use with Velero"
+    default: "uds-dev-stack"
+  - name: VELERO_BUCKET_KEY
+    description: "Key to use when connecting to the Velero bucket"
+    default: "uds"
+  - name: VELERO_BUCKET_KEY_SECRET
+    sensitive: true
+    description: "Key secret to use when connecting to the Velero bucket"
+    default: "uds-secret"
+  - name: VELERO_BUCKET_CREDENTIAL_NAME
+    default: "velero-bucket-credentials"
+  - name: VELERO_BUCKET_CREDENTIAL_KEY
+    default: "cloud"
+component:
+  charts:
+    - name: uds-velero-config
+      namespace: velero
+      local:
+        path: chart
+    - name: velero
+      namespace: velero
+      releaseName: velero
+      helmRepository:
+        url: https://vmware-tanzu.github.io/helm-charts
+        name: velero
+        version: 12.0.1
+      valuesFiles:
+        - values/values.yaml
+  actions:
+    onDeploy:
+      before:
+        - description: Handle Helm ownership metadata change on upgrade
+          cmd: |
+            # Update Helm ownership metadata for existing Velero CRDs
+            for crd_name in $(./zarf tools kubectl get crd -l 'component=velero' -o jsonpath='{.items[*].metadata.name}'); do
+              echo "Updating metadata for $crd_name"
+              ./zarf tools kubectl label crd "$crd_name" app.kubernetes.io/managed-by=Helm --overwrite
+              ./zarf tools kubectl annotate crd "$crd_name" meta.helm.sh/release-name="uds-velero-config" --overwrite
+              ./zarf tools kubectl annotate crd "$crd_name" meta.helm.sh/release-namespace="velero" --overwrite
+            done
