@@ -70,27 +70,29 @@ runs:
         echo "::endgroup::"
       shell: bash
 
-    # aws-network-policy-agent writes per-flow verdicts (Accept/Deny) to
-    # /var/log/aws-routed-eni/ on the node, not container stdout. kubectl logs misses these,
-    # so exec into the aws-node container (which hostPath-mounts the node dir at
-    # /host/var/log/aws-routed-eni) and pull every file via tar.
-    - name: EKS VPC CNI logs
+    # aws-network-policy-agent writes per-flow Accept/Deny verdicts to CloudWatch when
+    # vpc-cni addon is configured with nodeAgent.enableCloudWatchLogs (see
+    # .github/test-infra/aws/eks/cluster.tf). Pull the cluster's log group as JSON.
+    - name: EKS VPC CNI policy event logs
       if: ${{ inputs.distro == 'eks' }}
+      env:
+        UDS_CLUSTER_NAME: ${{ env.UDS_CLUSTER_NAME }}
+        UDS_REGION: ${{ env.UDS_REGION }}
       run: |
-        echo "::group::Collecting aws-node hostPath logs from each node"
+        echo "::group::Pulling aws-network-policy-agent CloudWatch logs"
         mkdir -p /tmp/eks-cni-logs
-        uds zarf tools kubectl get pods -n kube-system -l k8s-app=aws-node \
-          -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.nodeName}{"\n"}{end}' \
-          | while read pod node; do
-              [ -z "$pod" ] && continue
-              dest="/tmp/eks-cni-logs/${node}"
-              mkdir -p "$dest"
-              uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
-                ls -la /host/var/log/aws-routed-eni/ > "${dest}/_listing.txt" 2>&1 || true
-              uds zarf tools kubectl exec -n kube-system "$pod" -c aws-node -- \
-                tar -cf - -C /host/var/log/aws-routed-eni . 2>/dev/null \
-                | tar -xf - -C "${dest}/" 2>/dev/null || echo "tar failed for ${pod}" >> "${dest}/_listing.txt"
-            done
+        LOG_GROUP="/aws/eks/${UDS_CLUSTER_NAME}/cluster"
+        # 4-hour window covers a full CI test pass with margin.
+        START_MS=$(( ($(date +%s) - 14400) * 1000 ))
+        echo "log group: ${LOG_GROUP} region: ${UDS_REGION} start: ${START_MS}" > /tmp/eks-cni-logs/_meta.txt
+        # Streams contain per-node policy decisions; list them for triage context.
+        aws logs describe-log-streams --region "${UDS_REGION}" --log-group-name "${LOG_GROUP}" \
+          --order-by LastEventTime --descending --max-items 50 \
+          > /tmp/eks-cni-logs/_streams.json 2>>/tmp/eks-cni-logs/_meta.txt || echo "describe-log-streams failed" >> /tmp/eks-cni-logs/_meta.txt
+        # Full event dump as JSON for offline grep (Verdict, src/dst IPs, ports, protocol).
+        aws logs filter-log-events --region "${UDS_REGION}" --log-group-name "${LOG_GROUP}" \
+          --start-time "${START_MS}" --output json \
+          > /tmp/eks-cni-logs/events.json 2>>/tmp/eks-cni-logs/_meta.txt || echo "filter-log-events failed" >> /tmp/eks-cni-logs/_meta.txt
         echo "::endgroup::"
       shell: bash
 
