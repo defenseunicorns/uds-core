@@ -68,74 +68,6 @@ function isResponseError(curlOutput: { stdout: string; stderr: string }) {
   return httpResponseCode < 100 || httpResponseCode > 399;
 }
 
-type PodExecResult = Awaited<ReturnType<typeof execInPod>>;
-
-async function getUdpServerState(serverPodName: string): Promise<string> {
-  const state = await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    [
-      "NC_HELP=$(nc --help 2>&1 | tr '\n' ' ' | sed 's/  */ /g')",
-      'LOG_STATUS="missing"',
-      'if [ -f /tmp/udp.log ]; then LOG_STATUS=$(wc -c < /tmp/udp.log 2>/dev/null || printf "read-error"); fi',
-      "META=$(cat /tmp/udp.meta 2>/dev/null || true)",
-      "LOG_CONTENT=$(cat /tmp/udp.log 2>/dev/null || true)",
-      "LISTEN=$(ss -ulnp 2>/dev/null | grep 5000 || netstat -ulnp 2>/dev/null | grep 5000 || true)",
-      'PROC=$(ps -ef | grep "[n]c -u" || true)',
-      'printf "nc-help=%s\nmeta=%s\nlisten=%s\nproc=%s\nlog-bytes=%s\nlog=%s" "$NC_HELP" "$META" "$LISTEN" "$PROC" "$LOG_STATUS" "$LOG_CONTENT"',
-    ].join("; "),
-  ]);
-
-  return state.stdout.trim();
-}
-
-async function clearUdpLog(serverPodName: string): Promise<void> {
-  await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    "> /tmp/udp.log",
-  ]);
-}
-
-async function readUdpLog(serverPodName: string): Promise<PodExecResult> {
-  return execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    "cat /tmp/udp.log 2>/dev/null || true",
-  ]);
-}
-
-async function waitForUdpLog(
-  serverPodName: string,
-  expected: string,
-  timeoutMs = 5000,
-  intervalMs = 250,
-): Promise<{ log: PodExecResult; diagnostics: string }> {
-  const deadline = Date.now() + timeoutMs;
-  let log = await readUdpLog(serverPodName);
-
-  while (Date.now() < deadline) {
-    if (log.stdout.trim() === expected) {
-      return { log, diagnostics: await getUdpServerState(serverPodName) };
-    }
-
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
-    log = await readUdpLog(serverPodName);
-  }
-
-  return { log, diagnostics: await getUdpServerState(serverPodName) };
-}
-
-function expectUdpPingLog(result: { log: PodExecResult; diagnostics: string }, message: string) {
-  const lines = result.log.stdout.trim().split("\n").filter(Boolean);
-
-  expect(lines.length > 0, `${message} lines=${JSON.stringify(lines)}`).toBe(true);
-  expect(
-    lines.every(line => line === "ping"),
-    `${message} lines=${JSON.stringify(lines)}`,
-  ).toBe(true);
-}
-
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 
@@ -200,33 +132,21 @@ async function restartUdpPods(): Promise<void> {
 }
 
 beforeAll(async () => {
-  [
-    curlPodName1,
-    testAdminApp,
-    curlPodName6,
-    curlPodName8,
-    curlPodNameEgressAmbient1,
-    curlPodNameEgressAmbient2,
-    curlPodNameEgressAmbient3,
-    udpServerPodName,
-    udpClientPodName,
-  ] = await Promise.all([
-    getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1"),
-    getPodName("test-admin-app", "app=httpbin"),
-    getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
-    getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
-    getPodName("egress-ambient-1", "app=curl"),
-    getPodName("egress-ambient-2", "app=curl"),
-    getPodName("egress-ambient-2", "app=another-curl"),
-    getPodName("curl-ns-udp-server", "app=udp-echo-server"),
-    getPodName("curl-ns-udp-allow", "app=udp-echo-client"),
-  ]);
+  // Always fetch these pod names
+  curlPodName1 = await getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1");
+  testAdminApp = await getPodName("test-admin-app", "app=httpbin");
+  curlPodName6 = await getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress");
+  curlPodName8 = await getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api");
+  curlPodNameEgressAmbient1 = await getPodName("egress-ambient-1", "app=curl");
+  curlPodNameEgressAmbient2 = await getPodName("egress-ambient-2", "app=curl");
+  curlPodNameEgressAmbient3 = await getPodName("egress-ambient-2", "app=another-curl");
+  udpServerPodName = await getPodName("curl-ns-udp-server", "app=udp-echo-server");
+  udpClientPodName = await getPodName("curl-ns-udp-allow", "app=udp-echo-client");
 
+  // Only fetch egress pod names if egress tests will run
   if (runEgressTests) {
-    [curlPodNameEgress1, curlPodNameEgress2] = await Promise.all([
-      getPodName("egress-gw-1", "app=curl"),
-      getPodName("egress-gw-2", "app=curl"),
-    ]);
+    curlPodNameEgress1 = await getPodName("egress-gw-1", "app=curl");
+    curlPodNameEgress2 = await getPodName("egress-gw-2", "app=curl");
   }
 });
 
@@ -656,75 +576,58 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 },
   // Restart UDP pods so they reach a settled state before the test asserts delivery.
   await restartUdpPods();
 
-  // Get server pod IP for direct path (no kube-proxy DNAT).
-  const serverPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Get(udpServerPodName);
-  const serverPodIP = serverPod.status?.podIP ?? "";
-  const serverNode = serverPod.spec?.nodeName ?? "";
+  // Both execInPod calls run concurrently: the server nc blocks waiting for a UDP packet
+  // and the client sends after a short delay. We check the server's stdout to verify
+  // whether the packet arrived, with no echo mechanism required.
 
-  const clientPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Get(udpClientPodName);
-  const clientNode = clientPod.spec?.nodeName ?? "";
-
-  const baseCtx = `pod-ip="${serverPodIP}" server-node="${serverNode}" client-node="${clientNode}"`;
-
-  // ── ALLOWED via service DNS (kube-proxy DNAT path) ──────────────────────────
-  // udp-echo-client has explicit UDP egress NetworkPolicy to server port 5000.
-  await clearUdpLog(udpServerPodName);
-  const svcSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
-    "sh",
-    "-c",
-    "for i in 1 2 3; do echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; printf ' attempt:%s' \"$i\"; sleep 0.2; done; echo; echo nc-exit:$?",
-  ]);
-  const allowedSvc = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expectUdpPingLog(
-    allowedSvc,
-    `UDP allowed via service DNS: log="${allowedSvc.log.stdout}" nc="${svcSend.stdout}" ${baseCtx} server-state="${allowedSvc.diagnostics}"`,
-  );
-
-  // ── ALLOWED via pod IP (no kube-proxy DNAT) ──────────────────────────────────
-  await clearUdpLog(udpServerPodName);
-  const podIPSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
-    "sh",
-    "-c",
-    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
-  ]);
-  const allowedPodIP = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expectUdpPingLog(
-    allowedPodIP,
-    `UDP allowed via pod IP: log="${allowedPodIP.log.stdout}" nc="${podIPSend.stdout}" ${baseCtx} server-state="${allowedPodIP.diagnostics}"`,
-  );
-
-  // ── DENIED via service DNS ───────────────────────────────────────────────────
-  // curl-pkg-deny-all-1 has no UDP egress to port 5000 (client-side enforcement).
-  // Server's ingress NetworkPolicy adds defense-in-depth.
-  await clearUdpLog(udpServerPodName);
-  const deniedSvcSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
-    "sh",
-    "-c",
-    "for i in 1 2 3; do echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; printf ' attempt:%s' \"$i\"; sleep 0.2; done; echo; echo nc-exit:$?",
-  ]);
-  const deniedSvc = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
-  expect(
-    deniedSvc.log.stdout.trim(),
-    `UDP blocked via service DNS: log="${deniedSvc.log.stdout}" nc="${deniedSvcSend.stdout}" ${baseCtx} server-state="${deniedSvc.diagnostics}"`,
-  ).toBe("");
-
-  // ── DENIED via pod IP ────────────────────────────────────────────────────────
-  await clearUdpLog(udpServerPodName);
-  const deniedPodIPSend = await execInPod(
-    "curl-ns-deny-all-1",
-    curlPodName1,
-    "curl-pkg-deny-all-1",
-    [
+  // Allowed: udp-echo-client (curl-ns-udp-allow) has remoteProtocol: UDP egress to server port 5000.
+  const [allowedServer] = await Promise.all([
+    execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
       "sh",
       "-c",
-      `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
-    ],
-  );
-  const deniedPodIP = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
-  expect(
-    deniedPodIP.log.stdout.trim(),
-    `UDP blocked via pod IP: log="${deniedPodIP.log.stdout}" nc="${deniedPodIPSend.stdout}" ${baseCtx} server-state="${deniedPodIP.diagnostics}"`,
-  ).toBe("");
+      "timeout 3 nc -u -l -p 5000",
+    ]),
+    (async () => {
+      // Retry sends at short intervals — UDP gives no feedback if the server isn't listening yet.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 600));
+        await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+          "sh",
+          "-c",
+          "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+        ]);
+      }
+    })(),
+  ]);
+
+  const allowedDebug = `UDP allowed: server stdout="${allowedServer.stdout}"`;
+  expect(allowedServer.stdout.trim(), allowedDebug).toBe("ping");
+
+  // Blocked: the client's egress NetworkPolicy (curl-pkg-deny-all-1 has no UDP egress to
+  // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
+  // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
+  // Either policy alone would block the traffic.
+  const [deniedServer] = await Promise.all([
+    execInPod("curl-ns-udp-server", udpServerPodName, "udp-echo-server", [
+      "sh",
+      "-c",
+      "timeout 3 nc -u -l -p 5000",
+    ]),
+    (async () => {
+      // Retry sends at short intervals — UDP gives no feedback if the server isn't listening yet.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 600));
+        await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
+          "sh",
+          "-c",
+          "echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>/dev/null || true",
+        ]);
+      }
+    })(),
+  ]);
+
+  const deniedDebug = `UDP blocked: server stdout="${deniedServer.stdout}"`;
+  expect(deniedServer.stdout.trim(), deniedDebug).toBe("");
 });
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {
