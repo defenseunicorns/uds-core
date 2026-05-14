@@ -1,0 +1,39 @@
+---
+title: Identity Config 0.17.0
+description: Legacy manual upgrade notes for UDS Identity Config 0.17.0, covering OpenTofu client support and concurrent SSO session limits.
+sidebar:
+  order: 2.006
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## OpenTofu client
+
+UDS Identity Config introduced the `uds-opentofu-client` for managing Keycloak with OpenTofu. New realm imports include this client automatically. If you cannot reinitialize Keycloak, manually configure the client by following [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/).
+
+## SSO session limits
+
+UDS Core v0.51.0 also introduced per-user concurrent SSO session limits in the `uds` realm.
+
+To configure the session limiter manually:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Authentication** > **Flows** > **UDS Authentication**.
+3. Click **Add execution**.
+4. Select **User Session Count Limiter**.
+5. Open the settings for the new **User Session Count Limiter** execution.
+6. Set **Maximum concurrent sessions for each user within this realm** to the same value as `SSO_SESSION_MAX_PER_USER` in `realmInitEnv`.
+
+</Steps>
+
+## Related documentation
+
+- [Manage Keycloak with OpenTofu](/how-to-guides/identity-and-authorization/manage-keycloak-with-opentofu/) - current OpenTofu configuration guide
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions

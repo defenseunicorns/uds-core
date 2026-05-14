@@ -35,6 +35,19 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## Deploy UDS Core
 
+> [!IMPORTANT]
+> Before deploying, confirm your Kubernetes context is not pointing at a real cluster such as AKS, EKS, or GKE:
+>
+> ```bash
+> uds zarf tools kubectl config current-context
+> ```
+>
+> The `k3d-core-demo` bundle creates and targets a local k3d cluster. If your active context points somewhere unexpected, stop and switch context before continuing. If you are redeploying to an existing cluster or using a locally built demo bundle, also confirm the bundle architecture matches your node architecture:
+>
+> ```bash
+> uds zarf tools kubectl get nodes -o custom-columns=NAME:.metadata.name,ARCH:.status.nodeInfo.architecture
+> ```
+
 <Steps>
 
 1. **Deploy the [`k3d-core-demo`](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/README.md) bundle**
@@ -45,7 +58,7 @@ import { Steps } from '@astrojs/starlight/components';
    uds deploy k3d-core-demo:latest
    ```
 
-   Confirm with `y` when prompted. The first run takes approximately **10–15 minutes** while images are pulled.
+   Confirm with `y` when prompted. The first run takes approximately **10-15 minutes** while images are pulled.
 
    > [!NOTE]
    > To deploy a specific version, replace `latest` with a version tag. See all versions on the [package registry](https://github.com/defenseunicorns/uds-core/pkgs/container/packages%2Fuds%2Fbundles%2Fk3d-core-demo).
@@ -96,4 +109,3 @@ Delete the local k3d cluster:
 ```bash
 k3d cluster delete uds
 ```
-

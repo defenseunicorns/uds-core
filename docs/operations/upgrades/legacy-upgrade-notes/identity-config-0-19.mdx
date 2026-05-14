@@ -1,0 +1,41 @@
+---
+title: Identity Config 0.19.0+
+description: Legacy manual upgrade notes for UDS Identity Config 0.19.0+, covering the Keycloak view-system role required by older OpenTofu workflows.
+sidebar:
+  order: 2.005
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## ServerInfo permissions
+
+Keycloak 26.4.0 changed the `ServerInfo` endpoint. Without additional permissions, OpenTofu can fail with a `Malformed version` error when using the Keycloak Terraform provider. See [Keycloak Terraform Provider #1342](https://github.com/keycloak/terraform-provider-keycloak/issues/1342#issuecomment-3398650912) for upstream context.
+
+To add the required `view-system` role:
+
+<Steps>
+
+1. Navigate to the `uds` realm.
+2. Go to **Clients** > **realm-management** > **Client roles** > **Roles**.
+3. Click **Create role**.
+4. Set **Role name** to `view-system`.
+5. Set **Description** to `Enables displaying SystemInfo through the ServerInfo endpoint`.
+6. Click **Save**.
+7. Return to the `realm-management` roles by clicking the **Client details** breadcrumb.
+8. Select the `realm-admin` role.
+9. Open the **Associated roles** tab.
+10. Click **Assign role** > **Client roles**.
+11. Select the `view-system` role.
+12. Click **Assign**.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes

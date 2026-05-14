@@ -1,0 +1,64 @@
+---
+title: Identity Config 0.5.2
+description: Legacy manual upgrade notes for UDS Identity Config 0.5.2, covering Keycloak event listeners and the bare-groups client scope.
+sidebar:
+  order: 2.011
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## Event listeners
+
+UDS Identity Config v0.5.2 added a custom JSON Keycloak event logger, renamed the custom registration event listener, and added the `bare-groups` client scope.
+
+To enable the JSON event logger in the `uds` realm:
+
+<Steps>
+
+1. Go to **Realm settings** > **Events**.
+2. Add `jsonlog-event-listener`.
+3. Remove the built-in `jboss-logging` event listener.
+4. Click **Save**.
+
+</Steps>
+
+To update the renamed registration event listener in the `uds` realm:
+
+<Steps>
+
+1. Go to **Realm settings** > **Events**.
+2. Add `registration-event-listener`.
+3. Remove `custom-registration-listener`.
+4. Click **Save**.
+
+</Steps>
+
+## `bare-groups` client scope
+
+To add the `bare-groups` client scope:
+
+<Steps>
+
+1. Go to **Client scopes** > **Create client scope**.
+2. Set **Name** to `bare-groups`.
+3. Set **Type** to **Optional**.
+4. Set **Include in token scope** to **On**.
+5. Click **Save**.
+6. Open **Mappers** and click **Create a new mapper**.
+7. Select **Custom Group Path Mapper**.
+8. Set **Name** to `bare groups`.
+9. To allow clients to use this scope as a default client scope, go to **Clients** > **Client registration** > **Allowed client scopes**.
+10. Add `bare-groups`.
+11. Click **Save**.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes
