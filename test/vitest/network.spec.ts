@@ -132,21 +132,33 @@ async function restartUdpPods(): Promise<void> {
 }
 
 beforeAll(async () => {
-  // Always fetch these pod names
-  curlPodName1 = await getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1");
-  testAdminApp = await getPodName("test-admin-app", "app=httpbin");
-  curlPodName6 = await getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress");
-  curlPodName8 = await getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api");
-  curlPodNameEgressAmbient1 = await getPodName("egress-ambient-1", "app=curl");
-  curlPodNameEgressAmbient2 = await getPodName("egress-ambient-2", "app=curl");
-  curlPodNameEgressAmbient3 = await getPodName("egress-ambient-2", "app=another-curl");
-  udpServerPodName = await getPodName("curl-ns-udp-server", "app=udp-echo-server");
-  udpClientPodName = await getPodName("curl-ns-udp-allow", "app=udp-echo-client");
+  [
+    curlPodName1,
+    testAdminApp,
+    curlPodName6,
+    curlPodName8,
+    curlPodNameEgressAmbient1,
+    curlPodNameEgressAmbient2,
+    curlPodNameEgressAmbient3,
+    udpServerPodName,
+    udpClientPodName,
+  ] = await Promise.all([
+    getPodName("curl-ns-deny-all-1", "app=curl-pkg-deny-all-1"),
+    getPodName("test-admin-app", "app=httpbin"),
+    getPodName("curl-ns-remote-ns-1", "app=curl-pkg-remote-ns-egress"),
+    getPodName("curl-ns-kube-api", "app=curl-pkg-kube-api"),
+    getPodName("egress-ambient-1", "app=curl"),
+    getPodName("egress-ambient-2", "app=curl"),
+    getPodName("egress-ambient-2", "app=another-curl"),
+    getPodName("curl-ns-udp-server", "app=udp-echo-server"),
+    getPodName("curl-ns-udp-allow", "app=udp-echo-client"),
+  ]);
 
-  // Only fetch egress pod names if egress tests will run
   if (runEgressTests) {
-    curlPodNameEgress1 = await getPodName("egress-gw-1", "app=curl");
-    curlPodNameEgress2 = await getPodName("egress-gw-2", "app=curl");
+    [curlPodNameEgress1, curlPodNameEgress2] = await Promise.all([
+      getPodName("egress-gw-1", "app=curl"),
+      getPodName("egress-gw-2", "app=curl"),
+    ]);
   }
 });
 
