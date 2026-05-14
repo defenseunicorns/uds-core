@@ -132,6 +132,9 @@ let curlPodNameEgress2 = "";
 let udpServerPodName = "";
 let udpClientPodName = "";
 
+// Each getPodName is a separate API list call; on a slow EKS API server, 9+ sequential
+// calls can overrun the default 10s hook timeout. Run them in parallel so total time
+// tracks the slowest single call, not the sum.
 beforeAll(async () => {
   [
     curlPodName1,
