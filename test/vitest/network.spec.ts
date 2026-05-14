@@ -83,8 +83,12 @@ let curlPodNameEgress2 = "";
 let udpServerPodName = "";
 let udpClientPodName = "";
 
-async function waitForPodByLabel(namespace: string, labelSelector: string): Promise<string> {
-  const deadline = Date.now() + 120000;
+async function waitForPodByLabel(
+  namespace: string,
+  labelSelector: string,
+  timeoutMs = 90000,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
     const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
@@ -127,8 +131,10 @@ async function restartUdpPods(): Promise<void> {
     }
   }
 
-  udpServerPodName = await waitForPodByLabel("curl-ns-udp-server", "app=udp-echo-server");
-  udpClientPodName = await waitForPodByLabel("curl-ns-udp-allow", "app=udp-echo-client");
+  [udpServerPodName, udpClientPodName] = await Promise.all([
+    waitForPodByLabel("curl-ns-udp-server", "app=udp-echo-server"),
+    waitForPodByLabel("curl-ns-udp-allow", "app=udp-echo-client"),
+  ]);
 }
 
 beforeAll(async () => {
@@ -584,7 +590,7 @@ test(
   },
 );
 
-test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 120000 }, async () => {
+test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 180000 }, async () => {
   // Restart UDP pods so they reach a settled state before the test asserts delivery.
   await restartUdpPods();
 
