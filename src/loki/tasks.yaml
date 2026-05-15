@@ -53,6 +53,9 @@ tasks:
         default: "10"
     actions:
       - description: Validate object storage provider configuration
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           set -euo pipefail
 
@@ -88,6 +91,9 @@ tasks:
           - name: LOKI_OBJECT_STORAGE_TEST_START
 
       - description: Push a test log and flush Loki chunks
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           set -euo pipefail
 
@@ -107,7 +113,14 @@ tasks:
             echo "Loki push and flush diagnostics:"
             echo "Loki write pods:"
             uds zarf tools kubectl get pods -n loki -l app.kubernetes.io/component=write || true
-            echo "Port-forward output is available at ${PORT_FORWARD_LOG} during task execution."
+            echo "Port-forward output:"
+            if [ -s "${PORT_FORWARD_LOG}" ]; then
+              while IFS= read -r line; do
+                echo "  ${line}"
+              done < "${PORT_FORWARD_LOG}"
+            else
+              echo "  No port-forward output captured."
+            fi
           }
 
           fail() {
@@ -168,6 +181,9 @@ tasks:
           echo "Pushed test log and flushed Loki chunks."
 
       - description: Verify Loki chunks object write
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           set -euo pipefail
 
