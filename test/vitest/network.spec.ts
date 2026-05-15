@@ -117,59 +117,6 @@ function expectUdpPingLog(log: string, message: string) {
   ).toBe(true);
 }
 
-async function waitForPodByLabel(
-  namespace: string,
-  labelSelector: string,
-  timeoutMs = 90000,
-): Promise<string> {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
-    const readyPod = pods.items.find(
-      pod =>
-        pod.status?.phase === "Running" &&
-        pod.status.containerStatuses?.every(status => status.ready) &&
-        !pod.metadata?.deletionTimestamp,
-    );
-
-    if (readyPod?.metadata?.name) {
-      return readyPod.metadata.name;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
-
-  throw new Error(`Timed out waiting for running pod in ${namespace} with label ${labelSelector}`);
-}
-
-async function restartUdpPods(): Promise<void> {
-  const serverPods = await K8s(kind.Pod)
-    .InNamespace("curl-ns-udp-server")
-    .WithLabel("app=udp-echo-server")
-    .Get();
-  for (const pod of serverPods.items) {
-    if (pod.metadata?.name) {
-      await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Delete(pod.metadata.name);
-    }
-  }
-
-  const clientPods = await K8s(kind.Pod)
-    .InNamespace("curl-ns-udp-allow")
-    .WithLabel("app=udp-echo-client")
-    .Get();
-  for (const pod of clientPods.items) {
-    if (pod.metadata?.name) {
-      await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Delete(pod.metadata.name);
-    }
-  }
-
-  [udpServerPodName, udpClientPodName] = await Promise.all([
-    waitForPodByLabel("curl-ns-udp-server", "app=udp-echo-server"),
-    waitForPodByLabel("curl-ns-udp-allow", "app=udp-echo-client"),
-  ]);
-}
-
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 
@@ -641,19 +588,29 @@ test(
   },
 );
 
-test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 180000 }, async () => {
-  // Restart the dedicated UDP pods so the test runs against a fresh steady-state dataplane.
-  await restartUdpPods();
+test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, async () => {
+  const serverPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Get(udpServerPodName);
+  const serverPodIP = serverPod.status?.podIP ?? "";
+  const serverNode = serverPod.spec?.nodeName ?? "";
 
-  // Allowed: udp-echo-client (curl-ns-udp-allow) has remoteProtocol: UDP egress to server port 5000.
+  const clientPod = await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Get(udpClientPodName);
+  const clientNode = clientPod.spec?.nodeName ?? "";
+
+  const placement = `server-node="${serverNode}" client-node="${clientNode}" server-ip="${serverPodIP}"`;
+
+  // Validate the NetworkPolicy behavior via direct pod IP so the test stays focused on UDP
+  // policy enforcement rather than kube-proxy ClusterIP DNAT timing on EKS.
   await clearUdpLog(udpServerPodName);
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    "for i in 1 2 3; do echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; printf ' attempt:%s' \"$i\"; sleep 0.2; done; echo; echo nc-exit:$?",
+    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
   ]);
   const allowedLog = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expectUdpPingLog(allowedLog, `UDP allowed: log="${allowedLog}" nc="${allowedSend.stdout}"`);
+  expectUdpPingLog(
+    allowedLog,
+    `UDP allowed: log="${allowedLog}" nc="${allowedSend.stdout}" ${placement}`,
+  );
 
   // Blocked: the client's egress NetworkPolicy (curl-pkg-deny-all-1 has no UDP egress to
   // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
@@ -663,10 +620,12 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 180000 },
   const deniedSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
     "sh",
     "-c",
-    "for i in 1 2 3; do echo ping | nc -u -w 1 udp-echo-server.curl-ns-udp-server.svc.cluster.local 5000 2>&1; printf ' attempt:%s' \"$i\"; sleep 0.2; done; echo; echo nc-exit:$?",
+    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
   ]);
   const deniedLog = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
-  expect(deniedLog, `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}"`).toBe("");
+  expect(deniedLog, `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`).toBe(
+    "",
+  );
 });
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {
