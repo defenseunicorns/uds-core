@@ -128,6 +128,28 @@ runs:
         echo "::endgroup::"
       shell: bash
 
+    # aws-network-policy-agent writes per-flow Accept/Deny verdicts to CloudWatch when
+    # vpc-cni addon is configured with nodeAgent.enableCloudWatchLogs.
+    - name: EKS VPC CNI policy event logs
+      if: ${{ inputs.distro == 'eks' }}
+      env:
+        UDS_CLUSTER_NAME: ${{ env.UDS_CLUSTER_NAME }}
+        UDS_REGION: ${{ env.UDS_REGION }}
+      run: |
+        echo "::group::Pulling aws-network-policy-agent CloudWatch logs"
+        mkdir -p /tmp/eks-cni-logs
+        LOG_GROUP="/aws/eks/${UDS_CLUSTER_NAME}/cluster"
+        START_MS=$(( ($(date +%s) - 14400) * 1000 ))
+        echo "log group: ${LOG_GROUP} region: ${UDS_REGION} start: ${START_MS}" > /tmp/eks-cni-logs/_meta.txt
+        aws logs describe-log-streams --region "${UDS_REGION}" --log-group-name "${LOG_GROUP}" \
+          --order-by LastEventTime --descending --max-items 50 \
+          > /tmp/eks-cni-logs/_streams.json 2>>/tmp/eks-cni-logs/_meta.txt || echo "describe-log-streams failed" >> /tmp/eks-cni-logs/_meta.txt
+        aws logs filter-log-events --region "${UDS_REGION}" --log-group-name "${LOG_GROUP}" \
+          --start-time "${START_MS}" --output json \
+          > /tmp/eks-cni-logs/events.json 2>>/tmp/eks-cni-logs/_meta.txt || echo "filter-log-events failed" >> /tmp/eks-cni-logs/_meta.txt
+        echo "::endgroup::"
+      shell: bash
+
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: debug-log${{ inputs.suffix }}
@@ -138,6 +160,7 @@ runs:
           /tmp/maru-*.log
           /tmp/debug-*.log
           /tmp/pod-logs
+          /tmp/eks-cni-logs
           /tmp/control-plane-logs
           /tmp/uds-containerd-logs
           /tmp/k3d-uds-*.log

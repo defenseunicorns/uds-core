@@ -142,6 +142,8 @@ module "eks" {
       iam_role_additional_policies = {
         AmazonSSMManagedInstanceCore = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
         AmazonEBSCSIDriverPolicy     = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+        # Lets aws-network-policy-agent ship per-flow verdicts to CloudWatch Logs.
+        CloudWatchAgentServerPolicy = "arn:${data.aws_partition.current.partition}:iam::aws:policy/CloudWatchAgentServerPolicy"
       }
 
       tags = merge(local.tags, {
@@ -157,6 +159,10 @@ module "eks" {
       before_compute = true
       configuration_values = jsonencode({
         enableNetworkPolicy = "true"
+        nodeAgent = {
+          enablePolicyEventLogs = "true"
+          enableCloudWatchLogs  = "true"
+        }
       })
       # Needed because of https://github.com/terraform-aws-modules/terraform-aws-eks/issues/3582
       resolve_conflicts_on_create = "OVERWRITE"

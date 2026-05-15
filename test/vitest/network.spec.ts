@@ -117,6 +117,59 @@ function expectUdpPingLog(log: string, message: string) {
   ).toBe(true);
 }
 
+async function waitForPodByLabel(
+  namespace: string,
+  labelSelector: string,
+  timeoutMs = 90000,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(labelSelector).Get();
+    const readyPod = pods.items.find(
+      pod =>
+        pod.status?.phase === "Running" &&
+        pod.status.containerStatuses?.every(status => status.ready) &&
+        !pod.metadata?.deletionTimestamp,
+    );
+
+    if (readyPod?.metadata?.name) {
+      return readyPod.metadata.name;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  throw new Error(`Timed out waiting for running pod in ${namespace} with label ${labelSelector}`);
+}
+
+async function restartUdpPods(): Promise<void> {
+  const serverPods = await K8s(kind.Pod)
+    .InNamespace("curl-ns-udp-server")
+    .WithLabel("app=udp-echo-server")
+    .Get();
+  for (const pod of serverPods.items) {
+    if (pod.metadata?.name) {
+      await K8s(kind.Pod).InNamespace("curl-ns-udp-server").Delete(pod.metadata.name);
+    }
+  }
+
+  const clientPods = await K8s(kind.Pod)
+    .InNamespace("curl-ns-udp-allow")
+    .WithLabel("app=udp-echo-client")
+    .Get();
+  for (const pod of clientPods.items) {
+    if (pod.metadata?.name) {
+      await K8s(kind.Pod).InNamespace("curl-ns-udp-allow").Delete(pod.metadata.name);
+    }
+  }
+
+  [udpServerPodName, udpClientPodName] = await Promise.all([
+    waitForPodByLabel("curl-ns-udp-server", "app=udp-echo-server"),
+    waitForPodByLabel("curl-ns-udp-allow", "app=udp-echo-client"),
+  ]);
+}
+
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 
@@ -588,7 +641,10 @@ test(
   },
 );
 
-test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, async () => {
+test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 180000 }, async () => {
+  // Restart the dedicated UDP pods so the test runs against a fresh steady-state dataplane.
+  await restartUdpPods();
+
   // Allowed: udp-echo-client (curl-ns-udp-allow) has remoteProtocol: UDP egress to server port 5000.
   await clearUdpLog(udpServerPodName);
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [

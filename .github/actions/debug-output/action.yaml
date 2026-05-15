@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: debug-output
@@ -34,4 +34,18 @@ runs:
         uds zarf tools kubectl top nodes | tee /tmp/debug-k-top-node.log || true
         uds zarf tools kubectl top pods -A | tee /tmp/debug-k-top-pods.log || true
         echo "::endgroup::"
+        echo "::group::kubectl get endpointslices -A -o yaml"
+        uds zarf tools kubectl get endpointslices.discovery.k8s.io -A -o yaml | tee /tmp/debug-k-get-endpointslices.log || true
+        echo "::endgroup::"
+        echo "::group::kubectl get networkpolicies -A -o yaml"
+        uds zarf tools kubectl get networkpolicies.networking.k8s.io -A -o yaml | tee /tmp/debug-k-get-networkpolicies.log || true
+        echo "::endgroup::"
+        # PolicyEndpoint is the AWS VPC CNI CR that aws-network-policy-agent's eBPF programs
+        # consume. Confirms the generated NetworkPolicies were translated to per-pod eBPF state.
+        # CRD only exists on EKS with VPC CNI NetworkPolicy enabled; skip when absent.
+        if uds zarf tools kubectl get crd policyendpoints.networking.k8s.aws >/dev/null 2>&1; then
+          echo "::group::kubectl get policyendpoints -A -o yaml"
+          uds zarf tools kubectl get policyendpoints.networking.k8s.aws -A -o yaml | tee /tmp/debug-k-get-policyendpoints.log || true
+          echo "::endgroup::"
+        fi
       shell: bash
