@@ -135,7 +135,9 @@ tasks:
           PORT_FORWARD_PID="$!"
 
           for attempt in $(seq 1 30); do
+            echo "Attempt ${attempt}/30: checking Loki write port-forward readiness..."
             if curl -fsS "http://127.0.0.1:${LOKI_PORT}/ready" >/dev/null 2>&1; then
+              echo "Loki write port-forward is ready."
               break
             fi
             if ! kill -0 "${PORT_FORWARD_PID}" >/dev/null 2>&1; then
@@ -211,7 +213,11 @@ tasks:
           trap cleanup EXIT
 
           END_TIME=$(( $(date +%s) + ${{ .inputs.poll_timeout }} ))
+          ATTEMPT=1
           while [ "$(date +%s)" -lt "${END_TIME}" ]; do
+            REMAINING_SECONDS=$(( END_TIME - $(date +%s) ))
+            echo "Attempt ${ATTEMPT}: checking for Loki chunks object written after ${LOKI_OBJECT_STORAGE_TEST_START} (${REMAINING_SECONDS}s remaining)..."
+
             RECENT_OBJECT_KEY="$(aws s3api list-objects-v2 \
               --bucket "${LOKI_CHUNKS_OBJECT_STORAGE_BUCKET}" \
               --query "Contents[?LastModified>=\`${LOKI_OBJECT_STORAGE_TEST_START}\`].Key | [0]" \
@@ -222,6 +228,8 @@ tasks:
               exit 0
             fi
 
+            echo "No recent Loki chunks object found yet; waiting ${{ .inputs.poll_interval }}s before retrying."
+            ATTEMPT=$(( ATTEMPT + 1 ))
             sleep "${{ .inputs.poll_interval }}"
           done
 
