@@ -219,11 +219,13 @@ tasks:
             echo "Attempt ${ATTEMPT}: checking for Loki chunk objects under fake/ written after ${LOKI_OBJECT_STORAGE_TEST_START} (${REMAINING_SECONDS}s remaining)..."
 
             # auth_enabled is false, so Loki writes tenant chunk objects under fake/.
+            : > "${S3_LIST_ERROR}"
             RECENT_CHUNK_OBJECT_COUNT="$(aws s3api list-objects-v2 \
               --bucket "${LOKI_CHUNKS_OBJECT_STORAGE_BUCKET}" \
               --prefix "fake/" \
-              --query "length(Contents[?LastModified>=\`${LOKI_OBJECT_STORAGE_TEST_START}\`])" \
-              --output text 2>"${S3_LIST_ERROR}" || true)"
+              --output json 2>"${S3_LIST_ERROR}" \
+              | jq --arg start "${LOKI_OBJECT_STORAGE_TEST_START}" '[.Contents[]? | select(.LastModified >= $start)] | length' \
+              || true)"
 
             if [ -n "${RECENT_CHUNK_OBJECT_COUNT}" ] && [ "${RECENT_CHUNK_OBJECT_COUNT}" -gt 0 ] 2>/dev/null; then
               echo "Validated Loki wrote recent chunk objects to configured object storage."
