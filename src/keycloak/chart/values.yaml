@@ -117,6 +117,39 @@ insecureAdminPasswordGeneration:
   enabled: false
   username: admin
 
+# Realm management mode toggles. The two are independent and can be enabled
+# together — Keycloak imports at boot AND kcc reconciles afterward.
+realmImport:
+  # When enabled, Keycloak boots with --import-realm and ingests
+  # /opt/keycloak/data/import/realm.json on first start.
+  # NOTE: --import-realm only takes effect when the realm does not already
+  # exist. On upgrades or any subsequent deploy where the realm is already
+  # in the database, this flag is a no-op. Use realmSync for ongoing
+  # reconciliation.
+  # FUTURE: this toggle may be deprecated once realmSync is proven to handle
+  # the full realm lifecycle (initial create + ongoing reconcile). At that
+  # point realmSync becomes the single path.
+  enabled: true
+
+realmSync:
+  # When enabled, deploys a Job that runs keycloak-config-cli against the
+  # live Keycloak Admin API after each install/upgrade. Reconciles the
+  # UDS-essential realm baseline (clients, flows, scopes, IdPs, groups).
+  # Mission Hero customizations outside the declared baseline are preserved.
+  enabled: false
+  # backoffLimit on the Job — transient errors retry, persistent surface.
+  # Each retry runs in its own Pod (restartPolicy: Never) so all attempts'
+  # logs stay inspectable until the next deploy.
+  backoffLimit: 2
+  # Path inside the configImage to the curated realm file kcc reads.
+  realmFilePath: /home/nonroot/realm-kcc.json
+  # ttlSecondsAfterFinished is intentionally unset by default so the latest
+  # Job's Pod (and therefore its logs) stays in the cluster until the next
+  # deploy. The helm hook-delete-policy `before-hook-creation` cleans up
+  # the previous Job only when a new one is about to start. Override here
+  # to opt back into time-based GC (e.g. 604800 = 7 days).
+  ttlSecondsAfterFinished: ""
+
 # Optional annotations for grouping dashboards in Grafana folders.
 # see docs for more info: https://docs.defenseunicorns.com/core/how-to-guides/monitoring--observability/add-custom-dashboards/
 dashboardAnnotations: {}
