@@ -73,10 +73,10 @@ components:
           - "values/unicorn/kube-prometheus-stack.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips:1.11.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:0.90.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:0.91.0"
       - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:2.18.0"
       - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:0.32.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.90.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"
       - "cgr.dev/defenseunicorns.com/prometheus-fips:3.11.3"
       - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:1.15.2" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
@@ -123,4 +123,4 @@ components:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips:0.28.0"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.90.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"

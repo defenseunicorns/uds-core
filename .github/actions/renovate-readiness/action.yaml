@@ -134,6 +134,15 @@ runs:
               gh pr edit ${{ github.event.pull_request.number }} --add-label "waiting on unicorn"
             else
               gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
+            fi
+          fi
+
+          exit 1
+        else
+          echo "All Pepr versions are in sync. Ready for review."
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on upstream" || true
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on ironbank" || true
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label "waiting on unicorn" || true
           gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
         fi
 
@@ -220,7 +229,7 @@ runs:
         echo "labels=$LABELS" >> $GITHUB_OUTPUT
 
         # Check if waiting on labels are present, or this is a helm chart update only
-          if [[ "$LABELS" == *"waiting on ironbank"* ]] || [[ "$LABELS" == *"waiting on unicorn"* ]] || [[ "$LABELS" == *"helm-chart-only"* ]]; then
+        if [[ "$LABELS" == *"waiting on ironbank"* ]] || [[ "$LABELS" == *"waiting on unicorn"* ]] || [[ "$LABELS" == *"helm-chart-only"* ]]; then
           echo "waiting=true" >> $GITHUB_OUTPUT
         else
           echo "waiting=false" >> $GITHUB_OUTPUT
