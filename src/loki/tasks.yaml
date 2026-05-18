@@ -216,21 +216,23 @@ tasks:
           ATTEMPT=1
           while [ "$(date +%s)" -lt "${END_TIME}" ]; do
             REMAINING_SECONDS=$(( END_TIME - $(date +%s) ))
-            echo "Attempt ${ATTEMPT}: checking for Loki chunks object written after ${LOKI_OBJECT_STORAGE_TEST_START} (${REMAINING_SECONDS}s remaining)..."
+            echo "Attempt ${ATTEMPT}: checking for Loki chunk objects under fake/ written after ${LOKI_OBJECT_STORAGE_TEST_START} (${REMAINING_SECONDS}s remaining)..."
 
-            RECENT_OBJECT_KEY="$(aws s3api list-objects-v2 \
+            # auth_enabled is false, so Loki writes tenant chunk objects under fake/.
+            RECENT_CHUNK_OBJECT_COUNT="$(aws s3api list-objects-v2 \
               --bucket "${LOKI_CHUNKS_OBJECT_STORAGE_BUCKET}" \
-              --query "Contents[?LastModified>=\`${LOKI_OBJECT_STORAGE_TEST_START}\`].Key | [0]" \
+              --prefix "fake/" \
+              --query "length(Contents[?LastModified>=\`${LOKI_OBJECT_STORAGE_TEST_START}\`])" \
               --output text 2>"${S3_LIST_ERROR}" || true)"
 
-            if [ -n "${RECENT_OBJECT_KEY}" ] && [ "${RECENT_OBJECT_KEY}" != "None" ]; then
-              echo "Validated Loki wrote a recent object to configured chunks object storage."
+            if [ -n "${RECENT_CHUNK_OBJECT_COUNT}" ] && [ "${RECENT_CHUNK_OBJECT_COUNT}" -gt 0 ] 2>/dev/null; then
+              echo "Validated Loki wrote recent chunk objects to configured object storage."
               exit 0
             fi
 
-            echo "No recent Loki chunks object found yet; waiting ${{ .inputs.poll_interval }}s before retrying."
+            echo "No recent Loki chunk objects found under fake/ yet; waiting ${{ .inputs.poll_interval }}s before retrying."
             ATTEMPT=$(( ATTEMPT + 1 ))
             sleep "${{ .inputs.poll_interval }}"
           done
 
-          fail "Timed out waiting for a recent Loki object to appear in chunks object storage."
+          fail "Timed out waiting for recent Loki chunk objects under fake/ in object storage."
