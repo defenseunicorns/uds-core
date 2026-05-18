@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -31,6 +31,7 @@ views "uds-core" {
         cluster.falco,
         cluster.zarf,
         cluster.loki,
+        cluster.envoy-gateway,
         external-apps,
         external-services,
         istio-admin-gateway,
@@ -80,6 +81,8 @@ views "uds-core" {
         cluster.falco.*,
         cluster.zarf.*,
         cluster.loki.*,
+        cluster.envoy-gateway,
+        cluster.envoy-gateway.*,
         external-apps.*,
         external-services.*,
         istio-admin-gateway.*,
@@ -119,6 +122,8 @@ views "uds-core" {
       cluster.istio-egress-gateway.*,
       istio-passthrough-gateway,
       istio-passthrough-gateway.*,
+      cluster.envoy-gateway,
+      cluster.envoy-gateway.*,
   }
 
   view identity-authorization-layer of infrastructure {

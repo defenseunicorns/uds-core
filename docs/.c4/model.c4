@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -152,6 +152,30 @@ model {
           title 'Istio Passthrough Ingress Gateway'
           summary ' '
           description 'Ingress gateway for TLS passthrough traffic without termination. Routes encrypted traffic directly to backend services based on SNI information without decrypting, allowing applications to maintain end-to-end encryption with their own certificates.'
+        }
+      }
+
+      envoy-gateway = coreNamespace {
+        title 'Envoy Gateway Namespace'
+        summary ' '
+        description 'Namespace containing Envoy Gateway components that provide UDP ingress to UDS Core. Complements the Istio ingress gateways (which handle TCP/HTTPS) by accepting inbound UDP traffic on the default port (5353) and additional configured ports (21051, 60084) and forwarding to backend services.'
+
+        envoy-gateway = pod {
+          title 'Envoy Gateway'
+          summary ' '
+          description 'UDP ingress proxy listening on 5353/UDP by default and additional configured ports (21051/UDP, 60084/UDP). Receives traffic from the external tenant load balancer and routes to backend services according to Gateway API resources.'
+
+          // external relationship
+          envoy-gateway -> custom-application
+        }
+
+        envoy-gateway-config = pod {
+          title 'Envoy Gateway Config'
+          summary ' '
+          description 'Configuration controller that patches cluster resources via the Kubernetes API server so Envoy Gateway can bind to non-default UDP ports. Reconciles Gateway API resources and updates supporting Kubernetes objects (Services, listeners) to expose the configured UDP ports.'
+
+          // external relationship
+          envoy-gateway-config -> kubernetes-control-plane.api-server
         }
       }
 
@@ -598,10 +622,11 @@ model {
     external-tenant-loadbalancer = loadbalancer {
       title 'External Tenant LoadBalancer'
       summary ' '
-      description 'Infrastructure defined load balancer for the tenant gateway. Provides external access to tenant applications deployed on UDS Core. Typically implemented as a cloud provider load balancer (ELB, Azure Load Balancer) or MetalLB in on-premises environments, routing HTTPS traffic on port 443 to the Istio tenant ingress gateway.'
+      description 'Infrastructure defined load balancer for the tenant gateway. Provides external access to tenant applications deployed on UDS Core. Typically implemented as a cloud provider load balancer (ELB, Azure Load Balancer) or MetalLB in on-premises environments, routing HTTPS traffic on port 443 to the Istio tenant ingress gateway and UDP traffic on configured ports to Envoy Gateway.'
 
-      // external relationship
+      // external relationships
       external-tenant-loadbalancer -> istio-tenant-ingress-gateway
+      external-tenant-loadbalancer -> cluster.envoy-gateway.envoy-gateway
     }
 
     external-admin-loadbalancer = loadbalancer {
