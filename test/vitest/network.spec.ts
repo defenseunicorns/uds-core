@@ -93,15 +93,11 @@ async function waitForUdpLog(
   intervalMs = 250,
 ): Promise<string> {
   const deadline = Date.now() + timeoutMs;
-  let log = await readUdpLog(serverPodName);
 
-  while (Date.now() < deadline) {
-    if (log === expected) {
-      return log;
-    }
-
-    await new Promise(resolve => setTimeout(resolve, intervalMs));
-    log = await readUdpLog(serverPodName);
+   while (Date.now() < deadline) {  
+    const log = await readUdpLog(serverPodName);  
+    if (log === expected) return log;  
+    await new Promise(resolve => setTimeout(resolve, intervalMs));  
   }
 
   return log;
