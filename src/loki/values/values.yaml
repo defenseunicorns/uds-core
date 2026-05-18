@@ -61,23 +61,23 @@ loki:
         index:
           prefix: loki_index_
           period: 24h
-      - from: '{{- $secret := lookup "v1" "Secret" "loki" "loki" -}}
-          {{- $pastDate := now | dateModify "-48h" | date "2006-01-02" -}}
-          {{- $futureDate := now | dateModify "+48h" | date "2006-01-02" -}}
+      - from: "{{- $secret := lookup \"v1\" \"Secret\" \"loki\" \"loki\" -}}
+          {{- $pastDate := now | dateModify \"-48h\" | date \"2006-01-02\" -}}
+          {{- $futureDate := now | dateModify \"+48h\" | date \"2006-01-02\" -}}
           {{- $result := $pastDate -}}
           {{- if $secret -}}
-          {{- $result = $futureDate -}}
-          {{- if (index $secret.data "config.yaml") -}}
-          {{- $configYAML := (index $secret.data "config.yaml" | b64dec | fromYaml) -}}
-          {{- range $configYAML.schema_config.configs -}}
-          {{- if and (eq .store "tsdb") (eq .schema "v13") -}}
-          {{- $result = .from -}}
-          {{- break -}}
+            {{- $result = $futureDate -}}
+            {{- if (index $secret.data \"config.yaml\") -}}
+              {{- $configYAML := (index $secret.data \"config.yaml\" | b64dec | fromYaml) -}}
+              {{- range $configYAML.schema_config.configs -}}
+                {{- if and (eq .store \"tsdb\") (eq .schema \"v13\") -}}
+                  {{- $result = .from -}}
+                  {{- break -}}
+                {{- end -}}
+              {{- end -}}
+            {{- end -}}
           {{- end -}}
-          {{- end -}}
-          {{- end -}}
-          {{- end -}}
-          {{- $result -}}'
+          {{- $result -}}"
         store: tsdb
         object_store: "{{ .Values.loki.storage.type }}"
         schema: v13
@@ -224,7 +224,7 @@ write:
   # Use shared loki SA instead of creating a write-specific one
   # https://github.com/grafana-community/helm-charts/issues/390
   serviceAccount:
-    create: true # temporarily set to true to test broken irsa config and validate CI test fails when it should.
+    create: false
 
 backend:
   # Remove default anti-affinity to support single node
