@@ -93,14 +93,12 @@ async function waitForUdpLog(
   intervalMs = 250,
 ): Promise<string> {
   const deadline = Date.now() + timeoutMs;
-
-   while (Date.now() < deadline) {  
-    const log = await readUdpLog(serverPodName);  
-    if (log === expected) return log;  
-    await new Promise(resolve => setTimeout(resolve, intervalMs));  
+  while (Date.now() < deadline) {
+    const log = await readUdpLog(serverPodName);
+    if (log === expected) return log;
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
-
-  return log;
+  return readUdpLog(serverPodName);
 }
 
 function expectUdpPingLog(log: string, message: string) {
