@@ -26,7 +26,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.30.4
+        version: v0.31.0
 
     # Node is required for all workflows (either building Pepr or running specific scripts)
     - name: Use Node.js latest
@@ -39,7 +39,7 @@ runs:
       uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.11.8
+        version: 0.11.14
 
     - name: Install k3d
       if: ${{ inputs.installK3d == 'true' }}
@@ -51,4 +51,4 @@ runs:
       if: ${{ inputs.installHelmUnittest == 'true' }}
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: export HELM_UNITTEST_VERSION="v1.0.3" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
+      run: export HELM_UNITTEST_VERSION="v1.1.0" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"

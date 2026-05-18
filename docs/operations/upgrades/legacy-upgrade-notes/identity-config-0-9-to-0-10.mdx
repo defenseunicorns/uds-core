@@ -1,0 +1,51 @@
+---
+title: Identity Config 0.9.1 to 0.10.0
+description: Legacy manual upgrade notes for UDS Identity Config 0.9.1 to 0.10.0, covering ambient mesh trusted hosts and reset credential flow behavior.
+sidebar:
+  order: 2.010
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## Ambient mesh trusted hosts
+
+When running Istio ambient mesh, existing deployments needed two additional trusted hosts for client registration.
+
+To add ambient mesh trusted hosts:
+
+<Steps>
+
+1. Go to **Clients** > **Client registration** > **Client details**.
+2. Add these hosts to **Trusted hosts**:
+   - `*.pepr-uds-core-watcher.pepr-system.svc.cluster.local`
+   - `*.keycloak.svc.cluster.local`
+3. Click **Save**.
+
+</Steps>
+
+## Reset credential flow
+
+Keycloak 26.1.1 also added an option to force re-login after resetting credentials. New deployments enabled this by default.
+
+To enable forced login after credential reset:
+
+<Steps>
+
+1. Go to **Authentication** > **UDS Reset Credentials**.
+2. Find the **Send Reset Email** step.
+3. Click **Settings**.
+4. Enter an alias, for example `reset-credentials-email`.
+5. Enable **Force login after reset**.
+6. Click **Save**.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes

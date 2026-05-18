@@ -1,0 +1,66 @@
+---
+title: Legacy upgrade notes
+description: Preserved manual upgrade notes for older UDS Core and UDS Identity Config deployments that may still need support during version jumps.
+sidebar:
+  order: 2.003
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Legacy upgrade notes preserve manual steps that applied to older UDS Core and UDS Identity Config releases. Use these pages when supporting deployments that skipped historical manual Keycloak realm changes or are upgrading from versions older than the current release notes cover.
+
+> [!NOTE]
+> These notes are preserved for support cases on older deployments. For current upgrade guidance, use the [Upgrade Overview](/operations/upgrades/overview/), [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/), and [Release Notes](/operations/release-notes/overview/).
+
+<CardGrid>
+  <LinkCard
+    title="Identity Config 0.23.0+"
+    description="Enable logout confirmation for built-in Keycloak clients."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-23/"
+  />
+  <LinkCard
+    title="Identity Config 0.19.0+"
+    description="Add the view-system role required by older OpenTofu workflows."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-19/"
+  />
+  <LinkCard
+    title="Identity Config 0.17.0"
+    description="Configure OpenTofu client support and SSO session limits."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-17/"
+  />
+  <LinkCard
+    title="Identity Config 0.14.0 to 0.14.1"
+    description="Apply legacy Dynamic Client Registration and FIPS preparation steps."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-14/"
+  />
+  <LinkCard
+    title="Identity Config 0.11.0"
+    description="Configure client credentials, UDS client policy, MFA, and IDP redirector changes."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-11/"
+  />
+  <LinkCard
+    title="Identity Config 0.10.0"
+    description="Update SAML mapper properties for Keycloak 26.1.0."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-10/"
+  />
+  <LinkCard
+    title="Identity Config 0.9.1 to 0.10.0"
+    description="Add ambient mesh trusted hosts and reset credential flow behavior."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-9-to-0-10/"
+  />
+  <LinkCard
+    title="Identity Config 0.5.2"
+    description="Apply event listener and bare-groups client scope changes."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-5-2/"
+  />
+  <LinkCard
+    title="Identity Config 0.5.1"
+    description="Apply user managed attributes and STIG password rule changes."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-5-1/"
+  />
+  <LinkCard
+    title="Identity Config 0.5.0"
+    description="Create and apply group authorization authentication flows."
+    href="/operations/upgrades/legacy-upgrade-notes/identity-config-0-5-0/"
+  />
+</CardGrid>

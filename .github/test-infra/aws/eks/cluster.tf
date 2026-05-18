@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 locals {
@@ -56,6 +56,18 @@ module "eks" {
       to_port                       = 65535
       type                          = "ingress"
       source_cluster_security_group = true
+    }
+
+    # The terraform-aws-eks recommended rules only open UDP/53 (CoreDNS) between nodes,
+    # so cross-node pod-to-pod UDP on any other port is silently dropped at the node SG.
+    # This must be self-referencing node-to-node traffic, not cluster-SG sourced traffic.
+    clusterapi_ingress_udp = {
+      description = "Pod-to-pod UDP across nodes"
+      protocol    = "udp"
+      from_port   = 0
+      to_port     = 65535
+      type        = "ingress"
+      self        = true
     }
 
     // This is needed to allow the ELB to communicate with Istio ingress gateways

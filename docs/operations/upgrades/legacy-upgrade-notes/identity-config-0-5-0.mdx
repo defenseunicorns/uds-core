@@ -1,0 +1,52 @@
+---
+title: Identity Config 0.5.0
+description: Legacy manual upgrade notes for UDS Identity Config 0.5.0, covering group authorization authentication flow changes.
+sidebar:
+  order: 2.013
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+These notes preserve manual upgrade steps from older UDS Identity Config versions. Use them when supporting an older UDS Core deployment that may have skipped a historical Keycloak realm change.
+
+> [!NOTE]
+> These notes are not the source of truth for current supported releases. For current upgrade procedures, start with the [Upgrade Overview](/operations/upgrades/overview/), then review [Release Notes](/operations/release-notes/overview/) and [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/).
+
+## Group authorization
+
+UDS Identity Config v0.5.0 added a new authentication flow for group authorization.
+
+To add group authorization to browser flows:
+
+<Steps>
+
+1. In the Keycloak admin portal, navigate to the `uds` realm.
+2. Go to **Authentication**.
+3. Add **UDS Operator Group Authentication Validation** at the base level and bottom of these flows:
+   - **UDS Authentication**
+   - **UDS Registration**
+   - **UDS Reset Credentials**
+
+</Steps>
+
+If you use a SAML identity provider, create a dedicated `Authorization` flow:
+
+<Steps>
+
+1. Go to **Authentication**.
+2. Click **Create flow**.
+3. Set **Name** to `Authorization`.
+4. Set **Description** to `UDS Operator Group Authentication Validation`.
+5. Select **Basic flow**.
+6. Click **Create**.
+7. Click **Add execution**.
+8. Add **UDS Operator Group Authentication Validation**.
+9. Go to **Identity providers** and select the SAML provider.
+10. In **Advanced settings**, set **Post login flow** to `Authorization`.
+
+</Steps>
+
+## Related documentation
+
+- [Legacy upgrade notes](/operations/upgrades/legacy-upgrade-notes/overview/) - preserved manual steps for older Identity Config versions
+- [Upgrade Keycloak realm configuration](/operations/upgrades/upgrade-keycloak-realm/) - current guidance for manual Keycloak realm changes
