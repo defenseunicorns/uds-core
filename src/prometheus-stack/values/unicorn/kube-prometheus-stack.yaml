@@ -29,6 +29,7 @@ prometheus-node-exporter:
     registry: cgr.dev
     repository: defenseunicorns.com/prometheus-node-exporter-fips
     tag: 1.11.1
+    distroless: false
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
