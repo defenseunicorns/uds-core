@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 alertmanager:
@@ -29,6 +29,7 @@ prometheus-node-exporter:
     registry: quay.io
     repository: rfcurated/prometheus/node-exporter
     tag: 1.11.1-jammy-scratch-fips-rfcurated
+    distroless: false
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
