@@ -300,6 +300,10 @@ spec:
             - name: KC_CACHE_EMBEDDED_MTLS_ENABLED
               value: "false"
           {{- end }}
+          {{- if and (not .Values.autoscaling.enabled) (eq (include "keycloak.postgresql.config" .) "true") }}
+            - name: KC_CACHE
+              value: local
+          {{- end }}
           {{- if eq (include "keycloak.postgresql.config" .) "true" }}
             # Postgres database configuration
             - name: KC_DB
