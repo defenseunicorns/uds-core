@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.5.0](https://github.com/defenseunicorns/uds-core/compare/v1.4.0...v1.5.0) (2026-05-19)
+
+
+### Bug Fixes
+
+* **eks:** stabilize UDP NetworkPolicy e2e coverage ([#2666](https://github.com/defenseunicorns/uds-core/issues/2666)) ([3d45af4](https://github.com/defenseunicorns/uds-core/commit/3d45af432c464abbdff0104696756ac2d7015c95))
+
+
+### Miscellaneous
+
+* **ci:** add test to verify loki able to flush to s3 ([#2673](https://github.com/defenseunicorns/uds-core/issues/2673)) ([4783ffb](https://github.com/defenseunicorns/uds-core/commit/4783ffb38933eedb8b29c6eefa7497ed8d7a1265))
+* **deps:** update iac-support-deps ([#2670](https://github.com/defenseunicorns/uds-core/issues/2670)) ([ab1b90d](https://github.com/defenseunicorns/uds-core/commit/ab1b90daa3bc622a4ac36f58a3818fe2f8b0af22))
+* **deps:** update prometheus-stack ([#2644](https://github.com/defenseunicorns/uds-core/issues/2644)) ([1bfbfaf](https://github.com/defenseunicorns/uds-core/commit/1bfbfaf61f21365ea2d18b0d578d5c15289e70ff))
+* **docs:** add legacy upgrade notes and local demo deploy warning ([#2667](https://github.com/defenseunicorns/uds-core/issues/2667)) ([ded7c08](https://github.com/defenseunicorns/uds-core/commit/ded7c08966539c10e4d1bef624cf66337713cf18))
+* updating cert bundle ([#2675](https://github.com/defenseunicorns/uds-core/issues/2675)) ([7da8b6c](https://github.com/defenseunicorns/uds-core/commit/7da8b6c832767fdcac7600d6cafa972a3bc303fd))
+
 ## [1.4.0](https://github.com/defenseunicorns/uds-core/compare/v1.3.0...v1.4.0) (2026-05-12)
 
 
