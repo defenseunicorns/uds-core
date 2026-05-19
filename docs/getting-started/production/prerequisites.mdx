@@ -81,6 +81,14 @@ You must own a domain and be able to create wildcard DNS records pointing to you
 
 You must have TLS certificates (or the ability to obtain them) for both your tenant and admin domains. See [Provision External Services](/getting-started/production/provision-services/) for options.
 
+## Node time synchronization
+
+Configure NTP on every worker node as part of your node image build or bootstrap process. UDS Core components such as `keycloak` and Loki are sensitive to host clock drift: skewed node time can cause short-lived SSO sessions, token validation failures, and unstable `loki-write` ring membership.
+
+On EKS, AWS provides a link-local time source at `169.254.169.123`. If your base image uses `systemd-timesyncd`, add that address under `[Time]` in `/etc/systemd/timesyncd.conf` and restart `systemd-timesyncd`.
+
+Use the NTP source required by your platform if you are not running on EKS.
+
 ## Network policy support
 
 The UDS Operator dynamically provisions `NetworkPolicy` resources to secure traffic between components. Your CNI must enforce network policies.
@@ -149,8 +157,8 @@ Before moving on, confirm you have completed the following:
 - Load balancer provisioner is installed
 - You own a domain and can create wildcard DNS records
 - TLS certificates are available (or obtainable) for `*.yourdomain.com` and `*.admin.yourdomain.com`
+- NTP is configured on all worker nodes
 - Object storage buckets are created with credentials available
 - An external PostgreSQL database for Keycloak is available with credentials ready
 - UDS CLI is installed (`uds version`)
 - Authenticated to the [UDS Registry](https://registry.defenseunicorns.com) with a read token
-
