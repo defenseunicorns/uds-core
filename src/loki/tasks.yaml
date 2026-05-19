@@ -1,5 +1,9 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+variables:
+  - name: LOKI_CHUNKS_OBJECT_STORAGE_BUCKET
+    sensitive: true
 
 tasks:
   - name: validate
@@ -31,3 +35,206 @@ tasks:
         cmd: |
           npm ci && npx vitest run "loki" --exclude "**/*integration*"
         dir: test/vitest
+
+  - name: validate-object-storage-writes
+    description: Validate Loki writes log chunks to configured object storage
+    inputs:
+      provider:
+        description: Object storage provider to validate. (Currently only 'aws' is supported)
+        required: true
+      iac_dir:
+        description: Directory containing IaC outputs for the object storage backend
+        default: .github/test-infra/aws/eks
+      poll_timeout:
+        description: Maximum seconds to wait for Loki objects to appear in object storage
+        default: "300"
+      poll_interval:
+        description: Seconds between object storage polling attempts
+        default: "10"
+    actions:
+      - description: Validate object storage provider configuration
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+
+          case "${{ .inputs.provider }}" in
+            aws)
+              command -v aws >/dev/null 2>&1 || { echo "ERROR: aws CLI is required"; exit 1; }
+              command -v tofu >/dev/null 2>&1 || { echo "ERROR: tofu is required"; exit 1; }
+              command -v curl >/dev/null 2>&1 || { echo "ERROR: curl is required"; exit 1; }
+              command -v jq >/dev/null 2>&1 || { echo "ERROR: jq is required"; exit 1; }
+              ;;
+            *)
+              echo "ERROR: Unsupported Loki object storage provider '${{ .inputs.provider }}'. Supported providers: aws."
+              exit 1
+              ;;
+          esac
+
+          if [ ! -d "${{ .inputs.iac_dir }}" ]; then
+            echo "ERROR: IaC directory '${{ .inputs.iac_dir }}' does not exist."
+            exit 1
+          fi
+
+      - description: Resolve Loki chunks S3 bucket
+        cmd: tofu output -raw loki_s3_bucket
+        dir: ${{ .inputs.iac_dir }}
+        mute: true
+        setVariables:
+          - name: LOKI_CHUNKS_OBJECT_STORAGE_BUCKET
+
+      - description: Set object storage validation start time
+        cmd: date -u +'%Y-%m-%dT%H:%M:%S+00:00'
+        mute: true
+        setVariables:
+          - name: LOKI_OBJECT_STORAGE_TEST_START
+
+      - description: Push a test log and flush Loki chunks
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+
+          LOKI_PORT="3100"
+          PORT_FORWARD_PID=""
+          PORT_FORWARD_LOG="$(mktemp)"
+
+          cleanup() {
+            if [ -n "${PORT_FORWARD_PID}" ] && kill -0 "${PORT_FORWARD_PID}" >/dev/null 2>&1; then
+              kill "${PORT_FORWARD_PID}" >/dev/null 2>&1 || true
+              wait "${PORT_FORWARD_PID}" >/dev/null 2>&1 || true
+            fi
+            rm -f "${PORT_FORWARD_LOG}"
+          }
+
+          diagnostics() {
+            echo "Loki push and flush diagnostics:"
+            echo "Loki write pods:"
+            uds zarf tools kubectl get pods -n loki -l app.kubernetes.io/component=write || true
+            echo "Port-forward output:"
+            if [ -s "${PORT_FORWARD_LOG}" ]; then
+              while IFS= read -r line; do
+                echo "  ${line}"
+              done < "${PORT_FORWARD_LOG}"
+            else
+              echo "  No port-forward output captured."
+            fi
+          }
+
+          fail() {
+            echo "ERROR: $*" >&2
+            diagnostics
+            exit 1
+          }
+
+          trap cleanup EXIT
+
+          uds zarf tools kubectl port-forward -n loki svc/loki-write "${LOKI_PORT}:3100" >"${PORT_FORWARD_LOG}" 2>&1 &
+          PORT_FORWARD_PID="$!"
+
+          for attempt in $(seq 1 30); do
+            echo "Attempt ${attempt}/30: checking Loki write port-forward readiness..."
+            if curl -fsS "http://127.0.0.1:${LOKI_PORT}/ready" >/dev/null 2>&1; then
+              echo "Loki write port-forward is ready."
+              break
+            fi
+            if ! kill -0 "${PORT_FORWARD_PID}" >/dev/null 2>&1; then
+              fail "Loki write port-forward exited before becoming ready."
+            fi
+            if [ "${attempt}" -eq 30 ]; then
+              fail "Timed out waiting for Loki write port-forward to become ready."
+            fi
+            sleep 2
+          done
+
+          TEST_ID="$(date +%s)-$$"
+          LOG_MESSAGE="loki-object-storage-ci-${TEST_ID}"
+          TIMESTAMP="$(date +%s)000000000"
+          PAYLOAD="$(jq -n \
+            --arg timestamp "${TIMESTAMP}" \
+            --arg log_message "${LOG_MESSAGE}" \
+            --arg test_id "${TEST_ID}" \
+            '{
+              streams: [
+                {
+                  stream: {
+                    job: "loki-object-storage-ci",
+                    test_id: $test_id
+                  },
+                  values: [
+                    [$timestamp, $log_message]
+                  ]
+                }
+              ]
+            }')"
+
+          curl -fsS \
+            -H "Content-Type: application/json" \
+            -X POST \
+            --data-raw "${PAYLOAD}" \
+            "http://127.0.0.1:${LOKI_PORT}/loki/api/v1/push" \
+            || fail "Failed to push test log to Loki write endpoint."
+
+          curl -fsS -X POST "http://127.0.0.1:${LOKI_PORT}/flush" >/dev/null \
+            || fail "Failed to flush Loki write endpoint."
+
+          echo "Pushed test log and flushed Loki chunks."
+
+      - description: Verify Loki chunks object write
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+
+          S3_LIST_ERROR="$(mktemp)"
+
+          cleanup() {
+            rm -f "${S3_LIST_ERROR}"
+          }
+
+          diagnostics() {
+            if [ -s "${S3_LIST_ERROR}" ]; then
+              echo "Last S3 list error:"
+              while IFS= read -r line; do
+                echo "  ${line//${LOKI_CHUNKS_OBJECT_STORAGE_BUCKET}/<loki-chunks-bucket>}"
+              done < "${S3_LIST_ERROR}"
+            fi
+          }
+
+          fail() {
+            echo "ERROR: $*" >&2
+            diagnostics
+            exit 1
+          }
+
+          trap cleanup EXIT
+
+          END_TIME=$(( $(date +%s) + ${{ .inputs.poll_timeout }} ))
+          ATTEMPT=1
+          while [ "$(date +%s)" -lt "${END_TIME}" ]; do
+            REMAINING_SECONDS=$(( END_TIME - $(date +%s) ))
+            echo "Attempt ${ATTEMPT}: checking for Loki chunk objects under fake/ written after ${LOKI_OBJECT_STORAGE_TEST_START} (${REMAINING_SECONDS}s remaining)..."
+
+            # auth_enabled is false, so Loki writes tenant chunk objects under fake/.
+            : > "${S3_LIST_ERROR}"
+            RECENT_CHUNK_OBJECT_COUNT="$(aws s3api list-objects-v2 \
+              --bucket "${LOKI_CHUNKS_OBJECT_STORAGE_BUCKET}" \
+              --prefix "fake/" \
+              --output json 2>"${S3_LIST_ERROR}" \
+              | jq --arg start "${LOKI_OBJECT_STORAGE_TEST_START}" '[.Contents[]? | select(.LastModified >= $start)] | length' \
+              || true)"
+
+            if [ -n "${RECENT_CHUNK_OBJECT_COUNT}" ] && [ "${RECENT_CHUNK_OBJECT_COUNT}" -gt 0 ] 2>/dev/null; then
+              echo "Validated Loki wrote recent chunk objects to configured object storage."
+              exit 0
+            fi
+
+            echo "No recent Loki chunk objects found under fake/ yet; waiting ${{ .inputs.poll_interval }}s before retrying."
+            ATTEMPT=$(( ATTEMPT + 1 ))
+            sleep "${{ .inputs.poll_interval }}"
+          done
+
+          fail "Timed out waiting for recent Loki chunk objects under fake/ in object storage."
