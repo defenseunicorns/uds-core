@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -132,7 +132,7 @@ describe("validateIstioImage", () => {
 
   // Test each flavor with its canonical registry
   it("should return true for unicorn flavor image with correct registry", () => {
-    expect(validateIstioImage("quay.io/rfcurated/istio/proxyv2:1.16.0")).toBe(true);
+    expect(validateIstioImage("cgr.dev/defenseunicorns.com/istio-proxy-fips:1.16.0")).toBe(true);
   });
 
   it("should return true for upstream flavor image with correct registry", () => {
@@ -153,8 +153,10 @@ describe("validateIstioImage", () => {
 
   // Test with different tags and digests
   it("should handle images with tags and digests", () => {
-    expect(validateIstioImage("quay.io/rfcurated/istio/proxyv2:latest")).toBe(true);
-    expect(validateIstioImage("quay.io/rfcurated/istio/proxyv2@sha256:abc123")).toBe(true);
+    expect(validateIstioImage("cgr.dev/defenseunicorns.com/istio-proxy-fips:latest")).toBe(true);
+    expect(validateIstioImage("cgr.dev/defenseunicorns.com/istio-proxy-fips@sha256:abc123")).toBe(
+      true,
+    );
   });
 
   // Test negative cases

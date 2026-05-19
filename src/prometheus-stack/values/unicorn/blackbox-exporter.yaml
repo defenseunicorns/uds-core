@@ -1,14 +1,13 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Image configuration for unicorn flavor
 image:
-  registry: quay.io
-  repository: rfcurated/prometheus/blackbox-exporter
-  tag: 0.28.0-jammy-scratch-fips-rfcurated-rfhardened
+  registry: cgr.dev
+  repository: defenseunicorns.com/prometheus-blackbox-exporter-fips
+  tag: 0.28.0
 
 configReloader:
   image:
-    registry: quay.io
-    repository: rfcurated/prometheus-operator/prometheus-config-reloader
-    tag: 0.91.0-jammy-scratch-fips-rfcurated
+    registry: cgr.dev
+    repository: defenseunicorns.com/prometheus-config-reloader-fips
+    tag: 0.91.0

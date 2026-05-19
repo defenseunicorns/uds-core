@@ -17,12 +17,8 @@ inputs:
     description: "IRON_BANK_ROBOT_PASSWORD"
     required: false
     default: ''
-  rapidfortUsername:
-    description: "RAPIDFORT_USERNAME"
-    required: false
-    default: ''
-  rapidfortPassword:
-    description: "RAPIDFORT_PASSWORD"
+  chainguardIdentity:
+    description: "ID for Chainguard Identity"
     required: false
     default: ''
   installUv:
@@ -69,10 +65,8 @@ runs:
         echo "MARU_AUTH=\"{\"raw.githubusercontent.com\": \"${{ inputs.ghToken }}\"}\"" >> "$GITHUB_ENV"
       shell: bash
 
-    - name: Rapidfort Login
-      if: ${{ inputs.rapidfortUsername != '' && inputs.rapidfortPassword != '' }}
-      shell: bash
-      env:
-        RAPIDFORT_USERNAME: ${{ inputs.rapidfortUsername }}
-        RAPIDFORT_PASSWORD: ${{ inputs.rapidfortPassword }}
-      run: echo "${{ env.RAPIDFORT_PASSWORD }}" | uds zarf tools registry login -u "${{ env.RAPIDFORT_USERNAME }}" --password-stdin quay.io
+    - name: Chainguard Login
+      if: ${{ inputs.chainguardIdentity != '' }}
+      uses: chainguard-dev/setup-chainctl@2cddd35a2f120d9973e58094dc6878c93cf58c28 # v0.5.1
+      with:
+        identity: ${{ inputs.chainguardIdentity }}

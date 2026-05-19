@@ -52,8 +52,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
-          rapidfortUsername: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_USERNAME || '' }}
-          rapidfortPassword: ${{ (matrix.flavor == 'unicorn') && secrets.RAPIDFORT_PASSWORD || '' }}
+          chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
       - name: Run UDS Core Install HA Test

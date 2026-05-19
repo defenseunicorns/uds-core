@@ -1,6 +1,6 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: quay.io/rfcurated/metrics-server
-  tag: "0.8.1-jammy-scratch-fips-rfcurated-rfhardened"
+  repository: cgr.dev/defenseunicorns.com/metrics-server-fips
+  tag: "0.8.1"
