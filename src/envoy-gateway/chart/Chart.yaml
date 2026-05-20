@@ -1,0 +1,7 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v2
+name: uds-envoy-gateway-config
+version: 0.1.0
+description: "UDS configuration chart for Envoy Gateway"

@@ -1,0 +1,28 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-envoy-gateway-common
+  description: "UDS Core Envoy Gateway Common"
+  url: https://github.com/envoyproxy/gateway
+
+components:
+  - name: envoy-gateway
+    required: false
+    manifests:
+      - name: envoy-gateway-class
+        namespace: envoy-gateway-system
+        files:
+          - ../manifests/gatewayclass.yaml
+    charts:
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: ../chart
+      - name: envoy-gateway
+        namespace: envoy-gateway-system
+        url: oci://docker.io/envoyproxy/gateway-helm
+        version: v1.8.0
+        valuesFiles:
+          - "../values/values.yaml"

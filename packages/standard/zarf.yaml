@@ -84,6 +84,11 @@ components:
     import:
       path: ../metrics-server
 
+  - name: envoy-gateway
+    required: false
+    import:
+      path: ../envoy-gateway
+
   - name: keycloak
     required: true
     import:
