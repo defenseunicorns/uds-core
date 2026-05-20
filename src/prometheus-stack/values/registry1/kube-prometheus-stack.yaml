@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 alertmanager:
@@ -29,6 +29,7 @@ prometheus-node-exporter:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus/node-exporter
     tag: v1.11.1
+    distroless: false
 prometheusOperator:
   admissionWebhooks:
     containerSecurityContext:
@@ -48,9 +49,9 @@ prometheusOperator:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/prometheus-operator/prometheus-operator
-    tag: v0.90.1
+    tag: v0.91.0
   prometheusConfigReloader:
     image:
       registry: registry1.dso.mil
       repository: ironbank/opensource/prometheus-operator/prometheus-config-reloader
-      tag: v0.90.1
+      tag: v0.91.0

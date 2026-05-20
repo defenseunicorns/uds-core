@@ -15,7 +15,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 28.0.1
+        version: 29.0.0
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -32,11 +32,11 @@ components:
         valuesFiles:
           - "values/upstream/kube-prometheus-stack.yaml"
     images:
-      - "quay.io/prometheus/node-exporter:v1.11.1"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.90.1"
+      - "quay.io/prometheus/node-exporter:v1.11.1-distroless"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.91.0"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.18.0"
       - "quay.io/prometheus/alertmanager:v0.32.1"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.91.0"
       - "quay.io/prometheus/prometheus:v3.11.3"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
@@ -53,10 +53,10 @@ components:
           - "values/registry1/kube-prometheus-stack.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.11.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.90.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.91.0"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.18.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.32.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.90.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.91.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.11.3"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
@@ -72,13 +72,13 @@ components:
         valuesFiles:
           - "values/unicorn/kube-prometheus-stack.yaml"
     images:
-      - "quay.io/rfcurated/prometheus/node-exporter:1.11.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus-operator:0.90.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus/alertmanager:0.32.1-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.90.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus:3.11.3-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.9-jammy-fips-rfcurated-rfhardened"
+      - "cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips:1.11.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:0.91.0"
+      - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:2.18.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:0.32.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-fips:3.11.3"
+      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:1.15.2" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -93,7 +93,7 @@ components:
           - "values/upstream/blackbox-exporter.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.90.1"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.91.0"
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -108,7 +108,7 @@ components:
           - "values/registry1/blackbox-exporter.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.90.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.91.0"
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -122,5 +122,5 @@ components:
         valuesFiles:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
-      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.90.1-jammy-scratch-fips-rfcurated"
+      - "cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips:0.28.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"

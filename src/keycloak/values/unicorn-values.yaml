@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 podSecurityContext:
@@ -11,8 +11,8 @@ securityContext:
     drop:
       - ALL
 image:
-  repository: quay.io/rfcurated/keycloak
-  tag: "26.6.1-jammy-fips-rfcurated"
+  repository: cgr.dev/defenseunicorns.com/keycloak-fips
+  tag: "26.6.1"
 
 migrations:
   deleteGeneratedTrustStore: true

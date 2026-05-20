@@ -1,5 +1,5 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 cni:
-  image: quay.io/rfcurated/istio/install-cni:1.29.2-jammy-fips-rfcurated-rfhardened
+  image: cgr.dev/defenseunicorns.com/istio-install-cni-fips:1.29.2

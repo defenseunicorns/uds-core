@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -52,7 +52,7 @@ export async function compareImagesAndCharts(
     // If no waiting labels were added, add needs-review
     if (
       !result.labels.includes("waiting on ironbank") &&
-      !result.labels.includes("waiting on rapidfort") &&
+      !result.labels.includes("waiting on unicorn") &&
       !result.labels.includes("helm-chart-only")
     ) {
       result.labels.push("needs-review");
@@ -257,14 +257,12 @@ function compareImages(
             result.changes.push(
               `Waiting on Ironbank to update ${imgName} to version ${newVersion}`,
             );
-          } else if (missingImg.startsWith("quay.io/rfcurated")) {
+          } else if (missingImg.startsWith("cgr.dev/defenseunicorns.com")) {
             // Only add the label once, but add a message for each missing image
-            if (!result.labels.includes("waiting on rapidfort")) {
-              result.labels.push("waiting on rapidfort");
+            if (!result.labels.includes("waiting on unicorn")) {
+              result.labels.push("waiting on unicorn");
             }
-            result.changes.push(
-              `Waiting on Rapidfort to update ${imgName} to version ${newVersion}`,
-            );
+            result.changes.push(`Waiting on Unicorn to update ${imgName} to version ${newVersion}`);
           }
         }
 

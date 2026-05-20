@@ -101,6 +101,18 @@ done
 
 See [Istio's platform requirements](https://istio.io/latest/docs/ops/deployment/platform-requirements/) for the full upstream list.
 
+> [!NOTE]
+> **Unicorn flavor on RHEL 9 with fapolicyd:** The unicorn flavor uses FIPS-compliant CNI images that write `libcrypto.so.3` into `/opt/cni/bin/.cgr/` at runtime. If fapolicyd is running in enforcing mode, it will block access to this file because it is not RPM-managed, preventing istio-cni from starting. Add the following rule to allow access, then recompile and restart fapolicyd:
+>
+> ```bash
+> mkdir -p /etc/fapolicyd/rules.d
+> cat > /etc/fapolicyd/rules.d/20-cni-allow.rules << 'EOF'
+> allow perm=any all : dir=/opt/cni/bin/
+> EOF
+> fagenrules
+> systemctl restart fapolicyd
+> ```
+
 ## Falco requirements
 
 UDS Core uses [Falco](https://falco.org/)'s [Modern eBPF Probe](https://falco.org/docs/concepts/event-sources/kernel/#modern-ebpf-probe), which has the following requirements:

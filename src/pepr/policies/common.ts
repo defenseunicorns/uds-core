@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -40,8 +40,8 @@ const ISTIO_IMAGE_FLAVOR_CONFIGS = {
     repository: "ironbank/tetrate/istio/proxyv2",
   },
   unicorn: {
-    registry: "quay.io",
-    repository: "rfcurated/istio/proxyv2",
+    registry: "cgr.dev",
+    repository: "defenseunicorns.com/istio-proxy-fips",
   },
 } as const;
 
