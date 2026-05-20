@@ -12,14 +12,23 @@ const customObjects = kc.makeApiClient(k8s.CustomObjectsApi);
 
 describe("Envoy Gateway", () => {
   test("controller deployment should be available", async () => {
-    const deployment = await K8s(kind.Deployment).InNamespace("envoy-gateway-system").Get("envoy-gateway");
+    const deployment = await K8s(kind.Deployment)
+      .InNamespace("envoy-gateway-system")
+      .Get("envoy-gateway");
     const available = deployment.status?.conditions?.find(c => c.type === "Available");
     expect(available?.status).toBe("True");
   });
 
   test("GatewayClass envoy-gateway should be accepted", async () => {
-    const res = await customObjects.getClusterCustomObject({ group: "gateway.networking.k8s.io", version: "v1", plural: "gatewayclasses", name: "envoy-gateway" });
-    const gatewayClass = res as { status?: { conditions?: Array<{ type: string; status: string }> } };
+    const res = await customObjects.getClusterCustomObject({
+      group: "gateway.networking.k8s.io",
+      version: "v1",
+      plural: "gatewayclasses",
+      name: "envoy-gateway",
+    });
+    const gatewayClass = res as {
+      status?: { conditions?: Array<{ type: string; status: string }> };
+    };
     const accepted = gatewayClass.status?.conditions?.find(c => c.type === "Accepted");
     expect(accepted?.status).toBe("True");
   });
