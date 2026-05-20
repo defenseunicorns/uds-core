@@ -105,8 +105,7 @@ spec:
           app: istiod
         port: 15012
 
-      {{- if .Values.autoscaling.enabled }}
-      # HA for keycloak
+      # JGroups ports for Keycloak clustering (required for multi-replica deployments)
       - direction: Ingress
         remoteGenerated: IntraNamespace
         ports:
@@ -117,7 +116,6 @@ spec:
         ports:
           - 7800
           - 57800
-      {{- end }}
 
       # Custom rules for additional networking access
       {{- with .Values.additionalNetworkAllow }}

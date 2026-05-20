@@ -341,8 +341,7 @@ prometheusRule:
 
 autoscaling:
   # If `true`, an autoscaling/v2beta2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.18 or above)
-  # Autoscaling seems to be most reliable when using KUBE_PING service discovery (see README for details)
-  # This disables the `replicas` field in the StatefulSet
+  # Autoscaling enables HA mode with distributed Infinispan caches (KC_CACHE=ispn) and JDBC_PING cluster discovery
   enabled: false
   # Additional HorizontalPodAutoscaler labels
   labels: {}
