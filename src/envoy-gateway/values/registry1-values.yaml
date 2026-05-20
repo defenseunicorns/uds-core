@@ -4,4 +4,4 @@
 global:
   images:
     envoyGateway:
-      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0-###ZARF_PKG_ARCH###
+      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0

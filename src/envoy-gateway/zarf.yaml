@@ -32,7 +32,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0-###ZARF_PKG_ARCH###
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
 
   - name: envoy-gateway
     required: false
