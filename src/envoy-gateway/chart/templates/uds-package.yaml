@@ -7,6 +7,12 @@ metadata:
   name: envoy-gateway
   namespace: {{ .Release.Namespace }}
 spec:
+  monitor:
+    - selector:
+        control-plane: envoy-gateway
+      portName: metrics
+      targetPort: 19001
+      description: Metrics
   network:
     serviceMesh:
       mode: ambient

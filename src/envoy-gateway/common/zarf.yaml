@@ -24,5 +24,9 @@ components:
         namespace: envoy-gateway-system
         url: oci://docker.io/envoyproxy/gateway-helm
         version: v1.8.0
+        # Disable SSA to prevent field manager conflicts with Istio's Gateway API CRDs.
+        # Istio installs safe-upgrades.gateway.networking.k8s.io VAP with field manager "uds";
+        # SSA mode causes a conflict when this chart tries to apply the same VAP on install.
+        serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
