@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -53,5 +53,5 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/falcosecurity/falco:0.43.1-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/falcosecurity/falcosidekick:2.33.0-jammy-scratch-fips-rfcurated
+      - cgr.dev/defenseunicorns.com/falco-fips:0.43.1
+      - cgr.dev/defenseunicorns.com/falcosidekick-fips:2.33.0

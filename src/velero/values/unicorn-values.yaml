@@ -1,19 +1,19 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: quay.io/rfcurated/velero/velero
-  tag: 1.18.0-noble-scratch-fips-rfcurated
+  repository: cgr.dev/defenseunicorns.com/velero-fips
+  tag: 1.18.0
 
 initContainers:
   - name: velero-plugin-for-aws
-    image: quay.io/rfcurated/velero/velero-plugin-for-aws:1.14.0-noble-scratch-fips-rfcurated
+    image: cgr.dev/defenseunicorns.com/velero-plugin-for-aws-fips:1.14.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target
         name: plugins
   - name: velero-plugin-for-azure
-    image: quay.io/rfcurated/velero/velero-plugin-for-microsoft-azure:1.14.0-noble-scratch-fips-rfcurated
+    image: cgr.dev/defenseunicorns.com/velero-plugin-for-microsoft-azure-fips:1.14.0
     imagePullPolicy: IfNotPresent
     volumeMounts:
       - mountPath: /target

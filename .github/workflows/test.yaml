@@ -44,7 +44,7 @@ jobs:
   test:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
-    # Increase the timeout for longer upgrades - temporarily increased to 60 for longer upgrade from cgr -> rf
+    # Increase the timeout for longer upgrades
     timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
     env:
@@ -60,8 +60,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           registry1Username: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
-          rapidfortUsername: ${{ (inputs.flavor == 'unicorn') && secrets.RAPIDFORT_USERNAME || '' }}
-          rapidfortPassword: ${{ (inputs.flavor == 'unicorn') && secrets.RAPIDFORT_PASSWORD || '' }}
+          chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
       - name: Test a single layer package

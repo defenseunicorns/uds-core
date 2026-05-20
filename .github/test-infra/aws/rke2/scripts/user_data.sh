@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 info() {
@@ -62,6 +62,17 @@ rm -rf ./yq
 }
 
 pre_userdata
+
+# Allow CNI plugins and their bundled libraries to be opened/executed by fapolicyd.
+# fapolicyd starts before cloud-init runs this script, so we must recompile rules and restart.
+# Guard: fapolicyd is RHEL-specific; skip on distros where it is absent or disabled.
+if command -v fagenrules >/dev/null 2>&1; then
+  mkdir -p /etc/fapolicyd/rules.d
+  cat > /etc/fapolicyd/rules.d/20-cni-allow.rules << 'EOF'
+allow perm=any all : dir=/opt/cni/bin/
+EOF
+  fagenrules && systemctl restart fapolicyd
+fi
 
 # If no bootstrap IP is provided then start RKE2 as single node/bootstrap
 if [[ "${BOOTSTRAP_IP}" == "" ]]; then

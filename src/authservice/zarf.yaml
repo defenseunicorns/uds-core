@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -47,4 +47,4 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/istio-ecosystem/authservice:1.1.5-jammy-scratch-fips-rfcurated
+      - cgr.dev/defenseunicorns.com/authservice-fips:1.1.5

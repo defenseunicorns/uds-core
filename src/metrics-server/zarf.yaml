@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -45,4 +45,4 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - quay.io/rfcurated/metrics-server:0.8.1-jammy-scratch-fips-rfcurated-rfhardened
+      - cgr.dev/defenseunicorns.com/metrics-server-fips:0.8.1

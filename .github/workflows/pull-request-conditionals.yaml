@@ -146,8 +146,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           registry1Username: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
           registry1Password: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
-          rapidfortUsername: ${{ secrets.RAPIDFORT_USERNAME }}
-          rapidfortPassword: ${{ secrets.RAPIDFORT_PASSWORD }}
+          chainguardIdentity: ${{ secrets.CHAINGUARD_IDENTITY }}
 
       - name: Check multi-arch images
         uses: ./.github/actions/check-multiarch
