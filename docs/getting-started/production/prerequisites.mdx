@@ -83,7 +83,7 @@ You must have TLS certificates (or the ability to obtain them) for both your ten
 
 ## Node time synchronization
 
-Configure NTP on every worker node as part of your node image build or bootstrap process. UDS Core components such as `keycloak` and Loki are sensitive to host clock drift: skewed node time can cause short-lived SSO sessions, token validation failures, and unstable `loki-write` ring membership.
+Configure NTP on every worker node as part of your node image build or bootstrap process. UDS Core components such as Keycloak and Loki are sensitive to host clock drift: skewed node time can cause short-lived SSO sessions, token validation failures, and unstable `loki-write` ring membership.
 
 Verify that your node image enables a time sync service by default, or configure one during bootstrap.
 
