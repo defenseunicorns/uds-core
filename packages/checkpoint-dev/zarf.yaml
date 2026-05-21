@@ -1,7 +1,8 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
+
 metadata:
   name: k3d-core-slim-dev
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
@@ -14,11 +15,9 @@ variables:
   - name: CLUSTER_NAME
     description: "Name of the cluster"
     default: "uds"
-
   - name: K3D_EXTRA_ARGS
     description: "Optionally pass k3d arguments to the default"
     default: ""
-
   - name: NGINX_EXTRA_PORTS
     description: "Optionally allow more ports through Nginx (combine with K3D_EXTRA_ARGS '-p <port>:<port>@server:*')"
     default: "[]"
@@ -30,20 +29,12 @@ components:
     actions:
       onDeploy:
         before:
-          - cmd: |
-              echo "This package requires elevated permissions to deploy - requesting sudo (if paused enter password)"
-              sudo echo "got sudo! success!"
           - cmd: k3d cluster delete ${ZARF_VAR_CLUSTER_NAME}
             description: "Destroy the cluster"
           - cmd: |
-              sudo rm -rf data
-          - cmd: |
-              if [ -z "$TMPDIR" ]; then
-                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
-                TMPDIR="/tmp"
-              fi
-              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
-              sudo rm -rf "$DATA_DIR"
+              docker volume rm "k3d-${ZARF_VAR_CLUSTER_NAME}-k3s"     >/dev/null 2>&1 || true
+              docker volume rm "k3d-${ZARF_VAR_CLUSTER_NAME}-kubelet" >/dev/null 2>&1 || true
+            description: "Remove checkpoint volumes"
 
   - name: create-cluster
     required: true
@@ -51,33 +42,50 @@ components:
     files:
       - source: uds-checkpoint.tar
         target: uds-checkpoint.tar
+      - source: busybox.tar
+        target: busybox.tar
     actions:
       onCreate:
         before:
           - cmd: ./checkpoint.sh
         onSuccess:
-          - cmd: |
-              if [ -z "$TMPDIR" ]; then
-                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
-                TMPDIR="/tmp"
-              fi
-              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
-              sudo rm -rf "$DATA_DIR" uds-checkpoint.tar
+          - cmd: rm -f uds-checkpoint.tar
       onDeploy:
         after:
           - cmd: |
-              if [ -z "$TMPDIR" ]; then
-                #  macOS sets TMPDIR to a user temp directory - this also provides more options to linux
-                TMPDIR="/tmp"
-              fi
-              DATA_DIR="${TMPDIR}/uds-checkpoint-data"
-              mkdir -p "$DATA_DIR"
+              VOL_K3S="k3d-${ZARF_VAR_CLUSTER_NAME}-k3s"
+              VOL_KUBELET="k3d-${ZARF_VAR_CLUSTER_NAME}-kubelet"
 
-              sudo tar -xpf uds-checkpoint.tar -C "$DATA_DIR"
-              K8S_TOKEN="$(sudo cat ${DATA_DIR}/k3s_data/server/token)"
-              echo $K8S_TOKEN
-              sudo docker load -i "${DATA_DIR}/uds-k3d-checkpoint-latest.tar"
+              # Load the checkpoint image and capture its local ref so k3d uses
+              # the bundled image — not a remote pull of the same tag.
+              CHECKPOINT_IMAGE=$(tar -xOf uds-checkpoint.tar uds-k3d-checkpoint-latest.tar \
+                | docker load | awk '{print $NF}')
+              docker load < busybox.tar >/dev/null
 
+              # Create named Docker volumes and inject the checkpoint data by
+              # piping each tarball from the bundle directly into a busybox
+              # helper container that mounts the volume.
+              #
+              # Named volumes live inside the Docker VM, so this works on macOS
+              # (Lima, OrbStack, Docker Desktop) — no host bind-mount or sudo
+              # required.
+              docker volume create "$VOL_K3S" >/dev/null
+              docker volume create "$VOL_KUBELET" >/dev/null
+
+              tar -xOf uds-checkpoint.tar k3s_data.tar | \
+                docker run --rm -i -v "${VOL_K3S}:/data" busybox tar -x -C /data
+
+              tar -xOf uds-checkpoint.tar kubelet_data.tar | \
+                docker run --rm -i -v "${VOL_KUBELET}:/data" busybox tar -x -C /data
+
+              # Read the cluster token from the restored volume — no host
+              # filesystem access needed.
+              K8S_TOKEN=$(docker run --rm \
+                -v "${VOL_K3S}:/data" busybox \
+                cat /data/server/token)
+
+              # Create the cluster using named volumes instead of host paths.
+              # k3d's -v flag accepts volume-name:/path just like docker run.
               k3d cluster create \
                 -p "80:80@server:*" \
                 -p "443:443@server:*" \
@@ -87,12 +95,14 @@ components:
                 --k3s-arg "--disable=servicelb@server:*" \
                 --k3s-arg "--disable=local-storage@server:*" \
                 --k3s-arg "--token=${K8S_TOKEN}@server:*" \
-                -v "${DATA_DIR}/kubelet_data:/var/lib/kubelet@server:*" \
-                -v "${DATA_DIR}/k3s_data:/var/lib/rancher/k3s@server:*" \
-                --image ghcr.io/defenseunicorns/uds-core/checkpoint:latest ${ZARF_VAR_K3D_EXTRA_ARGS} \
+                -v "${VOL_K3S}:/var/lib/rancher/k3s@server:*" \
+                -v "${VOL_KUBELET}:/var/lib/kubelet@server:*" \
+                --image "$CHECKPOINT_IMAGE" \
+                ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
             description: "Create the cluster"
-          # This action waits on Keycloak since it is the slowest pod to start after cluster creation. By waiting on it, we guarantee the cluster is healthy and usable after deployment.
+          # Wait on Keycloak since it is the slowest pod to start after cluster
+          # creation.
           - description: Keycloak to be Healthy
             wait:
               cluster:
@@ -100,5 +110,12 @@ components:
                 name: app.kubernetes.io/name=keycloak
                 namespace: keycloak
                 condition: Ready
+          - description: Pepr to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app=pepr-uds-core
+                namespace: pepr-system
+                condition: Ready
         onSuccess:
-          - cmd: rm -f uds-checkpoint.tar
+          - cmd: rm -f uds-checkpoint.tar busybox.tar
