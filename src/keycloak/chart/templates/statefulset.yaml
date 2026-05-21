@@ -179,7 +179,7 @@ spec:
             {{- end }}
             # Infinispan 16 introduced virtual threads, enabled by default. In constrained environments, such as Kubernetes with fewer than 4 vCPUs, it is highly recommended
             # to disable this feature to reduce the risk of deadlocks. See https://github.com/keycloak/keycloak/issues/48792 for more details.
-            - Dorg.infinispan.threads.virtual=false
+            - "-Dorg.infinispan.threads.virtual=false"
           {{- with .Values.lifecycleHooks }}
           lifecycle:
           {{- toYaml . | nindent 12 }}
