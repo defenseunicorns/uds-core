@@ -1,6 +1,6 @@
 # K3d + UDS Core Slim Dev Checkpoint
 
-A Zarf package that snapshots a running K3d cluster (named `uds`) and rehydrates it on demand. Works on macOS and Linux without sudo.
+This is a special Zarf package that takes a running K3d cluster (named `uds`) and wraps its committed container and volumes into a zarf package.
 
 > [!CAUTION]
 > *KNOWN ISSUE*: ARM64 builds of this package do not properly enforce network policies in GitHub CI. There may be additional unexpected behavior and issues with ARM64 builds.
