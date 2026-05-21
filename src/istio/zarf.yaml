@@ -82,10 +82,10 @@ components:
           - "values/unicorn/ztunnel.yaml"
     # @lulaStart b4367e52-bef0-4463-a906-e5af6b4aa015
     images:
-      - quay.io/rfcurated/istio/pilot:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/proxyv2:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/install-cni:1.29.2-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/istio/ztunnel:1.29.2-jammy-scratch-fips-rfcurated
+      - cgr.dev/defenseunicorns.com/istio-pilot-fips:1.29.2
+      - cgr.dev/defenseunicorns.com/istio-proxy-fips:1.29.2
+      - cgr.dev/defenseunicorns.com/istio-install-cni-fips:1.29.2
+      - cgr.dev/defenseunicorns.com/ztunnel-fips:1.29.2
     # @lulaEnd b4367e52-bef0-4463-a906-e5af6b4aa015
 
   - name: gateway-api-crds

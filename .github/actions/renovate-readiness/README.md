@@ -33,7 +33,7 @@ The action performs the following steps:
    - It compares the extracted data using the `compareImagesAndCharts.ts` script.
    - Based on the comparison, it applies appropriate labels to the PR:
      - `waiting on ironbank`: If a registry1 image is behind
-     - `waiting on rapidfort`: If a rapidfort image is behind
+     - `waiting on unicorn`: If a Unicorn image is behind
      - `helm-chart-only`: If a PR only contains a helm chart update
      - `needs-review`: If PR is NOT waiting on image updates
      - `major-helm-update`: If the PR contains a major chart version bump
@@ -72,7 +72,7 @@ The TypeScript scripts are thoroughly tested using Jest:
 - **compareImagesAndCharts.test.ts**: Tests the comparison of images and charts, including:
   - Helm chart updates (both regular and major)
   - Image updates (including major updates)
-  - Waiting conditions for Ironbank and Rapidfort images
+  - Waiting conditions for Ironbank and Unicorn images
   - Missing or empty extract files
   - Invalid version formats
 

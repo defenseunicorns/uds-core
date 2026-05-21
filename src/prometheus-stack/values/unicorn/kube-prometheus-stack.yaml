@@ -4,14 +4,14 @@
 alertmanager:
   alertmanagerSpec:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus/alertmanager
-      tag: 0.32.1-jammy-fips-rfcurated-rfhardened
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-alertmanager-fips
+      tag: 0.32.1
 kube-state-metrics:
   image:
-    registry: quay.io
-    repository: rfcurated/kube-state-metrics
-    tag: 2.18.0-jammy-scratch-fips-rfcurated-rfhardened
+    registry: cgr.dev
+    repository: defenseunicorns.com/kube-state-metrics-fips
+    tag: 2.18.0
   securityContext:
     enabled: true
     fsGroup: 65532
@@ -21,14 +21,14 @@ kube-state-metrics:
 prometheus:
   prometheusSpec:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus
-      tag: 3.11.3-jammy-fips-rfcurated-rfhardened
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-fips
+      tag: 3.11.3
 prometheus-node-exporter:
   image:
-    registry: quay.io
-    repository: rfcurated/prometheus/node-exporter
-    tag: 1.11.1-jammy-scratch-fips-rfcurated
+    registry: cgr.dev
+    repository: defenseunicorns.com/prometheus-node-exporter-fips
+    tag: 1.11.1
     distroless: false
 prometheusOperator:
   admissionWebhooks:
@@ -39,19 +39,20 @@ prometheusOperator:
     patch:
       enabled: true
       image:
-        registry: quay.io
-        repository: rfcurated/ingress-nginx/kube-webhook-certgen
-        tag: 1.6.9-jammy-fips-rfcurated-rfhardened
+        registry: cgr.dev
+        repository: defenseunicorns.com/kube-webhook-certgen-fips
+        # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
+        tag: v1.15.5
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
         runAsUser: 65532
   image:
-    registry: quay.io
-    repository: rfcurated/prometheus-operator
-    tag: 0.91.0-jammy-scratch-fips-rfcurated
+    registry: cgr.dev
+    repository: defenseunicorns.com/prometheus-operator-fips
+    tag: 0.91.0
   prometheusConfigReloader:
     image:
-      registry: quay.io
-      repository: rfcurated/prometheus-operator/prometheus-config-reloader
-      tag: 0.91.0-jammy-scratch-fips-rfcurated
+      registry: cgr.dev
+      repository: defenseunicorns.com/prometheus-config-reloader-fips
+      tag: 0.91.0

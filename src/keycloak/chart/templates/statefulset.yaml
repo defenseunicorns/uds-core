@@ -185,13 +185,19 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
+          {{- if and (contains "cgr.dev" .Values.image.repository) .Values.env }}
+            {{- range .Values.env }}
+              {{- if eq .name "JAVA_OPTS_APPEND" }}
+                {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
           {{- if .Values.env }}
             {{- tpl (toYaml .Values.env) . | nindent 12 }}
           {{- end }}
-            {{- if or (contains "rfcurated" .Values.image.repository) (contains "rfcurated" (toString .Values.image.tag)) }}
-            # Ensure javaagent is disabled (only for rfcurated unicorn flavor)
-            - name: JDK_JAVA_OPTIONS
-              value: "--add-exports=java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports=java.base/sun.security.provider=ALL-UNNAMED"
+            {{- if contains "cgr.dev" .Values.image.repository }}
+            - name: JAVA_OPTS_APPEND
+              value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
             - name: UDS_DOMAIN
@@ -394,6 +400,12 @@ spec:
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            {{- if contains "cgr.dev" .Values.image.repository }}
+            - name: fips-jce-security
+              mountPath: /opt/keycloak/data/fips-sunjce.security
+              subPath: fips-sunjce.security
+              readOnly: true
+            {{- end }}
       enableServiceLinks: {{ .Values.enableServiceLinks }}
       restartPolicy: {{ .Values.restartPolicy }}
       {{- with .Values.nodeSelector }}
@@ -482,6 +494,11 @@ spec:
                       path: tc.txt
               {{- end }}
               {{- end }}
+        {{- end }}
+        {{- if contains "cgr.dev" .Values.image.repository }}
+        - name: fips-jce-security
+          configMap:
+            name: {{ include "keycloak.fullname" . }}-fips-jce-security
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}

@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -114,10 +114,10 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - quay.io/rfcurated/grafana:11.5.3-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/busybox:1.37.0-glibc-rf.1-rfcurated
-      - quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated
-      - quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened
+      - cgr.dev/defenseunicorns.com/grafana-fips:11.5.3
+      - cgr.dev/defenseunicorns.com/busybox:1.37.0
+      - cgr.dev/defenseunicorns.com/curl-fips:8.12.1
+      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:1.30.3
 `;
       }
       if (filePath === "test-dir/common/zarf.yaml") {
@@ -193,18 +193,15 @@ components:
       ],
       "8.12.1": [
         "docker.io/curlimages/curl:8.12.1",
-        "quay.io/rfcurated/curl:8.12.1-jammy-scratch-fips-rfcurated",
+        "cgr.dev/defenseunicorns.com/curl-fips:8.12.1",
       ],
-      "1.37.0": [
-        "docker.io/library/busybox:1.37.0",
-        "quay.io/rfcurated/busybox:1.37.0-glibc-rf.1-rfcurated",
-      ],
+      "1.37.0": ["docker.io/library/busybox:1.37.0", "cgr.dev/defenseunicorns.com/busybox:1.37.0"],
       "1.30.3": [
         "ghcr.io/kiwigrid/k8s-sidecar:1.30.3",
         "registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar:1.30.3",
-        "quay.io/rfcurated/k8s-sidecar:1.30.3-jammy-scratch-fips-rfcurated-rfhardened",
+        "cgr.dev/defenseunicorns.com/k8s-sidecar-fips:1.30.3",
       ],
-      "11.5.3": ["quay.io/rfcurated/grafana:11.5.3-jammy-scratch-fips-rfcurated"],
+      "11.5.3": ["cgr.dev/defenseunicorns.com/grafana-fips:11.5.3"],
       "9.5": ["registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.5"],
     });
   });
@@ -241,8 +238,8 @@ components:
     only:
       flavor: unicorn
     images:
-      - quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened
-      - quay.io/rfcurated/postgres:15.4.0-slim-jammy-fips-rfcurated-rfhardened
+      - cgr.dev/defenseunicorns.com/nginx-fips:1.25.3
+      - cgr.dev/defenseunicorns.com/postgresql-fips:15.4.0
 `;
       }
       if (filePath === "test-dir/common/zarf.yaml") {
@@ -274,12 +271,12 @@ metadata:
       "1.25.3": [
         "docker.io/library/nginx:1.25.3",
         "registry1.dso.mil/ironbank/opensource/nginx/nginx:1.25.3",
-        "quay.io/rfcurated/nginx:1.25.3-slim-jammy-fips-rfcurated-rfhardened",
+        "cgr.dev/defenseunicorns.com/nginx-fips:1.25.3",
       ],
       "15.4.0": [
         "docker.io/library/postgres:15.4.0",
         "registry1.dso.mil/ironbank/opensource/postgres/postgresql:15.4.0",
-        "quay.io/rfcurated/postgres:15.4.0-slim-jammy-fips-rfcurated-rfhardened",
+        "cgr.dev/defenseunicorns.com/postgresql-fips:15.4.0",
       ],
     });
   });
@@ -356,7 +353,7 @@ components:
   - name: component1
     images:
       - registry1.dso.mil/ironbank/postgres:15.2.0
-      - quay.io/rfcurated/postgres:15.2.0-slim-jammy-fips-rfcurated-rfhardened
+      - cgr.dev/defenseunicorns.com/postgresql-fips:15.2.0
       - docker.io/library/postgres:15.2.0-beta.2
 `;
       }
@@ -388,7 +385,7 @@ metadata:
     expect(images).toEqual({
       "15.2.0": [
         "registry1.dso.mil/ironbank/postgres:15.2.0",
-        "quay.io/rfcurated/postgres:15.2.0-slim-jammy-fips-rfcurated-rfhardened",
+        "cgr.dev/defenseunicorns.com/postgresql-fips:15.2.0",
         "docker.io/library/postgres:15.2.0-beta.2",
       ],
     });

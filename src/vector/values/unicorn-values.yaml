@@ -1,6 +1,6 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: quay.io/rfcurated/vector
-  tag: 0.55.0-jammy-fips-rfcurated-rfhardened
+  repository: cgr.dev/defenseunicorns.com/vector-fips
+  tag: 0.55.0

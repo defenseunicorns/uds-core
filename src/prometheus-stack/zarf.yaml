@@ -72,13 +72,13 @@ components:
         valuesFiles:
           - "values/unicorn/kube-prometheus-stack.yaml"
     images:
-      - "quay.io/rfcurated/prometheus/node-exporter:1.11.1-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus-operator:0.91.0-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/kube-state-metrics:2.18.0-jammy-scratch-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus/alertmanager:0.32.1-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.91.0-jammy-scratch-fips-rfcurated"
-      - "quay.io/rfcurated/prometheus:3.11.3-jammy-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/ingress-nginx/kube-webhook-certgen:1.6.9-jammy-fips-rfcurated-rfhardened"
+      - "cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips:1.11.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:0.91.0"
+      - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:2.18.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:0.32.1"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-fips:3.11.3"
+      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.5" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -122,5 +122,5 @@ components:
         valuesFiles:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
-      - "quay.io/rfcurated/prometheus/blackbox-exporter:0.28.0-jammy-scratch-fips-rfcurated-rfhardened"
-      - "quay.io/rfcurated/prometheus-operator/prometheus-config-reloader:0.91.0-jammy-scratch-fips-rfcurated"
+      - "cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips:0.28.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"

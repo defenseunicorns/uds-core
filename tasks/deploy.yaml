@@ -126,7 +126,7 @@ tasks:
           # Download latest release bundle
           curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
-          # Update the bundle with the latest version using yq
+          # Update the bundle: pin core to the latest release OCI ref
           ./uds zarf tools yq e -i "
             del(.packages[] | select(.name == \"core\").path) |
             .packages[] |= (select(.name == \"core\") |
