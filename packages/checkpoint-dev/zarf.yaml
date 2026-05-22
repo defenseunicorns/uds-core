@@ -49,7 +49,7 @@ components:
         before:
           - cmd: ./checkpoint.sh
         onSuccess:
-          - cmd: rm -f uds-checkpoint.tar
+          - cmd: rm -f uds-checkpoint.tar busybox.tar
       onDeploy:
         after:
           - cmd: |
