@@ -177,9 +177,12 @@ spec:
             - "--spi-connections-http-client-default-jitter-factor={{ .Values.httpRetry.jitterFactor }}"
             {{- end }}
             {{- end }}
+            {{- if .Values.disableVirtualThreads }}
             # Infinispan 16 introduced virtual threads, enabled by default. In constrained environments, such as Kubernetes with fewer than 4 vCPUs, it is highly recommended
             # to disable this feature to reduce the risk of deadlocks. See https://github.com/keycloak/keycloak/issues/48792 for more details.
+            # The switch if officially supported, see https://infinispan.org/blog/2025/11/10/infinispan-16-0
             - "-Dorg.infinispan.threads.virtual=false"
+            {{- end }}
           {{- with .Values.lifecycleHooks }}
           lifecycle:
           {{- toYaml . | nindent 12 }}

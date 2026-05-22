@@ -8,9 +8,27 @@ templates:
   - statefulset.yaml
 
 tests:
-  - it: should render Infinispan virtual-threads disabled flag
+  - it: should render Infinispan virtual-threads disabled flag by default
     template: statefulset.yaml
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].args
+          content: "-Dorg.infinispan.threads.virtual=false"
+
+  - it: should render Infinispan virtual-threads disabled flag when disableVirtualThreads is true
+    set:
+      disableVirtualThreads: true
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "-Dorg.infinispan.threads.virtual=false"
+
+  - it: should not render Infinispan virtual-threads disabled flag when disableVirtualThreads is false
+    set:
+      disableVirtualThreads: false
+    template: statefulset.yaml
+    asserts:
+      - notContains:
           path: spec.template.spec.containers[0].args
           content: "-Dorg.infinispan.threads.virtual=false"
