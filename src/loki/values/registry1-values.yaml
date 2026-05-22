@@ -25,7 +25,8 @@ gateway:
     tag: 1.29.8
 memcached:
   image:
-    repository: registry1.dso.mil/ironbank/opensource/memcached/memcached
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/memcached/memcached
     tag: 1.6.42
 
 sidecar:

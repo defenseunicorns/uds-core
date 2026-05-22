@@ -13,7 +13,8 @@ gateway:
     tag: v1.31.0
 memcached:
   image:
-    repository: cgr.dev/defenseunicorns.com/memcached-fips
+    registry: cgr.dev/defenseunicorns.com
+    repository: memcached-fips
     tag: v1.6.42
 sidecar:
   image:
