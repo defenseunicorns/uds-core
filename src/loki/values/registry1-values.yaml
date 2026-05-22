@@ -1,11 +1,11 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 loki:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/grafana/loki
-    tag: 3.7.1
+    tag: 3.7.2
   podSecurityContext:
     fsGroup: 10001
     runAsGroup: 10001
@@ -22,13 +22,15 @@ gateway:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/nginx/nginx-alpine
-    tag: 1.29.7
+    tag: 1.29.8
 memcached:
   image:
-    repository: registry1.dso.mil/ironbank/opensource/memcached/memcached
-    tag: 1.6.41
+    registry: registry1.dso.mil
+    repository: ironbank/opensource/memcached/memcached
+    tag: 1.6.42
 
 sidecar:
   image:
-    repository: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar
-    tag: 2.5.0
+    registry: registry1.dso.mil
+    repository: ironbank/kiwigrid/k8s-sidecar
+    tag: 2.7.1
