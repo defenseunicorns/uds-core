@@ -42,7 +42,7 @@ prometheusOperator:
         registry: cgr.dev
         repository: defenseunicorns.com/kube-webhook-certgen-fips
         # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
-        tag: 1.15.2
+        tag: v1.15.5
       securityContext:
         runAsGroup: 65532
         runAsNonRoot: true
