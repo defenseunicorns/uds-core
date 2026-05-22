@@ -34,7 +34,7 @@ components:
       - docker.io/grafana/grafana:13.0.1
       - docker.io/curlimages/curl:8.20.0
       - docker.io/library/busybox:1.37.0
-      - ghcr.io/kiwigrid/k8s-sidecar:2.7.3
+      - ghcr.io/kiwigrid/k8s-sidecar:2.7.1
 
   - name: grafana
     required: true
@@ -65,4 +65,4 @@ components:
       - cgr.dev/defenseunicorns.com/grafana-fips:v13.0.1
       - cgr.dev/defenseunicorns.com/busybox-fips:1.37.0
       - cgr.dev/defenseunicorns.com/curl-fips:v8.20.0
-      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:v2.7.3
+      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:v2.7.1
