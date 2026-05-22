@@ -17,5 +17,6 @@ memcached:
     tag: v1.6.42
 sidecar:
   image:
-    repository: cgr.dev/defenseunicorns.com/k8s-sidecar-fips
-    tag: v2.7.3
+    registry: cgr.dev
+    repository: defenseunicorns.com/k8s-sidecar-fips
+    tag: v2.7.1

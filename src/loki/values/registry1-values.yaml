@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 loki:
@@ -30,5 +30,6 @@ memcached:
 
 sidecar:
   image:
-    repository: registry1.dso.mil/ironbank/kiwigrid/k8s-sidecar
+    registry: registry1.dso.mil
+    repository: ironbank/kiwigrid/k8s-sidecar
     tag: 2.7.1

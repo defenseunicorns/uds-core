@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 loki:
@@ -21,5 +21,6 @@ memcached:
 
 sidecar:
   image:
-    repository: ghcr.io/kiwigrid/k8s-sidecar
-    tag: 2.7.3
+    registry: docker.io
+    repository: kiwigrid/k8s-sidecar
+    tag: 2.7.1

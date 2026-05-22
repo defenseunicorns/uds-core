@@ -28,7 +28,7 @@ components:
       - docker.io/grafana/loki:3.7.2
       - docker.io/nginxinc/nginx-unprivileged:1.31-alpine
       - docker.io/memcached:1.6.42-alpine
-      - ghcr.io/kiwigrid/k8s-sidecar:2.7.3
+      - docker.io/kiwigrid/k8s-sidecar:2.7.1
 
   - name: loki
     required: true
@@ -62,4 +62,4 @@ components:
       - cgr.dev/defenseunicorns.com/loki-fips:v3.7.2
       - cgr.dev/defenseunicorns.com/nginx-fips:v1.31.0
       - cgr.dev/defenseunicorns.com/memcached-fips:v1.6.42
-      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:v2.7.3
+      - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:v2.7.1
