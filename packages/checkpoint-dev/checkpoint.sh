@@ -18,6 +18,8 @@ fi
 echo "Pausing container ${K3S_CONTAINER} ..."
 docker pause "$CONTAINER_ID"
 
+trap 'docker unpause "$CONTAINER_ID" 2>/dev/null || true' EXIT
+
 echo "Committing container ${K3S_CONTAINER} ..."
 docker commit "$CONTAINER_ID" "$IMAGE_NAME" >/dev/null
 
