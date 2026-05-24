@@ -76,6 +76,7 @@ test("validate namespace dashboard", async ({ page }) => {
     url.searchParams.set("var-namespace", fullCore ? "authservice-sidecar-test-app" : "grafana");
     await page.goto(url.toString());
     await closeGrafanaModals(page);
+    await expect(page.locator('[data-testid="data-testid dashboard controls"]')).toBeVisible();
   });
 });
 
