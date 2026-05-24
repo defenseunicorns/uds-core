@@ -70,7 +70,7 @@ test("validate namespace dashboard", async ({ page }) => {
     await gotoGrafana(page, `/dashboards`);
     await page.click('text="Kubernetes / Compute Resources / Namespace (Pods)"');
     // Grafana 13+ does not eagerly load dropdown options even when a variable has a
-    // pre-selected value. Re-navigate with the namespace set in the URL to bypass this.
+    // preselected value. Re-navigate with the namespace set in the URL to bypass this.
     await page.waitForURL(/\/d\//);
     const url = new URL(page.url());
     url.searchParams.set("var-namespace", fullCore ? "authservice-sidecar-test-app" : "grafana");
