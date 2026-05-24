@@ -90,17 +90,16 @@ test("validate loki dashboard", async ({ page }) => {
     await gotoGrafana(page, `/dashboards`);
     await page.getByPlaceholder("Search for dashboards and folders").fill("Loki");
     await page.click('text="Loki Dashboard quick search"');
+    // Grafana 13+ lazy-loads variables with no saved current value, so the namespace
+    // dropdown may start empty rather than preselected to "authservice". Use a partial
+    // selector that matches regardless of the current displayed value.
     await page
-      .getByTestId(
-        "data-testid Dashboard template variables Variable Value DropDown value link text authservice",
+      .locator(
+        '[data-testid^="data-testid Dashboard template variables Variable Value DropDown value link text"]',
       )
+      .first()
       .click();
-    if (!fullCore) {
-      // Check grafana if not a full core deploy
-      await page.getByRole("option", { name: "grafana" }).click();
-    } else {
-      await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
-    }
+    await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
     await expect(
       page
         .getByTestId("data-testid Panel header Logs Panel")
