@@ -1,6 +1,6 @@
 ---
 title: UDS Core 1.5
-description: UDS Core 1.5 release notes covering the unicorn flavor migration from RapidFort to Chainguard FIPS images and the new UDS Portal functional layer.
+description: UDS Core 1.5 release notes covering the unicorn flavor migration from RapidFort to Chainguard FIPS images, the Grafana 13 upgrade, and Keycloak stability fixes on smaller nodes.
 sidebar:
   order: 3.990
 ---
@@ -8,11 +8,10 @@ sidebar:
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.5 migrates the unicorn flavor from RapidFort to Chainguard FIPS hardened images, introduces UDS Portal as a new optional functional layer in the upstream/unicorn flavor, and stabilizes Keycloak on smaller nodes by disabling Infinispan virtual threads.
+UDS Core 1.5 migrates the unicorn flavor from RapidFort to Chainguard FIPS hardened images, upgrades Grafana to 13.0.1, and stabilizes Keycloak on smaller nodes by disabling Infinispan virtual threads.
 
 ### Notable features
 
-- **UDS Portal as a new functional layer:** adds `packages/portal/` and `src/portal/` deploying [uds-portal](https://github.com/defenseunicorns/uds-portal) v0.2.0 as an optional layer. Available in the upstream/unicorn flavor only ([#2699](https://github.com/defenseunicorns/uds-core/pull/2699)).
 - **Unicorn flavor: Chainguard FIPS images:** the unicorn flavor migrates from RapidFort to Chainguard FIPS hardened images. Chainguard images are built on distroless bases and satisfy FIPS 140-2 requirements ([#2650](https://github.com/defenseunicorns/uds-core/pull/2650)).
 - **Keycloak: disable Infinispan virtual threads:** Infinispan 16 (shipped with Keycloak 26.6) enables virtual threads by default, which can deadlock under Kubernetes thread-pool starvation on nodes with fewer than 4 vCPUs. UDS Core now sets `-Dorg.infinispan.threads.virtual=false` to prevent this. References: [keycloak#48792](https://github.com/keycloak/keycloak/issues/48792), [keycloak#49203](https://github.com/keycloak/keycloak/issues/49203) ([#2686](https://github.com/defenseunicorns/uds-core/pull/2686)).
 - **Grafana 13 upgrade:** Grafana 12.4.2 → 13.0.1 includes dynamic-dashboard auto-migration (no opt-out), image renderer plugin removal, numeric `id` data source API references disabled, and deprecated `@grafana/ui` components removed.
