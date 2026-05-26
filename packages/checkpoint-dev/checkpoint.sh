@@ -36,8 +36,8 @@ echo "Saving checkpoint image ..."
 docker save -o uds-k3d-checkpoint-latest.tar "$IMAGE_NAME"
 
 echo "Saving busybox helper image ..."
-docker pull busybox
-docker save busybox -o busybox.tar
+docker pull cgr.dev/chainguard/busybox:latest
+docker save cgr.dev/chainguard/busybox:latest -o busybox.tar
 
 # Pack the three tarballs into a single bundle for Zarf to embed.
 echo "Creating bundle ..."
