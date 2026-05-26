@@ -11,7 +11,7 @@ kube-state-metrics:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/kube-state-metrics-fips
-    tag: 2.18.0
+    tag: v2.19.0
   securityContext:
     enabled: true
     fsGroup: 65532
