@@ -73,10 +73,10 @@ components:
               docker volume create "$VOL_KUBELET" >/dev/null
 
               tar -xOf uds-checkpoint.tar k3s_data.tar | \
-                docker run --rm -i -v "${VOL_K3S}:/data" busybox tar -x -C /data
+                docker run --rm -i -v "${VOL_K3S}:/data" busybox tar -x -C /data -f -
 
               tar -xOf uds-checkpoint.tar kubelet_data.tar | \
-                docker run --rm -i -v "${VOL_KUBELET}:/data" busybox tar -x -C /data
+                docker run --rm -i -v "${VOL_KUBELET}:/data" busybox tar -x -C /data -f -
 
               # Read the cluster token from the restored volume — no host
               # filesystem access needed.
