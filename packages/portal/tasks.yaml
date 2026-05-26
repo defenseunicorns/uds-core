@@ -9,3 +9,4 @@ tasks:
     actions:
       - description: "Validate Portal"
         task: portal:validate
+      - task: portal:e2e-test

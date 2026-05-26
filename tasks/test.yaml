@@ -27,7 +27,7 @@ tasks:
       - cmd: ./uds run -f tasks/test.yaml single-layer --set FLAVOR=${FLAVOR} --set=layer=base
 
   - name: single-layer
-    description: "Build and test a single layer, must set UDS_LAYER environment variable"
+    description: "Build and test a single layer, requires LAYER and FLAVOR to be set"
     inputs:
       create_options:
         default: "--skip-sbom"

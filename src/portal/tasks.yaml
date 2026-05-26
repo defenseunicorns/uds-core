@@ -1,6 +1,9 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+includes:
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.11/tasks/setup.yaml
+
 tasks:
   - name: validate
     actions:
@@ -10,3 +13,19 @@ tasks:
             protocol: https
             address: portal.uds.dev
             code: 200
+
+  - name: e2e-test
+    actions:
+      - description: "Setup the Doug User for testing"
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
+      - description: "Run Portal E2E tests"
+        dir: test/playwright
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.60.0-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test portal.test.ts \
+            "
