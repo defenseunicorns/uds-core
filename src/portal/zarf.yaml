@@ -1,0 +1,30 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-portal
+  description: "UDS Core Portal"
+  url: "https://github.com/defenseunicorns/uds-portal"
+
+variables:
+  - name: DOMAIN
+    description: "Cluster domain"
+    default: "uds.dev"
+
+  - name: ADMIN_DOMAIN
+    description: "Domain for admin services, defaults to `admin.DOMAIN`"
+
+components:
+  - name: uds-portal
+    required: true
+    only:
+      flavor: upstream
+    import:
+      path: common
+    images:
+      - ghcr.io/defenseunicorns/uds-portal:0.2.0
+    charts:
+      - name: uds-portal
+        valuesFiles:
+          - values/upstream-values.yaml

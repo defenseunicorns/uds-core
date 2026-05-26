@@ -1,0 +1,12 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: Wait for uds-portal deployment to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: uds-portal
+            namespace: uds-portal

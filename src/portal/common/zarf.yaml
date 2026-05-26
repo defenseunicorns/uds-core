@@ -1,0 +1,32 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-portal-common
+  description: "UDS Core Portal Common"
+  url: "https://github.com/defenseunicorns/uds-portal"
+
+components:
+  - name: uds-portal
+    required: true
+    charts:
+      - name: uds-portal
+        namespace: uds-portal
+        # renovate: datasource=github-releases depName=defenseunicorns/uds-portal
+        version: "v0.2.0"
+        url: https://github.com/defenseunicorns/uds-portal.git
+        gitPath: chart
+        valuesFiles:
+          - ../values/values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Validate Portal Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: packages.uds.dev
+                name: uds-portal
+                namespace: uds-portal
+                condition: "'{.status.phase}'=Ready"

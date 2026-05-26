@@ -1,0 +1,6 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+package:
+  domain: "###ZARF_VAR_DOMAIN###"
+  adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
