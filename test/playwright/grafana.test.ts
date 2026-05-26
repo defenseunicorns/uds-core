@@ -69,17 +69,14 @@ test("validate namespace dashboard", async ({ page }) => {
   await test.step("check dashboard", async () => {
     await gotoGrafana(page, `/dashboards`);
     await page.click('text="Kubernetes / Compute Resources / Namespace (Pods)"');
-    await page
-      .getByTestId(
-        "data-testid Dashboard template variables Variable Value DropDown value link text authservice",
-      )
-      .click();
-    if (!fullCore) {
-      // Check grafana if not a full core deploy
-      await page.getByRole("option", { name: "grafana" }).click();
-      return;
-    }
-    await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
+    // Grafana 13+ does not eagerly load dropdown options even when a variable has a
+    // preselected value. Re-navigate with the namespace set in the URL to bypass this.
+    await page.waitForURL(/\/d\//);
+    const url = new URL(page.url());
+    url.searchParams.set("var-namespace", fullCore ? "authservice-sidecar-test-app" : "grafana");
+    await page.goto(url.toString());
+    await closeGrafanaModals(page);
+    await expect(page.locator('[data-testid="data-testid dashboard controls"]')).toBeVisible();
   });
 });
 
@@ -90,17 +87,14 @@ test("validate loki dashboard", async ({ page }) => {
     await gotoGrafana(page, `/dashboards`);
     await page.getByPlaceholder("Search for dashboards and folders").fill("Loki");
     await page.click('text="Loki Dashboard quick search"');
-    await page
-      .getByTestId(
-        "data-testid Dashboard template variables Variable Value DropDown value link text authservice",
-      )
-      .click();
-    if (!fullCore) {
-      // Check grafana if not a full core deploy
-      await page.getByRole("option", { name: "grafana" }).click();
-    } else {
-      await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
-    }
+    // Grafana 13+ lazy-loads variables with no saved current value — clicking the empty
+    // dropdown does not reliably trigger the Prometheus query to populate options.
+    // Re-navigate with the namespace set in the URL to bypass lazy loading entirely.
+    await page.waitForURL(/\/d\//);
+    const url = new URL(page.url());
+    url.searchParams.set("var-namespace", "authservice-sidecar-test-app");
+    await page.goto(url.toString());
+    await closeGrafanaModals(page);
     await expect(
       page
         .getByTestId("data-testid Panel header Logs Panel")
