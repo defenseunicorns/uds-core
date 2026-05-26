@@ -10,3 +10,4 @@ tasks:
             kind: Deployment
             name: uds-portal
             namespace: uds-portal
+            condition: Available
