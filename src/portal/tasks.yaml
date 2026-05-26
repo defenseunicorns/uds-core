@@ -4,11 +4,9 @@
 tasks:
   - name: validate
     actions:
-      - description: Validate Portal HTTP endpoint responds
-        cmd: |
-          STATUS=$(curl -sSo /dev/null -w "%{http_code}" --max-time 30 https://portal.${DOMAIN})
-          if [ "${STATUS}" -ge 500 ]; then
-            echo "Portal returned server error: ${STATUS}"
-            exit 1
-          fi
-          echo "Portal responded with HTTP ${STATUS}"
+      - description: Validate portal interface
+        wait:
+          network:
+            protocol: https
+            address: portal.uds.dev
+            code: 302

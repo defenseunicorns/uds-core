@@ -4,64 +4,88 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)"
   ],
-  "ignorePresets": [":ignoreModulesAndTests"],
+  "ignorePresets": [
+    ":ignoreModulesAndTests"
+  ],
   "branchConcurrentLimit": 0,
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "separateMajorMinor": false,
   "packageRules": [
     {
-      "matchFileNames": ["src/authservice/**"],
+      "matchFileNames": [
+        "src/authservice/**"
+      ],
       "groupName": "authservice",
       "commitMessageTopic": "authservice"
     },
     {
-      "matchFileNames": ["src/istio/**"],
+      "matchFileNames": [
+        "src/istio/**"
+      ],
       "groupName": "istio",
       "commitMessageTopic": "istio"
     },
     {
-      "matchDepNames": ["istio/istio"],
+      "matchDepNames": [
+        "istio/istio"
+      ],
       "groupName": "istio",
       "commitMessageTopic": "istio"
     },
     {
-      "matchFileNames": ["src/vector/**"],
+      "matchFileNames": [
+        "src/vector/**"
+      ],
       "groupName": "vector",
       "commitMessageTopic": "vector"
     },
     {
-      "matchFileNames": ["src/velero/**"],
+      "matchFileNames": [
+        "src/velero/**"
+      ],
       "groupName": "velero",
       "commitMessageTopic": "velero"
     },
     {
-      "matchFileNames": ["src/prometheus-stack/**"],
+      "matchFileNames": [
+        "src/prometheus-stack/**"
+      ],
       "groupName": "prometheus-stack",
       "commitMessageTopic": "prometheus-stack"
     },
     {
-      "matchFileNames": ["src/falco/**"],
+      "matchFileNames": [
+        "src/falco/**"
+      ],
       "groupName": "falco",
       "commitMessageTopic": "falco"
     },
     {
-      "matchFileNames": ["src/metrics-server/**"],
+      "matchFileNames": [
+        "src/metrics-server/**"
+      ],
       "groupName": "metrics-server",
       "commitMessageTopic": "metrics-server"
     },
     {
-      "matchFileNames": ["src/loki/**"],
+      "matchFileNames": [
+        "src/loki/**"
+      ],
       "groupName": "loki",
       "commitMessageTopic": "loki"
     },
     {
-      "matchFileNames": ["src/keycloak/**"],
+      "matchFileNames": [
+        "src/keycloak/**"
+      ],
       "groupName": "keycloak",
       "commitMessageTopic": "keycloak"
     },
     {
-      "matchFileNames": ["src/grafana/**"],
+      "matchFileNames": [
+        "src/grafana/**"
+      ],
       "groupName": "grafana",
       "commitMessageTopic": "grafana"
     },
@@ -132,12 +156,16 @@
       "commitMessageTopic": "support-deps"
     },
     {
-      "matchFileNames": ["src/portal/**", "packages/portal/**"],
+      "matchFileNames": [
+        "src/portal/**"
+      ],
       "groupName": "portal",
       "commitMessageTopic": "portal"
     },
     {
-      "matchDepNames": ["bottlerocket-os/bottlerocket"],
+      "matchDepNames": [
+        "bottlerocket-os/bottlerocket"
+      ],
       "allowedVersions": "<= 1.53.0",
       "description": "Pin Bottlerocket until istio-cni FIPS compatibility is resolved (https://github.com/defenseunicorns/uds-core/issues/2490)"
     },
