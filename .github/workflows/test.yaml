@@ -49,7 +49,6 @@ jobs:
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
-      EXCLUDED_PACKAGES: ${{ inputs.flavor == 'registry1' && 'portal' || '' }}
 
     steps:
       - name: Checkout repository
@@ -70,11 +69,11 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
