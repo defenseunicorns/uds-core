@@ -130,7 +130,7 @@ components:
       path: ../backup-restore
 
   - name: uds-portal
-    required: false
+    required: true
     only:
       flavor: upstream
     import:
