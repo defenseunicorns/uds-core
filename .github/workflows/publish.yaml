@@ -76,7 +76,7 @@ jobs:
       - name: Test amd64 Bundle
         if: ${{ !inputs.snapshot }}
         env:
-          EXCLUDED_PACKAGES: ${{ matrix.flavor != 'upstream' && 'portal' || '' }}
+          EXCLUDED_PACKAGES: ${{ matrix.flavor == 'registry1' && 'portal' || '' }}
         run: |
           uds run deploy-standard-bundle --no-progress
           uds run -f tasks/test.yaml validate-packages --no-progress
@@ -109,8 +109,6 @@ jobs:
         arch: [amd64, arm64]
         exclude:
           - flavor: registry1
-            layer: portal
-          - flavor: unicorn
             layer: portal
     runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-24-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: Publish package layers

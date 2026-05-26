@@ -28,3 +28,16 @@ components:
       - name: uds-portal
         valuesFiles:
           - values/upstream-values.yaml
+
+  - name: uds-portal
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    images:
+      - ghcr.io/defenseunicorns/uds-portal:0.2.0
+    charts:
+      - name: uds-portal
+        valuesFiles:
+          - values/unicorn-values.yaml

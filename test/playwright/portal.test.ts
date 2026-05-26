@@ -10,8 +10,8 @@ test.use({ baseURL: `https://portal.${domain}` });
 
 test("validate portal loads with app grid", async ({ page }) => {
   test.skip(
-    !fullCore || flavor !== "upstream",
-    "Portal is only present on full core upstream deploys",
+    !fullCore || flavor === "registry1",
+    "Portal is not present in registry1 flavor deploys",
   );
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Your Apps" })).toBeVisible();

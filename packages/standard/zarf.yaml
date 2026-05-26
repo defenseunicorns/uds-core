@@ -135,3 +135,10 @@ components:
       flavor: upstream
     import:
       path: ../portal
+
+  - name: uds-portal
+    required: true
+    only:
+      flavor: unicorn
+    import:
+      path: ../portal
