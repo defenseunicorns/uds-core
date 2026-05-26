@@ -173,6 +173,12 @@ jobs:
           - package: all
             flavor: unicorn
             test_type: upgrade
+        # Portal is upstream-only; skip registry1/unicorn single-layer tests for it
+        exclude:
+          - package: portal
+            flavor: registry1
+          - package: portal
+            flavor: unicorn
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}

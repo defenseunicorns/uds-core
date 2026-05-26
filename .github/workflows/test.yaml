@@ -49,6 +49,7 @@ jobs:
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
+      EXCLUDED_PACKAGES: ${{ inputs.flavor != 'upstream' && 'portal' || '' }}
 
     steps:
       - name: Checkout repository

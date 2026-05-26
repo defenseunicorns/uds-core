@@ -5,3 +5,4 @@
 
 export const domain = process.env.DOMAIN || "uds.dev";
 export const fullCore = process.env.FULL_CORE === "true";
+export const flavor = process.env.FLAVOR || "upstream";
