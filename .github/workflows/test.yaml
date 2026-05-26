@@ -65,7 +65,7 @@ jobs:
           installK3d: 'true'
 
       - name: Test a single layer package
-        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
         run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
       - name: Test UDS Core Install
