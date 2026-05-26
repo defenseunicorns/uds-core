@@ -9,4 +9,4 @@ tasks:
           network:
             protocol: https
             address: portal.uds.dev
-            code: 302
+            code: 200
