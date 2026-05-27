@@ -33,7 +33,7 @@ export async function restartGatewayPods(istioConfig: kind.ConfigMap): Promise<v
   const mesh = istioConfig?.data?.["mesh"];
 
   if (mesh) {
-    const meshConfig = yaml.load(mesh) as IstioConfiguration;
+    const meshConfig = yaml.load(mesh, { schema: yaml.SAFE_SCHEMA }) as IstioConfiguration;
     const newProxyProtocol = JSON.stringify(
       meshConfig.defaultConfig?.gatewayTopology?.proxyProtocol,
     );
