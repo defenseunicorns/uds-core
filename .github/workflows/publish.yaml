@@ -77,7 +77,7 @@ jobs:
         if: ${{ !inputs.snapshot }}
         run: |
           uds run deploy-standard-bundle --no-progress
-          uds run -f tasks/test.yaml validate-packages --no-progress
+          uds run -f tasks/test.yaml validate-packages --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
@@ -103,8 +103,11 @@ jobs:
       fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
-        layer: [crds, base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring]
+        layer: [crds, base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring, portal]
         arch: [amd64, arm64]
+        exclude:
+          - flavor: registry1
+            layer: portal
     runs-on: ${{ matrix.arch == 'arm64' && 'uds-ubuntu-24-arm64-4-core' || 'uds-ubuntu-big-boy-4-core' }}
     name: Publish package layers
 

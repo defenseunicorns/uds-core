@@ -31,6 +31,7 @@ Every layer is published as an individual OCI Zarf package. All layers except `c
 | [core-logging](https://github.com/defenseunicorns/uds-core/tree/main/packages/logging) | Vector + Loki | Base; optionally Monitoring for UI |
 | [core-monitoring](https://github.com/defenseunicorns/uds-core/tree/main/packages/monitoring) | Prometheus + Grafana + Alertmanager + Blackbox Exporter | Base, Identity & Authorization |
 | [core-backup-restore](https://github.com/defenseunicorns/uds-core/tree/main/packages/backup-restore) | Velero | Base |
+| [core-portal](https://github.com/defenseunicorns/uds-core/tree/main/packages/portal) | UDS Portal (application portal UI; not available in `registry1`) | Base, Identity & Authorization |
 | [core](https://github.com/defenseunicorns/uds-core/tree/main/packages/standard) (standard) | All of the above combined | None (self-contained) |
 
 ## Layer selection criteria
@@ -47,9 +48,13 @@ Default to the full `core` package unless you have an explicit reason to use ind
 | **Logging** | Include if you need centralized log aggregation and shipping |
 | **Monitoring** | Include for metrics dashboards, alerting, and uptime monitoring |
 | **Backup & Restore** | Include if the deployment manages critical data or must maintain state across failures |
+| **Portal** | Include to give users a browser-based portal listing the applications they can access; not available in `registry1` |
 
 > [!NOTE]
 > The Monitoring layer includes Grafana, which requires the Identity & Authorization layer for login.
+
+> [!NOTE]
+> The Portal layer is not available in the `registry1` flavor.
 
 > [!CAUTION]
 > If your cluster already provides a metrics server, do **not** deploy the `core-metrics-server` layer. Running two metrics servers will cause conflicts.
@@ -73,6 +78,7 @@ Layers form a dependency graph, not a strict linear sequence. Many layers are in
 
 **Layer 3 (depend on Base + Identity & Authorization):**
 - `core-monitoring`
+- `core-portal` (upstream flavor only)
 
 Within the same dependency tier, layers can appear in any order. Layers in a higher tier must come after their dependencies. For example, `core-monitoring` must follow `core-identity-authorization`, but `core-logging` and `core-backup-restore` can appear in either order as long as both follow `core-base`.
 
