@@ -17,4 +17,3 @@ tasks:
             kind: GatewayClass
             name: envoy-gateway
             condition: Accepted
-
