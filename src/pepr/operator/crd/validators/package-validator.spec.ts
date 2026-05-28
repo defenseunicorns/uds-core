@@ -257,6 +257,19 @@ describe("Test validation of Package CRs", () => {
     });
   });
 
+  it("denies implicit HTTP expose without host (defense in depth)", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: undefined } as unknown as Partial<Expose>],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith("host must be set");
+  });
+
   it("allows packages that have no issues", async () => {
     const mockReq = makeMockReq({}, [], [], [], []);
     await validator(mockReq);

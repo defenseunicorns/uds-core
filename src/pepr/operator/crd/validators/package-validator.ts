@@ -19,9 +19,12 @@ import { migrate } from "../migrate";
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
-  const exposeHadMatch = (req.Raw.spec?.network?.expose ?? []).map(
-    expose => expose.match !== undefined,
-  );
+  const rawExposeList = req.Raw.spec?.network?.expose ?? [];
+
+  // We need to detect deprecated `expose.match` even after migrate() moves it to `advancedHTTP.match`.
+  // This relies on migrate() preserving expose[] length and order. If a future migration changes that,
+  // this check must be updated to avoid misattributing a match from a different entry.
+  const exposeHadMatch = rawExposeList.map(expose => expose.match !== undefined);
   const pkg = migrate(req.Raw);
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
@@ -49,6 +52,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     (Object.values(Gateway) as string[]).includes(g);
 
   const exposeList = pkg.spec?.network?.expose ?? [];
+
+  if (rawExposeList.length !== exposeList.length) {
+    return req.Deny(
+      "internal error: migration changed spec.network.expose order or length; cannot safely validate deprecated fields",
+    );
+  }
 
   // Track the names of the virtual services to ensure they are unique
   const virtualServiceNames = new Set<string>();
@@ -92,6 +101,12 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     if (expose.protocol === ExposeProtocol.HTTP && !expose.host) {
       return req.Deny("host must be set when protocol is HTTP");
+    }
+
+    // Defense in depth: historically host was enforced at the CRD schema level.
+    // Keep a webhook-level guard so stale CRDs or future schema changes do not allow hostless HTTP exposes.
+    if (!expose.protocol && !expose.host) {
+      return req.Deny("host must be set");
     }
 
     if (expose.gateway && isStandardGateway(expose.gateway) && expose.domain) {
