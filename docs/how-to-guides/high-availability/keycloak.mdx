@@ -257,6 +257,14 @@ uds zarf tools kubectl get hpa -n keycloak -l gateway.networking.k8s.io/gateway-
 uds zarf tools kubectl logs -n keycloak -l app.kubernetes.io/name=keycloak --tail=50
 ```
 
+### Problem: Users are signed out shortly after logging in
+
+**Symptoms:** Users can reach `sso.<domain>` and authenticate, but their session is terminated again within seconds.
+
+**Solution:** Check host clock sync on the nodes running `keycloak` pods. Keycloak token and session validation is sensitive to clock skew. If the affected nodes disagree on time, fix NTP on the hosts first, then restart all `keycloak` pods only if the issue persists.
+
+Reference [Prerequisites](/getting-started/production/prerequisites/#node-time-synchronization) for the node time sync requirement.
+
 ### Problem: HPA not scaling up under load
 
 **Symptoms:** HPA shows `<unknown>` for current metrics.

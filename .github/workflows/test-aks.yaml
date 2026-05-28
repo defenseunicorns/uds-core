@@ -72,7 +72,7 @@ jobs:
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
 
       - name: Setup Tofu
-        uses: opentofu/setup-opentofu@fc711fa910b93cba0f3fbecaafc9f42fd0c411cb # v2.0.0
+        uses: opentofu/setup-opentofu@847eaa4afeb791b06daa46e8eafa8b1b68d7cfb4 # v2.0.1
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
           tofu_version: 1.12.0
@@ -125,7 +125,7 @@ jobs:
         # webhook disruptions during test-app deploy, playwright, or vitest phases.
         run: |
           for attempt in 1 2 3; do
-            if uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="metrics-server"; then
+            if uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'metrics-server,portal' || 'metrics-server' }}"; then
               echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi

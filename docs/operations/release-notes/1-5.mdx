@@ -1,0 +1,46 @@
+---
+title: UDS Core 1.5
+description: UDS Core 1.5 release notes covering the unicorn flavor migration from RapidFort to Chainguard FIPS images, the Grafana 13 upgrade, and Keycloak stability fixes on smaller nodes.
+sidebar:
+  order: 3.990
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.5 migrates the unicorn flavor from RapidFort to Chainguard FIPS hardened images, upgrades Grafana to 13.0.1, and stabilizes Keycloak on smaller nodes by disabling Infinispan virtual threads.
+
+### Notable features
+
+- **Unicorn flavor: Chainguard FIPS images:** the unicorn flavor migrates from RapidFort to Chainguard FIPS hardened images. Chainguard images are built on distroless bases and satisfy FIPS 140-2 requirements ([#2650](https://github.com/defenseunicorns/uds-core/pull/2650)).
+- **Keycloak: disable Infinispan virtual threads:** Infinispan 16 (shipped with Keycloak 26.6) enables virtual threads by default, which can deadlock under Kubernetes thread-pool starvation on nodes with fewer than 4 vCPUs. UDS Core now sets `-Dorg.infinispan.threads.virtual=false` to prevent this. References: [keycloak#48792](https://github.com/keycloak/keycloak/issues/48792), [keycloak#49203](https://github.com/keycloak/keycloak/issues/49203) ([#2686](https://github.com/defenseunicorns/uds-core/pull/2686)).
+- **Grafana 13 upgrade:** Grafana 12.4.2 → 13.0.1 includes dynamic-dashboard auto-migration (no opt-out), image renderer plugin removal, numeric `id` data source API references disabled, and deprecated `@grafana/ui` components removed.
+
+### Dependency updates
+
+| Package                                | Previous | Updated                                                                                                              |
+| -------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |
+| Grafana                                | 12.4.2   | [13.0.1](https://github.com/grafana/grafana/releases/tag/v13.0.1)                                                    |
+| k8s-sidecar                            | 2.5.0    | [2.7.3](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.7.3)                                                  |
+| Loki                                   | 3.7.1    | [3.7.2](https://github.com/grafana/loki/releases/tag/v3.7.2)                                                         |
+| Velero                                 | 1.18.0   | [1.18.1](https://github.com/vmware-tanzu/velero/releases/tag/v1.18.1)                                                |
+| kube-prometheus-stack Helm chart       | 84.5.0   | [85.2.2](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-85.2.2)              |
+| prometheus-operator-crds Helm chart    | 28.0.1   | [29.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-29.0.0)           |
+| prometheus-blackbox-exporter Helm chart | 11.9.2   | [11.10.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.10.0)     |
+| Kube State Metrics                     | v2.18.0  | [v2.19.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.19.0)                                     |
+
+## Upgrade considerations
+
+### Review custom Grafana dashboards and plugins
+
+Grafana 12.4.2 → 13.0.1 is a major version bump. Dashboards using the legacy schema are auto-migrated on first load with no opt-out, the image renderer plugin is removed, numeric `id` data source API references are disabled, and several deprecated `@grafana/ui` components are removed. If you maintain custom dashboards or plugins, review the [Grafana 13 What's New](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v13-0/) page before upgrading.
+
+### Fapolicyd rule on RHEL 9 unicorn nodes
+
+If using the unicorn flavor with RHEL 9 nodes running fapolicyd in enforcing mode, add a rule to allow execution from `/opt/cni/bin/.cgr/` because the Chainguard Istio CNI image writes `libcrypto.so.3` into that path at runtime. See the [Istio requirements](/getting-started/production/prerequisites/#istio-requirements) in the production prerequisites for additional host-level guidance.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.5.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#150-2026-05-27) - full changelog
+- [Full diff (1.4.0...1.5.0)](https://github.com/defenseunicorns/uds-core/compare/v1.4.0...v1.5.0) - all changes between versions

@@ -1,18 +1,36 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { domain, fullCore } from "./uds.config";
 
 test.use({ baseURL: `https://grafana.admin.${domain}` });
 test.describe.configure({ mode: "serial" });
 
+async function closeGrafanaModals(page: Page) {
+  const closeButton = page.getByRole("dialog").getByRole("button", { name: "Close" }).first();
+
+  await closeButton
+    .waitFor({ state: "visible", timeout: 4000 })
+    .then(async () => {
+      await closeButton.click();
+      await expect(closeButton).toBeHidden();
+    })
+    .catch(() => {});
+}
+
+async function gotoGrafana(page: Page, path: string) {
+  await page.goto(path);
+  await closeGrafanaModals(page);
+}
+
 test("validate loki datasource", async ({ page }) => {
   test.skip(!fullCore, "Loki is only present on full core deploys");
   await test.step("check loki", async () => {
-    await page.goto(`/connections/datasources`);
+    await gotoGrafana(page, `/connections/datasources`);
     await page.getByRole("link", { name: "Loki" }).click();
     await page.click("text=Save & test");
     // Allow 40 second timeout for datasource validation
@@ -24,7 +42,7 @@ test("validate loki datasource", async ({ page }) => {
 
 test("validate prometheus datasource", async ({ page }) => {
   await test.step("check prometheus", async () => {
-    await page.goto(`/connections/datasources`);
+    await gotoGrafana(page, `/connections/datasources`);
     await page.getByRole("link", { name: "Prometheus" }).click();
     await page.click("text=Save & test");
     // Allow 20 second timeout for datasource validation
@@ -36,7 +54,7 @@ test("validate prometheus datasource", async ({ page }) => {
 
 test("validate alertmanager datasource", async ({ page }) => {
   await test.step("check alertmanager", async () => {
-    await page.goto(`/connections/datasources`);
+    await gotoGrafana(page, `/connections/datasources`);
     await page.getByRole("link", { name: "Alertmanager" }).click();
     await page.click("text=Save & test");
     // Allow 20 second timeout for datasource validation
@@ -49,19 +67,16 @@ test("validate alertmanager datasource", async ({ page }) => {
 // This dashboard is added by the upstream kube-prometheus-stack
 test("validate namespace dashboard", async ({ page }) => {
   await test.step("check dashboard", async () => {
-    await page.goto(`/dashboards`);
+    await gotoGrafana(page, `/dashboards`);
     await page.click('text="Kubernetes / Compute Resources / Namespace (Pods)"');
-    await page
-      .getByTestId(
-        "data-testid Dashboard template variables Variable Value DropDown value link text authservice",
-      )
-      .click();
-    if (!fullCore) {
-      // Check grafana if not a full core deploy
-      await page.getByRole("option", { name: "grafana" }).click();
-      return;
-    }
-    await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
+    // Grafana 13+ does not eagerly load dropdown options even when a variable has a
+    // preselected value. Re-navigate with the namespace set in the URL to bypass this.
+    await page.waitForURL(/\/d\//);
+    const url = new URL(page.url());
+    url.searchParams.set("var-namespace", fullCore ? "authservice-sidecar-test-app" : "grafana");
+    await page.goto(url.toString());
+    await closeGrafanaModals(page);
+    await expect(page.locator('[data-testid="data-testid dashboard controls"]')).toBeVisible();
   });
 });
 
@@ -69,20 +84,17 @@ test("validate namespace dashboard", async ({ page }) => {
 test("validate loki dashboard", async ({ page }) => {
   test.skip(!fullCore, "Loki is only present on full core deploys");
   await test.step("check dashboard", async () => {
-    await page.goto(`/dashboards`);
+    await gotoGrafana(page, `/dashboards`);
     await page.getByPlaceholder("Search for dashboards and folders").fill("Loki");
     await page.click('text="Loki Dashboard quick search"');
-    await page
-      .getByTestId(
-        "data-testid Dashboard template variables Variable Value DropDown value link text authservice",
-      )
-      .click();
-    if (!fullCore) {
-      // Check grafana if not a full core deploy
-      await page.getByRole("option", { name: "grafana" }).click();
-    } else {
-      await page.getByRole("option", { name: "authservice-sidecar-test-app" }).click();
-    }
+    // Grafana 13+ lazy-loads variables with no saved current value — clicking the empty
+    // dropdown does not reliably trigger the Prometheus query to populate options.
+    // Re-navigate with the namespace set in the URL to bypass lazy loading entirely.
+    await page.waitForURL(/\/d\//);
+    const url = new URL(page.url());
+    url.searchParams.set("var-namespace", "authservice-sidecar-test-app");
+    await page.goto(url.toString());
+    await closeGrafanaModals(page);
     await expect(
       page
         .getByTestId("data-testid Panel header Logs Panel")
@@ -117,7 +129,7 @@ test.describe("validate Keycloak Dashboards", () => {
       });
 
       // Navigate to dashboards page
-      await page.goto("/dashboards");
+      await gotoGrafana(page, "/dashboards");
 
       // Search for the dashboard
       await page.getByPlaceholder("Search for dashboards and folders").fill("Keycloak");
@@ -149,7 +161,7 @@ test.describe("validate Keycloak Dashboards", () => {
 // Test the logout functionality
 test("validate logout functionality", async ({ page }) => {
   await test.step("perform logout", async () => {
-    await page.goto(`/`);
+    await gotoGrafana(page, `/`);
 
     await page.locator('button[aria-label="Profile"]').click();
     await page.locator("span").filter({ hasText: "Sign out" }).click();

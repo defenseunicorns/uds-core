@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.10/tasks/lint.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.24.11/tasks/lint.yaml
 
 variables:
   - name: VELERO_CRD_VERSION
@@ -77,22 +77,33 @@ tasks:
             uds zarf tools kubectl logs -n velero -l name=velero
           }
 
-          STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
-          if [ "${STATUS}" != "Completed" ]; then
-            echo "Status is '$STATUS'... waiting to see if it changes"
-
-            # local testing indicates the status is "Finalizing" for a few seconds after completion
-            sleep 30
-
-            # check again...
+          # Backups can take longer on upgrade runs because more data exists.
+          # Poll for completion for a short, fixed budget, then dump diagnostics.
+          START_TS=$(date +%s)
+          TIMEOUT_SEC=90
+          while true; do
             STATUS=$(uds zarf tools kubectl get backup.velero.io -n velero ${BACKUP_NAME} -o jsonpath='{.status.phase}')
-            if [ "${STATUS}" != "Completed" ]; then
-              echo "Status is $STATUS... something isn't right.."
+            if [ "${STATUS}" = "Completed" ]; then
+              break
+            fi
+
+            if [ "${STATUS}" = "Failed" ] || [ "${STATUS}" = "PartiallyFailed" ]; then
+              echo "Status is '$STATUS'... backup failed"
               debug_velero_backup
-              # be a quitter
               exit 1
             fi
-          fi
+
+            NOW_TS=$(date +%s)
+            ELAPSED=$((NOW_TS - START_TS))
+            if [ "$ELAPSED" -ge "$TIMEOUT_SEC" ]; then
+              echo "Status is '$STATUS' after ${ELAPSED}s... timing out"
+              debug_velero_backup
+              exit 1
+            fi
+
+            echo "Status is '$STATUS'... waiting"
+            sleep 5
+          done
 
           echo "Checking Velero Volume Snapshot counts in the backup status..."
           SNAPSHOT_INFO=$(uds zarf tools kubectl describe backup.velero.io -n velero ${BACKUP_NAME})
