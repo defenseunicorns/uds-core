@@ -57,7 +57,7 @@
     "@vitest/coverage-v8": "^4.0.0",
     "globals": "^17.0.0",
     "husky": "9.1.7",
-    "lint-staged": "17.0.4",
+    "lint-staged": "17.0.5",
     "vitest": "^4.0.0"
   }
 }

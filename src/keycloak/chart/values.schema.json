@@ -206,6 +206,9 @@
     "devMode": {
       "type": "boolean"
     },
+    "disableVirtualThreads": {
+      "type": "boolean"
+    },
     "domain": {
       "type": "string"
     },

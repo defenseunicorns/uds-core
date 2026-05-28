@@ -173,6 +173,10 @@ jobs:
           - package: all
             flavor: unicorn
             test_type: upgrade
+        # Portal is not available in registry1; skip single-layer tests for that flavor
+        exclude:
+          - package: portal
+            flavor: registry1
     uses: ./.github/workflows/test.yaml
     with:
       package: ${{ matrix.package }}

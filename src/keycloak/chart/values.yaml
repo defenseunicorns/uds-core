@@ -159,6 +159,11 @@ debugMode: false
 # Enable JSON logging format for Keycloak
 jsonLogFormat: true
 
+# Disable Infinispan virtual threads. Infinispan 16 introduced virtual threads, enabled by default. In constrained
+# environments, such as Kubernetes with fewer than 4 vCPUs, it is highly recommended to disable this feature to reduce
+# the risk of deadlocks. See https://github.com/keycloak/keycloak/issues/48792 for more details.
+disableVirtualThreads: true
+
 # Enable SMTP networkPolicy and config
 smtp:
   enabled: false

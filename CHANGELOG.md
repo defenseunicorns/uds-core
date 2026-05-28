@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.5.0](https://github.com/defenseunicorns/uds-core/compare/v1.4.0...v1.5.0) (2026-05-26)
+
+
+### Bug Fixes
+
+* avoid virtual threads in Keycloak ([#2686](https://github.com/defenseunicorns/uds-core/issues/2686)) ([e07ddb2](https://github.com/defenseunicorns/uds-core/commit/e07ddb2c7b47c665910b00d5f2e1f8070ffedcab))
+* broken grafana tests ([#2696](https://github.com/defenseunicorns/uds-core/issues/2696)) ([202c8ac](https://github.com/defenseunicorns/uds-core/commit/202c8acfee8c678957c9ebce77fcee37ec395cb8))
+* **eks:** stabilize UDP NetworkPolicy e2e coverage ([#2666](https://github.com/defenseunicorns/uds-core/issues/2666)) ([3d45af4](https://github.com/defenseunicorns/uds-core/commit/3d45af432c464abbdff0104696756ac2d7015c95))
+
+
+### Miscellaneous
+
+* add 1.5.0 release notes ([#2700](https://github.com/defenseunicorns/uds-core/issues/2700)) ([197dc46](https://github.com/defenseunicorns/uds-core/commit/197dc46b093a44c119ec7f434f557b718d588442))
+* **ci:** add test to verify loki able to flush to s3 ([#2673](https://github.com/defenseunicorns/uds-core/issues/2673)) ([4783ffb](https://github.com/defenseunicorns/uds-core/commit/4783ffb38933eedb8b29c6eefa7497ed8d7a1265))
+* **deps:** migrate unicorn flavor images from RapidFort to Chainguard ([#2650](https://github.com/defenseunicorns/uds-core/issues/2650)) ([b0d4c87](https://github.com/defenseunicorns/uds-core/commit/b0d4c87ba27f7358c690eee22266388f18443255))
+* **deps:** update grafana ([#2584](https://github.com/defenseunicorns/uds-core/issues/2584)) ([f07a6a7](https://github.com/defenseunicorns/uds-core/commit/f07a6a717180493133eb3f2fe56af9c8ea91d8dc))
+* **deps:** update grafana to v2.7.3 ([#2691](https://github.com/defenseunicorns/uds-core/issues/2691)) ([0aaf351](https://github.com/defenseunicorns/uds-core/commit/0aaf351602975c347d48ce80c635dd396782b23a))
+* **deps:** update iac support dependencies to v2.0.1 ([#2677](https://github.com/defenseunicorns/uds-core/issues/2677)) ([40cf6a6](https://github.com/defenseunicorns/uds-core/commit/40cf6a622f479e037b53d6d4ca55ff503cfcb157))
+* **deps:** update iac-support-deps ([#2670](https://github.com/defenseunicorns/uds-core/issues/2670)) ([ab1b90d](https://github.com/defenseunicorns/uds-core/commit/ab1b90daa3bc622a4ac36f58a3818fe2f8b0af22))
+* **deps:** update loki ([#2586](https://github.com/defenseunicorns/uds-core/issues/2586)) ([396bb53](https://github.com/defenseunicorns/uds-core/commit/396bb5325ec68c56576ebccab8313a73116c96bb))
+* **deps:** update loki to v2.7.3 ([#2690](https://github.com/defenseunicorns/uds-core/issues/2690)) ([6b773ed](https://github.com/defenseunicorns/uds-core/commit/6b773ed193d6df174e3e589d60d206d5552e1395))
+* **deps:** update prometheus-stack ([#2644](https://github.com/defenseunicorns/uds-core/issues/2644)) ([1bfbfaf](https://github.com/defenseunicorns/uds-core/commit/1bfbfaf61f21365ea2d18b0d578d5c15289e70ff))
+* **deps:** update prometheus-stack ([#2684](https://github.com/defenseunicorns/uds-core/issues/2684)) ([1fae685](https://github.com/defenseunicorns/uds-core/commit/1fae685f39bf72b3456749e3359d034ef266a0e0))
+* **deps:** update prometheus-stack ([#2687](https://github.com/defenseunicorns/uds-core/issues/2687)) ([ceab924](https://github.com/defenseunicorns/uds-core/commit/ceab924c865b4725d23d0f1eb7e388b47148ec72))
+* **deps:** update support-deps ([#2683](https://github.com/defenseunicorns/uds-core/issues/2683)) ([f725d10](https://github.com/defenseunicorns/uds-core/commit/f725d105e92736cb3b4f190ca6f8f6190f210685))
+* **deps:** update support-deps ([#2689](https://github.com/defenseunicorns/uds-core/issues/2689)) ([83622c3](https://github.com/defenseunicorns/uds-core/commit/83622c372db19eefc7bca87a64cc7b727d8bac16))
+* **deps:** update velero ([#2678](https://github.com/defenseunicorns/uds-core/issues/2678)) ([70f0106](https://github.com/defenseunicorns/uds-core/commit/70f010692dc43dccfcc72cb7eb29b24199eaf044))
+* **docs:** add legacy upgrade notes and local demo deploy warning ([#2667](https://github.com/defenseunicorns/uds-core/issues/2667)) ([ded7c08](https://github.com/defenseunicorns/uds-core/commit/ded7c08966539c10e4d1bef624cf66337713cf18))
+* updating cert bundle ([#2675](https://github.com/defenseunicorns/uds-core/issues/2675)) ([7da8b6c](https://github.com/defenseunicorns/uds-core/commit/7da8b6c832767fdcac7600d6cafa972a3bc303fd))
+
+
+### Documentation
+
+* add time-sync prereqs callout in docs ([#2679](https://github.com/defenseunicorns/uds-core/issues/2679)) ([3d45a2c](https://github.com/defenseunicorns/uds-core/commit/3d45a2ca0ebaff8b2b6c584ddea0828906ce500a))
+
 ## [1.4.0](https://github.com/defenseunicorns/uds-core/compare/v1.3.0...v1.4.0) (2026-05-12)
 
 

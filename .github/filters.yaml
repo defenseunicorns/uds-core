@@ -37,3 +37,7 @@ monitoring:
   - "packages/monitoring/**"
   - "src/prometheus-stack/**"
   - "src/grafana/**"
+
+portal:
+  - "packages/portal/**"
+  - "src/portal/**"

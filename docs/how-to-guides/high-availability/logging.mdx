@@ -222,6 +222,14 @@ uds zarf tools kubectl get pods -n vector -o wide | grep <node-name>
 ```
 If the pod is not running, check for resource pressure or scheduling issues on that node.
 
+### Problem: `loki-write` pods keep flapping or dropping out of the ring
+
+**Symptoms:** `loki-write` pods frequently change leadership, leave the ring, or log timeout-related ring instability.
+
+**Solution:** Check host clock sync on the nodes running `loki-write` pods. Loki ring heartbeats are sensitive to clock skew, so unsynchronized nodes can look like network or timeout failures. Fix NTP on the hosts first, then restart all `loki-write` pods only if the issue persists.
+
+Reference [Prerequisites](/getting-started/production/prerequisites/#node-time-synchronization) for the node time sync requirement.
+
 ## Related documentation
 
 - [Grafana Loki: Sizing](https://grafana.com/docs/loki/latest/setup/size/) - guidance on sizing Loki for your log volume
