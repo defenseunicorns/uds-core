@@ -77,3 +77,8 @@ components:
     required: false
     import:
       path: ../../src/istio
+
+  - name: envoy-gateway
+    required: false
+    import:
+      path: ../../src/envoy-gateway

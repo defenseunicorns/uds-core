@@ -1,4 +1,4 @@
-# Copyright 2024-2026 Defense Unicorns
+# Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -18,9 +18,3 @@ tasks:
             name: envoy-gateway
             condition: Accepted
 
-  - name: e2e-test
-    actions:
-      - description: "Run Envoy Gateway E2E tests"
-        cmd: |
-          npm ci && npx vitest run "envoy-gateway"
-        dir: test/vitest

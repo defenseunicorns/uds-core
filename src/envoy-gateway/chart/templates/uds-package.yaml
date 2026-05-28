@@ -35,7 +35,8 @@ spec:
       - direction: Ingress
         selector:
           control-plane: envoy-gateway
-        remoteGenerated: KubeAPI
+        # todo: evaluate a "KubeAPI" ingress generated rule for webhook calls
+        remoteGenerated: Anywhere
         port: 9443
         description: "Webhook admission from kube-apiserver"
       - direction: Egress
