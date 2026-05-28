@@ -10,7 +10,7 @@ gateway:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: nginx-fips
-    tag: v1.31.0
+    tag: v1.31.1
 memcached:
   image:
     registry: cgr.dev/defenseunicorns.com
