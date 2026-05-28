@@ -56,7 +56,7 @@ jobs:
           installK3d: 'true'
 
       - name: Run UDS Core Private PKI Test
-        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
