@@ -125,7 +125,7 @@ jobs:
         # webhook disruptions during test-app deploy, playwright, or vitest phases.
         run: |
           for attempt in 1 2 3; do
-            if uds run -f tasks/test.yaml uds-core-non-k3d --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'metrics-server portal' || 'metrics-server' }}"; then
+            if uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES="${{ matrix.flavor == 'registry1' && 'metrics-server,portal' || 'metrics-server' }}"; then
               echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
