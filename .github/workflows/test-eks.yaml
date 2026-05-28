@@ -102,7 +102,7 @@ jobs:
         timeout-minutes: 40
 
       - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
 
       - name: Validate Loki chunks S3 writes
         run: uds run -f src/loki/tasks.yaml validate-object-storage-writes --no-progress --with provider=aws --with iac_dir=.github/test-infra/aws/eks
