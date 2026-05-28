@@ -168,28 +168,46 @@ spec:
                   properties:
                     expose:
                       type: array
-                      description: Expose a service on an Istio Gateway
+                      description: Expose a service through UDS Core managed ingress
                       items:
                         type: object
-                        required:
-                          - host
                         anyOf:
                           - required:
+                              - host
                               - service
                               - podLabels
                               - port
                           - required:
+                              - host
                               - service
                               - selector
                               - port
                           - required:
+                              - host
                               - advancedHTTP
+                          - required:
+                              - protocol
+                              - service
+                              - selector
+                              - port
                         properties:
                           description:
                             type: string
                             description: >-
                               A description of this expose entry, this will
-                              become part of the VirtualService name
+                              become part of the generated resource name
+                          protocol:
+                            description: >-
+                              The routing protocol for this expose entry. When
+                              set to `UDP`, the entry routes through Envoy
+                              Gateway instead of Istio. Hostname routing fields
+                              (`host`, `domain`, `advancedHTTP`, `match`) are
+                              invalid for UDP entries. UDP traffic is not
+                              protected by Istio AuthorizationPolicy or mTLS.
+                            type: string
+                            enum:
+                              - HTTP
+                              - UDP
                           host:
                             description: The hostname to expose the service on
                             type: string

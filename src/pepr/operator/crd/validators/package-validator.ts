@@ -13,12 +13,15 @@ import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { getFqdn } from "../../controllers/domain-utils";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
+  const exposeHadMatch = (req.Raw.spec?.network?.expose ?? []).map(
+    expose => expose.match !== undefined,
+  );
   const pkg = migrate(req.Raw);
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
@@ -52,7 +55,7 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   // Track FQDNs for uptime probes to ensure no duplicates
   const uptimeFqdns = new Set<string>();
 
-  for (const expose of exposeList) {
+  for (const [index, expose] of exposeList.entries()) {
     // Validate gateway name format if it's a custom gateway
     if (expose.gateway && !isStandardGateway(expose.gateway)) {
       // Check if gateway name is a valid Kubernetes resource name
@@ -63,6 +66,34 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         );
       }
     }
+
+    if (expose.protocol === ExposeProtocol.UDP) {
+      if (expose.host !== undefined) {
+        return req.Deny("host cannot be set when protocol is UDP");
+      }
+      if (expose.domain !== undefined) {
+        return req.Deny("domain cannot be set when protocol is UDP");
+      }
+      if (exposeHadMatch[index]) {
+        return req.Deny("match cannot be set when protocol is UDP");
+      }
+      if (expose.advancedHTTP) {
+        return req.Deny("advancedHTTP cannot be set when protocol is UDP");
+      }
+      if (expose.uptime) {
+        return req.Deny("uptime cannot be set when protocol is UDP");
+      }
+      if (expose.podLabels) {
+        return req.Deny("podLabels cannot be set when protocol is UDP; use selector");
+      }
+
+      continue;
+    }
+
+    if (expose.protocol === ExposeProtocol.HTTP && !expose.host) {
+      return req.Deny("host must be set when protocol is HTTP");
+    }
+
     if (expose.gateway && isStandardGateway(expose.gateway) && expose.domain) {
       return req.Deny(
         "domain cannot be set for the standard gateways (tenant, admin, or passthrough)",

@@ -9,6 +9,7 @@ import {
   Allow,
   Direction,
   Expose,
+  ExposeProtocol,
   Gateway,
   Monitor,
   Protocol,
@@ -403,6 +404,121 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq({}, [{}, {}], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  describe("UDP expose validation", () => {
+    const validUDPExpose = {
+      protocol: ExposeProtocol.UDP,
+      host: undefined,
+      service: "udp-service",
+      selector: { app: "udp" },
+      port: 8125,
+    };
+
+    it("allows UDP expose entries without a host", async () => {
+      const mockReq = makeMockReq({}, [validUDPExpose], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows UDP expose entries with user-managed gateways", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            ...validUDPExpose,
+            gateway: "team-gateway",
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies UDP expose entries with host", async () => {
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, host: "app" }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("host cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with domain", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, domain: "custom.example.com" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("domain cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with advancedHTTP", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, advancedHTTP: { directResponse: { status: 403 } } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("advancedHTTP cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with match", async () => {
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, match: [] }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("match cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with uptime", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, uptime: { checks: { paths: ["/"] } } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("uptime cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with podLabels", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, selector: undefined, podLabels: { app: "udp" } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        "podLabels cannot be set when protocol is UDP; use selector",
+      );
+    });
+
+    it("denies HTTP expose entries without a host", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            protocol: ExposeProtocol.HTTP,
+            host: undefined,
+            service: "http-service",
+            selector: { app: "http" },
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("host must be set when protocol is HTTP");
+    });
   });
 
   it("denies network policies that specify both remoteGenerated and remoteNamespace", async () => {
