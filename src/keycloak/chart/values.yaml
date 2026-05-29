@@ -84,10 +84,10 @@ themeCustomizations:
     enableRegistrationFields: true
     # Enable Access Request Notes field on the registration page
     enableAccessRequestNotes: false
-    # Override the realm display name at runtime for the UI (e.g., browser page title).
-    # This is a theme-level override; if not set, the UI falls back to the Keycloak realm
-    # display name configured in the realm itself (which may come from realmInitEnv.DISPLAY_NAME).
-    realmDisplayName: "Unified Defense Stack"
+    # Override the realm display name shown in the login UI (e.g., browser page title).
+    # When unset, the display name falls back to realmInitEnv.DISPLAY_NAME (if set),
+    # then to the default "Unified Defense Stack". Set this to force a specific UI name.
+    # realmDisplayName: "Unified Defense Stack"
 #   resources:
 #     images:
 #       - name: background.png
