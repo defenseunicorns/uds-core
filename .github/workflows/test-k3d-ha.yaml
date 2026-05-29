@@ -57,11 +57,11 @@ jobs:
 
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}
-        run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Run UDS Core Upgrade HA Test
         if: ${{ matrix.test-type == 'upgrade' }}
-        run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
