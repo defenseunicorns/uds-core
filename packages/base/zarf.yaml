@@ -53,6 +53,11 @@ components:
     import:
       path: ../../src/istio/common
 
+  - name: envoy-gateway-crds
+    required: false
+    import:
+      path: ../../src/envoy-gateway
+
   - name: istio-admin-gateway
     required: true
     import:

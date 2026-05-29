@@ -8,13 +8,17 @@ metadata:
   url: https://github.com/envoyproxy/gateway
 
 components:
+  - name: envoy-gateway-crds
+    required: false
+    manifests:
+      - name: envoy-gateway-crds
+        files:
+          # Fetched at package create time to remain airgap deployable.
+          - https://github.com/envoyproxy/gateway/releases/download/v1.8.0/envoy-gateway-crds.yaml
+
   - name: envoy-gateway
     required: false
     charts:
-      - name: uds-envoy-gateway-config
-        namespace: envoy-gateway-system
-        version: 0.1.0
-        localPath: ../chart
       - name: envoy-gateway
         namespace: envoy-gateway-system
         url: oci://docker.io/envoyproxy/gateway-helm
@@ -27,3 +31,17 @@ components:
         serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
+    actions:
+      onDeploy:
+        before:
+          - description: Wait for EnvoyProxy CRD to exist
+            cmd: |
+              set -e
+              for i in $(seq 1 60); do
+                if ./zarf tools kubectl get crd envoyproxies.gateway.envoyproxy.io >/dev/null 2>&1; then
+                  exit 0
+                fi
+                sleep 2
+              done
+              echo "Timed out waiting for CRD envoyproxies.gateway.envoyproxy.io" >&2
+              exit 1

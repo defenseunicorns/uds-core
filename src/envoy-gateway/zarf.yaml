@@ -8,6 +8,11 @@ metadata:
   url: https://github.com/envoyproxy/gateway
 
 components:
+  - name: envoy-gateway-crds
+    required: false
+    import:
+      path: common
+
   - name: envoy-gateway
     required: false
     only:
@@ -18,8 +23,15 @@ components:
       - name: envoy-gateway
         valuesFiles:
           - "values/upstream-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/upstream-values.yaml"
     images:
       - docker.io/envoyproxy/gateway:v1.8.0
+      - docker.io/envoyproxy/envoy:distroless-v1.38.0
 
   - name: envoy-gateway
     required: false
@@ -31,8 +43,15 @@ components:
       - name: envoy-gateway
         valuesFiles:
           - "values/registry1-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
 
   - name: envoy-gateway
     required: false
@@ -44,5 +63,12 @@ components:
       - name: envoy-gateway
         valuesFiles:
           - "values/unicorn-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/unicorn-values.yaml"
     images:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
+      - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
