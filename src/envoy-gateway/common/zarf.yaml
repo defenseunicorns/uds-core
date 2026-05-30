@@ -10,11 +10,16 @@ metadata:
 components:
   - name: envoy-gateway-crds
     required: false
-    manifests:
-      - name: envoy-gateway-crds
-        files:
-          # Fetched at package create time to remain airgap deployable.
-          - https://github.com/envoyproxy/gateway/releases/download/v1.8.0/envoy-gateway-crds.yaml
+    files:
+      # Fetched at package create time and applied at deploy time to avoid Helm's
+      # release secret size limit with the generated EnvoyProxy CRD.
+      - source: https://github.com/envoyproxy/gateway/releases/download/v1.8.0/envoy-gateway-crds.yaml
+        target: /tmp/uds-core-envoy-gateway-crds.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Apply Envoy Gateway CRDs
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-crds.yaml
 
   - name: envoy-gateway
     required: false

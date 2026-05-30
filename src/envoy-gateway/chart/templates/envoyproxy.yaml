@@ -5,7 +5,7 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: uds-default
-  namespace: {{ .Release.Namespace }}
+  namespace: envoy-gateway-system
 spec:
   provider:
     type: Kubernetes
