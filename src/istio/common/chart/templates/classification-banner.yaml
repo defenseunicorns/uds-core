@@ -191,7 +191,10 @@ spec:
             -- Inject the banner for any hosts where it is enabled
             function envoy_on_response(response_handle)
               local content_type = response_handle:headers():get("Content-Type") or ""
-              local host = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")["host"]
+              -- dynamicMetadata():get("envoy.lua") is nil when envoy_on_request did not run for
+              -- this response (e.g. a locally generated reply), so guard before indexing "host".
+              local lua_meta = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")
+              local host = lua_meta and lua_meta["host"]
 
               -- Skip anything that is not a successful HTML page on an enabled host (e.g. bodyless
               -- 3xx redirects, which still carry Content-Type: text/html).
@@ -208,17 +211,37 @@ spec:
               if response_handle:headers():get("content-length") ~= nil then
                 -- Bounded response: buffer and rewrite in one shot.
                 local body = response_handle:body()
-                response_handle:body():setBytes(inject_banner(tostring(body:getBytes(0, body:length()))))
+                body:setBytes(inject_banner(tostring(body:getBytes(0, body:length()))))
               else
                 -- Streamed response: rewrite chunks as they pass through (bodyChunks does not
-                -- buffer), so we never wait for end-of-stream. Stop once the banner is in; if a
-                -- tag straddles a chunk boundary the chunk is left untouched rather than stalling.
+                -- buffer), so we never wait for end-of-stream. Chunk boundaries are arbitrary, so
+                -- a <head>/<body> tag can straddle two chunks. Carry any unterminated trailing tag
+                -- ("<" with no closing ">") into the next chunk so the match is never missed.
                 local injected = false
+                local pending = ""
                 for chunk in response_handle:bodyChunks() do
-                  if chunk:length() > 0 and not injected then
-                    local data = inject_banner(chunk:getBytes(0, chunk:length()))
-                    chunk:setBytes(data)
-                    injected = string.find(data, "classification-banner-top", 1, true) ~= nil
+                  local len = chunk:length()
+                  if injected or len == 0 then
+                    -- already injected (or empty chunk) -> pass through untouched
+                  else
+                    local data = inject_banner(pending .. tostring(chunk:getBytes(0, len)))
+                    if string.find(data, "classification-banner-top", 1, true) ~= nil then
+                      chunk:setBytes(data)
+                      injected = true
+                      pending = ""
+                    else
+                      -- Not matched yet. Emit everything except a trailing partial tag and carry
+                      -- that fragment forward. Valid HTML ends on a closed tag, so nothing is held
+                      -- back at end-of-stream (no truncation).
+                      local lt = string.find(data, "<[^>]*$")
+                      if lt then
+                        chunk:setBytes(string.sub(data, 1, lt - 1))
+                        pending = string.sub(data, lt)
+                      else
+                        chunk:setBytes(data)
+                        pending = ""
+                      end
+                    end
                   end
                 end
               end
