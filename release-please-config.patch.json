@@ -16,6 +16,7 @@
         "packages/runtime-security/zarf.yaml",
         "packages/monitoring/zarf.yaml",
         "packages/metrics-server/zarf.yaml",
+        "packages/portal/zarf.yaml",
         "packages/standard/zarf.yaml",
         "bundles/k3d-slim-dev/uds-bundle.yaml",
         "bundles/k3d-standard/uds-bundle.yaml",

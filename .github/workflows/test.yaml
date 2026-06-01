@@ -64,16 +64,17 @@ jobs:
           installK3d: 'true'
 
       - name: Test a single layer package
-        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' }}
+        # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
         run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
