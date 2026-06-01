@@ -73,15 +73,15 @@ components:
               docker volume create "$VOL_KUBELET" >/dev/null
 
               tar -xOf uds-checkpoint.tar k3s_data.tar | \
-                docker run --rm -i -v "${VOL_K3S}:/data" busybox tar -x -C /data -f -
+                docker run --rm -i --user root -v "${VOL_K3S}:/data" cgr.dev/chainguard/busybox tar -x -C /data -f -
 
               tar -xOf uds-checkpoint.tar kubelet_data.tar | \
-                docker run --rm -i -v "${VOL_KUBELET}:/data" busybox tar -x -C /data -f -
+                docker run --rm -i --user root -v "${VOL_KUBELET}:/data" cgr.dev/chainguard/busybox tar -x -C /data -f -
 
               # Read the cluster token from the restored volume — no host
               # filesystem access needed.
               K8S_TOKEN=$(docker run --rm \
-                -v "${VOL_K3S}:/data" busybox \
+                --user root -v "${VOL_K3S}:/data" cgr.dev/chainguard/busybox \
                 cat /data/server/token)
 
               # Create the cluster using named volumes instead of host paths.
@@ -110,11 +110,18 @@ components:
                 name: app.kubernetes.io/name=keycloak
                 namespace: keycloak
                 condition: Ready
-          - description: Pepr to be Healthy
+          - description: Pepr Admission to be Healthy
             wait:
               cluster:
                 kind: Pod
                 name: app=pepr-uds-core
+                namespace: pepr-system
+                condition: Ready
+          - description: Pepr Watcher to be Healthy
+            wait:
+              cluster:
+                kind: Pod
+                name: app=pepr-uds-core-watcher
                 namespace: pepr-system
                 condition: Ready
         onSuccess:
