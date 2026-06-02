@@ -50,7 +50,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 | `OPENTOFU_CLIENT_ENABLED` | `false` | Enable the `uds-opentofu-client` Keycloak client for programmatic realm management |
 | `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""` | Comma-separated additional Protocol Mappers to allow in the UDS client policy |
 | `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | `""` | Comma-separated additional Client Scopes to allow in the UDS client policy |
-| `DISPLAY_NAME` | `"Unicorn Delivery Service"` | The display name for the realm. |
+| `DISPLAY_NAME` | `"Unified Defense Stack"` | The display name for the realm. |
 | `ACCOUNT_INACTIVITY_DAYS` | unset | Days of inactivity before a non-admin user account is automatically disabled. When unset, the feature is disabled. |
 
 > [!NOTE]
