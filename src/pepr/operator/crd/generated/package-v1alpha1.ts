@@ -864,6 +864,10 @@ export interface Sso {
    */
   standardFlowEnabled?: boolean;
   /**
+   * Configuration for the generated ambient waypoint
+   */
+  waypoint?: Waypoint;
+  /**
    * Allowed CORS origins. To permit all origins of Valid Redirect URIs, add '+'. This does
    * not include the '*' wildcard though. To permit all origins, explicitly add '*'.
    */
@@ -942,6 +946,16 @@ export interface SecretConfig {
    * A template for the generated secret
    */
   template?: { [key: string]: string };
+}
+
+/**
+ * Configuration for the generated ambient waypoint
+ */
+export interface Waypoint {
+  /**
+   * Additional annotations to apply to the generated ambient waypoint pod template
+   */
+  podAnnotations?: { [key: string]: string };
 }
 
 export interface StatusObject {

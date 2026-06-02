@@ -1,9 +1,10 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { a } from "pepr";
+import yaml from "js-yaml";
 import { beforeEach, describe, expect, it, vi, type MockedFunction } from "vitest";
 import { UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
@@ -551,7 +552,6 @@ describe("createWaypointGateway", () => {
 
     // Verify the function returned the waypoint name
     expect(result).toBe(waypointName);
-
     // Verify logging
     expect(mockLog.info).toHaveBeenNthCalledWith(
       1,
@@ -577,6 +577,107 @@ describe("createWaypointGateway", () => {
       },
       "Successfully created waypoint gateway",
     );
+  });
+
+  it("should create waypoint config and reference it when pod annotations are configured", async () => {
+    const pkg = createMockPackage("test-pkg");
+    const client: Sso = {
+      clientId: "test-client",
+      name: "test-sso",
+      waypoint: {
+        podAnnotations: {
+          "cloudwatch.aws.amazon.com/inject": "false",
+          "example.com/annotation": "test",
+        },
+      },
+    };
+
+    await createWaypointGateway(pkg, waypointName, client);
+
+    expect(mockApply).toHaveBeenCalledTimes(2);
+    expect(mockApply).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        kind: "ConfigMap",
+        metadata: expect.objectContaining({
+          name: `${waypointName}-config`,
+          namespace: "test-ns",
+          labels: expect.objectContaining({
+            "uds/managed-by": "uds-operator",
+            "app.kubernetes.io/component": "ambient-waypoint",
+            "istio.io/gateway-name": waypointName,
+            "uds/generation": "0",
+            "uds/package": "test-pkg",
+          }),
+          ownerReferences: [
+            {
+              kind: "Package",
+              name: "test-pkg",
+              uid: "test-uid",
+              apiVersion: "uds.dev/v1alpha1",
+            },
+          ],
+        }),
+        data: {
+          deployment: expect.any(String),
+        },
+      }),
+      { force: true },
+    );
+
+    const configMap = mockApply.mock.calls[0]?.[0] as { data?: { deployment?: string } };
+    const deploymentOverlay = yaml.load(configMap.data?.deployment ?? "") as {
+      spec?: { template?: { metadata?: { annotations?: Record<string, string> } } };
+    };
+    expect(deploymentOverlay.spec?.template?.metadata?.annotations).toEqual({
+      "cloudwatch.aws.amazon.com/inject": "false",
+      "example.com/annotation": "test",
+    });
+
+    expect(mockApply).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        spec: expect.objectContaining({
+          infrastructure: {
+            parametersRef: {
+              group: "",
+              kind: "ConfigMap",
+              name: `${waypointName}-config`,
+            },
+          },
+        }),
+      }),
+    );
+  });
+
+  it("should delete stale waypoint config when pod annotations are not configured", async () => {
+    const pkg = createMockPackage("test-pkg");
+
+    await createWaypointGateway(pkg, waypointName);
+
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+    const gateway = mockApply.mock.calls[0]?.[0];
+    expect(gateway.spec.infrastructure).toBeUndefined();
+  });
+
+  it("should fail waypoint creation when waypoint config apply fails", async () => {
+    const pkg = createMockPackage("test-pkg");
+    const client: Sso = {
+      clientId: "test-client",
+      name: "test-sso",
+      waypoint: {
+        podAnnotations: {
+          "cloudwatch.aws.amazon.com/inject": "false",
+        },
+      },
+    };
+    mockApply.mockRejectedValueOnce(new Error("config apply failed"));
+
+    await expect(createWaypointGateway(pkg, waypointName, client)).rejects.toThrow(
+      "Failed to create waypoint gateway: Failed to create waypoint config: config apply failed",
+    );
+
+    expect(mockApply).toHaveBeenCalledTimes(1);
   });
 
   it("should throw an error when package metadata is missing", async () => {
@@ -610,10 +711,9 @@ describe("createWaypointGateway", () => {
       expect.objectContaining({
         namespace: "test-ns",
         waypointName,
-        errorType: "object",
         errorDetails: testError,
       }),
-      "Error creating waypoint gateway",
+      "Failed to create waypoint gateway",
     );
   });
 
@@ -635,10 +735,9 @@ describe("createWaypointGateway", () => {
       expect.objectContaining({
         namespace: "test-ns",
         waypointName,
-        errorType: "string",
         errorDetails: testError,
       }),
-      "Error creating waypoint gateway",
+      "Failed to create waypoint gateway",
     );
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -13,7 +13,7 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
 import { Sso, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
-import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
+import { cleanupWaypointConfig, cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
 import * as authorizationPolicy from "./authorization-policy";
@@ -30,6 +30,7 @@ vi.mock("../../istio/waypoint-utils", () => ({
 
 // Mock the ambient-waypoint module
 vi.mock("../../istio/ambient-waypoint", () => ({
+  cleanupWaypointConfig: vi.fn().mockResolvedValue(undefined),
   cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
   setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
 }));
@@ -76,6 +77,7 @@ vi.mock("pepr", async () => {
 // Mock dependencies
 vi.mock("../../istio/ambient-waypoint", () => ({
   setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
+  cleanupWaypointConfig: vi.fn().mockResolvedValue(undefined),
   cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -205,6 +207,7 @@ describe("purgeAuthserviceClients", () => {
     // Assert
     expect(getWaypointName).toHaveBeenCalledWith("test-client");
     expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
+    expect(cleanupWaypointConfig).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
     expect(pkg.status?.authserviceClients).toHaveLength(1);
   });
 
@@ -224,6 +227,25 @@ describe("purgeAuthserviceClients", () => {
     const { cleanupWaypointLabels } = await import("../../istio/ambient-waypoint.js");
     expect(cleanupWaypointLabels).not.toHaveBeenCalled();
     expect(pkg.status?.authserviceClients).toHaveLength(0);
+  });
+
+  it("should clean up waypoint labels and config for removed clients", async () => {
+    const pkg = createMockPackage("test-pkg");
+    pkg.status = {
+      ...pkg.status,
+      authserviceClients: [
+        {
+          clientId: "removed-client",
+          selector: { app: "removed" },
+        },
+      ],
+    };
+
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [], Mode.Ambient, Mode.Ambient);
+
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "removed-client-waypoint");
+    expect(cleanupWaypointConfig).toHaveBeenCalledWith("test-ns", "removed-client-waypoint");
   });
 });
 
