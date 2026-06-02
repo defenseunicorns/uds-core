@@ -53,6 +53,7 @@ components:
       onDeploy:
         after:
           - cmd: |
+              set -euo pipefail
               VOL_K3S="k3d-${ZARF_VAR_CLUSTER_NAME}-k3s"
               VOL_KUBELET="k3d-${ZARF_VAR_CLUSTER_NAME}-kubelet"
 
