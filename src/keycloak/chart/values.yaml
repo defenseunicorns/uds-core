@@ -23,6 +23,12 @@ additionalGatewayNamespaces: []
 # Example
 # - "istio-login-gateway"
 
+# Istio source principals (mTLS SPIFFE identities) allowed to reach the Keycloak Admin API,
+# in addition to the istio-admin-gateway and pepr-system namespaces. Entries are used verbatim.
+adminApiAllowedPrincipals: []
+# Example
+# - "cluster.local/ns/argo/sa/workflow-service-account"
+
 # Enables an EnvoyFilter to block path-parameter bypasses of AuthorizationPolicy rules
 # Should only be disabled if this is incorrectly blocking paths you expect to be allowed
 pathParameterProtection: true
