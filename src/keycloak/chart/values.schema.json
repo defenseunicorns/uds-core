@@ -7,7 +7,10 @@
       "type": "object",
       "properties": {
         "cpu": {
-          "type": ["number", "string"]
+          "type": [
+            "number",
+            "string"
+          ]
         },
         "memory": {
           "type": "string"
@@ -533,7 +536,10 @@
             "type": "string"
           }
         },
-        "required": ["name", "value"]
+        "required": [
+          "name",
+          "value"
+        ]
       }
     },
     "extraVolumes": {
@@ -575,7 +581,12 @@
                 "type": "object",
                 "properties": {
                   "name": {
-                    "enum": ["background.png", "footer.png", "logo.png", "favicon.png"]
+                    "enum": [
+                      "background.png",
+                      "footer.png",
+                      "logo.png",
+                      "favicon.png"
+                    ]
                   },
                   "configmap": {
                     "type": "object",
@@ -609,20 +620,31 @@
                       "type": "string"
                     }
                   },
-                  "required": ["key", "name"]
+                  "required": [
+                    "key",
+                    "name"
+                  ]
                 }
               },
               "oneOf": [
                 {
-                  "required": ["inline"],
+                  "required": [
+                    "inline"
+                  ],
                   "not": {
-                    "required": ["configmap"]
+                    "required": [
+                      "configmap"
+                    ]
                   }
                 },
                 {
-                  "required": ["configmap"],
+                  "required": [
+                    "configmap"
+                  ],
                   "not": {
-                    "required": ["inline"]
+                    "required": [
+                      "inline"
+                    ]
                   }
                 }
               ]
@@ -653,12 +675,17 @@
             },
             "tlsCertificateFormat": {
               "type": "string",
-              "enum": ["PEM", "AWS"]
+              "enum": [
+                "PEM",
+                "AWS"
+              ]
             }
           }
         }
       },
-      "required": ["tls"]
+      "required": [
+        "tls"
+      ]
     },
     "detailedObservability": {
       "type": "object",
