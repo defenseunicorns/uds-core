@@ -101,6 +101,9 @@ components:
                 --image "$CHECKPOINT_IMAGE" \
                 ${ZARF_VAR_K3D_EXTRA_ARGS} \
                 ${ZARF_VAR_CLUSTER_NAME}
+            shell:
+              linux: bash
+              darwin: bash
             description: "Create the cluster"
           # Wait on Keycloak since it is the slowest pod to start after cluster
           # creation.
