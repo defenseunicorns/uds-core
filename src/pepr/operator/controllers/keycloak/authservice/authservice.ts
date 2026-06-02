@@ -156,7 +156,9 @@ export async function purgeAuthserviceClients(
 
     if (pkg.metadata?.namespace) {
       await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
-      await cleanupWaypointConfig(pkg.metadata.namespace, fullWaypointName);
+      if (meshModeChanged) {
+        await cleanupWaypointConfig(pkg.metadata.namespace, fullWaypointName);
+      }
     }
   }
 }

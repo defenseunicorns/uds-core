@@ -74,13 +74,6 @@ vi.mock("pepr", async () => {
   };
 });
 
-// Mock dependencies
-vi.mock("../../istio/ambient-waypoint", () => ({
-  setupAmbientWaypoint: vi.fn().mockResolvedValue(undefined),
-  cleanupWaypointConfig: vi.fn().mockResolvedValue(undefined),
-  cleanupWaypointLabels: vi.fn().mockResolvedValue(undefined),
-}));
-
 // Mock the config module
 vi.mock("./config", () => {
   const mockAuthserviceConfig = {
@@ -207,8 +200,32 @@ describe("purgeAuthserviceClients", () => {
     // Assert
     expect(getWaypointName).toHaveBeenCalledWith("test-client");
     expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
-    expect(cleanupWaypointConfig).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
+    expect(cleanupWaypointConfig).not.toHaveBeenCalled();
     expect(pkg.status?.authserviceClients).toHaveLength(1);
+  });
+
+  it("should clean up waypoint labels and config when clients switch out of ambient mode", async () => {
+    const pkg = createMockPackage("test-pkg");
+    pkg.status = {
+      ...pkg.status,
+      authserviceClients: [
+        {
+          clientId: "test-client",
+          selector: { app: "test" },
+        },
+      ],
+    };
+
+    const updatedClient: AuthserviceClient = {
+      clientId: "test-client",
+      selector: { app: "test" },
+    };
+
+    const { purgeAuthserviceClients } = await import("./authservice.js");
+    await purgeAuthserviceClients(pkg, [updatedClient], Mode.Ambient, Mode.Sidecar);
+
+    expect(cleanupWaypointLabels).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
+    expect(cleanupWaypointConfig).toHaveBeenCalledWith("test-ns", "test-client-waypoint");
   });
 
   it("should handle empty initial clients list", async () => {
