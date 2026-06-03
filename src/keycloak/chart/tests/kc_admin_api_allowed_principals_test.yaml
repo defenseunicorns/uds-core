@@ -1,0 +1,112 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+# Rules are selected by their operation paths rather than array index so the
+# assertions stay correct if the AuthorizationPolicy rules are reordered.
+suite: Keycloak - Admin API Allowed Principals
+templates:
+  - istio-authpol-admin.yaml
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+
+tests:
+  - it: should not render notPrincipals by default, leaving notNamespaces intact
+    asserts:
+      - notExists:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+      - notExists:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
+      # baseline behavior must be unchanged when the feature is off
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notNamespaces'
+          value:
+            - pepr-system
+            - istio-admin-gateway
+
+  - it: should render notPrincipals on the admin and clients rules when principals are set
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+
+  - it: should render all configured principals in order
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+        - cluster.local/ns/ci-tooling/sa/realm-sync
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+            - cluster.local/ns/ci-tooling/sa/realm-sync
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+            - cluster.local/ns/ci-tooling/sa/realm-sync
+
+  - it: should render notPrincipals on the clients rule for a non-default realm
+    set:
+      realm: myrealm
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      # the clients rule path is realm-dependent, so it tracks the configured realm
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/myrealm/clients")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+      # the realm-independent /admin* rule is unaffected by the realm value
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/argo/sa/workflow-service-account
+
+  - it: should not leak notPrincipals onto non-admin rules
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      # metrics endpoint (port 9000) must stay scoped to the monitoring namespace
+      - notExists:
+          path: 'spec.rules[?(@.to[0].operation.ports[0]=="9000")].from[0].source.notPrincipals'
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.ports[0]=="9000")].from[0].source.notNamespaces'
+          value:
+            - monitoring
+      # mTLS client-cert catch-all rule must not exempt configured principals
+      - notExists:
+          path: 'spec.rules[?(@.when)].from[0].source.notPrincipals'
+
+  - it: should preserve notNamespaces alongside notPrincipals
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notNamespaces'
+          value:
+            - pepr-system
+            - istio-admin-gateway
