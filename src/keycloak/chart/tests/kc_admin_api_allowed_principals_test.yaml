@@ -79,6 +79,24 @@ tests:
           value:
             - cluster.local/ns/argo/sa/workflow-service-account
 
+  - it: should quote principals so wildcard values render as valid YAML
+    set:
+      adminApiAllowedPrincipals:
+        # leading '*' would parse as a YAML alias if rendered unquoted
+        - "*/ns/argo/sa/workflow-service-account"
+        - cluster.local/ns/argo/sa/*
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - "*/ns/argo/sa/workflow-service-account"
+            - cluster.local/ns/argo/sa/*
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
+          value:
+            - "*/ns/argo/sa/workflow-service-account"
+            - cluster.local/ns/argo/sa/*
+
   - it: should not leak notPrincipals onto non-admin rules
     set:
       adminApiAllowedPrincipals:

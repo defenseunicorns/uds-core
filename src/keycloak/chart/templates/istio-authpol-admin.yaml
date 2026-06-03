@@ -29,7 +29,7 @@ spec:
             {{- with .Values.adminApiAllowedPrincipals }}
             notPrincipals:
               {{- range . }}
-              - {{ . }}
+              - {{ . | quote }}
               {{- end }}
             {{- end }}
     - to:
@@ -63,7 +63,7 @@ spec:
             {{- with .Values.adminApiAllowedPrincipals }}
             notPrincipals:
               {{- range . }}
-              - {{ . }}
+              - {{ . | quote }}
               {{- end }}
             {{- end }}
     - when:
