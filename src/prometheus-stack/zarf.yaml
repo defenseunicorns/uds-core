@@ -37,7 +37,7 @@ components:
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.19.0"
       - "quay.io/prometheus/alertmanager:v0.32.1"
       - "quay.io/prometheus-operator/prometheus-config-reloader:v0.91.0"
-      - "quay.io/prometheus/prometheus:v3.11.3"
+      - "quay.io/prometheus/prometheus:v3.12.0"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
   - name: kube-prometheus-stack
@@ -57,7 +57,7 @@ components:
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.19.0"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.32.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.91.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.11.3"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.12.0"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
   - name: kube-prometheus-stack
@@ -77,8 +77,8 @@ components:
       - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:v2.19.0"
       - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:0.32.1"
       - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:0.91.0"
-      - "cgr.dev/defenseunicorns.com/prometheus-fips:3.11.3"
-      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.5" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
+      - "cgr.dev/defenseunicorns.com/prometheus-fips:v3.12.0"
+      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.6" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
   - name: prometheus-blackbox-exporter
     required: true
