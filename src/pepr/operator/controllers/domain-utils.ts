@@ -6,6 +6,38 @@
 import { Expose, Gateway } from "../crd";
 import { UDSConfig } from "./config/config";
 
+export const defaultAdminContextPath = "/admin";
+
+export function normalizeContextPath(path?: string, defaultPath = ""): string {
+  const rawPath = path || defaultPath;
+  if (!rawPath || rawPath === "/" || rawPath.startsWith("###ZARF_VAR_")) {
+    return defaultPath === "/" ? "" : defaultPath;
+  }
+
+  const withLeadingSlash = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  return withLeadingSlash.replace(/\/+$/g, "");
+}
+
+export function getHost(): string {
+  return UDSConfig.subdomain ? `${UDSConfig.subdomain}.${UDSConfig.domain}` : UDSConfig.domain;
+}
+
+export function getPublicBaseUrl(): string {
+  return `https://${getHost()}${UDSConfig.contextPath}`;
+}
+
+export function getAdminBaseUrl(): string {
+  return `${getPublicBaseUrl()}${UDSConfig.adminContextPath || defaultAdminContextPath}`;
+}
+
+export function getSsoUrl(): string {
+  return UDSConfig.pathRouting ? `${getPublicBaseUrl()}/sso` : `https://sso.${UDSConfig.domain}`;
+}
+
+export function getAdminAppUrl(app: string): string {
+  return UDSConfig.pathRouting ? `${getAdminBaseUrl()}/${app}` : `https://${app}.${UDSConfig.adminDomain}`;
+}
+
 /**
  * Get the FQDN for an expose entry based on host, domain, and gateway
  *
@@ -13,6 +45,10 @@ import { UDSConfig } from "./config/config";
  * @returns The fully qualified domain name
  */
 export function getFqdn(expose: Expose): string {
+  if (UDSConfig.pathRouting && isStandardGateway(expose.gateway)) {
+    return getHost();
+  }
+
   const { gateway = Gateway.Tenant, host } = expose;
 
   // Get the correct domain based on gateway or custom domain
@@ -25,4 +61,8 @@ export function getFqdn(expose: Expose): string {
 
   // Add the host to the domain, unless this is the reserved root domain host (`.`)
   return host === "." ? domain : `${host}.${domain}`;
+}
+
+function isStandardGateway(gateway = Gateway.Tenant): boolean {
+  return gateway === Gateway.Tenant || gateway === Gateway.Admin || gateway === Gateway.Passthrough;
 }

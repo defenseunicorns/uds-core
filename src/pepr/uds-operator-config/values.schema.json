@@ -62,6 +62,23 @@
             "adminDomain": {
               "type": "string",
               "description": "Admin domain for cluster exposure."
+            },
+            "subdomain": {
+              "type": "string",
+              "description": "Optional subdomain for path-based single-host routing."
+            },
+            "contextPath": {
+              "type": "string",
+              "description": "Optional public context path for path-based single-host routing."
+            },
+            "adminContextPath": {
+              "type": "string",
+              "description": "Optional admin context path for path-based single-host routing."
+            },
+            "pathRouting": {
+              "type": ["boolean", "string"],
+              "enum": ["true", "false", true, false],
+              "description": "Route built-in services on one host using URL paths."
             }
           }
         },

@@ -41,5 +41,15 @@ spec:
     {{- else }}
     adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
     {{- end }}
+    {{- if .Values.cluster.expose.subdomain }}
+    subdomain: {{ .Values.cluster.expose.subdomain | quote }}
+    {{- end }}
+    {{- if .Values.cluster.expose.contextPath }}
+    contextPath: {{ .Values.cluster.expose.contextPath | quote }}
+    {{- end }}
+    {{- if .Values.cluster.expose.adminContextPath }}
+    adminContextPath: {{ .Values.cluster.expose.adminContextPath | quote }}
+    {{- end }}
+    pathRouting: {{ .Values.cluster.expose.pathRouting | default false | toString | eq "true" }}
   policy:
     allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}

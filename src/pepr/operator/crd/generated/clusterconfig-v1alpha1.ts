@@ -60,9 +60,25 @@ export interface Expose {
    */
   adminDomain?: string;
   /**
+   * Optional admin URL context path appended after contextPath when pathRouting is enabled
+   */
+  adminContextPath?: string;
+  /**
+   * Optional public URL context path used when pathRouting is enabled, for example /bar
+   */
+  contextPath?: string;
+  /**
    * Domain all cluster services will be exposed on
    */
   domain: string;
+  /**
+   * Route built-in public and admin services on a single host using URL paths
+   */
+  pathRouting?: boolean;
+  /**
+   * Optional subdomain used with domain for single-host path routing, for example foo in foo.uds.dev
+   */
+  subdomain?: string;
 }
 
 export interface Networking {

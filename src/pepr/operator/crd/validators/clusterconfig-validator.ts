@@ -18,6 +18,8 @@ export async function validateCfgUpdate(req: PeprValidateRequest<ClusterConfig>)
 }
 
 export function validateCfg(cfg: ClusterConfig) {
+  validateExposePaths(cfg);
+
   // Validate that the caBundle.certs is base64 encoded and is a valid cert bundle
   if (cfg.spec?.caBundle?.certs && cfg.spec.caBundle.certs !== "###ZARF_VAR_CA_BUNDLE_CERTS###") {
     if (!isBase64(cfg.spec.caBundle.certs)) {
@@ -45,4 +47,42 @@ export function validateCfg(cfg: ClusterConfig) {
       }
     });
   }
+}
+
+function validateExposePaths(cfg: ClusterConfig) {
+  const expose = cfg.spec?.expose;
+  if (!expose) {
+    return;
+  }
+
+  for (const [field, value] of Object.entries({
+    contextPath: expose.contextPath,
+    adminContextPath: expose.adminContextPath,
+  })) {
+    if (!value || value.startsWith("###ZARF_VAR_")) {
+      continue;
+    }
+    if (!value.startsWith("/")) {
+      throw new Error(`ClusterConfig: expose.${field} must start with /`);
+    }
+    if (value.length > 1 && value.endsWith("/")) {
+      throw new Error(`ClusterConfig: expose.${field} must not end with /`);
+    }
+  }
+
+  const contextPath = normalizeValidationPath(expose.contextPath);
+  const adminContextPath = normalizeValidationPath(expose.adminContextPath, "/admin");
+  if (contextPath && contextPath === adminContextPath) {
+    throw new Error("ClusterConfig: expose.contextPath and expose.adminContextPath must not collide");
+  }
+}
+
+function normalizeValidationPath(path?: string, defaultPath = ""): string {
+  const rawPath = path || defaultPath;
+  if (!rawPath || rawPath === "/" || rawPath.startsWith("###ZARF_VAR_")) {
+    return defaultPath === "/" ? "" : defaultPath;
+  }
+
+  const withLeadingSlash = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
+  return withLeadingSlash.replace(/\/+$/g, "");
 }

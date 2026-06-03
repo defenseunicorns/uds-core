@@ -21,6 +21,10 @@ cluster:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
     domain: "###ZARF_VAR_DOMAIN###"
     adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    subdomain: "###ZARF_VAR_SUBDOMAIN###"
+    contextPath: "###ZARF_VAR_CONTEXT_PATH###"
+    adminContextPath: "###ZARF_VAR_ADMIN_CONTEXT_PATH###"
+    pathRouting: false
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
