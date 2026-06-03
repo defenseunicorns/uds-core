@@ -1,10 +1,9 @@
 /**
- * Copyright 2024-2026 Defense Unicorns
+ * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { a, K8s, kind } from "pepr";
-import yaml from "js-yaml";
 import { K8sGateway, K8sGatewayFromType, UDSPackage } from "../../crd";
 import { Mode, Sso } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "../packages/package-store";
@@ -46,7 +45,7 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
   const waypointName = getWaypointName(waypointId);
 
   try {
-    await createWaypointGateway(pkg, waypointName, client);
+    await createWaypointGateway(pkg, waypointName);
     await waitForWaypointPodHealthy(namespace, waypointName);
     await reconcileExistingResources(pkg, client, waypointName);
   } catch (error) {
@@ -62,23 +61,13 @@ export async function setupAmbientWaypoint(pkg: UDSPackage, client: Sso): Promis
 /**
  * Creates a waypoint gateway for the given package
  */
-export async function createWaypointGateway(pkg: UDSPackage, waypointName: string, client?: Sso) {
+export async function createWaypointGateway(pkg: UDSPackage, waypointName: string) {
   const { namespace, name } = pkg.metadata || {};
   if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
 
   log.info(`Creating waypoint gateway for package: ${namespace}/${name}`);
 
   try {
-    const podAnnotations = client?.waypoint?.podAnnotations;
-    const hasPodAnnotations = podAnnotations && Object.keys(podAnnotations).length > 0;
-    const configMapName = getWaypointConfigMapName(waypointName);
-
-    if (hasPodAnnotations) {
-      await applyWaypointConfigMap(pkg, waypointName, podAnnotations);
-    } else {
-      await deleteWaypointConfigMap(namespace, configMapName);
-    }
-
     const gateway = new K8sGateway();
 
     gateway.metadata = {
@@ -100,16 +89,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
       listeners: [{ name: "mesh", port: 15008, protocol: "HBONE" }],
     };
 
-    if (hasPodAnnotations) {
-      gateway.spec.infrastructure = {
-        parametersRef: {
-          group: "",
-          kind: "ConfigMap",
-          name: configMapName,
-        },
-      };
-    }
-
     // Log the gateway object before applying
     log.info(
       {
@@ -121,9 +100,21 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
       "Applying waypoint gateway",
     );
 
-    await K8s(K8sGateway).Apply(gateway);
-    log.info({ namespace, waypointName }, "Successfully created waypoint gateway");
-    return waypointName;
+    try {
+      await K8s(K8sGateway).Apply(gateway);
+      log.info({ namespace, waypointName }, "Successfully created waypoint gateway");
+      return waypointName;
+    } catch (applyError) {
+      // Detailed logging of the apply error
+      log.error(
+        { namespace, waypointName, errorType: typeof applyError, errorDetails: applyError },
+        "Error creating waypoint gateway",
+      );
+
+      throw new Error(
+        `Failed to create waypoint gateway: ${applyError instanceof Error ? applyError.message : String(applyError)}`,
+      );
+    }
   } catch (error) {
     // Capture all error details
     log.error(
@@ -135,83 +126,6 @@ export async function createWaypointGateway(pkg: UDSPackage, waypointName: strin
       `Failed to create waypoint gateway: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
-}
-
-function getWaypointConfigMapName(waypointName: string): string {
-  return `${waypointName}-config`;
-}
-
-function buildWaypointConfigMap(
-  pkg: UDSPackage,
-  waypointName: string,
-  podAnnotations: Record<string, string>,
-): kind.ConfigMap {
-  const { namespace, name } = pkg.metadata || {};
-  if (!namespace || !name) throw new Error("Package metadata is missing namespace or name");
-
-  return {
-    apiVersion: "v1",
-    kind: "ConfigMap",
-    metadata: {
-      name: getWaypointConfigMapName(waypointName),
-      namespace,
-      labels: {
-        [UDS_MANAGED_LABEL]: "uds-operator",
-        "app.kubernetes.io/component": "ambient-waypoint",
-        "istio.io/gateway-name": waypointName,
-        "uds/generation": (pkg.metadata?.generation ?? 0).toString(),
-        "uds/package": name,
-      },
-      ownerReferences: getOwnerRef(pkg),
-    },
-    data: {
-      deployment: yaml.dump({
-        spec: {
-          template: {
-            metadata: {
-              annotations: podAnnotations,
-            },
-          },
-        },
-      }),
-    },
-  };
-}
-
-async function applyWaypointConfigMap(
-  pkg: UDSPackage,
-  waypointName: string,
-  podAnnotations: Record<string, string>,
-): Promise<void> {
-  const configMap = buildWaypointConfigMap(pkg, waypointName, podAnnotations);
-
-  try {
-    await K8s(kind.ConfigMap).Apply(configMap, { force: true });
-  } catch (applyError) {
-    throw new Error(
-      `Failed to create waypoint config: ${applyError instanceof Error ? applyError.message : String(applyError)}`,
-    );
-  }
-}
-
-async function deleteWaypointConfigMap(namespace: string, configMapName: string): Promise<void> {
-  try {
-    await K8s(kind.ConfigMap, { name: configMapName, namespace }).Delete();
-  } catch (deleteError) {
-    if ((deleteError as { status?: number } | undefined)?.status === 404) return;
-
-    log.warn(
-      { namespace, configMapName, error: deleteError },
-      "Failed to delete stale waypoint config ConfigMap",
-    );
-  }
-}
-
-export async function cleanupWaypointConfig(
-  namespace: string,
-  waypointName: string,
-): Promise<void> {
-  await deleteWaypointConfigMap(namespace, getWaypointConfigMapName(waypointName));
 }
 
 /**

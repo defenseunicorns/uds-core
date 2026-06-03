@@ -125,8 +125,6 @@ tasks:
         with:
           address: ambient2-protected.uds.dev
 
-      - task: validate-waypoint-annotations
-
       - description: Verify podinfo podmonitor exists
         wait:
           cluster:
@@ -140,35 +138,6 @@ tasks:
             kind: ServiceMonitor
             name: podinfo-svcmonitor
             namespace: podinfo
-
-  - name: validate-waypoint-annotations
-    description: Verify configured ambient waypoint pod annotations are scoped to the matching waypoint
-    actions:
-      - description: Verify ambient client 1 waypoint has configured pod annotation
-        cmd: |
-          ANNOTATION_KEY="uds.dev/waypoint-test-annotation"
-          annotated_value=$(uds zarf tools kubectl get deployment \
-            -n authservice-ambient-test-app \
-            -l istio.io/gateway-name=uds-core-ambient-httpbin-waypoint \
-            -o jsonpath='{.items[0].spec.template.metadata.annotations.uds\.dev/waypoint-test-annotation}')
-
-          if [ "$annotated_value" != "true" ]; then
-            echo "Expected $ANNOTATION_KEY=true on uds-core-ambient-httpbin-waypoint, got '$annotated_value'"
-            exit 1
-          fi
-
-      - description: Verify ambient client 2 waypoint does not inherit pod annotation
-        cmd: |
-          ANNOTATION_KEY="uds.dev/waypoint-test-annotation"
-          unannotated_value=$(uds zarf tools kubectl get deployment \
-            -n authservice-ambient-test-app \
-            -l istio.io/gateway-name=uds-core-ambient2-httpbin-waypoint \
-            -o jsonpath='{.items[0].spec.template.metadata.annotations.uds\.dev/waypoint-test-annotation}')
-
-          if [ -n "$unannotated_value" ]; then
-            echo "Expected no $ANNOTATION_KEY on uds-core-ambient2-httpbin-waypoint, got '$unannotated_value'"
-            exit 1
-          fi
 
   - name: check-authservice-protection
     description: Verify if a service is protected by authservice by checking redirects

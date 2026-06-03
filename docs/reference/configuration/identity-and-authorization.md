@@ -184,31 +184,22 @@ SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) a
 
 ## Ambient waypoint pod annotations
 
-UDS Core creates operator-managed ambient waypoints for `Package` SSO clients that use `enableAuthserviceSelector`. You can add annotations to the generated waypoint pod template when another cluster component needs to opt the waypoint pod in or out of mutation.
+UDS Core creates operator-managed ambient waypoints for `Package` SSO clients that use `enableAuthserviceSelector`. Configure Istio's `istio-waypoint` GatewayClass defaults when another cluster component needs annotations on generated waypoint pod templates.
 
-Set `spec.sso[].waypoint.podAnnotations` on the SSO client that owns the waypoint:
+Set `gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations` on the `istiod` Helm chart to apply annotations to all waypoint pods that use the `istio-waypoint` GatewayClass:
 
-```yaml title="package.yaml"
-apiVersion: uds.dev/v1alpha1
-kind: Package
-metadata:
-  name: uds-ui
-  namespace: uds-ui
-spec:
-  sso:
-    - name: UDS UI
-      clientId: uds-ui
-      redirectUris:
-        - "https://uds-ui.uds.dev/login"
-      enableAuthserviceSelector:
-        app.kubernetes.io/name: uds-ui
-      waypoint:
-        podAnnotations:
-          # Example: opt the waypoint pod out of an EKS observability add-on mutation.
-          cloudwatch.aws.amazon.com/inject: "false"
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-controlplane:
+    istiod:
+      values:
+        - path: gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations
+          value:
+            # Example: opt waypoint pods out of an EKS observability add-on mutation.
+            cloudwatch.aws.amazon.com/inject: "false"
 ```
 
-This field only affects UDS Operator-managed ambient authservice waypoint pods. It has no effect in sidecar mode or on application pods. Reference the [Package spec](/reference/operator-and-crds/packages-v1alpha1-cr/#Waypoint) for all available waypoint fields.
+This setting applies cluster-wide to waypoint pods that use the `istio-waypoint` GatewayClass. It does not configure application pods or sidecar-injected workloads. Reference the [Istio waypoint proxy documentation](https://istio.io/latest/docs/ambient/usage/waypoint/) for upstream waypoint behavior.
 
 ## Account lockout
 

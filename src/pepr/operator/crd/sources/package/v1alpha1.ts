@@ -351,20 +351,6 @@ const sso = {
           type: "string",
         },
       },
-      waypoint: {
-        description: "Configuration for the generated ambient waypoint",
-        type: "object",
-        properties: {
-          podAnnotations: {
-            description:
-              "Additional annotations to apply to the generated ambient waypoint pod template",
-            type: "object",
-            additionalProperties: {
-              type: "string",
-            },
-          },
-        },
-      },
       secretConfig: {
         description: "Configuration for the generated Kubernetes Secret",
         type: "object",

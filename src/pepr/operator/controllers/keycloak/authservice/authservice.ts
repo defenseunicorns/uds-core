@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2026 Defense Unicorns
+ * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -8,11 +8,7 @@ import { R } from "pepr";
 import { Component, setupLogger } from "../../../../logger";
 import { K8sGateway, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
-import {
-  cleanupWaypointConfig,
-  cleanupWaypointLabels,
-  setupAmbientWaypoint,
-} from "../../istio/ambient-waypoint";
+import { cleanupWaypointLabels, setupAmbientWaypoint } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { getAuthserviceClients, purgeOrphans } from "../../utils";
 import { Client } from "../types";
@@ -127,7 +123,6 @@ export async function purgeAuthserviceClients(
 
       if (pkg.metadata?.namespace) {
         await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
-        await cleanupWaypointConfig(pkg.metadata.namespace, fullWaypointName);
       }
     }),
   );
@@ -156,9 +151,6 @@ export async function purgeAuthserviceClients(
 
     if (pkg.metadata?.namespace) {
       await cleanupWaypointLabels(pkg.metadata.namespace, fullWaypointName);
-      if (meshModeChanged) {
-        await cleanupWaypointConfig(pkg.metadata.namespace, fullWaypointName);
-      }
     }
   }
 }
