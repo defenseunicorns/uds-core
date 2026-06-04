@@ -215,6 +215,27 @@
     "adminDomain": {
       "type": "string"
     },
+    "adminContextPath": {
+      "type": "string"
+    },
+    "contextPath": {
+      "type": "string"
+    },
+    "pathRouting": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "enum": [
+        true,
+        false,
+        "true",
+        "false"
+      ]
+    },
+    "subdomain": {
+      "type": "string"
+    },
     "enableServiceLinks": {
       "type": "boolean"
     },

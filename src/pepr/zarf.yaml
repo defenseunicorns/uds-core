@@ -15,6 +15,22 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
+  - name: SUBDOMAIN
+    description: "Optional subdomain for single-host path routing"
+    default: ""
+
+  - name: CONTEXT_PATH
+    description: "Optional public context path for single-host path routing"
+    default: ""
+
+  - name: ADMIN_CONTEXT_PATH
+    description: "Optional admin context path for single-host path routing"
+    default: "/admin"
+
+  - name: PATH_ROUTING
+    description: "Whether to route built-in services on one host using URL paths"
+    default: "false"
+
   - name: CA_BUNDLE_CERTS
     description: "Base64 encoded CA certs (bundle) in PEM format that UDS Core will inherently trust. At a minimum this must at least include your Domain CA Cert if using Private PKI for your UDS Core Deployment"
     default: ""

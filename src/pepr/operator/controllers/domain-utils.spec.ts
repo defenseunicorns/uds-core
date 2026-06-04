@@ -49,11 +49,20 @@ describe("getFqdn", () => {
     expect(getFqdn(expose)).toEqual("app.custom.example.com");
   });
 
-  it("should return the shared host for standard gateways when path routing is enabled", () => {
+  it("should return the shared host for built-in services when path routing is enabled", () => {
     UDSConfig.pathRouting = true;
     UDSConfig.subdomain = "foo";
-    const expose: Expose = { host: "app", gateway: "admin" };
+    const expose: Expose = { host: "grafana", gateway: "admin" };
     expect(getFqdn(expose)).toEqual("foo.uds.dev");
+    UDSConfig.pathRouting = false;
+    UDSConfig.subdomain = "";
+  });
+
+  it("should preserve package FQDNs when path routing is enabled", () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.subdomain = "foo";
+    const expose: Expose = { host: "app", gateway: "tenant" };
+    expect(getFqdn(expose)).toEqual("app.uds.dev");
     UDSConfig.pathRouting = false;
     UDSConfig.subdomain = "";
   });

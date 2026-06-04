@@ -19,6 +19,22 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
+  - name: SUBDOMAIN
+    description: "Optional subdomain for single-host path routing"
+    default: ""
+
+  - name: CONTEXT_PATH
+    description: "Optional public context path for single-host path routing"
+    default: ""
+
+  - name: ADMIN_CONTEXT_PATH
+    description: "Optional admin context path for single-host path routing"
+    default: "/admin"
+
+  - name: PATH_ROUTING
+    description: "Whether to route built-in services on one host using URL paths"
+    default: "false"
+
 components:
   - name: grafana
     required: true

@@ -1,0 +1,67 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Path Routing
+set:
+  domain: example.com
+  adminDomain: admin.example.com
+  pathRouting: true
+  subdomain: foo
+  contextPath: /bar
+  adminContextPath: /admin
+templates:
+  - uds-package.yaml
+  - statefulset.yaml
+  - path-parameter-envoyfilter.yaml
+
+tests:
+  - it: should render public and admin path routes
+    template: uds-package.yaml
+    asserts:
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[0].uri.exact
+          value: /bar/sso
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.redirect.uri
+          value: /bar/sso/realms/uds/account
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.match[0].uri.prefix
+          value: /bar/sso
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.rewrite.uri
+          value: /
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.match[0].uri.prefix
+          value: /bar/admin/keycloak
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.rewrite.uri
+          value: /
+
+  - it: should configure Keycloak frontend and admin URLs
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --hostname=https://foo.example.com/bar/sso
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --hostname-admin=https://foo.example.com/bar/admin/keycloak
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_URL
+            value: https://foo.example.com/bar/sso
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_ADMIN_URL
+            value: https://foo.example.com/bar/admin/keycloak
+
+  - it: should protect the shared host from path parameter bypasses
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: host == "foo.example.com"

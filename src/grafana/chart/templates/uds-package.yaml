@@ -12,13 +12,8 @@ spec:
     - name: Grafana
       clientId: uds-core-admin-grafana
       redirectUris:
-        {{- if .Values.adminDomain }}
-        - "https://grafana.{{ .Values.adminDomain }}/login/generic_oauth"
-        - "https://grafana.{{ .Values.adminDomain }}/login"
-        {{- else }}
-        - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
-        - "https://grafana.admin.{{ .Values.domain }}/login"
-        {{- end }}
+        - "{{ include "grafana.externalUrl" . }}/login/generic_oauth"
+        - "{{ include "grafana.externalUrl" . }}/login"
       {{- if .Values.sso.groups }}
       groups:
         anyOf:
@@ -47,6 +42,15 @@ spec:
         gateway: admin
         port: 80
         targetPort: 3000
+        {{- if eq (include "grafana.pathRouting.enabled" .) "true" }}
+        advancedHTTP:
+          match:
+            - name: grafana-admin-path
+              uri:
+                prefix: {{ printf "%s%s/grafana" (include "grafana.contextPath" .) (include "grafana.adminContextPath" .) | quote }}
+          rewrite:
+            uri: /
+        {{- end }}
         {{- if .Values.uptime.enabled }}
         uptime:
           checks:
@@ -133,4 +137,3 @@ spec:
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
       {{- end }}
-

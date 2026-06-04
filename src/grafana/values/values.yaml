@@ -47,7 +47,8 @@ extraConfigmapMounts:
 
 grafana.ini:
   server:
-    root_url: https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}
+    root_url: '{{ if eq (toString "###ZARF_VAR_PATH_ROUTING###") "true" }}https://{{ if and "###ZARF_VAR_SUBDOMAIN###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_SUBDOMAIN###")) }}###ZARF_VAR_SUBDOMAIN###.{{ end }}###ZARF_VAR_DOMAIN###{{ if and "###ZARF_VAR_CONTEXT_PATH###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_CONTEXT_PATH###")) }}###ZARF_VAR_CONTEXT_PATH###{{ end }}{{ "###ZARF_VAR_ADMIN_CONTEXT_PATH###" | default "/admin" }}/grafana{{ else }}https://grafana.{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}{{ end }}'
+    serve_from_sub_path: '{{ eq (toString "###ZARF_VAR_PATH_ROUTING###") "true" }}'
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false
@@ -70,10 +71,10 @@ grafana.ini:
     login_attribute_path: preferred_username
     name_attribute_path: name
     name: UDS Identity Service
-    auth_url: https://sso.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/auth
+    auth_url: '{{ if eq (toString "###ZARF_VAR_PATH_ROUTING###") "true" }}https://{{ if and "###ZARF_VAR_SUBDOMAIN###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_SUBDOMAIN###")) }}###ZARF_VAR_SUBDOMAIN###.{{ end }}###ZARF_VAR_DOMAIN###{{ if and "###ZARF_VAR_CONTEXT_PATH###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_CONTEXT_PATH###")) }}###ZARF_VAR_CONTEXT_PATH###{{ end }}/sso{{ else }}https://sso.###ZARF_VAR_DOMAIN###{{ end }}/realms/uds/protocol/openid-connect/auth'
     # Note: this has to be the external URL to ensure that the token issuer checks in Grafana line up with this URL
-    token_url: https://sso.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/token
-    signout_redirect_url: https://sso.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2Fgrafana.admin.###ZARF_VAR_DOMAIN###%2Flogin
+    token_url: '{{ if eq (toString "###ZARF_VAR_PATH_ROUTING###") "true" }}https://{{ if and "###ZARF_VAR_SUBDOMAIN###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_SUBDOMAIN###")) }}###ZARF_VAR_SUBDOMAIN###.{{ end }}###ZARF_VAR_DOMAIN###{{ if and "###ZARF_VAR_CONTEXT_PATH###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_CONTEXT_PATH###")) }}###ZARF_VAR_CONTEXT_PATH###{{ end }}/sso{{ else }}https://sso.###ZARF_VAR_DOMAIN###{{ end }}/realms/uds/protocol/openid-connect/token'
+    signout_redirect_url: '{{ if eq (toString "###ZARF_VAR_PATH_ROUTING###") "true" }}https://{{ if and "###ZARF_VAR_SUBDOMAIN###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_SUBDOMAIN###")) }}###ZARF_VAR_SUBDOMAIN###.{{ end }}###ZARF_VAR_DOMAIN###{{ if and "###ZARF_VAR_CONTEXT_PATH###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_CONTEXT_PATH###")) }}###ZARF_VAR_CONTEXT_PATH###{{ end }}/sso/realms/uds/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2F{{ if and "###ZARF_VAR_SUBDOMAIN###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_SUBDOMAIN###")) }}###ZARF_VAR_SUBDOMAIN###.{{ end }}###ZARF_VAR_DOMAIN###{{ if and "###ZARF_VAR_CONTEXT_PATH###" (not (hasPrefix "###ZARF_VAR_" "###ZARF_VAR_CONTEXT_PATH###")) }}{{ replace "/" "%2F" "###ZARF_VAR_CONTEXT_PATH###" }}{{ end }}{{ replace "/" "%2F" ("###ZARF_VAR_ADMIN_CONTEXT_PATH###" | default "/admin") }}%2Fgrafana%2Flogin{{ else }}https://sso.###ZARF_VAR_DOMAIN###/realms/uds/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2Fgrafana.admin.###ZARF_VAR_DOMAIN###%2Flogin{{ end }}'
     use_refresh_token: true
     allow_sign_up: true
     # Require a UDS Core group to access Grafana

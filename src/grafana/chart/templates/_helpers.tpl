@@ -83,6 +83,7 @@ Create the name of the service account to use
 {{- fail "Missing remoteSelector or remoteNamespace for internal PostgreSQL." -}}
 {{- end }}
 {{- end }}
+
 {{- if (empty (compact (values (omit .Values.postgresql "port" "internal" "ssl_mode")))) -}}
 {{- if .Values.postgresql.internal.enabled -}}
 {{- fail "Missing configuration for internal postgres host, database, user, and password." -}}
@@ -97,3 +98,60 @@ Create the name of the service account to use
 {{- default "true" "" }}
 {{- end }}
 {{- end }}
+
+{{- define "grafana.pathRouting.enabled" -}}
+{{- eq (toString .Values.pathRouting) "true" -}}
+{{- end -}}
+
+{{- define "grafana.contextPath" -}}
+{{- $path := .Values.contextPath | default "" -}}
+{{- if or (eq $path "") (eq $path "/") (hasPrefix "###ZARF_VAR_" $path) -}}
+{{- "" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.adminContextPath" -}}
+{{- $path := .Values.adminContextPath | default "/admin" -}}
+{{- if hasPrefix "###ZARF_VAR_" $path -}}
+{{- "/admin" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.host" -}}
+{{- $subdomain := .Values.subdomain | default "" -}}
+{{- if or (eq $subdomain "") (hasPrefix "###ZARF_VAR_" $subdomain) -}}
+{{- .Values.domain -}}
+{{- else -}}
+{{- printf "%s.%s" $subdomain .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.adminDomain" -}}
+{{- if .Values.adminDomain -}}
+{{- tpl .Values.adminDomain . -}}
+{{- else -}}
+{{- printf "admin.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.externalUrl" -}}
+{{- if eq (include "grafana.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s%s/grafana" (include "grafana.host" .) (include "grafana.contextPath" .) (include "grafana.adminContextPath" .) -}}
+{{- else -}}
+{{- printf "https://grafana.%s" (include "grafana.adminDomain" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.ssoUrl" -}}
+{{- if eq (include "grafana.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s/sso" (include "grafana.host" .) (include "grafana.contextPath" .) -}}
+{{- else -}}
+{{- printf "https://sso.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}

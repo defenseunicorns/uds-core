@@ -75,6 +75,71 @@ Create the service DNS name.
 {{ include "keycloak.fullname" . }}-headless.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
 {{- end }}
 
+{{- define "keycloak.pathRouting.enabled" -}}
+{{- eq (toString .Values.pathRouting) "true" -}}
+{{- end -}}
+
+{{- define "keycloak.contextPath" -}}
+{{- $path := .Values.contextPath | default "" -}}
+{{- if or (eq $path "") (eq $path "/") (hasPrefix "###ZARF_VAR_" $path) -}}
+{{- "" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "keycloak.adminContextPath" -}}
+{{- $path := .Values.adminContextPath | default "/admin" -}}
+{{- if hasPrefix "###ZARF_VAR_" $path -}}
+{{- "/admin" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "keycloak.host" -}}
+{{- $subdomain := .Values.subdomain | default "" -}}
+{{- if or (eq $subdomain "") (hasPrefix "###ZARF_VAR_" $subdomain) -}}
+{{- .Values.domain -}}
+{{- else -}}
+{{- printf "%s.%s" $subdomain .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "keycloak.adminDomain" -}}
+{{- if .Values.adminDomain -}}
+{{- tpl .Values.adminDomain . -}}
+{{- else -}}
+{{- printf "admin.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "keycloak.ssoPath" -}}
+{{- printf "%s/sso" (include "keycloak.contextPath" .) -}}
+{{- end -}}
+
+{{- define "keycloak.adminPath" -}}
+{{- printf "%s%s/keycloak" (include "keycloak.contextPath" .) (include "keycloak.adminContextPath" .) -}}
+{{- end -}}
+
+{{- define "keycloak.ssoUrl" -}}
+{{- if eq (include "keycloak.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s" (include "keycloak.host" .) (include "keycloak.ssoPath" .) -}}
+{{- else -}}
+{{- printf "https://sso.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "keycloak.adminUrl" -}}
+{{- if eq (include "keycloak.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s" (include "keycloak.host" .) (include "keycloak.adminPath" .) -}}
+{{- else -}}
+{{- printf "https://keycloak.%s" (include "keycloak.adminDomain" .) -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Check external PostgreSQL connection information. Fails when required values are missing or if PostgreSQL is configured when devMode is enabled.
 */}}
@@ -217,4 +282,3 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- "host" -}}
 {{- end -}}
 {{- end -}}
-

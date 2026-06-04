@@ -26,3 +26,23 @@ tests:
             - "/UDS Core/Admin"
             - "/UDS Core/Auditor"
             - "/UDS Core/Test"
+
+  - it: should render path-routed redirect URIs and admin route
+    set:
+      pathRouting: true
+      subdomain: foo
+      contextPath: /bar
+      adminContextPath: /admin
+    template: uds-package.yaml
+    asserts:
+      - equal:
+          path: spec.sso[0].redirectUris
+          value:
+            - https://foo.example.com/bar/admin/grafana/login/generic_oauth
+            - https://foo.example.com/bar/admin/grafana/login
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[0].uri.prefix
+          value: /bar/admin/grafana
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.rewrite.uri
+          value: /

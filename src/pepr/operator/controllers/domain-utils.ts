@@ -45,7 +45,7 @@ export function getAdminAppUrl(app: string): string {
  * @returns The fully qualified domain name
  */
 export function getFqdn(expose: Expose): string {
-  if (UDSConfig.pathRouting && isStandardGateway(expose.gateway)) {
+  if (UDSConfig.pathRouting && isCorePathRoutedHost(expose)) {
     return getHost();
   }
 
@@ -63,6 +63,10 @@ export function getFqdn(expose: Expose): string {
   return host === "." ? domain : `${host}.${domain}`;
 }
 
-function isStandardGateway(gateway = Gateway.Tenant): boolean {
-  return gateway === Gateway.Tenant || gateway === Gateway.Admin || gateway === Gateway.Passthrough;
+function isCorePathRoutedHost(expose: Expose): boolean {
+  const { gateway = Gateway.Tenant, host } = expose;
+  if (gateway !== Gateway.Tenant && gateway !== Gateway.Admin) {
+    return false;
+  }
+  return host === "sso" || host === "grafana" || host === "keycloak";
 }
