@@ -27,9 +27,14 @@ tasks:
       istio_components:
         description: "Comma separated list of istio components to deploy"
         default: ""
+      K3D_EXTRA_ARGS:
+        description: "Additional uds-k3d deploy-time arguments"
+        default: ""
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
+        with:
+          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
 
       - description: "Create required namespaces"
         cmd: |

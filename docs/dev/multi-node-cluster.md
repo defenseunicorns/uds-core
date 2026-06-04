@@ -52,6 +52,42 @@ The created k3d cluster includes:
 
 Ideal for HA simulation and scaling tests.
 
+## Configure proxy and CA settings for k3d nodes
+
+Use `scripts/k3d-proxy-config/generate.sh` when your local k3d nodes need outbound proxy settings or a custom certificate authority (CA). The helper reads `HTTPS_PROXY`, `HTTP_PROXY`, and `NO_PROXY` by default, and explicit flags override those environment variables.
+
+Generate a local `UDS_CONFIG` file before running the normal deploy flow:
+
+```bash
+scripts/k3d-proxy-config/generate.sh --ca-cert /path/to/proxy-ca.pem
+export UDS_CONFIG=build/k3d-proxy/uds-config.yaml
+uds run deploy-standard-bundle
+```
+
+Merge proxy settings with an existing HA config when you need both sets of variables:
+
+```bash
+scripts/k3d-proxy-config/generate.sh \
+  --base-config bundles/k3d-standard/uds-ha-config.yaml \
+  --ca-cert /path/to/proxy-ca.pem \
+  --output build/k3d-proxy/uds-ha-config.yaml
+export UDS_CONFIG=build/k3d-proxy/uds-ha-config.yaml
+uds run test-uds-core-ha
+```
+
+For setup-only flows, print the generated args and pass them through the environment. Do not pass proxy-generated args through `--with`, because `NO_PROXY` values contain commas and the task parser treats commas as input separators.
+
+```bash
+export K3D_EXTRA_ARGS="$(scripts/k3d-proxy-config/generate.sh --ca-cert /path/to/proxy-ca.pem --print-args)"
+uds run -f tasks/setup.yaml create-k3d-cluster
+```
+
+Use the same environment variable for `dev-setup`:
+
+```bash
+export K3D_EXTRA_ARGS="$(scripts/k3d-proxy-config/generate.sh --ca-cert /path/to/proxy-ca.pem --print-args)"
+uds run dev-setup
+
 ## Notes
 - The multi-node cluster is still a local k3d environment.
 - Networking is provided by Flannel.

@@ -3,10 +3,36 @@
 
 tasks:
   - name: create-k3d-cluster
+    inputs:
+      K3D_EXTRA_ARGS:
+        description: "Additional uds-k3d deploy-time arguments"
+        default: ""
     actions:
       - description: "Create the K3d cluster"
+        shell:
+          darwin: bash
+          linux: bash
         # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
-        cmd: "./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.0-airgap --confirm"
+        cmd: |
+          FINAL_K3D_EXTRA_ARGS="${K3D_EXTRA_ARGS:-}"
+
+          if [[ -z "$FINAL_K3D_EXTRA_ARGS" ]]; then
+            FINAL_K3D_EXTRA_ARGS='${{ .inputs.K3D_EXTRA_ARGS }}'
+          fi
+
+          if [[ -z "$FINAL_K3D_EXTRA_ARGS" ]]; then
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.0-airgap --confirm
+            exit 0
+          fi
+
+          TMP_ZARF_CONFIG_DIR=$(mktemp -d /tmp/zarf-k3d-config-XXXXXX)
+          TMP_ZARF_CONFIG="$TMP_ZARF_CONFIG_DIR/zarf-config.yaml"
+          trap 'rm -rf "$TMP_ZARF_CONFIG_DIR"' EXIT
+
+          printf 'package:\n  deploy:\n    set: {}\n' > "$TMP_ZARF_CONFIG"
+          K3D_EXTRA_ARGS="$FINAL_K3D_EXTRA_ARGS" ./uds zarf tools yq -i '.package.deploy.set.K3D_EXTRA_ARGS = strenv(K3D_EXTRA_ARGS)' "$TMP_ZARF_CONFIG"
+
+          ZARF_CONFIG="$TMP_ZARF_CONFIG" ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.0-airgap --confirm
 
   - name: k3d-test-cluster
     actions:
