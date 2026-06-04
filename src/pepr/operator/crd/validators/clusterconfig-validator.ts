@@ -5,6 +5,7 @@
 
 import { PeprValidateRequest } from "pepr";
 import { X509Certificate } from "crypto";
+import { normalizeContextPath } from "../../controllers/url-utils";
 import { isBase64 } from "../../controllers/utils";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";
 
@@ -70,19 +71,9 @@ function validateExposePaths(cfg: ClusterConfig) {
     }
   }
 
-  const contextPath = normalizeValidationPath(expose.contextPath);
-  const adminContextPath = normalizeValidationPath(expose.adminContextPath, "/admin");
+  const contextPath = normalizeContextPath(expose.contextPath);
+  const adminContextPath = normalizeContextPath(expose.adminContextPath, "/admin");
   if (contextPath && contextPath === adminContextPath) {
     throw new Error("ClusterConfig: expose.contextPath and expose.adminContextPath must not collide");
   }
-}
-
-function normalizeValidationPath(path?: string, defaultPath = ""): string {
-  const rawPath = path || defaultPath;
-  if (!rawPath || rawPath === "/" || rawPath.startsWith("###ZARF_VAR_")) {
-    return defaultPath === "/" ? "" : defaultPath;
-  }
-
-  const withLeadingSlash = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  return withLeadingSlash.replace(/\/+$/g, "");
 }

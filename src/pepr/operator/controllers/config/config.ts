@@ -18,6 +18,7 @@ import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
 import { registerWatchEventHandlers, watchCfg } from "../utils";
+import { normalizeContextPath } from "../url-utils";
 import { Config, KeycloakClientMode } from "./types";
 
 export const configLog = setupLogger(Component.OPERATOR_CONFIG);
@@ -45,16 +46,6 @@ export const UDSConfig: Config = {
   isIdentityDeployed: false,
   allowPublicClients: false,
 };
-
-function normalizeConfigPath(path?: string, defaultPath = ""): string {
-  const rawPath = path || defaultPath;
-  if (!rawPath || rawPath === "/" || rawPath.startsWith("###ZARF_VAR_")) {
-    return defaultPath === "/" ? "" : defaultPath;
-  }
-
-  const withLeadingSlash = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  return withLeadingSlash.replace(/\/+$/g, "");
-}
 
 // Enums for tracking the config action and step of the action
 export enum ConfigAction {
@@ -381,8 +372,8 @@ export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
         : `admin.${domain}`;
     const subdomain =
       expose.subdomain && expose.subdomain !== "###ZARF_VAR_SUBDOMAIN###" ? expose.subdomain : "";
-    const contextPath = normalizeConfigPath(expose.contextPath);
-    const adminContextPath = normalizeConfigPath(expose.adminContextPath, "/admin");
+    const contextPath = normalizeContextPath(expose.contextPath);
+    const adminContextPath = normalizeContextPath(expose.adminContextPath, "/admin");
     const pathRouting = expose.pathRouting === true;
 
     if (

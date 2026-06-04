@@ -5,37 +5,35 @@
 
 import { Expose, Gateway } from "../crd";
 import { UDSConfig } from "./config/config";
+import {
+  getAdminAppUrl as getAdminAppUrlForConfig,
+  getAdminBaseUrl as getAdminBaseUrlForConfig,
+  getHost as getHostForConfig,
+  getPublicBaseUrl as getPublicBaseUrlForConfig,
+  getSsoUrl as getSsoUrlForConfig,
+  normalizeContextPath,
+} from "./url-utils";
 
-export const defaultAdminContextPath = "/admin";
-
-export function normalizeContextPath(path?: string, defaultPath = ""): string {
-  const rawPath = path || defaultPath;
-  if (!rawPath || rawPath === "/" || rawPath.startsWith("###ZARF_VAR_")) {
-    return defaultPath === "/" ? "" : defaultPath;
-  }
-
-  const withLeadingSlash = rawPath.startsWith("/") ? rawPath : `/${rawPath}`;
-  return withLeadingSlash.replace(/\/+$/g, "");
-}
+export { defaultAdminContextPath, normalizeContextPath } from "./url-utils";
 
 export function getHost(): string {
-  return UDSConfig.subdomain ? `${UDSConfig.subdomain}.${UDSConfig.domain}` : UDSConfig.domain;
+  return getHostForConfig(UDSConfig);
 }
 
 export function getPublicBaseUrl(): string {
-  return `https://${getHost()}${UDSConfig.contextPath}`;
+  return getPublicBaseUrlForConfig(UDSConfig);
 }
 
 export function getAdminBaseUrl(): string {
-  return `${getPublicBaseUrl()}${UDSConfig.adminContextPath || defaultAdminContextPath}`;
+  return getAdminBaseUrlForConfig(UDSConfig);
 }
 
 export function getSsoUrl(): string {
-  return UDSConfig.pathRouting ? `${getPublicBaseUrl()}/sso` : `https://sso.${UDSConfig.domain}`;
+  return getSsoUrlForConfig(UDSConfig);
 }
 
 export function getAdminAppUrl(app: string): string {
-  return UDSConfig.pathRouting ? `${getAdminBaseUrl()}/${app}` : `https://${app}.${UDSConfig.adminDomain}`;
+  return getAdminAppUrlForConfig(UDSConfig, app);
 }
 
 /**
