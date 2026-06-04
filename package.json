@@ -46,7 +46,7 @@
     "test:unit": "vitest run src/pepr/"
   },
   "dependencies": {
-    "pepr": "1.2.0"
+    "pepr": "1.2.1"
   },
   "devDependencies": {
     "@commitlint/cli": "21.0.2",
