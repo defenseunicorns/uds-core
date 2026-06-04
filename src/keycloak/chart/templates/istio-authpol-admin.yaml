@@ -26,6 +26,12 @@ spec:
             notNamespaces:
               - istio-admin-gateway
               - "pepr-system"
+            {{- with .Values.adminApiAllowedPrincipals }}
+            notPrincipals:
+              {{- range . }}
+              - {{ . | quote }}
+              {{- end }}
+            {{- end }}
     - to:
         - operation:
             ports:
@@ -54,6 +60,12 @@ spec:
             notNamespaces:
               - pepr-system
               - istio-admin-gateway
+            {{- with .Values.adminApiAllowedPrincipals }}
+            notPrincipals:
+              {{- range . }}
+              - {{ . | quote }}
+              {{- end }}
+            {{- end }}
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
