@@ -1,0 +1,108 @@
+---
+title: Customize UDS Portal app tiles
+description: "Customize how an application appears in the UDS Portal: set its tile title and icon, and hide specific exposed endpoints."
+sidebar:
+  order: 10.004
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+The UDS Portal is the landing page where users discover the applications they can access in a UDS environment. This guide covers the tile settings you configure for an application: its title, its icon, and which of its exposed endpoints appear.
+
+> [!NOTE]
+> The Portal layer ships in the `upstream` and `unicorn` flavors only. It is not available in `registry1`. See [Functional Layers](/concepts/platform/functional-layers/) for the full layer and flavor matrix.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with UDS Core deployed, including the Identity & Authorization and Portal layers
+- An application deployed with a [`Package` CR](/reference/operator-and-crds/packages-v1alpha1-cr/) that has an `sso` section and at least one `network.expose` entry
+
+## How the Portal builds tiles
+
+The Portal builds its app list from `Package` CRs in the cluster, creating one tile per `network.expose` entry. A package must define an `sso` section or it produces no tiles, even when it exposes services.
+
+The Portal has no access controls of its own. It reflects each application's SSO authorization, so a user sees a tile only for an app they can access. That access is governed by the app's `Package` CR through `spec.sso[].groups.anyOf`: list groups to restrict the app, or omit it to allow all authenticated users. You configure access on the SSO client, not in the Portal:
+
+- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - define an application's SSO client.
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict which Keycloak groups can access an app, which in turn controls its tile visibility.
+
+The rest of this guide covers only the Portal-specific tile settings: title, icon, and endpoint hiding.
+
+## Steps
+
+<Steps>
+
+1. **Set the tile title and icon**
+
+   Add the `dev.uds.title` and `dev.uds.icon` annotations to the Zarf package `metadata.annotations` in `zarf.yaml`. These annotations live on the Zarf package, not the `Package` CR.
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: my-app
+     annotations:
+       dev.uds.title: My Application                 # display name shown on the tile
+       dev.uds.icon: "https://my-app.uds.dev/icon.svg" # tile logo; a URL or a data URI
+   ```
+
+   If `dev.uds.title` is absent, the title falls back to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If `dev.uds.icon` is absent, the Portal shows a default logo.
+
+   > [!TIP]
+   > The icon value accepts a URL or an inline data URI such as `data:image/svg+xml;base64,<base64-encoded-svg>`. A data URI avoids an extra network fetch and works in the airgap.
+
+2. **(Optional) Hide specific exposed endpoints**
+
+   A package that exposes multiple endpoints (for example, an application and its separate pages service) generates a tile for each one. To hide specific endpoints, set the `uds.dev/portal-hide-apps` annotation on the `Package` CR to a comma-separated list of `network.expose[].host` values.
+
+   ```yaml title="package.yaml"
+   metadata:
+     name: my-app
+     annotations:
+       # Hide the tiles for these exposed hosts
+       uds.dev/portal-hide-apps: "my-app-pages,my-app-registry"
+   ```
+
+   Expose entries with a wildcard `host` (for example, `*.pages`) are always excluded automatically.
+
+3. **Deploy your application**
+
+   Include the updated `zarf.yaml` and `Package` CR in your Zarf package, then create and deploy it. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
+
+   ```bash
+   uds zarf package create --confirm
+   uds zarf package deploy zarf-package-*.tar.zst --confirm
+   ```
+
+   > [!NOTE]
+   > The title and icon come from the deployed Zarf package metadata, so they update only on `zarf package deploy`, not by applying the `Package` CR alone.
+
+</Steps>
+
+## Verification
+
+Log in to the Portal at `https://portal.<your-domain>` (for example, `https://portal.uds.dev`) and confirm the tile appears with the expected title and icon, and that any hidden endpoints are absent.
+
+## Troubleshooting
+
+### Problem: Title or icon does not update
+
+**Symptom:** The tile shows the default title or logo.
+
+**Solution:** The `dev.uds.title` and `dev.uds.icon` annotations must be on the Zarf package `metadata.annotations` in `zarf.yaml`, not the `Package` CR. Setting them on the `Package` CR has no effect. Repackage and redeploy after correcting them.
+
+### Problem: App tile does not appear
+
+**Symptom:** Your application is deployed and exposed, but no tile shows up.
+
+**Solution:** Confirm the `Package` CR has an `sso` section; a package without one produces no tiles. If the app restricts access with `groups.anyOf`, a missing tile is expected for users outside the allowed groups. See [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/).
+
+## Related documentation
+
+- [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - all available `spec.sso` and `network.expose` fields
+- [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict which Keycloak groups can access an app, which in turn controls its tile visibility
+- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - configure SSO clients and Keycloak groups
+- [Functional Layers](/concepts/platform/functional-layers/) - how the Portal layer fits into UDS Core and which flavors include it
+- [UDS Portal repository](https://github.com/defenseunicorns/uds-portal) - source and additional configuration details
