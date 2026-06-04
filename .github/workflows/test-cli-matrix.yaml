@@ -37,12 +37,12 @@ jobs:
           # Both versions intentionally frozen on last compatible CLI version
           - scenario: old-old
             flavor: upstream
-            install_cli: v0.29.0
-            upgrade_cli: v0.29.0
+            install_cli: v0.32.0
+            upgrade_cli: v0.32.0
           # install_cli intentionally frozen (last compatible version); upgrade_cli tracks new releases via Renovate
           - scenario: old-new
             flavor: upstream
-            install_cli: v0.29.0
+            install_cli: v0.32.0
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             upgrade_cli: v0.32.0
 
