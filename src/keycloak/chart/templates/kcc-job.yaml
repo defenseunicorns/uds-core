@@ -1,0 +1,144 @@
+# Copyright 2024-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.realmSync.enabled }}
+{{- $fullname := include "keycloak.fullname" . }}
+{{- $adminSecret := printf "%s-admin-password" $fullname }}
+{{- $realmEnvSecret := printf "%s-realm-env" $fullname }}
+{{- $realmSyncSA := printf "%s-realm-sync" $fullname }}
+---
+# Dedicated ServiceAccount so the Istio admin-API deny policy can exempt
+# this Job's principal precisely via cluster.local/ns/{ns}/sa/{sa}.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $realmSyncSA }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+    app.kubernetes.io/component: realm-sync
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "5"
+    helm.sh/hook-delete-policy: before-hook-creation
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Job name includes the chart revision so each install/upgrade creates a
+  # fresh Job. Helm garbage-collects old Jobs on uninstall.
+  name: {{ printf "%s-realm-sync-%d" $fullname (int .Release.Revision) | trunc 63 | trimSuffix "-" }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "keycloak.labels" . | nindent 4 }}
+    app.kubernetes.io/component: realm-sync
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: {{ .Values.realmSync.backoffLimit | default 2 }}
+  {{- with .Values.realmSync.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "keycloak.labels" . | nindent 8 }}
+        app.kubernetes.io/component: realm-sync
+    spec:
+      # Never (vs. OnFailure) makes each backoffLimit retry a separate Pod
+      # with its own logs, instead of restarting the container in-place.
+      # Keeps every failed attempt independently inspectable for debugging.
+      restartPolicy: Never
+      serviceAccountName: {{ $realmSyncSA }}
+      {{- if .Values.priorityClassName }}
+      priorityClassName: {{ .Values.priorityClassName }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: realm-sync
+          image: "{{ .Values.configImage }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - "/usr/bin/java"
+          args:
+            - "-jar"
+            - "/opt/kcc/keycloak-config-cli.jar"
+          envFrom:
+            # Same Secret Keycloak reads — operator-tunable realmInitEnv values.
+            - secretRef:
+                name: {{ $realmEnvSecret }}
+          env:
+            # In-cluster Service URL for the Keycloak Admin API.
+            - name: KEYCLOAK_URL
+              value: "http://{{ $fullname }}-http.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:8080/"
+            # POC auth: relies on insecureAdminPasswordGeneration. Production
+            # auth path is a TDD concern.
+            - name: KEYCLOAK_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $adminSecret }}
+                  key: username
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $adminSecret }}
+                  key: password
+            # UDS_*_DOMAIN aren't in the realmInitEnv Secret; mirror what
+            # the keycloak StatefulSet env does so substitution resolves.
+            - name: UDS_DOMAIN
+              value: {{ .Values.domain | quote }}
+            - name: UDS_ADMIN_DOMAIN
+              value: {{ .Values.adminDomain | quote }}
+            # File path inside the configImage that holds the curated baseline.
+            - name: IMPORT_FILES_LOCATIONS
+              value: {{ .Values.realmSync.realmFilePath | default "/home/nonroot/realm-kcc.json" | quote }}
+            # Wait for Keycloak Admin API to be ready (handles ordering vs
+            # Keycloak readiness without an explicit init container).
+            - name: KEYCLOAK_AVAILABILITYCHECK_ENABLED
+              value: "true"
+            - name: KEYCLOAK_AVAILABILITYCHECK_TIMEOUT
+              value: "120s"
+            # Substitute ${env:VAR:-default} placeholders against the env above.
+            - name: IMPORT_VARSUBSTITUTION_ENABLED
+              value: "true"
+            - name: IMPORT_VARSUBSTITUTION_PREFIX
+              value: "${"
+            - name: IMPORT_VARSUBSTITUTION_SUFFIX
+              value: "}"
+            # Keycloak i18n refs (${role_uma_authorization} etc.) have no env
+            # var to back them — leave them literal instead of erroring.
+            - name: IMPORT_VARSUBSTITUTION_UNDEFINEDISERROR
+              value: "false"
+            # Track ownership so Mission Hero customizations are preserved.
+            - name: IMPORT_REMOTESTATE_ENABLED
+              value: "true"
+            # Components include Keycloak-auto-managed entries (KeyProvider,
+            # WorkflowProvider, ClientRegistrationPolicy) that we do not
+            # declare in the curated baseline. no-delete means kcc adopts
+            # but never removes — Keycloak's auto-managed components survive.
+            - name: IMPORT_MANAGED_COMPONENT
+              value: "no-delete"
+            # Authentication flows: Keycloak's --import-realm assigns
+            # execution priorities loosely (via JSON array order); kcc is
+            # strict. no-delete tells kcc to update flows in-place rather
+            # than delete+recreate, which preserves UUIDs and avoids login
+            # disruption while still applying field-level updates.
+            - name: IMPORT_MANAGED_AUTHENTICATION_FLOW
+              value: "no-delete"
+            # Default kcc cache skips reconcile when input file checksum
+            # hasn't changed — that masks drift. Disable so every run
+            # actually compares declared vs live and reconciles.
+            - name: IMPORT_CACHE_ENABLED
+              value: "false"
+            - name: LOGGING_LEVEL_DE_ADORSYS_KEYCLOAK_CONFIG
+              value: "DEBUG"
+{{- end }}
