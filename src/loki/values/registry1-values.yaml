@@ -22,7 +22,7 @@ gateway:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/nginx/nginx-alpine
-    tag: 1.29.8
+    tag: 1.30.2
 memcached:
   image:
     registry: registry1.dso.mil
