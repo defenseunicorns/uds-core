@@ -44,14 +44,14 @@ The rest of this guide covers only the Portal-specific tile settings: title, ico
    metadata:
      name: my-app
      annotations:
-       dev.uds.title: My Application                 # display name shown on the tile
-       dev.uds.icon: "https://my-app.uds.dev/icon.svg" # tile logo; a URL or a data URI
+       dev.uds.title: My Application  # display name shown on the tile
+       dev.uds.icon: "data:image/svg+xml;base64,<base64-encoded-svg>"  # tile logo as a base64 data URI
    ```
 
    If `dev.uds.title` is absent, the title falls back to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If `dev.uds.icon` is absent, the Portal shows a default logo.
 
    > [!TIP]
-   > The icon value accepts a URL or an inline data URI such as `data:image/svg+xml;base64,<base64-encoded-svg>`. A data URI avoids an extra network fetch and works in the airgap.
+   > Provide the icon as a base64-encoded data URI so it renders without an external fetch and works in the airgap. A plain image URL only works if every user's browser can reach it, so avoid URLs in airgapped deployments.
 
 2. **(Optional) Hide specific exposed endpoints**
 
