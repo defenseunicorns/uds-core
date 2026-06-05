@@ -182,6 +182,25 @@ SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) a
 > [!NOTE]
 > Enforcement runs at UDS Operator admission only. Clients created directly in Keycloak (Admin API, Admin UI, OpenTofu) are not validated by this flag. Tightening the Keycloak-side UDS Client Profile to mirror this gate is deferred to a future major release to avoid breaking clusters that already have non-device-flow public clients in Keycloak.
 
+## Ambient waypoint pod annotations
+
+UDS Core creates operator-managed ambient waypoints for `Package` SSO clients that use `enableAuthserviceSelector`. Configure Istio's `istio-waypoint` GatewayClass defaults when another cluster component needs annotations on generated waypoint pod templates.
+
+Set `gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations` on the `istiod` Helm chart to apply annotations to all waypoint pods that use the `istio-waypoint` GatewayClass:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-controlplane:
+    istiod:
+      values:
+        - path: gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations
+          value:
+            # Example: opt waypoint pods out of an EKS observability add-on mutation.
+            cloudwatch.aws.amazon.com/inject: "false"
+```
+
+This setting applies cluster-wide to waypoint pods that use the `istio-waypoint` GatewayClass. It does not configure application pods or sidecar-injected workloads. Reference the [Istio waypoint proxy documentation](https://istio.io/latest/docs/ambient/usage/waypoint/) for upstream waypoint behavior.
+
 ## Account lockout
 
 UDS Core configures Keycloak brute-force detection with the following defaults.
