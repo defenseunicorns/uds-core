@@ -1,13 +1,13 @@
 ---
 title: Platform Features
-description: Guides for platform-wide UDS Core features including functional layer bundles, automatic pod reload, and the security classification banner.
+description: Guides for platform-wide UDS Core features including functional layer bundles, automatic pod reload, the security classification banner, and the UDS Portal.
 sidebar:
   order: 10.000
 ---
 
 import { CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-Platform-wide UDS Core capabilities that aren't tied to a single component. These guides cover custom layer bundles, automatic pod restarts, and UI-level classification markings.
+Platform-wide UDS Core capabilities that aren't tied to a single component. These guides cover custom layer bundles, automatic pod restarts, UI-level classification markings, and customizing the UDS Portal.
 
 ## Guides
 
@@ -26,5 +26,10 @@ Platform-wide UDS Core capabilities that aren't tied to a single component. Thes
     title="Enable the classification banner"
     description="Inject a security classification banner into web UIs via Istio EnvoyFilter."
     href="/how-to-guides/platform-features/enable-classification-banner/"
+  />
+  <LinkCard
+    title="Customize UDS Portal app tiles"
+    description="Set an application's UDS Portal tile title and icon, and hide specific exposed endpoints."
+    href="/how-to-guides/platform-features/portal/"
   />
 </CardGrid>
