@@ -17,3 +17,10 @@ tasks:
             kind: GatewayClass
             name: envoy-gateway
             condition: Accepted
+
+  - name: e2e-test
+    actions:
+      - description: "Run Envoy Gateway E2E tests"
+        cmd: |
+          npm ci && npx vitest run "envoy-gateway"
+        dir: test/vitest
