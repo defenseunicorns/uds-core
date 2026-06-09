@@ -147,6 +147,13 @@
       "minimumReleaseAge": null
     },
     {
+      "matchFileNames": [
+        "src/portal/**"
+      ],
+      "groupName": "portal",
+      "commitMessageTopic": "portal"
+    },
+    {
       "matchPackageNames": [
         "defenseunicorns/uds-common",
         "mcr.microsoft.com/playwright",
@@ -154,13 +161,6 @@
       ],
       "groupName": "support-deps",
       "commitMessageTopic": "support-deps"
-    },
-    {
-      "matchFileNames": [
-        "src/portal/**"
-      ],
-      "groupName": "portal",
-      "commitMessageTopic": "portal"
     },
     {
       "matchDepNames": [
