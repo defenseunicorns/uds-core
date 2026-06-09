@@ -12,4 +12,4 @@ spec:
     kubernetes:
       envoyDeployment:
         container:
-          image: {{ required "global.images.envoyProxy.image is required" .Values.global.images.envoyProxy.image | quote }}
+          image: registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
