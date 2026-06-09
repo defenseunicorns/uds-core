@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.6.0](https://github.com/defenseunicorns/uds-core/compare/v1.5.0...v1.6.0) (2026-06-09)
+
+
+### Features
+
+* allow a list of principals to access keycloak admin API ([#2714](https://github.com/defenseunicorns/uds-core/issues/2714)) ([2f3d014](https://github.com/defenseunicorns/uds-core/commit/2f3d014fe178f0c096d64fc744949f7fd2ed2af8))
+* **checkpoint-dev:** make checkpoint work on macOS and without sudo ([#2688](https://github.com/defenseunicorns/uds-core/issues/2688)) ([6c0b81f](https://github.com/defenseunicorns/uds-core/commit/6c0b81f66714022bcf7df8065f71ceb889fdedab))
+* generate UDPRoute CRD type ([#2704](https://github.com/defenseunicorns/uds-core/issues/2704)) ([76182fc](https://github.com/defenseunicorns/uds-core/commit/76182fc1031712d83eb150397bfbea4254909cf9))
+* uds portal as layer in upstream flavor ([#2699](https://github.com/defenseunicorns/uds-core/issues/2699)) ([62cd29e](https://github.com/defenseunicorns/uds-core/commit/62cd29eeff8b18ab9610745e9992c97313fc6f98))
+
+
+### Bug Fixes
+
+* exclude portal from registry1 private pki tests ([#2707](https://github.com/defenseunicorns/uds-core/issues/2707)) ([523cb84](https://github.com/defenseunicorns/uds-core/commit/523cb8418528cc21f7d260c0d66a99e8a56d334e))
+
+
+### Miscellaneous
+
+* add 1.6.0 release notes ([#2729](https://github.com/defenseunicorns/uds-core/issues/2729)) ([0fac825](https://github.com/defenseunicorns/uds-core/commit/0fac825752b9be9f03c31ef32fa038507bca54ef))
+* **deps:** bump qs from 6.15.0 to 6.15.2 ([#2695](https://github.com/defenseunicorns/uds-core/issues/2695)) ([a0b4fd8](https://github.com/defenseunicorns/uds-core/commit/a0b4fd8a1cd9f937b608aaa4f8fead630752de4c))
+* **deps:** update iac-support-deps ([#2698](https://github.com/defenseunicorns/uds-core/issues/2698)) ([5e220c0](https://github.com/defenseunicorns/uds-core/commit/5e220c07ede88cb031eed8669cfbdfa9b4ce8a1e))
+* **deps:** update istio to 1.29.3 ([#2676](https://github.com/defenseunicorns/uds-core/issues/2676)) ([1936c96](https://github.com/defenseunicorns/uds-core/commit/1936c9636d70d6200be2c42a924d78463c2c8305))
+* **deps:** update keycloak to v26.6.2 ([#2680](https://github.com/defenseunicorns/uds-core/issues/2680)) ([3d7977c](https://github.com/defenseunicorns/uds-core/commit/3d7977c7bd710b7b588f44804522e084801f3d9a))
+* **deps:** update loki ([#2693](https://github.com/defenseunicorns/uds-core/issues/2693)) ([8262492](https://github.com/defenseunicorns/uds-core/commit/8262492935f0f3ccba8798d59ad937f25eb986c9))
+* **deps:** update loki ([#2709](https://github.com/defenseunicorns/uds-core/issues/2709)) ([0f16a7d](https://github.com/defenseunicorns/uds-core/commit/0f16a7d8707241ba3403600aef45aef8765c7ff8))
+* **deps:** update pepr to v1.2.1 ([#2716](https://github.com/defenseunicorns/uds-core/issues/2716)) ([90bfc71](https://github.com/defenseunicorns/uds-core/commit/90bfc71aad213af8b35a881ff6f0344372fd876c))
+* **deps:** update portal ([#2712](https://github.com/defenseunicorns/uds-core/issues/2712)) ([e7ed8a0](https://github.com/defenseunicorns/uds-core/commit/e7ed8a019819db6f31e3dd3052a7fe108a10a65d))
+* **deps:** update prometheus-stack ([#2694](https://github.com/defenseunicorns/uds-core/issues/2694)) ([dd63525](https://github.com/defenseunicorns/uds-core/commit/dd635251aac2c7adafd9a3a03065cb34250c5299))
+* **deps:** update support-deps ([#2697](https://github.com/defenseunicorns/uds-core/issues/2697)) ([346030a](https://github.com/defenseunicorns/uds-core/commit/346030adc2b1163b87e7efb571befd31e3676647))
+* **deps:** update uds-identity-config 0.28.0 ([#2727](https://github.com/defenseunicorns/uds-core/issues/2727)) ([08608e3](https://github.com/defenseunicorns/uds-core/commit/08608e3c0a490ae379fb2574f963dd2a4d7db50b))
+* **deps:** update vector to v0.56.0 ([#2717](https://github.com/defenseunicorns/uds-core/issues/2717)) ([c3980a6](https://github.com/defenseunicorns/uds-core/commit/c3980a64d56a044001e63bb777d081cd6c52551f))
+* rename uds to unified defense stack ([#2708](https://github.com/defenseunicorns/uds-core/issues/2708)) ([36be3f6](https://github.com/defenseunicorns/uds-core/commit/36be3f6e9901761400f5856005f25ef252660955))
+* update dod root ca certs ([#2720](https://github.com/defenseunicorns/uds-core/issues/2720)) ([c2ece26](https://github.com/defenseunicorns/uds-core/commit/c2ece26d4d98b798cb9113502c91c5b99fc0a38f))
+
+
+### Documentation
+
+* add doc for ambient waypoint pod annotations ([#2715](https://github.com/defenseunicorns/uds-core/issues/2715)) ([ed2bb51](https://github.com/defenseunicorns/uds-core/commit/ed2bb51970b987a405b38d7891f42e95de7f54c2))
+* portal concepts page ([#2725](https://github.com/defenseunicorns/uds-core/issues/2725)) ([8a52447](https://github.com/defenseunicorns/uds-core/commit/8a524472217a1da63c5de60bfe73fd2557768015))
+* portal how-to configuration and flavor page updates ([#2721](https://github.com/defenseunicorns/uds-core/issues/2721)) ([197d0ee](https://github.com/defenseunicorns/uds-core/commit/197d0eecd0d760c39117268c3bed21cc2cae0265))
+
 ## [1.5.0](https://github.com/defenseunicorns/uds-core/compare/v1.4.0...v1.5.0) (2026-05-26)
 
 
