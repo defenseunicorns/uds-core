@@ -39,7 +39,13 @@ UDS Core 1.6 adds the UDS Portal as a new layer in the upstream and unicorn flav
 
 ### Identity Config updates (0.28.0)
 
-Identity Config [0.28.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.28.0) adds a new `usercertificateSKI` user attribute extracted from x509 certificates, pulls in an internal Keycloak 26.6.3 security update, and updates branding references. No manual realm changes are required for this release.
+Identity Config [0.28.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.28.0) includes the following changes:
+
+- Adds a new `usercertificateSKI` user attribute extracted from x509 certificates.
+- Bumps the internal Keycloak compile dependency to 26.6.3 (security update); the deployed Keycloak server version remains 26.6.2.
+- Updates branding references to "Unified Defense Stack".
+
+No manual realm changes are required for this release.
 
 ## Related documentation
 
