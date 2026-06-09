@@ -5,11 +5,11 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: uds-default
-  namespace: envoy-gateway-system
+  namespace: {{ .Release.Namespace }}
 spec:
   provider:
     type: Kubernetes
     kubernetes:
       envoyDeployment:
         container:
-          image: registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
+          image: {{ .Values.global.images.envoyProxy.image }}

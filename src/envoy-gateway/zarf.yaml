@@ -32,12 +32,6 @@ components:
     images:
       - docker.io/envoyproxy/gateway:v1.8.0
       - docker.io/envoyproxy/envoy:distroless-v1.38.0
-    manifests:
-      - name: envoy-gateway-config
-        namespace: envoy-gateway-system
-        files:
-          - manifests/envoyproxy-upstream.yaml
-          - manifests/gatewayclass.yaml
 
   - name: envoy-gateway
     required: false
@@ -58,12 +52,6 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
-    manifests:
-      - name: envoy-gateway-config
-        namespace: envoy-gateway-system
-        files:
-          - manifests/envoyproxy-registry1.yaml
-          - manifests/gatewayclass.yaml
 
   - name: envoy-gateway
     required: false
@@ -84,9 +72,3 @@ components:
     images:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
-    manifests:
-      - name: envoy-gateway-config
-        namespace: envoy-gateway-system
-        files:
-          - manifests/envoyproxy-unicorn.yaml
-          - manifests/gatewayclass.yaml
