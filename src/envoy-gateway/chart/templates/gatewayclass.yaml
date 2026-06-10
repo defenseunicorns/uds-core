@@ -7,8 +7,3 @@ metadata:
   name: envoy-gateway
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
-  parametersRef:
-    group: gateway.envoyproxy.io
-    kind: EnvoyProxy
-    name: uds-default
-    namespace: envoy-gateway-system
