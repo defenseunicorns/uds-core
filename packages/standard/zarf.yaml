@@ -84,11 +84,6 @@ components:
     import:
       path: ../metrics-server
 
-  - name: envoy-gateway-crds
-    required: false
-    import:
-      path: ../base
-
   - name: envoy-gateway
     required: false
     import:

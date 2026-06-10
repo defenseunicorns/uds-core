@@ -8,11 +8,6 @@ metadata:
   url: https://github.com/envoyproxy/gateway
 
 components:
-  - name: envoy-gateway-crds
-    required: false
-    import:
-      path: common
-
   - name: envoy-gateway
     required: false
     only:

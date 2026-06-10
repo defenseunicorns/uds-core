@@ -8,19 +8,6 @@ metadata:
   url: https://github.com/envoyproxy/gateway
 
 components:
-  - name: envoy-gateway-crds
-    required: false
-    files:
-      # Fetched at package create time and applied at deploy time to avoid Helm's
-      # release secret size limit with the generated EnvoyProxy CRD.
-      - source: https://github.com/envoyproxy/gateway/releases/download/v1.8.0/envoy-gateway-crds.yaml
-        target: /tmp/uds-core-envoy-gateway-crds.yaml
-    actions:
-      onDeploy:
-        after:
-          - description: Apply Envoy Gateway CRDs
-            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-crds.yaml
-
   - name: envoy-gateway
     required: false
     charts:
@@ -36,17 +23,3 @@ components:
         serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
-    actions:
-      onDeploy:
-        before:
-          - description: Wait for EnvoyProxy CRD to exist
-            cmd: |
-              set -e
-              for i in $(seq 1 60); do
-                if ./zarf tools kubectl get crd envoyproxies.gateway.envoyproxy.io >/dev/null 2>&1; then
-                  exit 0
-                fi
-                sleep 2
-              done
-              echo "Timed out waiting for CRD envoyproxies.gateway.envoyproxy.io" >&2
-              exit 1
