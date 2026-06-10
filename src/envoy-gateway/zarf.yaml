@@ -32,6 +32,21 @@ components:
     images:
       - docker.io/envoyproxy/gateway:v1.8.0
       - docker.io/envoyproxy/envoy:distroless-v1.38.0
+    files:
+      # Applied via kubectl rather than manifests: to avoid Zarf health check
+      # waiting on EnvoyProxy.status.conditions, which stays Unknown until a
+      # Gateway resource is deployed (never happens at install time).
+      - source: manifests/envoyproxy-upstream.yaml
+        target: /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+      - source: manifests/gatewayclass.yaml
+        target: /tmp/uds-core-envoy-gateway-gatewayclass.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Apply EnvoyProxy configuration
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+          - description: Apply GatewayClass
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-gatewayclass.yaml
 
   - name: envoy-gateway
     required: false
@@ -52,6 +67,21 @@ components:
     images:
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
+    files:
+      # Applied via kubectl rather than manifests: to avoid Zarf health check
+      # waiting on EnvoyProxy.status.conditions, which stays Unknown until a
+      # Gateway resource is deployed (never happens at install time).
+      - source: manifests/envoyproxy-registry1.yaml
+        target: /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+      - source: manifests/gatewayclass.yaml
+        target: /tmp/uds-core-envoy-gateway-gatewayclass.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Apply EnvoyProxy configuration
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+          - description: Apply GatewayClass
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-gatewayclass.yaml
 
   - name: envoy-gateway
     required: false
@@ -72,3 +102,18 @@ components:
     images:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
+    files:
+      # Applied via kubectl rather than manifests: to avoid Zarf health check
+      # waiting on EnvoyProxy.status.conditions, which stays Unknown until a
+      # Gateway resource is deployed (never happens at install time).
+      - source: manifests/envoyproxy-unicorn.yaml
+        target: /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+      - source: manifests/gatewayclass.yaml
+        target: /tmp/uds-core-envoy-gateway-gatewayclass.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Apply EnvoyProxy configuration
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-envoyproxy.yaml
+          - description: Apply GatewayClass
+            cmd: ./zarf tools kubectl apply --server-side=true --force-conflicts --field-manager=uds -f /tmp/uds-core-envoy-gateway-gatewayclass.yaml
