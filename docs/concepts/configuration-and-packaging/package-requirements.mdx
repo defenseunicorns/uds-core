@@ -22,7 +22,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 - **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
 - **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
-- **MUST** be capable of operating within an airgap (internet-disconnected) environment.
+- **MUST** be capable of operating within the airgap (internet-disconnected).
 - **MUST** not use local commands outside of `coreutils` or `./zarf` self references within `zarf actions`.
 - **MUST** use Helm charts for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
   > This keeps the package structure clean and maintainable by separating concerns into inspectable units. Using upstream charts also makes it easier to incorporate upstream changes over time.

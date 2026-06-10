@@ -18,7 +18,7 @@ When a package meets UDS package requirements, it can be published to [UDS Regis
 
 Add annotations under `metadata.annotations` in your package config:
 
-```yaml
+```yaml title="zarf.yaml"
 kind: ZarfPackageConfig
 metadata:
   annotations:
@@ -40,12 +40,12 @@ The following annotations are recommended for production packages, and are used 
 
 ## Implementation guidelines
 
-### `dev.uds.title`
+**`dev.uds.title`**
 
 - **MUST** be a human-readable title-case string that clearly identifies the package.
 - **SHOULD** match the official product name when packaging existing software.
 
-### `dev.uds.categories`
+**`dev.uds.categories`**
 
 - **MUST** be a comma-with-space-separated string (`"Category One, Category Two"`).
 - **SHOULD** include 1-3 categories from these standard options:
@@ -78,16 +78,16 @@ The following annotations are recommended for production packages, and are used 
 
 - **MAY** include new categories when existing categories do not adequately describe the package.
 
-### `dev.uds.keywords`
+**`dev.uds.keywords`**
 
 - **MUST** be a comma-with-space-separated string of 3-7 relevant search terms.
 - **SHOULD** include alternative terms and abbreviations users might search for.
 
-### `dev.uds.tagline`
+**`dev.uds.tagline`**
 
 - **MUST** be one concise sentence (recommended 5-10 words) describing package function.
 
-### `dev.uds.icon`
+**`dev.uds.icon`**
 
 - **MUST** be encoded as a base64 [data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
 - **SHOULD** use `.png` or `.svg` (`.svg` recommended), square aspect ratio, transparent background.
@@ -106,5 +106,5 @@ These annotations are experimental and may evolve over time:
 
 ## Related documentation
 
-- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
-- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/)
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/) - pre-publish checklist for required capabilities and standards.
+- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/) - end-to-end guide for building a package that meets UDS requirements.

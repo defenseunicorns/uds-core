@@ -40,16 +40,13 @@ For shared values across multiple charts (for example `domain`), use a shared ke
 
 ## Example mapping
 
+The following example shows how to define `values` and map them into chart values within the Zarf package definition:
+
 ```yaml title="common/zarf.yaml"
 kind: ZarfPackageConfig
 metadata:
   name: nginx
   description: UDS Common Nginx Example
-
-values:
-  files:
-    - zarf-values.yaml
-  schema: zarf-values.schema.json
 
 components:
   - name: nginx
@@ -89,7 +86,36 @@ components:
             targetPath: .affinity
 ```
 
+```yaml title="zarf.yaml"
+kind: ZarfPackageConfig
+metadata:
+  name: nginx
+  description: UDS Nginx Example Package
+
+values:
+  files:
+    - zarf-values.yaml  
+  schema: zarf-values.schema.json
+
+components:
+  - name: nginx
+    required: true
+    description: Deploy nginx with upstream images
+    import:
+      path: common
+    only:
+      flavor: upstream
+    charts:
+      - name: nginx
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - nginx:1.30.0
+```
+
 ## Example defaults
+
+The following example shows a `values.yaml` with defaults a deployer can override:
 
 ```yaml title="zarf-values.yaml"
 uds-nginx-config:
@@ -114,6 +140,8 @@ nginx:
 ```
 
 ## Example schema
+
+The following example shows a `zarf-values.schema.json` that validates the defaults above:
 
 ```json title="zarf-values.schema.json"
 {
@@ -165,6 +193,6 @@ nginx:
 
 ## Related documentation
 
-- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/)
-- [Package Testing](/how-to-guides/packaging-applications/package-testing/)
-- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
+- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/) - end-to-end guide for packaging an application as a UDS Package.
+- [Package testing](/how-to-guides/packaging-applications/package-testing/) - add journey and upgrade tests for your package.
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/) - pre-publish checklist for required capabilities and standards.
