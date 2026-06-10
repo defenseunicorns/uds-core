@@ -10,8 +10,8 @@ sidebar:
 You'll define a consistent values strategy for your UDS Package so downstream teams can safely configure deployments across environments. This includes:
 
 - Exposing chart configuration through Zarf Values
-- Defining defaults in a Zarf `values.yaml`
-- Validating expected inputs with a Zarf `values.schema.json`
+- Defining defaults in a `zarf-values.yaml`
+- Validating expected inputs with a `zarf-values.schema.json`
 
 ## Why this matters
 
@@ -26,8 +26,8 @@ In general, expose most non-sensitive chart values. Restrict values that would b
 
 Define the top-level `values` key in your root `zarf.yaml` and reference:
 
-- A Zarf `values.yaml` for defaults
-- A Zarf `values.schema.json` for validation
+- A `zarf-values.yaml` for defaults
+- A `zarf-values.schema.json` for validation
 
 The schema should follow [JSON Schema](https://json-schema.org/) and focus on validating common user-facing values. Keep deeply nested validation practical to avoid fragile schemas as charts and Kubernetes APIs evolve.
 
@@ -48,8 +48,8 @@ metadata:
 
 values:
   files:
-    - values.yaml
-  schema: values.schema.json
+    - zarf-values.yaml
+  schema: zarf-values.schema.json
 
 components:
   - name: nginx
@@ -91,7 +91,7 @@ components:
 
 ## Example defaults
 
-```yaml title="values.yaml"
+```yaml title="zarf-values.yaml"
 uds-nginx-config:
   domain: uds.dev
 
@@ -115,7 +115,7 @@ nginx:
 
 ## Example schema
 
-```json title="values.schema.json"
+```json title="zarf-values.schema.json"
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
