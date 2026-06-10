@@ -1,0 +1,170 @@
+---
+title: Package Values
+description: Expose and validate UDS Package configuration using Zarf Values and JSON schema.
+sidebar:
+  order: 9.003
+---
+
+## What you'll accomplish
+
+You'll define a consistent values strategy for your UDS Package so downstream teams can safely configure deployments across environments. This includes:
+
+- Exposing chart configuration through Zarf Values
+- Defining defaults in a Zarf `values.yaml`
+- Validating expected inputs with a Zarf `values.schema.json`
+
+## Why this matters
+
+UDS Packages are deployed in a wide range of environments. A clear values contract helps keep packages flexible, secure, and predictable.
+
+In general, expose most non-sensitive chart values. Restrict values that would break package integrity or weaken security, such as image references, ingress ownership, or hard security settings.
+
+> [!NOTE]
+> [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature and as such, packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
+
+## Implementation
+
+Define the top-level `values` key in your root `zarf.yaml` and reference:
+
+- A Zarf `values.yaml` for defaults
+- A Zarf `values.schema.json` for validation
+
+The schema should follow [JSON Schema](https://json-schema.org/) and focus on validating common user-facing values. Keep deeply nested validation practical to avoid fragile schemas as charts and Kubernetes APIs evolve.
+
+> [!TIP]
+> There is an open Zarf issue to support schema generation: [zarf-dev/zarf#4918](https://github.com/zarf-dev/zarf/issues/4918).
+
+Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`). Keep mappings as flat as practical and expose the highest sensible node in the values tree.
+
+For shared values across multiple charts (for example `domain`), use a shared key to reduce configuration drift.
+
+## Example mapping
+
+```yaml title="common/zarf.yaml"
+kind: ZarfPackageConfig
+metadata:
+  name: nginx
+  description: UDS Common Nginx Example
+
+values:
+  files:
+    - values.yaml
+  schema: values.schema.json
+
+components:
+  - name: nginx
+    required: true
+    charts:
+      - name: uds-nginx-config
+        namespace: nginx
+        version: 0.1.0
+        localPath: ../chart
+        values:
+          - sourcePath: .uds-nginx-config
+            targetPath: .
+      - name: nginx
+        version: 0.1.0
+        namespace: nginx
+        localPath: ../src/nginx
+        valuesFiles:
+          - ../values/common-values.yaml
+        values:
+          - sourcePath: .nginx.replicaCount
+            targetPath: .replicaCount
+          - sourcePath: .nginx.service
+            targetPath: .service
+          - sourcePath: .nginx.resources
+            targetPath: .resources
+          - sourcePath: .nginx.autoscaling
+            targetPath: .autoscaling
+          - sourcePath: .nginx.volumes
+            targetPath: .volumes
+          - sourcePath: .nginx.volumeMounts
+            targetPath: .volumeMounts
+          - sourcePath: .nginx.nodeSelector
+            targetPath: .nodeSelector
+          - sourcePath: .nginx.tolerations
+            targetPath: .tolerations
+          - sourcePath: .nginx.affinity
+            targetPath: .affinity
+```
+
+## Example defaults
+
+```yaml title="values.yaml"
+uds-nginx-config:
+  domain: uds.dev
+
+nginx:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+  volumes: []
+  volumeMounts: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+```
+
+## Example schema
+
+```json title="values.schema.json"
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "uds-nginx-config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string"
+        }
+      }
+    },
+    "nginx": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string" },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "resources": { "type": "object" },
+        "autoscaling": { "type": "object" },
+        "volumes": { "type": "array", "items": { "type": "object" } },
+        "volumeMounts": { "type": "array", "items": { "type": "object" } },
+        "nodeSelector": { "type": "object" },
+        "tolerations": { "type": "array", "items": { "type": "object" } },
+        "affinity": { "type": "object" }
+      }
+    }
+  }
+}
+```
+
+## Related documentation
+
+- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/)
+- [Package Testing](/how-to-guides/packaging-applications/package-testing/)
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)

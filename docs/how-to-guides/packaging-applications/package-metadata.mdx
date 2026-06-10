@@ -1,0 +1,110 @@
+---
+title: Package Metadata
+description: Add and validate metadata annotations used by UDS Registry and related products.
+sidebar:
+  order: 9.004
+---
+
+## What you'll accomplish
+
+You'll define metadata annotations in your `zarf.yaml` so your package is easier to discover and understand across UDS product surfaces.
+
+## Before you begin
+
+When a package meets UDS package requirements, it can be published to [UDS Registry](https://registry.defenseunicorns.com/). Metadata annotations improve discoverability and user experience for published packages.
+
+> [!NOTE]
+> This page uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) terminology.
+
+Add annotations under `metadata.annotations` in your package config:
+
+```yaml
+kind: ZarfPackageConfig
+metadata:
+  annotations:
+    dev.uds.title: "Example Package"
+    dev.uds.categories: "Development, Testing"
+```
+
+## Production-ready annotations
+
+The following annotations are recommended for production packages, and are used by a variety of UDS products:
+
+| Annotation | Description | Example | Products |
+| --- | --- | --- | --- |
+| `dev.uds.title` | Human-readable package title | `"GitLab Runner"` | [UDS Registry](https://registry.defenseunicorns.com/), [UDS Fleet](https://defenseunicorns.com/platform/uds-fleet/), [UDS Portal](https://github.com/defenseunicorns/uds-portal) |
+| `dev.uds.categories` | Dynamic category list | `"Software Dev, Kubernetes (K8s)"` | [UDS Registry](https://registry.defenseunicorns.com/), [UDS Fleet](https://defenseunicorns.com/platform/uds-fleet/) |
+| `dev.uds.keywords` | Search keywords | `"CI/CD Pipelines, Automation, GitLab"` | [UDS Registry](https://registry.defenseunicorns.com/) |
+| `dev.uds.tagline` | Short package tagline | `"Open Source CI/CD Job Execution Tool"` | [UDS Registry](https://registry.defenseunicorns.com/) |
+| `dev.uds.icon` | Base64 icon as [data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) | `"data:image/png;base64,iVBORw0KGgo..."` | [UDS Registry](https://registry.defenseunicorns.com/), [UDS Fleet](https://defenseunicorns.com/platform/uds-fleet/), [UDS Portal](https://github.com/defenseunicorns/uds-portal) |
+
+## Implementation guidelines
+
+### `dev.uds.title`
+
+- **MUST** be a human-readable title-case string that clearly identifies the package.
+- **SHOULD** match the official product name when packaging existing software.
+
+### `dev.uds.categories`
+
+- **MUST** be a comma-with-space-separated string (`"Category One, Category Two"`).
+- **SHOULD** include 1-3 categories from these standard options:
+
+<details>
+<summary>Standard Categories</summary>
+
+- AI
+- Cloud Native
+- Collaboration
+- Command And Control
+- Cybersecurity
+- Data Engineering
+- Databases
+- Digital Engineering
+- IT Management
+- Infrastructure
+- Kubernetes (K8s)
+- Load Balancing
+- Networking
+- Observability
+- Operator
+- Pipelines
+- Productivity
+- Security
+- Software Dev
+- Web
+
+</details>
+
+- **MAY** include new categories when existing categories do not adequately describe the package.
+
+### `dev.uds.keywords`
+
+- **MUST** be a comma-with-space-separated string of 3-7 relevant search terms.
+- **SHOULD** include alternative terms and abbreviations users might search for.
+
+### `dev.uds.tagline`
+
+- **MUST** be one concise sentence (recommended 5-10 words) describing package function.
+
+### `dev.uds.icon`
+
+- **MUST** be encoded as a base64 [data URI](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs).
+- **SHOULD** use `.png` or `.svg` (`.svg` recommended), square aspect ratio, transparent background.
+- **RECOMMENDED** size: `200x200px`.
+
+> [!TIP]
+> Keep annotations concise and user-centered. Think about how the package appears in registry search and detail views.
+
+## Provisional annotations
+
+These annotations are experimental and may evolve over time:
+
+| Annotation | Description | Example | Products |
+| --- | --- | --- | --- |
+| `dev.uds.system` | Whether a package is system-level (OS/firmware) vs application-level | `"true"` | [UDS Fleet](https://defenseunicorns.com/platform/uds-fleet/) |
+
+## Related documentation
+
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/)
+- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/)

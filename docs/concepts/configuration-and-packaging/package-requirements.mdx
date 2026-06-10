@@ -12,15 +12,6 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 >
 > These requirements are mandatory for Defense Unicorns engineers. For external maintainers, they are strongly recommended to promote consistency, quality, and security across the UDS ecosystem.
 
-## UDS Operator integration
-
-- **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
-- **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
-- **MUST** be capable of operating within an airgap (internet-disconnected) environment.
-- **MUST** not use local commands outside of `coreutils` or `./zarf` self references within `zarf actions`.
-- **SHOULD** limit the use of Zarf variable templates and prioritize configuring packages via Helm value overrides.
-  > This ensures that the package is configured the same way that the bundle would be and avoids any side effect issues of Zarf's `###` templating.
-
 ## Security, policy, and hardening
 
 - **MUST** minimize the scope and number of exemptions, to only what is absolutely required by the application. UDS Packages **MAY** make use of the [UDS `Exemption` custom resource](/how-to-guides/policy-and-compliance/create-policy-exemptions/) for exempting any Pepr policies, but in doing so they **MUST** document rationale for the exemptions. Exemptions should be documented in `docs/justifications.md` of the UDS Package repository.
@@ -29,11 +20,19 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 
 ## Packaging lifecycle and configuration
 
+- **MUST** be declaratively defined as a [Zarf package](https://docs.zarf.dev/ref/create/).
+- **MUST** integrate declaratively (i.e. no clickops) with the UDS Operator.
+- **MUST** be capable of operating within an airgap (internet-disconnected) environment.
+- **MUST** not use local commands outside of `coreutils` or `./zarf` self references within `zarf actions`.
+- **MUST** use Helm charts for rendering Kubernetes resources. When available and suitable for UDS packaging, an upstream chart **MUST** be used. When using an upstream chart, UDS-specific configurations **SHOULD** be encapsulated in a separate `config` Helm chart.
+  > This keeps the package structure clean and maintainable by separating concerns into inspectable units. Using upstream charts also makes it easier to incorporate upstream changes over time.
 - **MUST** (except if the application provides no application metrics) implement monitors for each application metrics endpoint using its built-in chart monitors, `monitor` key, or manual monitors in the config chart. [Monitor Resource](/how-to-guides/monitoring-and-observability/capture-application-metrics/)
-- **MUST** contain documentation under a `docs` folder at the root that describes how to configure the package and outlines package dependencies.
-- **MUST** include application [metadata for UDS Registry](https://github.com/defenseunicorns/uds-common/blob/main/docs/uds-packages/guidelines/metadata-guidelines.md) publishing.
-- **SHOULD** expose all configuration (`uds.dev` CRs, additional `Secrets`/`ConfigMaps`, etc) through a Helm chart (ideally in a `chart` or `charts` directory).
-  > This allows UDS bundles to override configuration with Helm overrides and enables downstream teams to fully control their bundle configurations.
+- **MUST** include package documentation in a root-level `docs` folder (for configuration and dependencies) and include it in the Zarf package under the [`documentation` key](https://docs.zarf.dev/schema/v1alpha1-package/#ZarfPackage).
+- **MUST** include application metadata for UDS Registry publishing. See [Package Metadata](/how-to-guides/packaging-applications/package-metadata/).
+- **SHOULD** follow the [Package Values](/how-to-guides/packaging-applications/package-values/) guide for exposing package configuration.
+  > [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature and as such, packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
+- **SHOULD** limit the use of [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) and prioritize configuring packages via [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/).
+  > This ensures that the package has more flexibility and avoids any side effect issues of Zarf's `###` templating (which is planned to be deprecated and removed once Zarf Values is stable).
 - **SHOULD** implement or allow for multiple flavors (ideally with common definitions in a common directory).
   > This allows for different images or configurations to be delivered consistently to customers.
 
@@ -46,7 +45,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **SHOULD** use Istio Ambient unless specific technical constraints require otherwise.
 - **MAY** use Istio Sidecars, when Istio Ambient is not technically feasible. Must document the specific technical constraints in `docs/justifications.md` if using Sidecars.
 - **SHOULD** avoid workarounds with Istio such as disabling strict mTLS peer authentication.
-- **MAY** template network policy keys to provide flexibility for delivery customers to configure.
+- **MAY** template network policy keys to provide flexibility for customers to configure.
 
 ## Identity and access management
 
@@ -54,7 +53,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **SHOULD** name the Keycloak client `<App> Login` (i.e. `Mattermost Login`) to provide login UX consistency.
 - **SHOULD** clearly mark the Keycloak client id with the group and app name `uds-<group>-<application>` (i.e. `uds-swf-mattermost`) to provide consistency in the Keycloak UI.
 - **MAY** end any generated Keycloak client secrets with `sso` to easily locate them when querying the cluster.
-- **MAY** template Keycloak fields to provide flexibility for delivery customers to configure.
+- **MAY** template Keycloak fields to provide flexibility for customers to configure.
 
 ## Testing
 
@@ -67,7 +66,7 @@ UDS Packages must meet a set of standards to ensure they are secure, maintainabl
 - **MUST** have a dependency management bot (such as renovate) configured to open PRs to update the core package and support dependencies.
 - **MUST** publish the package to the standard package registry, using a namespace and name that clearly identifies the application (e.g., `ghcr.io/uds-packages/neuvector`).
 - **SHOULD** be created from the [UDS Package Template](https://github.com/uds-packages/template).
-- **SHOULD** lint their configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
+- **SHOULD** lint configurations with appropriate tooling, such as [`yamllint`](https://github.com/adrienverge/yamllint) and [`zarf dev lint`](https://docs.zarf.dev/commands/zarf_dev_lint/).
 
 ## Versioning
 
