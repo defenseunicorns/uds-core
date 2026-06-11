@@ -25,7 +25,7 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - docker.io/envoyproxy/gateway:v1.8.0
+      - docker.io/envoyproxy/gateway:v1.8.1
       - docker.io/envoyproxy/envoy:distroless-v1.38.0
 
   - name: envoy-gateway
