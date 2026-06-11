@@ -24,6 +24,7 @@ packages:
     # x-release-please-end
     optionalComponents:
       - istio-egress-gateway
+      - envoy-gateway
     overrides:
       istio-admin-gateway:
         gateway:

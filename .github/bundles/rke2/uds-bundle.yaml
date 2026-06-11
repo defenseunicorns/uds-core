@@ -46,6 +46,7 @@ packages:
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
+      - envoy-gateway
     overrides:
       istio-admin-gateway:
         gateway:

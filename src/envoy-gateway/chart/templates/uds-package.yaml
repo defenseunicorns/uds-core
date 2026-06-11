@@ -1,0 +1,51 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: envoy-gateway
+  namespace: {{ .Release.Namespace }}
+spec:
+  monitor:
+    - selector:
+        control-plane: envoy-gateway
+      portName: metrics
+      targetPort: 19001
+      description: Metrics
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Egress
+        selector:
+          control-plane: envoy-gateway
+        remoteGenerated: KubeAPI
+        description: "KubeAPI access for controller"
+      - direction: Egress
+        selector:
+          control-plane: envoy-gateway
+        remoteGenerated: IntraNamespace
+        description: "Intra-namespace communication for managed proxies and cert generation"
+      - direction: Ingress
+        selector:
+          control-plane: envoy-gateway
+        remoteGenerated: IntraNamespace
+        description: "Intra-namespace communication from managed proxies"
+      - direction: Ingress
+        selector:
+          control-plane: envoy-gateway
+        # todo: evaluate a "KubeAPI" ingress generated rule for webhook calls
+        remoteGenerated: Anywhere
+        port: 9443
+        description: "Webhook admission from kube-apiserver"
+      - direction: Egress
+        selector:
+          app: certgen
+        remoteGenerated: KubeAPI
+        description: "KubeAPI access for certgen pre-install job"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: IntraNamespace
+        description: "xDS and SDS connections from managed Envoy pods to controller"
