@@ -45,7 +45,7 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.1
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
 
   - name: envoy-gateway
