@@ -65,5 +65,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
+      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.1
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
