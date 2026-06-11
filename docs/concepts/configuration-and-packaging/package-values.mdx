@@ -1,28 +1,16 @@
 ---
 title: Package Values
-description: Expose and validate UDS Package configuration using Zarf Values and JSON schema.
+description: How UDS Packages expose configuration through Zarf Values, including values strategy, schema validation, and mapping patterns.
 sidebar:
-  order: 9.003
+  order: 4.004
 ---
 
-## What you'll accomplish
-
-You'll define a consistent values strategy for your UDS Package so downstream teams can safely configure deployments across environments. This includes:
-
-- Exposing chart configuration through Zarf Values
-- Defining defaults in a `zarf-values.yaml`
-- Validating expected inputs with a `zarf-values.schema.json`
-
-## Why this matters
-
-UDS Packages are deployed in a wide range of environments. A clear values contract helps keep packages flexible, secure, and predictable.
-
-In general, expose most non-sensitive chart values. Restrict values that would break package integrity or weaken security, such as image references, ingress ownership, or hard security settings.
+UDS Packages expose configuration through [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/), a structured mechanism for passing Helm chart values at deploy time. In general, expose most non-sensitive chart values and restrict values that would break package integrity or weaken security, such as image references, ingress, or security settings.
 
 > [!NOTE]
-> [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/) is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature and as such, packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
+> Zarf Values is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature. Packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
 
-## Implementation
+## Values structure
 
 Define the top-level `values` key in your root `zarf.yaml` and reference:
 
@@ -36,11 +24,15 @@ The schema should follow [JSON Schema](https://json-schema.org/) and focus on va
 
 Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`). Keep mappings as flat as practical and expose the highest sensible node in the values tree.
 
+If the list of mappings gets unwieldy, consider inverting the mappings using higher level keys with `excludePaths` instead.
+
 For shared values across multiple charts (for example `domain`), use a shared key to reduce configuration drift.
 
-## Example mapping
+## Example configuration
 
-The following example shows how to define `values` and map them into chart values within the Zarf package definition:
+The following example shows a complete values setup for an nginx package.
+
+Define values and map them into chart values within the Zarf package definition:
 
 ```yaml title="common/zarf.yaml"
 kind: ZarfPackageConfig
@@ -66,24 +58,16 @@ components:
         valuesFiles:
           - ../values/common-values.yaml
         values:
-          - sourcePath: .nginx.replicaCount
-            targetPath: .replicaCount
-          - sourcePath: .nginx.service
-            targetPath: .service
-          - sourcePath: .nginx.resources
-            targetPath: .resources
-          - sourcePath: .nginx.autoscaling
-            targetPath: .autoscaling
-          - sourcePath: .nginx.volumes
-            targetPath: .volumes
-          - sourcePath: .nginx.volumeMounts
-            targetPath: .volumeMounts
-          - sourcePath: .nginx.nodeSelector
-            targetPath: .nodeSelector
-          - sourcePath: .nginx.tolerations
-            targetPath: .tolerations
-          - sourcePath: .nginx.affinity
-            targetPath: .affinity
+          - sourcePath: .nginx
+            targetPath: .
+            excludePaths:
+              - .nginx.image
+              - .nginx.imagePullSecrets
+              - .nginx.ingress
+              - .nginx.podSecurityContext
+              - .nginx.securityContext
+              - .nginx.livenessProbe
+              - .nginx.readinessProbe
 ```
 
 ```yaml title="zarf.yaml"
@@ -94,7 +78,7 @@ metadata:
 
 values:
   files:
-    - zarf-values.yaml  
+    - zarf-values.yaml
   schema: zarf-values.schema.json
 
 components:
@@ -113,9 +97,7 @@ components:
       - nginx:1.30.0
 ```
 
-## Example defaults
-
-The following example shows a `values.yaml` with defaults a deployer can override:
+The `zarf-values.yaml` provides defaults that deployers can override:
 
 ```yaml title="zarf-values.yaml"
 uds-nginx-config:
@@ -139,9 +121,7 @@ nginx:
   affinity: {}
 ```
 
-## Example schema
-
-The following example shows a `zarf-values.schema.json` that validates the defaults above:
+The `zarf-values.schema.json` validates the defaults above:
 
 ```json title="zarf-values.schema.json"
 {

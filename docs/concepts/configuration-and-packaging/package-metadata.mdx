@@ -1,22 +1,16 @@
 ---
 title: Package Metadata
-description: Add and validate metadata annotations used by UDS Registry and related products.
+description: Standard metadata annotations for UDS Packages, including production and provisional fields used across UDS products
 sidebar:
-  order: 9.004
+  order: 4.005
 ---
 
-## What you'll accomplish
-
-You'll define metadata annotations in your `zarf.yaml` so your package is easier to discover and understand across UDS product surfaces.
-
-## Before you begin
-
-When a package meets UDS package requirements, it can be published to [UDS Registry](https://registry.defenseunicorns.com/). Metadata annotations improve discoverability and user experience for published packages.
+Packages published to [UDS Registry](https://registry.defenseunicorns.com/) and consumed by other UDS products support a set of standard metadata annotations that improve discoverability and user experience across UDS products.
 
 > [!NOTE]
 > This page uses [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt) terminology.
 
-Add annotations under `metadata.annotations` in your package config:
+These annotations are defined under `metadata.annotations` in your `zarf.yaml` package config:
 
 ```yaml title="zarf.yaml"
 kind: ZarfPackageConfig
@@ -26,9 +20,9 @@ metadata:
     dev.uds.categories: "Development, Testing"
 ```
 
-## Production-ready annotations
+## Production annotations
 
-The following annotations are recommended for production packages, and are used by a variety of UDS products:
+The following annotations are recommended for production packages and are used across UDS products:
 
 | Annotation | Description | Example | Products |
 | --- | --- | --- | --- |
@@ -51,7 +45,7 @@ The following annotations are recommended for production packages, and are used 
 - **SHOULD** include 1-3 categories from these standard options:
 
 <details>
-<summary>Standard Categories</summary>
+<summary>Standard categories</summary>
 
 - AI
 - Cloud Native
