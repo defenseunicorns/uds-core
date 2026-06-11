@@ -8,8 +8,8 @@ import type { Page } from "@playwright/test";
 import { domain, flavor, fullCore } from "./uds.config";
 
 // Text injected by the classification-banner EnvoyFilter, set on the enabled hosts in
-// bundles/k3d-standard/uds-bundle.yaml. UNKNOWN renders as the black marking.
-const BANNER_TEXT = "UNKNOWN";
+// bundles/k3d-standard/uds-bundle.yaml. SAMPLE BANNER renders as the black marking.
+const BANNER_TEXT = "SAMPLE BANNER";
 
 // Asserts the classification-banner EnvoyFilter injected its fixed header div into the page.
 // The Lua filter previously called response_handle:body() on bodyless 3xx redirects, which

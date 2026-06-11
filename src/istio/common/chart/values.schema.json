@@ -11,8 +11,8 @@
         },
         "text": {
           "type": ["string", "null"],
-          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN)?$",
-          "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN or empty/null are also allowed."
+          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN|SAMPLE BANNER)?$",
+          "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN, SAMPLE BANNER (a demo placeholder), or empty/null are also allowed."
         }
       }
     }

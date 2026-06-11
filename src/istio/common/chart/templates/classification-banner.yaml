@@ -69,6 +69,7 @@ spec:
               ["TOP SECRET"] = { backgroundColor = "#ff8c00", textColor = "#000000" },
               ["TOP SECRET//SCI"] = { backgroundColor = "#fce83a", textColor = "#000000" },
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
+              ["SAMPLE BANNER"] = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
             local classification = "{{ .Values.classificationBanner.text }}"
 
@@ -107,6 +108,8 @@ spec:
                 return "CUI"
               elseif string.find(base, "^UNCLASSIFIED") then
                 return "UNCLASSIFIED"
+              elseif string.find(base, "^SAMPLE BANNER") then
+                return "SAMPLE BANNER"
               else
                 return "UNKNOWN"
               end
