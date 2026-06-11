@@ -60,7 +60,7 @@ variable "databases" {
       name              = "grafana"
       port              = 5432
       username          = "grafana"
-      engine_version    = "16.8"
+      engine_version    = "16.14"
       family            = "postgres16"
       allocated_storage = 20
       instance_class    = "db.t4g.large"
@@ -69,7 +69,7 @@ variable "databases" {
       name              = "keycloak"
       port              = 5432
       username          = "keycloak"
-      engine_version    = "16.8"
+      engine_version    = "16.14"
       family            = "postgres16"
       allocated_storage = 20
       instance_class    = "db.t4g.large"
