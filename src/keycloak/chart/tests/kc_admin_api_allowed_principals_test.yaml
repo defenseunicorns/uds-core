@@ -13,13 +13,16 @@ capabilities:
     - security.istio.io/v1
 
 tests:
-  - it: should not render notPrincipals by default, leaving notNamespaces intact
+  - it: should render the Fleet admin principal by default, leaving notNamespaces intact
     asserts:
-      - notExists:
+      - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
-      - notExists:
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+      - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
-      # baseline behavior must be unchanged when the feature is off
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
           value:
@@ -31,7 +34,7 @@ tests:
             - pepr-system
             - istio-admin-gateway
 
-  - it: should render notPrincipals on the admin and clients rules when principals are set
+  - it: should append configured principals on the admin and clients rules
     set:
       adminApiAllowedPrincipals:
         - cluster.local/ns/argo/sa/workflow-service-account
@@ -39,13 +42,15 @@ tests:
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
 
-  - it: should render all configured principals in order
+  - it: should render the Fleet admin principal followed by all configured principals in order
     set:
       adminApiAllowedPrincipals:
         - cluster.local/ns/argo/sa/workflow-service-account
@@ -54,11 +59,13 @@ tests:
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
             - cluster.local/ns/ci-tooling/sa/realm-sync
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
             - cluster.local/ns/ci-tooling/sa/realm-sync
 
@@ -72,11 +79,13 @@ tests:
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/myrealm/clients")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
       # the realm-independent /admin* rule is unaffected by the realm value
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - cluster.local/ns/argo/sa/workflow-service-account
 
   - it: should quote principals so wildcard values render as valid YAML
@@ -89,11 +98,13 @@ tests:
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - "*/ns/argo/sa/workflow-service-account"
             - cluster.local/ns/argo/sa/*
       - equal:
           path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin/realms/uds/clients")].from[0].source.notPrincipals'
           value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
             - "*/ns/argo/sa/workflow-service-account"
             - cluster.local/ns/argo/sa/*
 
@@ -111,7 +122,7 @@ tests:
             - monitoring
       # mTLS client-cert catch-all rule must not exempt configured principals
       - notExists:
-          path: 'spec.rules[?(@.when)].from[0].source.notPrincipals'
+          path: "spec.rules[?(@.when)].from[0].source.notPrincipals"
 
   - it: should preserve notNamespaces alongside notPrincipals
     set:
