@@ -44,3 +44,8 @@ spec:
           app: certgen
         remoteGenerated: KubeAPI
         description: "KubeAPI access for certgen pre-install job"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: IntraNamespace
+        description: "xDS and SDS connections from managed Envoy pods to controller"
