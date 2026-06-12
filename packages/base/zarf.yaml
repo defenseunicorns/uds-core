@@ -82,3 +82,17 @@ components:
     required: false
     import:
       path: ../../src/envoy-gateway
+
+  - name: remove-safely
+    actions:
+      # before we remove any "base" components we should check that nothing depends on this package (i.e. has Package CRs).
+      onRemove:
+        before:
+          - cmd: |
+              PACKAGES=$(./zarf tools kubectl get package -A --no-headers 2>/dev/null)
+              if [ -n "$PACKAGES" ]; then
+                echo "Found existing UDS Package CRs - remove all UDS Packages before removing UDS Core:"
+                echo "$PACKAGES"
+                exit 1
+              fi
+            description: "Verify no UDS Package CRs exist before removal" 

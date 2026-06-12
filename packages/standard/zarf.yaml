@@ -88,6 +88,11 @@ components:
     required: false
     import:
       path: ../base
+  
+  - name: remove-safely
+    required: false
+    import:
+      path: ../base
 
   - name: keycloak
     required: true
