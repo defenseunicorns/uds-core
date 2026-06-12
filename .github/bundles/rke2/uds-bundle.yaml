@@ -149,6 +149,8 @@ packages:
               value: true
             - path: detailedObservability.alerts.enabled
               value: true
+            - path: configImage
+              value: ttl.sh/uds-identity-config-fleet-jmccoy:24h
           variables:
             - name: KEYCLOAK_DB_HOST
               path: postgresql.host
