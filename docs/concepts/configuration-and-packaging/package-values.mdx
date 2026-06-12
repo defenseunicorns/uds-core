@@ -1,0 +1,178 @@
+---
+title: Package Values
+description: How UDS Packages expose configuration through Zarf Values, including values strategy, schema validation, and mapping patterns.
+sidebar:
+  order: 4.004
+---
+
+UDS Packages expose configuration through [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/), a structured mechanism for passing Helm chart values at deploy time. In general, expose most non-sensitive chart values and restrict values that would break package integrity or weaken security, such as image references, ingress, or security settings.
+
+> [!NOTE]
+> Zarf Values is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature. Packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
+
+## Values structure
+
+Define the top-level `values` key in your root `zarf.yaml` and reference:
+
+- A `zarf-values.yaml` for defaults
+- A `zarf-values.schema.json` for validation
+
+The schema should follow [JSON Schema](https://json-schema.org/) and focus on validating common user-facing values. Keep deeply nested validation practical to avoid fragile schemas as charts and Kubernetes APIs evolve.
+
+> [!TIP]
+> There is an open Zarf issue to support schema generation: [zarf-dev/zarf#4918](https://github.com/zarf-dev/zarf/issues/4918).
+
+Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`). Keep mappings as flat as practical and expose the highest sensible node in the values tree.
+
+If the list of mappings gets unwieldy, consider inverting the mappings using higher level keys with `excludePaths` instead.
+
+For shared values across multiple charts (for example `domain`), use a shared key to reduce configuration drift.
+
+## Example configuration
+
+The following example shows a complete values setup for an nginx package.
+
+Define values and map them into chart values within the Zarf package definition:
+
+```yaml title="common/zarf.yaml"
+kind: ZarfPackageConfig
+metadata:
+  name: nginx
+  description: UDS Common Nginx Example
+
+components:
+  - name: nginx
+    required: true
+    charts:
+      - name: uds-nginx-config
+        namespace: nginx
+        version: 0.1.0
+        localPath: ../chart
+        values:
+          - sourcePath: .uds-nginx-config
+            targetPath: .
+      - name: nginx
+        version: 0.1.0
+        namespace: nginx
+        localPath: ../src/nginx
+        valuesFiles:
+          - ../values/common-values.yaml
+        values:
+          - sourcePath: .nginx
+            targetPath: .
+            excludePaths:
+              - .nginx.image
+              - .nginx.imagePullSecrets
+              - .nginx.ingress
+              - .nginx.podSecurityContext
+              - .nginx.securityContext
+              - .nginx.livenessProbe
+              - .nginx.readinessProbe
+```
+
+```yaml title="zarf.yaml"
+kind: ZarfPackageConfig
+metadata:
+  name: nginx
+  description: UDS Nginx Example Package
+
+values:
+  files:
+    - zarf-values.yaml
+  schema: zarf-values.schema.json
+
+components:
+  - name: nginx
+    required: true
+    description: Deploy nginx with upstream images
+    import:
+      path: common
+    only:
+      flavor: upstream
+    charts:
+      - name: nginx
+        valuesFiles:
+          - values/upstream-values.yaml
+    images:
+      - nginx:1.30.0
+```
+
+The `zarf-values.yaml` provides defaults that deployers can override:
+
+```yaml title="zarf-values.yaml"
+uds-nginx-config:
+  domain: uds.dev
+
+nginx:
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    port: 8080
+  resources: {}
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 100
+    targetCPUUtilizationPercentage: 80
+  volumes: []
+  volumeMounts: []
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+```
+
+The `zarf-values.schema.json` validates the defaults above:
+
+```json title="zarf-values.schema.json"
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "uds-nginx-config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string"
+        }
+      }
+    },
+    "nginx": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicaCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string" },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "resources": { "type": "object" },
+        "autoscaling": { "type": "object" },
+        "volumes": { "type": "array", "items": { "type": "object" } },
+        "volumeMounts": { "type": "array", "items": { "type": "object" } },
+        "nodeSelector": { "type": "object" },
+        "tolerations": { "type": "array", "items": { "type": "object" } },
+        "affinity": { "type": "object" }
+      }
+    }
+  }
+}
+```
+
+## Related documentation
+
+- [Create a UDS Package](/how-to-guides/packaging-applications/create-uds-package/) - end-to-end guide for packaging an application as a UDS Package.
+- [Package testing](/how-to-guides/packaging-applications/package-testing/) - add journey and upgrade tests for your package.
+- [UDS Package Requirements](/concepts/configuration-and-packaging/package-requirements/) - pre-publish checklist for required capabilities and standards.
