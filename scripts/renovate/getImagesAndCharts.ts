@@ -137,15 +137,10 @@ function processImage(imagePullString: string, images: Record<string, string[]>)
 
   if (!imageName || !imageTag) return;
 
-  // Normalize version by removing 'v' prefix and any suffixes
+  // Normalize version by extracting semver from tags with optional prefixes/suffixes
   let normalizedTag = imageTag;
 
-  // Remove 'v' prefix if present
-  if (normalizedTag.startsWith("v")) {
-    normalizedTag = normalizedTag.substring(1);
-  }
-
-  // Remove prefixes/suffixes (e.g., distroless-v1.38.0, 1.2.3-beta.1)
+  // (e.g., v1.2.3, distroless-v1.38.0, 1.2.3-beta.1)
   const versionMatch = normalizedTag.match(/v?(\d+\.\d+\.\d+)/);
   if (versionMatch) {
     normalizedTag = versionMatch[1];
