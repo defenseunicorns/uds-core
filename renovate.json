@@ -91,6 +91,13 @@
     },
     {
       "matchFileNames": [
+        "src/envoy-gateway/**"
+      ],
+      "groupName": "envoy-gateway",
+      "commitMessageTopic": "envoy-gateway"
+    },
+    {
+      "matchFileNames": [
         "test/**/*",
         ".github/**",
         "bundles/**",
