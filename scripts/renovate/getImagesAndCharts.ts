@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -82,7 +82,7 @@ function findZarfYamlFiles(dir: string): string[] {
 // Define a ZarfConfig type to replace 'any'
 interface ZarfComponent {
   charts?: Array<{ name: string; version: string; localPath?: string; url?: string }>;
-  images?: Array<{ name: string }>;
+  images?: string[];
 }
 
 interface ZarfConfig {
@@ -145,8 +145,8 @@ function processImage(imagePullString: string, images: Record<string, string[]>)
     normalizedTag = normalizedTag.substring(1);
   }
 
-  // Remove suffixes (e.g., -beta.1)
-  const versionMatch = normalizedTag.match(/^(\d+\.\d+\.\d+)/);
+  // Remove prefixes/suffixes (e.g., distroless-v1.38.0, 1.2.3-beta.1)
+  const versionMatch = normalizedTag.match(/v?(\d+\.\d+\.\d+)/);
   if (versionMatch) {
     normalizedTag = versionMatch[1];
   }
