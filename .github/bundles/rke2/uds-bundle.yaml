@@ -163,6 +163,9 @@ packages:
             - name: KEYCLOAK_DB_PASSWORD
               path: postgresql.password
               sensitive: true
+            - name: KEYCLOAK_KUBERNETES_ISSUER
+              description: Kubernetes service account issuer for Keycloak federated client auth
+              path: realmInitEnv.KUBERNETES_ISSUER
       falco:
         uds-falco-config:
           variables:
