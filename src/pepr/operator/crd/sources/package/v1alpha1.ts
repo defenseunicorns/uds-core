@@ -190,9 +190,9 @@ const expose = {
         type: "string",
       },
       gateway: {
-        description: "The name of the gateway to expose the service on (default: tenant)",
+        description:
+          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted.",
         type: "string",
-        default: "tenant",
       },
       domain: {
         description:

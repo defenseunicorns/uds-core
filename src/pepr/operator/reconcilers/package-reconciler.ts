@@ -1,12 +1,20 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { K8s } from "pepr";
 import { getReadinessConditions, handleFailure, shouldSkip, updateStatus, writeEvent } from ".";
 import { Component, setupLogger } from "../../logger";
 import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import { UDSConfig } from "../controllers/config/config";
+import {
+  envoyGatewayResources,
+  getEnvoyGatewayStatusConditions,
+  hasDefaultModeUDPExpose,
+  isEnvoyGatewayDefaultEnabled,
+  reconcileDefaultGatewayListeners,
+} from "../controllers/envoy-gateway/udp-route-resources";
 import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { istioResources } from "../controllers/istio/istio-resources";
@@ -26,7 +34,7 @@ import { updateBlackboxConfig } from "../controllers/uptime/config";
 import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import { AuthserviceClient, Mode } from "../crd/generated/package-v1alpha1";
+import { AuthserviceClient, Mode, StatusObject } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // @lulaStart 5c6d86fa-5206-4bb5-a685-62ec52ff5694
@@ -82,6 +90,23 @@ export async function packageReconciler(pkg: UDSPackage) {
   }
 }
 
+export async function reconcileEnvoyGatewayDefaultPackages() {
+  const packages = await K8s(UDSPackage).Get();
+  for (const pkg of packages.items.filter(hasDefaultModeUDPExpose)) {
+    await forcePackageReconcile(pkg);
+  }
+}
+
+export async function forcePackageReconcile(pkg: UDSPackage) {
+  migrate(pkg);
+  await updateStatus(pkg, { phase: Phase.Pending, conditions: getReadinessConditions(false) });
+  try {
+    await reconcilePackageFlow(pkg);
+  } catch (err) {
+    await handleFailure(err, pkg);
+  }
+}
+
 /**
  * Orchestrates the main reconciliation flow for a package.
  * Handles status updates, resource creation, and sequencing.
@@ -118,6 +143,9 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Create the Istio ingress resources per the package configuration
   endpoints = await istioResources(pkg, namespace!);
 
+  // Create the Envoy Gateway ingress resources for UDP expose entries.
+  const envoyGatewayResult = await envoyGatewayResources(pkg, namespace!);
+
   // Reconcile egress resources separately to avoid cycles
   await istioEgressResources(pkg, namespace!);
 
@@ -140,20 +168,27 @@ async function reconcilePackageFlow(pkg: UDSPackage): Promise<void> {
   // Create the CA Bundle Config Map if needed
   await caBundleConfigMap(pkg, namespace!);
 
-  await updateStatus(pkg, {
+  const envoyGatewayConditions = getEnvoyGatewayStatusConditions(envoyGatewayResult);
+  const readyStatus: StatusObject = {
     phase: Phase.Ready,
-    conditions: getReadinessConditions(true),
+    conditions: envoyGatewayConditions ?? getReadinessConditions(true),
     ssoClients: [...ssoClients.keys(), ...probeSsoClients],
     authserviceClients,
     endpoints,
     monitors,
     probes,
-    networkPolicyCount: netPol.length,
+    networkPolicyCount: netPol.length + envoyGatewayResult.networkPolicies.length,
     authorizationPolicyCount: authPol.length + authserviceClients.length * 2,
     meshMode: istioMode,
     observedGeneration: metadata.generation,
     retryAttempt: 0, // todo: make this nullable when kfc generates the type
-  });
+  };
+
+  if (envoyGatewayConditions) {
+    readyStatus.phase = Phase.Failed;
+  }
+
+  await updateStatus(pkg, readyStatus);
 }
 
 /**
@@ -299,6 +334,27 @@ export async function packageFinalizer(pkg: UDSPackage) {
     );
     await writeEvent(pkg, {
       message: `Removal of shared egress resources failed: ${e.message}`,
+      reason: "RemovalFailed",
+      type: "Warning",
+    });
+    await updateStatus(pkg, { phase: Phase.RemovalFailed });
+    return false;
+  }
+
+  // Recompute the shared default UDP Gateway after package removal. Owner references clean up
+  // generated UDPRoutes and NetworkPolicies, but the shared Gateway has no package owner.
+  try {
+    if (await isEnvoyGatewayDefaultEnabled()) {
+      await retryWithDelay(async function cleanupEnvoyGatewayResources() {
+        await reconcileDefaultGatewayListeners();
+      }, log);
+    }
+  } catch (e) {
+    log.debug(
+      `Removal of Envoy Gateway UDP resources during finalizer failed for ${pkg.metadata?.namespace}/${pkg.metadata?.name}: ${e.message}`,
+    );
+    await writeEvent(pkg, {
+      message: `Removal of Envoy Gateway UDP resources failed: ${e.message}`,
       reason: "RemovalFailed",
       type: "Warning",
     });
