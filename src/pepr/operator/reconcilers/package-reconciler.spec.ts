@@ -29,8 +29,14 @@ vi.mock("../controllers/istio/istio-resources", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/istio-resources")) as object;
   return { ...originalModule, istioResources: vi.fn() };
 });
-vi.mock("../controllers/istio/namespace", () => ({ cleanupNamespace: vi.fn(), enableIstio: vi.fn() }));
-vi.mock("../controllers/keycloak/client-sync", () => ({ keycloak: vi.fn(), purgeSSOClients: vi.fn() }));
+vi.mock("../controllers/istio/namespace", () => ({
+  cleanupNamespace: vi.fn(),
+  enableIstio: vi.fn(),
+}));
+vi.mock("../controllers/keycloak/client-sync", () => ({
+  keycloak: vi.fn(),
+  purgeSSOClients: vi.fn(),
+}));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   authservice: vi.fn(),
   purgeAuthserviceClients: vi.fn(),
@@ -89,7 +95,10 @@ import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
-import { authservice, purgeAuthserviceClients } from "../controllers/keycloak/authservice/authservice";
+import {
+  authservice,
+  purgeAuthserviceClients,
+} from "../controllers/keycloak/authservice/authservice";
 import { purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
@@ -113,7 +122,10 @@ vi.mock("../controllers/istio/namespace", async () => {
   const originalModule = (await vi.importActual("../controllers/istio/namespace")) as object;
   return { ...originalModule, cleanupNamespace: vi.fn(), enableIstio: vi.fn() };
 });
-vi.mock("../controllers/keycloak/client-sync", () => ({ keycloak: vi.fn(), purgeSSOClients: vi.fn() }));
+vi.mock("../controllers/keycloak/client-sync", () => ({
+  keycloak: vi.fn(),
+  purgeSSOClients: vi.fn(),
+}));
 vi.mock("../controllers/keycloak/authservice/authservice", () => ({
   authservice: vi.fn(),
   purgeAuthserviceClients: vi.fn(),
@@ -159,7 +171,12 @@ describe("packageReconciler", () => {
     vi.clearAllMocks();
     uidSeen.clear();
     mockPackage = {
-      metadata: { name: "test-package", namespace: "test-namespace", generation: 1, uid: "test-uid" },
+      metadata: {
+        name: "test-package",
+        namespace: "test-namespace",
+        generation: 1,
+        uid: "test-uid",
+      },
       status: { phase: Phase.Pending, observedGeneration: 0 },
     };
     mockPatchStatus.mockReset().mockResolvedValue(undefined);
@@ -446,7 +463,9 @@ describe("packageFinalizer", () => {
   test("should handle default Envoy Gateway listener cleanup failure and set phase to RemovalFailed", async () => {
     mockPackage.status = { phase: Phase.Ready };
     (isEnvoyGatewayDefaultEnabled as Mock).mockResolvedValue(true);
-    (reconcileDefaultGatewayListeners as Mock).mockRejectedValue(new Error("gateway cleanup failed"));
+    (reconcileDefaultGatewayListeners as Mock).mockRejectedValue(
+      new Error("gateway cleanup failed"),
+    );
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
