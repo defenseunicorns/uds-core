@@ -90,7 +90,7 @@ components:
       path: ../base
   
   - name: remove-safely
-    required: false
+    required: true
     import:
       path: ../base
 

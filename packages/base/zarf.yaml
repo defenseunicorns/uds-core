@@ -84,6 +84,7 @@ components:
       path: ../../src/envoy-gateway
 
   - name: remove-safely
+    required: true
     actions:
       # before we remove any "base" components we should check that nothing depends on this package (i.e. has Package CRs).
       onRemove:
