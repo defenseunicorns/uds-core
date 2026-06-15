@@ -4,12 +4,12 @@
  */
 
 import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
 import * as yaml from "js-yaml";
+import * as os from "os";
+import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, MockInstance, vi } from "vitest";
-import { handleDoDCerts, handlePublicCerts, updateConfigMapWithCerts } from "./index";
 import { DoDCert } from "./dod-certs";
+import { handleDoDCerts, handlePublicCerts, updateConfigMapWithCerts } from "./index";
 import { PublicCACert } from "./public-certs";
 
 // Mock the dod-certs module
@@ -64,8 +64,9 @@ describe("index", () => {
 
   describe("handleDoDCerts", () => {
     it("should handle check mode with differences detected", async () => {
-      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } =
-        await import("./dod-certs");
+      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } = await import(
+        "./dod-certs"
+      );
 
       vi.mocked(retrieveDoDCertificates).mockResolvedValue();
       vi.mocked(inventoryDoDCertificates)
@@ -98,8 +99,9 @@ describe("index", () => {
     });
 
     it("should handle check mode with no differences", async () => {
-      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } =
-        await import("./dod-certs");
+      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } = await import(
+        "./dod-certs"
+      );
 
       const mockCert = {
         filepath: "/tmp/certs/dod/v1.1/Entrust",
@@ -126,8 +128,9 @@ describe("index", () => {
     });
 
     it("should handle check mode with only removed certificates", async () => {
-      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } =
-        await import("./dod-certs");
+      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } = await import(
+        "./dod-certs"
+      );
 
       const removedCert = {
         filepath: "/tmp/certs/dod/v1.1/Entrust",
@@ -153,8 +156,9 @@ describe("index", () => {
     });
 
     it("should handle check mode with only modified certificates", async () => {
-      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } =
-        await import("./dod-certs");
+      const { retrieveDoDCertificates, inventoryDoDCertificates, diffDoDCerts } = await import(
+        "./dod-certs"
+      );
 
       const oldCert = {
         filepath: "/tmp/certs/dod/v1.1/Entrust",
