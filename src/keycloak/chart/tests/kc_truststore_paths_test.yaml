@@ -26,7 +26,8 @@ tests:
           path: spec.template.spec.containers[0].args
           content: "--truststore-kubernetes-enabled=false"
 
-  - it: should NOT render a generate-bcfks-truststore init container
+  - it: should NOT render a separate generate-bcfks-truststore init container
+    # The BCFKS truststore is built inside the existing uds-config init container, not a dedicated one.
     template: statefulset.yaml
     asserts:
       - notContains:
@@ -34,6 +35,30 @@ tests:
           content:
             name: generate-bcfks-truststore
           any: true
+
+  - it: should pass truststorePaths to the uds-config init container as TRUSTSTORE_PATHS
+    set:
+      truststorePaths:
+        - "/tmp/ca-certs"
+        - "/opt/custom-certs"
+    template: statefulset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: uds-config
+      - equal:
+          path: spec.template.spec.initContainers[0].env[?(@.name=="TRUSTSTORE_PATHS")].value
+          value: "/tmp/ca-certs /opt/custom-certs"
+
+  - it: should mount the UDS trust bundle into the uds-config init container so it can build the BCFKS truststore
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: ca-certs
+            mountPath: /tmp/ca-certs
+            readOnly: true
 
   - it: should point Keycloak at the BCFKS truststore via JAVA_OPTS_APPEND
     template: statefulset.yaml

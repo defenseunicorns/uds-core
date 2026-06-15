@@ -44,7 +44,9 @@ tests:
           path: spec.template.spec.containers[0].args
           content: "--https-trust-store-type=bcfks"
 
-  - it: should delete both PKCS12 and BCFKS truststores in migration init container
+  - it: should delete only the legacy PKCS12 truststore in migration init container
+    # The BCFKS truststore is rebuilt on every start by the uds-config init container (which runs
+    # before this one), so it must NOT be deleted here — only the legacy Keycloak-generated PKCS12.
     template: statefulset.yaml
     set:
       migrations:
@@ -53,6 +55,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.initContainers[1].command[2]
           pattern: "keycloak-truststore\\.p12"
-      - matchRegex:
+      - notMatchRegex:
           path: spec.template.spec.initContainers[1].command[2]
           pattern: "keycloak-truststore\\.bcfks"

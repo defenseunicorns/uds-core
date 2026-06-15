@@ -62,13 +62,27 @@ spec:
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
+            # Mount the same extra volumes as the main container (e.g. the UDS trust bundle at
+            # /tmp/ca-certs) so build-truststore.sh can read them when assembling the BCFKS truststore.
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          env:
+            # Paths scanned by build-truststore.sh when building the BCFKS system truststore.
+            # The Kubernetes service account CA is auto-mounted into the init container.
+            - name: TRUSTSTORE_PATHS
+              value: "{{ join " " .Values.truststorePaths }}"
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
         {{- if .Values.migrations.deleteGeneratedTrustStore }}
         - name: remove-generated-truststore
           image: "{{ .Values.configImage }}"
-          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
+          # Removes only the legacy PKCS12 truststore that Keycloak's TruststoreBuilder may have
+          # generated on a persistent data volume in a prior version. The BCFKS truststore is
+          # rebuilt from scratch on every start by the uds-config init container, so it must NOT
+          # be deleted here (this container runs after uds-config).
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 ; ls -la /opt/keycloak/data"]
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
@@ -163,9 +177,9 @@ spec:
             # CA), it calls TruststoreBuilder.setSystemTruststore(), which always writes a PKCS12
             # truststore and forces javax.net.ssl.trustStoreType=PKCS12 (not FIPS-compliant). By
             # leaving all three empty, configureTruststore() returns early and leaves the JVM
-            # system truststore alone. The generate-bcfks-truststore init container instead builds
-            # a FIPS-compliant BCFKS truststore (including the Kubernetes CA) and we point Keycloak
-            # at it via JAVA_OPTS_APPEND below.
+            # system truststore alone. The uds-config init container instead builds a FIPS-compliant
+            # BCFKS truststore at startup (honoring .Values.truststorePaths and including the
+            # Kubernetes CA) and we point Keycloak at it via JAVA_OPTS_APPEND below.
             - "--truststore-kubernetes-enabled=false"
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
@@ -210,9 +224,9 @@ spec:
           {{- if .Values.env }}
             {{- tpl (toYaml .Values.env) . | nindent 12 }}
           {{- end }}
-            # Point the JVM system truststore at the BCFKS truststore built by the
-            # generate-bcfks-truststore init container. This is what outgoing TLS connections
-            # (identity providers, LDAP, webhooks, etc.) use to validate peer certificates.
+            # Point the JVM system truststore at the BCFKS truststore built by the uds-config
+            # init container. This is what outgoing TLS connections (identity providers, LDAP,
+            # webhooks, etc.) use to validate peer certificates.
             # The FIPS JCE security override is appended for the cgr.dev FIPS image.
             - name: JAVA_OPTS_APPEND
               value: >-
