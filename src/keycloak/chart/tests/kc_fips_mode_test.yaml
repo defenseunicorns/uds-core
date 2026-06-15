@@ -30,29 +30,17 @@ tests:
           path: data.FIPS_ENABLED
           value: "dHJ1ZQ=="
 
-  - it: should include BCFKS keystore args when deleteGeneratedTrustStore is true
+  - it: should always include BCFKS key store type in container args
     template: statefulset.yaml
-    set:
-      migrations:
-        deleteGeneratedTrustStore: true
     asserts:
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--https-key-store-type=bcfks"
-      - contains:
-          path: spec.template.spec.containers[0].args
-          content: "--https-trust-store-type=bcfks"
 
-  - it: should NOT include BCFKS keystore args when deleteGeneratedTrustStore is false
+  - it: should always include BCFKS trust store type in container args
     template: statefulset.yaml
-    set:
-      migrations:
-        deleteGeneratedTrustStore: false
     asserts:
-      - notContains:
-          path: spec.template.spec.containers[0].args
-          content: "--https-key-store-type=bcfks"
-      - notContains:
+      - contains:
           path: spec.template.spec.containers[0].args
           content: "--https-trust-store-type=bcfks"
 

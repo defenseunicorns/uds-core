@@ -155,10 +155,8 @@ spec:
             - "--features=preview,fips"
             - "--fips-mode=strict"
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
-            {{- if .Values.migrations.deleteGeneratedTrustStore }}
             - "--https-key-store-type=bcfks"
             - "--https-trust-store-type=bcfks"
-            {{- end }}
             {{- if .Values.truststorePaths }}
             - "--truststore-paths={{ join "," .Values.truststorePaths }}"
             {{- end }}
