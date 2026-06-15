@@ -68,7 +68,7 @@ spec:
         {{- if .Values.migrations.deleteGeneratedTrustStore }}
         - name: remove-generated-truststore
           image: "{{ .Values.configImage }}"
-          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 ; ls -la /opt/keycloak/data"]
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
@@ -155,6 +155,10 @@ spec:
             - "--features=preview,fips"
             - "--fips-mode=strict"
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
+            {{- if .Values.migrations.deleteGeneratedTrustStore }}
+            - "--https-key-store-type=bcfks"
+            - "--https-trust-store-type=bcfks"
+            {{- end }}
             {{- if .Values.truststorePaths }}
             - "--truststore-paths={{ join "," .Values.truststorePaths }}"
             {{- end }}

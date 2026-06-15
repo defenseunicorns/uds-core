@@ -29,3 +29,42 @@ tests:
       - equal:
           path: data.FIPS_ENABLED
           value: "dHJ1ZQ=="
+
+  - it: should include BCFKS keystore args when deleteGeneratedTrustStore is true
+    template: statefulset.yaml
+    set:
+      migrations:
+        deleteGeneratedTrustStore: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-key-store-type=bcfks"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-trust-store-type=bcfks"
+
+  - it: should NOT include BCFKS keystore args when deleteGeneratedTrustStore is false
+    template: statefulset.yaml
+    set:
+      migrations:
+        deleteGeneratedTrustStore: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-key-store-type=bcfks"
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-trust-store-type=bcfks"
+
+  - it: should delete both PKCS12 and BCFKS truststores in migration init container
+    template: statefulset.yaml
+    set:
+      migrations:
+        deleteGeneratedTrustStore: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[1].command[2]
+          pattern: "keycloak-truststore\\.p12"
+      - matchRegex:
+          path: spec.template.spec.initContainers[1].command[2]
+          pattern: "keycloak-truststore\\.bcfks"
