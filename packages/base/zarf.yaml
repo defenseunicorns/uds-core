@@ -96,4 +96,4 @@ components:
                 echo "$PACKAGES"
                 exit 1
               fi
-            description: "Verify no UDS Package CRs exist before removal" 
+            description: "Verify no UDS Package CRs exist before removal"
