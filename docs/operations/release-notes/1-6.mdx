@@ -1,0 +1,58 @@
+---
+title: UDS Core 1.6
+description: UDS Core 1.6 release notes covering the UDS Portal layer, a Keycloak Admin API principal allowlist, an Identity Config 0.28.0 bump, and the UDS CLI v0.32.0 minimum now required to deploy the keyless-signed demo bundles.
+sidebar:
+  order: 3.989
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.6 adds the UDS Portal as a new layer in the upstream and unicorn flavors, brings macOS and sudo-free support to the checkpoint slim-dev package, introduces an allowlist for granting trusted in-cluster workloads access to the Keycloak Admin API, and bumps `uds-identity-config` to 0.28.0. The demo bundles now ship a keyless-signed Zarf init package, so deploying them requires UDS CLI v0.32.0 or later.
+
+> [!IMPORTANT]
+> The Core demo bundles now include a keyless-signed Zarf init package. Deploying them with a UDS CLI older than v0.32.0 fails signature verification. Upgrade the UDS CLI to v0.32.0 or later before deploying the demo bundles. If you cannot upgrade the CLI, pass `--skip-signature-validation` on the deploy command as a break-glass workaround. This affects only the demo bundles, which bundle a Zarf init package; it does not change Core itself. UDS Core CI now tests against UDS CLI v0.32.0 as the minimum supported version.
+
+### Notable features
+
+- **UDS Portal:** the UDS Portal ships as a new layer in the upstream and unicorn flavors, providing a user-facing application portal that discovers and links the applications a user can access. The Portal is not present in the registry1 flavor. See [UDS Portal concepts](/concepts/core-features/portal/) and [Customize UDS Portal app tiles](/how-to-guides/platform-features/portal/) ([#2699](https://github.com/defenseunicorns/uds-core/pull/2699)).
+- **macOS support for the checkpoint slim-dev package:** the published checkpoint slim-dev package now deploys on macOS and no longer requires `sudo`, significantly speeding up quick dev deploys of slim-dev. Checkpoint creation streams k3s and kubelet volume data over the Docker socket with `docker cp` instead of host bind-mounts, and deploy populates named Docker volumes that k3d can mount on any platform. Tested on Lima, OrbStack, and Linux. Deploy the checkpoint package with `uds zarf package deploy oci://ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev:1.6.0` ([#2688](https://github.com/defenseunicorns/uds-core/pull/2688)).
+- **Keycloak Admin API principal allowlist:** a new `adminApiAllowedPrincipals` value on the Keycloak chart lets you allowlist specific Istio source principals (mTLS SPIFFE identities) to reach the Keycloak Admin API without routing through the admin gateway. The value defaults to `[]`, so there is no behavioral change when unset. By default the `keycloak-block-admin-access-from-public-gateway` `AuthorizationPolicy` denies Admin API access to all sources outside the admin gateway and `pepr-system`; each configured principal is rendered as a `notPrincipals` exclusion scoped only to the Admin API DENY rules ([#2714](https://github.com/defenseunicorns/uds-core/pull/2714)).
+- **UDPRoute CRD type:** UDS Core now generates the Gateway API `UDPRoute` TypeScript type, laying groundwork for future Envoy Gateway UDP ingress support. This is an internal type-generation change with no operator-facing configuration yet ([#2704](https://github.com/defenseunicorns/uds-core/pull/2704)).
+- **Branding update:** the UDS acronym now expands to "Unified Defense Stack" (previously "Unicorn Delivery Service"). The Keycloak realm display name shown in the login UI now defaults to "Unified Defense Stack" when no override is set. Precedence is unchanged: an explicit `themeCustomizations.settings.realmDisplayName` takes priority, then `realmInitEnv.DISPLAY_NAME`, so existing clusters that set a display name keep it ([#2708](https://github.com/defenseunicorns/uds-core/pull/2708)).
+
+### Dependency updates
+
+| Package                           | Previous | Updated                                                                                                  |
+| --------------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| Istio                             | 1.29.2   | [1.29.3](https://github.com/istio/istio/releases/tag/1.29.3)                                             |
+| Keycloak                          | 26.6.1   | [26.6.2](https://github.com/keycloak/keycloak/releases/tag/26.6.2)                                       |
+| Prometheus                        | v3.11.3  | [v3.12.0](https://github.com/prometheus/prometheus/releases/tag/v3.12.0)                                 |
+| Vector                            | 0.55.0   | [0.56.0](https://github.com/vectordotdev/vector/releases/tag/v0.56.0)                                    |
+| Pepr                              | 1.2.0    | [1.2.1](https://github.com/defenseunicorns/pepr/releases/tag/v1.2.1)                                     |
+| UDS Identity Config               | 0.27.0   | [0.28.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.28.0)                    |
+| Loki Helm chart                   | 17.0.1   | [17.1.7](https://github.com/grafana-community/helm-charts/releases/tag/loki-17.1.7)                      |
+| kube-prometheus-stack Helm chart  | 85.2.2   | [86.1.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-86.1.0)  |
+| Vector Helm chart                 | 0.52.0   | [0.56.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.56.0)                         |
+| DoD root CA certs                 | n/a      | Updated                                                                                                  |
+
+## Upgrade considerations
+
+### Identity Config updates (0.28.0)
+
+Identity Config [0.28.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.28.0) includes the following changes:
+
+- Adds a new `usercertificateSKI` user attribute extracted from x509 certificates.
+- Bumps the internal Keycloak compile dependency to 26.6.3 (security update); the deployed Keycloak server version remains 26.6.2.
+- Updates branding references to "Unified Defense Stack".
+
+No manual realm changes are required for this release.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Portal concepts](/concepts/core-features/portal/) - what the Portal is and how it discovers accessible applications
+- [Customize UDS Portal app tiles](/how-to-guides/platform-features/portal/) - set tile titles and icons, and hide exposed endpoints
+- [UDS Core 1.6.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#160-2026-06-09) - full changelog
+- [UDS Identity Config 0.28.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0280) - identity-config changes
+- [Full diff (1.5.0...1.6.0)](https://github.com/defenseunicorns/uds-core/compare/v1.5.0...v1.6.0) - all changes between versions

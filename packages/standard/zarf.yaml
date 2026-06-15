@@ -9,7 +9,7 @@ metadata:
   # @lulaEnd babb60a4-d745-426c-ab8e-9527fda629d6
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "1.5.0"
+  version: "1.6.0"
   # x-release-please-end
   annotations:
     dev.uds.title: UDS Core
@@ -83,6 +83,11 @@ components:
     required: false
     import:
       path: ../metrics-server
+
+  - name: envoy-gateway
+    required: false
+    import:
+      path: ../base
 
   - name: keycloak
     required: true

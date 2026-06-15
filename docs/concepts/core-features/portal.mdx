@@ -1,0 +1,27 @@
+---
+title: UDS Portal
+description: What the UDS Portal is, how it discovers the applications a user can access, and how users reach it.
+sidebar:
+  order: 2.008
+---
+
+UDS Portal is the landing page for viewing the applications you have access to in a UDS environment. After signing in, you see them in one place, without needing to memorize hostnames or track which services a cluster runs.
+
+## How the Portal builds its app list
+
+The Portal reads `Package` Custom Resources (CRs) from the cluster and creates one tile per exposed endpoint (`spec.network.expose`). A package must also define an `sso` section, or it produces no tiles.
+
+The Portal has no access controls of its own. It reflects each application's SSO authorization: a user sees a tile only for an app they can access, governed by the app's `spec.sso[].groups.anyOf` defined in the UDS Package CR. Restrict an app to a Keycloak group and only that group sees its tile; leave groups unset and any authenticated user sees it. See [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) for how that access is configured.
+
+Each tile shows the application's title and icon, which teams can customize. See [Customize UDS Portal app tiles](/how-to-guides/platform-features/portal/) for the configurable settings.
+
+## Accessing the Portal
+
+The Portal is exposed at `https://portal.<your-domain>` (for example, `https://portal.uds.dev`). Access requires authentication: the Portal runs behind Authservice and Keycloak, so you sign in with your UDS identity before any tiles appear. A built-in **My Account** tile links to the Keycloak account console at `https://sso.<your-domain>`, where you manage your profile.
+
+## Availability
+
+The Portal ships as the `core-portal` [functional layer](/concepts/platform/functional-layers/) and depends on the `base` and `identity-authorization` layers. UDS Core publishes it in the `upstream` and `unicorn` [flavors](/concepts/platform/flavors/) only, not `registry1`.
+
+> [!TIP]
+> To customize how your applications appear in the Portal, see [Customize UDS Portal app tiles](/how-to-guides/platform-features/portal/).

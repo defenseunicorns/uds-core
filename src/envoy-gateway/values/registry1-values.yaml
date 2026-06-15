@@ -1,0 +1,9 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+global:
+  images:
+    envoyGateway:
+      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
+    envoyProxy:
+      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0

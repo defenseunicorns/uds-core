@@ -50,7 +50,7 @@ Bundle override path: `overrides.keycloak.keycloak.values[].path: realmInitEnv`
 | `OPENTOFU_CLIENT_ENABLED` | `false` | Enable the `uds-opentofu-client` Keycloak client for programmatic realm management |
 | `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` | `""` | Comma-separated additional Protocol Mappers to allow in the UDS client policy |
 | `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` | `""` | Comma-separated additional Client Scopes to allow in the UDS client policy |
-| `DISPLAY_NAME` | `"Unicorn Delivery Service"` | The display name for the realm. |
+| `DISPLAY_NAME` | `"Unified Defense Stack"` | The display name for the realm. |
 | `ACCOUNT_INACTIVITY_DAYS` | unset | Days of inactivity before a non-admin user account is automatically disabled. When unset, the feature is disabled. |
 
 > [!NOTE]
@@ -181,6 +181,25 @@ SSO clients with `publicClient: true` are validated by the UDS Operator (Pepr) a
 
 > [!NOTE]
 > Enforcement runs at UDS Operator admission only. Clients created directly in Keycloak (Admin API, Admin UI, OpenTofu) are not validated by this flag. Tightening the Keycloak-side UDS Client Profile to mirror this gate is deferred to a future major release to avoid breaking clusters that already have non-device-flow public clients in Keycloak.
+
+## Ambient waypoint pod annotations
+
+UDS Core creates operator-managed ambient waypoints for `Package` SSO clients that use `enableAuthserviceSelector`. Configure Istio's `istio-waypoint` GatewayClass defaults when another cluster component needs annotations on generated waypoint pod templates.
+
+Set `gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations` on the `istiod` Helm chart to apply annotations to all waypoint pods that use the `istio-waypoint` GatewayClass:
+
+```yaml title="uds-bundle.yaml"
+overrides:
+  istio-controlplane:
+    istiod:
+      values:
+        - path: gatewayClasses.istio-waypoint.deployment.spec.template.metadata.annotations
+          value:
+            # Example: opt waypoint pods out of an EKS observability add-on mutation.
+            cloudwatch.aws.amazon.com/inject: "false"
+```
+
+This setting applies cluster-wide to waypoint pods that use the `istio-waypoint` GatewayClass. It does not configure application pods or sidecar-injected workloads. Reference the [Istio waypoint proxy documentation](https://istio.io/latest/docs/ambient/usage/waypoint/) for upstream waypoint behavior.
 
 ## Account lockout
 
