@@ -19,63 +19,21 @@ tests:
           path: spec.template.spec.containers[0].args
           content: "--truststore-paths=/tmp/ca-certs,/opt/custom-certs"
 
-  - it: should render the generate-bcfks-truststore init container
+  - it: should disable Kubernetes CA auto-inclusion to prevent TruststoreBuilder from generating PKCS12
     template: statefulset.yaml
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--truststore-kubernetes-enabled=false"
+
+  - it: should NOT render a generate-bcfks-truststore init container
+    template: statefulset.yaml
+    asserts:
+      - notContains:
           path: spec.template.spec.initContainers
           content:
             name: generate-bcfks-truststore
           any: true
-
-  - it: should run the BCFKS init container with the Keycloak image
-    template: statefulset.yaml
-    asserts:
-      - equal:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].image
-          value: "quay.io/keycloak/keycloak:26.6.2"
-
-  - it: should mount the cert sources in the BCFKS init container
-    template: statefulset.yaml
-    asserts:
-      - contains:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].volumeMounts
-          content:
-            name: providers
-            mountPath: /opt/keycloak/providers
-      - contains:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].volumeMounts
-          content:
-            name: data
-            mountPath: /opt/keycloak/data
-      - contains:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].volumeMounts
-          content:
-            name: conf
-            mountPath: /opt/keycloak/conf
-      - contains:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].volumeMounts
-          content:
-            name: ca-certs
-            mountPath: /tmp/ca-certs
-            readOnly: true
-
-  - it: should build the BCFKS truststore at the data dir path
-    template: statefulset.yaml
-    asserts:
-      - matchRegex:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].command[2]
-          pattern: "BCFKS_OUT=\"/opt/keycloak/data/keycloak-truststore.bcfks\""
-      - matchRegex:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].command[2]
-          pattern: "storetype bcfks"
-
-  - it: should clear conf/truststores so Keycloak does not regenerate a PKCS12 truststore
-    template: statefulset.yaml
-    asserts:
-      - matchRegex:
-          path: spec.template.spec.initContainers[?(@.name=="generate-bcfks-truststore")].command[2]
-          pattern: "rm -rf \"\\$CONF_TRUSTSTORES\""
 
   - it: should point Keycloak at the BCFKS truststore via JAVA_OPTS_APPEND
     template: statefulset.yaml
@@ -86,3 +44,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].env[?(@.name=="JAVA_OPTS_APPEND")].value
           pattern: "-Djavax.net.ssl.trustStoreType=BCFKS"
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="JAVA_OPTS_APPEND")].value
+          pattern: "-Djavax.net.ssl.trustStorePassword=keycloakchangeit"
