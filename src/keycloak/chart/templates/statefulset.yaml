@@ -79,6 +79,117 @@ spec:
             - name: data
               mountPath: /opt/keycloak/data
         {{- end }}
+        # Generates a BCFKS truststore from all certificate sources (DoD CAs in conf/truststores,
+        # the UDS trust bundle, and the Kubernetes service account CA) and points Keycloak at it
+        # via JAVA_OPTS_APPEND. Keycloak's upstream TruststoreBuilder hardcodes PKCS12, which is
+        # not FIPS-compliant, so we build the truststore ourselves and clear conf/truststores to
+        # prevent Quarkus auto-discovery from regenerating a PKCS12 truststore at startup.
+        - name: generate-bcfks-truststore
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+
+              TRUSTSTORE_PASSWORD="keycloakchangeit"
+              BCFKS_OUT="/opt/keycloak/data/keycloak-truststore.bcfks"
+              CONF_TRUSTSTORES="/opt/keycloak/conf/truststores"
+              CA_CERTS_DIR="/tmp/ca-certs"
+              SA_CA="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+              # The BC FIPS jars are placed in providers/ by the uds-config init container.
+              CP=$(ls /opt/keycloak/providers/bc-fips-*.jar \
+                      /opt/keycloak/providers/bctls-fips-*.jar \
+                      /opt/keycloak/providers/bcutil-fips-*.jar \
+                      /opt/keycloak/providers/bcpkix-fips-*.jar 2>/dev/null | tr '\n' ':')
+              if [ -z "$CP" ]; then
+                echo "ERROR: BouncyCastle FIPS jars not found in /opt/keycloak/providers" >&2
+                exit 1
+              fi
+
+              WORKDIR=$(mktemp -d)
+              SPLITDIR="$WORKDIR/split"
+              COLLECT="$WORKDIR/sources"
+              mkdir -p "$SPLITDIR" "$COLLECT"
+
+              # Start from a clean truststore so reruns are idempotent.
+              rm -f "$BCFKS_OUT"
+
+              # Collect every PEM source file into a staging directory.
+              i=0
+              add_source() {
+                src="$1"
+                [ -f "$src" ] || return 0
+                grep -q "BEGIN CERTIFICATE" "$src" 2>/dev/null || return 0
+                cp "$src" "$COLLECT/src-$i.pem"
+                i=$((i + 1))
+              }
+
+              if [ -d "$CONF_TRUSTSTORES" ]; then
+                for f in "$CONF_TRUSTSTORES"/*; do add_source "$f"; done
+              fi
+              if [ -d "$CA_CERTS_DIR" ]; then
+                for f in "$CA_CERTS_DIR"/*; do add_source "$f"; done
+              fi
+              add_source "$SA_CA"
+
+              # Split each (potentially multi-cert) PEM bundle and import each cert individually,
+              # since keytool -importcert only reads the first certificate from a bundle.
+              n=0
+              for src in "$COLLECT"/*.pem; do
+                [ -f "$src" ] || continue
+                rm -f "$SPLITDIR"/cert-*.pem
+                ( cd "$SPLITDIR" && csplit -z -f cert- -b "%04d.pem" "$src" "/-----BEGIN CERTIFICATE-----/" "{*}" >/dev/null 2>&1 ) || true
+                for c in "$SPLITDIR"/cert-*.pem; do
+                  [ -f "$c" ] || continue
+                  if keytool -importcert -noprompt \
+                       -alias "udsca-$n" \
+                       -file "$c" \
+                       -keystore "$BCFKS_OUT" \
+                       -storetype bcfks \
+                       -providername BCFIPS \
+                       -providerclass org.bouncycastle.jcajce.provider.BouncyCastleFipsProvider \
+                       -providerpath "$CP" \
+                       -storepass "$TRUSTSTORE_PASSWORD" \
+                       -trustcacerts >/dev/null 2>&1; then
+                    n=$((n + 1))
+                  else
+                    echo "WARNING: failed to import certificate from $c" >&2
+                  fi
+                done
+              done
+
+              rm -rf "$WORKDIR"
+
+              if [ "$n" -eq 0 ]; then
+                echo "ERROR: no certificates were imported into the BCFKS truststore" >&2
+                exit 1
+              fi
+              echo "Imported $n certificate(s) into $BCFKS_OUT"
+
+              # Clear conf/truststores so Keycloak's Quarkus auto-discovery does not run
+              # TruststoreBuilder (which would create a non-FIPS PKCS12 truststore) at startup.
+              if [ -d "$CONF_TRUSTSTORES" ]; then
+                rm -rf "$CONF_TRUSTSTORES"/* "$CONF_TRUSTSTORES"/.[!.]* 2>/dev/null || true
+              fi
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: providers
+              mountPath: /opt/keycloak/providers
+            - name: data
+              mountPath: /opt/keycloak/data
+            - name: conf
+              mountPath: /opt/keycloak/conf
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
         {{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
         - name: fix-volume-permissions
           image: "{{ .Values.configImage }}"
@@ -157,9 +268,16 @@ spec:
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             - "--https-key-store-type=bcfks"
             - "--https-trust-store-type=bcfks"
-            {{- if .Values.truststorePaths }}
-            - "--truststore-paths={{ join "," .Values.truststorePaths }}"
-            {{- end }}
+            # NOTE: --truststore-paths is intentionally NOT set, and --truststore-kubernetes-enabled
+            # is disabled. Whenever Keycloak's configureTruststore() has any truststore source
+            # (an explicit path, a non-empty conf/truststores dir, or the auto-included Kubernetes
+            # CA), it calls TruststoreBuilder.setSystemTruststore(), which always writes a PKCS12
+            # truststore and forces javax.net.ssl.trustStoreType=PKCS12 (not FIPS-compliant). By
+            # leaving all three empty, configureTruststore() returns early and leaves the JVM
+            # system truststore alone. The generate-bcfks-truststore init container instead builds
+            # a FIPS-compliant BCFKS truststore (including the Kubernetes CA) and we point Keycloak
+            # at it via JAVA_OPTS_APPEND below.
+            - "--truststore-kubernetes-enabled=false"
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
@@ -193,20 +311,26 @@ spec:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
           env:
-          {{- if and (contains "cgr.dev" .Values.image.repository) .Values.env }}
+          {{- if .Values.env }}
             {{- range .Values.env }}
               {{- if eq .name "JAVA_OPTS_APPEND" }}
-                {{- fail "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override" }}
+                {{- fail "JAVA_OPTS_APPEND must not be set in .Values.env; the chart injects JAVA_OPTS_APPEND to configure the BCFKS system truststore and the FIPS JCE security override" }}
               {{- end }}
             {{- end }}
           {{- end }}
           {{- if .Values.env }}
             {{- tpl (toYaml .Values.env) . | nindent 12 }}
           {{- end }}
-            {{- if contains "cgr.dev" .Values.image.repository }}
+            # Point the JVM system truststore at the BCFKS truststore built by the
+            # generate-bcfks-truststore init container. This is what outgoing TLS connections
+            # (identity providers, LDAP, webhooks, etc.) use to validate peer certificates.
+            # The FIPS JCE security override is appended for the cgr.dev FIPS image.
             - name: JAVA_OPTS_APPEND
-              value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
-            {{- end }}
+              value: >-
+                -Djavax.net.ssl.trustStore=/opt/keycloak/data/keycloak-truststore.bcfks
+                -Djavax.net.ssl.trustStoreType=BCFKS
+                -Djavax.net.ssl.trustStorePassword=keycloakchangeit
+                {{- if contains "cgr.dev" .Values.image.repository }} -Djava.security.properties=/opt/keycloak/data/fips-sunjce.security{{- end }}
             # Common configuration
             - name: UDS_DOMAIN
               value: "{{ .Values.domain }}"

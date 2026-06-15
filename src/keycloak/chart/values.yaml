@@ -455,8 +455,13 @@ extraVolumeMounts:
     mountPath: /tmp/ca-certs
     readOnly: true
 
-# Additional truststore paths for Keycloak to scan for certificates
-# These paths will be added to the --truststore-paths startup argument
+# DEPRECATED / UNUSED: kept for backwards compatibility only.
+# Keycloak's upstream TruststoreBuilder hardcodes a non-FIPS PKCS12 truststore whenever
+# --truststore-paths is set, so the chart no longer passes this argument. Instead, the
+# generate-bcfks-truststore init container builds a FIPS-compliant BCFKS truststore from the
+# UDS trust bundle (/tmp/ca-certs), the Kubernetes service account CA, and the DoD CA certs in
+# conf/truststores, then points Keycloak at it via JAVA_OPTS_APPEND. These paths are fixed in
+# the init container and are no longer read from this value.
 truststorePaths:
   # Default path for UDS trust bundle certificates
   - "/tmp/ca-certs"

@@ -39,28 +39,25 @@ tests:
           path: data["fips-sunjce.security"]
           pattern: "security\\.provider\\.99=SunJCE"
 
-  - it: should NOT inject JAVA_OPTS_APPEND when image.repository does not contain cgr.dev
+  - it: should NOT include the FIPS JCE security override in JAVA_OPTS_APPEND when image.repository does not contain cgr.dev
     set:
       image:
         repository: quay.io/keycloak/keycloak
     template: statefulset.yaml
     asserts:
-      - notContains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: JAVA_OPTS_APPEND
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="JAVA_OPTS_APPEND")].value
+          pattern: "fips-sunjce.security"
 
-  - it: should inject JAVA_OPTS_APPEND with correct path when image.repository contains cgr.dev
+  - it: should include the FIPS JCE security override in JAVA_OPTS_APPEND when image.repository contains cgr.dev
     set:
       image:
         repository: cgr.dev/defenseunicorns.com/keycloak-fips
     template: statefulset.yaml
     asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: JAVA_OPTS_APPEND
-            value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
+      - matchRegex:
+          path: spec.template.spec.containers[0].env[?(@.name=="JAVA_OPTS_APPEND")].value
+          pattern: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
 
   - it: should NOT add fips-jce-security volumeMount when image.repository does not contain cgr.dev
     set:
@@ -87,14 +84,12 @@ tests:
             subPath: fips-sunjce.security
             readOnly: true
 
-  - it: should fail render when image.repository contains cgr.dev and env contains JAVA_OPTS_APPEND
+  - it: should fail render when env contains JAVA_OPTS_APPEND
     set:
-      image:
-        repository: cgr.dev/defenseunicorns.com/keycloak-fips
       env:
         - name: JAVA_OPTS_APPEND
           value: "-Xmx512m"
     template: statefulset.yaml
     asserts:
       - failedTemplate:
-          errorMessage: "cgr.dev image detected with JAVA_OPTS_APPEND in .Values.env; the chart injects JAVA_OPTS_APPEND to load the FIPS JCE security override"
+          errorMessage: "JAVA_OPTS_APPEND must not be set in .Values.env; the chart injects JAVA_OPTS_APPEND to configure the BCFKS system truststore and the FIPS JCE security override"
