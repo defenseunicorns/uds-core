@@ -32,7 +32,8 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.6.2
-      - ghcr.io/defenseunicorns/uds/identity-config:0.28.0
+      # TEMP(core-604): personal quay build for CI validation; revert before merge
+      - quay.io/sebastian_laskawiec/uds_identity_config:core-604-41198bb
 
   - name: keycloak
     required: true
@@ -46,7 +47,8 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.6.2-fips
-      - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.28.0
+      # TEMP(core-604): personal quay build for CI validation; revert before merge
+      - quay.io/sebastian_laskawiec/uds_identity_config:core-604-41198bb
 
   - name: keycloak
     required: true
@@ -60,4 +62,5 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - cgr.dev/defenseunicorns.com/keycloak-fips:v26.6.2
-      - ghcr.io/defenseunicorns/uds/identity-config:0.28.0
+      # TEMP(core-604): personal quay build for CI validation; revert before merge
+      - quay.io/sebastian_laskawiec/uds_identity_config:core-604-41198bb
