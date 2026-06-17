@@ -40,6 +40,21 @@ spec:
       securityContext:
       {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
+        {{- if .Values.migrations.deleteGeneratedTrustStore }}
+        - name: remove-generated-truststore
+          image: "{{ .Values.configImage }}"
+          # Removes generated truststores from persistent data volumes before Keycloak starts.
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
+          securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/keycloak/data
+        {{- end }}
         - name: uds-config
           image: "{{ .Values.configImage }}"
           securityContext:
@@ -62,34 +77,24 @@ spec:
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
-            # Mount the same extra volumes as the main container so build_bcfjks.sh can read
+            # Mount the same extra volumes as the main container so the init container can read
             # them when assembling the BCFKS truststore.
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
-            # Paths scanned by build_bcfjks.sh when building the BCFKS system truststore.
+            - name: KC_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-truststore-password
+                  key: password
+            # Paths scanned when building the BCFKS system truststore.
             # The Kubernetes service account CA is auto-mounted into the init container.
             - name: TRUSTSTORE_PATHS
               value: "{{ join " " .Values.truststorePaths }}"
           envFrom:
             - secretRef:
                 name: {{ include "keycloak.fullname" . }}-realm-env
-        {{- if .Values.migrations.deleteGeneratedTrustStore }}
-        - name: remove-generated-truststore
-          image: "{{ .Values.configImage }}"
-          # Removes generated truststores from persistent data volumes before Keycloak starts.
-          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
-          securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "128Mi"
-          volumeMounts:
-            - name: data
-              mountPath: /opt/keycloak/data
-        {{- end }}
         {{- if and .Release.IsUpgrade .Values.migrations.upgradePermissions (or .Values.devMode .Values.persistence.data.enabled .Values.persistence.themes.enabled .Values.persistence.conf.enabled .Values.persistence.providers.enabled) }}
         - name: fix-volume-permissions
           image: "{{ .Values.configImage }}"
@@ -214,6 +219,11 @@ spec:
           {{- if .Values.env }}
             {{- tpl (toYaml .Values.env) . | nindent 12 }}
           {{- end }}
+            - name: KC_TRUSTSTORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "keycloak.fullname" . }}-truststore-password
+                  key: password
             # Point the JVM system truststore at the BCFKS truststore built by the uds-config
             # init container. This is what outgoing TLS connections (identity providers, LDAP,
             # webhooks, etc.) use to validate peer certificates.
@@ -222,7 +232,7 @@ spec:
               value: >-
                 -Djavax.net.ssl.trustStore=/opt/keycloak/data/keycloak-truststore.bcfks
                 -Djavax.net.ssl.trustStoreType=BCFKS
-                -Djavax.net.ssl.trustStorePassword=keycloakchangeit
+                -Djavax.net.ssl.trustStorePassword=$(KC_TRUSTSTORE_PASSWORD)
                 {{- if contains "cgr.dev" .Values.image.repository }} -Djava.security.properties=/opt/keycloak/data/fips-sunjce.security{{- end }}
             # Common configuration
             - name: UDS_DOMAIN

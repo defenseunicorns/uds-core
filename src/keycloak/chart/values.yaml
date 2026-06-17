@@ -459,9 +459,10 @@ extraVolumeMounts:
 # Keycloak's upstream TruststoreBuilder hardcodes a non-FIPS PKCS12 truststore, so the chart
 # does NOT pass --truststore-paths. Instead these paths are passed (as TRUSTSTORE_PATHS) to the
 # uds-config init container, which builds a BCFKS truststore at startup from the DoD CA certs
-# baked into the config image plus every cert found under each path below, then points Keycloak
-# at it via JAVA_OPTS_APPEND. To add custom paths, mount them via extraVolumes/extraVolumeMounts
-# (they are mounted into the init container too) and list them here.
+# baked into the config image plus each entry below (which may be a file or a directory;
+# directories are scanned recursively), then points Keycloak at it via JAVA_OPTS_APPEND.
+# To add custom paths, mount them via extraVolumes/extraVolumeMounts (they are mounted into
+# the init container too) and list them here.
 truststorePaths:
   # Default path for UDS trust bundle certificates
   - "/tmp/ca-certs"

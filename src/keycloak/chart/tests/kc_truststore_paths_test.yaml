@@ -71,4 +71,4 @@ tests:
           pattern: "-Djavax.net.ssl.trustStoreType=BCFKS"
       - matchRegex:
           path: spec.template.spec.containers[0].env[?(@.name=="JAVA_OPTS_APPEND")].value
-          pattern: "-Djavax.net.ssl.trustStorePassword=keycloakchangeit"
+          pattern: "-Djavax.net.ssl.trustStorePassword=\\$\\(KC_TRUSTSTORE_PASSWORD\\)"
