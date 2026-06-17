@@ -43,6 +43,8 @@ export {
   Networking,
 } from "./generated/clusterconfig-v1alpha1";
 
+export { ClusterSet, Phase as ClusterSetPhase } from "./generated/clusterset-v1alpha1";
+
 export {
   HTTP as IstioHTTP,
   HTTPRoute as IstioHTTPRoute,

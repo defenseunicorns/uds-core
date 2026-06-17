@@ -60,6 +60,21 @@ tasks:
           uds zarf tools yq -i '.definitions.ClusterConfig.additionalProperties = {}' schemas/clusterconfig-v1alpha1.schema.json
         description: "Generate JSON schema for clusterconfig.uds.dev"
 
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.7 crd src/pepr/uds-cluster-crds/templates/clustersets.uds.dev.yaml src/pepr/operator/crd/generated
+        description: "Generate TS types for clustersets.uds.dev"
+
+      - cmd: |
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.7 crd src/pepr/uds-cluster-crds/templates/clustersets.uds.dev.yaml -l json-schema schemas
+          # Move the schema files to a standard path
+          mv schemas/clusterset-v1alpha1.json-schema schemas/clusterset-v1alpha1.schema.json
+          # Make the schema strict on additionalProperties
+          uds zarf tools yq -i '(.. | select(has("additionalProperties") and .additionalProperties | select(length==0))) |= .additionalProperties = false' schemas/clusterset-v1alpha1.schema.json
+          uds zarf tools yq -i '.definitions.ClusterSet.additionalProperties = {}' schemas/clusterset-v1alpha1.schema.json
+        description: "Generate JSON schema for clustersets.uds.dev"
+
       - description: "Add license headers to generated CRD files"
         shell:
           darwin: bash
@@ -85,7 +100,7 @@ tasks:
     actions:
       - description: "Generate Docs for CRDs"
         cmd: |
-          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev"
+          CRD_LIST="exemptions.uds.dev packages.uds.dev clusterconfig.uds.dev clustersets.uds.dev"
           for CRD in $CRD_LIST; do
               # Convert YAML to JSON and extract openAPIV3Schema for v1alpha1
               uds zarf tools yq -o=json '.spec.versions[] | select(.name == "v1alpha1").schema.openAPIV3Schema' src/pepr/uds-cluster-crds/templates/$CRD.yaml > $CRD-crd.json

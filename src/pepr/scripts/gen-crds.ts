@@ -8,6 +8,7 @@ import yaml from "js-yaml";
 import path from "path";
 
 import { v1alpha1 as clusterConfig } from "../operator/crd/sources/cluster-config/v1alpha1";
+import { v1alpha1 as clusterSet } from "../operator/crd/sources/cluster-set/v1alpha1";
 import { v1alpha1 as exemption } from "../operator/crd/sources/exemption/v1alpha1";
 import { v1alpha1 as pkg } from "../operator/crd/sources/package/v1alpha1";
 
@@ -76,8 +77,27 @@ const exemptionManifest = {
   },
 };
 
+// ClusterSet CRD
+const clusterSetManifest = {
+  apiVersion: "apiextensions.k8s.io/v1",
+  kind: "CustomResourceDefinition",
+  metadata: { name: "clustersets.uds.dev" },
+  spec: {
+    group: "uds.dev",
+    scope: "Cluster",
+    names: {
+      plural: "clustersets",
+      singular: "clusterset",
+      kind: "ClusterSet",
+      listKind: "ClusterSetList",
+    },
+    versions: [clusterSet],
+  },
+};
+
 writeYamlToDir("clusterconfig.uds.dev.yaml", clusterConfigManifest);
 writeYamlToDir("packages.uds.dev.yaml", packageManifest);
 writeYamlToDir("exemptions.uds.dev.yaml", exemptionManifest);
+writeYamlToDir("clustersets.uds.dev.yaml", clusterSetManifest);
 
 console.log("CRD YAMLs generated.");

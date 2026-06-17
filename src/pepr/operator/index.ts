@@ -28,7 +28,7 @@ import {
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
-import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
+import { ClusterConfig, ClusterSet, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
@@ -49,6 +49,7 @@ import {
 } from "./controllers/keycloak/client-secret-sync";
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
+import { clusterSetReconciler } from "./reconcilers/clusterset-reconciler";
 import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
@@ -137,6 +138,9 @@ When(ClusterConfig)
   .IsCreatedOrUpdated()
   .Validate(validateCfgUpdate)
   .Reconcile(cfg => handleCfg(cfg, ConfigAction.UPDATE));
+
+// Watch UDS ClusterSet and reconcile
+When(ClusterSet).IsCreatedOrUpdated().Reconcile(clusterSetReconciler);
 
 // Watch the uds-ca-certs Configmap and update CA bundle configmaps
 When(a.ConfigMap)
