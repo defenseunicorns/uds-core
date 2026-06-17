@@ -27,7 +27,7 @@ Status: ⬜ todo · 🟡 in progress · ✅ done
 | # | Task | Owner | Spec § | Status |
 |---|---|---|---|---|
 | 1 | Shared branch `feat/clusterset` | — | §7 | ✅ |
-| 2 | Two-cluster k3d env (`tasks/multicluster.yaml`), non-overlapping CIDRs | Eng3 | §5.5 | 🟡 |
+| 2 | Two-cluster k3d env (`tasks/multicluster.yaml`), non-overlapping CIDRs | Eng3 | §5.5 | ✅ |
 | 3 | Submariner package: operator + broker | Eng2 | §5.4 | ⬜ |
 | 4 | `subctl join` edge → mesh up | Eng2 | §6 | ⬜ |
 | 5 | Hand ServiceExport/ServiceImport CRD yaml to Eng1 (mock seam) | Eng2 | §8 | ⬜ |
@@ -67,13 +67,16 @@ other's working tree. Rebase your sub-branch on `feat/clusterset` regularly to s
 ## Working with the env (filled in as tasks land)
 
 ```bash
-# bring up the two-cluster mesh   (task #2 — to be implemented)
-uds run multicluster:up
+# bring up the two-cluster mesh (hub + edge)
+uds run -f tasks/multicluster.yaml up
+
+# verify CIDRs distinct + cross-cluster node reachability
+uds run -f tasks/multicluster.yaml verify
 
 # tear down
-uds run multicluster:down
+uds run -f tasks/multicluster.yaml down
 
-# check mesh health
+# mesh health (after Submariner is joined — Eng2)
 subctl show connections
 subctl show services
 ```

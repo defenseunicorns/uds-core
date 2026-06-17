@@ -1,0 +1,97 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Two-cluster k3d environment for UDS ClusterSet (Submariner multicluster POC).
+# Run with: uds run -f tasks/multicluster.yaml <task>
+
+tasks:
+  - name: create-cluster
+    description: "Deploy one uds-k3d cluster onto the shared clusterset network"
+    inputs:
+      name:
+        description: "k3d cluster name"
+        required: true
+      api_port:
+        description: "Host port for the k8s API server"
+        required: true
+      http_port:
+        description: "Host port mapped to cluster HTTP"
+        required: true
+      https_port:
+        description: "Host port mapped to cluster HTTPS"
+        required: true
+      extra_args:
+        description: "K3D_EXTRA_ARGS (k3s args for CIDR overrides)"
+        default: ""
+    actions:
+      - description: "Create the shared docker network (idempotent)"
+        cmd: docker network create clusterset || true
+      - description: "Deploy uds-k3d cluster ${{ .inputs.name }}"
+        # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
+        cmd: |
+          uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.1-airgap \
+            --set CLUSTER_NAME=${{ .inputs.name }} \
+            --set K3D_NETWORK=clusterset \
+            --set K3D_API_PORT=${{ .inputs.api_port }} \
+            --set K3D_HTTP_PORT=${{ .inputs.http_port }} \
+            --set K3D_HTTPS_PORT=${{ .inputs.https_port }} \
+            --set K3D_EXTRA_ARGS="${{ .inputs.extra_args }}" \
+            --confirm
+
+  - name: up
+    description: "Bring up hub + edge k3d clusters with non-overlapping CIDRs"
+    actions:
+      - description: "Create hub (default k3s CIDRs: pod 10.42/16, svc 10.43/16)"
+        task: create-cluster
+        with:
+          name: hub
+          api_port: "6550"
+          http_port: "80"
+          https_port: "443"
+      - description: "Create edge (pod 10.44/16, svc 10.45/16 to avoid overlap)"
+        task: create-cluster
+        with:
+          name: edge
+          api_port: "6551"
+          http_port: "8081"
+          https_port: "8444"
+          # No inner quotes: zarf --set uses a CSV parser that rejects bare quotes,
+          # and k3s-arg values have no spaces so quotes aren't needed.
+          extra_args: "--k3s-arg --cluster-cidr=10.44.0.0/16@server:* --k3s-arg --service-cidr=10.45.0.0/16@server:*"
+      - description: "Show contexts"
+        cmd: |
+          echo "Clusters up. Contexts: k3d-hub, k3d-edge"
+          uds zarf tools kubectl config get-contexts
+
+  - name: verify
+    description: "Assert hub/edge pod CIDRs differ and node containers can reach each other"
+    actions:
+      - description: "Print hub pod CIDR (expect 10.42.x)"
+        cmd: |
+          uds zarf tools kubectl get nodes --context k3d-hub \
+            -o jsonpath='{.items[0].spec.podCIDR}{"\n"}'
+      - description: "Print edge pod CIDR (expect 10.44.x) and fail if it overlaps hub"
+        cmd: |
+          EDGE_CIDR=$(uds zarf tools kubectl get nodes --context k3d-edge \
+            -o jsonpath='{.items[0].spec.podCIDR}')
+          echo "edge pod CIDR: $EDGE_CIDR"
+          case "$EDGE_CIDR" in
+            10.44.*) echo "OK: edge CIDR distinct from hub" ;;
+            *) echo "FAIL: edge CIDR not in 10.44/16 — overlap risk"; exit 1 ;;
+          esac
+      - description: "Cross-cluster node reachability over the clusterset network"
+        cmd: |
+          EDGE_IP=$(docker inspect k3d-edge-server-0 \
+            -f '{{(index .NetworkSettings.Networks "clusterset").IPAddress}}')
+          echo "edge node IP on clusterset network: $EDGE_IP"
+          docker exec k3d-hub-server-0 ping -c 2 "$EDGE_IP"
+
+  - name: down
+    description: "Delete hub + edge clusters and the shared network"
+    actions:
+      - description: "Delete clusters (ignore if already gone)"
+        cmd: |
+          k3d cluster delete hub || true
+          k3d cluster delete edge || true
+      - description: "Remove the shared docker network (ignore if in use/gone)"
+        cmd: docker network rm clusterset || true
