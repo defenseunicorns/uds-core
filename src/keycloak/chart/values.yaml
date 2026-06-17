@@ -10,9 +10,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-# TEMP(core-604): pinned to a personal quay build for CI validation of the runtime BCFKS truststore.
-# Revert to ghcr.io/defenseunicorns/uds/identity-config:<release> before merge.
-configImage: quay.io/sebastian_laskawiec/uds_identity_config:core-604-41198bb
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.28.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"

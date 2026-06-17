@@ -62,13 +62,13 @@ spec:
             - name: theme-overrides
               mountPath: /opt/keycloak/theme-overrides
             {{- end }}
-            # Mount the same extra volumes as the main container (e.g. the UDS trust bundle at
-            # /tmp/ca-certs) so build-truststore.sh can read them when assembling the BCFKS truststore.
+            # Mount the same extra volumes as the main container so build_bcfjks.sh can read
+            # them when assembling the BCFKS truststore.
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
-            # Paths scanned by build-truststore.sh when building the BCFKS system truststore.
+            # Paths scanned by build_bcfjks.sh when building the BCFKS system truststore.
             # The Kubernetes service account CA is auto-mounted into the init container.
             - name: TRUSTSTORE_PATHS
               value: "{{ join " " .Values.truststorePaths }}"
@@ -78,11 +78,8 @@ spec:
         {{- if .Values.migrations.deleteGeneratedTrustStore }}
         - name: remove-generated-truststore
           image: "{{ .Values.configImage }}"
-          # Removes only the legacy PKCS12 truststore that Keycloak's TruststoreBuilder may have
-          # generated on a persistent data volume in a prior version. The BCFKS truststore is
-          # rebuilt from scratch on every start by the uds-config init container, so it must NOT
-          # be deleted here (this container runs after uds-config).
-          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 ; ls -la /opt/keycloak/data"]
+          # Removes generated truststores from persistent data volumes before Keycloak starts.
+          command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
@@ -171,15 +168,8 @@ spec:
             # @lulaEnd e7a920f8-e6e2-4a97-80a0-edda1fab0f8b
             - "--https-key-store-type=bcfks"
             - "--https-trust-store-type=bcfks"
-            # NOTE: --truststore-paths is intentionally NOT set, and --truststore-kubernetes-enabled
-            # is disabled. Whenever Keycloak's configureTruststore() has any truststore source
-            # (an explicit path, a non-empty conf/truststores dir, or the auto-included Kubernetes
-            # CA), it calls TruststoreBuilder.setSystemTruststore(), which always writes a PKCS12
-            # truststore and forces javax.net.ssl.trustStoreType=PKCS12 (not FIPS-compliant). By
-            # leaving all three empty, configureTruststore() returns early and leaves the JVM
-            # system truststore alone. The uds-config init container instead builds a FIPS-compliant
-            # BCFKS truststore at startup (honoring .Values.truststorePaths and including the
-            # Kubernetes CA) and we point Keycloak at it via JAVA_OPTS_APPEND below.
+            # Keep Keycloak's TruststoreBuilder disabled because it emits PKCS12.
+            # uds-config builds BCFKS instead and JAVA_OPTS_APPEND points the JVM at it.
             - "--truststore-kubernetes-enabled=false"
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"

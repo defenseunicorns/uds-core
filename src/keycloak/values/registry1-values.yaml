@@ -13,9 +13,7 @@ securityContext:
   capabilities:
     drop:
       - ALL
-# TEMP(core-604): pinned to a personal quay build for CI validation of the runtime BCFKS truststore.
-# Revert to the registry1 mirror before merge.
-configImage: quay.io/sebastian_laskawiec/uds_identity_config:core-604-41198bb
+configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.28.0
 
 migrations:
   deleteGeneratedTrustStore: true
