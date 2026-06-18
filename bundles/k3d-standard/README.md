@@ -31,6 +31,16 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 | `LOKI_S3_ACCESS_KEY_ID` | The S3 Access Key ID | loki.storage.s3.accessKeyId |
 | `LOKI_S3_SECRET_ACCESS_KEY` | The S3 Secret Access Key | loki.storage.s3.secretAccessKey |
 
+##### istio-controlplane (istiod)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `ISTIO_COMPLIANCE_POLICY` | Istio COMPLIANCE_POLICY (control plane + data plane). Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off. | pilot.env.COMPLIANCE_POLICY |
+
+##### istio-controlplane (ztunnel)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `ISTIO_COMPLIANCE_POLICY` | Istio COMPLIANCE_POLICY for the ztunnel L4 mTLS hop. Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off. | env.COMPLIANCE_POLICY |
+
 ##### istio-admin-gateway (uds-istio-config)
 | Variable | Description | Path |
 |----------|-------------|------|

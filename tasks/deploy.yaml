@@ -175,3 +175,17 @@ tasks:
     actions:
       - description: "Deploy the checkpoint K3d + UDS Core Slim zarf package"
         cmd: ./uds zarf package deploy build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm
+
+  - name: k3d-standard-bundle-pqc
+    description: "Deploy the UDS Core standard bundle with COMPLIANCE_POLICY=pqc forced (upstream flavor only)"
+    actions:
+      - description: "PQC is only supported on the non-FIPS upstream flavor"
+        cmd: |
+          if [ "${FLAVOR}" != "upstream" ]; then
+            echo "ERROR: the PQC scenario requires FLAVOR=upstream (got '${FLAVOR}'); PQC is not supported on FIPS flavors." >&2
+            exit 1
+          fi
+      # Setting ISTIO_COMPLIANCE_POLICY=pqc forces post-quantum key exchange on istiod and ztunnel;
+      # istiod propagates the policy to the gateway Envoys via xDS.
+      - description: "Deploy the standard bundle with ISTIO_COMPLIANCE_POLICY=pqc forced"
+        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set ISTIO_COMPLIANCE_POLICY=pqc --confirm --no-progress

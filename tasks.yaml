@@ -144,6 +144,11 @@ tasks:
     actions:
       - task: test:uds-core-upgrade
 
+  - name: test-uds-core-pqc
+    description: "Deploy UDS Core with PQC (COMPLIANCE_POLICY=pqc) forced and run the PQC force-mode scenario (upstream flavor only)"
+    actions:
+      - task: test:uds-core-pqc
+
   - name: lint-check
     description: "Run linting checks"
     actions:

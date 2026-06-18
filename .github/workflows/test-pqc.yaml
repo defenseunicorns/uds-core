@@ -1,0 +1,46 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Test PQC
+
+# Runs the dedicated post-quantum cryptography (COMPLIANCE_POLICY=pqc) force-mode scenario on the
+# upstream flavor. Kept out of the standard test matrix because forcing PQC mesh-wide makes the
+# tenant gateway reject the non-PQC clients the standard suite relies on. Trigger manually, or call
+# it from an orchestrating workflow.
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  contents: read
+  id-token: write # This is needed for OIDC federation.
+  packages: read # Allows reading the published GHCR packages
+
+jobs:
+  test-pqc:
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 40
+    name: Test PQC (upstream)
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          installK3d: "true"
+
+      - name: Force PQC and run the PQC force-mode scenario
+        run: uds run test-uds-core-pqc --set FLAVOR=upstream --no-progress
+
+      - name: Debug Output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -pqc-upstream
