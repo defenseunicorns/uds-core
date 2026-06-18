@@ -43,9 +43,7 @@ spec:
         {{- if .Values.migrations.deleteGeneratedTrustStore }}
         - name: remove-generated-truststore
           image: "{{ .Values.configImage }}"
-          # Removes the legacy PKCS12 truststore (written by Keycloak's TruststoreBuilder in
-          # versions prior to the BCFKS migration) and any stale BCFKS truststore from a prior
-          # pod start. The uds-config init container rebuilds the BCFKS truststore from scratch.
+          # Cleans stale truststores; uds-config rebuilds them from scratch on every start.
           command: ["sh", "-c", "rm -rf /opt/keycloak/data/keycloak-truststore.p12 /opt/keycloak/data/keycloak-truststore.bcfks ; ls -la /opt/keycloak/data"]
           securityContext:
           {{- toYaml .Values.securityContext | nindent 12 }}

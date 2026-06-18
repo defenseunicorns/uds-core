@@ -423,11 +423,8 @@ env: []
 
 # Custom migrations setting for UDS Core internal usage only
 migrations:
-  # Removes legacy PKCS12 truststores (keycloak-truststore.p12) that Keycloak's TruststoreBuilder
-  # wrote to the persistent data volume in versions prior to the BCFKS migration, and any stale
-  # BCFKS truststores (keycloak-truststore.bcfks) left on persistent volumes between redeploys.
-  # Both files are rebuilt from scratch on every start by the uds-config init container, so
-  # deleting them before startup is safe and ensures a clean truststore on every pod start.
+  # Runs an init container that removes stale truststores (.p12, .bcfks) before each start.
+  # uds-config rebuilds them from scratch, ensuring a clean state on every pod start.
   deleteGeneratedTrustStore: false
   # Runs a privileged init container during `helm upgrade` to chown persistent volumes
   upgradePermissions: false
