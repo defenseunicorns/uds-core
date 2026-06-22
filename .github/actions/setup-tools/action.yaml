@@ -26,7 +26,7 @@ runs:
       uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.32.0
+        version: v0.33.0
 
     # Node is required for all workflows (either building Pepr or running specific scripts)
     - name: Use Node.js latest
@@ -39,7 +39,7 @@ runs:
       uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.11.19
+        version: 0.11.22
 
     - name: Install k3d
       if: ${{ inputs.installK3d == 'true' }}
