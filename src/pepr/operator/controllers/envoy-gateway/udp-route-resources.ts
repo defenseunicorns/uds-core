@@ -145,10 +145,12 @@ export async function reconcileDefaultGatewayListeners(packages?: UDSPackage[]):
   }
 
   defaultGatewayReconcileDirty = true;
+  let packagesForReconcile = packages;
   defaultGatewayReconcileInFlight = (async () => {
     while (defaultGatewayReconcileDirty) {
       defaultGatewayReconcileDirty = false;
-      await performDefaultGatewayReconciliation(packages);
+      await performDefaultGatewayReconciliation(packagesForReconcile);
+      packagesForReconcile = undefined;
     }
   })();
 

@@ -528,6 +528,42 @@ describe("Test validation of Package CRs", () => {
       expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("duplicate UDPRoute"));
     });
 
+    it("denies duplicate default-mode UDP ports in one package", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a" },
+          { ...validUDPExpose, description: "game-b" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("Only one default-mode UDP expose entry can use port 8125"),
+      );
+    });
+
+    it("allows duplicate UDP ports when one entry uses a user-managed gateway", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a" },
+          { ...validUDPExpose, description: "game-b", gateway: "team-gateway" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
     it("denies HTTP expose entries without a host", async () => {
       const mockReq = makeMockReq(
         {},

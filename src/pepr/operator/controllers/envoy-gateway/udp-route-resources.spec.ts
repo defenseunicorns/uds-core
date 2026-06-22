@@ -12,6 +12,7 @@ import {
   envoyDefaultGatewayName,
   envoyDefaultGatewayNamespace,
   envoyGatewayResources,
+  reconcileDefaultGatewayListeners,
 } from "./udp-route-resources";
 
 vi.mock("pepr", () => ({
@@ -529,5 +530,48 @@ describe("envoyGatewayResources", () => {
     expect(result.portConflict).toBe(true);
     expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
     expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
+  });
+
+  it("fetches fresh packages when a dirty default Gateway reconciliation re-runs", async () => {
+    const pkg = packageFixture();
+    let releaseFirstApply: () => void = () => undefined;
+    const firstApplyStarted = new Promise<void>(resolve => {
+      vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
+        const existingClient = clients.get(resourceKind);
+        if (existingClient) return existingClient;
+
+        const client: K8sClient = {
+          Apply: vi.fn(async () => {
+            if (resourceKind === K8sGateway) {
+              resolve();
+              await new Promise<void>(release => {
+                releaseFirstApply = release;
+              });
+            }
+          }),
+          Delete: vi.fn(async () => undefined),
+          Get: vi.fn(async () => (resourceKind === UDSPackage ? { items: [] } : { items: [] })),
+          InNamespace: vi.fn(() => client),
+          WithLabel: vi.fn(() => client),
+        };
+
+        clients.set(resourceKind, client);
+        return client;
+      }) as never);
+    });
+
+    const firstReconcile = reconcileDefaultGatewayListeners([pkg]);
+    await firstApplyStarted;
+
+    const secondReconcile = reconcileDefaultGatewayListeners();
+    releaseFirstApply();
+    await Promise.all([firstReconcile, secondReconcile]);
+
+    expect(clientFor(UDSPackage).Get).toHaveBeenCalled();
+    expect(clientFor(K8sGateway).Delete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: { name: envoyDefaultGatewayName, namespace: envoyDefaultGatewayNamespace },
+      }),
+    );
   });
 });

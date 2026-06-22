@@ -63,6 +63,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const virtualServiceNames = new Set<string>();
   // Track the names of UDP routes to ensure they are unique
   const udpRouteNames = new Set<string>();
+  // Track default-mode UDP ports to prevent multiple routes targeting the same listener
+  const defaultModeUDPPorts = new Set<number>();
   // Track FQDNs for uptime probes to ensure no duplicates
   const uptimeFqdns = new Set<string>();
 
@@ -109,6 +111,16 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         );
       }
       udpRouteNames.add(udpRouteName);
+
+      if (!expose.gateway && defaultModeUDPPorts.has(expose.port!)) {
+        return req.Deny(
+          `Only one default-mode UDP expose entry can use port ${expose.port} in a package. ` +
+            `Use a different port or a user-managed gateway for additional UDP entries.`,
+        );
+      }
+      if (!expose.gateway) {
+        defaultModeUDPPorts.add(expose.port!);
+      }
 
       continue;
     }
