@@ -133,6 +133,7 @@ rbac:
       - gateway.networking.k8s.io
     resources:
       - gateways
+      - udproutes
     verbs:
       - create
       - delete
