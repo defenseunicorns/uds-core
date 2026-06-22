@@ -69,20 +69,38 @@ export async function envoyGatewayResources(
   const networkPolicies: kind.NetworkPolicy[] = [];
   let defaultDisabled = false;
   let portConflict = false;
+  let defaultGatewayEnabled: boolean | undefined;
+  let allPackages: UDSPackage[] | undefined;
 
-  if (udpEntries.length === 0 && !(await hasGeneratedUDPNetworkPolicies(namespace, pkgName))) {
-    return { networkPolicies, defaultDisabled, portConflict };
+  const getDefaultGatewayEnabled = async () => {
+    defaultGatewayEnabled ??= await isEnvoyGatewayDefaultEnabled();
+    return defaultGatewayEnabled;
+  };
+
+  const getAllPackages = async () => {
+    allPackages ??= (await K8s(UDSPackage).Get()).items;
+    return allPackages;
+  };
+
+  if (udpEntries.length === 0) {
+    const hasGeneratedUDPResources =
+      (await hasGeneratedUDPRoutes(namespace, pkgName)) ||
+      (await hasGeneratedUDPNetworkPolicies(namespace, pkgName));
+
+    if (!hasGeneratedUDPResources) {
+      return { networkPolicies, defaultDisabled, portConflict };
+    }
   }
 
   for (const entry of udpEntries) {
     const targetGateway = resolveGatewayTarget(entry.expose);
 
     if (targetGateway.defaultMode) {
-      if (!(await isEnvoyGatewayDefaultEnabled())) {
+      if (!(await getDefaultGatewayEnabled())) {
         defaultDisabled = true;
         continue;
       }
-      if (await isLosingDefaultPortConflict(pkg, entry.expose)) {
+      if (isLosingDefaultPortConflict(pkg, entry.expose, await getAllPackages())) {
         portConflict = true;
         continue;
       }
@@ -112,14 +130,14 @@ export async function envoyGatewayResources(
     "uds/managed-by": "envoy-gateway",
   });
 
-  if (await isEnvoyGatewayDefaultEnabled()) {
-    await reconcileDefaultGatewayListeners();
+  if (await getDefaultGatewayEnabled()) {
+    await reconcileDefaultGatewayListeners(allPackages);
   }
 
   return { networkPolicies, defaultDisabled, portConflict };
 }
 
-export async function reconcileDefaultGatewayListeners(): Promise<void> {
+export async function reconcileDefaultGatewayListeners(packages?: UDSPackage[]): Promise<void> {
   if (defaultGatewayReconcileInFlight) {
     defaultGatewayReconcileDirty = true;
     await defaultGatewayReconcileInFlight;
@@ -130,7 +148,7 @@ export async function reconcileDefaultGatewayListeners(): Promise<void> {
   defaultGatewayReconcileInFlight = (async () => {
     while (defaultGatewayReconcileDirty) {
       defaultGatewayReconcileDirty = false;
-      await performDefaultGatewayReconciliation();
+      await performDefaultGatewayReconciliation(packages);
     }
   })();
 
@@ -277,6 +295,15 @@ async function hasGeneratedUDPNetworkPolicies(
   return policies.items.length > 0;
 }
 
+async function hasGeneratedUDPRoutes(namespace: string, pkgName: string): Promise<boolean> {
+  const udpRoutes = await K8s(K8sUDPRoute)
+    .InNamespace(namespace)
+    .WithLabel("uds/package", pkgName)
+    .Get();
+
+  return udpRoutes.items.length > 0;
+}
+
 export async function isEnvoyGatewayDefaultEnabled(): Promise<boolean> {
   if (UDSConfig.isEnvoyGatewayDefaultEnabled) {
     return true;
@@ -294,8 +321,8 @@ export async function isEnvoyGatewayDefaultEnabled(): Promise<boolean> {
   }
 }
 
-async function performDefaultGatewayReconciliation(): Promise<void> {
-  const listenerEntries = await getWinningDefaultListenerEntries();
+async function performDefaultGatewayReconciliation(packages?: UDSPackage[]): Promise<void> {
+  const listenerEntries = await getWinningDefaultListenerEntries(packages);
 
   if (listenerEntries.length === 0) {
     try {
@@ -349,11 +376,11 @@ async function performDefaultGatewayReconciliation(): Promise<void> {
   );
 }
 
-async function getWinningDefaultListenerEntries(): Promise<
-  { pkg: UDSPackage; expose: Expose; namespace: string }[]
-> {
-  const packages = await K8s(UDSPackage).Get();
-  const entries = packages.items.flatMap(pkg =>
+async function getWinningDefaultListenerEntries(
+  packages?: UDSPackage[],
+): Promise<{ pkg: UDSPackage; expose: Expose; namespace: string }[]> {
+  const packageItems = packages ?? (await K8s(UDSPackage).Get()).items;
+  const entries = packageItems.flatMap(pkg =>
     pkg.metadata?.deletionTimestamp
       ? []
       : getUDPExposeEntries(pkg)
@@ -373,9 +400,12 @@ async function getWinningDefaultListenerEntries(): Promise<
   return [...winners.values()].sort((a, b) => a.expose.port! - b.expose.port!);
 }
 
-async function isLosingDefaultPortConflict(pkg: UDSPackage, expose: Expose): Promise<boolean> {
-  const packages = await K8s(UDSPackage).Get();
-  const conflictingPackages = packages.items.filter(
+function isLosingDefaultPortConflict(
+  pkg: UDSPackage,
+  expose: Expose,
+  packages: UDSPackage[],
+): boolean {
+  const conflictingPackages = packages.filter(
     otherPkg =>
       !otherPkg.metadata?.deletionTimestamp &&
       getUDPExposeEntries(otherPkg).some(

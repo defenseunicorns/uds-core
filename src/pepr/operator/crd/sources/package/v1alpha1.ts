@@ -191,7 +191,7 @@ const expose = {
       },
       gateway: {
         description:
-          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted.",
+          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed Gateways, this value is used as both the Gateway name and namespace.",
         type: "string",
       },
       domain: {

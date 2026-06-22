@@ -301,7 +301,7 @@ export interface Expose {
   domain?: string;
   /**
    * The name of the gateway to expose the service on. HTTP defaults to tenant when omitted.
-   * UDP uses the UDS Core managed default Gateway when omitted.
+   * UDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed Gateways, this value is used as both the Gateway name and namespace.
    */
   gateway?: string;
   /**

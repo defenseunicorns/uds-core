@@ -280,7 +280,7 @@ describe("envoyGatewayResources", () => {
     expect(clientFor(K8sGateway).Apply).toHaveBeenCalled();
   });
 
-  it("skips Gateway API work for packages without UDP expose entries", async () => {
+  it("skips applying Gateway API resources for packages without UDP expose entries", async () => {
     const pkg = packageFixture({
       metadata: {
         name: "web",
@@ -303,9 +303,68 @@ describe("envoyGatewayResources", () => {
       defaultDisabled: false,
       portConflict: false,
     });
-    expect(clients.has(K8sUDPRoute)).toBe(false);
+    expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
     expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
     expect(clients.has(K8sGateway)).toBe(false);
+  });
+
+  it("purges stale UDPRoutes even when generated UDP NetworkPolicies are gone", async () => {
+    const pkg = packageFixture({
+      metadata: {
+        name: "web",
+        namespace: "web-ns",
+        uid: "uid-web",
+        generation: 2,
+        creationTimestamp: new Date("2026-01-03T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          expose: [{ host: "app", service: "app", selector: { app: "app" }, port: 8080 }],
+        },
+      },
+    });
+
+    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
+      const existingClient = clients.get(resourceKind);
+      if (existingClient) return existingClient;
+
+      const client: K8sClient = {
+        Apply: vi.fn(async () => undefined),
+        Delete: vi.fn(async () => undefined),
+        Get: vi.fn(async () => {
+          if (resourceKind === K8sUDPRoute) {
+            return {
+              items: [
+                {
+                  apiVersion: "gateway.networking.k8s.io/v1alpha2",
+                  kind: "UDPRoute",
+                  metadata: {
+                    name: "web-udp-old",
+                    namespace: "web-ns",
+                    labels: { "uds/package": "web", "uds/generation": "1" },
+                  },
+                },
+              ],
+            };
+          }
+
+          return { items: [] };
+        }),
+        InNamespace: vi.fn(() => client),
+        WithLabel: vi.fn(() => client),
+      };
+
+      clients.set(resourceKind, client);
+      return client;
+    }) as never);
+
+    const result = await envoyGatewayResources(pkg, "web-ns");
+
+    expect(result).toMatchObject({ defaultDisabled: false, portConflict: false });
+    expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
+    );
+    expect(clientFor(kind.NetworkPolicy).Delete).not.toHaveBeenCalled();
   });
 
   it("purges generated UDP resources when UDP expose entries were removed", async () => {
