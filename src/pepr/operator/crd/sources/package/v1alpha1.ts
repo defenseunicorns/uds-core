@@ -156,35 +156,43 @@ const allow = {
 
 const expose = {
   type: "array",
-  description: "Expose a service on an Istio Gateway",
+  description: "Expose a service through UDS Core managed ingress",
   items: {
     type: "object",
-    required: ["host"],
     anyOf: [
       {
-        required: ["service", "podLabels", "port"],
+        required: ["host", "service", "podLabels", "port"],
       },
       {
-        required: ["service", "selector", "port"],
+        required: ["host", "service", "selector", "port"],
       },
       {
-        required: ["advancedHTTP"],
+        required: ["host", "advancedHTTP"],
+      },
+      {
+        required: ["protocol", "service", "selector", "port"],
       },
     ],
     properties: {
       description: {
         type: "string",
         description:
-          "A description of this expose entry, this will become part of the VirtualService name",
+          "A description of this expose entry, this will become part of the generated resource name",
+      },
+      protocol: {
+        description:
+          "The routing protocol for this expose entry. When set to `UDP`, the entry routes through Envoy Gateway instead of Istio. Hostname routing fields (`host`, `domain`, `advancedHTTP`, `match`) are invalid for UDP entries. UDP traffic is not protected by Istio AuthorizationPolicy or mTLS.",
+        type: "string",
+        enum: ["HTTP", "UDP"],
       },
       host: {
         description: "The hostname to expose the service on",
         type: "string",
       },
       gateway: {
-        description: "The name of the gateway to expose the service on (default: tenant)",
+        description:
+          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted.",
         type: "string",
-        default: "tenant",
       },
       domain: {
         description:

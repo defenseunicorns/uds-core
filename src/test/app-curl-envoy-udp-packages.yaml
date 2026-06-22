@@ -1,0 +1,51 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-pkg-udp-server
+  namespace: curl-ns-udp-server
+spec:
+  network:
+    expose:
+      - description: envoy-gateway-e2e
+        protocol: UDP
+        service: udp-echo-server
+        selector:
+          app: udp-echo-server
+        port: 5000
+    allow:
+      - direction: Ingress
+        remoteNamespace: curl-ns-udp-allow
+        remoteSelector:
+          app: udp-echo-client
+        selector:
+          app: udp-echo-server
+        port: 5000
+        remoteProtocol: UDP
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: curl-pkg-udp-allow
+  namespace: curl-ns-udp-allow
+spec:
+  network:
+    allow:
+      - direction: Egress
+        remoteNamespace: curl-ns-udp-server
+        remoteSelector:
+          app: udp-echo-server
+        selector:
+          app: udp-echo-client
+        port: 5000
+        remoteProtocol: UDP
+      - direction: Egress
+        remoteNamespace: envoy-default-gateway
+        remoteSelector:
+          gateway.envoyproxy.io/owning-gateway-name: envoy-default-gateway
+        selector:
+          app: udp-echo-client
+        port: 5000
+        remoteProtocol: UDP

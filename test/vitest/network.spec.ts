@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import * as k8s from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { execInPod } from "./helpers/k8s";
@@ -10,6 +11,103 @@ import { execInPod } from "./helpers/k8s";
 vi.setConfig({ testTimeout: 30000 });
 
 const CURL_GATEWAY = ["curl", "-s", "-w", " HTTP_CODE:%{http_code}", "https://demo-8080.uds.dev"];
+const ENVOY_DEFAULT_GATEWAY_NAME = "envoy-default-gateway";
+const ENVOY_OWNING_GATEWAY_LABEL = "gateway.envoyproxy.io/owning-gateway-name";
+
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const customObjects = kc.makeApiClient(k8s.CustomObjectsApi);
+const core = kc.makeApiClient(k8s.CoreV1Api);
+const networking = kc.makeApiClient(k8s.NetworkingV1Api);
+
+type GatewayObject = k8s.KubernetesObject & {
+  spec?: {
+    listeners?: {
+      name?: string;
+      protocol?: string;
+      port?: number;
+    }[];
+  };
+};
+
+type UDPRouteObject = k8s.KubernetesObject & {
+  spec?: {
+    parentRefs?: {
+      name?: string;
+      namespace?: string;
+      sectionName?: string;
+    }[];
+  };
+};
+
+async function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
+  const deadline = Date.now() + 120000;
+  while (Date.now() < deadline) {
+    const services = await core.listServiceForAllNamespaces({
+      labelSelector: `${ENVOY_OWNING_GATEWAY_LABEL}=${ENVOY_DEFAULT_GATEWAY_NAME}`,
+    });
+    const service = services.items.find(item =>
+      item.spec?.ports?.some(
+        servicePort => servicePort.port === port && servicePort.protocol === "UDP",
+      ),
+    );
+    const name = service?.metadata?.name;
+    const namespace = service?.metadata?.namespace;
+
+    if (name && namespace) {
+      return `${name}.${namespace}.svc.cluster.local`;
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+
+  throw new Error(`Timeout waiting for default Envoy Service UDP port ${port}`);
+}
+
+async function assertDefaultEnvoyUDPResources(port: number): Promise<string> {
+  const gateway = (await customObjects.getNamespacedCustomObject({
+    group: "gateway.networking.k8s.io",
+    version: "v1",
+    namespace: "envoy-default-gateway",
+    plural: "gateways",
+    name: ENVOY_DEFAULT_GATEWAY_NAME,
+  })) as GatewayObject;
+
+  expect(gateway.spec?.listeners).toContainEqual(
+    expect.objectContaining({ name: `udp-${port}`, protocol: "UDP", port }),
+  );
+
+  const route = (await customObjects.getNamespacedCustomObject({
+    group: "gateway.networking.k8s.io",
+    version: "v1alpha2",
+    namespace: "curl-ns-udp-server",
+    plural: "udproutes",
+    name: "curl-pkg-udp-server-udp-envoy-gateway-e2e",
+  })) as UDPRouteObject;
+
+  expect(route.spec?.parentRefs).toContainEqual(
+    expect.objectContaining({
+      name: ENVOY_DEFAULT_GATEWAY_NAME,
+      namespace: "envoy-default-gateway",
+      sectionName: `udp-${port}`,
+    }),
+  );
+
+  const policies = await networking.listNamespacedNetworkPolicy({
+    namespace: "curl-ns-udp-server",
+    labelSelector: "uds/package=curl-pkg-udp-server,uds/managed-by=envoy-gateway",
+  });
+  expect(policies.items.length).toBeGreaterThan(0);
+  expect(
+    policies.items.some(policy =>
+      policy.spec?.ingress?.some(rule =>
+        rule.ports?.some(policyPort => policyPort.protocol === "UDP" && policyPort.port === port),
+      ),
+    ),
+  ).toBe(true);
+
+  return getDefaultEnvoyUDPServiceTarget(port);
+}
 
 function getCurlCommand(serviceName: string, namespaceName: string, port = 8080) {
   return [
@@ -113,6 +211,7 @@ function expectUdpPingLog(log: string, message: string) {
 
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
+const runUDPExposeTests = process.env.UDP_EXPOSE_TESTS === "true";
 
 let curlPodName1 = "";
 let testAdminApp = "";
@@ -621,6 +720,27 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
     "",
   );
 });
+
+(runUDPExposeTests ? test : test.skip)(
+  "UDP expose routes through default Envoy Gateway",
+  { retry: 2, timeout: 180000 },
+  async () => {
+    const serviceTarget = await assertDefaultEnvoyUDPResources(5000);
+
+    await clearUdpLog(udpServerPodName);
+    const send = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+      "sh",
+      "-c",
+      `for i in 1 2 3 4 5; do echo ping | nc -u -w 1 ${serviceTarget} 5000 2>&1; sleep 0.2; done`,
+    ]);
+    const receivedLog = await waitForUdpLog(udpServerPodName, "ping", 30000, 1000);
+
+    expectUdpPingLog(
+      receivedLog,
+      `UDP Envoy Gateway expose: log="${receivedLog}" nc="${send.stdout}" target="${serviceTarget}"`,
+    );
+  },
+);
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const SSO_CURL = [

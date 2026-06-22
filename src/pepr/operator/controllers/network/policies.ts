@@ -7,7 +7,7 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
@@ -99,7 +99,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
   // Iterate over each exposed service, excluding directResponse services
-  for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
+  for (const expose of exposeList.filter(
+    exp => exp.protocol !== ExposeProtocol.UDP && !exp.advancedHTTP?.directResponse,
+  )) {
     const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
     const policyPort = targetPort ?? port;
 
