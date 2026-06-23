@@ -23,8 +23,8 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - docker.io/falcosecurity/falco:0.43.1
-      - docker.io/falcosecurity/falcosidekick:2.33.0
+      - docker.io/falcosecurity/falco:0.44.1
+      - docker.io/falcosecurity/falcosidekick:2.34.1
 
   - name: falco
     description: "Deploy Falco"
@@ -38,8 +38,8 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.43.1
-      - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.33.0
+      - registry1.dso.mil/ironbank/opensource/falcosecurity/falco:0.44.1
+      - registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick:2.34.1
 
   - name: falco
     description: "Deploy Falco"
@@ -53,5 +53,5 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/defenseunicorns.com/falco-fips:0.43.1
-      - cgr.dev/defenseunicorns.com/falcosidekick-fips:2.33.0
+      - cgr.dev/defenseunicorns.com/falco-fips:v0.44.1
+      - cgr.dev/defenseunicorns.com/falcosidekick-fips:v2.34.1
