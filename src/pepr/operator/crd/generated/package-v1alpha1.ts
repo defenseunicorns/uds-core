@@ -297,7 +297,7 @@ export interface Expose {
    */
   annotations?: { [key: string]: string };
   /**
-   * A description of this expose entry, this will become part of the VirtualService name
+   * A description of this expose entry, this will become part of the generated resource name
    */
   description?: string;
   /**
