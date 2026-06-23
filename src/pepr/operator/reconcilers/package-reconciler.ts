@@ -12,7 +12,6 @@ import {
   envoyGatewayResources,
   getEnvoyGatewayStatusConditions,
   hasDefaultModeUDPExpose,
-  reconcileDefaultGatewayListeners,
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
@@ -347,7 +346,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
   try {
     if (hasDefaultModeUDPExpose(pkg)) {
       await retryWithDelay(async function cleanupEnvoyGatewayResources() {
-        await reconcileDefaultGatewayListeners();
+        await reconcileEnvoyGatewayDefaultPackages();
       }, log);
     }
   } catch (e) {
