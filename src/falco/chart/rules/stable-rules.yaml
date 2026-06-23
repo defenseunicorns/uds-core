@@ -317,15 +317,15 @@
 # ******************************************************************************
 - rule: Directory traversal monitored file read
   desc: >
-    Web applications can be vulnerable to directory traversal attacks that allow accessing files outside of the web app's root directory 
-    (e.g. Arbitrary File Read bugs). System directories like /etc are typically accessed via absolute paths. Access patterns outside of this 
+    Web applications can be vulnerable to directory traversal attacks that allow accessing files outside of the web app's root directory
+    (e.g. Arbitrary File Read bugs). System directories like /etc are typically accessed via absolute paths. Access patterns outside of this
     (here path traversal) can be regarded as suspicious. This rule includes failed file open attempts.
-  condition: > 
-    (open_read or open_file_failed) 
-    and (etc_dir or user_ssh_directory or 
-         fd.name startswith /root/.ssh or 
-         fd.name contains "id_rsa") 
-    and directory_traversal 
+  condition: >
+    (open_read or open_file_failed)
+    and (etc_dir or user_ssh_directory or
+         fd.name startswith /root/.ssh or
+         fd.name contains "id_rsa")
+    and directory_traversal
     and not proc.pname in (shell_binaries)
   enabled: true
   output: Read monitored file via directory traversal | file=%fd.name fileraw=%fd.nameraw gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -343,16 +343,16 @@
     An attempt to read any sensitive file (e.g. files containing user/password/authentication
     information) by a trusted program after startup. Trusted programs might read these files
     at startup to load initial state, but not afterwards. Can be customized as needed.
-    In modern containerized cloud infrastructures, accessing traditional Linux sensitive files 
-    might be less relevant, yet it remains valuable for baseline detections. While we provide additional 
-    rules for SSH or cloud vendor-specific credentials, you can significantly enhance your security 
+    In modern containerized cloud infrastructures, accessing traditional Linux sensitive files
+    might be less relevant, yet it remains valuable for baseline detections. While we provide additional
+    rules for SSH or cloud vendor-specific credentials, you can significantly enhance your security
     program by crafting custom rules for critical application credentials unique to your environment.
-  condition: > 
-    open_read 
-    and sensitive_files 
-    and server_procs 
-    and not proc_is_new 
-    and proc.name!="sshd" 
+  condition: >
+    open_read
+    and sensitive_files
+    and server_procs
+    and not proc_is_new
+    and proc.name!="sshd"
     and not user_known_read_sensitive_files_activities
   output: Sensitive file opened for reading by trusted program after startup | file=%fd.name pcmdline=%proc.pcmdline gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
@@ -364,7 +364,7 @@
     vsftpd, systemd, mysql_install_d, psql, screen, debconf-show, sa-update,
     pam-auth-update, pam-config, /usr/sbin/spamd, polkit-agent-he, lsattr, file, sosreport,
     scxcimservera, adclient, rtvscand, cockpit-session, userhelper, ossec-syscheckd,
-    sshd-session
+    sshd-session, rkhunter
     ]
 
 # Add conditions to this macro (probably in a separate file,
@@ -398,9 +398,9 @@
   desc: >
     An attempt to read any sensitive file (e.g. files containing user/password/authentication
     information). Exceptions are made for known trusted programs. Can be customized as needed.
-    In modern containerized cloud infrastructures, accessing traditional Linux sensitive files 
-    might be less relevant, yet it remains valuable for baseline detections. While we provide additional 
-    rules for SSH or cloud vendor-specific credentials, you can significantly enhance your security 
+    In modern containerized cloud infrastructures, accessing traditional Linux sensitive files
+    might be less relevant, yet it remains valuable for baseline detections. While we provide additional
+    rules for SSH or cloud vendor-specific credentials, you can significantly enhance your security
     program by crafting custom rules for critical application credentials unique to your environment.
   condition: >
     open_read
@@ -433,6 +433,9 @@
 
 - macro: postgres_running_wal_e
   condition: (proc.pname=postgres and (proc.cmdline startswith "sh -c envdir /etc/wal-e.d/env /usr/local/bin/wal-e" or proc.cmdline startswith "sh -c envdir \"/run/etc/wal-e.d/env\" wal-g wal-push"))
+
+- macro: postgres_running_cnpg
+  condition: (proc.pname=postgres and (proc.cmdline startswith "sh -c /controller/manager wal-archive"))
 
 - macro: redis_running_prepost_scripts
   condition: (proc.aname[2]=redis-server and (proc.cmdline contains "redis-server.post-up.d" or proc.cmdline contains "redis-server.pre-up.d"))
@@ -559,15 +562,15 @@
 # (the ./run and ./finish scripts), but the processes runsv can not
 # spawn shells.
 - rule: Run shell untrusted
-  desc: > 
-    An attempt to spawn a shell below a non-shell application. The non-shell applications that are monitored are 
-    defined in the protected_shell_spawner macro, with protected_shell_spawning_binaries being the list you can 
-    easily customize. For Java parent processes, please note that Java often has a custom process name. Therefore, 
-    rely more on proc.exe to define Java applications. This rule can be noisier, as you can see in the exhaustive 
-    existing tuning. However, given it is very behavior-driven and broad, it is universally relevant to catch 
-    general Remote Code Execution (RCE). Allocate time to tune this rule for your use cases and reduce noise. 
-    Tuning suggestions include looking at the duration of the parent process (proc.ppid.duration) to define your 
-    long-running app processes. Checking for newer fields such as proc.vpgid.name and proc.vpgid.exe instead of the 
+  desc: >
+    An attempt to spawn a shell below a non-shell application. The non-shell applications that are monitored are
+    defined in the protected_shell_spawner macro, with protected_shell_spawning_binaries being the list you can
+    easily customize. For Java parent processes, please note that Java often has a custom process name. Therefore,
+    rely more on proc.exe to define Java applications. This rule can be noisier, as you can see in the exhaustive
+    existing tuning. However, given it is very behavior-driven and broad, it is universally relevant to catch
+    general Remote Code Execution (RCE). Allocate time to tune this rule for your use cases and reduce noise.
+    Tuning suggestions include looking at the duration of the parent process (proc.ppid.duration) to define your
+    long-running app processes. Checking for newer fields such as proc.vpgid.name and proc.vpgid.exe instead of the
     direct parent process being a non-shell application could make the rule more robust.
   condition: >
     spawned_process
@@ -594,6 +597,7 @@
     and not python_mesos_marathon_scripting
     and not splunk_running_forwarder
     and not postgres_running_wal_e
+    and not postgres_running_cnpg
     and not redis_running_prepost_scripts
     and not rabbitmq_running_scripts
     and not rabbitmqctl_running_scripts
@@ -683,19 +687,19 @@
 #  output: "Interactive root | %user.name %proc.name %evt.type %evt.args %fd.name"
 #  priority: WARNING
 - rule: System user interactive
-  desc: > 
+  desc: >
     System (e.g. non-login) users spawning new processes. Can add custom service users (e.g. apache or mysqld).
-    'Interactive' is defined as new processes as descendants of an ssh session or login process. Consider further tuning 
-    by only looking at processes in a terminal / tty (proc.tty != 0). A newer field proc.is_vpgid_leader could be of help 
-    to distinguish if the process was "directly" executed, for instance, in a tty, or executed as a descendant process in the 
-    same process group, which, for example, is the case when subprocesses are spawned from a script. Consider this rule 
-    as a great template rule to monitor interactive accesses to your systems more broadly. However, such a custom rule would be 
-    unique to your environment. The rule "Terminal shell in container" that fires when using "kubectl exec" is more Kubernetes 
+    'Interactive' is defined as new processes as descendants of an ssh session or login process. Consider further tuning
+    by only looking at processes in a terminal / tty (proc.tty != 0). A newer field proc.is_vpgid_leader could be of help
+    to distinguish if the process was "directly" executed, for instance, in a tty, or executed as a descendant process in the
+    same process group, which, for example, is the case when subprocesses are spawned from a script. Consider this rule
+    as a great template rule to monitor interactive accesses to your systems more broadly. However, such a custom rule would be
+    unique to your environment. The rule "Terminal shell in container" that fires when using "kubectl exec" is more Kubernetes
     relevant, whereas this one could be more interesting for the underlying host.
-  condition: > 
-    spawned_process 
-    and system_users 
-    and interactive 
+  condition: >
+    spawned_process
+    and system_users
+    and interactive
     and not user_known_system_user_login
   output: System user ran an interactive command | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: INFO
@@ -708,15 +712,15 @@
 
 - rule: Terminal shell in container
   desc: >
-    A shell was used as the entrypoint/exec point into a container with an attached terminal. Parent process may have 
-    legitimately already exited and be null (read container_entrypoint macro). Common when using "kubectl exec" in Kubernetes. 
-    Correlate with k8saudit exec logs if possible to find user or serviceaccount token used (fuzzy correlation by namespace and pod name). 
-    Rather than considering it a standalone rule, it may be best used as generic auditing rule while examining other triggered 
+    A shell was used as the entrypoint/exec point into a container with an attached terminal. Parent process may have
+    legitimately already exited and be null (read container_entrypoint macro). Common when using "kubectl exec" in Kubernetes.
+    Correlate with k8saudit exec logs if possible to find user or serviceaccount token used (fuzzy correlation by namespace and pod name).
+    Rather than considering it a standalone rule, it may be best used as generic auditing rule while examining other triggered
     rules in this container/tty.
   condition: >
-    spawned_process 
+    spawned_process
     and container
-    and shell_procs 
+    and shell_procs
     and proc.tty != 0
     and container_entrypoint
     and not user_expected_terminal_shell_in_container_conditions
@@ -796,13 +800,18 @@
     (container.image.repository in (gcr.io/google_containers/hyperkube-amd64,
      gcr.io/google_containers/kube2sky,
      docker.io/sysdig/sysdig, sysdig/sysdig,
+     docker.io/kiwigrid/k8s-sidecar, quay.io/kiwigrid/k8s-sidecar, ghcr.io/kiwigrid/k8s-sidecar,
+     registry.k8s.io/sig-storage/snapshot-controller,
      fluent/fluentd-kubernetes-daemonset, prom/prometheus,
      falco_containers,
      falco_no_driver_containers,
      ibm_cloud_containers,
-     velero/velero,
+     docker.io/velero/velero, velero/velero,
+     registry.k8s.io/sig-storage/nfs-subdir-external-provisioner,
+     quay.io/metallb/controller, quay.io/metallb/speaker,
      quay.io/jetstack/cert-manager-cainjector, weaveworks/kured,
      quay.io/prometheus-operator/prometheus-operator,
+     quay.io/prometheus/prometheus,
      registry.k8s.io/ingress-nginx/kube-webhook-certgen, quay.io/spotahome/redis-operator,
      registry.opensource.zalan.do/acid/postgres-operator, registry.opensource.zalan.do/acid/postgres-operator-ui,
      rabbitmqoperator/cluster-operator, quay.io/kubecost1/kubecost-cost-model,
@@ -817,36 +826,36 @@
 
 - rule: Contact K8S API Server From Container
   desc: >
-    Detect attempts to communicate with the K8S API Server from a container by non-profiled users. Kubernetes APIs play a 
-    pivotal role in configuring the cluster management lifecycle. Detecting potential unauthorized access to the API server 
-    is of utmost importance. Audit your complete infrastructure and pinpoint any potential machines from which the API server 
-    might be accessible based on your network layout. If Falco can't operate on all these machines, consider analyzing the 
-    Kubernetes audit logs (typically drained from control nodes, and Falco offers a k8saudit plugin) as an additional data 
+    Detect attempts to communicate with the K8S API Server from a container by non-profiled users. Kubernetes APIs play a
+    pivotal role in configuring the cluster management lifecycle. Detecting potential unauthorized access to the API server
+    is of utmost importance. Audit your complete infrastructure and pinpoint any potential machines from which the API server
+    might be accessible based on your network layout. If Falco can't operate on all these machines, consider analyzing the
+    Kubernetes audit logs (typically drained from control nodes, and Falco offers a k8saudit plugin) as an additional data
     source for detections within the control plane.
   condition: >
-    evt.type=connect 
-    and (fd.typechar=4 or fd.typechar=6) 
-    and container 
-    and k8s_api_server 
-    and not k8s_containers 
+    evt.type=connect
+    and (fd.typechar=4 or fd.typechar=6)
+    and container
+    and k8s_api_server
+    and not k8s_containers
     and not user_known_contact_k8s_api_server_activities
   output: Unexpected connection to K8s API Server from container | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
   tags: [maturity_stable, container, network, k8s, mitre_discovery, T1565]
 
 - rule: Netcat Remote Code Execution in Container
-  desc: > 
-    Netcat Program runs inside container that allows remote code execution and may be utilized 
+  desc: >
+    Netcat Program runs inside container that allows remote code execution and may be utilized
     as a part of a variety of reverse shell payload https://github.com/swisskyrepo/PayloadsAllTheThings/.
     These programs are of higher relevance as they are commonly installed on UNIX-like operating systems.
-    Can fire in combination with the "Redirect STDOUT/STDIN to Network Connection in Container" 
+    Can fire in combination with the "Redirect STDOUT/STDIN to Network Connection in Container"
     rule as it utilizes a different evt.type.
   condition: >
-    spawned_process 
-    and container 
-    and ((proc.name = "nc" and (proc.cmdline contains " -e" or 
+    spawned_process
+    and container
+    and ((proc.name = "nc" and (proc.cmdline contains " -e" or
                                 proc.cmdline contains " -c")) or
-         (proc.name = "ncat" and (proc.args contains "--sh-exec" or 
+         (proc.name = "ncat" and (proc.args contains "--sh-exec" or
                                   proc.args contains "--exec" or proc.args contains "-e " or
                                   proc.args contains "-c " or proc.args contains "--lua-exec"))
          )
@@ -879,16 +888,16 @@
 
 - rule: Search Private Keys or Passwords
   desc: >
-    Detect attempts to search for private keys or passwords using the grep or find command. This is often seen with 
-    unsophisticated attackers, as there are many ways to access files using bash built-ins that could go unnoticed. 
-    Regardless, this serves as a solid baseline detection that can be tailored to cover these gaps while maintaining 
+    Detect attempts to search for private keys or passwords using the grep or find command. This is often seen with
+    unsophisticated attackers, as there are many ways to access files using bash built-ins that could go unnoticed.
+    Regardless, this serves as a solid baseline detection that can be tailored to cover these gaps while maintaining
     an acceptable noise level.
   condition: >
-    spawned_process 
+    spawned_process
     and ((grep_commands and private_key_or_password) or
-         (proc.name = "find" and (proc.args contains "id_rsa" or 
-                                  proc.args contains "id_dsa" or 
-                                  proc.args contains "id_ed25519" or 
+         (proc.name = "find" and (proc.args contains "id_rsa" or
+                                  proc.args contains "id_dsa" or
+                                  proc.args contains "id_ed25519" or
                                   proc.args contains "id_ecdsa"
           )
         ))
@@ -923,16 +932,16 @@
                                         fd.name startswith "/var/lib/rancher/k3s/agent/containerd/tmpmounts/"))
 
 - rule: Clear Log Activities
-  desc: > 
-    Detect clearing of critical access log files, typically done to erase evidence that could be attributed to an adversary's 
-    actions. To effectively customize and operationalize this detection, check for potentially missing log file destinations 
+  desc: >
+    Detect clearing of critical access log files, typically done to erase evidence that could be attributed to an adversary's
+    actions. To effectively customize and operationalize this detection, check for potentially missing log file destinations
     relevant to your environment, and adjust the profiled containers you wish not to be alerted on.
   condition: >
-    open_write 
-    and access_log_files 
-    and evt.arg.flags contains "O_TRUNC" 
+    open_write
+    and access_log_files
+    and evt.arg.flags contains "O_TRUNC"
     and not containerd_activities
-    and not trusted_logging_images 
+    and not trusted_logging_images
     and not allowed_clear_log_files
   output: Log files were tampered | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority:
@@ -949,12 +958,12 @@
   condition: (never_true)
 
 - rule: Remove Bulk Data from Disk
-  desc: > 
-    Detect a process running to clear bulk data from disk with the intention to destroy data, possibly interrupting availability 
+  desc: >
+    Detect a process running to clear bulk data from disk with the intention to destroy data, possibly interrupting availability
     to systems. Profile your environment and use user_known_remove_data_activities to tune this rule.
-  condition: > 
-    spawned_process 
-    and clear_data_procs 
+  condition: >
+    spawned_process
+    and clear_data_procs
     and not user_known_remove_data_activities
   output: Bulk data has been removed from disk | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority:
@@ -962,24 +971,24 @@
   tags: [maturity_stable, host, container, process, filesystem, mitre_impact, T1485]
 
 - rule: Create Symlink Over Sensitive Files
-  desc: > 
-    Detect symlinks created over a curated list of sensitive files or subdirectories under /etc/ or 
-    root directories. Can be customized as needed. Refer to further and equivalent guidance within the 
+  desc: >
+    Detect symlinks created over a curated list of sensitive files or subdirectories under /etc/ or
+    root directories. Can be customized as needed. Refer to further and equivalent guidance within the
     rule "Read sensitive file untrusted".
   condition: >
-    create_symlink 
+    create_symlink
     and (evt.arg.target in (sensitive_file_names) or evt.arg.target in (sensitive_directory_names))
   output: Symlinks created over sensitive files | target=%evt.arg.target linkpath=%evt.arg.linkpath evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_stable, host, container, filesystem, mitre_credential_access, T1555]
 
 - rule: Create Hardlink Over Sensitive Files
-  desc: > 
-    Detect hardlink created over a curated list of sensitive files or subdirectories under /etc/ or 
-    root directories. Can be customized as needed. Refer to further and equivalent guidance within the 
+  desc: >
+    Detect hardlink created over a curated list of sensitive files or subdirectories under /etc/ or
+    root directories. Can be customized as needed. Refer to further and equivalent guidance within the
     rule "Read sensitive file untrusted".
   condition: >
-    create_hardlink 
+    create_hardlink
     and (evt.arg.oldpath in (sensitive_file_names))
   output: Hardlinks created over sensitive files | target=%evt.arg.oldpath linkpath=%evt.arg.newpath evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
@@ -989,14 +998,14 @@
   items: []
 
 - rule: Packet socket created in container
-  desc: > 
-    Detect new packet socket at the device driver (OSI Layer 2) level in a container. Packet socket could be used for ARP Spoofing 
+  desc: >
+    Detect new packet socket at the device driver (OSI Layer 2) level in a container. Packet socket could be used for ARP Spoofing
     and privilege escalation (CVE-2020-14386) by an attacker. Noise can be reduced by using the user_known_packet_socket_binaries
     template list.
-  condition: > 
+  condition: >
     evt.type=socket
-    and container 
-    and evt.arg.domain contains AF_PACKET 
+    and container
+    and evt.arg.domain contains AF_PACKET
     and not proc.name in (user_known_packet_socket_binaries)
   output: Packet socket was created in a container | socket_info=%evt.args connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -1019,17 +1028,17 @@
 # relying on the rule triggering when any of std{out,err,in} are redirected.
 - rule: Redirect STDOUT/STDIN to Network Connection in Container
   desc: >
-    Detect redirection of stdout/stdin to a network connection within a container, achieved by utilizing a 
-    variant of the dup syscall (potential reverse shell or remote code execution 
-    https://github.com/swisskyrepo/PayloadsAllTheThings/). This detection is behavior-based and may generate 
-    noise in the system, and can be adjusted using the user_known_stand_streams_redirect_activities template 
-    macro. Tuning can be performed similarly to existing detections based on process lineage or container images, 
+    Detect redirection of stdout/stdin to a network connection within a container, achieved by utilizing a
+    variant of the dup syscall (potential reverse shell or remote code execution
+    https://github.com/swisskyrepo/PayloadsAllTheThings/). This detection is behavior-based and may generate
+    noise in the system, and can be adjusted using the user_known_stand_streams_redirect_activities template
+    macro. Tuning can be performed similarly to existing detections based on process lineage or container images,
     and/or it can be limited to interactive tty (tty != 0).
-  condition: > 
-    dup 
-    and container 
-    and evt.rawres in (0, 1, 2) 
-    and fd.type in ("ipv4", "ipv6") 
+  condition: >
+    dup
+    and container
+    and evt.rawres in (0, 1, 2)
+    and fd.type in ("ipv4", "ipv6")
     and not user_known_stand_streams_redirect_activities
   output: Redirect stdout/stdin to network connection | gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] fd.sip=%fd.sip connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -1043,21 +1052,21 @@
     Inject Linux Kernel Modules from containers using insmod or modprobe with init_module and finit_module
     syscalls, given the precondition of sys_module effective capabilities. Profile the environment and consider
     allowed_container_images_loading_kernel_module to reduce noise and account for legitimate cases.
-  condition: > 
-    kernel_module_load 
-    and container 
-    and thread.cap_effective icontains sys_module 
+  condition: >
+    kernel_module_load
+    and container
+    and thread.cap_effective icontains sys_module
     and not container.image.repository in (allowed_container_images_loading_kernel_module)
   output: Linux Kernel Module injection from container | parent_exepath=%proc.pexepath gparent=%proc.aname[2] gexepath=%proc.aexepath[2] module=%proc.args res=%evt.res evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_stable, host, container, process, mitre_persistence, TA0003]
 
 - rule: Debugfs Launched in Privileged Container
-  desc: > 
-    Detect file system debugger debugfs launched inside a privileged container which might lead to container escape. 
+  desc: >
+    Detect file system debugger debugfs launched inside a privileged container which might lead to container escape.
     This rule has a more narrow scope.
   condition: >
-    spawned_process 
+    spawned_process
     and container
     and container.privileged=true
     and proc.name=debugfs
@@ -1066,15 +1075,15 @@
   tags: [maturity_stable, container, cis, process, mitre_privilege_escalation, T1611]
 
 - rule: Detect release_agent File Container Escapes
-  desc: > 
-    Detect an attempt to exploit a container escape using release_agent file. 
-    By running a container with certains capabilities, a privileged user can modify 
+  desc: >
+    Detect an attempt to exploit a container escape using release_agent file.
+    By running a container with certains capabilities, a privileged user can modify
     release_agent file and escape from the container.
   condition: >
-    open_write 
-    and container 
-    and fd.name endswith release_agent 
-    and (user.uid=0 or thread.cap_effective contains CAP_DAC_OVERRIDE) 
+    open_write
+    and container
+    and fd.name endswith release_agent
+    and (user.uid=0 or thread.cap_effective contains CAP_DAC_OVERRIDE)
     and thread.cap_effective contains CAP_SYS_ADMIN
   output: Detect an attempt to exploit a container escape using release_agent file | file=%fd.name cap_effective=%thread.cap_effective evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: CRITICAL
@@ -1099,27 +1108,27 @@
     evt.arg.request contains PTRACE_SETREGS))
 
 - rule: PTRACE attached to process
-  desc: > 
-    Detect an attempt to inject potentially malicious code into a process using PTRACE in order to evade 
-    process-based defenses or elevate privileges. Common anti-patterns are debuggers. Additionally, profiling 
-    your environment via the known_ptrace_procs template macro can reduce noise. 
+  desc: >
+    Detect an attempt to inject potentially malicious code into a process using PTRACE in order to evade
+    process-based defenses or elevate privileges. Common anti-patterns are debuggers. Additionally, profiling
+    your environment via the known_ptrace_procs template macro can reduce noise.
     A successful ptrace syscall generates multiple logs at once.
-  condition: > 
-    ptrace_attach_or_injection 
-    and proc_name_exists 
+  condition: >
+    ptrace_attach_or_injection
+    and proc_name_exists
     and not known_ptrace_procs
   output: Detected ptrace PTRACE_ATTACH attempt | proc_pcmdline=%proc.pcmdline evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_stable, host, container, process, mitre_privilege_escalation, T1055.008]
-  
+
 - rule: PTRACE anti-debug attempt
-  desc: > 
-    Detect usage of the PTRACE system call with the PTRACE_TRACEME argument, indicating a program actively attempting 
+  desc: >
+    Detect usage of the PTRACE system call with the PTRACE_TRACEME argument, indicating a program actively attempting
     to avoid debuggers attaching to the process. This behavior is typically indicative of malware activity.
     Read more about PTRACE in the "PTRACE attached to process" rule.
-  condition: > 
-    evt.type=ptrace 
-    and evt.arg.request contains PTRACE_TRACEME 
+  condition: >
+    evt.type=ptrace
+    and evt.arg.request contains PTRACE_TRACEME
     and proc_name_exists
   output: Detected potential PTRACE_TRACEME anti-debug attempt | proc_pcmdline=%proc.pcmdline evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -1135,12 +1144,12 @@
 
 - rule: Find AWS Credentials
   desc: >
-    Detect attempts to search for private keys or passwords using the grep or find command, particularly targeting standard 
-    AWS credential locations. This is often seen with unsophisticated attackers, as there are many ways to access files 
-    using bash built-ins that could go unnoticed. Regardless, this serves as a solid baseline detection that can be tailored 
+    Detect attempts to search for private keys or passwords using the grep or find command, particularly targeting standard
+    AWS credential locations. This is often seen with unsophisticated attackers, as there are many ways to access files
+    using bash built-ins that could go unnoticed. Regardless, this serves as a solid baseline detection that can be tailored
     to cover these gaps while maintaining an acceptable noise level. This rule complements the rule "Search Private Keys or Passwords".
   condition: >
-    spawned_process 
+    spawned_process
     and ((grep_commands and private_aws_credentials) or
          (proc.name = "find" and proc.args endswith ".aws/credentials"))
   output: Detected AWS credentials search activity | proc_pcmdline=%proc.pcmdline proc_cwd=%proc.cwd group_gid=%group.gid group_name=%group.name user_loginname=%user.loginname evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
@@ -1148,19 +1157,19 @@
   tags: [maturity_stable, host, container, process, aws, mitre_credential_access, T1552]
 
 - rule: Execution from /dev/shm
-  desc: > 
-    This rule detects file execution in the /dev/shm directory, a tactic often used by threat actors to store their readable, writable, and 
-    occasionally executable files. /dev/shm acts as a link to the host or other containers, creating vulnerabilities for their compromise 
-    as well. Notably, /dev/shm remains unchanged even after a container restart. Consider this rule alongside the newer 
+  desc: >
+    This rule detects file execution in the /dev/shm directory, a tactic often used by threat actors to store their readable, writable, and
+    occasionally executable files. /dev/shm acts as a link to the host or other containers, creating vulnerabilities for their compromise
+    as well. Notably, /dev/shm remains unchanged even after a container restart. Consider this rule alongside the newer
     "Drop and execute new binary in container" rule.
   condition: >
-    spawned_process 
-    and (proc.exe startswith "/dev/shm/" or 
-        (proc.cwd startswith "/dev/shm/" and proc.exe startswith "./" ) or 
-        (shell_procs and proc.args startswith "-c /dev/shm") or 
-        (shell_procs and proc.args startswith "-i /dev/shm") or 
-        (shell_procs and proc.args startswith "/dev/shm") or 
-        (proc.cwd startswith "/dev/shm/" and proc.args startswith "./" )) 
+    spawned_process
+    and (proc.exe startswith "/dev/shm/" or
+        (proc.cwd startswith "/dev/shm/" and proc.exe startswith "./" ) or
+        (shell_procs and proc.args startswith "-c /dev/shm") or
+        (shell_procs and proc.args startswith "-i /dev/shm") or
+        (shell_procs and proc.args startswith "/dev/shm") or
+        (proc.cwd startswith "/dev/shm/" and proc.args startswith "./" ))
     and not container.image.repository in (falco_privileged_images, trusted_images)
   output: File execution detected from /dev/shm | evt_res=%evt.res file=%fd.name proc_cwd=%proc.cwd proc_pcmdline=%proc.pcmdline user_loginname=%user.loginname group_gid=%group.gid group_name=%group.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
@@ -1178,15 +1187,15 @@
     Detect if an executable not belonging to the base image of a container is being executed.
     The drop and execute pattern can be observed very often after an attacker gained an initial foothold.
     is_exe_upper_layer filter field only applies for container runtimes that use overlayfs as union mount filesystem.
-    Adopters can utilize the provided template list known_drop_and_execute_containers containing allowed container 
+    Adopters can utilize the provided template list known_drop_and_execute_containers containing allowed container
     images known to execute binaries not included in their base image. Alternatively, you could exclude non-production
-    namespaces in Kubernetes settings by adjusting the rule further. This helps reduce noise by applying application 
-    and environment-specific knowledge to this rule. Common anti-patterns include administrators or SREs performing 
+    namespaces in Kubernetes settings by adjusting the rule further. This helps reduce noise by applying application
+    and environment-specific knowledge to this rule. Common anti-patterns include administrators or SREs performing
     ad-hoc debugging.
   condition: >
     spawned_process
     and container
-    and proc.is_exe_upper_layer=true 
+    and proc.is_exe_upper_layer=true
     and not container.image.repository in (known_drop_and_execute_containers)
     and not known_drop_and_execute_activities
   output: Executing binary not part of base image | proc_exe=%proc.exe proc_sname=%proc.sname gparent=%proc.aname[2] proc_exe_ino_ctime=%proc.exe_ino.ctime proc_exe_ino_mtime=%proc.exe_ino.mtime proc_exe_ino_ctime_duration_proc_start=%proc.exe_ino.ctime_duration_proc_start proc_cwd=%proc.cwd container_start_ts=%container.start_ts evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
@@ -1213,18 +1222,18 @@
   condition: (fd.sport in (ssh_non_standard_ports))
 
 - rule: Disallowed SSH Connection Non Standard Port
-  desc: > 
-    Detect any new outbound SSH connection from the host or container using a non-standard port. This rule holds the potential 
-    to detect a family of reverse shells that cause the victim machine to connect back out over SSH, with STDIN piped from 
-    the SSH connection to a shell's STDIN, and STDOUT of the shell piped back over SSH. Such an attack can be launched against 
-    any app that is vulnerable to command injection. The upstream rule only covers a limited selection of non-standard ports. 
-    We suggest adding more ports, potentially incorporating ranges based on your environment's knowledge and custom SSH port 
-    configurations. This rule can complement the "Redirect STDOUT/STDIN to Network Connection in Container" or 
+  desc: >
+    Detect any new outbound SSH connection from the host or container using a non-standard port. This rule holds the potential
+    to detect a family of reverse shells that cause the victim machine to connect back out over SSH, with STDIN piped from
+    the SSH connection to a shell's STDIN, and STDOUT of the shell piped back over SSH. Such an attack can be launched against
+    any app that is vulnerable to command injection. The upstream rule only covers a limited selection of non-standard ports.
+    We suggest adding more ports, potentially incorporating ranges based on your environment's knowledge and custom SSH port
+    configurations. This rule can complement the "Redirect STDOUT/STDIN to Network Connection in Container" or
     "Disallowed SSH Connection" rule.
-  condition: > 
-    outbound 
-    and proc.exe endswith ssh 
-    and fd.l4proto=tcp 
+  condition: >
+    outbound
+    and proc.exe endswith ssh
+    and fd.l4proto=tcp
     and ssh_non_standard_ports_network
   output: Disallowed SSH Connection | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -1234,7 +1243,7 @@
   items: [runc]
 
 - macro: known_memfd_execution_processes
-  condition: > 
+  condition: >
     (proc.name in (known_memfd_execution_binaries))
     or (proc.pname in (known_memfd_execution_binaries))
     or (proc.exepath = "memfd:runc_cloned:/proc/self/exe")
@@ -1243,9 +1252,9 @@
 
 - rule: Fileless execution via memfd_create
   desc: >
-    Detect if a binary is executed from memory using the memfd_create technique. This is a well-known defense evasion 
-    technique for executing malware on a victim machine without storing the payload on disk and to avoid leaving traces 
-    about what has been executed. Adopters can whitelist processes that may use fileless execution for benign purposes 
+    Detect if a binary is executed from memory using the memfd_create technique. This is a well-known defense evasion
+    technique for executing malware on a victim machine without storing the payload on disk and to avoid leaving traces
+    about what has been executed. Adopters can whitelist processes that may use fileless execution for benign purposes
     by adding items to the list known_memfd_execution_processes.
   condition: >
     spawned_process
