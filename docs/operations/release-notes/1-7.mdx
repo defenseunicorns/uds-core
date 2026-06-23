@@ -1,0 +1,34 @@
+---
+title: UDS Core 1.7
+description: UDS Core 1.7 release notes covering the new optional Envoy Gateway component and consumer-extensible annotations on Package CR expose entries.
+sidebar:
+  order: 3.988
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.7 adds Envoy Gateway as a new optional component in the standard package, giving you a managed Envoy Gateway controller and a ready-to-use `GatewayClass`. It also introduces a consumer-extensible `annotations` map on `expose` entries in the `Package` CR, enabling richer per-endpoint integrations such as Portal visibility and title customization.
+
+### Notable features
+
+- **Envoy Gateway component:** UDS Core ships a new optional Envoy Gateway component in `packages/standard`. The component deploys the Envoy Gateway controller v1.8.0 in the `envoy-gateway-system` namespace and creates a `GatewayClass` named `envoy-gateway`. The component is available in the upstream, registry1, and unicorn flavors, and you opt in through `optionalComponents` in your bundle configuration. On-demand `Gateway` lifecycle management (handled by the Pepr operator) and `UDPRoute` generation are scoped to future work ([#2685](https://github.com/defenseunicorns/uds-core/pull/2685)).
+- **Package CR expose annotations:** `expose` entries in the `Package` CR now accept an `annotations` map for consumer-extensible per-endpoint metadata. Keys should be namespaced (for example, `portal.uds.dev/visible` and `uds.dev/title`). This enables richer integration points, such as Portal visibility and title customization, without introducing separate mechanisms ([#2757](https://github.com/defenseunicorns/uds-core/pull/2757)).
+
+### Dependency updates
+
+| Package                           | Previous | Updated                                                                                                  |
+| --------------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| Falco                             | 0.43.1   | [0.44.1](https://github.com/falcosecurity/falco/releases/tag/0.44.1)                                     |
+| Falco Helm chart                  | 8.0.2    | [9.1.0](https://github.com/falcosecurity/charts/releases/tag/falco-9.1.0)                                |
+| kube-prometheus-stack Helm chart  | 86.1.0   | [87.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-87.0.1)  |
+| Loki Helm chart                   | 17.1.7   | [17.4.10](https://github.com/grafana-community/helm-charts/releases/tag/loki-17.4.10)                    |
+| Envoy Gateway                     | N/A      | [v1.8.0](https://github.com/envoyproxy/gateway/releases/tag/v1.8.0)                                      |
+
+The kube-prometheus-stack 87.0.1 update bumps Alertmanager from 0.32.1 to 0.33.0 and prometheus-operator from 0.91.0 to 0.92.0.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.7.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#170-2026-06-23) - full changelog
+- [Full diff (1.6.0...1.7.0)](https://github.com/defenseunicorns/uds-core/compare/v1.6.0...v1.7.0) - all changes between versions

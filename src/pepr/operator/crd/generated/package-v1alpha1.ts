@@ -292,7 +292,12 @@ export interface Expose {
    */
   advancedHTTP?: AdvancedHTTP;
   /**
-   * A description of this expose entry, this will become part of the generated resource name
+   * Consumer-extensible per-endpoint metadata. Keys should be namespaced (e.g.
+   * 'portal.uds.dev/visible', 'uds.dev/title', etc.).
+   */
+  annotations?: { [key: string]: string };
+  /**
+   * A description of this expose entry, this will become part of the VirtualService name
    */
   description?: string;
   /**
