@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "keycloak": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "insecureAdminPasswordGeneration": {
+          "type": "object",
+          "properties": { "enabled": { "type": "boolean" } }
+        },
+        "devMode": { "type": "boolean" },
+        "autoscaling": {
+          "type": "object",
+          "properties": { "enabled": { "type": "boolean" } }
+        },
+        "resources": { "type": "object" },
+        "postgresql": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "host": { "type": "string" },
+            "database": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        }
+      }
+    },
+    "authservice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "resources": { "type": "object" }
+      }
+    }
+  }
+}

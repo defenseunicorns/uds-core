@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -100,6 +100,11 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
+        values:
+          - sourcePath: .pepr.watcher.resources
+            targetPath: .watcher.resources
+          - sourcePath: .pepr.admission.resources
+            targetPath: .admission.resources
     actions:
       onDeploy:
         after:

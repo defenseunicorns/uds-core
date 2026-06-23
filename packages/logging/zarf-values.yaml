@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Logging package.
+# Zarf deep-merges values onto the chart defaults, so the storage object is left as an empty
+# no-op ({}) to preserve the chart default while still allowing overrides (e.g.
+# loki.loki.storage.bucketNames.chunks or loki.loki.storage.s3.endpoint via -f).
+# Replica counts are scalars, so they must repeat the upstream Loki chart default (3, not set
+# in src/loki/values/values.yaml). Re-verify on chart bumps (run `uds run values-verify:parity`).
+loki:
+  loki:
+    storage: {}
+  write:
+    replicas: 3
+  read:
+    replicas: 3
+  backend:
+    replicas: 3
