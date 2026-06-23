@@ -9,6 +9,7 @@
       "properties": {
         "postgresql": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "host": { "type": "string" },
             "database": { "type": "string" },
@@ -26,6 +27,7 @@
       "properties": {
         "autoscaling": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         }
       }

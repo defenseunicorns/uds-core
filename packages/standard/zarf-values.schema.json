@@ -32,6 +32,7 @@
       "properties": {
         "tls": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "cert": { "type": "string" },
             "key": { "type": "string" },
@@ -46,6 +47,7 @@
       "properties": {
         "tls": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "cert": { "type": "string" },
             "key": { "type": "string" },
@@ -67,16 +69,19 @@
       "properties": {
         "insecureAdminPasswordGeneration": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         },
         "devMode": { "type": "boolean" },
         "autoscaling": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         },
         "resources": { "type": "object" },
         "postgresql": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "username": { "type": "string" },
             "password": { "type": "string" },
@@ -127,6 +132,7 @@
       "properties": {
         "postgresql": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "host": { "type": "string" },
             "database": { "type": "string" },
@@ -144,6 +150,7 @@
       "properties": {
         "autoscaling": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         }
       }

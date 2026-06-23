@@ -44,6 +44,18 @@ tasks:
             > /tmp/zv-parity-before.yaml
       - description: "Redeploy passing the default values file explicitly"
         cmd: uds zarf package deploy "${{ .variables.PACKAGE }}" --values "${{ .variables.VALUES_FILE }}" --confirm
+      - description: "Wait for rollout to complete before capturing state"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
       - description: "Capture again and diff (expect PARITY OK)"
         shell:
           darwin: bash
@@ -70,6 +82,12 @@ tasks:
         cmd: |
           set -euo pipefail
           uds deploy "${{ .variables.BUNDLE }}" --set ${{ .variables.VAR_SET }} --confirm
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
           uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
             | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
             > /tmp/zv-equiv-a.yaml
@@ -80,6 +98,12 @@ tasks:
         cmd: |
           set -euo pipefail
           uds zarf package deploy "${{ .variables.PACKAGE }}" --values "${{ .variables.VALUES_FILE }}" --confirm
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
           uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
             | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
             > /tmp/zv-equiv-b.yaml

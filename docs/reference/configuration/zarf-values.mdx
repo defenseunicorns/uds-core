@@ -69,6 +69,9 @@ This package exposes Keycloak and authservice settings. The `keycloak` key maps 
 | `authservice.replicaCount` | integer | `1` | Number of authservice replicas |
 | `authservice.resources` | object | `{}` | Resource requests and limits for authservice |
 
+> [!WARNING]
+> External PostgreSQL requires `keycloak.devMode: false`. The Keycloak chart fails at deploy time when any `postgresql.*` field is non-empty and `devMode` is `true` (the chart default). Always set `keycloak.devMode: false` alongside any `keycloak.postgresql.*` override.
+
 > [!NOTE]
 > `keycloak.domain` and `keycloak.adminDomain` are not exposed as values; they remain driven by the `DOMAIN` and `ADMIN_DOMAIN` Zarf variables.
 
@@ -96,6 +99,9 @@ This package includes the full Prometheus/Grafana observability stack (kube-prom
 | `uds-grafana-config.postgresql.ssl_mode` | string | `require` | PostgreSQL SSL mode |
 | `uds-grafana-config.postgresql.port` | integer | `5432` | External PostgreSQL port |
 | `grafana.autoscaling.enabled` | boolean | `false` | Enable Grafana HA (horizontal autoscaling) |
+
+> [!WARNING]
+> External PostgreSQL configuration requires `host`, `database`, `user`, `password`, and `port` to be set together. Setting any one of `host`, `database`, `user`, or `password` without the others causes a hard failure at deploy time.
 
 > [!NOTE]
 > `uds-grafana-config.domain` and `uds-grafana-config.adminDomain` are not exposed as values; they remain driven by the `DOMAIN` and `ADMIN_DOMAIN` Zarf variables.

@@ -9,16 +9,19 @@
       "properties": {
         "insecureAdminPasswordGeneration": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         },
         "devMode": { "type": "boolean" },
         "autoscaling": {
           "type": "object",
+          "additionalProperties": false,
           "properties": { "enabled": { "type": "boolean" } }
         },
         "resources": { "type": "object" },
         "postgresql": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "username": { "type": "string" },
             "password": { "type": "string" },

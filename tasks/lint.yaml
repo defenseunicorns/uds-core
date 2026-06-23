@@ -63,10 +63,22 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          set -e
+          set -euo pipefail
           for pkg in base identity-authorization logging monitoring standard; do
             echo "Linting packages/${pkg}"
             uds zarf dev lint "packages/${pkg}" --flavor upstream
+          done
+      - description: "Validate default values files against their schemas"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for pkg in base identity-authorization logging monitoring standard; do
+            echo "Validating packages/${pkg}/zarf-values.yaml"
+            uvx check-jsonschema \
+              --schemafile "packages/${pkg}/zarf-values.schema.json" \
+              "packages/${pkg}/zarf-values.yaml"
           done
 
   - name: helm-unittest

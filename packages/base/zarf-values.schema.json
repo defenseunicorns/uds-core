@@ -32,6 +32,7 @@
       "properties": {
         "tls": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "cert": { "type": "string" },
             "key": { "type": "string" },
@@ -46,6 +47,7 @@
       "properties": {
         "tls": {
           "type": "object",
+          "additionalProperties": false,
           "properties": {
             "cert": { "type": "string" },
             "key": { "type": "string" },
