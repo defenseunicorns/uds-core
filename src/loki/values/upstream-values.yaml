@@ -23,4 +23,4 @@ sidecar:
   image:
     registry: docker.io
     repository: kiwigrid/k8s-sidecar
-    tag: 2.7.3
+    tag: 2.7.4
