@@ -57,7 +57,7 @@ tasks:
           fi
 
           # renovate: datasource=github-tags depName=falcosecurity/rules extractVersion=^falco-incubating-rules-(?<version>\d+\.\d+\.\d+)$
-          INCUBATING_RULES_TAG="6.0.0"
+          INCUBATING_RULES_TAG="6.0.1"
           if ! curl -sSfL --connect-timeout 30 --max-time 60 \
                https://raw.githubusercontent.com/falcosecurity/rules/falco-incubating-rules-${INCUBATING_RULES_TAG}/rules/falco-incubating_rules.yaml \
                -o "${RULES_DIR}/incubating-rules.yaml"; then
