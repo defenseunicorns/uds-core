@@ -29,8 +29,7 @@ resource "local_sensitive_file" "uds_config" {
         "keycloak_db_host" : element(split(":", module.dbs["keycloak"].db_instance_endpoint), 0),
         "keycloak_db_username" : var.databases["keycloak"].username,
         "keycloak_db_database" : var.databases["keycloak"].name,
-        "keycloak_db_password" : random_password.db_passwords["keycloak"].result,
-        "keycloak_kubernetes_issuer" : "https://${module.oidc_bucket.s3_bucket_bucket_regional_domain_name}"
+        "keycloak_db_password" : random_password.db_passwords["keycloak"].result
       }
       "init" : {
         # Disabled to prevent scaling timing issues with image pushes
