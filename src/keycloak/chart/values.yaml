@@ -423,7 +423,8 @@ env: []
 
 # Custom migrations setting for UDS Core internal usage only
 migrations:
-  # Deletes the generated truststore to enable recreating it by Keycloak
+  # Runs an init container that removes stale truststores (.p12, .bcfks) before each start.
+  # uds-config rebuilds them from scratch, ensuring a clean state on every pod start.
   deleteGeneratedTrustStore: false
   # Runs a privileged init container during `helm upgrade` to chown persistent volumes
   upgradePermissions: false
@@ -455,8 +456,14 @@ extraVolumeMounts:
     mountPath: /tmp/ca-certs
     readOnly: true
 
-# Additional truststore paths for Keycloak to scan for certificates
-# These paths will be added to the --truststore-paths startup argument
+# Paths scanned for CA certificates when building the FIPS BCFKS system truststore.
+# Keycloak's upstream TruststoreBuilder hardcodes a non-FIPS PKCS12 truststore, so the chart
+# does NOT pass --truststore-paths. Instead these paths are passed (as TRUSTSTORE_PATHS) to the
+# uds-config init container, which builds a BCFKS truststore at startup from the DoD CA certs
+# baked into the config image plus each entry below (which may be a file or a directory;
+# directories are scanned recursively), then points Keycloak at it via JAVA_OPTS_APPEND.
+# To add custom paths, mount them via extraVolumes/extraVolumeMounts (they are mounted into
+# the init container too) and list them here.
 truststorePaths:
   # Default path for UDS trust bundle certificates
   - "/tmp/ca-certs"

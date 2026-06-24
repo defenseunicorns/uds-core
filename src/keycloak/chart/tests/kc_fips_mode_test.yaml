@@ -29,3 +29,33 @@ tests:
       - equal:
           path: data.FIPS_ENABLED
           value: "dHJ1ZQ=="
+
+  - it: should always include BCFKS key store type in container args
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-key-store-type=bcfks"
+
+  - it: should always include BCFKS trust store type in container args
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--https-trust-store-type=bcfks"
+
+  - it: should delete generated truststores in migration init container
+    template: statefulset.yaml
+    set:
+      migrations:
+        deleteGeneratedTrustStore: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "keycloak-truststore\\.p12"
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "keycloak-truststore\\.bcfks"
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: uds-config
