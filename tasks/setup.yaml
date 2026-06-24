@@ -52,12 +52,14 @@ tasks:
           POSTGRES_VERSION=16
           # RDS (Postgres 16) supports only TLS 1.2 only
           TLS_VERSION=TLSv1.2
+          # The official postgres image runs scripts mounted into /docker-entrypoint-initdb.d after initdb and before final startup.
+          # See https://github.com/docker-library/docs/blob/master/postgres/README.md#initialization-scripts
           docker run -p 5432:5432 --network=k3d-uds --rm --name $CONTAINER_NAME \
-            -e POSTGRES_DB=keycloak \
             -e POSTGRES_USER=postgres \
             -e POSTGRES_PASSWORD='unicorn123!@#UN' \
             -v $(pwd)/build/certs/fixed.crt:/var/lib/postgresql/server.crt:ro \
             -v $(pwd)/build/certs/fixed.key:/var/lib/postgresql/server.key:ro \
+            -v $(pwd)/scripts/postgres-ha-setup.sql:/docker-entrypoint-initdb.d/postgres-ha-setup.sql:ro \
             -d postgres:$POSTGRES_VERSION \
             -c ssl=on \
             -c ssl_cert_file=/var/lib/postgresql/server.crt \
@@ -71,12 +73,18 @@ tasks:
             -c log_statement=all
       - description: "Wait for PostgreSQL to be ready"
         cmd: |
-          for i in {1..10}; do
-            docker exec postgres pg_isready -U postgres && break
+          for i in {1..30}; do
+            if docker logs postgres 2>&1 | grep -q "PostgreSQL init process complete; ready for start up." && \
+              docker exec postgres pg_isready -U postgres; then
+              break
+            fi
             sleep 1
+            if [ "$i" -eq 30 ]; then
+              docker logs postgres
+              echo "PostgreSQL failed to become ready"
+              exit 1
+            fi
           done
-      - description: "Add Grafana database to PostgreSQL"
-        cmd: docker exec postgres psql -U postgres -c "CREATE DATABASE grafana;"
 
   - name: ha-redis
     actions:
