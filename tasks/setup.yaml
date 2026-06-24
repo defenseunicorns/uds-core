@@ -78,12 +78,12 @@ tasks:
               docker exec postgres pg_isready -U postgres; then
               break
             fi
-            sleep 1
             if [ "$i" -eq 30 ]; then
               docker logs postgres
               echo "PostgreSQL failed to become ready"
               exit 1
             fi
+            sleep 1
           done
 
   - name: ha-redis
