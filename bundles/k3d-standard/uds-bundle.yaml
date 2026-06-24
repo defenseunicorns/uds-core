@@ -106,6 +106,17 @@ packages:
               path: backend.replicas
               description: "Loki backend replicas"
               default: "1"
+      istio-controlplane:
+        istiod:
+          variables:
+            - name: ISTIO_COMPLIANCE_POLICY
+              description: "Istio COMPLIANCE_POLICY (control plane + data plane). Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off."
+              path: "pilot.env.COMPLIANCE_POLICY"
+        ztunnel:
+          variables:
+            - name: ISTIO_COMPLIANCE_POLICY
+              description: "Istio COMPLIANCE_POLICY for the ztunnel L4 mTLS hop. Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off."
+              path: "env.COMPLIANCE_POLICY"
       istio-admin-gateway:
         uds-istio-config:
           variables:

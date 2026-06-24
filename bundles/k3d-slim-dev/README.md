@@ -27,6 +27,16 @@ The k3d uds-dev-stack provides:
 
 ### Package: core
 
+##### istio-controlplane (istiod)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `ISTIO_COMPLIANCE_POLICY` | Istio COMPLIANCE_POLICY (control plane + data plane). Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off. | pilot.env.COMPLIANCE_POLICY |
+
+##### istio-controlplane (ztunnel)
+| Variable | Description | Path |
+|----------|-------------|------|
+| `ISTIO_COMPLIANCE_POLICY` | Istio COMPLIANCE_POLICY for the ztunnel L4 mTLS hop. Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off. | env.COMPLIANCE_POLICY |
+
 ##### istio-admin-gateway (uds-istio-config)
 | Variable | Description | Path |
 |----------|-------------|------|

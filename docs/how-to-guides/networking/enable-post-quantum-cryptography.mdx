@@ -1,0 +1,125 @@
+---
+title: Enable post-quantum cryptography
+description: Force Istio's COMPLIANCE_POLICY to pqc across the UDS Core service mesh, then verify the tenant gateway and control plane enforce X25519MLKEM768 post-quantum key exchange.
+sidebar:
+  order: 2.012
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, the UDS Core service mesh will force post-quantum cryptography (PQC): every TLS and mTLS handshake negotiates the `X25519MLKEM768` hybrid key exchange group, and peers that cannot negotiate it are rejected. You will set the `ISTIO_COMPLIANCE_POLICY` toggle, deploy Core with it enabled, and verify enforcement at both the tenant gateway and the control plane.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster running UDS Core on the `upstream` (non-FIPS) flavor in ambient mode
+- OpenSSL 3.5 or newer for client-side verification (earlier versions do not recognize the `X25519MLKEM768` group name)
+- Familiarity with setting UDS bundle variables through `uds-config.yaml` or `--set`
+
+## Before you begin
+
+This toggle forces PQC mesh-wide; it does not prefer it. Any client or upstream that cannot negotiate `X25519MLKEM768` is rejected rather than downgraded, so egress to non-PQC hosts and ingress from non-PQC clients will fail. PQC is supported only on the `upstream` flavor: the FIPS flavors (`registry1`, `unicorn`) ship a ztunnel that cannot negotiate the hybrid group. For the full support matrix and behavior details, see [Post-quantum cryptography](/reference/configuration/post-quantum-cryptography/).
+
+## Steps
+
+<Steps>
+
+1. **Provide the `pqc` value**
+
+   The UDS Core standard and slim-dev bundles already declare `ISTIO_COMPLIANCE_POLICY` on the `istiod` and `ztunnel` charts, so you only supply the value. Add it to a config file, or skip this step and pass it as a deploy flag in the next step.
+
+   ```yaml title="uds-config.yaml"
+   variables:
+     core:
+       # Force post-quantum key exchange across the mesh
+       ISTIO_COMPLIANCE_POLICY: pqc
+   ```
+
+2. **Deploy UDS Core with PQC enabled**
+
+   Deploy the bundle with the value set, using either the config file or a deploy flag.
+
+   <Tabs>
+   <TabItem label="Config file">
+
+   ```bash
+   UDS_CONFIG=uds-config.yaml uds deploy <bundle> --confirm
+   ```
+
+   </TabItem>
+   <TabItem label="Deploy flag">
+
+   ```bash
+   uds deploy <bundle> --set ISTIO_COMPLIANCE_POLICY=pqc --confirm
+   ```
+
+   </TabItem>
+   </Tabs>
+
+   The control plane and ztunnel restart with `COMPLIANCE_POLICY=pqc`, and istiod propagates the policy to the Envoy gateways.
+
+</Steps>
+
+## Verification
+
+Confirm the policy reached both workloads, then confirm the gateway enforces it on the wire.
+
+First, check that `COMPLIANCE_POLICY=pqc` is set on the control plane and the ztunnel data plane:
+
+```bash
+uds zarf tools kubectl get deployment istiod -n istio-system \
+  -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="COMPLIANCE_POLICY")].value}'
+# Expected: pqc
+
+uds zarf tools kubectl get daemonset ztunnel -n istio-system \
+  -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="COMPLIANCE_POLICY")].value}'
+# Expected: pqc
+```
+
+Next, confirm a PQC-capable client negotiates the hybrid group at the tenant gateway. Replace `<app-host>` with an application host served by the tenant gateway:
+
+```bash
+echo | openssl s_client -connect <app-host>:443 -groups X25519MLKEM768 -tls1_3 2>/dev/null \
+  | grep -iE "negotiated tls1.3 group|server temp key"
+# Expected (OpenSSL 3.5+): Negotiated TLS1.3 group: X25519MLKEM768
+# (older OpenSSL prints: Server Temp Key: X25519MLKEM768, 1216 bits)
+```
+
+Finally, confirm force mode by checking that a classical-only client is rejected. This is what distinguishes force from prefer:
+
+```bash
+echo | openssl s_client -connect <app-host>:443 -groups X25519 -tls1_3 2>&1 \
+  | grep -iE "negotiated tls1.3 group|server temp key|handshake failure|alert"
+# Expected: handshake failure (tls alert handshake failure); the negotiated group is <NULL>, not a real group
+```
+
+> [!NOTE]
+> If the classical-only client still completes the handshake and reports a negotiated group, the gateway is behaving as prefer rather than force on that path. Treat that as a finding to investigate, not a reason to relax the check.
+
+## Troubleshooting
+
+### Problem: Browsers or API clients can no longer connect
+
+**Symptom:** Clients that previously worked now fail the TLS handshake against the tenant gateway.
+
+**Solution:** This is expected under force mode. Only PQC-capable clients (current Chrome and Firefox, and tools built with OpenSSL 3.5+) can connect. Upgrade the client to one that negotiates `X25519MLKEM768`, or leave `ISTIO_COMPLIANCE_POLICY` unset if you cannot require PQC-capable clients.
+
+### Problem: Mesh mTLS fails after enabling pqc on a FIPS flavor
+
+**Symptom:** Workloads cannot establish mTLS, and ztunnel logs show key exchange failures, after setting `pqc` on a `registry1` or `unicorn` deployment.
+
+**Solution:** PQC is not supported on FIPS flavors. Their ztunnel uses a vendored BoringSSL that predates `X25519MLKEM768`. Unset `ISTIO_COMPLIANCE_POLICY` and redeploy.
+
+### Problem: openssl reports an unknown group
+
+**Symptom:** `openssl s_client` fails with an error about the `X25519MLKEM768` group name.
+
+**Solution:** Use OpenSSL 3.5 or newer. Earlier versions do not know the hybrid group. Run the check from a container image that ships a recent OpenSSL if your local version is older.
+
+## Related documentation
+
+- [Post-quantum cryptography](/reference/configuration/post-quantum-cryptography/) - variable reference, support matrix, and force-mode behavior
+- [Configure TLS certificates for gateways](/how-to-guides/networking/configure-tls-certificates/) - related gateway TLS configuration
+- [Istio 1.27 change notes](https://istio.io/latest/news/releases/1.27.x/announcing-1.27/change-notes/) - upstream introduction of the `COMPLIANCE_POLICY` post-quantum option

@@ -254,3 +254,34 @@ tasks:
           ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
+
+  - name: pqc-tests
+    description: "Run the PQC (COMPLIANCE_POLICY=pqc) force-mode vitest spec. Requires PQC already forced on the cluster."
+    actions:
+      - dir: test/vitest
+        cmd: |
+          npm ci
+          PQC_TESTS=true npx vitest run istio-pqc.spec.ts
+
+  - name: uds-core-pqc
+    description: "Deploy UDS Core (upstream) with COMPLIANCE_POLICY=pqc forced and run the PQC force-mode scenario. Kept separate from the standard suite, which forced PQC would break."
+    actions:
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-pqc
+      - task: validate-packages
+      # Deploy the tenant demo app (demo-8080) via the test-apps package directly. The
+      # test-resources:create-deploy task verifies ingress with non-PQC curl/HTTP clients, which a
+      # force-PQC gateway rejects; the PQC-capable in-cluster probe in the spec does that checking
+      # instead, so deploy the package without the task-level verification waits.
+      - description: "Build the test-apps package"
+        cmd: ./uds zarf package create src/test --confirm --skip-sbom -a ${UDS_ARCH}
+      - description: "Deploy the tenant demo app (no PQC-incompatible verification waits)"
+        cmd: ./uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --no-progress
+      - description: "Wait for the tenant demo app and its Package to be ready"
+        cmd: |
+          ./uds zarf tools kubectl rollout status deployment/http-echo-multi-port -n test-tenant-app --timeout=180s
+          ./uds zarf tools kubectl wait packages.uds.dev/test-tenant-app -n test-tenant-app --for=condition=Ready --timeout=300s
+      - task: pqc-tests

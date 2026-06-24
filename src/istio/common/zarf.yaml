@@ -41,6 +41,9 @@ components:
           - name: PROXY_CPU_REQUEST
             description: "CPU requests for sidecars in cluster"
             path: "global.proxy.resources.requests.cpu"
+          - name: ISTIO_COMPLIANCE_POLICY
+            description: "Istio COMPLIANCE_POLICY (control plane + data plane). Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off."
+            path: "pilot.env.COMPLIANCE_POLICY"
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0
@@ -59,6 +62,10 @@ components:
         namespace: istio-system
         valuesFiles:
           - "../values/base-ztunnel.yaml"
+        variables:
+          - name: ISTIO_COMPLIANCE_POLICY
+            description: "Istio COMPLIANCE_POLICY for the ztunnel L4 mTLS hop. Set to 'pqc' to force post-quantum hybrid key exchange (X25519MLKEM768). Empty = default/off."
+            path: "env.COMPLIANCE_POLICY"
     actions:
       onDeploy:
         before:
