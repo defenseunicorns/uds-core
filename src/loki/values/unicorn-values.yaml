@@ -10,7 +10,7 @@ gateway:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: nginx-fips
-    tag: v1.31.1
+    tag: v1.31.2
 memcached:
   image:
     registry: cgr.dev/defenseunicorns.com
@@ -20,4 +20,4 @@ sidecar:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/k8s-sidecar-fips
-    tag: v2.7.3
+    tag: v2.7.4
