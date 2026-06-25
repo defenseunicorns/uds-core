@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- if .Values.classificationBanner.enabledHosts }}
@@ -69,6 +69,7 @@ spec:
               ["TOP SECRET"] = { backgroundColor = "#ff8c00", textColor = "#000000" },
               ["TOP SECRET//SCI"] = { backgroundColor = "#fce83a", textColor = "#000000" },
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
+              ["SAMPLE BANNER"] = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
             local classification = "{{ .Values.classificationBanner.text }}"
 
@@ -107,6 +108,8 @@ spec:
                 return "CUI"
               elseif string.find(base, "^UNCLASSIFIED") then
                 return "UNCLASSIFIED"
+              elseif string.find(base, "^SAMPLE BANNER") then
+                return "SAMPLE BANNER"
               else
                 return "UNKNOWN"
               end
@@ -115,28 +118,51 @@ spec:
             local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
             local backgroundColor = colors.backgroundColor
             local textColor = colors.textColor
-            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
+            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
             local header = "<div id=\"classification-banner-top\" style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
             local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
 
-            -- Add script to manage padding around the body of the response
+            -- Reserve space for the banner(s) so they don't overlap page content, including apps
+            -- whose nav/toolbar is position:fixed (e.g. SPAs).
             local bodyPaddingScript = [[
             <script>
-              window.addEventListener('DOMContentLoaded', function () {
-                var headerBanner = document.getElementById('classification-banner-top');
-                var footerBanner = document.getElementById('classification-banner-bottom');
-                if (headerBanner) {
-                  document.body.style.paddingTop = '24px';
+            (function () {
+              var H = '24px';
+              function place() {
+                var b = document.body;
+                if (!b) { return; }
+                var top = document.getElementById('classification-banner-top');
+                var bottom = document.getElementById('classification-banner-bottom');
+                if (!top && !bottom) { return; }
+                // Keep the banners on <html> (not <body>) so they stay anchored to the viewport
+                // after <body> is transformed below. The banner's font is pinned explicitly in its
+                // style, so it stays consistent regardless of which element it is parented to.
+                if (top && top.parentElement !== document.documentElement) {
+                  document.documentElement.appendChild(top);
                 }
-                if (footerBanner) {
-                  var footerHeight = '24px';
-                  document.body.style.paddingBottom = footerHeight;
-                  var existingFooter = document.querySelector('footer');
-                  if (existingFooter) {
-                    existingFooter.style.marginBottom = footerHeight;
-                  }
+                if (bottom && bottom.parentElement !== document.documentElement) {
+                  document.documentElement.appendChild(bottom);
                 }
-              });
+                b.style.boxSizing = 'border-box';
+                b.style.minHeight = '100vh';
+                // A transform makes <body> the containing block for its position:fixed descendants
+                // (e.g. an app's fixed nav). Their containing block is body's PADDING box, so a
+                // transparent BORDER -- not padding -- is what pushes those fixed elements clear of
+                // the banner while also reserving the strip for normal-flow content.
+                if (top) { b.style.borderTop = H + ' solid transparent'; }
+                if (bottom) { b.style.borderBottom = H + ' solid transparent'; }
+                if (!b.style.transform || b.style.transform === 'none') {
+                  b.style.transform = 'translateZ(0)';
+                }
+              }
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', place);
+              } else {
+                place();
+              }
+              // SPAs mount their chrome after initial load; re-assert once more afterwards.
+              window.addEventListener('load', function () { setTimeout(place, 0); });
+            })();
             </script>
             ]]
 
@@ -153,26 +179,74 @@ spec:
               request_handle:streamInfo():dynamicMetadata():set("envoy.lua", "host", tostring(host))
             end
 
+            -- Insert the banner div(s) after <body> and the padding script after <head>. Both
+            -- :gsub calls are bounded to a single replacement so this is safe to apply to a whole
+            -- buffered body or to a single streamed chunk.
+            local function inject_banner(html)
+              {{- if .Values.classificationBanner.addFooter }}
+              html = html:gsub("<body([^>]*)>", "<body%1>" .. header .. footer, 1)
+              {{- else }}
+              html = html:gsub("<body([^>]*)>", "<body%1>" .. header, 1)
+              {{- end }}
+              return (html:gsub("<head>", "<head>" .. bodyPaddingScript, 1))
+            end
+
             -- Inject the banner for any hosts where it is enabled
             function envoy_on_response(response_handle)
               local content_type = response_handle:headers():get("Content-Type") or ""
-              local host = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")["host"]
+              -- dynamicMetadata():get("envoy.lua") is nil when envoy_on_request did not run for
+              -- this response (e.g. a locally generated reply), so guard before indexing "host".
+              local lua_meta = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")
+              local host = lua_meta and lua_meta["host"]
 
-              if string.find(content_type, "text/html") and enabled_hosts[host] then
-                local body = response_handle:body():getBytes(0, response_handle:body():length())
-                local body_text = tostring(body)
+              -- Skip anything that is not a successful HTML page on an enabled host (e.g. bodyless
+              -- 3xx redirects, which still carry Content-Type: text/html).
+              if response_handle:headers():get(":status") ~= "200"
+                or not string.find(content_type, "text/html")
+                or not enabled_hosts[host] then
+                return
+              end
 
-                -- Insert banners into <body>
-                {{- if .Values.classificationBanner.addFooter }}
-                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header .. footer)
-                {{- else }}
-                body_text = body_text:gsub("<body([^>]*)>", "<body%1>" .. header)
-                {{- end }}
-
-                -- Insert script into <head>
-                body_text = body_text:gsub("<head>", "<head>" .. bodyPaddingScript)
-
-                response_handle:body():setBytes(body_text)
+              -- response_handle:body() buffers the whole body and blocks until end-of-stream.
+              -- That is fine for a bounded response (Content-Length present), but it hangs the
+              -- gateway on a streamed/chunked response with no Content-Length (e.g. an SPA that
+              -- renders its HTML directly to the response). Pick the strategy accordingly.
+              if response_handle:headers():get("content-length") ~= nil then
+                -- Bounded response: buffer and rewrite in one shot.
+                local body = response_handle:body()
+                body:setBytes(inject_banner(tostring(body:getBytes(0, body:length()))))
+              else
+                -- Streamed response: rewrite chunks as they pass through (bodyChunks does not
+                -- buffer), so we never wait for end-of-stream. Chunk boundaries are arbitrary, so
+                -- a <head>/<body> tag can straddle two chunks. Carry any unterminated trailing tag
+                -- ("<" with no closing ">") into the next chunk so the match is never missed.
+                local injected = false
+                local pending = ""
+                for chunk in response_handle:bodyChunks() do
+                  local len = chunk:length()
+                  if injected or len == 0 then
+                    -- already injected (or empty chunk) -> pass through untouched
+                  else
+                    local data = inject_banner(pending .. tostring(chunk:getBytes(0, len)))
+                    if string.find(data, "classification-banner-top", 1, true) ~= nil then
+                      chunk:setBytes(data)
+                      injected = true
+                      pending = ""
+                    else
+                      -- Not matched yet. Emit everything except a trailing partial tag and carry
+                      -- that fragment forward. Valid HTML ends on a closed tag, so nothing is held
+                      -- back at end-of-stream (no truncation).
+                      local lt = string.find(data, "<[^>]*$")
+                      if lt then
+                        chunk:setBytes(string.sub(data, 1, lt - 1))
+                        pending = string.sub(data, lt)
+                      else
+                        chunk:setBytes(data)
+                        pending = ""
+                      end
+                    end
+                  end
+                end
               end
             end
   - applyTo: HTTP_FILTER
