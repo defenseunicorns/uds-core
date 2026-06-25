@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -9,14 +9,17 @@
  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
  */
 import { Component, setupLogger } from "../../../logger";
-import { UDSPackage } from "../../crd";
+import { Expose, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { getExposureKey } from "../domain-utils";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
+// Map structure: fqdn -> namespace (1:1; one package per namespace, one owner per FQDN)
+let fqdnIndex: Map<string, string>;
 
 /**
  * Initializes the package namespace map.
@@ -27,6 +30,7 @@ let ssoIndex: Map<string, Set<string>>;
 function init(): void {
   packageNamespaceMap = new Map();
   ssoIndex = new Map();
+  fqdnIndex = new Map();
 }
 
 /**
@@ -54,8 +58,17 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
   const namespaceMap = packageNamespaceMap.get(namespace)!;
   const isUpdate = namespaceMap.has(name);
 
+  // Remove stale FQDN index entries before overwriting with updated package
+  if (isUpdate) {
+    const oldPkg = namespaceMap.get(name);
+    oldPkg?.spec?.network?.expose?.forEach(e => fqdnIndex.delete(getExposureKey(e)));
+  }
+
   // Set the package
   namespaceMap.set(name, pkg);
+
+  // Index exposed FQDNs
+  pkg.spec?.network?.expose?.forEach(e => fqdnIndex.set(getExposureKey(e), namespace));
 
   // Add SSO index if necessary
   const clients = pkg.spec?.sso;
@@ -103,6 +116,10 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     return;
   }
 
+  // Read stored copy before deletion so FQDN cleanup uses the indexed spec, not the
+  // event-delivered object (which may be stale on watch reconnects).
+  const storedPkg = namespaceMap.get(name);
+
   // Remove the package
   namespaceMap.delete(name);
 
@@ -110,6 +127,9 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   if (namespaceMap.size === 0) {
     packageNamespaceMap.delete(namespace);
   }
+
+  // Remove FQDN index entries using the stored spec
+  storedPkg?.spec?.network?.expose?.forEach(e => fqdnIndex.delete(getExposureKey(e)));
 
   // Remove SSO index if necessary
   const clients = pkg.spec?.sso;
@@ -175,6 +195,18 @@ function findPackagesWithSsoClientId(clientId: string): Set<string> {
 }
 
 /**
+ * Finds the namespace of the package that owns the given expose entry.
+ * Uses a compound key (gateway:fqdn) so tenant and passthrough entries with the same
+ * host are treated as distinct and do not falsely collide.
+ *
+ * @param {Expose} expose - The expose entry to look up.
+ * @returns {string | undefined} - The namespace of the owning package, or undefined if not found.
+ */
+function findNamespaceForExpose(expose: Expose): string | undefined {
+  return fqdnIndex.get(getExposureKey(expose));
+}
+
+/**
  * Finds all packages that have ambient waypoint enabled
  * @returns Array of UDSPackage objects with ambient waypoint enabled
  */
@@ -211,6 +243,7 @@ export const PackageStore = {
   hasKey,
   getPkgName,
   findPackagesWithSsoClientId,
+  findNamespaceForExpose,
   getAmbientPackages,
   getPackageByNamespace,
 };
