@@ -48,21 +48,21 @@ spec:
             paths:
               # Block client registration API access. Users can use Admin API via admin gateway instead.
               - "/realms/{{ .Values.realm }}/clients-registrations/*"
+    # Scope the Fleet SA to ONLY the realm's clients endpoints; deny it everywhere else under the admin API.
     - to:
         - operation:
             ports:
               - "8080"
             paths:
+              - "/admin*"
+              - "/realms/master*"
+            notPaths:
               - "/admin/realms/{{ .Values.realm }}/clients"
+              - "/admin/realms/{{ .Values.realm }}/clients/*"
       from:
         - source:
-            notNamespaces:
-              - pepr-system
-              - istio-admin-gateway
-            notPrincipals:
-              {{- range $adminApiAllowedPrincipals }}
-              - {{ . | quote }}
-              {{- end }}
+            principals:
+              - "cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa"
     - when:
         - key: request.headers[istio-mtls-client-certificate]
           values: ["*"]
