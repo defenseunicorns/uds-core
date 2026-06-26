@@ -12,4 +12,3 @@ extraConfigmapMounts:
     readOnly: true
     subPath: ca-bundle.pem
     optional: true
-    
