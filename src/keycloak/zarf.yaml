@@ -34,7 +34,7 @@ components:
       - quay.io/keycloak/keycloak:26.6.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.28.0
       # TODO: Remove this temporary identity-config image once the Fleet admin changes are in an identity-config release.
-      - ttl.sh/uds-identity-config-fleet-jmccoy:168
+      - ttl.sh/uds-identity-config-fleet-jmccoy:168h
 
   - name: keycloak
     required: true
@@ -50,7 +50,7 @@ components:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.6.2-fips
       - registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.28.0
       # TODO: Remove this temporary identity-config image once the Fleet admin changes are in an identity-config release.
-      - ttl.sh/uds-identity-config-fleet-jmccoy:168
+      - ttl.sh/uds-identity-config-fleet-jmccoy:168h
 
   - name: keycloak
     required: true
@@ -66,4 +66,4 @@ components:
       - cgr.dev/defenseunicorns.com/keycloak-fips:v26.6.2
       - ghcr.io/defenseunicorns/uds/identity-config:0.28.0
       # TODO: Remove this temporary identity-config image once the Fleet admin changes are in an identity-config release.
-      - ttl.sh/uds-identity-config-fleet-jmccoy:168
+      - ttl.sh/uds-identity-config-fleet-jmccoy:168h

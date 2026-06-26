@@ -54,7 +54,7 @@ packages:
               value: true
             # TODO: Remove this temporary identity-config override once the Fleet admin changes are in an identity-config release.
             - path: configImage
-              value: ttl.sh/uds-identity-config-fleet-jmccoy:168
+              value: ttl.sh/uds-identity-config-fleet-jmccoy:168h
             - path: realmInitEnv.FLEET_CLIENT_ENABLED
               value: "true"
           variables:
