@@ -191,8 +191,9 @@ packages:
               description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
               path: env[0].value
           values:
+            # TODO: Remove this temporary identity-config override once the Fleet admin changes are in an identity-config release.
             - path: configImage
-              value: ttl.sh/uds-identity-config-fleet-jmccoy:24h
+              value: ttl.sh/uds-identity-config-fleet-jmccoy:168
             - path: realmInitEnv
               value:
                 FLEET_CLIENT_ENABLED: "true"
