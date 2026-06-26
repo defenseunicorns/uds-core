@@ -44,11 +44,11 @@ jobs:
             flavor: upstream
             install_cli: v0.32.0
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-            upgrade_cli: v0.32.0
+            upgrade_cli: v0.33.0
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Environment setup
         uses: ./.github/actions/setup
@@ -100,7 +100,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Environment setup
         uses: ./.github/actions/setup

@@ -1,0 +1,25 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-envoy-gateway-common
+  description: "UDS Core Envoy Gateway Common"
+  url: https://github.com/envoyproxy/gateway
+
+components:
+  - name: envoy-gateway
+    required: false
+    charts:
+      - name: envoy-gateway
+        namespace: envoy-gateway-system
+        url: oci://docker.io/envoyproxy/gateway-helm
+        version: 1.8.1
+        # SSA disabled to avoid field manager conflict: the chart's crds/ dir contains the
+        # safe-upgrades.gateway.networking.k8s.io VAP, which Istio already owns with field
+        # manager "uds". SSA causes a conflict on the .spec.matchConstraints field.
+        # Once https://github.com/envoyproxy/gateway/issues/8560 lands we can skip CRDs
+        # entirely and remove this.
+        serverSideApply: "false"
+        valuesFiles:
+          - "../values/values.yaml"

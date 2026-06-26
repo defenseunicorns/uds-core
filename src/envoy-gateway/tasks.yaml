@@ -1,0 +1,26 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: validate
+    actions:
+      - description: Wait for envoy-gateway deployment to be ready
+        wait:
+          cluster:
+            kind: Deployment
+            name: envoy-gateway
+            namespace: envoy-gateway-system
+            condition: available
+      - description: Wait for GatewayClass envoy-gateway to be accepted
+        wait:
+          cluster:
+            kind: GatewayClass
+            name: envoy-gateway
+            condition: Accepted
+
+  - name: e2e-test
+    actions:
+      - description: "Run Envoy Gateway E2E tests"
+        cmd: |
+          npm ci && npx vitest run "envoy-gateway"
+        dir: test/vitest

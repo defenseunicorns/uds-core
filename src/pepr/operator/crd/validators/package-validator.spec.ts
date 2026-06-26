@@ -1571,6 +1571,50 @@ describe("Test validation of Package CRs", () => {
     await validator(mockReq);
     expect(mockReq.Approve).toHaveBeenCalledTimes(1);
   });
+
+  describe("expose annotations", () => {
+    it("approves expose entry with populated annotations", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            host: "grafana",
+            service: "grafana",
+            port: 3000,
+            annotations: {
+              "uds.dev/title": "Grafana",
+              "portal.uds.dev/visible": "true",
+              "fleet.uds.dev/visible": "false",
+            },
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("approves expose entry with empty annotations map", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            host: "app",
+            service: "app",
+            port: 8080,
+            annotations: {},
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe("Test Allowed SSO Client Attributes", () => {
