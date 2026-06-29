@@ -89,6 +89,11 @@ components:
     import:
       path: ../base
 
+  - name: remove-safely
+    required: true
+    import:
+      path: ../base
+
   - name: keycloak
     required: true
     import:
