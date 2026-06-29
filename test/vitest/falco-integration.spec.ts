@@ -95,7 +95,7 @@ describe("Falco Integration e2e Tests", () => {
             await execAndWait(
               "kube-system",
               podName,
-              ["touch", `${etcTestDir}/${testFile}`],
+              ["sh", "-c", `echo test >> ${etcTestDir}/${testFile}`],
               "main",
             );
             const falcoSidekickLogs = await getAllLogsByLabelSelector(
