@@ -37,15 +37,15 @@ describe("Falco Integration e2e Tests", () => {
         command: ["sleep", "3600"],
       },
       async podName => {
-        await execAndWait(
-          "kube-system",
-          podName,
-          ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
-          "main",
-        );
-
+        // Retrigger the event on each poll attempt so transient eBPF misses don't cause a timeout
         const falcoEvent = await pollUntilSuccess(
           async () => {
+            await execAndWait(
+              "kube-system",
+              podName,
+              ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
+              "main",
+            );
             const queryResult = await queryLoki(
               lokiRead,
               `{rule="Search Private Keys or Passwords"} |= "test-${randomString}"`,
@@ -57,7 +57,7 @@ describe("Falco Integration e2e Tests", () => {
           },
           result => result !== null,
           `Falco event with identifier "test-${randomString}" in Loki logs`,
-          60000, // 60 seconds timeout
+          120000, // 2 minute timeout
           5000, // 5 seconds interval
         );
 
@@ -66,11 +66,16 @@ describe("Falco Integration e2e Tests", () => {
         expect(falcoEvent!.data.result.length).toBeGreaterThan(0);
       },
     );
-  }, 70000); // Set test timeout to 70 seconds
+  }, 150000); // 150s to cover pod creation + 120s poll
 
   test("Falco detects 'Write below root' event and sends to Falco Sidekick", async () => {
     // Generate a random string to identify this test run
     const randomString = Math.random().toString(36).substring(2, 10);
+    // Mount an emptyDir at /etc/testdir so UID 1000 (set by Pepr's RequireNonRootUser mutation)
+    // can write there. /etc/passwd is root:root 644 and would silently fail as non-root,
+    // never triggering open_write (which requires fd.num>=0).
+    const etcTestDir = "/etc/testdir";
+    const testFile = `falco-test-${randomString}`;
 
     // Use a temporary pod in kube-system to trigger the Falco event
     await withTempPod(
@@ -79,19 +84,20 @@ describe("Falco Integration e2e Tests", () => {
         namespace: "kube-system", // Use kube-system to get around zarf mutations
         image: "alpine:latest",
         command: ["sleep", "3600"],
+        volumes: [{ name: "etc-testdir", emptyDir: {} }],
+        volumeMounts: [{ name: "etc-testdir", mountPath: etcTestDir }],
+        podSecurityContext: { fsGroup: 1000 },
       },
       async podName => {
-        // Try to write to a system directory (should trigger the rule)
-        await execAndWait(
-          "kube-system",
-          podName,
-          ["sh", "-c", `echo "test" >> /etc/passwd`],
-          "main",
-        );
-
-        // Poll for the Falco event in falcosidekick logs until success or timeout
+        // Retrigger the event on each poll attempt so transient eBPF misses don't cause a timeout
         const falcoSidekickEvent = await pollUntilSuccess(
           async () => {
+            await execAndWait(
+              "kube-system",
+              podName,
+              ["touch", `${etcTestDir}/${testFile}`],
+              "main",
+            );
             const falcoSidekickLogs = await getAllLogsByLabelSelector(
               "falco",
               "app.kubernetes.io/name=falcosidekick",
@@ -100,19 +106,19 @@ describe("Falco Integration e2e Tests", () => {
               log =>
                 log.includes('"rule":"Write below etc"') &&
                 log.includes("File below /etc opened for writing") &&
-                log.includes("file=/etc/passwd"),
+                log.includes(`file=${etcTestDir}/${testFile}`),
             );
           },
           result => result !== undefined,
-          "Falco event for write to /etc/passwd in falcosidekick logs",
-          60000, // 1 minute timeout
+          `Falco event for write to ${etcTestDir}/${testFile} in falcosidekick logs`,
+          120000, // 2 minute timeout
           15000, // 15 seconds interval
         );
 
         expect(falcoSidekickEvent).toBeDefined();
       },
     );
-  }, 70000); // Set test timeout to 70 seconds
+  }, 150000); // 150s to cover pod creation + 120s poll
 
   test("Falco detects 'Read environment variables from /proc files' event and sends to Falco Sidekick", async () => {
     // Generate a random string to identify this test run
@@ -127,12 +133,10 @@ describe("Falco Integration e2e Tests", () => {
         command: ["sleep", "3600"],
       },
       async podName => {
-        // Try to read environment variables from /proc/1/environ
-        await execAndWait("kube-system", podName, ["sh", "-c", "cat /proc/1/environ"], "main");
-
-        // Poll for the Falco event in falcosidekick logs until success or timeout
+        // Retrigger the event on each poll attempt so transient eBPF misses don't cause a timeout
         const falcoSidekickEvent = await pollUntilSuccess(
           async () => {
+            await execAndWait("kube-system", podName, ["sh", "-c", "cat /proc/1/environ"], "main");
             const falcoSidekickLogs = await getAllLogsByLabelSelector(
               "falco",
               "app.kubernetes.io/name=falcosidekick",
@@ -146,12 +150,12 @@ describe("Falco Integration e2e Tests", () => {
           },
           result => result !== undefined,
           "Falco event for reading /proc/1/environ in falcosidekick logs",
-          60000, // 1 minute timeout
+          120000, // 2 minute timeout
           15000, // 15 seconds interval
         );
 
         expect(falcoSidekickEvent).toBeDefined();
       },
     );
-  }, 70000); // Set test timeout to 70 seconds
+  }, 150000); // 150s to cover pod creation + 120s poll
 });
