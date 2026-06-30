@@ -23,7 +23,7 @@ additionalGatewayNamespaces: []
 # Example
 # - "istio-login-gateway"
 
-# Istio source principals (mTLS SPIFFE identities) allowed to reach the Keycloak Admin API
+# Additional Istio source principals (mTLS SPIFFE identities) allowed to reach the Keycloak Admin API
 adminApiAllowedPrincipals: []
 # Example
 # - "cluster.local/ns/argo/sa/workflow-service-account"

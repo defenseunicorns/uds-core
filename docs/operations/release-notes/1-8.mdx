@@ -1,0 +1,123 @@
+---
+title: DRAFT - UDS Core 1.8
+description: Draft UDS Core 1.8 upgrade notes for manually adding the Fleet Keycloak admin client to existing uds realms.
+draft: true
+sidebar:
+  hidden: true
+  order: 3.988
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+> [!NOTE]
+> This is a draft upgrade note for PR review. It is intentionally not linked from the release notes overview yet, and the normal release summary, notable features, dependency table, and related documentation sections are intentionally omitted.
+
+> [!IMPORTANT]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/). These steps apply only to existing clusters with an already-imported Keycloak `uds` realm. New installs receive the realm changes automatically from `uds-identity-config`.
+
+## Upgrade considerations
+
+### Identity Config updates
+
+The next `uds-identity-config` release adds the `uds-fleet-admin` Keycloak client for Fleet Command. The client uses Keycloak's federated JWT client authentication flow with a projected Kubernetes service-account token from:
+
+```text
+system:serviceaccount:uds-fleet-command:uds-fleet-command-sa
+```
+
+The identity-config image also adds a temporary `uds-kubernetes` identity provider plugin. The plugin resolves the Kubernetes service-account issuer from the cluster and fetches JWKS keys without forwarding the Keycloak pod service-account token to public/external JWKS endpoints.
+
+Because Keycloak realm objects are persisted in the Keycloak database, upgrading the Keycloak package and identity-config image does not automatically add these realm objects to an existing cluster. Existing clusters that need Fleet Command must apply the manual realm changes below after the upgraded identity-config image is deployed.
+
+> [!CAUTION]
+> These steps should be validated in a non-production environment first. The exact Keycloak UI labels can vary slightly by Keycloak version and theme, but the object names and values below should match exactly.
+
+#### Manual realm changes
+
+Apply the following steps once per existing cluster after upgrading to the UDS Core release that contains the new identity-config image.
+
+<Steps>
+
+1. **Open the Keycloak admin console and switch to the `uds` realm**
+
+   Sign in with a Keycloak admin account, then select the `uds` realm from the realm selector.
+
+2. **Confirm the federated JWT authenticator exists in the client authentication flow**
+
+   Go to **Authentication** > **Flows** and open the `UDS Client Credentials` flow.
+
+   Confirm the flow contains an execution named **Signed JWT - Federated** with requirement **Alternative**.
+
+   If it is missing, add it:
+
+   - Click **Add execution**.
+   - Select **Signed JWT - Federated**.
+   - Set the requirement to **Alternative**.
+   - Place it alongside the other client credential authenticators in the `UDS Client Credentials` flow.
+
+3. **Create the `uds-kubernetes` identity provider**
+
+   Go to **Identity providers** and add a provider of type **UDS Kubernetes**.
+
+   Configure it with:
+
+   | Field | Value |
+   | --- | --- |
+   | Alias | `uds-kubernetes` |
+   | Enabled | `On` |
+   | Issuer discovery URL | `https://kubernetes.default.svc` |
+   | Automatic issuer discovery | `On` |
+   | Issuer | leave empty unless your environment requires an explicit override |
+
+   Save the provider.
+
+   After save, the provider should resolve and persist the Kubernetes service-account issuer. For managed clusters or RKE2 environments with an external service-account issuer, do not manually set the issuer unless automatic discovery fails.
+
+4. **Create the `uds-fleet-admin` client**
+
+   Go to **Clients** and create an OpenID Connect client.
+
+   Configure the client with:
+
+   | Field | Value |
+   | --- | --- |
+   | Client ID | `uds-fleet-admin` |
+   | Name | `uds-fleet-admin` |
+   | Description | `Scoped admin client for UDS Fleet Management to manage fleet-* clients` |
+   | Client authentication | `On` |
+   | Standard flow | `Off` |
+   | Direct access grants | `Off` |
+   | Service accounts roles | `On` |
+
+   Save the client.
+
+5. **Set the client authenticator**
+
+   Open the `uds-fleet-admin` client, then go to its credentials or authentication settings.
+
+   Set the client authenticator to **Signed JWT - Federated** and save.
+
+6. **Add the federated JWT matching attributes**
+
+   Open the `uds-fleet-admin` client advanced settings or attributes view.
+
+   Add the following client attributes:
+
+   | Attribute | Value |
+   | --- | --- |
+   | `jwt.credential.issuer` | `uds-kubernetes` |
+   | `jwt.credential.sub` | `system:serviceaccount:uds-fleet-command:uds-fleet-command-sa` |
+
+   Save the client.
+
+7. **Assign the service account role**
+
+   Open the `uds-fleet-admin` client and go to **Service account roles**.
+
+   Assign the `realm-management` client role:
+
+   ```text
+   manage-clients
+   ```
+
+</Steps>
