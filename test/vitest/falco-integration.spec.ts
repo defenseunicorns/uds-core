@@ -68,7 +68,7 @@ describe("Falco Integration e2e Tests", () => {
     );
   }, 150000); // 150s to cover pod creation + 120s poll
 
-  test("Falco detects 'Write below root' event and sends to Falco Sidekick", async () => {
+  test("Falco detects 'Write below etc' event and sends to Falco Sidekick", async () => {
     // Generate a random string to identify this test run
     const randomString = Math.random().toString(36).substring(2, 10);
     // Mount an emptyDir at /etc/testdir so UID 1000 (set by Pepr's RequireNonRootUser mutation)
