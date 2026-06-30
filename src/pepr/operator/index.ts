@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -49,7 +49,11 @@ import {
 } from "./controllers/keycloak/client-secret-sync";
 import { validateCfgUpdate } from "./crd/validators/clusterconfig-validator";
 import { exemptValidator } from "./crd/validators/exempt-validator";
-import { packageFinalizer, packageReconciler } from "./reconcilers/package-reconciler";
+import {
+  packageFinalizer,
+  packageReconciler,
+  reconcileEnvoyGatewayDefaultPackages,
+} from "./reconcilers/package-reconciler";
 
 // Export the operator capability for registration in the root pepr.ts
 export { operator } from "./common";
@@ -113,6 +117,29 @@ When(UDSPackage)
   .Watch(() => {
     log.info("Identity and Authorization layer removed, operator will NOT handle SSO.");
     UDSConfig.isIdentityDeployed = false;
+  });
+
+When(UDSPackage)
+  .IsCreatedOrUpdated()
+  .InNamespace("envoy-gateway-system")
+  .WithName("envoy-gateway")
+  .Watch(async () => {
+    const wasEnabled = UDSConfig.isEnvoyGatewayDefaultEnabled;
+    log.info("Envoy Gateway deployed, operator configured to handle default UDP expose entries.");
+    UDSConfig.isEnvoyGatewayDefaultEnabled = true;
+
+    if (!wasEnabled) {
+      await reconcileEnvoyGatewayDefaultPackages();
+    }
+  });
+
+When(UDSPackage)
+  .IsDeleted()
+  .InNamespace("envoy-gateway-system")
+  .WithName("envoy-gateway")
+  .Watch(() => {
+    log.info("Envoy Gateway removed, operator will NOT handle default UDP expose entries.");
+    UDSConfig.isEnvoyGatewayDefaultEnabled = false;
   });
 
 // Watch for changes to the Nodes and update the Node CIDR list

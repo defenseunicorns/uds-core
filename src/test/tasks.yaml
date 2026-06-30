@@ -24,7 +24,7 @@ tasks:
           validate_egress: ${{ .inputs.validate_egress }}
       - description: "Run Network Tests"
         cmd: |
-          EGRESS_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
         dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
@@ -70,6 +70,10 @@ tasks:
       - description: Deploy the test resources (with egress-app)
         if: ${{ eq .inputs.validate_egress "true" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
+
+      - description: Apply Envoy Gateway UDP test overlay
+        if: ${{ eq .inputs.validate_egress "true" }}
+        cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
 
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}

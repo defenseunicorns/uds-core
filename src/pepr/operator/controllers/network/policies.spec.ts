@@ -6,7 +6,7 @@
 import { V1NetworkPolicy } from "@kubernetes/client-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Direction, Gateway, UDSPackage } from "../../crd";
-import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { findMatchingClient, networkPolicies } from "./policies";
 
 // Mock dependencies
@@ -1045,5 +1045,64 @@ describe("networkPolicies", () => {
     const ports = udpPolicy?.spec?.egress?.[0]?.ports ?? [];
     expect(ports).toContainEqual({ port: 53, protocol: "UDP" });
     expect(ports.map(p => p.port)).not.toContain(15008);
+  });
+
+  it("should skip UDP expose entries when generating Istio gateway NetworkPolicies", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          expose: [
+            {
+              protocol: ExposeProtocol.UDP,
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "udp-ns", Mode.Ambient);
+
+    expect(policies.some(policy => policy.metadata?.name?.includes("Istio tenant gateway"))).toBe(
+      false,
+    );
+  });
+
+  it("should keep HTTP expose NetworkPolicies when skipping UDP expose entries", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "web",
+              host: "web.example.com",
+              selector: { app: "web" },
+              port: 8080,
+            },
+            {
+              protocol: ExposeProtocol.UDP,
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "mixed-ns", Mode.Ambient);
+
+    expect(
+      policies.some(
+        policy =>
+          policy.metadata?.name?.includes("8080-web") &&
+          policy.metadata?.name?.includes("Istio tenant gateway"),
+      ),
+    ).toBe(true);
+    expect(policies.some(policy => policy.metadata?.name?.includes("7777-game"))).toBe(false);
   });
 });
