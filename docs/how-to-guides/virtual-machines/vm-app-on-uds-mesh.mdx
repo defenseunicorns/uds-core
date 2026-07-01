@@ -1,0 +1,417 @@
+---
+title: Expose a VM application on the UDS mesh
+description: Configure Service routing, tenant gateway exposure, and Prometheus monitoring for a VM running a network service on UDS Core.
+sidebar:
+  order: 11.003
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Deploy a Fedora VM that runs a simple HTTP service, expose it through the UDS tenant gateway at
+`https://<app>.uds.dev`, and configure a ServiceMonitor so Prometheus can scrape metrics from the
+VM's service port. This is the golden pattern for any VM application that needs to be reachable
+from outside the cluster or observed by UDS Core's monitoring stack.
+
+This guide uses a Python HTTP server started by cloud-init as the example application. The same
+pattern applies to any network service running inside a VM.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - KubeVirt and CDI running
+- [A working VM deployment](/how-to-guides/virtual-machines/first-vm/) - Familiar with `VirtualMachine` manifests and lifecycle
+- `kubectl` and `virtctl` on your PATH
+
+## Before you begin
+
+Service routing for VM applications works through the `virt-launcher` pod. The Istio sidecar on
+the `virt-launcher` pod intercepts inbound connections and routes them into the VM guest through
+the `k6t-eth0` virtual interface. This means:
+
+- The Kubernetes `Service` selector must target the `virt-launcher` pod, not the VM itself.
+  Labels in `spec.template.metadata.labels` in the `VirtualMachine` manifest become labels on
+  the `virt-launcher` pod.
+- Ports that will receive traffic from Services, gateways, or monitoring must be declared in
+  `spec.template.spec.domain.devices.interfaces[].ports`. Without the port declaration, KubeVirt
+  does not configure the masquerade interface to forward traffic on that port into the guest.
+- The declared port number, the Kubernetes `Service` `targetPort`, the UDS Package `expose`
+  `targetPort`, and the UDS Package `monitor` `targetPort` must all match.
+
+## Steps
+
+<Steps>
+
+1. **Create the VM workload namespace**
+
+   The namespace needs Istio sidecar injection and a UDS Package with `mode: sidecar`. The
+   UDS Package also declares the gateway exposure and monitoring in the same manifest.
+
+   > [!NOTE]
+   > The namespace carries `uds.dev/kubevirt-workload: "true"`, which is what permits the
+   > `virt-launcher` Istio annotations. `kubevirt.enabled: true` on the Package makes the operator
+   > apply that label, but this VM uses `runStrategy: Always`, so its launcher pod can start during
+   > deploy before the operator reconciles. The label is set on the namespace manifest too so it
+   > exists first; without it the launcher pod is denied.
+
+   ```yaml title="vm-app-namespace.yaml"
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: my-vm-app
+     labels:
+       istio-injection: enabled
+       uds.dev/kubevirt-workload: "true"
+   ---
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-vm-app
+     namespace: my-vm-app
+   spec:
+     kubevirt:
+       enabled: true
+     network:
+       serviceMesh:
+         mode: sidecar
+       expose:
+         - service: my-vm-app
+           selector:
+             app.kubernetes.io/name: my-vm-app
+           gateway: tenant
+           host: my-vm-app
+           port: 80
+           targetPort: 80
+       allow:
+         - direction: Egress
+           remoteGenerated: KubeAPI
+           description: virt-launcher to KubeAPI
+         - direction: Ingress
+           remoteGenerated: IntraNamespace
+         - direction: Egress
+           remoteGenerated: IntraNamespace
+     monitor:
+       - selector:
+           app.kubernetes.io/name: my-vm-app
+         targetPort: 80
+         portName: http
+         description: VM app metrics
+         kind: ServiceMonitor
+   ```
+
+   > [!NOTE]
+   > The `expose.selector` and `monitor.selector` target the `virt-launcher` pod, not the VM.
+   > Labels you put in the `VirtualMachine` `spec.template.metadata.labels` become labels on the
+   > `virt-launcher` pod. Use those same labels in the selectors here.
+
+2. **Create the Kubernetes Service**
+
+   The Service selects the `virt-launcher` pod and routes to the VM's service port.
+
+   ```yaml title="vm-app-service.yaml"
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: my-vm-app
+     namespace: my-vm-app
+     labels:
+       app.kubernetes.io/name: my-vm-app
+   spec:
+     selector:
+       app.kubernetes.io/name: my-vm-app
+     ports:
+       - name: http
+         port: 80
+         targetPort: 80
+         protocol: TCP
+   ```
+
+3. **Create the VirtualMachine**
+
+   The VM manifest has three requirements beyond a basic VM:
+
+   - Labels in `spec.template.metadata.labels` must match the Service selector (they become
+     `virt-launcher` pod labels).
+   - The service port must be declared in `spec.template.spec.domain.devices.interfaces[].ports`.
+   - Both `sidecar.istio.io/inject: "true"` and
+     `traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0` must be in
+     `spec.template.metadata.annotations`.
+
+   ```yaml title="vm-app.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: my-vm-app
+     namespace: my-vm-app
+     labels:
+       app.kubernetes.io/name: my-vm-app
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           app.kubernetes.io/name: my-vm-app    # must match Service selector
+           kubevirt.io/domain: my-vm-app
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 1
+           resources:
+             requests:
+               memory: 1024M
+           devices:
+             disks:
+               - name: containerdisk
+                 disk:
+                   bus: virtio
+               - name: cloudinitdisk
+                 disk:
+                   bus: virtio
+             interfaces:
+               - name: default
+                 masquerade: {}
+                 ports:
+                   - name: http    # must match Service port name
+                     port: 80      # must match Service targetPort
+         networks:
+           - name: default
+             pod: {}
+         terminationGracePeriodSeconds: 0   # dev only; use 60+ in production for graceful shutdown
+         volumes:
+           - name: containerdisk
+             containerDisk:
+               image: 127.0.0.1:31999/containerdisks/fedora:latest  # k3d registry; replace with your Zarf registry address
+               imagePullPolicy: IfNotPresent
+           - name: cloudinitdisk
+             cloudInitNoCloud:
+               userData: |-
+                 #cloud-config
+                 password: fedora
+                 chpasswd: { expire: False }
+                 write_files:
+                   - path: /usr/local/bin/app.py
+                     permissions: '0755'
+                     content: |
+                       #!/usr/bin/env python3
+                       import json
+                       from http.server import BaseHTTPRequestHandler, HTTPServer
+
+                       requests_total = 0
+
+                       class Handler(BaseHTTPRequestHandler):
+                           def do_GET(self):
+                               global requests_total
+                               requests_total += 1
+                               if self.path == "/metrics":
+                                   # Prometheus text exposition format
+                                   body = (
+                                       "# HELP vm_app_requests_total Total HTTP requests served.\n"
+                                       "# TYPE vm_app_requests_total counter\n"
+                                       f"vm_app_requests_total {requests_total}\n"
+                                   ).encode()
+                                   content_type = "text/plain; version=0.0.4"
+                               else:
+                                   body = json.dumps({"status": "ok"}).encode()
+                                   content_type = "application/json"
+                               self.send_response(200)
+                               self.send_header("Content-Type", content_type)
+                               self.send_header("Content-Length", str(len(body)))
+                               self.end_headers()
+                               self.wfile.write(body)
+                           def log_message(self, *args):
+                               pass
+
+                       HTTPServer(("0.0.0.0", 80), Handler).serve_forever()
+                   - path: /etc/systemd/system/app.service
+                     permissions: '0644'
+                     content: |
+                       [Unit]
+                       Description=VM app HTTP service
+                       After=network-online.target
+                       Wants=network-online.target
+
+                       [Service]
+                       ExecStart=/usr/local/bin/app.py
+                       Restart=always
+
+                       [Install]
+                       WantedBy=multi-user.target
+                 runcmd:
+                   - [ systemctl, daemon-reload ]
+                   - [ systemctl, enable, --now, app.service ]
+   ```
+
+   > [!WARNING]
+   > Do NOT use `traffic.sidecar.istio.io/excludeInboundPorts` on `virt-launcher` pods. This
+   > breaks the gateway mTLS path. Do not use HTTP readiness probes with a custom `host` value;
+   > these interact badly with Istio's probe rewrite mechanism. Use TCP socket probes on declared
+   > ports instead.
+
+   > [!NOTE]
+   > The example app serves Prometheus metrics on `/metrics` (the default scrape path) and a
+   > `{"status": "ok"}` response on every other path. The `monitor` entry in step 1 scrapes
+   > `/metrics` on the same service port.
+
+4. **Apply all manifests and wait for the VM**
+
+   **(Recommended)** Package these manifests in a Zarf package and deploy with Zarf. See
+   [Packaging applications](/how-to-guides/packaging-applications/overview/) for guidance.
+
+   **Or** apply directly for quick testing:
+
+   ```bash
+   kubectl apply -f vm-app-namespace.yaml
+   kubectl apply -f vm-app-service.yaml
+   kubectl apply -f vm-app.yaml
+   ```
+
+   Wait for the VM to start:
+
+   ```bash
+   kubectl get vmi my-vm-app -n my-vm-app -w
+   ```
+
+   When phase reaches `Running`, the `virt-launcher` pod is up and the VM is booting. Cloud-init
+   runs during the first boot and may take 60-90 seconds to start your application.
+
+</Steps>
+
+## Verification
+
+**Check the virt-launcher pod is running and has the correct labels and annotations:**
+
+```bash
+kubectl get pod -n my-vm-app -l app.kubernetes.io/name=my-vm-app
+kubectl get pod -n my-vm-app -l kubevirt.io=virt-launcher \
+  -o jsonpath='{.items[0].metadata.annotations}' | python3 -m json.tool | \
+  grep -E "kubevirtInterfaces|inject|reroute"
+```
+
+Expected annotations on the virt-launcher pod:
+
+```console
+"traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
+"sidecar.istio.io/inject": "true",
+"istio.io/reroute-virtual-interfaces": "k6t-eth0"
+```
+
+**Check the Service has endpoints:**
+
+```bash
+kubectl get endpoints my-vm-app -n my-vm-app
+```
+
+The endpoint address should be the `virt-launcher` pod IP. If `<none>`, the Service selector
+does not match the `virt-launcher` pod labels.
+
+**Check the UDS Package created the VirtualService:**
+
+```bash
+kubectl get virtualservice -n my-vm-app
+```
+
+Expected output shows a VirtualService routing through `istio-tenant-gateway/tenant-gateway`.
+
+**Check the ServiceMonitor was created:**
+
+```bash
+kubectl get servicemonitor -n my-vm-app
+```
+
+**Test the service through the gateway:**
+
+```bash
+curl -sk --resolve "my-vm-app.uds.dev:443:127.0.0.1" https://my-vm-app.uds.dev/
+```
+
+**Test the service directly via port-forward (bypasses gateway, useful for debugging):**
+
+```bash
+kubectl port-forward svc/my-vm-app 8080:80 -n my-vm-app
+curl http://localhost:8080/
+```
+
+## How the routing path works
+
+Requests arrive at the tenant ingressgateway, which terminates TLS and routes to the `my-vm-app`
+Service via the VirtualService the UDS Package operator creates. The Service selects the
+`virt-launcher` pod; the Istio sidecar on that pod forwards traffic through `k6t-eth0` into the
+VM guest because port 80 is declared in the VM interface spec.
+
+## Port alignment
+
+This table shows all the places port 80 must appear for the full routing chain to work. A
+mismatch anywhere in this chain causes routing failures.
+
+| Location | Field | Value |
+|---|---|---|
+| VM interface | `domain.devices.interfaces[].ports[].port` | `80` |
+| VM interface | `domain.devices.interfaces[].ports[].name` | `http` |
+| Service | `spec.ports[].targetPort` | `80` |
+| Service | `spec.ports[].name` | `http` |
+| UDS Package expose | `expose[].targetPort` | `80` |
+| UDS Package monitor | `monitor[].targetPort` | `80` |
+| UDS Package monitor | `monitor[].portName` | `http` |
+
+## Troubleshooting
+
+### Problem: Service has no endpoints
+
+**Symptom:** `kubectl get endpoints my-vm-app -n my-vm-app` shows `<none>`.
+
+**Solution:** The Service selector does not match the `virt-launcher` pod labels. Check that the
+labels in `spec.template.metadata.labels` in the `VirtualMachine` manifest match the `selector`
+in the Service. Verify with:
+
+```bash
+kubectl get pod -n my-vm-app -l app.kubernetes.io/name=my-vm-app
+```
+
+If no pods are returned, the label is missing or different on the virt-launcher pod.
+
+### Problem: Gateway returns 503 or connection refused
+
+**Symptom:** `curl https://my-vm-app.uds.dev/` returns a 503 or the gateway cannot reach the
+backend.
+
+**Solution:** Check that the VM application is running on port 80 inside the guest, and that the
+port is declared in the VM interface spec. Also verify the Service's `targetPort` matches. Test
+the direct path first:
+
+```bash
+kubectl port-forward svc/my-vm-app 8080:80 -n my-vm-app
+curl http://localhost:8080/
+```
+
+If this also fails, the issue is inside the VM. Connect via console to check the application:
+
+```bash
+virtctl console my-vm-app -n my-vm-app
+```
+
+### Problem: VM boots but service port is not reachable
+
+**Symptom:** The VM is running, the pod has endpoints, but requests to port 80 time out.
+
+**Solution:** The port is not declared in `spec.template.spec.domain.devices.interfaces[].ports`.
+Without this declaration, KubeVirt's masquerade interface does not forward port 80 traffic into
+the VM guest. Add the port declaration and recreate the VM.
+
+### Problem: Prometheus is not scraping the VM app
+
+**Symptom:** The ServiceMonitor exists but no metrics appear in Prometheus.
+
+**Solution:** Verify the ServiceMonitor `portName` matches the Service port name. Verify the VM
+application exposes a Prometheus-compatible `/metrics` endpoint (or configure a different
+`path` in the monitor spec). In slim-dev deployments, Prometheus is not included; scraping
+requires the standard UDS Core bundle with the monitoring stack.
+
+## Related documentation
+
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview, mesh mode rules
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - Basic VM lifecycle and container disk
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - Use a PVC-backed disk instead of a container disk
+- [Windows Server VMs on UDS Core](/how-to-guides/virtual-machines/windows-server-vm/) - Apply this pattern to a Windows VM with monitoring

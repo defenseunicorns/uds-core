@@ -305,6 +305,89 @@ describe("enableIstio", () => {
     const applyCall = mockApply.mock.calls[0][0];
     expect(applyCall.metadata.annotations["uds.dev/original-istio-state"]).toBe("none");
   });
+
+  test("sets the kubevirt-workload label when spec.kubevirt.enabled is true", async () => {
+    mockGet.mockResolvedValue({ metadata: { name: "test-ns", labels: {}, annotations: {} } });
+
+    await enableIstio({
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: { kubevirt: { enabled: true } },
+    } as UDSPackage);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).toHaveProperty("uds.dev/kubevirt-workload", "true");
+  });
+
+  test("does not set the kubevirt-workload label when the marker is absent", async () => {
+    mockGet.mockResolvedValue({ metadata: { name: "test-ns", labels: {}, annotations: {} } });
+
+    await enableIstio({
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {},
+    } as UDSPackage);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).not.toHaveProperty("uds.dev/kubevirt-workload");
+  });
+
+  test("removes the kubevirt-workload label when the marker is cleared", async () => {
+    mockGet.mockResolvedValue({
+      metadata: {
+        name: "test-ns",
+        labels: {
+          "istio.io/dataplane-mode": "ambient",
+          "uds.dev/kubevirt-workload": "true",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/kubevirt-pkg-test-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.None,
+        },
+      },
+    });
+
+    await enableIstio({
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {},
+    } as UDSPackage);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).not.toHaveProperty("uds.dev/kubevirt-workload");
+  });
+
+  test("preserves the kubevirt-workload label when a non-kubevirt package reconciles", async () => {
+    // The namespace label is backed by another package's intent annotation. A package without the
+    // marker reconciling must not strip it (the multi-package flip-flop the per-package fix closes).
+    mockGet.mockResolvedValue({
+      metadata: {
+        name: "test-ns",
+        labels: {
+          "istio.io/dataplane-mode": "ambient",
+          "uds.dev/kubevirt-workload": "true",
+        },
+        annotations: {
+          "uds.dev/pkg-other-pkg": "true",
+          "uds.dev/kubevirt-pkg-other-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.None,
+        },
+      },
+    });
+
+    await enableIstio({
+      metadata: { name: "test-pkg", namespace: "test-ns" },
+      spec: {},
+    } as UDSPackage);
+
+    const applied = mockApply.mock.calls[0]?.[0];
+    if (applied) {
+      expect(applied.metadata.labels).toHaveProperty("uds.dev/kubevirt-workload", "true");
+    } else {
+      expect(mockApply).not.toHaveBeenCalled();
+    }
+  });
 });
 
 describe("cleanupNamespace", () => {
@@ -495,6 +578,78 @@ describe("cleanupNamespace", () => {
     // Verify that only the specific package annotation was removed
     expect(applyCall.metadata.annotations["uds.dev/pkg-test-pkg"]).toBeUndefined();
     expect(applyCall.metadata.annotations["uds.dev/pkg-other-pkg"]).toBe("true");
+  });
+
+  test("removes the kubevirt-workload label on last package cleanup", async () => {
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: {
+          "istio.io/dataplane-mode": "ambient",
+          "uds.dev/kubevirt-workload": "true",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/kubevirt-pkg-test-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.Ambient,
+        },
+      },
+    });
+    const pkg: UDSPackage = { metadata: { namespace: "test-ns", name: "test-pkg" } };
+
+    await cleanupNamespace(pkg);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).not.toHaveProperty("uds.dev/kubevirt-workload");
+  });
+
+  test("keeps the kubevirt-workload label when another kubevirt package remains", async () => {
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: {
+          "istio.io/dataplane-mode": "ambient",
+          "uds.dev/kubevirt-workload": "true",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/kubevirt-pkg-test-pkg": "true",
+          "uds.dev/pkg-other-pkg": "true",
+          "uds.dev/kubevirt-pkg-other-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.Ambient,
+        },
+      },
+    });
+    const pkg: UDSPackage = { metadata: { namespace: "test-ns", name: "test-pkg" } };
+
+    await cleanupNamespace(pkg);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).toHaveProperty("uds.dev/kubevirt-workload", "true");
+  });
+
+  test("removes the kubevirt-workload label when remaining packages are not kubevirt", async () => {
+    mockGet.mockResolvedValue({
+      metadata: {
+        labels: {
+          "istio.io/dataplane-mode": "ambient",
+          "uds.dev/kubevirt-workload": "true",
+        },
+        annotations: {
+          "uds.dev/pkg-test-pkg": "true",
+          "uds.dev/kubevirt-pkg-test-pkg": "true",
+          "uds.dev/pkg-other-pkg": "true",
+          "uds.dev/original-istio-state": IstioState.Ambient,
+        },
+      },
+    });
+    const pkg: UDSPackage = { metadata: { namespace: "test-ns", name: "test-pkg" } };
+
+    await cleanupNamespace(pkg);
+
+    expect(mockApply).toHaveBeenCalled();
+    const applyCall = mockApply.mock.calls[0][0];
+    expect(applyCall.metadata.labels).not.toHaveProperty("uds.dev/kubevirt-workload");
   });
 });
 

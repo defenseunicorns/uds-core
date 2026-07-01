@@ -1,0 +1,440 @@
+---
+title: Run a Windows Server VM on UDS Core
+description: Import a Windows Server QCOW2 image with CDI, configure a KubeVirt VirtualMachine with UEFI firmware, HyperV enlightenments, and the VirtIO driver disk, and expose RDP through a UDS Package.
+sidebar:
+  order: 11.009
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Import a Windows Server disk image into a PVC using CDI, create a `VirtualMachine` with the
+correct UEFI firmware, HyperV timer, and VirtIO driver configuration, expose RDP (port 3389)
+through the UDS mesh, and verify the guest is reachable via `virtctl port-forward`.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/)
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - familiarity with DataVolume import
+- `kubectl` and `virtctl` on your PATH, pointed at the cluster
+- A Windows Server QCOW2 disk image accessible from inside the cluster (HTTP source or local upload)
+
+> [!NOTE]
+> This guide uses Windows Server 2022. The KubeVirt manifest and UDS Package structure apply
+> to Windows Server 2019 without changes. For a local disk image upload workflow, see
+> [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/).
+
+## Before you begin
+
+Windows Server VMs on KubeVirt require three things that Linux VMs typically do not:
+
+- **UEFI firmware** - Windows Server 2022 requires UEFI. Set `firmware.bootloader.efi.secureBoot: false`
+  unless you have a Secure Boot-enabled image.
+- **HyperV enlightenments** - Paravirtualized timers, interrupt controllers, and other
+  HyperV features dramatically improve Windows guest performance under KVM. The full set
+  is listed in the manifest below.
+- **HyperV timer** - The `clock.timer.hyperv` field must be present when using `synictimer`.
+  Omitting it causes a libvirt error at VM start: `'stimer' hyperv feature requires 'hypervclock' timer`.
+- **VirtIO driver disk** - Windows does not ship with VirtIO disk or network drivers. The
+  `virtio-container-disk` image in the Zarf registry provides the VirtIO Windows driver ISO.
+  Attach it as a CD-ROM so Windows can find the drivers on first boot.
+
+## Steps
+
+<Steps>
+
+1. **Set up the VM workload namespace**
+
+   If you do not already have a sidecar-mode VM namespace, set one up following
+   [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/). That guide
+   covers namespace labels, the `private-registry` pull secret, and the UDS Package CR.
+
+   The UDS Package for a Windows VM needs one additional allow rule: an ingress on port 3389
+   to the VM pod, so that `virtctl port-forward` can forward RDP traffic. Add it when creating
+   the Package:
+
+   ```yaml title="vm-namespace-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-vms
+     namespace: my-vms
+   spec:
+     network:
+       serviceMesh:
+         mode: sidecar
+       allow:
+         - direction: Egress
+           remoteGenerated: KubeAPI
+           description: virt-launcher to KubeAPI
+         - direction: Ingress
+           port: 3389
+           selector:
+             app: windows-vm   # must match labels on the virt-launcher pod
+           remoteGenerated: Anywhere   # restrict to your RDP client CIDR in production
+           description: RDP access
+   ```
+
+   ```bash
+   kubectl apply -f vm-namespace-package.yaml
+   ```
+
+2. **Import the Windows disk image**
+
+   Import the Windows Server QCOW2 image into a PVC using a DataVolume. The HTTP import
+   source works for images hosted on an accessible URL. For a local file, use
+   `virtctl image-upload` as described in
+   [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/).
+
+   ```yaml title="windows-disk.yaml"
+   apiVersion: cdi.kubevirt.io/v1beta1
+   kind: DataVolume
+   metadata:
+     name: windows-disk
+     namespace: my-vms
+   spec:
+     source:
+       http:
+         url: "http://your-server/windows-server-2022.qcow2"   # QCOW2 HTTP URL
+     pvc:
+       accessModes:
+         - ReadWriteOnce
+       resources:
+         requests:
+           storage: 50Gi   # must be larger than the uncompressed disk image
+       # storageClassName: omit to use the cluster default, or specify your StorageClass
+   ```
+
+   ```bash
+   kubectl apply -f windows-disk.yaml
+   ```
+
+   Watch import progress:
+
+   ```bash
+   kubectl get datavolume windows-disk -n my-vms -w
+   ```
+
+   Import completes when the DataVolume phase reaches `Succeeded`.
+
+3. **Create the VirtualMachine**
+
+   ```yaml title="windows-vm.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: windows-vm
+     namespace: my-vms
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           kubevirt.io/vm: windows-vm
+           app: windows-vm   # matches the RDP ingress selector in step 1
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 2
+           resources:
+             requests:
+               memory: 4Gi
+           clock:
+             utc: {}
+             timer:
+               hpet:
+                 present: false
+               pit:
+                 tickPolicy: delay
+               rtc:
+                 tickPolicy: catchup
+               hyperv:            # required when synictimer is enabled
+                 present: true
+           firmware:
+             bootloader:
+               efi:
+                 secureBoot: false
+           features:
+             hyperv:
+               relaxed: {}
+               vapic: {}
+               vpindex: {}
+               spinlocks:
+                 spinlocks: 8191
+               synic: {}
+               synictimer:
+                 direct: {}
+               reset: {}
+               runtime: {}
+               frequencies: {}
+               reenlightenment: {}
+               tlbflush: {}
+               ipi: {}
+           devices:
+             disks:
+               - name: windowsdisk
+                 disk:
+                   bus: virtio
+                 bootOrder: 1
+               - name: virtiocontainerdisk
+                 cdrom:
+                   bus: sata       # sata so Windows can find it before VirtIO drivers load
+                 bootOrder: 2
+             interfaces:
+               - name: default
+                 masquerade: {}
+         networks:
+           - name: default
+             pod: {}
+         volumes:
+           - name: windowsdisk
+             persistentVolumeClaim:
+               claimName: windows-disk
+           - name: virtiocontainerdisk
+             containerDisk:
+               image: <registry>/kubevirt/virtio-container-disk:<kubevirt-version>  # replace with your Zarf registry address and the KubeVirt version in your package
+               imagePullPolicy: IfNotPresent
+   ```
+
+   ```bash
+   kubectl apply -f windows-vm.yaml
+   ```
+
+   > [!IMPORTANT]
+   > The `clock.timer.hyperv.present: true` field is required. KubeVirt uses the field name
+   > `hyperv` (not `hypervclock`) under `clock.timer`. Omitting it when `synictimer` is enabled
+   > causes a libvirt error and the VM never starts.
+
+   > [!NOTE]
+   > The VirtIO driver disk uses `bus: sata` for the CD-ROM because Windows cannot read a
+   > VirtIO disk before VirtIO drivers are installed. SATA is available without additional
+   > drivers and is accessible from the Windows installer or a running Windows guest.
+
+4. **Wait for the VM to start**
+
+   Watch the `virt-launcher` pod:
+
+   ```bash
+   kubectl get pods -n my-vms -w
+   ```
+
+   A Windows VM running with a VirtIO driver disk shows one more container than a standard
+   Linux VM:
+
+   ```console
+   NAME                             READY   STATUS    RESTARTS   AGE
+   virt-launcher-windows-vm-xxxxx   4/4     Running   0          30s
+   ```
+
+   The `4/4` count includes:
+   - `compute` (the QEMU/libvirt container)
+   - `volumevirtiocontainerdisk` (serves the VirtIO ISO as a CD-ROM)
+   - `istio-proxy` (Istio sidecar; uses the Kubernetes 1.29 native sidecar mechanism so it counts in the container total and runs for the pod's lifetime)
+   - `guest-console-log` (captures serial console output, stays running)
+
+   Check the VMI:
+
+   ```bash
+   kubectl get vmi windows-vm -n my-vms
+   ```
+
+   The phase shows `Running` when QEMU has started. The Windows guest takes several minutes
+   to boot for the first time.
+
+   > [!NOTE]
+   > The `4/4` container count and container names above were verified on a real cluster using a
+   > PVC-backed VM with a `virtio-container-disk` volume.
+   >
+   > The platform mechanics for steps 5-7 were verified on 2026-06-29 using a CirrOS VM in a
+   > sidecar-mode namespace: `virtctl vnc` opened a VNC session and captured a live guest
+   > framebuffer screenshot; `virtctl port-forward vm/<name> -n <namespace> 3389:3389` forwarded
+   > TCP port 3389 to localhost (TCP connection confirmed end-to-end); and `runStrategy: Always`
+   > restarted the VM automatically after a guest `poweroff`, with a new VMI created within the
+   > same second as shutdown.
+   >
+   > The Windows-specific procedures (VirtIO driver path inside the ISO, sysprep command and
+   > shutdown behavior, and RDP client authentication) follow standard Windows documentation and
+   > have not been executed against a live Windows guest.
+
+5. **Install VirtIO drivers (first boot)**
+
+   On first boot, Windows cannot see the primary disk because VirtIO drivers are not yet
+   installed. The Windows installer (or Windows itself if the disk has an existing install)
+   must load the drivers from the VirtIO CD-ROM.
+
+   Connect to the VM console:
+
+   ```bash
+   virtctl console windows-vm -n my-vms
+   ```
+
+   Press `Ctrl+]` to exit the console.
+
+   > [!WARNING]
+   > The serial console shows UEFI firmware boot messages and the Windows boot manager only.
+   > Windows Setup and the Windows desktop do not render in the serial console. You must use
+   > a graphical console to complete driver installation. Use `virtctl vnc` to open a VNC
+   > session (requires a VNC viewer on your workstation, such as `vncviewer` or TigerVNC),
+   > or skip ahead and wait for RDP to become available after the VM finishes its initial boot
+   > (this requires the VirtIO storage driver to already be present in the Windows image, which
+   > is the case if you used a pre-sysprep'd image with VirtIO drivers pre-installed).
+
+   In the Windows installer or guest (accessed via VNC):
+
+   1. Open the VirtIO driver CD (typically drive `E:` or the last drive letter).
+   2. Navigate to `virtio-win-gt-x64.msi` (for 64-bit Windows Server) and run it.
+      This installs all VirtIO drivers including the storage driver, network driver,
+      balloon driver, and guest agent (`virtio-win-guest-tools.exe`).
+   3. Reboot when prompted.
+
+   After the first reboot, Windows uses the VirtIO disk driver and the VM starts faster on
+   subsequent boots.
+
+6. **Verify the guest agent is running**
+
+   After VirtIO drivers and the QEMU guest agent are installed, virt-controller reports the
+   guest's IP address via the VMI status:
+
+   ```bash
+   kubectl get vmi windows-vm -n my-vms -o jsonpath='{.status.guestOSInfo}'
+   ```
+
+   A running guest agent reports the OS name, version, and hostname. If this field is empty,
+   the `qemu-guest-agent` service is not running inside the Windows guest.
+
+7. **Connect via RDP**
+
+   Port-forward RDP through the Istio sidecar:
+
+   ```bash
+   virtctl port-forward vm/windows-vm -n my-vms 3389:3389
+   ```
+
+   Connect your RDP client to `localhost:3389`. Use the Windows username and password you
+   configured during installation.
+
+</Steps>
+
+## Verification
+
+Check that the VM is running and the guest agent is reporting:
+
+```bash
+kubectl get vm,vmi -n my-vms
+```
+
+Both the `VirtualMachine` and `VirtualMachineInstance` should show `Running` / `Ready: True`.
+
+Confirm the RDP NetworkPolicy exists and targets the correct pod label:
+
+```bash
+kubectl get networkpolicy -n my-vms | grep rdp
+```
+
+Expected: one policy with selector `app=windows-vm` on port 3389.
+
+## Monitoring and logging
+
+Monitoring and logging for Windows VMs follow the same UDS Core patterns as any other VM
+application, with the addition of in-guest agents for both metrics and logs.
+
+> [!NOTE]
+> UDS Core slim-dev does not deploy Prometheus or Loki, so the monitoring and logging paths
+> below are not verified end to end. Both follow the standard UDS Core application patterns
+> and require a full UDS Core deployment to test.
+
+**Metrics (Windows Exporter):** Install
+[Windows Exporter](https://github.com/prometheus-community/windows_exporter) inside the Windows
+guest and configure it to listen on a port (default: 9182). Declare the metrics port in your
+UDS Package and add a `monitor` entry, the same pattern as
+[Expose a VM application on the UDS mesh](/how-to-guides/virtual-machines/vm-app-on-uds-mesh/).
+
+**Logs:** Ship Windows event logs and application logs to the UDS Core log stack using a
+log forwarding agent installed inside the guest (for example, Promtail or Elastic Agent).
+Configure the agent to send to the Loki or Elasticsearch endpoint in your cluster.
+
+## Troubleshooting
+
+### Problem: VM starts but stays at phase Scheduled
+
+**Symptom:** `kubectl get vmi windows-vm -n my-vms` shows `Scheduled` indefinitely with no
+IP address.
+
+**Solution:** Check VMI conditions for libvirt errors:
+
+```bash
+kubectl get vmi windows-vm -n my-vms \
+  -o jsonpath='{.status.conditions}' | python3 -m json.tool
+```
+
+A common cause is missing the `clock.timer.hyperv` field when `synictimer` is enabled. The
+error reads: `'stimer' hyperv feature requires 'hypervclock' timer`. Add
+`clock.timer.hyperv.present: true` to the VirtualMachine spec and delete and re-create the VM.
+
+### Problem: Windows cannot find the boot disk
+
+**Symptom:** Windows setup or boot reports no disks available.
+
+**Solution:** VirtIO disk drivers are not installed. The primary disk is VirtIO bus and Windows
+cannot see it without the driver. Confirm the VirtIO driver CD-ROM is attached:
+
+```bash
+kubectl get vmi windows-vm -n my-vms \
+  -o jsonpath='{.spec.domain.devices.disks}' | python3 -m json.tool
+```
+
+The `virtiocontainerdisk` disk should be present with `cdrom.bus: sata`. If missing, the VM
+was created without the VirtIO driver volume. Update the VirtualMachine spec to add it and
+restart the VM.
+
+### Problem: virt-launcher pod stuck in Init phase
+
+**Symptom:** The pod shows `Init:ImagePullBackOff` for the `volumevirtiocontainerdisk` container.
+
+**Solution:** The `virtio-container-disk` image is not in the Zarf registry. Verify:
+
+```bash
+kubectl port-forward svc/zarf-docker-registry 15000:5000 -n zarf &
+PF_PID=$!
+sleep 2
+PASS=$(kubectl get secret private-registry -n zarf \
+  -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d \
+  | python3 -c "
+import sys, json, base64
+d = json.load(sys.stdin)
+auth = list(d['auths'].values())[0]['auth']
+print(base64.b64decode(auth).decode().split(':')[1])
+")
+curl -s -u "zarf-pull:$PASS" "http://localhost:15000/v2/kubevirt/virtio-container-disk/tags/list"
+kill $PF_PID
+```
+
+If the image is missing, rebuild and redeploy the KubeVirt bundle. The KubeVirt package source
+includes the `virtio-container-disk` image.
+
+### Problem: virtctl port-forward exits immediately
+
+**Symptom:** `virtctl port-forward` exits with "unexpected EOF" or a connection error immediately
+after connecting.
+
+**Solution:** The namespace is using ambient mode instead of sidecar mode. Confirm:
+
+```bash
+kubectl get namespace my-vms -o jsonpath='{.metadata.labels.istio\.io/dataplane-mode}'
+```
+
+If the output is `ambient`, remove the label and verify the UDS Package has
+`serviceMesh.mode: sidecar`. See the troubleshooting section in
+[Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) for full instructions.
+
+## Related documentation
+
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - Namespace setup, container disk VM basics
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - DataVolume import patterns
+- [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/) - Upload a local QCOW2 file instead of HTTP import
+- [Expose a VM application on the UDS mesh](/how-to-guides/virtual-machines/vm-app-on-uds-mesh/) - Metrics port declaration and ServiceMonitor pattern
+- [KubeVirt Windows guest documentation](https://kubevirt.io/user-guide/virtual_machines/windows_virtio_drivers/) - VirtIO driver installation details

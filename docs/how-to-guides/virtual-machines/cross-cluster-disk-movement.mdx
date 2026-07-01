@@ -1,0 +1,403 @@
+---
+title: Move a disk image between clusters
+description: Export a PVC from a source cluster using the VMExport API, download it locally, and upload it to a destination cluster with virtctl image-upload.
+sidebar:
+  order: 11.008
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Export a PVC from a source cluster using the KubeVirt VMExport API, download the disk image to
+your workstation, and upload it to a PVC on a destination cluster using `virtctl image-upload`.
+The resulting PVC is ready to use as a VM disk.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) on both source and destination clusters
+- [A PVC to export](/how-to-guides/virtual-machines/upload-disk-image/) - A `Bound` PVC in a VM namespace on the source cluster
+- `kubectl` and `virtctl` on your PATH, with kubeconfig access to both clusters
+- Enough local disk space to hold the exported image
+
+## Before you begin
+
+> [!NOTE]
+> This guide was verified end-to-end on 2026-06-29: a CirrOS disk was exported from a source
+> cluster, downloaded as `disk.img.gz`, uploaded to a second independent k3d cluster running
+> a second independent k3d cluster, and a VM booted from the imported disk
+> successfully. On single-node k3d clusters, `virtctl image-upload` may fail due to a ztunnel
+> same-node routing issue; see troubleshooting if you hit this.
+
+VMExport creates an ephemeral export server pod (`virt-export-<name>`) in the same namespace
+as the source PVC. The pod serves the disk over HTTPS with token authentication. The export
+has a 2-hour TTL; after that KubeVirt removes the pod. Re-create the VMExport CR if you need
+more time.
+
+The export server exposes each PVC in two formats:
+
+- `raw`: an uncompressed raw disk image (`disk.img`)
+- `gz`: a gzip-compressed raw disk image (`disk.img.gz`)
+
+This guide uses the `gz` format. `virtctl image-upload` accepts both raw and gzip-compressed
+images and handles decompression automatically.
+
+## Managing cluster contexts
+
+This guide requires running commands against two clusters. Before starting, confirm both
+contexts are available:
+
+```bash
+kubectl config get-contexts
+```
+
+Switch between clusters with `use-context`:
+
+```bash
+kubectl config use-context source-cluster
+kubectl config use-context dest-cluster
+```
+
+Steps 1-6 run against the source cluster. Step 7 switches to the destination cluster.
+Set your context to the source cluster before beginning step 1:
+
+```bash
+kubectl config use-context source-cluster
+```
+
+> [!IMPORTANT]
+> The VMExport feature gate must be enabled before creating VMExport resources. This also
+> deploys `virt-exportproxy` in the `kubevirt` namespace, which requires a KubeAPI egress rule
+> in the KubeVirt UDS Package. Step 1 covers enabling the feature gate. The egress rule ships
+> with the KubeVirt package; see troubleshooting if `virt-exportproxy` cannot reach the API.
+
+## Steps
+
+<Steps>
+
+1. **Verify VMExport is active**
+
+   The KubeVirt package ships with the `VMExport` feature gate enabled by default in
+   common-flavor deployments (`common-values.yaml`). Upstream-flavor bundles that do not
+   include `common-values.yaml` do not enable it. Confirm `virt-exportproxy` is running:
+
+   ```bash
+   kubectl get pods -n kubevirt | grep exportproxy
+   ```
+
+   Expected: one or more pods showing `1/1 Running`.
+
+   If `virt-exportproxy` is missing, the deployed package version predates the default
+   feature gate. Enable it explicitly in your bundle:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: kubevirt
+       repository: ghcr.io/defenseunicorns/packages/uds/kubevirt
+       ref: 1.8.2-upstream
+       overrides:
+         kubevirt:
+           uds-kubevirt-config:
+             values:
+               - path: kubevirt.configuration.developerConfiguration.featureGates
+                 value:
+                   - VMExport
+   ```
+
+   > [!WARNING]
+   > The `value` list **replaces** the entire `featureGates` array. Include any other feature
+   > gates your cluster uses, not just VMExport, or they will be removed on redeploy.
+
+2. **Create the export token secret**
+
+   Choose a token value and create a secret in the namespace that holds the source PVC.
+   Replace `my-export-token` with a value of your choice:
+
+   ```bash
+   EXPORT_TOKEN=my-export-token
+   kubectl create secret generic export-token \
+     -n my-vms \
+     --from-literal=token=$EXPORT_TOKEN
+   ```
+
+   Note the token value. You will need it in step 5 when downloading.
+
+3. **Create the VMExport CR**
+
+   Create a VMExport that references the source PVC and the token secret:
+
+   ```yaml title="disk-export.yaml"
+   apiVersion: export.kubevirt.io/v1beta1
+   kind: VirtualMachineExport
+   metadata:
+     name: disk-export
+     namespace: my-vms
+   spec:
+     tokenSecretRef: export-token   # secret from step 2
+     source:
+       apiGroup: ""
+       kind: PersistentVolumeClaim
+       name: my-disk               # PVC to export
+   ```
+
+   ```bash
+   kubectl apply -f disk-export.yaml
+   ```
+
+4. **Wait for the export to become Ready**
+
+   Watch the VMExport phase:
+
+   ```bash
+   kubectl get virtualmachineexport disk-export -n my-vms -w
+   ```
+
+   The export moves through `Pending` → `Ready`. When `Ready`, the export server pod
+   is running 2/2 in your namespace.
+
+   ```console
+   NAME          PHASE     AGE
+   disk-export   Pending   5s
+   disk-export   Ready     20s
+   ```
+
+5. **Download the disk image**
+
+   The simplest download method is `virtctl vmexport download`, which handles port-forwarding
+   and token authentication automatically:
+
+   ```bash
+   virtctl vmexport download disk-export \
+     --volume=my-disk \
+     --output=my-disk.img.gz \
+     --port-forward \
+     -n my-vms
+   ```
+
+   Expected output:
+
+   ```console
+   service virt-export-disk-export is ready for port-forwarding
+   Forwarding from 127.0.0.1:<port> -> 8443
+   Port forwarding is ready.
+   Downloading file: ... Download finished successfully
+   ```
+
+   Alternatively, use curl with a manual port-forward:
+
+   ```bash
+   kubectl port-forward svc/virt-export-disk-export 18444:443 -n my-vms &
+   PF_PID=$!
+   ```
+
+   ```bash
+   curl -sk \
+     -H "x-kubevirt-export-token: $EXPORT_TOKEN" \
+     -o my-disk.img.gz \
+     "https://localhost:18444/volumes/my-disk/disk.img.gz"
+   ```
+
+   ```bash
+   kill $PF_PID
+   ```
+
+   The volume URL path is `/volumes/<pvc-name>/disk.img.gz`. Confirm the PVC name matches
+   the name you used in the VMExport spec.
+
+6. **Delete the VMExport to release the export server pod**
+
+   ```bash
+   kubectl delete virtualmachineexport disk-export -n my-vms
+   ```
+
+   KubeVirt removes the export server pod automatically. Deleting the VMExport does not affect
+   the source PVC. If you did not finish downloading before the 2-hour TTL expires, the export
+   pod disappears on its own. Re-create the VMExport CR from step 3 to start a new export.
+
+7. **Upload the image to the destination cluster**
+
+   Switch to the destination cluster context:
+
+   ```bash
+   kubectl config use-context <destination-cluster-context>
+   ```
+
+   Follow [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/)
+   to upload `my-disk.img.gz` to a PVC in the destination cluster. The upload guide covers the
+   UDS Package network rule, PVC creation, port-forward, and `virtctl image-upload` command.
+
+   The only difference from the upload guide: your image path is the `.img.gz` file from step 5.
+   `virtctl image-upload` accepts gzip-compressed images and handles decompression automatically.
+
+   ```bash
+   virtctl image-upload pvc my-disk \
+     --no-create \
+     --uploadproxy-url=https://localhost:18443 \
+     --insecure \
+     --image-path=./my-disk.img.gz \
+     -n my-vms
+   ```
+
+   > [!NOTE]
+   > On single-node clusters (including single-node k3d), `virtctl image-upload` fails with
+   > `http: proxy error: EOF` because the CDI uploadproxy and upload server pods co-schedule on
+   > one node and hit a ztunnel same-node routing issue. Use the DataVolume HTTP import in
+   > troubleshooting instead. Multi-node clusters are not affected.
+
+</Steps>
+
+## Verification
+
+On the source cluster, confirm the export server pod was cleaned up:
+
+```bash
+kubectl get pods -n my-vms | grep virt-export
+```
+
+No `virt-export-disk-export` pod should be present after step 6.
+
+On the destination cluster, confirm the PVC is bound:
+
+```bash
+kubectl get pvc my-disk -n my-vms
+```
+
+Expected status: `Bound`.
+
+## Troubleshooting
+
+### Problem: Export server pod stuck in ImagePullBackOff
+
+**Symptom:** `kubectl get pods -n my-vms` shows `virt-export-<name>` in `ErrImagePull` or
+`ImagePullBackOff` pulling `127.0.0.1:31999/kubevirt/virt-exportserver:<version>-*` (address shown is k3d-specific; yours will differ on other cluster types).
+
+**Solution:** Both `virt-exportproxy` and `virt-exportserver` images are bundled in the
+KubeVirt package (`zarf.yaml`). If the pod cannot pull the image, the Zarf registry may not
+have it loaded. Confirm the images are present:
+
+```bash
+kubectl port-forward svc/zarf-docker-registry 15000:5000 -n zarf &
+PF_PID=$!
+sleep 2
+PASS=$(kubectl get secret private-registry -n zarf \
+  -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d \
+  | python3 -c "
+import sys, json, base64
+d = json.load(sys.stdin)
+auth = list(d['auths'].values())[0]['auth']
+print(base64.b64decode(auth).decode().split(':')[1])
+")
+curl -s -u "zarf-pull:$PASS" "http://localhost:15000/v2/_catalog" \
+  | python3 -m json.tool | grep -E "exportserver|exportproxy"
+kill $PF_PID
+```
+
+If the images are absent despite being in the bundle, the Zarf deploy may have failed to push
+them. Re-run `uds deploy` or check the deploy logs for push errors.
+
+### Problem: virt-exportproxy keeps failing to reach the Kubernetes API
+
+**Symptom:** `kubectl logs -n kubevirt -l kubevirt.io=virt-exportproxy` shows repeated
+`TLS handshake timeout` or `EOF` errors against the cluster API IP.
+
+**Solution:** The KubeVirt package ships with a KubeAPI egress rule for `virt-exportproxy`
+in `chart/templates/uds-package.yaml`. If the rule is missing, you are running a package
+version older than this fix. Upgrade to the current package, or patch the Package CR
+temporarily:
+
+```bash
+kubectl patch package kubevirt -n kubevirt --type=json -p='[
+  {
+    "op": "add",
+    "path": "/spec/network/allow/-",
+    "value": {
+      "direction": "Egress",
+      "selector": {"kubevirt.io": "virt-exportproxy"},
+      "remoteGenerated": "KubeAPI",
+      "description": "virt-exportproxy to KubeAPI"
+    }
+  }
+]'
+```
+
+This patch is not persistent across Package CR reconciliation. Upgrade the package for a
+permanent fix.
+
+### Problem: VMExport stays in Pending
+
+**Symptom:** `kubectl get virtualmachineexport -n my-vms` shows `Pending` for more than 2
+minutes with no export server pod created.
+
+**Solution:** Check the events on the VMExport:
+
+```bash
+kubectl describe virtualmachineexport disk-export -n my-vms
+```
+
+Common causes: the source PVC is not `Bound`, the `tokenSecretRef` secret does not exist in
+the same namespace, or `virt-controller` cannot reconcile the resource. Confirm the PVC status:
+
+```bash
+kubectl get pvc my-disk -n my-vms
+```
+
+### Problem: curl download returns empty or 401
+
+**Symptom:** The download completes but the file is empty, or curl returns an HTTP 401 error.
+
+**Solution:** The token header is missing or wrong. The header name is exactly
+`x-kubevirt-export-token` and the value must match the `token` key in the secret created in
+step 2. Verify the secret:
+
+```bash
+kubectl get secret export-token -n my-vms \
+  -o jsonpath='{.data.token}' | base64 -d
+```
+
+### Problem: virtctl image-upload fails with `http: proxy error: EOF` on the destination cluster
+
+**Symptom:** `virtctl image-upload` exits with `http: proxy error: EOF` or `connection refused`
+in CDI uploadproxy logs when uploading to the destination cluster.
+
+**Solution:** On single-node clusters (including k3d), the CDI uploadproxy pod and the CDI
+upload server pod both schedule on the same node. Ztunnel's same-node routing path returns
+`ECONNREFUSED` for CDI's internal mTLS connection between the two pods. This is a k3d-specific
+limitation; on multi-node clusters the pods schedule on different nodes and cross-node traffic
+works correctly.
+
+**Workaround:** Import the disk directly on the destination cluster using a DataVolume with an
+HTTP source. Serve `my-disk.img.gz` from your workstation:
+
+```bash
+python3 -m http.server 8888
+```
+
+Then create a DataVolume on the destination cluster pointing at your workstation IP:
+
+```yaml title="workaround-dv.yaml"
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: my-disk
+  namespace: my-vms
+spec:
+  source:
+    http:
+      url: "http://<your-workstation-ip>:8888/my-disk.img.gz"
+  pvc:
+    accessModes:
+      - ReadWriteOnce
+    resources:
+      requests:
+        storage: 10Gi
+```
+
+The CDI importer handles `.img.gz` decompression automatically. Add an egress rule to your
+destination UDS Package for port 8888 so the importer pod can reach your workstation.
+
+## Related documentation
+
+- [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/) - Upload the downloaded image to the destination cluster
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - Alternative import methods: Zarf registry and HTTP sources
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview
+- [KubeVirt VMExport documentation](https://kubevirt.io/user-guide/operations/export_api/) - Full VMExport spec reference

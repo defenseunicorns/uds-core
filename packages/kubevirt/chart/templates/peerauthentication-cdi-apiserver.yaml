@@ -1,0 +1,19 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.cdi.enabled }}
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: cdi-apiserver-peerauth
+  namespace: cdi
+spec:
+  selector:
+    matchLabels:
+      cdi.kubevirt.io: cdi-apiserver
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8443:
+      mode: PERMISSIVE
+{{- end }}

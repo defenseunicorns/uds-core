@@ -1,0 +1,376 @@
+---
+title: Import a disk image with CDI
+description: Use CDI DataVolumes to import disk images from the Zarf registry or an HTTP server, then run VMs from the resulting PVCs.
+sidebar:
+  order: 11.004
+---
+
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Create a PersistentVolumeClaim backed by a real disk image using CDI DataVolumes. You'll import
+from the Zarf registry and from an HTTP source, then boot a VM from the resulting PVC. PVC-backed
+disks persist across VM restarts and can be snapshotted or migrated independently from the VM.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - KubeVirt and CDI operators running
+- [A working VM namespace](/how-to-guides/virtual-machines/first-vm/) - Namespace with UDS Package, sidecar injection, and `private-registry` secret
+- `kubectl` and `virtctl` on your PATH
+- A disk image accessible from the cluster (Zarf registry or HTTP endpoint)
+
+## Before you begin
+
+CDI's `DataVolume` resource describes a disk import operation. When you create a DataVolume, CDI
+creates a temporary `importer-*` pod in your namespace to fetch the image and write it to a PVC.
+When the import completes, the pod is removed and the DataVolume phase transitions to `Succeeded`.
+
+CDI importer pods set `sidecar.istio.io/inject: "false"`. UDS Core's Pepr module allows this
+annotation on pods whose names start with `importer-`. No extra namespace configuration is needed.
+
+For the Zarf registry source, CDI uses `pullMethod: node`, which routes through the node's
+containerd daemon. This uses the same credentials containerd uses for pulling container images,
+so no `secretRef` is needed in the DataVolume spec.
+
+> [!NOTE]
+> The `virt-launcher` pod for a PVC-backed VM shows `3/3` containers, not `4/4`. Container
+> disk VMs include a `volumecontainerdisk` container that serves the disk image; PVC-backed
+> VMs do not need this because the disk is already on a PVC.
+
+## Steps
+
+<Steps>
+
+1. **Create the VM workload namespace**
+
+   Set up a namespace with Istio sidecar injection and a UDS Package. CDI importer pods run in
+   this namespace, so the UDS Package must allow the egress traffic the importer needs.
+
+   > [!NOTE]
+   > `kubevirt.enabled: true` makes the operator label the namespace
+   > `uds.dev/kubevirt-workload: "true"`. The label is also set directly on the namespace here:
+   > the CDI importer pod can start during deploy, before the operator reconciles the Package, and
+   > the importer is denied if the label is not already present. Setting it on the manifest removes
+   > that race.
+
+   ```yaml title="vm-namespace-package.yaml"
+   apiVersion: v1
+   kind: Namespace
+   metadata:
+     name: my-vms
+     labels:
+       istio-injection: enabled
+       uds.dev/kubevirt-workload: "true"
+   ---
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-vms
+     namespace: my-vms
+   spec:
+     kubevirt:
+       enabled: true
+     network:
+       serviceMesh:
+         mode: sidecar
+       allow:
+         - direction: Egress
+           remoteGenerated: KubeAPI
+           description: virt-launcher to KubeAPI
+         # Add egress rules for the import source if using the HTTP tab below.
+         # CDI importer pods run in this namespace and need egress to the source URL.
+         # A UDS allow rule requires a remote target; a port-only rule is rejected.
+         # Example for an HTTP/HTTPS source outside the cluster:
+         # - direction: Egress
+         #   remoteGenerated: Anywhere   # scope to the source CIDR with remoteCidr in production
+         #   port: 80
+         #   description: CDI importer HTTP source
+         # - direction: Egress
+         #   remoteGenerated: Anywhere   # scope to the source CIDR with remoteCidr in production
+         #   port: 443
+         #   description: CDI importer HTTPS source
+   ```
+
+   Copy the `private-registry` secret so Istio sidecars can pull from the Zarf registry:
+
+   ```bash
+   DOCKER_CONFIG=$(kubectl get secret private-registry -n zarf \
+     -o jsonpath='{.data.\.dockerconfigjson}')
+
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/dockerconfigjson
+   metadata:
+     name: private-registry
+     namespace: my-vms
+   data:
+     .dockerconfigjson: $DOCKER_CONFIG
+   EOF
+
+   kubectl patch serviceaccount default -n my-vms \
+     -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
+   ```
+
+2. **Import a disk image**
+
+   <Tabs>
+   <TabItem label="Zarf registry">
+
+   Use `pullMethod: node` and omit `secretRef`. CDI uses the node's containerd credentials,
+   which already have access to the Zarf registry (`127.0.0.1:31999` on k3d; find your address with `kubectl get svc zarf-docker-registry -n zarf` on other clusters).
+
+   ```yaml title="fedora-dv.yaml"
+   apiVersion: cdi.kubevirt.io/v1beta1
+   kind: DataVolume
+   metadata:
+     name: fedora-disk
+     namespace: my-vms
+   spec:
+     source:
+       registry:
+         url: "docker://127.0.0.1:31999/containerdisks/fedora:latest"
+         pullMethod: node
+     pvc:
+       accessModes:
+         - ReadWriteOnce
+       resources:
+         requests:
+           storage: 6Gi
+   ```
+
+   > [!IMPORTANT]
+   > Do not set `secretRef` on a Zarf registry source. CDI will look for S3-style credentials
+   > (`accessKeyId`/`secretKey`) and fail if the secret is a Docker config format. The node
+   > pull path handles authentication through the node's containerd configuration.
+
+   </TabItem>
+   <TabItem label="HTTP">
+
+   Point the DataVolume at any HTTP URL that serves a raw, QCOW2, or ISO disk image. The URL
+   must be reachable from within the cluster.
+
+   ```yaml title="fedora-dv.yaml"
+   apiVersion: cdi.kubevirt.io/v1beta1
+   kind: DataVolume
+   metadata:
+     name: fedora-disk
+     namespace: my-vms
+   spec:
+     source:
+       http:
+         url: "http://my-fileserver.example.com/fedora-40.qcow2"
+     pvc:
+       accessModes:
+         - ReadWriteOnce
+       resources:
+         requests:
+           storage: 6Gi
+   ```
+
+   Size the PVC at least as large as the uncompressed disk image. QCOW2 images expand on write;
+   provision enough overhead for the guest OS to operate.
+
+   </TabItem>
+   </Tabs>
+
+   Apply the DataVolume:
+
+   ```bash
+   kubectl apply -f fedora-dv.yaml
+   ```
+
+3. **Watch import progress**
+
+   The DataVolume moves through phases: `ImportScheduled` → `ImportInProgress` → `Succeeded`.
+
+   ```bash
+   kubectl get datavolume fedora-disk -n my-vms -w
+   ```
+
+   Watch the importer pod:
+
+   ```bash
+   kubectl get pods -n my-vms -w
+   ```
+
+   The importer pod is named `importer-<datavolume-name>`. It runs, writes the image to the PVC,
+   and is removed when the import completes.
+
+   When complete:
+
+   ```console
+   NAME          PHASE       PROGRESS   RESTARTS   AGE
+   fedora-disk   Succeeded   100.0%                45s
+   ```
+
+4. **Create a VM from the PVC**
+
+   Reference the DataVolume's PVC in the `volumes` section of the VM spec. The PVC name matches
+   the DataVolume name.
+
+   ```yaml title="fedora-vm.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: fedora-vm
+     namespace: my-vms
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           kubevirt.io/vm: fedora-vm
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 2
+           resources:
+             requests:
+               memory: 2Gi
+           devices:
+             disks:
+               - name: pvcdisk
+                 disk:
+                   bus: virtio
+             interfaces:
+               - name: default
+                 masquerade: {}
+         networks:
+           - name: default
+             pod: {}
+         terminationGracePeriodSeconds: 0   # dev only; use 60+ in production for graceful shutdown
+         volumes:
+           - name: pvcdisk
+             persistentVolumeClaim:
+               claimName: fedora-disk    # must match DataVolume name
+   ```
+
+   ```bash
+   kubectl apply -f fedora-vm.yaml
+   ```
+
+5. **Wait for the VM to reach Running**
+
+   ```bash
+   kubectl get vmi fedora-vm -n my-vms -w
+   ```
+
+   When phase shows `Running`, connect to the console:
+
+   ```bash
+   virtctl console fedora-vm -n my-vms
+   ```
+
+</Steps>
+
+## Verification
+
+**Check the DataVolume and PVC:**
+
+```bash
+kubectl get datavolume,pvc -n my-vms
+```
+
+Both should exist. The DataVolume shows `Succeeded`; the PVC shows `Bound`.
+
+**Check the VM and virt-launcher pod:**
+
+```bash
+kubectl get vm,vmi,pods -n my-vms
+```
+
+The `virt-launcher` pod shows `3/3` ready. The three containers are:
+- `compute` (QEMU/libvirt process)
+- `istio-proxy` (Istio sidecar; uses the Kubernetes 1.29 native sidecar mechanism so it counts in the container total and runs for the pod's lifetime)
+- `guest-console-log` (captures serial console output, stays running)
+
+**Verify the disk is attached inside the VM:**
+
+Connect via console and check that the block device is visible:
+
+```bash
+virtctl console fedora-vm -n my-vms
+```
+
+Inside the guest:
+
+```bash
+lsblk
+```
+
+You should see a `vda` block device corresponding to the PVC.
+
+## Troubleshooting
+
+### Problem: DataVolume stuck in ImportScheduled
+
+**Symptom:** `kubectl get datavolume -n my-vms` shows `ImportScheduled` with no importer pod.
+
+**Solution:** The importer pod failed to schedule. Check events on the DataVolume:
+
+```bash
+kubectl describe datavolume fedora-disk -n my-vms
+```
+
+Common causes: the namespace has no default StorageClass, or the PVC size exceeds available
+node storage. Check cluster storage:
+
+```bash
+kubectl get storageclass
+kubectl describe nodes | grep -A5 "Allocated resources"
+```
+
+### Problem: Registry import fails with "couldn't find key accessKeyId"
+
+**Symptom:** The importer pod logs show `Error: couldn't find key accessKeyId in Secret`.
+
+**Solution:** A `secretRef` was set on a registry source DataVolume. Remove `secretRef` from the
+DataVolume spec and re-create it. CDI treats `secretRef` on registry sources as S3 credentials
+and looks for `accessKeyId`/`secretKey` fields. For Zarf registry sources with `pullMethod:
+node`, no `secretRef` is needed.
+
+### Problem: HTTP import fails with connection timeout
+
+**Symptom:** The importer pod logs show a connection timeout or "no route to host".
+
+**Solution:** In a UDS namespace, the default-deny NetworkPolicy blocks the importer pod's egress
+unless your UDS Package has an egress allow rule with a remote target (`remoteGenerated: Anywhere`
+or a `remoteCidr`) for the source port. Add the rule shown in step 1 and re-create the DataVolume.
+If the egress rule is already present, confirm the HTTP URL is reachable from inside the cluster:
+check that the URL's host resolves and is reachable. In airgap environments, the HTTP server must
+be in-cluster or on the cluster's internal network. To upload a local disk image instead, see
+[Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/).
+
+### Problem: PVC-backed VM fails to start with disk not found
+
+**Symptom:** The VMI shows an error about the PVC not existing or not being bound.
+
+**Solution:** Verify the DataVolume phase is `Succeeded` before creating the VM:
+
+```bash
+kubectl get datavolume fedora-disk -n my-vms
+```
+
+If the DataVolume is still importing, wait for it to complete. The PVC is not ready until the
+DataVolume reaches `Succeeded`.
+
+### Problem: virt-launcher shows ErrImagePull for Istio sidecar
+
+**Symptom:** The `virt-launcher` pod fails with an image pull error for
+`127.0.0.1:31999/istio/proxyv2`.
+
+**Solution:** The `private-registry` secret is missing or not attached to the service account.
+Run the copy and patch commands from step 1.
+
+## Related documentation
+
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview, CDI importer pod model
+- [Install KubeVirt on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - CDI scratchSpaceStorageClass configuration
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - Container disk VMs and namespace setup
+- [Upload a local disk image with virtctl](/how-to-guides/virtual-machines/upload-disk-image/) - Import a disk image from your workstation via CDI upload
+- [CDI DataVolume documentation](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/datavolumes.md) - Full DataVolume spec reference

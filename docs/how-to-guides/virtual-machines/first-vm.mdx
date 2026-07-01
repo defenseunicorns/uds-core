@@ -1,0 +1,416 @@
+---
+title: Run your first VM on UDS Core
+description: Create a container disk VirtualMachine, connect to it via console and SSH, and manage its lifecycle with virtctl start, stop, and pause commands.
+sidebar:
+  order: 11.002
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Deploy a CirrOS container disk VM in a UDS-managed namespace, verify that the `virt-launcher` pod
+comes up with the Istio sidecar and required KubeVirt annotations, connect to the VM via console,
+and exercise the basic lifecycle commands.
+
+This guide uses CirrOS (a minimal Linux cloud image) as the example VM. CirrOS is included in the
+KubeVirt package and does not require a separate image import.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - KubeVirt and CDI operators running
+- `kubectl` and `virtctl` on your PATH, pointed at the cluster
+
+## Before you begin
+
+Container disk VMs use a container image as the disk. KubeVirt pulls the image via containerd on
+the node, not via a pod imagePullSecret. For images stored in the cluster's Zarf registry, you
+must reference the image by its full Zarf registry URL.
+
+> [!NOTE]
+> The Zarf agent does not rewrite image references in `VirtualMachine` specs. Always use the
+> Zarf registry URL directly for container disk images in air-gapped deployments.
+
+**Finding your Zarf registry address.** On k3d clusters, the Zarf registry is exposed at
+`127.0.0.1:31999`. On other cluster types, find the address by checking the Zarf registry
+Service in the `zarf` namespace:
+
+```bash
+kubectl get svc zarf-docker-registry -n zarf
+```
+
+Use the `CLUSTER-IP` and port as your registry address inside the cluster, or the NodePort if
+accessing from outside. This guide uses `127.0.0.1:31999` throughout; replace this with your
+cluster's Zarf registry address if you are not on k3d.
+
+Images bundled with the KubeVirt package are available at `<zarf-registry>/kubevirt/` after
+deployment. This guide uses `127.0.0.1:31999/kubevirt/cirros-container-disk-demo:latest`.
+
+## Steps
+
+<Steps>
+
+1. **Set up the VM workload namespace**
+
+   The namespace where VMs run must:
+   - Carry the `uds.dev/kubevirt-workload: "true"` label so the KubeVirt Pepr allowances apply.
+     Set `kubevirt.enabled: true` in the namespace's UDS Package and the operator applies it, or
+     label the namespace directly (the manual path below does this)
+   - Have Istio sidecar injection enabled (`istio-injection: enabled`)
+   - Have a UDS Package CR with `serviceMesh.mode: sidecar`
+   - Have the `private-registry` imagePullSecret so the Istio sidecar can pull from the Zarf registry
+
+   **(Recommended)** Create the namespace as part of a Zarf package. Zarf creates the
+   `private-registry` secret and configures the service account automatically. See
+   [Packaging applications](/how-to-guides/packaging-applications/overview/) for guidance.
+
+   **Or** create the namespace manually for quick testing:
+
+   ```bash
+   kubectl create namespace my-vms
+   kubectl label namespace my-vms istio-injection=enabled
+   kubectl label namespace my-vms uds.dev/kubevirt-workload=true
+   ```
+
+   Then copy the `private-registry` secret and patch the default service account:
+
+   ```bash
+   DOCKER_CONFIG=$(kubectl get secret private-registry -n zarf \
+     -o jsonpath='{.data.\.dockerconfigjson}')
+
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/dockerconfigjson
+   metadata:
+     name: private-registry
+     namespace: my-vms
+   data:
+     .dockerconfigjson: $DOCKER_CONFIG
+   EOF
+
+   kubectl patch serviceaccount default -n my-vms \
+     -p '{"imagePullSecrets": [{"name": "private-registry"}]}'
+   ```
+
+   Apply the UDS Package CR:
+
+   ```yaml title="vm-namespace-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-vms
+     namespace: my-vms
+   spec:
+     network:
+       serviceMesh:
+         mode: sidecar
+       allow:
+         - direction: Egress
+           remoteGenerated: KubeAPI
+           description: virt-launcher to KubeAPI
+   ```
+
+   ```bash
+   kubectl apply -f vm-namespace-package.yaml
+   ```
+
+   Verify the Package reaches `Ready`:
+
+   ```bash
+   kubectl get package my-vms -n my-vms
+   ```
+
+2. **Create the VirtualMachine**
+
+   ```yaml title="cirros-vm.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: cirros-vm
+     namespace: my-vms
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           kubevirt.io/vm: cirros-vm
+           app: cirros-vm    # used by Service selectors in later guides (live migration, L2 networking)
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 1
+           resources:
+             requests:
+               memory: 128M
+           devices:
+             disks:
+               - name: containerdisk
+                 disk:
+                   bus: virtio
+             interfaces:
+               - name: default
+                 masquerade: {}
+         networks:
+           - name: default
+             pod: {}
+         volumes:
+           - name: containerdisk
+             containerDisk:
+               image: 127.0.0.1:31999/kubevirt/cirros-container-disk-demo:latest
+               imagePullPolicy: IfNotPresent
+   ```
+
+   ```bash
+   kubectl apply -f cirros-vm.yaml
+   ```
+
+   > [!IMPORTANT]
+   > The `traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0` annotation is required. It tells
+   > the Istio sidecar not to intercept traffic on the VM's virtual interface `k6t-eth0`. Without
+   > it, VM networking does not work.
+   >
+   > The `sidecar.istio.io/inject: "true"` annotation is also required. The UDS Package `mode:
+   > sidecar` alone does not force injection; the annotation makes it explicit.
+
+3. **Wait for the VM to start**
+
+   Watch the `virt-launcher` pod come up:
+
+   ```bash
+   kubectl get pods -n my-vms -w
+   ```
+
+   The pod passes through several init phases before reaching `Running`. When the VM is ready,
+   you see:
+
+   ```console
+   NAME                           READY   STATUS    RESTARTS   AGE
+   virt-launcher-cirros-vm-xxxxx  4/4     Running   0          30s
+   ```
+
+   The `4/4` count includes:
+   - `compute` (the QEMU/libvirt container)
+   - `volumecontainerdisk` (serves the container image as a disk)
+   - `istio-proxy` (Istio sidecar; uses the Kubernetes 1.29 native sidecar mechanism so it counts in the container total and runs for the pod's lifetime)
+   - `guest-console-log` (captures serial console output, stays running)
+
+   Check the VMI status:
+
+   ```bash
+   kubectl get vmi cirros-vm -n my-vms
+   ```
+
+   Expected output:
+
+   ```console
+   NAME        AGE   PHASE     IP           NODENAME      READY
+   cirros-vm   1m    Running   10.42.0.45   node-name     True
+   ```
+
+4. **Connect to the console**
+
+   ```bash
+   virtctl console cirros-vm -n my-vms
+   ```
+
+   Press Enter to get a login prompt. Default CirrOS credentials:
+   - Username: `cirros`
+   - Password: `gocubsgo`
+
+   To exit the console, press `Ctrl+]`.
+
+5. **Verify the Istio sidecar and KubeVirt annotations**
+
+   Confirm the virt-launcher pod has the required annotations:
+
+   ```bash
+   kubectl get pod -n my-vms -l kubevirt.io=virt-launcher -o jsonpath='{.items[0].metadata.annotations}' \
+     | python3 -m json.tool | grep -E "kubevirtInterfaces|inject"
+   ```
+
+   Expected output includes:
+
+   ```console
+   "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
+   "sidecar.istio.io/inject": "true",
+   "istio.io/reroute-virtual-interfaces": "k6t-eth0"
+   ```
+
+   The `istio.io/reroute-virtual-interfaces` annotation is added automatically by Istio based on
+   the `kubevirtInterfaces` annotation. It confirms Istio is properly routing around the VM's
+   virtual network interface.
+
+</Steps>
+
+## VM lifecycle commands
+
+All lifecycle commands target the `VirtualMachine` object, not the `VirtualMachineInstance`.
+KubeVirt reconciles the VMI and `virt-launcher` pod in response.
+
+**Stop a running VM:**
+
+Sends a graceful shutdown signal. The VMI and pod are terminated; the `VirtualMachine` object persists.
+
+```bash
+virtctl stop cirros-vm -n my-vms
+```
+
+The VMI reaches phase `Succeeded`, the `virt-launcher` pod status changes to `Completed`, and the
+VM status shows `Stopped`.
+
+**Start a stopped VM:**
+
+Creates a new VMI and a new `virt-launcher` pod.
+
+```bash
+virtctl start cirros-vm -n my-vms
+```
+
+The VM gets a new IP address on each start.
+
+**Pause a running VM:**
+
+Freezes the QEMU domain in place without stopping the `virt-launcher` pod.
+
+```bash
+virtctl pause vm cirros-vm -n my-vms
+```
+
+The VM status changes to `Paused`. The VM's IP and pod are preserved.
+
+**Unpause:**
+
+Resumes the frozen QEMU domain.
+
+```bash
+virtctl unpause vm cirros-vm -n my-vms
+```
+
+**Restart a running VM:**
+
+Replaces the VMI with a new one without stopping the `VirtualMachine`.
+
+```bash
+virtctl restart cirros-vm -n my-vms
+```
+
+The pod is re-created with a new name and the VM gets a new IP address.
+
+**Delete the VM entirely:**
+
+Removes the `VirtualMachine` object and any running `VirtualMachineInstance`.
+
+```bash
+kubectl delete vm cirros-vm -n my-vms
+```
+
+The `virt-launcher` pod is also cleaned up.
+
+> [!NOTE]
+> Use `runStrategy: Always` (not the deprecated `spec.running: true`). `runStrategy: Always` is
+> the current API and controls how KubeVirt reacts to VM failures and stops.
+
+## Verification
+
+Check the full VM status:
+
+```bash
+kubectl get vm,vmi,pods -n my-vms
+```
+
+All three object types should show a `Running` or `Ready` state.
+
+Test that virtctl can connect to the VM API (confirms sidecar mode is working, not ambient mode):
+
+```bash
+timeout 3 virtctl port-forward vm/cirros-vm -n my-vms 2222:22
+```
+
+If this exits without "unexpected EOF" or a connection error, the `virtctl` subresource path to
+the `virt-launcher` pod is working correctly. If the VM does not have SSH running, the connection
+will time out normally, which is expected.
+
+## Troubleshooting
+
+### Problem: virt-launcher pod stuck in Init:ImagePullBackOff
+
+**Symptom:** The `virt-launcher` pod fails to start with an image pull error for
+`127.0.0.1:31999/istio/proxyv2`.
+
+**Solution:** The pod is missing the `private-registry` imagePullSecret. Check whether the
+default service account in the namespace has imagePullSecrets configured:
+
+```bash
+kubectl get serviceaccount default -n my-vms -o jsonpath='{.imagePullSecrets}'
+```
+
+If empty, copy the secret and patch the service account as described in step 1.
+
+### Problem: container disk image not found in Zarf registry
+
+**Symptom:** The `virt-launcher` pod fails with
+`127.0.0.1:31999/kubevirt/cirros-container-disk-demo:latest: not found`.
+
+**Solution:** The image was not bundled in the KubeVirt package or was pushed under a different
+name. List images in the Zarf registry to find the correct path:
+
+```bash
+# Port-forward to the Zarf registry
+kubectl port-forward svc/zarf-docker-registry 15000:5000 -n zarf &
+PF_PID=$!
+
+# Get registry credentials
+kubectl get secret private-registry -n zarf \
+  -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d | python3 -m json.tool
+
+# List all repositories (use the credentials from the secret)
+curl -s -u "zarf-pull:<password>" "http://localhost:15000/v2/_catalog"
+
+kill $PF_PID
+```
+
+### Problem: VM starts but networking does not work
+
+**Symptom:** The VM boots but cannot reach the pod network or external hosts.
+
+**Solution:** Check that the `traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0` annotation
+is present on the `virt-launcher` pod:
+
+```bash
+kubectl get pod -n my-vms -l kubevirt.io=virt-launcher \
+  -o jsonpath='{.items[0].metadata.annotations.traffic\.sidecar\.istio\.io/kubevirtInterfaces}'
+```
+
+If missing, the annotation was blocked by Pepr policy. The
+`traffic.sidecar.istio.io/kubevirtInterfaces` annotation is allowed only when the namespace
+carries `uds.dev/kubevirt-workload: "true"` and the pod is a real `virt-launcher` pod (the
+`virt-launcher-` name prefix plus the `kubevirt.io=virt-launcher` label, both set by KubeVirt).
+A blocked annotation usually means the namespace label is missing, or you are running a UDS Core
+version that does not include the native KubeVirt Pepr support. Confirm both (see
+[KubeVirt on UDS Core](/concepts/core-features/virtual-machines/)).
+
+### Problem: virtctl console shows "unexpected EOF"
+
+**Symptom:** `virtctl console` or `virtctl port-forward` exits immediately with "unexpected EOF"
+or hangs.
+
+**Solution:** This indicates the namespace is using ambient mode instead of sidecar mode. Confirm
+the namespace does NOT have the `istio.io/dataplane-mode=ambient` label:
+
+```bash
+kubectl get namespace my-vms -o jsonpath='{.metadata.labels}'
+```
+
+If `istio.io/dataplane-mode` is set to `ambient`, remove it and verify the UDS Package has
+`serviceMesh.mode: sidecar`.
+
+## Related documentation
+
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview, sidecar mode requirements
+- [Install KubeVirt on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - Deploy the KubeVirt package
+- [Expose a VM application on the UDS mesh](/how-to-guides/virtual-machines/vm-app-on-uds-mesh/) - Wire up Service, gateway routing, and monitoring for a VM running a network service
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - Run a VM from a PVC-backed disk instead of a container disk

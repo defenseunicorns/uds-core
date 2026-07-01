@@ -1,0 +1,75 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+includes:
+  - kubevirt-pkg: ../packages/kubevirt/tasks.yaml
+  - create: ./create.yaml
+
+variables:
+  - name: KUBEVIRT_USE_EMULATION
+    default: "false"
+  - name: VERSION
+    description: "Version of the UDS Core packages to deploy"
+    # x-release-please-start-version
+    default: "1.7.0"
+    # x-release-please-end
+
+tasks:
+  # Build the kubevirt Zarf package into build/
+  - name: build-package
+    description: "Build the core-kubevirt Zarf package"
+    actions:
+      - description: "Create build output directory"
+        cmd: mkdir -p build
+      - description: "Build core-kubevirt package"
+        cmd: ./uds zarf package create packages/kubevirt --flavor upstream --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+      - description: "Rename flavored package file by removing the upstream suffix"
+        cmd: |
+          for f in build/zarf-package-core-kubevirt-*-upstream.tar.zst; do
+            [ -e "$f" ] && mv -v "$f" "${f%-upstream.tar.zst}.tar.zst"
+          done
+
+  # Build core-base + kubevirt + the kubevirt-dev bundle
+  - name: build
+    description: "Build core-base, core-kubevirt, and the k3d-kubevirt-dev bundle"
+    actions:
+      - description: "Build core-base package"
+        task: create:single-layer
+        with:
+          layer: base
+          shim_bundle: "false"
+      - description: "Build core-identity-authorization package"
+        task: create:single-layer
+        with:
+          layer: identity-authorization
+      - task: build-package
+      - description: "Create k3d-kubevirt-dev bundle"
+        cmd: ./uds create bundles/k3d-kubevirt-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+
+  # Deploy the kubevirt-dev bundle to an existing k3d cluster
+  - name: deploy
+    description: "Deploy k3d-kubevirt-dev bundle (cluster must already exist)"
+    actions:
+      - description: "Deploy k3d-kubevirt-dev bundle"
+        cmd: >-
+          ./uds deploy bundles/k3d-kubevirt-dev/uds-bundle-k3d-core-kubevirt-dev-${UDS_ARCH}-${VERSION}.tar.zst
+          --set INSECURE_ADMIN_PASSWORD_GENERATION=true
+          --set KUBEVIRT_USE_EMULATION=${KUBEVIRT_USE_EMULATION}
+          --set K3D_EXTRA_ARGS="--agents 1"
+          --confirm --no-progress
+
+  # Full end-to-end: create cluster, build, deploy, test
+  - name: demo
+    description: "Full demo: create k3d cluster, build, deploy, and run KubeVirt tests"
+    actions:
+      - description: "Create k3d cluster"
+        task: setup:create-k3d-cluster
+      - task: kubevirt:build
+      - task: kubevirt:deploy
+      - task: kubevirt:test
+
+  # Run all KubeVirt tests against a running cluster with kubevirt deployed
+  - name: test
+    description: "Run all KubeVirt tests (health-check, vm-test, podinfo-vm-test)"
+    actions:
+      - task: kubevirt-pkg:all

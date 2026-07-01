@@ -1,0 +1,66 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.cdi.enabled }}
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: cdi
+  namespace: cdi
+spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      - direction: Ingress
+        selector:
+          cdi.kubevirt.io: cdi-apiserver
+        remoteGenerated: Anywhere
+        description: "cdi-apiserver webhook"
+
+      - direction: Ingress
+        remoteNamespace: monitoring
+        remoteSelector:
+          app: prometheus
+        selector:
+          prometheus.cdi.kubevirt.io: "true"
+        port: 8443
+        description: "CDI metrics"
+
+      - direction: Egress
+        selector:
+          cdi.kubevirt.io: cdi-operator
+        remoteGenerated: KubeAPI
+        description: "cdi-operator to KubeAPI"
+
+      - direction: Egress
+        selector:
+          cdi.kubevirt.io: cdi-apiserver
+        remoteGenerated: KubeAPI
+        description: "cdi-apiserver to KubeAPI"
+
+      - direction: Egress
+        selector:
+          cdi.kubevirt.io: cdi-deployment
+        remoteGenerated: KubeAPI
+        description: "cdi-controller to KubeAPI"
+
+      - direction: Egress
+        selector:
+          cdi.kubevirt.io: cdi-uploadproxy
+        remoteGenerated: KubeAPI
+        description: "cdi-uploadproxy to KubeAPI"
+
+      - direction: Egress
+        selector:
+          cdi.kubevirt.io: cdi-uploadproxy
+        remoteGenerated: Anywhere
+        port: 8443
+        description: "cdi-uploadproxy to upload server pods in user namespaces"
+{{- end }}

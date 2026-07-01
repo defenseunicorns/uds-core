@@ -1,0 +1,138 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/refs/heads/main/uds.schema.json
+kind: UDSBundle
+metadata:
+  name: k3d-core-kubevirt-dev
+  description: UDS Core slim-dev with KubeVirt — for local development and teammate experimentation
+  # x-release-please-start-version
+  version: "1.7.0"
+  # x-release-please-end
+
+packages:
+  - name: uds-k3d-dev
+    repository: ghcr.io/defenseunicorns/packages/uds-k3d
+    ref: 0.20.1-airgap
+    overrides:
+      uds-dev-stack:
+        minio:
+          variables:
+            - name: buckets
+              description: "Set Minio Buckets"
+              path: buckets
+            - name: svcaccts
+              description: "Minio Service Accounts"
+              path: svcaccts
+            - name: users
+              description: "Minio Users"
+              path: users
+            - name: policies
+              description: "Minio policies"
+              path: policies
+
+  - name: init
+    repository: ghcr.io/zarf-dev/packages/init
+    ref: v0.79.0
+    keylessVerification:
+      certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
+
+  - name: core-base
+    path: ../../build/
+    # x-release-please-start-version
+    ref: 1.7.0
+    # x-release-please-end
+    overrides:
+      pepr-uds-core:
+        module:
+          variables:
+            - name: PEPR_WATCHER_MEMORY_REQUEST
+              description: "Memory requests for the pepr watcher pod"
+              path: "watcher.resources.requests.memory"
+              default: "64Mi"
+            - name: PEPR_ADMISSION_MEMORY_REQUEST
+              description: "Memory requests for the pepr admission pods"
+              path: "admission.resources.requests.memory"
+              default: "64Mi"
+            - name: PEPR_WATCHER_CPU_REQUEST
+              description: "CPU requests for the pepr watcher pod"
+              path: "watcher.resources.requests.cpu"
+              default: "100m"
+            - name: PEPR_ADMISSION_CPU_REQUEST
+              description: "CPU requests for the pepr admission pods"
+              path: "admission.resources.requests.cpu"
+              default: "100m"
+      istio-controlplane:
+        istiod:
+          variables:
+            - name: ISTIOD_MEMORY_REQUEST
+              description: "Memory request for Istiod"
+              path: "resources.requests.memory"
+              default: "1024Mi"
+            - name: ISTIOD_CPU_REQUEST
+              description: "CPU request for Istiod"
+              path: "resources.requests.cpu"
+              default: "100m"
+            - name: PROXY_MEMORY_REQUEST
+              description: "Memory request for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.requests.memory"
+              default: "40Mi"
+            - name: PROXY_MEMORY_LIMIT
+              description: "Memory limit for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.limits.memory"
+              default: "1024Mi"
+            - name: PROXY_CPU_REQUEST
+              description: "CPU request for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.requests.cpu"
+              default: "10m"
+            - name: PROXY_CPU_LIMIT
+              description: "CPU limit for the Istio Proxy Sidecar"
+              path: "global.proxy.resources.limits.cpu"
+              default: "2000m"
+      istio-admin-gateway:
+        uds-istio-config:
+          variables:
+            - name: ADMIN_TLS_CERT
+              description: "The TLS cert for the admin gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: ADMIN_TLS_KEY
+              description: "The TLS key for the admin gateway (must be base64 encoded)"
+              path: tls.key
+      istio-tenant-gateway:
+        uds-istio-config:
+          variables:
+            - name: TENANT_TLS_CERT
+              description: "The TLS cert for the tenant gateway (must be base64 encoded)"
+              path: tls.cert
+            - name: TENANT_TLS_KEY
+              description: "The TLS key for the tenant gateway (must be base64 encoded)"
+              path: tls.key
+
+  - name: core-identity-authorization
+    path: ../../build/
+    # x-release-please-start-version
+    ref: 1.7.0
+    # x-release-please-end
+    overrides:
+      keycloak:
+        keycloak:
+          variables:
+            - name: INSECURE_ADMIN_PASSWORD_GENERATION
+              description: "Generate an insecure admin password for dev/test"
+              path: insecureAdminPasswordGeneration.enabled
+              default: "true"
+
+  - name: core-kubevirt
+    path: ../../build/
+    # x-release-please-start-version
+    ref: 1.7.0
+    # x-release-please-end
+    overrides:
+      kubevirt:
+        uds-kubevirt-config:
+          variables:
+            - name: KUBEVIRT_USE_EMULATION
+              description: "Enable QEMU emulation for nodes without KVM (e.g. nested virt in CI)"
+              path: kubevirt.configuration.developerConfiguration.useEmulation
+              default: "false"

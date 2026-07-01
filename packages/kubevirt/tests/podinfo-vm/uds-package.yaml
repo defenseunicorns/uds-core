@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: podinfo-vm
+  namespace: podinfo-vm
+spec:
+  # The operator labels the namespace uds.dev/kubevirt-workload=true from this marker. The
+  # namespace manifest also sets the label directly so the deploy-time CDI importer pod is
+  # admitted before the operator reconciles this Package.
+  kubevirt:
+    enabled: true
+  network:
+    serviceMesh:
+      mode: sidecar
+    expose:
+      - service: podinfo-vm
+        selector:
+          app.kubernetes.io/name: podinfo-vm
+        gateway: tenant
+        host: podinfo-vm
+        port: 80
+        targetPort: 80
+        uptime:
+          checks:
+            paths:
+              - /
+    allow:
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+  monitor:
+    - selector:
+        app.kubernetes.io/name: podinfo-vm
+      targetPort: 80
+      portName: http
+      description: "podinfo-vm service monitor"
+      kind: ServiceMonitor

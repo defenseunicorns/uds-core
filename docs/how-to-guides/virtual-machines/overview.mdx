@@ -1,0 +1,62 @@
+---
+title: Virtual machines
+description: Guides for deploying and managing virtual machines on UDS Core using KubeVirt and CDI.
+sidebar:
+  order: 11.000
+---
+
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+UDS Core supports running virtual machines alongside container workloads using KubeVirt and CDI. This section covers installing the platform components, running VMs on the UDS mesh, and advanced workflows like PVC-backed disks, live migration, and L2 networking.
+
+For background on how KubeVirt and CDI integrate with UDS Core's service mesh, policy enforcement, and observability stack, see [Virtual machines](/concepts/core-features/virtual-machines/).
+
+## Guides
+
+<CardGrid>
+  <LinkCard
+    title="Install KubeVirt on UDS Core"
+    description="Deploy the KubeVirt and CDI operators on a UDS Core cluster and verify all components are healthy."
+    href="/how-to-guides/virtual-machines/install-kubevirt/"
+  />
+  <LinkCard
+    title="Run your first VM"
+    description="Create a container disk VirtualMachine, connect via console and SSH, and manage its lifecycle with virtctl."
+    href="/how-to-guides/virtual-machines/first-vm/"
+  />
+  <LinkCard
+    title="Expose a VM application on the UDS mesh"
+    description="Configure Service routing, tenant gateway exposure, and Prometheus monitoring for a VM running a network service."
+    href="/how-to-guides/virtual-machines/vm-app-on-uds-mesh/"
+  />
+  <LinkCard
+    title="PVC-backed VMs with CDI"
+    description="Import disk images into PersistentVolumeClaims using CDI DataVolumes and run VMs backed by persistent storage."
+    href="/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/"
+  />
+  <LinkCard
+    title="Upload a disk image"
+    description="Push a local disk image into the cluster using virtctl image-upload and CDI's uploadproxy."
+    href="/how-to-guides/virtual-machines/upload-disk-image/"
+  />
+  <LinkCard
+    title="Live migration"
+    description="Trigger and verify live migration of a running VM to another node without downtime."
+    href="/how-to-guides/virtual-machines/live-migration/"
+  />
+  <LinkCard
+    title="L2 networking with Multus"
+    description="Attach VMs to L2 networks using Multus CNI for DHCP, VLANs, or direct external network access."
+    href="/how-to-guides/virtual-machines/l2-networking-with-multus/"
+  />
+  <LinkCard
+    title="Cross-cluster disk movement"
+    description="Export VM disk images from one cluster and import them on another using the VMExport API and CDI."
+    href="/how-to-guides/virtual-machines/cross-cluster-disk-movement/"
+  />
+  <LinkCard
+    title="Windows Server VM"
+    description="Run a Windows Server VM on UDS Core with VirtIO drivers, VNC access, and virtctl port-forward."
+    href="/how-to-guides/virtual-machines/windows-server-vm/"
+  />
+</CardGrid>

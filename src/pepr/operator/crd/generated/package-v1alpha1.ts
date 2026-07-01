@@ -16,6 +16,12 @@ export interface Spec {
    */
   caBundle?: CABundle;
   /**
+   * KubeVirt workload settings. When enabled, the UDS operator labels the namespace
+   * 'uds.dev/kubevirt-workload: "true"' so the KubeVirt and CDI Pepr policy allowances apply
+   * to the namespace's generated pods (virt-launcher, CDI importer/upload/clone).
+   */
+  kubevirt?: Kubevirt;
+  /**
    * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
@@ -59,6 +65,19 @@ export interface ConfigMap {
    * The name of the ConfigMap to create (default: uds-trust-bundle)
    */
   name?: string;
+}
+
+/**
+ * KubeVirt workload settings. When enabled, the UDS operator labels the namespace
+ * 'uds.dev/kubevirt-workload: "true"' so the KubeVirt and CDI Pepr policy allowances apply
+ * to the namespace's generated pods (virt-launcher, CDI importer/upload/clone).
+ */
+export interface Kubevirt {
+  /**
+   * Enable KubeVirt workload support for this namespace. Labels the namespace so KubeVirt and
+   * CDI generated pods are permitted their required Istio annotations.
+   */
+  enabled?: boolean;
 }
 
 export interface Monitor {

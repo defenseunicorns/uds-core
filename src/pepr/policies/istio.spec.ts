@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -154,9 +154,9 @@ describe("checkIstioTrafficInterceptionOverrides", () => {
   });
 
   it("should handle pod metadata variations", () => {
-    expect(checkIstioTrafficInterceptionOverrides(mockContainers, {} as V1Pod)).toEqual([]);
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, {} as V1Pod, false)).toEqual([]);
     expect(
-      checkIstioTrafficInterceptionOverrides(mockContainers, { metadata: {} } as V1Pod),
+      checkIstioTrafficInterceptionOverrides(mockContainers, { metadata: {} } as V1Pod, false),
     ).toEqual([]);
   });
 
@@ -176,7 +176,7 @@ describe("checkIstioTrafficInterceptionOverrides", () => {
       },
     } as V1Pod;
 
-    const result = checkIstioTrafficInterceptionOverrides(mockContainers, pod);
+    const result = checkIstioTrafficInterceptionOverrides(mockContainers, pod, false);
     expect(result).toContain("annotation sidecar.istio.io/inject");
     expect(result).toContain("annotation traffic.sidecar.istio.io/excludeInboundPorts");
     expect(result).toContain("label sidecar.istio.io/inject");
@@ -187,7 +187,7 @@ describe("checkIstioTrafficInterceptionOverrides", () => {
       "sidecar.istio.io/inject": "true",
     });
 
-    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod as V1Pod)).toEqual([]);
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod as V1Pod, false)).toEqual([]);
   });
 
   it("should ignore waypoint pods", () => {
@@ -195,6 +195,100 @@ describe("checkIstioTrafficInterceptionOverrides", () => {
       "sidecar.istio.io/inject": "false",
     });
 
-    expect(checkIstioTrafficInterceptionOverrides(waypointContainers, pod as V1Pod)).toEqual([]);
+    expect(checkIstioTrafficInterceptionOverrides(waypointContainers, pod as V1Pod, false)).toEqual(
+      [],
+    );
+  });
+
+  it("should allow sidecar.istio.io/inject=false on CDI-managed pods in a kubevirt-workload namespace", () => {
+    const annotation = { "sidecar.istio.io/inject": "false" };
+
+    const importerPod = { metadata: { name: "importer-my-dv", annotations: annotation } };
+    const uploadPod = { metadata: { name: "cdi-upload-my-dv", annotations: annotation } };
+    const clonePod = { metadata: { name: "cdi-clone-abc123", annotations: annotation } };
+
+    expect(
+      checkIstioTrafficInterceptionOverrides(mockContainers, importerPod as V1Pod, true),
+    ).toEqual([]);
+    expect(
+      checkIstioTrafficInterceptionOverrides(mockContainers, uploadPod as V1Pod, true),
+    ).toEqual([]);
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, clonePod as V1Pod, true)).toEqual(
+      [],
+    );
+  });
+
+  it("should block sidecar.istio.io/inject=false on CDI-named pods when the namespace lacks the workload label", () => {
+    const annotation = { "sidecar.istio.io/inject": "false" };
+    const importerPod = { metadata: { name: "importer-my-dv", annotations: annotation } };
+
+    // isKubeVirtNamespace=false: a CDI pod name alone must not grant the exception.
+    expect(
+      checkIstioTrafficInterceptionOverrides(mockContainers, importerPod as V1Pod, false),
+    ).toContain("annotation sidecar.istio.io/inject");
+  });
+
+  it("should block sidecar.istio.io/inject=false on non-CDI pods", () => {
+    const pod = {
+      metadata: {
+        name: "my-app-pod",
+        annotations: { "sidecar.istio.io/inject": "false" },
+      },
+    };
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod as V1Pod, true)).toContain(
+      "annotation sidecar.istio.io/inject",
+    );
+  });
+
+  it("should allow kubevirt interface annotations on virt-launcher pods in a kubevirt-workload namespace", () => {
+    const pod = {
+      metadata: {
+        name: "virt-launcher-my-vm-abc12",
+        namespace: "my-vms",
+        labels: { "kubevirt.io": "virt-launcher" },
+        annotations: {
+          "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
+          "istio.io/reroute-virtual-interfaces": "k6t-eth0",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod, true)).toEqual([]);
+  });
+
+  it("should block kubevirt interface annotations on non-launcher pods in a kubevirt-workload namespace", () => {
+    const pod = {
+      metadata: {
+        name: "rogue-pod",
+        namespace: "my-vms",
+        annotations: {
+          "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
+          "istio.io/reroute-virtual-interfaces": "k6t-eth0",
+        },
+      },
+    } as V1Pod;
+
+    const result = checkIstioTrafficInterceptionOverrides(mockContainers, pod, true);
+    expect(result).toContain("annotation traffic.sidecar.istio.io/kubevirtInterfaces");
+    expect(result).toContain("annotation istio.io/reroute-virtual-interfaces");
+  });
+
+  it("should block kubevirt interface annotations on a launcher pod when the namespace lacks the workload label", () => {
+    const pod = {
+      metadata: {
+        name: "virt-launcher-my-vm-abc12",
+        namespace: "not-a-vm-namespace",
+        labels: { "kubevirt.io": "virt-launcher" },
+        annotations: {
+          "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
+        },
+      },
+    } as V1Pod;
+
+    // isKubeVirtNamespace=false: launcher name + label are not enough without the ns label.
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod, false)).toContain(
+      "annotation traffic.sidecar.istio.io/kubevirtInterfaces",
+    );
   });
 });

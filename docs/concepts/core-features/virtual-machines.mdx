@@ -1,0 +1,240 @@
+---
+title: KubeVirt on UDS Core
+description: Understand how KubeVirt and CDI integrate with UDS Core's service mesh, policy enforcement, and observability stack before deploying VM workloads.
+sidebar:
+  order: 2.009
+---
+
+KubeVirt extends Kubernetes with native virtual machine support. On UDS Core, VMs run alongside
+containers and participate in the same routing, policy, and observability stack, but the
+integration has specific rules you need to understand before deploying VM workloads.
+
+## How KubeVirt works
+
+KubeVirt installs as an operator and a set of control-plane components in the `kubevirt` namespace:
+
+- **`virt-operator`**: Manages the KubeVirt installation lifecycle. Reads the `KubeVirt/kubevirt` CR
+  and reconciles the other control-plane components.
+- **`virt-api`**: Serves the KubeVirt API (`subresources.kubevirt.io`). Handles `VirtualMachine`
+  and `VirtualMachineInstance` admission webhooks and exposes subresources like console, VNC, and
+  SSH proxying.
+- **`virt-controller`**: Watches `VirtualMachine` and `VirtualMachineInstance` resources and
+  creates the `virt-launcher` pod for each running VM.
+- **`virt-handler`**: A DaemonSet that runs on every node. Handles the on-node VM lifecycle:
+  starting `libvirt` domains, managing network interfaces, and triggering live migrations.
+
+When you create a `VirtualMachine` and set it to running, `virt-controller` creates a
+`virt-launcher` pod in your VM workload namespace. That pod is the Kubernetes workload object that
+represents your VM. Everything that Kubernetes and UDS Core care about (network policy, service
+routing, metrics, logs, sidecar injection) applies to the `virt-launcher` pod, not to the VM
+directly.
+
+## How CDI works
+
+CDI (Containerized Data Importer) adds disk import and management capabilities alongside KubeVirt.
+It runs in the `cdi` namespace and provides the `DataVolume` custom resource. When you create a
+`DataVolume`, CDI creates a temporary `importer-*` pod in your workload namespace to fetch the
+disk image from the source (HTTP, S3, registry, or upload) and write it to a PersistentVolumeClaim.
+
+CDI components:
+
+- **`cdi-operator`**: Manages the CDI installation lifecycle.
+- **`cdi-controller`**: Watches `DataVolume` resources and creates importer, cloner, and uploader
+  pods as needed.
+- **`cdi-apiserver`**: Serves the CDI API and handles admission webhooks.
+- **`cdi-uploadproxy`**: Accepts disk image uploads from `virtctl image-upload`.
+
+## Mesh mode rules
+
+KubeVirt has a specific constraint with Istio: the `virt-launcher` pod requires sidecar mode, not
+ambient mode.
+
+**`kubevirt` and `cdi` namespaces use ambient mode.** The control-plane components (operators,
+controllers, webhooks) run in ambient mode. They communicate through ztunnel HBONE tunneling and
+benefit from ambient mesh mTLS and authorization policy without sidecar overhead.
+
+**VM workload namespaces must use sidecar mode.** The `virt-launcher` pod has a sidecar injected
+and participates in the mesh as a standard sidecar workload. This is what makes Service routing,
+gateway exposure, and monitoring work for VMs the same way they work for containers.
+
+**VM workload namespaces must NOT use ambient mode.** If a namespace where `virt-launcher` pods
+run has the `istio.io/dataplane-mode=ambient` label, the following break:
+
+- `virtctl port-forward` and everything that depends on it (`virtctl ssh`, `virtctl scp`)
+- `virtctl console` WebSocket connections
+- Any kube-apiserver-proxied subresource connection to a `virt-launcher` pod
+
+The root cause is that ztunnel intercepts inbound traffic on ambient namespace pods and expects
+HBONE tunneling. The kube-apiserver proxy that backs these `virtctl` commands does not speak HBONE,
+so the connection fails with `unexpected EOF`.
+
+## Pepr policy allowances
+
+UDS Core's Pepr module enforces admission policies on all pods. Two policies that apply to
+normal pods have scoped exceptions for KubeVirt and CDI-generated pods.
+
+### virt-launcher pods
+
+KubeVirt sets `traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0` on every `virt-launcher`
+pod. This annotation tells the Istio sidecar how to handle the `k6t-eth0` virtual network
+interface that bridges the pod network into the VM guest. Without it, Istio's traffic interception
+breaks VM networking.
+
+UDS Core blocks this annotation by default because it modifies Istio traffic interception behavior.
+The native KubeVirt support adds a scoped exception. The annotation is allowed only when all three
+hold: the namespace carries `uds.dev/kubevirt-workload: "true"`, the pod name starts with
+`virt-launcher-`, and the pod carries the `kubevirt.io=virt-launcher` label. KubeVirt sets the pod
+name and label automatically. The namespace label is the trust anchor, because pod names and
+labels are tenant-settable.
+
+### CDI pods
+
+CDI creates three types of ephemeral pods in your workload namespace, and all three set
+`sidecar.istio.io/inject: "false"`:
+
+- `importer-*`: created for DataVolume imports (HTTP, registry, S3 sources)
+- `cdi-upload-*`: created as the upload server target for `virtctl image-upload`
+- `cdi-clone-*`: created for PVC-to-PVC cloning operations
+
+UDS Core blocks `sidecar.istio.io/inject: "false"` by default. The native CDI support adds a
+scoped exception: injection disable is allowed only in a namespace labeled
+`uds.dev/kubevirt-workload: "true"`, and only on pods whose name starts with `importer-`,
+`cdi-upload-`, or `cdi-clone-`.
+
+> [!NOTE]
+> Both sets of exceptions require the namespace label `uds.dev/kubevirt-workload: "true"` in
+> addition to the KubeVirt/CDI pod names and labels. The namespace label is the security
+> boundary: only the platform can label a namespace, while pod names and labels are
+> tenant-settable. This behavior requires UDS Core with the native KubeVirt/CDI Pepr support
+> included in this package.
+
+### The kubevirt-workload namespace label
+
+Every VM workload namespace must carry `uds.dev/kubevirt-workload: "true"`. The label scopes both
+exceptions above to that namespace. Pods in unlabeled namespaces are denied the KubeVirt and CDI
+annotations even when their names and labels match.
+
+Set `kubevirt.enabled: true` in the namespace's UDS Package and the UDS operator applies the label
+for you, so you never label the namespace by hand:
+
+```yaml title="vm-app-package.yaml"
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: my-vm-app
+  namespace: my-vm-app
+spec:
+  kubevirt:
+    enabled: true
+  network:
+    serviceMesh:
+      mode: sidecar
+```
+
+The label is the security boundary, so only the operator or an admin can set it; a tenant pod
+cannot. Label the namespace directly when it has no UDS Package, or when generated pods start
+during deploy before the operator reconciles the Package: CDI importer pods, or a VM launcher when
+the VM auto-starts with `runStrategy: Always`. The operator reconciles the Package asynchronously,
+so a pod that races ahead of it is denied. Setting the label on the namespace removes that race.
+
+## The VM app contract
+
+A VM workload namespace must satisfy these requirements before VMs can run on UDS Core:
+
+- The namespace must carry the `uds.dev/kubevirt-workload: "true"` label so the KubeVirt and CDI
+  Pepr allowances apply to its generated pods. Set `kubevirt.enabled: true` in the UDS Package to
+  have the operator apply it, or label the namespace directly.
+- The namespace must have a `Package` CR with `serviceMesh.mode: sidecar`.
+- The namespace must have Istio sidecar injection enabled (`istio-injection: enabled` label or
+  equivalent). This is handled automatically when a UDS Package with `mode: sidecar` reconciles.
+- `VirtualMachine` templates must have `sidecar.istio.io/inject: "true"` set explicitly in
+  `spec.template.metadata.annotations`. The UDS Package `mode: sidecar` alone does not force
+  injection on individual pods; the annotation makes it explicit.
+- `VirtualMachine` templates must have `traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0`
+  set in `spec.template.metadata.annotations`. This is required for VM networking to work through
+  the Istio sidecar.
+- The `private-registry` image pull secret must be present in the namespace and attached to the
+  service account, so that Istio sidecar container images can be pulled from the Zarf registry.
+  Zarf-managed namespaces get this automatically.
+- VM interface ports that need Service, gateway, monitor, or readiness behavior must be declared
+  in `spec.template.spec.domain.devices.interfaces[].ports`.
+- The declared interface port, the Kubernetes `Service` `targetPort`, the UDS `expose` `targetPort`,
+  and the UDS `monitor` `targetPort` must all match.
+
+> [!WARNING]
+> Do not set `traffic.sidecar.istio.io/excludeInboundPorts` on `virt-launcher` pods. This breaks
+> the gateway mTLS path. Do not use HTTP readiness probes with a custom `host` value; these
+> interact badly with Istio's probe rewrite mechanism. Use TCP socket probes on declared ports
+> instead.
+
+## Monitoring model
+
+KubeVirt and CDI expose Prometheus metrics on port `8443` in their control-plane namespaces. The
+KubeVirt package installs `ServiceMonitor` resources for both. These are scraped by the UDS Core
+Prometheus instance automatically once the package is deployed.
+
+For VM applications, monitoring works through the standard UDS Package `monitor` configuration.
+The `virt-launcher` pod is the scrape target. Your VM application must expose a Prometheus metrics
+endpoint on a declared interface port, and your UDS Package must include a `monitor` entry
+pointing to that port. The metric endpoint runs inside the VM guest; the Istio sidecar on the
+`virt-launcher` pod proxies the scrape request in. This is identical to the pattern for
+containerized applications.
+
+For implementation details and a worked example, see
+[Expose a VM application on the UDS mesh](/how-to-guides/virtual-machines/vm-app-on-uds-mesh/).
+
+## Logging model
+
+UDS Core's Vector agent collects logs from container stdout and stderr. The `virt-launcher` pod's
+stdout is QEMU and libvirt process output (VM lifecycle events: boot, shutdown, migration,
+errors), not your VM application's logs. Vector collects these automatically.
+
+To collect VM application logs, you need a log agent running inside the guest that ships logs to
+the Loki endpoint on UDS Core. The approach depends on the guest OS, and your UDS Package must
+include an egress rule to allow the outbound connection from the `virt-launcher` pod's namespace
+to Loki.
+
+For implementation details, see
+[Windows Server VMs on UDS Core](/how-to-guides/virtual-machines/windows-server-vm/).
+
+## Storage requirements
+
+Most KubeVirt features work with any StorageClass. Some require specific access modes:
+
+- **Container disk VMs**: No PVC required. The VM image is a container image pulled by
+  `virt-handler`. No StorageClass needed.
+- **PVC-backed VMs**: Require a PVC. Any StorageClass that supports `ReadWriteOnce` works.
+  Local-path provisioner is sufficient.
+- **CDI DataVolume imports**: Require a default StorageClass or an explicit
+  `scratchSpaceStorageClass` set in CDIConfig. Without scratch space, registry-source imports fail.
+- **Live migration with persistent disks**: Requires a `ReadWriteMany` StorageClass. Local-path
+  provisioner is `ReadWriteOnce` only. Container disk VMs can migrate without RWX because each node
+  pulls the container image fresh.
+- **VM snapshots**: Require a `VolumeSnapshotClass` configured in the cluster.
+
+## virt-api webhook routing
+
+KubeVirt's admission webhooks (in `virt-api`) use `failurePolicy: Fail`. The webhooks must be
+reachable from kube-apiserver for any `VirtualMachine` create, update, or delete to succeed.
+
+KubeVirt v1.8.2 does not pin `virt-api` to control-plane nodes. It sets a `podAntiAffinity`
+preference that spreads replicas across nodes, but places no node affinity requiring control-plane
+placement.
+
+kube-apiserver is not mesh-enrolled and cannot present an Istio identity, so its webhook calls
+reach `virt-api` as plaintext. The `virt-api` PeerAuthentication sets port `8443` to PERMISSIVE,
+which is what allows those calls to succeed under global STRICT mTLS.
+
+> [!NOTE]
+> On multi-node clusters, kube-apiserver webhook calls to a `virt-api` pod on a different node have
+> been observed to fail on k3d: the cross-node delivery path through the destination pod's ztunnel
+> does not complete. Single-node clusters keep the call on one node, so it succeeds. If you hit
+> this, pin `virt-api` to the control-plane node with a node affinity rule in the KubeVirt CR, or
+> cordon worker nodes during VM admission.
+
+## Related documentation
+
+- [KubeVirt upstream documentation](https://kubevirt.io/user-guide/) - KubeVirt user guide
+- [CDI upstream documentation](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/) - CDI documentation
+- [Install KubeVirt on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - Install and configure the KubeVirt package
+- [Windows Server VMs on UDS Core](/how-to-guides/virtual-machines/windows-server-vm/) - Monitoring and logging implementation for VM workloads

@@ -1,0 +1,37 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: kubevirt
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - DisallowHostNamespaces
+        - DisallowPrivileged
+        - RestrictHostPathWrite
+        - RestrictVolumeTypes
+        - RequireNonRootUser
+      matcher:
+        namespace: kubevirt
+        name: "^virt-handler-.*"
+      title: "kubevirt virt-handler exemptions"
+      description: |
+        KubeVirt is a VM virtualization software and requires a broader
+        scope of exemptions than most packages.
+        DisallowPrivileged:
+        - The container must have access to virtualization hardware devices such as `/dev/kvm`.
+        RestrictHostPathWrite:
+        - `/var/run/kubevirt-libvirt-runtimes` (`libvirt-runtimes`): This path provides access to the runtime environment of `libvirt`, the virtualization tool KubeVirt relies on to manage virtual machine instances. It contains runtime information necessary for managing virtual machines, such as UNIX sockets and process state related to `libvirtd`.
+        - `/var/run/kubevirt` (`virt-share-dir`): This directory is used as a shared space between KubeVirt components, specifically to store information that needs to be exchanged between processes running on the same host (e.g., between `virt-handler` and `virt-launcher`). It typically holds sockets and temporary files that are critical for VM management during runtime.
+        - `/var/lib/kubevirt` (`virt-lib-dir`): This is the primary data directory for KubeVirt. It is where important VM-related metadata, logs, or disk images might be stored persistently. It can also be used for storing configuration files or caching important data for faster access.
+        - `/var/run/kubevirt-private` (`virt-private-dir`): This directory is used for private KubeVirt runtime files that need to remain isolated from other processes on the host for security or management reasons. This might include private UNIX domain sockets or other files that should only be accessed by KubeVirt components.
+        - `/var/lib/kubelet/device-plugins` (`device-plugin`): This directory is important for exposing device plugins to the Kubernetes `kubelet`, which is responsible for managing devices and scheduling workloads on the node. KubeVirt might rely on device plugins for accessing hardware like GPUs, SR-IOV network devices, or other specialized hardware needed by VMs.
+        - `/var/lib/kubelet/pods` (`kubelet-pods-shortened` and `kubelet-pods`): These paths are related to the Kubernetes node infrastructure and are used by KubeVirt to interact with the running Kubernetes pods on the node. KubeVirt needs access to these paths to correctly map and manage the pod environment for VMs, as each VM runs in a pod. This allows KubeVirt to manage pod lifecycle and resource allocation for the VMs.
+        - `/var/lib/kubevirt-node-labeller` (`node-labeller`): This path is used by the **node-labeller** component in KubeVirt, which inspects the host's hardware capabilities (e.g., CPU model, features like AVX or SSE, etc.) and labels the node accordingly. This ensures that VMs requiring specific hardware features are scheduled on compatible nodes. The node-labeller stores its metadata in this directory.
+        RestrictVolumeTypes:
+        - Allows for hostpath volumes to be created.
+        RequireNonRootUser:
+        - Required for privileged, see reason above.

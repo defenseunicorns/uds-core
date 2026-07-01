@@ -1,0 +1,332 @@
+---
+title: Upload a local disk image with virtctl
+description: Use virtctl image-upload and CDI to upload a local disk image directly to a PVC in your VM namespace. Useful when the image is on your workstation and not accessible from inside the cluster.
+sidebar:
+  order: 11.005
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Upload a local disk image (QCOW2, raw, or ISO) from your workstation to a PVC in your VM
+namespace using `virtctl image-upload` and CDI's upload proxy. The resulting PVC is ready to use
+as a VM disk, identical to one created by a CDI DataVolume import.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/) - KubeVirt and CDI operators running
+- [A working VM namespace](/how-to-guides/virtual-machines/first-vm/) - Namespace with UDS Package and `private-registry` secret
+- `kubectl` and `virtctl` on your PATH
+- A disk image on your workstation in a format CDI supports: QCOW2, raw, or ISO
+
+## Before you begin
+
+CDI's upload path uses an ephemeral upload server pod (`cdi-upload-<pvc-name>`) that CDI creates
+in your VM namespace when an upload starts. The pod receives the image data from the CDI
+uploadproxy and writes it to the PVC. CDI removes the pod when the upload completes.
+
+Several platform behaviors affect this path:
+
+**Pepr allows the upload server pod.** CDI sets `sidecar.istio.io/inject=false` on the upload
+server pod. Pepr's `RestrictIstioTrafficOverrides` policy permits this on pods whose names start
+with `cdi-upload-`. No namespace-level exemption is required.
+
+**CDI uploadproxy bypasses ztunnel.** The `cdi-uploadproxy` deployment runs with the
+`istio.io/dataplane-mode: none` label so Istio CNI does not enroll it in ztunnel. CDI uses its
+own mTLS certificate (`cdi-uploadserver-client-cert`) for uploadproxy-to-upload-server traffic.
+Ztunnel intercepting this path breaks the connection because the mTLS handshake does not use
+Istio certificates. The KubeVirt package sets this label on the uploadproxy deployment via the
+CDI CR `customizeComponents.patches` field.
+
+**Your VM namespace needs a network allow rule.** CDI uploadproxy (in the `cdi` namespace)
+connects to the upload server pod in your namespace on port 8443. If your namespace has a UDS
+Package, its default-deny NetworkPolicy will block this unless you add an explicit ingress allow
+rule. Add the rule described in step 1 before starting an upload.
+
+## Steps
+
+<Steps>
+
+1. **Add the CDI upload network rule to your VM namespace UDS Package**
+
+   Your VM namespace's UDS Package needs an ingress allow rule so CDI uploadproxy can reach the
+   upload server pod. Add the following allow entry under `spec.network.allow`:
+
+   ```yaml title="vm-namespace-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-vms
+     namespace: my-vms
+   spec:
+     network:
+       serviceMesh:
+         mode: sidecar
+       allow:
+         - direction: Egress
+           remoteGenerated: KubeAPI
+           description: virt-launcher to KubeAPI
+
+         - direction: Ingress
+           remoteNamespace: cdi
+           remoteSelector:
+             cdi.kubevirt.io: cdi-uploadproxy
+           port: 8443
+           description: CDI upload server
+   ```
+
+   Apply it:
+
+   ```bash
+   kubectl apply -f vm-namespace-package.yaml
+   ```
+
+2. **Copy the `private-registry` secret into your namespace**
+
+   CDI pulls the upload server image from the Zarf registry. The upload server pod runs in your
+   namespace and needs the `private-registry` pull secret to authenticate.
+
+   ```bash
+   DOCKER_CONFIG=$(kubectl get secret private-registry -n zarf \
+     -o jsonpath='{.data.\.dockerconfigjson}')
+
+   kubectl apply -f - <<EOF
+   apiVersion: v1
+   kind: Secret
+   type: kubernetes.io/dockerconfigjson
+   metadata:
+     name: private-registry
+     namespace: my-vms
+   data:
+     .dockerconfigjson: $DOCKER_CONFIG
+   EOF
+   ```
+
+   > [!NOTE]
+   > If you followed [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/)
+   > and already copied the secret, this is idempotent: re-running it updates the secret in place.
+
+3. **Create a PVC to upload into**
+
+   Create the PVC before starting the upload. Size it to hold the uncompressed disk image.
+
+   ```yaml title="upload-pvc.yaml"
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: my-disk
+     namespace: my-vms
+   spec:
+     accessModes: [ReadWriteOnce]
+     resources:
+       requests:
+         storage: 10Gi
+   ```
+
+   ```bash
+   kubectl apply -f upload-pvc.yaml
+   ```
+
+   Size the PVC at least as large as the uncompressed image. QCOW2 images expand on write; a
+   compressed QCOW2 often occupies two to three times its compressed size on disk.
+
+4. **Port-forward the CDI uploadproxy**
+
+   CDI uploadproxy is not exposed outside the cluster by default. Port-forward it to your
+   workstation for the duration of the upload.
+
+   ```bash
+   kubectl port-forward svc/cdi-uploadproxy -n cdi 18443:443 &
+   PF_PID=$!
+   ```
+
+   Keep this running while you upload. The `PF_PID` variable lets you stop it cleanly in step 6.
+
+5. **Upload the image**
+
+   Run `virtctl image-upload` targeting the existing PVC:
+
+   ```bash
+   virtctl image-upload pvc my-disk \
+     --no-create \
+     --uploadproxy-url=https://localhost:18443 \
+     --insecure \
+     --image-path=/path/to/your/image.qcow2 \
+     -n my-vms
+   ```
+
+   The `--no-create` flag tells `virtctl` to use the PVC you created in the previous step rather
+   than creating a new one. The `--insecure` flag skips TLS verification for the local
+   port-forward connection.
+
+   A successful upload looks like:
+
+   ```console
+   Using existing PVC my-vms/my-disk
+   Uploading data to https://localhost:18443
+
+   4.80 GiB / 4.80 GiB [==============================] 100.00% ? p/s 0s
+   Uploading data completed successfully, waiting for processing to complete, you can hit ctrl-c without interrupting the progress
+   Processing completed successfully
+   Uploading /path/to/your/image.qcow2 completed successfully
+   ```
+
+   The progress bar reflects the image file size, not the PVC size. A 4.80 GiB QCOW2 uploaded
+   into a 10Gi PVC shows 4.80 GiB transferred. That is expected.
+
+6. **Stop the port-forward**
+
+   After the upload completes, stop the port-forward:
+
+   ```bash
+   kill $PF_PID
+   ```
+
+   Or if you started it in a separate terminal, press `Ctrl-C` there.
+
+</Steps>
+
+## Verification
+
+Check that the PVC is bound and ready:
+
+```bash
+kubectl get pvc my-disk -n my-vms
+```
+
+The PVC shows `Bound`:
+
+```console
+NAME      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+my-disk   Bound    pvc-a1b2c3d4-e5f6-7890-abcd-ef1234567890   10Gi       RWO            local-path     2m
+```
+
+Confirm the upload server pod cleaned up:
+
+```bash
+kubectl get pods -n my-vms
+```
+
+The `cdi-upload-my-disk` pod is gone after a successful upload. CDI removes it automatically.
+
+The PVC is now ready to use as a VM disk. Reference it in a VirtualMachine spec the same way as
+a DataVolume-created PVC:
+
+```yaml
+volumes:
+  - name: disk0
+    persistentVolumeClaim:
+      claimName: my-disk   # matches the PVC name from step 3
+```
+
+## Troubleshooting
+
+### Problem: Upload server pod fails with ErrImagePull
+
+**Symptom:** `kubectl get pods -n my-vms` shows `cdi-upload-my-disk` in `ErrImagePull` or
+`ImagePullBackOff`.
+
+**Solution:** The `private-registry` secret is missing from your namespace. Copy it from the
+`zarf` namespace:
+
+```bash
+DOCKER_CONFIG=$(kubectl get secret private-registry -n zarf \
+  -o jsonpath='{.data.\.dockerconfigjson}')
+
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/dockerconfigjson
+metadata:
+  name: private-registry
+  namespace: my-vms
+data:
+  .dockerconfigjson: $DOCKER_CONFIG
+EOF
+```
+
+### Problem: Upload fails with `http: proxy error: EOF`
+
+**Symptom:** `kubectl logs -n cdi -l cdi.kubevirt.io=cdi-uploadproxy` shows
+`Error in reverse proxy: http: proxy error: EOF` or `connection refused`.
+
+**Solution:** Check whether the CDI uploadproxy pod is opted out of ztunnel. When the
+`istio.io/dataplane-mode: none` label is present on the pod, Istio CNI sets the
+`ambient.istio.io/redirection` annotation to `disabled` as a status field:
+
+```bash
+kubectl get pod -n cdi -l cdi.kubevirt.io=cdi-uploadproxy \
+  -o jsonpath='{.items[0].metadata.annotations.ambient\.istio\.io/redirection}'
+```
+
+If the value is `enabled` (or the annotation is absent), the `istio.io/dataplane-mode: none`
+label is missing from the pod and ztunnel is intercepting the upload proxy traffic. The
+KubeVirt package version in use does not include the ztunnel opt-out fix. Upgrade the KubeVirt package or patch the deployment manually:
+
+```bash
+kubectl patch deployment cdi-uploadproxy -n cdi --type=json \
+  -p='[{"op":"add","path":"/spec/template/metadata/labels/istio.io~1dataplane-mode","value":"none"}]'
+```
+
+> [!WARNING]
+> A manual `kubectl patch` on the deployment **will be reverted** when the CDI operator
+> reconciles. The persistent fix is to upgrade to a KubeVirt package version that includes the
+> `customizeComponents.patches` entry on the CDI CR.
+
+### Problem: Upload fails with `connection refused` immediately
+
+**Symptom:** `virtctl image-upload` exits quickly with a connection error before the upload bar
+appears.
+
+**Solution:** The CDI uploadproxy cannot reach the upload server pod in your namespace. Verify
+the CDI UDS Package has the egress rule for port 8443:
+
+```bash
+kubectl get networkpolicy -n cdi | grep uploadproxy
+```
+
+If the `allow-cdi-egress-cdi-uploadproxy-to-upload-server` (or similar) NetworkPolicy is
+missing, the KubeVirt package version does not include the cross-namespace egress rule. Upgrade
+the KubeVirt package, or add the NetworkPolicy manually for testing:
+
+```bash
+kubectl apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-cdi-uploadproxy-to-upload-server
+  namespace: cdi
+spec:
+  podSelector:
+    matchLabels:
+      cdi.kubevirt.io: cdi-uploadproxy
+  policyTypes:
+  - Egress
+  egress:
+  - ports:
+    - port: 8443
+      protocol: TCP
+EOF
+```
+
+> [!WARNING]
+> A manually applied NetworkPolicy in the `cdi` namespace will be reverted when the UDS operator
+> reconciles the CDI `Package` CR. The persistent fix is to upgrade to a KubeVirt package version
+> that includes the cross-namespace egress rule in `chart/templates/cdi-uds-package.yaml`.
+
+### Problem: Upload server pod denied by Pepr
+
+**Symptom:** The upload fails immediately and `kubectl get events -n my-vms` shows a Pepr
+admission denial for the `cdi-upload-my-disk` pod.
+
+**Solution:** The Pepr module does not have the CDI pod exemption for
+`sidecar.istio.io/inject=false`. This exemption is part of UDS Core and covers pods whose names
+start with `cdi-upload-`. Check the UDS Core version in use and upgrade if needed.
+
+## Related documentation
+
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview, CDI upload server pod model
+- [Import a disk image with CDI](/how-to-guides/virtual-machines/pvc-backed-vms-with-cdi/) - Import from Zarf registry or HTTP instead of a local file
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - VM namespace setup and `private-registry` secret
+- [CDI upload documentation](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/upload.md) - Full virtctl image-upload reference
