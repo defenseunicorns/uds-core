@@ -159,6 +159,7 @@ export function checkIstioTrafficInterceptionOverrides(
     "traffic.sidecar.istio.io/includeOutboundIPRanges", // Can modify outbound IP range interception
     "traffic.sidecar.istio.io/includeOutboundPorts", // Can modify outbound port interception
     "sidecar.istio.io/interceptionMode", // Can change interception mode (REDIRECT/TPROXY)
+    "istio.io/redirect-virtual-interfaces", // Can modify virtual interface traffic handling
   ];
   const kubevirtBlockedTrafficAnnotations = [
     "traffic.sidecar.istio.io/kubevirtInterfaces", // Deprecated (Istio 1.25) kubevirt interface handling
