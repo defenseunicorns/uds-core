@@ -24,6 +24,10 @@
           "$ref": "#/definitions/CABundle",
           "description": "CA bundle configuration for the package"
         },
+        "kubevirt": {
+          "$ref": "#/definitions/Kubevirt",
+          "description": "KubeVirt workload settings. When enabled, the UDS operator labels the namespace\n'uds.dev/kubevirt-workload: \"true\"' so the KubeVirt and CDI Pepr policy allowances apply\nto the namespace's generated pods (virt-launcher, CDI importer/upload/clone)."
+        },
         "monitor": {
           "type": "array",
           "items": {
@@ -89,6 +93,19 @@
       "required": [],
       "title": "ConfigMap",
       "description": "ConfigMap configuration for CA bundle"
+    },
+    "Kubevirt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable KubeVirt workload support for this namespace. Labels the namespace so KubeVirt and\nCDI generated pods are permitted their required Istio annotations."
+        }
+      },
+      "required": [],
+      "title": "Kubevirt",
+      "description": "KubeVirt workload settings. When enabled, the UDS operator labels the namespace 'uds.dev/kubevirt-workload: \"true\"' so the KubeVirt and CDI Pepr policy allowances apply to the namespace's generated pods (virt-launcher, CDI importer/upload/clone)."
     },
     "Monitor": {
       "type": "object",

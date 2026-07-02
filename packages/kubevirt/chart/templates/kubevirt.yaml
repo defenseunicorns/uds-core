@@ -1,0 +1,24 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.kubevirt.enabled }}
+apiVersion: kubevirt.io/v1
+kind: KubeVirt
+metadata:
+  name: kubevirt
+  namespace: {{ .Release.Namespace }}
+spec:
+  infra:
+    {{- toYaml .Values.kubevirt.infra | nindent 4 }}
+  workloads:
+    {{- toYaml .Values.kubevirt.workloads | nindent 4 }}
+  configuration: {{- toYaml .Values.kubevirt.configuration | nindent 4 }}
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets:
+    - name: "private-registry"
+  imageRegistry: {{ .Values.image.registry }}
+  imageTag: {{ .Values.image.tag }}
+  {{- if .Values.kubevirt.extraValues }}
+  {{- toYaml .Values.kubevirt.extraValues | nindent 2 }}
+  {{- end }}
+{{- end }}

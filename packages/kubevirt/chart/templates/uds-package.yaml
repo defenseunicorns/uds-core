@@ -1,0 +1,89 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: kubevirt
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    serviceMesh:
+      mode: ambient
+    allow:
+      - direction: Ingress
+        remoteGenerated: IntraNamespace
+
+      - direction: Ingress
+        remoteNamespace: monitoring
+        remoteSelector:
+          app: prometheus
+        selector:
+          prometheus.kubevirt.io: "true"
+        port: 8443
+        description: Metrics
+
+      - direction: Egress
+        remoteGenerated: IntraNamespace
+
+      # Allow Kubernetes API server to connect to Kubevirt API webhook over HTTPS
+      - direction: Ingress
+        selector:
+          kubevirt.io: virt-api
+        # uds-core has a todo to evaluate a "KubeAPI" _ingress_ generated rule for webhook calls
+        # https://github.com/defenseunicorns/uds-core/blob/main/src/prometheus-stack/chart/templates/uds-package.yaml#L44-L50
+        remoteGenerated: Anywhere
+
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-operator
+        remoteGenerated: KubeAPI
+        description: "virt-operator to KubeAPI"
+
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-operator-strategy-dumper
+        remoteGenerated: KubeAPI
+        description: "virt-operator-strategy-dumper to KubeAPI"
+
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-api
+        remoteGenerated: KubeAPI
+        description: "virt-api to KubeAPI"
+
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-controller
+        remoteGenerated: KubeAPI
+        description: "virt-controller to KubeAPI"
+
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-handler
+        remoteGenerated: KubeAPI
+        description: "virt-handler to KubeAPI"
+
+      # virt-exportproxy is deployed when the VMExport feature gate is enabled.
+      # It watches VirtualMachineExport resources and proxies export server traffic.
+      - direction: Egress
+        selector:
+          kubevirt.io: virt-exportproxy
+        remoteGenerated: KubeAPI
+        description: "virt-exportproxy to KubeAPI"
+
+      # Custom rules for unanticipated scenarios
+      {{- range .Values.additionalNetworkAllow }}
+      - direction: {{ .direction }}
+        selector:
+          {{ .selector | toYaml | nindent 10 }}
+        {{- if not .remoteGenerated }}
+        remoteNamespace: {{ .remoteNamespace }}
+        remoteSelector:
+          {{ .remoteSelector | toYaml | nindent 10 }}
+        port: {{ .port }}
+        {{- else }}
+        remoteGenerated: {{ .remoteGenerated }}
+        {{- end }}
+        description: {{ .description }}
+      {{- end }}

@@ -792,6 +792,18 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             monitor,
             sso,
             caBundle,
+            kubevirt: {
+              type: "object",
+              description:
+                "KubeVirt workload settings. When enabled, the UDS operator labels the namespace 'uds.dev/kubevirt-workload: \"true\"' so the KubeVirt and CDI Pepr policy allowances apply to the namespace's generated pods (virt-launcher, CDI importer/upload/clone).",
+              properties: {
+                enabled: {
+                  type: "boolean",
+                  description:
+                    "Enable KubeVirt workload support for this namespace. Labels the namespace so KubeVirt and CDI generated pods are permitted their required Istio annotations.",
+                },
+              },
+            },
           },
         } as V1JSONSchemaProps,
       },

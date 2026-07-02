@@ -1,0 +1,295 @@
+---
+title: Live-migrate a VM between nodes
+description: Trigger a live migration on a container disk VM, observe the migration lifecycle, and understand why Service DNS should be used instead of the VMI IP for connections.
+sidebar:
+  order: 11.006
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Trigger a live migration on a running container disk VM, watch the migration through to
+`Succeeded`, and confirm that a Kubernetes Service tracks the VM across nodes automatically.
+You will also observe the VMI IP change that happens during migration and understand why clients
+must use Service DNS, not the VMI IP, for reliable connections.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/)
+- [A running container disk VM](/how-to-guides/virtual-machines/first-vm/) - Running `VirtualMachineInstance` in a VM workload namespace
+- A cluster with at least two nodes (live migration moves the VM between nodes; a single-node cluster has nowhere to migrate to)
+- `kubectl` and `virtctl` on your PATH
+
+> [!NOTE]
+> This guide covers container disk VMs only. Live migration of PVC-backed VMs additionally
+> requires a `ReadWriteMany` StorageClass (for example, Longhorn). The container disk path
+> verified here uses `PreCopy` mode: memory pages are transferred to the target node before
+> the final cutover.
+
+## Before you begin
+
+**VMI IP changes on every migration.** Each `virt-launcher` pod gets an IP from the node's pod
+CIDR. When the VM migrates to a different node, KubeVirt creates a new pod there with a new IP.
+The old pod enters `Completed` state and is removed shortly after.
+
+**Use Service DNS, not the VMI IP.** The Kubernetes `Service` endpoint tracks the `virt-launcher`
+pod label and updates automatically when the pod changes. Any client that holds the VMI IP loses
+its connection during migration and cannot reconnect. Clients that use the Service ClusterIP or
+DNS name reconnect to the new pod transparently after a brief interruption.
+
+**The connection disruption window.** During the final cutover, inbound connections are
+interrupted while the target pod takes over. For CirrOS container disk VMs on local
+infrastructure, this measured around 1-2 seconds with a small percentage of in-flight requests
+failing. Larger VM memory footprints extend this window proportionally. Clients should implement
+a retry loop on connection errors if continuity is required.
+
+> [!IMPORTANT]
+> Live migration requires a second node, and adding one changes `virt-api` scheduling. KubeVirt
+> spreads `virt-api` replicas across nodes, so a replica can land on a worker node. Cross-node
+> webhook calls from kube-apiserver to a `virt-api` pod fail because kube-apiserver does not speak
+> HBONE, and that blocks every `VirtualMachine` create, update, and delete. Before adding the
+> node, review
+> [virt-api webhook routing](/concepts/core-features/virtual-machines/#virt-api-webhook-routing)
+> and pin `virt-api` to the control-plane node, or cordon the new node during VM creation and
+> uncordon it afterward.
+
+## Steps
+
+<Steps>
+
+1. **Verify the VM is live-migratable**
+
+   Check that the VMI shows `LIVE-MIGRATABLE: True`:
+
+   ```bash
+   kubectl get vmi <vm-name> -n <namespace>
+   ```
+
+   Expected output:
+
+   ```console
+   NAME           AGE   PHASE     IP           NODENAME       READY   LIVE-MIGRATABLE   PAUSED
+   migrate-test   2m    Running   10.42.2.9    worker-node-1  True    True
+   ```
+
+   If `LIVE-MIGRATABLE` is `False`, check the VMI conditions for the reason:
+
+   ```bash
+   kubectl get vmi <vm-name> -n <namespace> \
+     -o jsonpath='{.status.conditions}' | python3 -m json.tool
+   ```
+
+2. **Confirm a second node is available**
+
+   Migration requires a target node. Verify at least two nodes are `Ready`:
+
+   ```bash
+   kubectl get nodes
+   ```
+
+   KubeVirt schedules the target `virt-launcher` pod using normal Kubernetes scheduling. If only
+   one node is available, the migration pod stays `Pending` and the migration eventually times out.
+
+3. **Create a Service for the VM (if you do not have one)**
+
+   If you plan to connect to the VM across migrations, create a Service that selects the
+   `virt-launcher` pod by label. Labels in `spec.template.metadata.labels` in the
+   `VirtualMachine` manifest become labels on the `virt-launcher` pod. The VM from
+   [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) already carries an
+   `app:` label for this purpose; match that label in the selector below.
+
+   ```yaml title="vm-service.yaml"
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: <vm-name>
+     namespace: <namespace>
+   spec:
+     selector:
+       app: <vm-name>   # must match a label on the virt-launcher pod
+     ports:
+       - name: ssh
+         port: 22
+         targetPort: 22
+   ```
+
+   ```bash
+   kubectl apply -f vm-service.yaml
+   ```
+
+4. **Trigger the migration**
+
+   ```bash
+   virtctl migrate <vm-name> -n <namespace>
+   ```
+
+   This creates a `VirtualMachineInstanceMigration` CR named `kubevirt-migrate-vm-<random>` in
+   the same namespace. You can also create the CR directly:
+
+   ```yaml title="migration.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachineInstanceMigration
+   metadata:
+     name: migrate-to-other-node
+     namespace: <namespace>
+   spec:
+     vmiName: <vm-name>
+   ```
+
+   ```bash
+   kubectl apply -f migration.yaml
+   ```
+
+5. **Watch the migration**
+
+   Watch the `VirtualMachineInstanceMigration` phase:
+
+   ```bash
+   kubectl get vmim -n <namespace> -w
+   ```
+
+   The migration moves through these phases:
+
+   ```console
+   NAME                        PHASE          VMI
+   kubevirt-migrate-vm-8l4h6   Pending        migrate-test
+   kubevirt-migrate-vm-8l4h6   Scheduling     migrate-test
+   kubevirt-migrate-vm-8l4h6   Scheduled      migrate-test
+   kubevirt-migrate-vm-8l4h6   PreparingTarget migrate-test
+   kubevirt-migrate-vm-8l4h6   TargetReady    migrate-test
+   kubevirt-migrate-vm-8l4h6   Running        migrate-test
+   kubevirt-migrate-vm-8l4h6   Succeeded      migrate-test
+   ```
+
+   Watch the pods to see the source pod complete and the target pod take over:
+
+   ```bash
+   kubectl get pods -n <namespace> -w
+   ```
+
+   During migration you briefly see two `virt-launcher` pods: one `Running` on the source node
+   and one `Running` on the target node. After cutover, the source pod transitions to
+   `Completed` and is removed.
+
+</Steps>
+
+## Verification
+
+Check that the VMI moved to a different node and has a new IP:
+
+```bash
+kubectl get vmi <vm-name> -n <namespace>
+```
+
+The `NODENAME` and `IP` columns both change. The VMI IP moves to an address in the target
+node's pod CIDR.
+
+Confirm the Service endpoint followed the VM to the new pod:
+
+```bash
+kubectl get endpoints <vm-name> -n <namespace>
+```
+
+The endpoint IP matches the new VMI IP. Clients reconnecting through the Service ClusterIP
+reach the VM on its new node without any configuration change.
+
+Check the migration history:
+
+```bash
+kubectl get vmim -n <namespace>
+```
+
+Each migration creates one `VirtualMachineInstanceMigration` CR. Completed migrations stay in
+the namespace until you delete them.
+
+## Persistent disk migration
+
+Live migration of PVC-backed VMs requires a `ReadWriteMany` StorageClass. With `local-path`
+provisioner (the default on k3d), PVC-backed VMs show `LIVE-MIGRATABLE: False` because the
+PVC cannot be mounted simultaneously on two nodes.
+
+To enable live migration for PVC-backed VMs, provision a `ReadWriteMany`-capable StorageClass
+such as Longhorn, and create the DataVolume with `ReadWriteMany` access mode before creating
+the VM.
+
+## Troubleshooting
+
+### Problem: LIVE-MIGRATABLE shows False
+
+**Symptom:** `kubectl get vmi` shows `LIVE-MIGRATABLE: False`.
+
+**Solution:** Check the VMI conditions for the non-migratable reason:
+
+```bash
+kubectl get vmi <vm-name> -n <namespace> \
+  -o jsonpath='{.status.conditions}' | python3 -m json.tool | grep -A3 LiveMigratable
+```
+
+Common causes:
+- The VM uses a PVC with `ReadWriteOnce` access mode (requires `ReadWriteMany` for live migration)
+- The VM has a hostDisk volume (hostDisk volumes are node-local and cannot migrate)
+- virt-handler is not running on both nodes
+
+### Problem: Migration stays in Scheduling or Pending
+
+**Symptom:** `kubectl get vmim` shows phase `Scheduling` or `Pending` for more than 2 minutes.
+
+**Solution:** No target node is available. Check node readiness:
+
+```bash
+kubectl get nodes
+```
+
+Check the target pod events:
+
+```bash
+kubectl get pods -n <namespace> | grep virt-launcher
+kubectl describe pod -n <namespace> <target-virt-launcher-pod>
+```
+
+If the pod is `Pending`, the scheduler cannot find a node. Common causes: all nodes are
+cordoned, resource requests on the VM exceed available capacity on the second node, or a
+node selector prevents scheduling on the available node.
+
+### Problem: Migration fails after reaching Running phase
+
+**Symptom:** `kubectl get vmim` shows `Failed` after reaching `Running`.
+
+**Solution:** Check the migration details:
+
+```bash
+kubectl get vmim <migration-name> -n <namespace> \
+  -o jsonpath='{.status.migrationState}' | python3 -m json.tool
+```
+
+Also check the virt-handler logs on the source node. Identify the virt-handler pod on that
+node first, then stream its logs:
+
+```bash
+kubectl get pods -n kubevirt -l kubevirt.io=virt-handler \
+  --field-selector=spec.nodeName=<source-node> -o name \
+  | xargs kubectl logs -n kubevirt
+```
+
+Common causes: the VM has a userspace device (GPU, SR-IOV NIC) that does not support migration,
+or the memory transfer exceeded the timeout.
+
+### Problem: Clients lose connection after migration
+
+**Symptom:** Connections to the VM drop after migration completes and do not automatically recover.
+
+**Solution:** The client is connecting to the VMI IP directly instead of through a Service. The
+VMI IP changes on every migration. Create a Kubernetes Service that selects the `virt-launcher`
+pod by label (step 3), and update clients to connect through the Service ClusterIP or DNS name.
+
+The interruption window during live migration is expected. For container disk VMs on local
+infrastructure this measured 1-2 seconds. Clients should implement a retry loop on the
+connection if continuity is critical.
+
+## Related documentation
+
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - Create the VM used in this guide
+- [Expose a VM application on the UDS mesh](/how-to-guides/virtual-machines/vm-app-on-uds-mesh/) - Full Service, gateway, and monitoring setup for VM applications
+- [L2 networking with Multus](/how-to-guides/virtual-machines/l2-networking-with-multus/) - Secondary network interfaces and IP persistence across migrations
+- [KubeVirt live migration documentation](https://kubevirt.io/user-guide/compute/live_migration/) - Full migration configuration reference

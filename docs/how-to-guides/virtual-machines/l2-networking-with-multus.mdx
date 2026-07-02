@@ -1,0 +1,502 @@
+---
+title: Secondary L2 networks with Multus
+description: Attach a secondary bridge network to a KubeVirt VM using Multus, verify the interface is present in the guest, and configure a static IP via cloud-init.
+sidebar:
+  order: 11.007
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Create a `NetworkAttachmentDefinition` using the bridge CNI plugin, attach a secondary L2
+interface to two KubeVirt VMs, and verify that L2 traffic flows between them on the same node.
+You will also configure static IPs on the secondary interfaces using cloud-init user-data and
+understand how to persist those IPs across live migrations.
+
+## Prerequisites
+
+- [KubeVirt installed on UDS Core](/how-to-guides/virtual-machines/install-kubevirt/)
+- [A running container disk VM](/how-to-guides/virtual-machines/first-vm/) - familiarity with the VM workload namespace and pull secret setup
+- [Live migration verified](/how-to-guides/virtual-machines/live-migration/) - required for the IP persistence section
+- Multus CNI installed on the cluster as a thick plugin daemonset (cluster-admin responsibility, not part of the KubeVirt package)
+- `network-attachment-definitions.k8s.cni.cncf.io` CRD present on the cluster
+- `kubectl` on your PATH
+
+> [!IMPORTANT]
+> Multus is not installed by the KubeVirt package. Verify the CRD exists before starting:
+>
+> ```bash
+> kubectl get crd network-attachment-definitions.k8s.cni.cncf.io
+> ```
+>
+> If the CRD is missing, you must install Multus before continuing. Two paths exist depending
+> on your environment:
+>
+> **Internet-connected clusters:** Apply the upstream thick plugin manifest from the
+> [Multus quickstart](https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md).
+> This pulls `ghcr.io/k8snetworkplumbingwg/multus-cni:snapshot-thick` directly from the internet.
+>
+> **Air-gapped clusters:** The upstream quickstart will not work because nodes cannot reach
+> `ghcr.io`. Package the Multus image in a Zarf package and push it to the cluster's Zarf
+> registry, then apply the daemonset manifest with the registry address rewritten to your
+> Zarf registry URL. The Multus daemonset requires `privileged: true`; you must also create
+> a UDS `Exemption` in the `uds-policy-exemptions` namespace that covers the Multus daemonset
+> pods (`kube-system/kube-multus-ds-*`) for `DisallowPrivileged` before the pods will start.
+
+## Before you begin
+
+**Bridge CNI is node-local.** The bridge CNI plugin creates a Linux bridge (`br-l2` or whatever
+name you choose) on each node independently. VMs on the same node share that bridge and can
+communicate directly over L2. VMs on different nodes do NOT share the bridge; cross-node L2
+requires a VXLAN overlay or a physical L2 switch connecting the nodes.
+
+**host-local IPAM is also node-local.** The `host-local` IPAM plugin tracks IP leases
+per-node. Two VMs on different nodes can receive the same IP address from `host-local` because
+each node maintains its own allocation state. For cluster-wide unique L2 IPs, use
+[whereabouts](https://github.com/k8snetworkplumbingwg/whereabouts) IPAM instead.
+
+**KubeVirt bridge mode networking.** When a VM declares a `bridge: {}` secondary interface,
+KubeVirt creates a bridge (`k6t-<id>`) inside the virt-launcher pod, attaches the Multus
+interface to it, and creates a tap device for QEMU to use. The guest sees a virtio NIC.
+
+**Zarf registry address.** VM manifests in this guide use `127.0.0.1:31999` as the Zarf
+registry address. This is the k3d default. On other cluster types, replace this with your
+cluster's Zarf registry address. See
+[Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) for how to find it.
+
+**L2 traffic bypasses Istio.** Traffic on the secondary interface flows directly between the
+Linux bridges on the node. It does not pass through ztunnel or the Istio sidecar. Mutual TLS,
+authorization policies, and Istio telemetry do not apply to secondary interface traffic. Apply
+network policies or firewall rules at the network level if the L2 segment carries sensitive
+traffic.
+
+## Steps
+
+<Steps>
+
+1. **Create the NetworkAttachmentDefinition**
+
+   The `NetworkAttachmentDefinition` describes the CNI plugin configuration for the secondary
+   network. Create it in the same namespace as your VMs:
+
+   ```yaml title="l2-bridge-nad.yaml"
+   apiVersion: k8s.cni.cncf.io/v1
+   kind: NetworkAttachmentDefinition
+   metadata:
+     name: l2-bridge
+     namespace: my-vms
+   spec:
+     config: |
+       {
+         "cniVersion": "0.3.1",
+         "name": "l2-bridge",
+         "type": "bridge",
+         "bridge": "br-l2",
+         "isGateway": false,
+         "ipam": {
+           "type": "host-local",
+           "subnet": "192.168.100.0/24",
+           "rangeStart": "192.168.100.2",
+           "rangeEnd": "192.168.100.254"
+         }
+       }
+   ```
+
+   ```bash
+   kubectl apply -f l2-bridge-nad.yaml
+   ```
+
+   `bridge: "br-l2"` is the Linux bridge name the CNI plugin creates on the node.
+   The CNI plugin creates the bridge automatically the first time a pod using this NAD
+   schedules on that node. `isGateway: false` means no IP is assigned to the bridge
+   itself: the bridge is purely L2.
+
+   > [!NOTE]
+   > The `host-local` IPAM assigns IPs from the per-node pool. VMs on the same node
+   > get unique IPs within that pool; VMs on different nodes may get the same IP.
+   > For cluster-wide unique IPs, replace the `ipam` block with a
+   > [whereabouts](https://github.com/k8snetworkplumbingwg/whereabouts) configuration.
+
+2. **Create the first VM with a secondary interface**
+
+   Declare the secondary network in the VM spec using `multus.networkName` pointing at
+   the NAD, and set the interface type to `bridge`:
+
+   ```yaml title="vm-l2-a.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: vm-l2-a
+     namespace: my-vms
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           kubevirt.io/vm: vm-l2-a
+           app: vm-l2-a
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 1
+           resources:
+             requests:
+               memory: 128M
+           devices:
+             disks:
+               - name: containerdisk
+                 disk:
+                   bus: virtio
+               - name: cloudinit
+                 disk:
+                   bus: virtio
+             interfaces:
+               - name: default
+                 masquerade: {}
+               - name: l2net
+                 bridge: {}
+         networks:
+           - name: default
+             pod: {}
+           - name: l2net
+             multus:
+               networkName: l2-bridge   # must match the NAD name in the same namespace
+         volumes:
+           - name: containerdisk
+             containerDisk:
+               image: 127.0.0.1:31999/kubevirt/cirros-container-disk-demo:latest
+               imagePullPolicy: IfNotPresent
+           - name: cloudinit
+             cloudInitNoCloud:
+               userData: |
+                 #!/bin/sh
+                 ip addr add 192.168.100.10/24 dev eth1
+                 ip link set eth1 up
+   ```
+
+   ```bash
+   kubectl apply -f vm-l2-a.yaml
+   ```
+
+   The `cloudinit` volume provides user-data that configures a static IP on the secondary
+   interface (`eth1`) at boot. The `#!/bin/sh` format causes the guest OS to run it as a
+   shell script via the cloud-init datasource.
+
+3. **Create the second VM**
+
+   Create a second VM with a different static IP on the same L2 subnet:
+
+   ```yaml title="vm-l2-b.yaml"
+   apiVersion: kubevirt.io/v1
+   kind: VirtualMachine
+   metadata:
+     name: vm-l2-b
+     namespace: my-vms
+   spec:
+     runStrategy: Always
+     template:
+       metadata:
+         labels:
+           kubevirt.io/vm: vm-l2-b
+           app: vm-l2-b
+         annotations:
+           sidecar.istio.io/inject: "true"
+           traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+       spec:
+         domain:
+           cpu:
+             cores: 1
+           resources:
+             requests:
+               memory: 128M
+           devices:
+             disks:
+               - name: containerdisk
+                 disk:
+                   bus: virtio
+               - name: cloudinit
+                 disk:
+                   bus: virtio
+             interfaces:
+               - name: default
+                 masquerade: {}
+               - name: l2net
+                 bridge: {}
+         networks:
+           - name: default
+             pod: {}
+           - name: l2net
+             multus:
+               networkName: l2-bridge
+         volumes:
+           - name: containerdisk
+             containerDisk:
+               image: 127.0.0.1:31999/kubevirt/cirros-container-disk-demo:latest
+               imagePullPolicy: IfNotPresent
+           - name: cloudinit
+             cloudInitNoCloud:
+               userData: |
+                 #!/bin/sh
+                 ip addr add 192.168.100.11/24 dev eth1
+                 ip link set eth1 up
+   ```
+
+   ```bash
+   kubectl apply -f vm-l2-b.yaml
+   ```
+
+4. **Wait for both VMs to reach Running**
+
+   ```bash
+   kubectl get vmi -n my-vms -w
+   ```
+
+   Both VMIs reach `Running` when QEMU is live. Multus attaches the secondary interface
+   during pod setup before the VM starts.
+
+</Steps>
+
+## Verification
+
+Check the Multus network-status annotation on each virt-launcher pod:
+
+```bash
+kubectl get pod -n my-vms -l kubevirt.io/vm=vm-l2-a \
+  -o jsonpath='{.items[0].metadata.annotations.k8s\.v1\.cni\.cncf\.io/network-status}' \
+  | python3 -m json.tool
+```
+
+Expected output shows two entries: the default pod network and the L2 network:
+
+```console
+[
+    {
+        "name": "cbr0",
+        "interface": "eth0",
+        "ips": ["10.42.2.22"],
+        "mac": "a6:7a:70:1d:c9:e6",
+        "default": true
+    },
+    {
+        "name": "my-vms/l2-bridge",
+        "interface": "pod<generated-id>",
+        "ips": ["192.168.100.2"],
+        "mac": "c2:64:b8:3e:76:44"
+    }
+]
+```
+
+The IP in the `ips` field is the IPAM-assigned address from the `host-local` pool (starting at
+`192.168.100.2`). This is the address the CNI plugin assigned to the pod network namespace
+interface. It is separate from the static IP the cloud-init script configures inside the guest.
+
+Check the VMI status to confirm both interfaces are up:
+
+```bash
+kubectl get vmi vm-l2-a -n my-vms \
+  -o jsonpath='{.status.interfaces}' | python3 -m json.tool
+```
+
+The `l2net` interface should show `linkState: up` and `infoSource: domain, multus-status`:
+
+```console
+[
+    {
+        "name": "default",
+        "linkState": "up",
+        "ipAddress": "10.42.2.22",
+        ...
+    },
+    {
+        "name": "l2net",
+        "linkState": "up",
+        "ipAddress": "192.168.100.2",
+        "infoSource": "domain, multus-status",
+        ...
+    }
+]
+```
+
+> [!NOTE]
+> The `ipAddress` in VMI status reflects the IPAM-assigned address, not the static IP set by
+> cloud-init. The guest's `eth1` has `192.168.100.10` (for `vm-l2-a`) configured by the
+> `#!/bin/sh` user-data script. To confirm the guest IP, connect via serial console:
+>
+> ```bash
+> virtctl console vm-l2-a -n my-vms
+> ```
+>
+> Inside the guest: `ip addr show eth1`
+
+**Verify L2 connectivity between the two VMs.** Both VMs must be on the same node for bridge
+CNI L2 to work. Confirm this first:
+
+```bash
+kubectl get vmi -n my-vms
+```
+
+If both `NODENAME` values match, connect to `vm-l2-a`'s serial console and ping `vm-l2-b`:
+
+```bash
+virtctl console vm-l2-a -n my-vms
+```
+
+Inside the guest:
+
+```console
+$ ping -c3 192.168.100.11
+PING 192.168.100.11 (192.168.100.11): 56 data bytes
+64 bytes from 192.168.100.11: seq=0 ttl=64 time=0.5 ms
+64 bytes from 192.168.100.11: seq=1 ttl=64 time=0.5 ms
+64 bytes from 192.168.100.11: seq=2 ttl=64 time=0.5 ms
+--- 192.168.100.11 ping statistics ---
+3 packets transmitted, 3 packets received, 0% packet loss
+```
+
+Three packets received with 0% loss confirms bidirectional L2 forwarding through the bridge.
+
+## L2 IP persistence across live migration
+
+When a VM migrates to a different node, KubeVirt creates a new virt-launcher pod on the
+target node. Multus runs the bridge CNI ADD on the target node and the `host-local` IPAM
+assigns an IP from that node's local pool. The migrated VM's secondary interface gets a new
+IP from the target node's allocation state.
+
+To preserve the L2 IP across migrations, configure a static IP inside the guest via
+cloud-init instead of relying on IPAM. Static IPs survive migration because the guest sets
+them at boot, not because IPAM assigns them at pod creation time. When the VM migrates,
+Multus runs CNI ADD on the target node and `host-local` assigns a new IP from the target
+node's pool. The pod-side IPAM IP changes; the guest-side static IP does not.
+
+> [!NOTE]
+> The `#!/bin/sh` format used in this guide's VMs is specific to CirrOS. On CirrOS 0.4.0,
+> `#cloud-config` `bootcmd` and `runcmd` blocks are silently ignored; only the `#!/bin/sh`
+> form runs. For production VMs running Fedora, Ubuntu, RHEL, or similar OSes, use
+> `#cloud-config` with a `runcmd` block or a `networkData` field.
+
+For production VMs with a full OS, set the secondary interface IP using the cloud-init
+`networkData` field so the network configuration persists across reboots. When providing
+`networkData`, include all interfaces the guest uses, including the primary interface. Omitting
+`eth0` from `networkData` causes cloud-init to write a network config that has no `eth0` entry,
+which can break the primary interface on Ubuntu and other netplan-based systems:
+
+```yaml
+volumes:
+  - name: cloudinit
+    cloudInitNoCloud:
+      networkData: |
+        version: 2
+        ethernets:
+          eth0:
+            dhcp4: true
+          eth1:
+            addresses:
+              - 192.168.100.10/24
+```
+
+For cluster-wide unique L2 IPs, use
+[whereabouts](https://github.com/k8snetworkplumbingwg/whereabouts) as the IPAM plugin.
+Whereabouts tracks IP leases across all nodes so no two pods in the cluster receive the same
+address. Note that whereabouts provides uniqueness, not persistence: if the pod is deleted and
+recreated (including during migration), whereabouts assigns the next available IP from the pool,
+which may differ from the original. Use a guest static IP for stable addressing across restarts.
+
+## Troubleshooting
+
+### Problem: Pod stays in Init or FailedCreatePodSandBox with Multus error
+
+**Symptom:** `kubectl get events -n my-vms` shows
+`plugin type="multus-shim" ... CmdAdd (shim): CNI request failed`.
+
+**Solution:** Check the Multus daemonset pod logs for the CNI error detail:
+
+```bash
+kubectl logs -n kube-system -l app=multus --tail=50 | grep -i error
+```
+
+Common causes:
+- The NAD `name` field does not match the `multus.networkName` in the VM spec
+- The NAD is in a different namespace than the VM pod
+- The CNI plugin binary (`bridge`, `host-local`) is missing from the CNI bin path on the node
+- The Multus daemonset cannot see the pod network namespace (`/run/netns` or
+  `/var/run/netns` depending on the node OS)
+
+### Problem: Secondary interface missing from network-status annotation
+
+**Symptom:** The `k8s.v1.cni.cncf.io/network-status` annotation only shows the default network.
+
+**Solution:** Check the Multus daemonset logs for a NAD lookup failure:
+
+```bash
+kubectl logs -n kube-system -l app=multus --tail=50 | grep "l2-bridge"
+```
+
+Confirm the NAD exists in the same namespace as the VM:
+
+```bash
+kubectl get network-attachment-definitions -n my-vms
+```
+
+### Problem: VMI shows l2net linkState as down
+
+**Symptom:** `kubectl get vmi ... -o jsonpath='{.status.interfaces}'` shows
+`"linkState": "down"` for `l2net`.
+
+**Solution:** The bridge on the node may not have been created yet, or the veth pair failed
+to attach. Check that the `br-l2` bridge exists on the node the VM is running on. First find
+which node the VM is on, then open a debug shell on that node:
+
+```bash
+NODE=$(kubectl get vmi vm-l2-a -n my-vms -o jsonpath='{.status.nodeName}')
+kubectl debug node/$NODE -it --image=busybox -- chroot /host ip link show type bridge_slave
+```
+
+Look for entries with `master br-l2`. If none appear, the CNI plugin did not run successfully. Force-delete the
+virt-launcher pod so Multus re-runs CNI ADD:
+
+```bash
+kubectl delete pod -n my-vms <virt-launcher-pod-name> --grace-period=0 --force
+```
+
+### Problem: Guest cannot ping over the secondary interface
+
+**Symptom:** The secondary interface appears in the VMI status with an IP, but pings between
+VMs fail or the interface has no traffic.
+
+**Solution:** Verify both VMs are on the same node. Bridge CNI is node-local; VMs on
+different nodes cannot reach each other through the bridge:
+
+```bash
+kubectl get vmi -n my-vms
+```
+
+Check the `NODENAME` column. Both `vm-l2-a` and `vm-l2-b` must show the same node for
+same-node L2 communication to work.
+
+If both VMs are on the same node and pings still fail, confirm the guest configured the
+secondary interface IP. Connect to the console and check:
+
+```bash
+virtctl console vm-l2-a -n my-vms
+```
+
+Inside the guest, verify `eth1` has the expected IP:
+
+```console
+$ ip addr show eth1
+```
+
+If `eth1` is down or has no IP, the cloud-init script did not run. Verify the cloud-init
+volume is attached and the user-data format is correct for your guest OS.
+
+## Related documentation
+
+- [Live-migrate a VM between nodes](/how-to-guides/virtual-machines/live-migration/) - Prerequisites for IP persistence across migration
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview
+- [Multus quickstart](https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md) - Installing Multus on a cluster
+- [whereabouts IPAM](https://github.com/k8snetworkplumbingwg/whereabouts) - Cluster-wide IP address management for secondary networks
+- [KubeVirt interfaces and networks](https://kubevirt.io/user-guide/network/interfaces_and_networks/) - Full reference for KubeVirt network interface types

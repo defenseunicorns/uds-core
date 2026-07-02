@@ -1,9 +1,9 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { a, sdk } from "pepr";
+import { a, K8s, kind, sdk } from "pepr";
 
 import { V1Container, V1Pod, V1PodSecurityContext } from "@kubernetes/client-node";
 import { Policy } from "../operator/crd";
@@ -67,15 +67,28 @@ export function checkIstioSidecarOverrides(pod: V1Pod) {
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(markExemption(Policy.RestrictIstioTrafficOverrides))
-  .Validate(request => {
+  .Validate(async request => {
     if (isExempt(request, Policy.RestrictIstioTrafficOverrides)) {
       return request.Approve();
     }
 
     const podContainers = containers(request);
 
+    // KubeVirt and CDI generated pods get scoped exceptions, but only when their namespace
+    // carries `uds.dev/kubevirt-workload: "true"`. The namespace label is the trust anchor:
+    // tenants can set pod names and pod labels, but only the platform can label a namespace.
+    // Only pods whose name matches a generated-pod prefix trigger the lookup, so normal pods
+    // do not pay for the extra API call.
+    const isKubeVirtNamespace = isKubeVirtGeneratedPodName(request.Raw)
+      ? await isKubeVirtWorkloadNamespace(request.Raw.metadata?.namespace)
+      : false;
+
     // Combine all violations and sort
-    const violations = checkIstioTrafficInterceptionOverrides(podContainers, request.Raw);
+    const violations = checkIstioTrafficInterceptionOverrides(
+      podContainers,
+      request.Raw,
+      isKubeVirtNamespace,
+    );
 
     if (violations.length > 0) {
       return request.Deny(
@@ -86,10 +99,56 @@ When(a.Pod)
     return request.Approve();
   });
 
-export function checkIstioTrafficInterceptionOverrides(podContainers: V1Container[], pod: V1Pod) {
+const KUBEVIRT_WORKLOAD_NAMESPACE_LABEL = "uds.dev/kubevirt-workload";
+
+// CDI generates these pods in the target VM namespace; they are matched by name prefix.
+const CDI_POD_NAME_PREFIXES = ["importer-", "cdi-upload-", "cdi-clone-"];
+
+/**
+ * Returns true if the pod name matches a KubeVirt launcher or CDI generated pod prefix.
+ * This is a cheap, label-free check used only to decide whether the namespace trust-anchor
+ * lookup is needed. It does not by itself grant any exception.
+ */
+export function isKubeVirtGeneratedPodName(pod: V1Pod): boolean {
+  const name = pod.metadata?.name ?? "";
+  return name.startsWith("virt-launcher-") || CDI_POD_NAME_PREFIXES.some(p => name.startsWith(p));
+}
+
+/**
+ * Returns true only if the namespace carries `uds.dev/kubevirt-workload: "true"`.
+ * Fails closed: if the namespace cannot be read, the exception is not granted.
+ */
+export async function isKubeVirtWorkloadNamespace(namespace?: string): Promise<boolean> {
+  if (!namespace) {
+    return false;
+  }
+  try {
+    const ns = await K8s(kind.Namespace).Get(namespace);
+    return ns.metadata?.labels?.[KUBEVIRT_WORKLOAD_NAMESPACE_LABEL] === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function checkIstioTrafficInterceptionOverrides(
+  podContainers: V1Container[],
+  pod: V1Pod,
+  isKubeVirtNamespace: boolean,
+) {
   const namespace = pod.metadata?.namespace || "default";
   const annotations = pod.metadata?.annotations || {};
   const labels = pod.metadata?.labels || {};
+  const name = pod.metadata?.name ?? "";
+  // A launcher exception requires all three: a kubevirt-workload namespace, the launcher name
+  // prefix, and the launcher identity label. Pod name and label are tenant-settable, so the
+  // namespace label is the actual security boundary.
+  const isKubeVirtWorkload =
+    isKubeVirtNamespace &&
+    name.startsWith("virt-launcher-") &&
+    labels["kubevirt.io"] === "virt-launcher";
+  // A CDI exception requires a kubevirt-workload namespace and a CDI generated pod name prefix.
+  const isCDIPod =
+    isKubeVirtNamespace && CDI_POD_NAME_PREFIXES.some(prefix => name.startsWith(prefix));
   const blockedTrafficAnnotations = [
     "sidecar.istio.io/inject", // Can disable sidecar injection
     "traffic.sidecar.istio.io/excludeInboundPorts", // Can bypass inbound port interception
@@ -100,25 +159,34 @@ export function checkIstioTrafficInterceptionOverrides(podContainers: V1Containe
     "traffic.sidecar.istio.io/includeOutboundIPRanges", // Can modify outbound IP range interception
     "traffic.sidecar.istio.io/includeOutboundPorts", // Can modify outbound port interception
     "sidecar.istio.io/interceptionMode", // Can change interception mode (REDIRECT/TPROXY)
-    "traffic.sidecar.istio.io/kubevirtInterfaces", // Can modify kubevirt interface handling
     "istio.io/redirect-virtual-interfaces", // Can modify virtual interface traffic handling
+  ];
+  const kubevirtBlockedTrafficAnnotations = [
+    "traffic.sidecar.istio.io/kubevirtInterfaces", // Deprecated (Istio 1.25) kubevirt interface handling
+    "istio.io/reroute-virtual-interfaces", // Replacement for kubevirtInterfaces; reroutes virtual interface traffic
   ];
   const blockedTrafficLabels = [
     "sidecar.istio.io/inject", // Can disable sidecar injection
   ];
   // Check annotations for violations
+  const effectiveBlockedAnnotations = isKubeVirtWorkload
+    ? blockedTrafficAnnotations
+    : [...blockedTrafficAnnotations, ...kubevirtBlockedTrafficAnnotations];
+
   const annotationViolations = Object.entries(annotations)
     .filter(([key]) => {
       if (
         // Ignore 'sidecar.istio.io/inject' annotation in istio-system namespace
         (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
         // Ignore 'sidecar.istio.io/inject=true' annotation
-        (key === "sidecar.istio.io/inject" && annotations[key].trim() === "true")
+        (key === "sidecar.istio.io/inject" && annotations[key].trim() === "true") ||
+        // Ignore 'sidecar.istio.io/inject=false' annotation on CDI-managed pods (importer, upload, clone)
+        (key === "sidecar.istio.io/inject" && annotations[key].trim() === "false" && isCDIPod)
       ) {
         return false;
       }
 
-      return blockedTrafficAnnotations.includes(key);
+      return effectiveBlockedAnnotations.includes(key);
     })
     .map(([key]) => `annotation ${key}`);
 

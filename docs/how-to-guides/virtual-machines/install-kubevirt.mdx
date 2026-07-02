@@ -1,0 +1,240 @@
+---
+title: Install KubeVirt on UDS Core
+description: Deploy the KubeVirt and CDI operators on a UDS Core cluster, verify all components are healthy, and configure the VM workload namespace.
+sidebar:
+  order: 11.001
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Deploy KubeVirt and CDI on a running UDS Core cluster. After this guide, both operators are healthy, the UDS Package CRs are Ready, and you have a VM workload namespace configured to run virtual machines.
+
+## Prerequisites
+
+- Access to a running UDS Core cluster (multi-node recommended; see the virt-api webhook routing
+  note in [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/))
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- A UDS Core release that includes native KubeVirt/CDI Pepr support. The `virt-launcher` and CDI
+  pod policy allowances are scoped by the `uds.dev/kubevirt-workload` namespace label and the
+  KubeVirt/CDI pod names; a UDS Core build without this support denies those annotations. See
+  [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/)
+- `kubectl` and `virtctl` available on your PATH (`virtctl` version must match the deployed KubeVirt version; install from the [KubeVirt releases page](https://github.com/kubevirt/kubevirt/releases) or via `kubectl krew install virt`)
+- KVM available on the cluster nodes (or emulation enabled; see step 2)
+
+## Steps
+
+<Steps>
+
+1. **Create a bundle that includes the KubeVirt package**
+
+   The KubeVirt package is not part of UDS Core. You deploy it by building a UDS bundle that
+   includes both UDS Core and the KubeVirt package (or adding it on top of an existing UDS Core
+   deployment).
+
+   Create a `uds-bundle.yaml` that includes the KubeVirt package:
+
+   ```yaml title="uds-bundle.yaml"
+   kind: UDSBundle
+   metadata:
+     name: my-kubevirt-bundle
+     description: UDS Core with KubeVirt
+     version: 0.1.0
+
+   packages:
+     - name: core
+       repository: ghcr.io/defenseunicorns/packages/uds/core
+       ref: x.x.x-upstream
+
+     - name: kubevirt
+       repository: ghcr.io/defenseunicorns/packages/uds/kubevirt
+       ref: 1.8.2-upstream
+   ```
+
+   > [!NOTE]
+   > No bundle variable is needed to scope VM namespaces. A VM workload namespace opts in by
+   > setting `kubevirt.enabled: true` in its UDS Package (the operator then labels the namespace
+   > `uds.dev/kubevirt-workload: "true"`), or by carrying that label directly. The VM guides cover
+   > this. Pods in unlabeled namespaces are denied the KubeVirt/CDI annotations.
+
+2. **(Optional) Enable QEMU emulation**
+
+   If your cluster nodes do not have KVM available (common in nested virtualization or CI
+   environments), add this override to enable software emulation:
+
+   > [!NOTE]
+   > To check if KVM is available on a k3d node: `docker exec <node-name> ls /dev/kvm`
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     kubevirt:
+       uds-kubevirt-config:
+         values:
+           - path: kubevirt.configuration.developerConfiguration.useEmulation
+             value: true
+   ```
+
+   The `kubevirt.configuration` path passes directly to the `KubeVirt` CR `spec.configuration`.
+   It is not a declared Helm value in `chart/values.yaml`; any key nested under
+   `kubevirt.configuration` is valid as long as it matches the KubeVirt CR spec.
+
+   > [!WARNING]
+   > Emulation is significantly slower than KVM hardware acceleration. Do not use it in
+   > production.
+
+3. **(Optional) Configure the CDI scratch space storage class**
+
+   CDI requires a scratch PVC when importing disk images from registry sources. By default it
+   uses the cluster's default StorageClass. To use a specific class:
+
+   ```yaml title="uds-bundle.yaml"
+   overrides:
+     kubevirt:
+       uds-kubevirt-config:
+         values:
+           - path: cdi.scratchSpaceStorageClass
+             value: "my-storageclass"
+   ```
+
+4. **Build and deploy the bundle**
+
+   ```bash
+   uds create .
+   uds deploy uds-bundle-my-kubevirt-bundle-amd64-0.1.0.tar.zst --confirm
+   ```
+
+   The `uds deploy` command waits for all readiness conditions before completing:
+   - `KubeVirt/kubevirt` condition `Available`
+   - `CDI/cdi` condition `Available`
+   - Both UDS Packages reach `Ready` phase
+
+</Steps>
+
+## Verification
+
+Confirm every component is healthy before proceeding.
+
+**Check the operators and control plane pods:**
+
+```bash
+kubectl get pods -n kubevirt
+```
+
+Expected output (all pods Running and Ready; pod counts reflect a 2-node cluster):
+
+```console
+NAME                               READY   STATUS    RESTARTS   AGE
+virt-api-c69d55fcb-2bfkh           1/1     Running   0          2m
+virt-api-c69d55fcb-66rds           1/1     Running   0          2m
+virt-controller-78d4cc5bb9-nmkmn   1/1     Running   0          2m
+virt-controller-78d4cc5bb9-vvwfc   1/1     Running   0          2m
+virt-handler-8qckv                 2/2     Running   0          2m
+virt-handler-sw6nb                 2/2     Running   0          2m
+virt-operator-598cbd6dc5-d6jkl     1/1     Running   0          3m
+virt-operator-598cbd6dc5-pwtjg     1/1     Running   0          3m
+```
+
+The `virt-handler` DaemonSet runs one pod per node; a 2-node cluster shows 2 virt-handler pods.
+The `2/2` count reflects two containers: `virt-handler` and `virt-launcher-image-holder` (holds
+the virt-launcher image reference on the node). The `virt-api` Deployment runs 2 replicas and
+spreads them across available nodes using pod anti-affinity.
+
+**Check CDI:**
+
+```bash
+kubectl get pods -n cdi
+```
+
+Expected output (all pods Running and Ready):
+
+```console
+NAME                               READY   STATUS    RESTARTS   AGE
+cdi-apiserver-5f64754756-kfs5s     1/1     Running   0          2m
+cdi-deployment-67bfd4d7c6-l794s    1/1     Running   0          2m
+cdi-operator-7b55c457df-8t2tt      1/1     Running   0          3m
+cdi-uploadproxy-5dd77ddcc5-qqwwx   1/1     Running   0          2m
+```
+
+**Check the KubeVirt and CDI custom resource status:**
+
+```bash
+kubectl get kubevirt kubevirt -n kubevirt
+kubectl get cdi cdi
+```
+
+Both should show phase `Deployed` and condition `Available`.
+
+**Check the UDS Packages:**
+
+```bash
+kubectl get packages -A
+```
+
+Both `kubevirt` (in the `kubevirt` namespace) and `cdi` (in the `cdi` namespace) should show
+`STATUS: Ready`.
+
+**Check the UDS Exemption for VM workload namespaces:**
+
+```bash
+kubectl get exemptions -n uds-policy-exemptions
+```
+
+A `kubevirt` exemption should be present. It contains a single entry:
+- `virt-handler` pods in the `kubevirt` namespace: privileged + host path exemptions
+
+The KubeVirt and CDI Istio annotation allowances are not exemptions. They are scoped Pepr
+admission checks keyed on the `uds.dev/kubevirt-workload` namespace label and the generated pod
+names, so no per-namespace `RestrictIstioTrafficOverrides` exemption is created.
+
+**Check the virtctl client and server versions match:**
+
+```bash
+virtctl version
+```
+
+Both `Client Version` and `Server Version` should show the same version tag.
+
+## Troubleshooting
+
+### Problem: virt-api pods stuck in Pending or CrashLoopBackOff
+
+**Symptom:** `kubectl get pods -n kubevirt` shows `virt-api` pods not running after 2-3 minutes.
+
+**Solution:** Check the pod events with `kubectl describe pod -n kubevirt <pod>`. If the issue is
+a missing secret (`kubevirt-ca` or `kubevirt-virt-api-certs`), wait another minute; the operator
+creates these on first run. If the pod is stuck due to resource constraints, check node capacity
+with `kubectl describe node`.
+
+### Problem: cdi-uploadproxy fails with "secret cdi-api-signing-key not found"
+
+**Symptom:** `kubectl get pods -n cdi` shows `cdi-uploadproxy` in `CreateContainerConfigError`
+immediately after deployment.
+
+**Solution:** This is normal. The CDI operator creates the `cdi-api-signing-key` secret during
+initialization. The uploadproxy pod will restart and recover within 30-60 seconds. Wait for
+`cdi-operator` to reach `Ready` before checking whether `cdi-uploadproxy` is running.
+
+### Problem: KubeVirt CR stays in Deploying phase
+
+**Symptom:** `kubectl get kubevirt kubevirt -n kubevirt` shows phase `Deploying` for more than
+5 minutes.
+
+**Solution:** Check the virt-operator logs: `kubectl logs -n kubevirt -l kubevirt.io=virt-operator`.
+Look for certificate or RBAC errors. If virt-handler pods are failing, check that KVM or
+emulation is enabled correctly.
+
+### Problem: Package status is Pending, never reaches Ready
+
+**Symptom:** `kubectl get packages kubevirt -n kubevirt` shows `STATUS: Pending` indefinitely.
+
+**Solution:** Check the Pepr operator logs: `kubectl logs -n pepr-system -l app=pepr-uds-core`.
+Look for validation failures on the KubeVirt UDS Package CR. A missing network allow rule or a
+typo in the Package spec can block reconciliation.
+
+## Related documentation
+
+- [KubeVirt on UDS Core](/concepts/core-features/virtual-machines/) - Architecture overview before you deploy
+- [KubeVirt upstream documentation](https://kubevirt.io/user-guide/) - KubeVirt user guide
+- [CDI upstream documentation](https://github.com/kubevirt/containerized-data-importer/blob/main/doc/) - CDI documentation
+- [Run your first VM on UDS Core](/how-to-guides/virtual-machines/first-vm/) - Deploy and connect to a container disk VM

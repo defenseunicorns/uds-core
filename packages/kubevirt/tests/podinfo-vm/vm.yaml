@@ -1,0 +1,89 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: podinfo-vm
+  namespace: podinfo-vm
+  labels:
+    app.kubernetes.io/name: podinfo-vm
+spec:
+  runStrategy: Halted
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+        traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+      labels:
+        app.kubernetes.io/name: podinfo-vm
+        kubevirt.io/domain: podinfo-vm
+    spec:
+      domain:
+        devices:
+          interfaces:
+            - name: default
+              masquerade: {}
+              ports:
+                - name: http
+                  port: 80
+          disks:
+            - disk:
+                bus: virtio
+              name: containerdisk
+            - disk:
+                bus: virtio
+              name: cloudinitdisk
+        resources:
+          requests:
+            memory: 1024M
+      networks:
+        - name: default
+          pod: {}
+      terminationGracePeriodSeconds: 0
+      volumes:
+        - name: containerdisk
+          containerDisk:
+            image: kubevirt/fedora-cloud-container-disk-demo
+        - name: cloudinitdisk
+          cloudInitNoCloud:
+            userData: |-
+              #cloud-config
+              password: fedora
+              chpasswd: { expire: False }
+              write_files:
+                - path: /usr/local/bin/podinfo-vm.py
+                  permissions: '0755'
+                  content: |
+                    #!/usr/bin/env python3
+                    import json
+                    from http.server import BaseHTTPRequestHandler, HTTPServer
+
+                    class Handler(BaseHTTPRequestHandler):
+                        def do_GET(self):
+                            body = json.dumps({"app": "podinfo-vm", "status": "ok"}).encode()
+                            self.send_response(200)
+                            self.send_header("Content-Type", "application/json")
+                            self.send_header("Content-Length", str(len(body)))
+                            self.end_headers()
+                            self.wfile.write(body)
+
+                    HTTPServer(("0.0.0.0", 80), Handler).serve_forever()
+                - path: /etc/systemd/system/podinfo-vm.service
+                  permissions: '0644'
+                  content: |
+                    [Unit]
+                    Description=Podinfo VM HTTP service
+                    After=network-online.target
+                    Wants=network-online.target
+
+                    [Service]
+                    ExecStart=/usr/local/bin/podinfo-vm.py
+                    Restart=always
+                    RestartSec=5
+
+                    [Install]
+                    WantedBy=multi-user.target
+              runcmd:
+                - [ systemctl, daemon-reload ]
+                - [ systemctl, enable, --now, podinfo-vm.service ]

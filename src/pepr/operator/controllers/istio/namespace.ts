@@ -15,8 +15,17 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
+const KUBEVIRT_WORKLOAD_LABEL = "uds.dev/kubevirt-workload";
+// Per-package record of kubevirt intent (one annotation per package that sets kubevirt.enabled).
+// The workload label is derived from whether any of these exist, so packages in a shared namespace
+// do not flip-flop the label. Mirrors the uds.dev/pkg- presence annotations.
+const KUBEVIRT_PKG_ANNOTATION_PREFIX = "uds.dev/kubevirt-pkg-";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
-const MANAGED_LABEL_FIELDS = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
+const MANAGED_LABEL_FIELDS = new Set([
+  `f:${INJECTION_LABEL}`,
+  `f:${AMBIENT_LABEL}`,
+  `f:${KUBEVIRT_WORKLOAD_LABEL}`,
+]);
 
 export enum IstioState {
   Sidecar = Mode.Sidecar,
@@ -62,6 +71,20 @@ export async function enableIstio(pkg: UDSPackage) {
 
   const result = getIstioLabels(labels, targetIstioState, currentIstioState);
 
+  // Record this package's kubevirt intent, then derive the workload label from whether ANY package
+  // in the namespace wants it. The label is the trust anchor the RestrictIstioTrafficOverrides
+  // policy checks before allowing KubeVirt and CDI generated pods their Istio annotations. Only the
+  // operator (or an admin) can set it, never a tenant pod. Tracking intent per package keeps two
+  // packages in one namespace from flip-flopping the label. The label change does not require
+  // restarting pods, so shouldRestartPods is untouched.
+  const kubevirtPkgKey = `${KUBEVIRT_PKG_ANNOTATION_PREFIX}${pkg.metadata.name}`;
+  if (pkg.spec?.kubevirt?.enabled) {
+    annotations[kubevirtPkgKey] = "true";
+  } else {
+    delete annotations[kubevirtPkgKey];
+  }
+  setKubeVirtWorkloadLabel(result.labels, annotations);
+
   // Apply namespace updates and restart pods if needed
   await applyNamespaceUpdates(
     pkg.metadata.namespace,
@@ -92,8 +115,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   const currentState = getCurrentIstioState(labels);
   const originalIstioState = annotations[ISTIO_STATE_ANNOTATION] as IstioState;
 
-  // Remove the package annotation
+  // Remove the package presence annotation and this package's kubevirt intent annotation
   delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
+  delete annotations[`${KUBEVIRT_PKG_ANNOTATION_PREFIX}${pkg.metadata.name}`];
 
   // Check if there are any other package annotations
   // Backwards compatibility for multiple package CRs in a single namespace
@@ -111,6 +135,10 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     // Delete the annotation since we're restoring to original state
     delete annotations[ISTIO_STATE_ANNOTATION];
   }
+
+  // Recompute the kubevirt workload label from the remaining per-package intent annotations: it
+  // stays only if another package in the namespace still has kubevirt enabled.
+  setKubeVirtWorkloadLabel(result.labels, annotations);
 
   // Apply the updated Namespace
   await applyNamespaceUpdates(
@@ -214,7 +242,10 @@ export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
     Object.keys(meta).some(k => k !== "f:labels" && k !== "f:annotations") ||
     Object.keys(labels).some(k => !MANAGED_LABEL_FIELDS.has(k)) ||
     Object.keys(annotations).some(
-      k => k !== `f:${ISTIO_STATE_ANNOTATION}` && !k.startsWith("f:uds.dev/pkg-"),
+      k =>
+        k !== `f:${ISTIO_STATE_ANNOTATION}` &&
+        !k.startsWith("f:uds.dev/pkg-") &&
+        !k.startsWith(`f:${KUBEVIRT_PKG_ANNOTATION_PREFIX}`),
     )
   );
 }
@@ -225,6 +256,8 @@ function pickManagedLabels(labels: Record<string, string> | undefined): Record<s
   const result: Record<string, string> = {};
   if (labels?.[INJECTION_LABEL] !== undefined) result[INJECTION_LABEL] = labels[INJECTION_LABEL];
   if (labels?.[AMBIENT_LABEL] !== undefined) result[AMBIENT_LABEL] = labels[AMBIENT_LABEL];
+  if (labels?.[KUBEVIRT_WORKLOAD_LABEL] !== undefined)
+    result[KUBEVIRT_WORKLOAD_LABEL] = labels[KUBEVIRT_WORKLOAD_LABEL];
   return result;
 }
 
@@ -234,9 +267,28 @@ function pickManagedAnnotations(
 ): Record<string, string> {
   return Object.fromEntries(
     Object.entries(annotations || {}).filter(
-      ([k]) => k === ISTIO_STATE_ANNOTATION || k.startsWith("uds.dev/pkg-"),
+      ([k]) =>
+        k === ISTIO_STATE_ANNOTATION ||
+        k.startsWith("uds.dev/pkg-") ||
+        k.startsWith(KUBEVIRT_PKG_ANNOTATION_PREFIX),
     ),
   );
+}
+
+// Derive the kubevirt workload label from the per-package intent annotations: the label is present
+// iff at least one package in the namespace has kubevirt enabled.
+function setKubeVirtWorkloadLabel(
+  labels: Record<string, string>,
+  annotations: Record<string, string>,
+): void {
+  const anyKubeVirtPackage = Object.keys(annotations).some(k =>
+    k.startsWith(KUBEVIRT_PKG_ANNOTATION_PREFIX),
+  );
+  if (anyKubeVirtPackage) {
+    labels[KUBEVIRT_WORKLOAD_LABEL] = "true";
+  } else {
+    delete labels[KUBEVIRT_WORKLOAD_LABEL];
+  }
 }
 
 /**

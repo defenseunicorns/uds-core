@@ -59,6 +59,23 @@ tasks:
       - description: "Create the slim dev bundle (Base and Identity)"
         cmd: ./uds create bundles/k3d-slim-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
 
+  - name: k3d-kubevirt-dev-bundle
+    description: "Create the k3d-kubevirt-dev bundle (base + identity + kubevirt)"
+    actions:
+      - description: "Create base package"
+        task: single-layer
+        with:
+          layer: base
+          shim_bundle: "false"
+      - description: "Create identity-authorization package"
+        task: single-layer
+        with:
+          layer: identity-authorization
+      - description: "Create kubevirt package"
+        cmd: mkdir -p build && ./uds zarf package create packages/kubevirt --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+      - description: "Create k3d-kubevirt-dev bundle"
+        cmd: ./uds create bundles/k3d-kubevirt-dev --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"
     actions:

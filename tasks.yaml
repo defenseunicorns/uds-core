@@ -14,6 +14,7 @@ includes:
   - test: ./tasks/test.yaml
   - lint: ./tasks/lint.yaml
   - diagrams: ./tasks/diagrams.yaml
+  - kubevirt: ./tasks/kubevirt.yaml
 
 tasks:
   - name: default
