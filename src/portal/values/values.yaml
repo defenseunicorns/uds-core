@@ -4,3 +4,11 @@
 package:
   domain: "###ZARF_VAR_DOMAIN###"
   adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
+extraConfigmapMounts:
+  - name: ca-certs
+    mountPath: /etc/ssl/certs/ca.pem
+    configMap: uds-trust-bundle
+    readOnly: true
+    subPath: ca-bundle.pem
+    optional: true
