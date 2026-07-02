@@ -15,7 +15,7 @@ components:
     charts:
       - name: prometheus-operator-crds
         url: https://prometheus-community.github.io/helm-charts
-        version: 30.0.0
+        version: 30.0.1
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
@@ -33,11 +33,11 @@ components:
           - "values/upstream/kube-prometheus-stack.yaml"
     images:
       - "quay.io/prometheus/node-exporter:v1.11.1-distroless"
-      - "quay.io/prometheus-operator/prometheus-operator:v0.92.0"
+      - "quay.io/prometheus-operator/prometheus-operator:v0.92.1"
       - "registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.19.1"
       - "quay.io/prometheus/alertmanager:v0.33.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.92.0"
-      - "quay.io/prometheus/prometheus:v3.12.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.92.1"
+      - "quay.io/prometheus/prometheus:v3.13.0"
       - "registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
   - name: kube-prometheus-stack
@@ -53,11 +53,11 @@ components:
           - "values/registry1/kube-prometheus-stack.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/node-exporter:v1.11.1"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.92.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-operator:v0.92.1"
       - "registry1.dso.mil/ironbank/opensource/kubernetes/kube-state-metrics:v2.19.1"
       - "registry1.dso.mil/ironbank/opensource/prometheus/alertmanager:v0.33.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.92.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.12.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.92.1"
+      - "registry1.dso.mil/ironbank/opensource/prometheus/prometheus:v3.13.0"
       - "registry1.dso.mil/ironbank/opensource/ingress-nginx/kube-webhook-certgen:v1.6.9"
 
   - name: kube-prometheus-stack
@@ -73,10 +73,10 @@ components:
           - "values/unicorn/kube-prometheus-stack.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-node-exporter-fips:1.11.1"
-      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:v0.92.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-operator-fips:v0.92.1"
       - "cgr.dev/defenseunicorns.com/kube-state-metrics-fips:v2.19.1"
       - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:v0.33.0"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.92.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.92.1"
       - "cgr.dev/defenseunicorns.com/prometheus-fips:v3.12.0"
       - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.8" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
@@ -93,7 +93,7 @@ components:
           - "values/upstream/blackbox-exporter.yaml"
     images:
       - "quay.io/prometheus/blackbox-exporter:v0.28.0"
-      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.92.0"
+      - "quay.io/prometheus-operator/prometheus-config-reloader:v0.92.1"
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -108,7 +108,7 @@ components:
           - "values/registry1/blackbox-exporter.yaml"
     images:
       - "registry1.dso.mil/ironbank/opensource/prometheus/blackbox_exporter:v0.28.0"
-      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.92.0"
+      - "registry1.dso.mil/ironbank/opensource/prometheus-operator/prometheus-config-reloader:v0.92.1"
 
   - name: prometheus-blackbox-exporter
     required: true
@@ -123,4 +123,4 @@ components:
           - "values/unicorn/blackbox-exporter.yaml"
     images:
       - "cgr.dev/defenseunicorns.com/prometheus-blackbox-exporter-fips:0.28.0"
-      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.92.0"
+      - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.92.1"
