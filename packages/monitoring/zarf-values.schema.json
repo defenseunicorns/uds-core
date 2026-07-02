@@ -21,16 +21,6 @@
         }
       }
     },
-    "grafana": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "autoscaling": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean" } }
-        }
-      }
-    }
+    "grafana": { "type": "object" }
   }
 }

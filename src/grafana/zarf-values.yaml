@@ -1,0 +1,7 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Grafana source package.
+# Required so `zarf dev deploy src/grafana` has a backing values tree for all sourcePath mappings.
+uds-grafana-config: {}
+grafana: {}

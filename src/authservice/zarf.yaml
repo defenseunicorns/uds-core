@@ -9,6 +9,10 @@ metadata:
   description: "UDS Core Authservice"
   url: https://github.com/istio-ecosystem/authservice
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: authservice
     required: true

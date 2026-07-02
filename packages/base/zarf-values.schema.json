@@ -3,29 +3,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "pepr": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "watcher": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "resources": { "type": "object" } }
-        },
-        "admission": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "resources": { "type": "object" } }
-        }
-      }
-    },
-    "istiod": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "resources": { "type": "object" }
-      }
-    },
+    "pepr": { "type": "object" },
+    "istiod": { "type": "object" },
     "uds-istio-config-admin": {
       "type": "object",
       "additionalProperties": true,

@@ -34,10 +34,8 @@
     },
     "authservice": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
-        "replicaCount": { "type": "integer", "minimum": 0 },
-        "resources": { "type": "object" }
+        "replicaCount": { "type": "integer", "minimum": 1 }
       }
     }
   }

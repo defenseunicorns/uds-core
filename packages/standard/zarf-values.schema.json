@@ -3,29 +3,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "pepr": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "watcher": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "resources": { "type": "object" } }
-        },
-        "admission": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "resources": { "type": "object" } }
-        }
-      }
-    },
-    "istiod": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "resources": { "type": "object" }
-      }
-    },
+    "pepr": { "type": "object" },
+    "istiod": { "type": "object" },
     "uds-istio-config-admin": {
       "type": "object",
       "additionalProperties": true,
@@ -94,38 +73,11 @@
     },
     "authservice": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
-        "replicaCount": { "type": "integer", "minimum": 0 },
-        "resources": { "type": "object" }
+        "replicaCount": { "type": "integer", "minimum": 1 }
       }
     },
-    "loki": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "loki": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "storage": { "type": "object" } }
-        },
-        "write": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        },
-        "read": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        },
-        "backend": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        }
-      }
-    },
+    "loki": { "type": "object" },
     "uds-grafana-config": {
       "type": "object",
       "additionalProperties": true,
@@ -144,16 +96,6 @@
         }
       }
     },
-    "grafana": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "autoscaling": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "enabled": { "type": "boolean" } }
-        }
-      }
-    }
+    "grafana": { "type": "object" }
   }
 }

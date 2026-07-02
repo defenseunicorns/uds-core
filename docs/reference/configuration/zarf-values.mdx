@@ -1,11 +1,11 @@
 ---
 title: Zarf values
-description: Reference for overriding UDS Core configuration with native Zarf values, including the per-package value keys, defaults, and how values relate to bundle variables.
+description: Reference for overriding UDS Core configuration with native Zarf values, including the per-package value keys, excluded paths, and how values relate to bundle variables.
 sidebar:
   order: 3.004
 ---
 
-UDS Core exposes a curated set of Helm configuration as native [Zarf values](https://docs.zarf.dev/ref/examples/values-templating/), so you can override common settings with a values file when deploying a Core package directly with `zarf package deploy`, without building a UDS bundle. Bundle `variables` and `values` continue to work unchanged; Zarf values are an additive option for the straight-Zarf deployment path.
+UDS Core exposes Helm configuration as native [Zarf values](https://docs.zarf.dev/ref/examples/values-templating/), so you can override settings with a values file when deploying a Core package directly with `zarf package deploy`, without building a UDS bundle. Bundle `variables` and `values` continue to work unchanged; Zarf values are an additive option for the straight-Zarf deployment path.
 
 ## Overriding values at deploy
 
@@ -29,17 +29,25 @@ uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst --values values.ya
 
 ## Available values
 
-The full UDS Core (`standard`) package exposes the union of every layer's values. The individual layer packages (`core-base`, `core-identity-authorization`, `core-logging`, `core-monitoring`) each expose their own subset. Each package validates its values against a JSON schema, so unknown keys are rejected at deploy time.
+The full UDS Core (`standard`) package exposes the union of every layer's values. The individual layer packages (`core-base`, `core-identity-authorization`, `core-logging`, `core-monitoring`) each expose their own subset.
+
+Each package validates its values against a JSON schema. Unknown top-level namespaces (for example, setting a key that doesn't correspond to any chart) are rejected. Within a chart namespace, sub-keys are validated according to the schema for that chart — pass-through charts accept any valid chart value.
 
 ### Base (`core-base`)
 
-This package is the UDS Core foundation layer, including the Pepr operator, Istio service mesh, Envoy Gateway, and supporting CRDs. The Zarf values surface exposes resource and gateway settings for Pepr and Istio. The gateway `name` and `domain` are excluded from the `uds-istio-config` maps (`name` is bound to the `Gateway` resource and its Deployment selector; `domain` is driven by the `DOMAIN` Zarf variable).
+This package is the UDS Core foundation layer, including the Pepr operator, Istio service mesh, Envoy Gateway, and supporting CRDs.
+
+**Pepr (`pepr.*`)** and **Istiod (`istiod.*`)** are pass-through namespaces — any value from the upstream chart can be set. The paths listed below are excluded and will be silently dropped at deploy time.
+
+| Chart | Excluded paths |
+|---|---|
+| Pepr | `pepr.watcher.env`, `pepr.admission.env`, `pepr.watcher.extraVolumeMounts`, `pepr.watcher.extraVolumes`, `pepr.admission.extraVolumeMounts`, `pepr.admission.extraVolumes`, `pepr.watcher.serviceMonitor`, `pepr.admission.serviceMonitor`, `pepr.admission.webhookAnnotations` |
+| Istiod | `istiod.global` |
+
+The `uds-istio-config-admin`, `uds-istio-config-tenant`, and `tenant-gateway` keys are UDS-authored config charts with the following enumerated values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `pepr.watcher.resources` | object | chart default | Resource requests and limits for the Pepr watcher pod |
-| `pepr.admission.resources` | object | chart default | Resource requests and limits for the Pepr admission pods |
-| `istiod.resources` | object | chart default | Resource requests and limits for Istiod |
 | `uds-istio-config-admin.tls.cert` | string | unset | Base64-encoded TLS certificate for the admin gateway |
 | `uds-istio-config-admin.tls.key` | string | unset | Base64-encoded TLS key for the admin gateway |
 | `uds-istio-config-admin.tls.supportTLSV1_2` | boolean | `false` | Allow TLS 1.2 on the admin gateway |
@@ -49,25 +57,30 @@ This package is the UDS Core foundation layer, including the Pepr operator, Isti
 | `tenant-gateway.service` | object | chart default | Tenant gateway LoadBalancer service config, including `ports` for non-HTTP(S) traffic |
 
 > [!NOTE]
+> The gateway `name` and `domain` are excluded from the `uds-istio-config` maps — `name` is bound to the `Gateway` resource and its Deployment selector; `domain` is driven by the `DOMAIN` Zarf variable.
+
+> [!NOTE]
 > The Istio sidecar proxy resource requests (`global.proxy.resources.requests`) are exposed through the existing Zarf `variables` (`PROXY_MEMORY_REQUEST`, `PROXY_CPU_REQUEST`), not through values, to avoid a double mapping.
 
 ### Identity and authorization (`core-identity-authorization`)
 
-This package exposes Keycloak and authservice settings. The `keycloak` key maps to the Keycloak chart broadly; `image`, `configImage`, the `Service`, `domain`/`adminDomain`, security contexts, and monitoring objects (`ServiceMonitor`/`PrometheusRule`) are excluded so they cannot be overridden.
+This package exposes Keycloak and authservice settings.
+
+**Authservice (`authservice.*`)** is a pass-through namespace — any value from the upstream chart can be set. The following paths are excluded and will be silently dropped at deploy time: `authservice.image`, `authservice.securityContext`, `authservice.podSecurityContext`.
+
+**Keycloak (`keycloak.*`)** maps to the Keycloak chart broadly. The following paths are excluded: `keycloak.image`, `keycloak.configImage`, `keycloak.domain`, `keycloak.adminDomain`, `keycloak.service`, `keycloak.podSecurityContext`, `keycloak.securityContext`, `keycloak.serviceMonitor`, `keycloak.prometheusRule`. Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `keycloak.insecureAdminPasswordGeneration.enabled` | boolean | `false` | Generate an insecure admin password for dev/test |
 | `keycloak.autoscaling.enabled` | boolean | `false` | Enable Keycloak HA (horizontal autoscaling) |
-| `keycloak.devMode` | boolean | chart default | Enable Keycloak dev mode |
+| `keycloak.devMode` | boolean | chart default (`true`) | Enable Keycloak dev mode |
 | `keycloak.resources` | object | chart default | Resource requests and limits for Keycloak |
 | `keycloak.postgresql.host` | string | `""` | External PostgreSQL host |
 | `keycloak.postgresql.username` | string | `""` | External PostgreSQL username |
 | `keycloak.postgresql.password` | string | `""` | External PostgreSQL password |
 | `keycloak.postgresql.database` | string | `""` | External PostgreSQL database name |
 | `keycloak.postgresql.port` | integer | `5432` | External PostgreSQL port |
-| `authservice.replicaCount` | integer | `1` | Number of authservice replicas |
-| `authservice.resources` | object | `{}` | Resource requests and limits for authservice |
 
 > [!WARNING]
 > External PostgreSQL requires `keycloak.devMode: false`. The Keycloak chart fails at deploy time when any `postgresql.*` field is non-empty and `devMode` is `true` (the chart default). Always set `keycloak.devMode: false` alongside any `keycloak.postgresql.*` override.
@@ -77,18 +90,23 @@ This package exposes Keycloak and authservice settings. The `keycloak` key maps 
 
 ### Logging (`core-logging`)
 
-This package includes Loki and Vector (log collection and forwarding). The Zarf values surface exposes Loki storage and replica settings.
+This package includes Loki and Vector (log collection and forwarding).
 
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `loki.loki.storage` | object | chart default | Loki object storage config, including `bucketNames` and `s3` connection settings |
-| `loki.write.replicas` | integer | `3` | Loki write component replicas |
-| `loki.read.replicas` | integer | `3` | Loki read component replicas |
-| `loki.backend.replicas` | integer | `3` | Loki backend component replicas |
+**Loki (`loki.*`)** is a pass-through namespace — any value from the upstream Loki chart can be set. The following paths are excluded and will be silently dropped at deploy time:
+
+| Excluded path | Reason |
+|---|---|
+| `loki.loki.auth_enabled` | Changing the auth model breaks the UDS-managed multi-tenancy configuration |
+| `loki.deploymentMode` | Changing deployment mode (e.g., `SingleBinary` vs `SimpleScalable`) requires a full reinstall and breaks the existing topology |
+| `loki.minio` | UDS does not deploy the built-in MinIO instance; object storage is configured separately |
 
 ### Monitoring (`core-monitoring`)
 
-This package includes the full Prometheus/Grafana observability stack (kube-prometheus-stack, Prometheus Blackbox Exporter, Grafana). The Zarf values surface exposes Grafana database and scaling settings. The `uds-grafana-config` key maps to the Grafana config chart broadly; `domain`/`adminDomain` and `sso` are excluded (`sso` is wired to Keycloak by UDS, so overriding it would break authentication).
+This package includes the full Prometheus/Grafana observability stack.
+
+**Grafana (`grafana.*`)** is a pass-through namespace — any value from the upstream Grafana chart can be set. The following path is excluded and will be silently dropped at deploy time: `grafana.sidecar` (UDS configures the provisioning sidecars that wire Loki and Prometheus datasources; overriding them breaks datasource connectivity).
+
+**`uds-grafana-config.*`** is a UDS-authored config chart exposed broadly. Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -98,7 +116,6 @@ This package includes the full Prometheus/Grafana observability stack (kube-prom
 | `uds-grafana-config.postgresql.password` | string | `""` | External PostgreSQL password |
 | `uds-grafana-config.postgresql.ssl_mode` | string | `require` | PostgreSQL SSL mode |
 | `uds-grafana-config.postgresql.port` | integer | `5432` | External PostgreSQL port |
-| `grafana.autoscaling.enabled` | boolean | `false` | Enable Grafana HA (horizontal autoscaling) |
 
 > [!WARNING]
 > External PostgreSQL configuration requires `host`, `database`, `user`, `password`, and `port` to be set together. Setting any one of `host`, `database`, `user`, or `password` without the others causes a hard failure at deploy time.
@@ -111,9 +128,9 @@ This package includes the full Prometheus/Grafana observability stack (kube-prom
 Zarf values do not replace the bundle `variables` and `values` that UDS bundles use. Both mechanisms coexist:
 
 - Deploying a Core package directly with `zarf package deploy --values values.yaml` uses Zarf values. This is the path these values are designed for.
-- Deploying through a UDS bundle continues to use the bundle's `variables` and `values`. If a bundle variable and a Zarf value target the same Helm path, the bundle variable wins, because `###ZARF_VAR###` templating runs after values are applied.
+- Deploying through a UDS bundle continues to use the bundle's `variables` and `values`. Zarf values take precedence over `###ZARF_VAR###`-substituted `valuesFiles` at the same Helm path — bundle direct overrides (`--set` style) take precedence over Zarf values.
 
-Avoid setting the same Helm path through both mechanisms in a single deploy.
+Avoid setting the same Helm path through both mechanisms in a single deploy. The `excludePaths` for `domain` and `adminDomain` on every chart are load-bearing for this reason: without them, a Zarf values override would silently stomp the variable-substituted domain.
 
 ## Related documentation
 

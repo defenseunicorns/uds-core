@@ -33,6 +33,10 @@ components:
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
+        # sidecar is excluded because UDS configures the provisioning sidecars that wire
+        # Loki and Prometheus datasources; overriding it breaks datasource connectivity.
         values:
-          - sourcePath: .grafana.autoscaling
-            targetPath: .autoscaling
+          - sourcePath: .grafana
+            targetPath: .
+            excludePaths:
+              - .grafana.sidecar

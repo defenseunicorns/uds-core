@@ -3,33 +3,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "loki": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "loki": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "storage": { "type": "object" }
-          }
-        },
-        "write": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        },
-        "read": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        },
-        "backend": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
-        }
-      }
-    }
+    "loki": { "type": "object" }
   }
 }

@@ -20,12 +20,12 @@ components:
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
+        # auth_enabled, deploymentMode, and minio are excluded to protect the loki security
+        # model, scalable topology, and to prevent enabling the built-in minio instance.
         values:
-          - sourcePath: .loki.loki.storage
-            targetPath: .loki.storage
-          - sourcePath: .loki.write.replicas
-            targetPath: .write.replicas
-          - sourcePath: .loki.read.replicas
-            targetPath: .read.replicas
-          - sourcePath: .loki.backend.replicas
-            targetPath: .backend.replicas
+          - sourcePath: .loki
+            targetPath: .
+            excludePaths:
+              - .loki.loki.auth_enabled
+              - .loki.deploymentMode
+              - .loki.minio

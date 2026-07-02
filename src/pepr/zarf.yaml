@@ -43,6 +43,10 @@ variables:
     description: "Whether to allow exemptions to be created in all namespaces"
     default: "false"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: uds-crds
     required: true
@@ -100,11 +104,22 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
+        # env, extraVolume*, serviceMonitor, and webhookAnnotations are excluded because they
+        # carry UDS-specific wiring (Keycloak token mounts, ZARF_VAR substitutions, enforcer
+        # bypass) that must not be overridden.
         values:
-          - sourcePath: .pepr.watcher.resources
-            targetPath: .watcher.resources
-          - sourcePath: .pepr.admission.resources
-            targetPath: .admission.resources
+          - sourcePath: .pepr
+            targetPath: .
+            excludePaths:
+              - .pepr.watcher.env
+              - .pepr.admission.env
+              - .pepr.watcher.extraVolumeMounts
+              - .pepr.watcher.extraVolumes
+              - .pepr.admission.extraVolumeMounts
+              - .pepr.admission.extraVolumes
+              - .pepr.watcher.serviceMonitor
+              - .pepr.admission.serviceMonitor
+              - .pepr.admission.webhookAnnotations
     actions:
       onDeploy:
         after:

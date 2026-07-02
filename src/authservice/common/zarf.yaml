@@ -16,7 +16,9 @@ components:
         version: 1.0.1
         namespace: authservice
         values:
-          - sourcePath: .authservice.replicaCount
-            targetPath: .replicaCount
-          - sourcePath: .authservice.resources
-            targetPath: .resources
+          - sourcePath: .authservice
+            targetPath: .
+            excludePaths:
+              - .authservice.image
+              - .authservice.securityContext
+              - .authservice.podSecurityContext

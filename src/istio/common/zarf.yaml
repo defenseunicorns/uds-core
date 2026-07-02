@@ -43,9 +43,12 @@ components:
             path: "global.proxy.resources.requests.cpu"
         # Note: global.proxy.resources.requests is already exposed via the `variables` above,
         # so it is intentionally not re-mapped here to avoid a double-mapping conflict.
+        # global is excluded to prevent overriding mesh-wide image registry/tag settings.
         values:
-          - sourcePath: .istiod.resources
-            targetPath: .resources
+          - sourcePath: .istiod
+            targetPath: .
+            excludePaths:
+              - .istiod.global
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0

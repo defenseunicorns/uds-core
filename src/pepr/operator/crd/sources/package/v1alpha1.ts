@@ -253,6 +253,14 @@ const expose = {
           },
         },
       },
+      annotations: {
+        description:
+          "Consumer-extensible per-endpoint metadata. Keys should be namespaced (e.g. 'portal.uds.dev/visible', 'uds.dev/title', etc.).",
+        type: "object",
+        additionalProperties: {
+          type: "string",
+        },
+      },
     },
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
