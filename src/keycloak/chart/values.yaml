@@ -10,7 +10,7 @@ image:
   pullPolicy: IfNotPresent
 
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
-configImage: ghcr.io/defenseunicorns/uds/identity-config:0.28.0
+configImage: ghcr.io/defenseunicorns/uds/identity-config:0.29.0
 
 # The public domain name of the Keycloak server
 domain: "###ZARF_VAR_DOMAIN###"
@@ -220,8 +220,8 @@ resources:
     cpu: "100m"
     memory: "700Mi"
   limits:
-    cpu: "1"
-    memory: "1Gi"
+    cpu: "2"
+    memory: "2Gi"
 
 # Persistence settings for PVC management (when enabled=false, an emptyDir will be used)
 # `devMode` overrides the enabled flag for `data` and `themes` to allow hot-reloads of the theme/plugin in k3d

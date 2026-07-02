@@ -13,7 +13,7 @@ metadata:
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.20.1-airgap
+    ref: 0.20.2-airgap
     overrides:
       uds-dev-stack:
         minio:
@@ -33,7 +33,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.79.0
+    ref: v0.80.0
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
@@ -139,7 +139,7 @@ packages:
             - name: KEYCLOAK_MEMORY_REQUEST
               description: "Memory request for the Keycloak pod"
               path: "resources.requests.memory"
-              default: "512Mi"
+              default: "700Mi"
             - name: KEYCLOAK_CPU_REQUEST
               description: "CPU request for the Keycloak pod"
               path: "resources.requests.cpu"
@@ -147,11 +147,11 @@ packages:
             - name: KEYCLOAK_MEMORY_LIMIT
               description: "Memory limit for the Keycloak pod"
               path: "resources.limits.memory"
-              default: "1Gi"
+              default: "2Gi"
             - name: KEYCLOAK_CPU_LIMIT
               description: "CPU limit for the Keycloak pod"
               path: "resources.limits.cpu"
-              default: "1000m"
+              default: "2"
             - name: KEYCLOAK_WAYPOINT_HPA_ENABLED
               description: "Whether the HPA is enabled for the waypoint"
               path: "waypoint.horizontalPodAutoscaler.enabled"

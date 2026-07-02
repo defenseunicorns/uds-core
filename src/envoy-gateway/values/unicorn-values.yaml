@@ -4,6 +4,6 @@
 global:
   images:
     envoyGateway:
-      image: cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
+      image: cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.1
     envoyProxy:
-      image: cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
+      image: cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
