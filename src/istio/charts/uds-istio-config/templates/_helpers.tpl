@@ -60,3 +60,17 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Conditionally expand a hostname with the domain name.
+Must be passed a dictionary containing the "host" and "domain" keys as a scope.
+*/}}
+{{- define "uds-istio-config.expandHost" -}}
+{{- if regexMatch "^\\.$" $.host }}
+{{- $.domain }}
+{{- else if regexMatch "\\.$" $.host }}
+{{- $.host }}
+{{- else }}
+{{- $.host }}.{{ $.domain }}
+{{- end }}
+{{- end }}
