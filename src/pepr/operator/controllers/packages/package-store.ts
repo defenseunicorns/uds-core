@@ -18,7 +18,7 @@ const log = setupLogger(Component.OPERATOR_PACKAGES);
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
-// Map structure: fqdn -> namespace (1:1; one package per namespace, one owner per FQDN)
+// Map structure: "gateway:fqdn" -> namespace (1:1; one owner per gateway+FQDN pair)
 let fqdnIndex: Map<string, string>;
 
 /**
@@ -132,7 +132,7 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
   storedPkg?.spec?.network?.expose?.forEach(e => fqdnIndex.delete(getExposureKey(e)));
 
   // Remove SSO index if necessary
-  const clients = pkg.spec?.sso;
+  const clients = storedPkg?.spec?.sso;
   if (clients) {
     clients.forEach(client => {
       const clientId = client.clientId;
