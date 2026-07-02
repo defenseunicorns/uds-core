@@ -254,3 +254,36 @@ tasks:
           ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
+
+  - name: values-e2e
+    description: "Verify Zarf values override takes effect in cluster (authservice replicaCount used as test vehicle)"
+    actions:
+      - description: "Write values override file"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          printf 'authservice:\n  replicaCount: 2\n' > /tmp/zv-e2e-override.yaml
+      - description: "Deploy identity-authorization with authservice.replicaCount=2"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          PKG=$(ls build/zarf-package-core-identity-authorization-*.tar.zst | head -1)
+          ./uds zarf package deploy "$PKG" --values /tmp/zv-e2e-override.yaml --confirm --components '*' --no-progress
+      - description: "Wait for rollout"
+        cmd: ./uds zarf tools kubectl rollout status deployment/authservice -n authservice --timeout=120s
+      - description: "Assert authservice.replicaCount is 2 in cluster"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          GOT=$(./uds zarf tools kubectl get deployment authservice -n authservice -o jsonpath='{.spec.replicas}')
+          if [ "$GOT" -eq 2 ]; then
+            echo "PASS: authservice.replicaCount=2 confirmed in cluster"
+          else
+            echo "FAIL: expected 2 replicas, got $GOT"
+            exit 1
+          fi
