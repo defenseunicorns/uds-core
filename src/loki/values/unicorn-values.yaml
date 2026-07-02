@@ -20,4 +20,4 @@ sidecar:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/k8s-sidecar-fips
-    tag: v2.8.0
+    tag: v2.8.1
