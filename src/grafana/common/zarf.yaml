@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -17,9 +17,22 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
+        # UDS-authored config chart, exposed broadly. domain/adminDomain are excluded so they
+        # stay driven by Zarf variable templating (###ZARF_VAR###); sso is excluded because the
+        # Grafana OAuth client is wired to Keycloak by UDS and a careless override breaks auth.
+        values:
+          - sourcePath: .uds-grafana-config
+            targetPath: .
+            excludePaths:
+              - .uds-grafana-config.domain
+              - .uds-grafana-config.adminDomain
+              - .uds-grafana-config.sso
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .grafana.autoscaling
+            targetPath: .autoscaling

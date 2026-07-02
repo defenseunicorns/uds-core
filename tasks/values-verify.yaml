@@ -1,0 +1,117 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Manual verification helpers for Zarf values: prove that overriding a setting via a Zarf
+# values file produces the same deployed object as the legacy bundle variable, and that a
+# deploy without an override file matches the chart default (parity).
+#
+# Notes:
+#   - Pass a values file to deploy with `--values`, not `-f`.
+#   - Set inputs with `--set` (these are task variables), e.g.
+#       uds run values-verify:parity --set PACKAGE=build/zarf-package-core-identity-authorization-arm64-1.6.0-upstream.tar.zst \
+#         --set VALUES_FILE=packages/identity-authorization/zarf-values.yaml \
+#         --set OBJ_KIND=deployment --set OBJ_NAME=authservice --set OBJ_NS=authservice
+#   - Run against a cluster that already has the relevant layer (and base) deployed.
+
+variables:
+  - name: PACKAGE
+    description: "Path to the layer package tarball"
+  - name: VALUES_FILE
+    description: "Path to a values file"
+  - name: BUNDLE
+    description: "Path to a UDS bundle tarball (equivalence Path A)"
+  - name: VAR_SET
+    description: "Bundle-style override, e.g. AUTHSERVICE_REPLICA_COUNT=3"
+  - name: OBJ_KIND
+    description: "Object kind (deployment, statefulset, service, configmap)"
+  - name: OBJ_NAME
+    description: "Object name"
+  - name: OBJ_NS
+    description: "Object namespace"
+
+tasks:
+  - name: parity
+    description: "Diff a deployed object before vs after applying the package's own default values file (expect PARITY OK)"
+    actions:
+      - description: "Capture the object as currently deployed"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
+            | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
+            > /tmp/zv-parity-before.yaml
+      - description: "Redeploy passing the default values file explicitly"
+        cmd: uds zarf package deploy "${{ .variables.PACKAGE }}" --values "${{ .variables.VALUES_FILE }}" --confirm
+      - description: "Wait for rollout to complete before capturing state"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
+      - description: "Capture again and diff (expect PARITY OK)"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
+            | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
+            > /tmp/zv-parity-after.yaml
+          if diff /tmp/zv-parity-before.yaml /tmp/zv-parity-after.yaml; then
+            echo "PARITY OK"
+          else
+            echo "PARITY DRIFT - a default in the values file does not match the chart default (see diff above)"
+            exit 1
+          fi
+
+  - name: equivalence
+    description: "Deploy via a bundle variable and via an equivalent Zarf values file, then diff the rendered object (expect EQUIVALENT)"
+    actions:
+      - description: "Path A - deploy the bundle with the variable set"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          uds deploy "${{ .variables.BUNDLE }}" --set ${{ .variables.VAR_SET }} --confirm
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
+          uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
+            | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
+            > /tmp/zv-equiv-a.yaml
+      - description: "Path B - deploy the package with the equivalent values file"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          uds zarf package deploy "${{ .variables.PACKAGE }}" --values "${{ .variables.VALUES_FILE }}" --confirm
+          case "${{ .variables.OBJ_KIND }}" in
+            deployment|statefulset|daemonset)
+              uds zarf tools kubectl rollout status "${{ .variables.OBJ_KIND }}/${{ .variables.OBJ_NAME }}" \
+                -n "${{ .variables.OBJ_NS }}" --timeout=120s
+              ;;
+          esac
+          uds zarf tools kubectl get ${{ .variables.OBJ_KIND }} ${{ .variables.OBJ_NAME }} -n ${{ .variables.OBJ_NS }} -o yaml \
+            | uds zarf tools yq 'del(.metadata.uid,.metadata.resourceVersion,.metadata.creationTimestamp,.metadata.generation,.metadata.managedFields,.status)' \
+            > /tmp/zv-equiv-b.yaml
+      - description: "Diff the two (expect EQUIVALENT)"
+        cmd: |
+          if diff /tmp/zv-equiv-a.yaml /tmp/zv-equiv-b.yaml; then
+            echo "EQUIVALENT"
+          else
+            echo "NOT EQUIVALENT - see diff above"
+            exit 1
+          fi

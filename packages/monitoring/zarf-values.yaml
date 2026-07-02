@@ -1,0 +1,16 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Monitoring package.
+# Zarf deep-merges values onto the chart defaults, so object knobs are left as empty no-ops
+# ({}) to preserve chart defaults while staying overridable.
+# uds-grafana-config.domain / adminDomain are intentionally not exposed (they remain driven by
+# Zarf variable templating, ###ZARF_VAR###).
+# Override examples (-f file): uds-grafana-config.postgresql.{host,database,user,password,
+#   ssl_mode,port}, grafana.autoscaling.enabled
+uds-grafana-config:
+  postgresql: {}
+
+grafana:
+  autoscaling:
+    enabled: false

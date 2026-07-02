@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -48,6 +48,38 @@ tasks:
         task: license
       - description: Run helm unittest on all charts
         task: helm-unittest
+      - description: Lint packages that expose Zarf values
+        task: values-lint
+
+  - name: values-lint
+    description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
+    actions:
+      - description: "Build the Pepr module (needed to compose the base and standard packages)"
+        cmd: |
+          npm ci
+          npx pepr build -z chart
+      - description: "Lint each values-bearing package"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for pkg in base identity-authorization logging monitoring standard; do
+            echo "Linting packages/${pkg}"
+            uds zarf dev lint "packages/${pkg}" --flavor upstream
+          done
+      - description: "Validate default values files against their schemas"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for pkg in base identity-authorization logging monitoring standard; do
+            echo "Validating packages/${pkg}/zarf-values.yaml"
+            uvx check-jsonschema \
+              --schemafile "packages/${pkg}/zarf-values.schema.json" \
+              "packages/${pkg}/zarf-values.yaml"
+          done
 
   - name: helm-unittest
     description: "Run helm unittest on all charts"

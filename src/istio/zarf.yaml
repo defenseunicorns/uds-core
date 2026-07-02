@@ -109,6 +109,15 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/config-admin.yaml"
+        # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
+        # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
+        # Deployment selector) and `domain` (driven by Zarf variable templating).
+        values:
+          - sourcePath: .uds-istio-config-admin
+            targetPath: .
+            excludePaths:
+              - .uds-istio-config-admin.name
+              - .uds-istio-config-admin.domain
 
   - name: istio-tenant-gateway
     required: true
@@ -120,12 +129,27 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        # Only the tenant gateway exposes `service` (for non-HTTP(S) port overrides); the admin
+        # and passthrough gateways intentionally do not. Map the service object (not the ports
+        # list leaf) so an empty/partial override deep-merges and the chart default ports survive.
+        values:
+          - sourcePath: .tenant-gateway.service
+            targetPath: .service
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/config-tenant.yaml"
+        # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
+        # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
+        # Deployment selector) and `domain` (driven by Zarf variable templating).
+        values:
+          - sourcePath: .uds-istio-config-tenant
+            targetPath: .
+            excludePaths:
+              - .uds-istio-config-tenant.name
+              - .uds-istio-config-tenant.domain
 
   - name: istio-passthrough-gateway
     required: false

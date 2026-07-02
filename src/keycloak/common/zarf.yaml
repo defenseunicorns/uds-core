@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -17,6 +17,22 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
+        # Keycloak is a UDS-authored chart, so expose it broadly. Exclude keys that would
+        # break the package (image references, Service wiring), compromise its security or
+        # monitoring wiring, or are driven by Zarf variable templating (domain/adminDomain).
+        values:
+          - sourcePath: .keycloak
+            targetPath: .
+            excludePaths:
+              - .keycloak.image
+              - .keycloak.configImage
+              - .keycloak.domain
+              - .keycloak.adminDomain
+              - .keycloak.service
+              - .keycloak.podSecurityContext
+              - .keycloak.securityContext
+              - .keycloak.serviceMonitor
+              - .keycloak.prometheusRule
     actions:
       onDeploy:
         before:

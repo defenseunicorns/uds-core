@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -20,3 +20,12 @@ components:
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .loki.loki.storage
+            targetPath: .loki.storage
+          - sourcePath: .loki.write.replicas
+            targetPath: .write.replicas
+          - sourcePath: .loki.read.replicas
+            targetPath: .read.replicas
+          - sourcePath: .loki.backend.replicas
+            targetPath: .backend.replicas

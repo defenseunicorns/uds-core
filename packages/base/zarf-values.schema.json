@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pepr": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "watcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "resources": { "type": "object" } }
+        },
+        "admission": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "resources": { "type": "object" } }
+        }
+      }
+    },
+    "istiod": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": { "type": "object" }
+      }
+    },
+    "uds-istio-config-admin": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cert": { "type": "string" },
+            "key": { "type": "string" },
+            "supportTLSV1_2": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "uds-istio-config-tenant": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cert": { "type": "string" },
+            "key": { "type": "string" },
+            "supportTLSV1_2": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "tenant-gateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "service": { "type": "object" }
+      }
+    }
+  }
+}

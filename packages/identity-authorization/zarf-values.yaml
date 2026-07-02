@@ -1,0 +1,22 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Identity & Authorization package.
+# Zarf deep-merges values onto the chart defaults, so object knobs are left as empty no-ops
+# ({}) to preserve chart defaults while staying overridable; scalars carry the chart default.
+# keycloak.domain / adminDomain are intentionally not exposed (they remain driven by Zarf
+# variable templating, ###ZARF_VAR###).
+# Override examples (-f file): keycloak.insecureAdminPasswordGeneration.enabled,
+#   keycloak.autoscaling.enabled, keycloak.devMode, keycloak.resources.requests.cpu,
+#   keycloak.postgresql.{host,username,password,database,port}
+keycloak:
+  insecureAdminPasswordGeneration:
+    enabled: false
+  autoscaling:
+    enabled: false
+  resources: {}
+  postgresql: {}
+
+authservice:
+  replicaCount: 1
+  resources: {}

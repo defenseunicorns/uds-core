@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "pepr": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "watcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "resources": { "type": "object" } }
+        },
+        "admission": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "resources": { "type": "object" } }
+        }
+      }
+    },
+    "istiod": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "resources": { "type": "object" }
+      }
+    },
+    "uds-istio-config-admin": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cert": { "type": "string" },
+            "key": { "type": "string" },
+            "supportTLSV1_2": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "uds-istio-config-tenant": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cert": { "type": "string" },
+            "key": { "type": "string" },
+            "supportTLSV1_2": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "tenant-gateway": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "service": { "type": "object" }
+      }
+    },
+    "keycloak": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "insecureAdminPasswordGeneration": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "enabled": { "type": "boolean" } }
+        },
+        "devMode": { "type": "boolean" },
+        "autoscaling": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "enabled": { "type": "boolean" } }
+        },
+        "resources": { "type": "object" },
+        "postgresql": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "host": { "type": "string" },
+            "database": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        }
+      }
+    },
+    "authservice": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "resources": { "type": "object" }
+      }
+    },
+    "loki": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "loki": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "storage": { "type": "object" } }
+        },
+        "write": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
+        },
+        "read": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
+        },
+        "backend": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "replicas": { "type": "integer", "minimum": 1 } }
+        }
+      }
+    },
+    "uds-grafana-config": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "postgresql": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "host": { "type": "string" },
+            "database": { "type": "string" },
+            "user": { "type": "string" },
+            "password": { "type": "string" },
+            "ssl_mode": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        }
+      }
+    },
+    "grafana": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "autoscaling": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "enabled": { "type": "boolean" } }
+        }
+      }
+    }
+  }
+}

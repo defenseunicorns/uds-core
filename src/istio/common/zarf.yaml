@@ -41,6 +41,11 @@ components:
           - name: PROXY_CPU_REQUEST
             description: "CPU requests for sidecars in cluster"
             path: "global.proxy.resources.requests.cpu"
+        # Note: global.proxy.resources.requests is already exposed via the `variables` above,
+        # so it is intentionally not re-mapped here to avoid a double-mapping conflict.
+        values:
+          - sourcePath: .istiod.resources
+            targetPath: .resources
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0

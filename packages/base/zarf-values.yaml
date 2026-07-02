@@ -1,0 +1,28 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Base package.
+# Each mapped path must be present here, so the values that should keep their chart default are
+# set to an empty object ({}). Zarf deep-merges values onto the chart defaults, so an empty
+# object is a no-op (the chart default is preserved) while still allowing overrides via -f.
+# Override examples (uncomment or pass your own -f file):
+#   pepr.watcher.resources.requests.cpu, pepr.admission.resources.requests.memory
+#   istiod.resources.requests.memory
+#   uds-istio-config-admin.tls.{cert,key,supportTLSV1_2}
+#   uds-istio-config-tenant.tls.{cert,key,supportTLSV1_2}
+#   tenant-gateway.service.ports
+pepr:
+  watcher:
+    resources: {}
+  admission:
+    resources: {}
+
+istiod:
+  resources: {}
+
+uds-istio-config-admin: {}
+
+uds-istio-config-tenant: {}
+
+tenant-gateway:
+  service: {}
