@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -198,6 +198,21 @@ function isPodReady(pod: k8s.V1Pod, containerName?: string): boolean {
   return containerStatuses.length > 0 && containerStatuses.every(status => status.ready);
 }
 
+function isKubernetesNotFoundError(error: unknown): boolean {
+  const maybeError = error as {
+    statusCode?: number;
+    status?: number;
+    response?: { statusCode?: number; status?: number };
+  };
+
+  return (
+    maybeError.statusCode === 404 ||
+    maybeError.status === 404 ||
+    maybeError.response?.statusCode === 404 ||
+    maybeError.response?.status === 404
+  );
+}
+
 export async function waitForPodReady(
   namespace: string,
   config: WaitForPodReadyConfig,
@@ -219,9 +234,18 @@ export async function waitForPodReady(
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
-    const pods = name
-      ? [await core.readNamespacedPod({ namespace, name })]
-      : (await core.listNamespacedPod({ namespace, labelSelector: selector })).items;
+    let pods: k8s.V1Pod[] = [];
+    if (name) {
+      try {
+        pods = [await core.readNamespacedPod({ namespace, name })];
+      } catch (error) {
+        if (!isKubernetesNotFoundError(error)) {
+          throw error;
+        }
+      }
+    } else {
+      pods = (await core.listNamespacedPod({ namespace, labelSelector: selector })).items;
+    }
 
     for (const pod of pods) {
       const phase = pod.status?.phase;

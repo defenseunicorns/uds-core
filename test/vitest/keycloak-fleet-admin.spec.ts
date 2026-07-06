@@ -48,7 +48,6 @@ kc.loadFromDefault();
 const core = kc.makeApiClient(k8s.CoreV1Api);
 
 let keycloakProxy: { server: net.Server; url: string } | undefined;
-let fleetAccessTokenReady = false;
 
 interface TokenExchangeResult {
   status: number;
@@ -116,10 +115,6 @@ function truncateForAssertion(value: string | undefined): string {
 }
 
 async function ensureFleetAccessToken(): Promise<void> {
-  if (fleetAccessTokenReady) {
-    return;
-  }
-
   const tokenExchange = await exchangeFleetTokenFromPod();
   expect(
     tokenExchange.status,
@@ -129,8 +124,6 @@ async function ensureFleetAccessToken(): Promise<void> {
     tokenExchange.tokenPresent,
     `Keycloak token exchange returned 200 but no access token was parsed`,
   ).toBe(true);
-
-  fleetAccessTokenReady = true;
 }
 
 async function exchangeFleetTokenFromPod(): Promise<TokenExchangeResult> {
