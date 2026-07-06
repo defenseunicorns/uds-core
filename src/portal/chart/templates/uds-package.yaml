@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: uds-portal
+  namespace: {{ .Release.Namespace }}
+spec:
+  network:
+    expose:
+      - service: uds-portal
+        selector:
+          app: uds-portal
+        host: {{ .Values.package.host }}
+        gateway: {{ .Values.package.gateway }}
+        port: 8080
+        targetPort: 8080
+    allow:
+      - direction: Egress
+        selector:
+          app: uds-portal
+        remoteGenerated: KubeAPI
+      - direction: Egress
+        selector:
+          app: uds-portal
+        remoteSelector:
+          app: tenant-ingressgateway
+        remoteNamespace: istio-tenant-gateway
+        description: "SSO Provider"
+  {{- if .Values.sso.enabled }}
+  sso:
+    - name: uds-portal
+      clientId: uds-portal
+      attributes:
+        access.token.lifespan: "120"
+      redirectUris:
+        - "https://{{ .Values.package.host }}.{{ .Values.package.domain }}/auth"
+      enableAuthserviceSelector:
+        app: uds-portal
+  {{- end }}

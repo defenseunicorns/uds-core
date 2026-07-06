@@ -11,10 +11,16 @@ components:
   - name: uds-portal
     required: true
     charts:
+      - name: uds-portal-config
+        namespace: uds-portal
+        version: 0.1.0
+        localPath: ../chart
+        valuesFiles:
+          - ../chart/values.yaml
       - name: uds-portal
         namespace: uds-portal
         # renovate: datasource=github-releases depName=defenseunicorns/uds-portal
-        version: "v0.3.0"
+        version: "v0.4.0"
         url: https://github.com/defenseunicorns/uds-portal.git
         gitPath: chart
         valuesFiles:

@@ -2,13 +2,18 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 package:
+  enabled: false
   domain: "###ZARF_VAR_DOMAIN###"
   adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
-extraConfigmapMounts:
+extraVolumeMounts:
   - name: ca-certs
-    mountPath: /etc/ssl/certs/ca.pem
-    configMap: uds-trust-bundle
-    readOnly: true
+    mountPath: /etc/ssl/certs/ca-bundle.pem
     subPath: ca-bundle.pem
-    optional: true
+    readOnly: true
+
+extraVolumes:
+  - name: ca-certs
+    configMap:
+      name: uds-trust-bundle
+      optional: true
