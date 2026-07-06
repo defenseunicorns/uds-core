@@ -17,9 +17,9 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## Upgrade considerations
 
-### Identity Config updates
+### Identity Config updates (0.29.0)
 
-The next `uds-identity-config` release adds the `uds-fleet-admin` Keycloak client for Fleet Command. The client uses Keycloak's federated JWT client authentication flow with a projected Kubernetes service-account token from:
+Identity Config [0.29.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.29.0) adds the `uds-fleet-admin` Keycloak client for Fleet Command. The client uses Keycloak's federated JWT client authentication flow with a projected Kubernetes service-account token from:
 
 ```text
 system:serviceaccount:uds-fleet-command:uds-fleet-command-sa
@@ -59,21 +59,46 @@ Apply the following steps once per existing cluster after upgrading to the UDS C
 
    Go to **Identity providers** and add a provider of type **UDS Kubernetes**.
 
-   Configure it with:
+   On the initial add-provider screen, configure it with:
 
    | Field | Value |
    | --- | --- |
    | Alias | `uds-kubernetes` |
-   | Enabled | `On` |
-   | Issuer discovery URL | `https://kubernetes.default.svc` |
-   | Automatic issuer discovery | `On` |
-   | Issuer | leave empty unless your environment requires an explicit override |
+   | Display name | `UDS Kubernetes` |
+   | Client ID | `uds-kubernetes` |
+   | Client Secret | `unused` |
+
+   The `Client ID` and `Client Secret` fields are required by the Keycloak UI because this temporary provider reuses upstream Kubernetes/OIDC provider configuration. They are not used by the Fleet federated-JWT client authentication path.
 
    Save the provider.
 
-   After save, the provider should resolve and persist the Kubernetes service-account issuer. For managed clusters or RKE2 environments with an external service-account issuer, do not manually set the issuer unless automatic discovery fails.
+4. **Confirm the auto-discovered Kubernetes issuer**
 
-4. **Create the `uds-fleet-admin` client**
+   Open the newly-created `uds-kubernetes` identity provider and confirm its settings. The provider resolves and persists the Kubernetes service-account issuer when it is first saved.
+
+   | Field | Value |
+   | --- | --- |
+   | Enabled | `On` |
+   | Kubernetes Issuer URL | auto-populated with the cluster's Kubernetes service-account issuer |
+   | Max expiration for Client Assertions | leave empty |
+
+   For local k3d/k3s deployments, the auto-discovered **Kubernetes Issuer URL** is usually:
+
+   ```text
+   https://kubernetes.default.svc.cluster.local
+   ```
+
+   For managed clusters or RKE2 environments with an external service-account issuer, the auto-discovered value is commonly an external OIDC issuer URL instead.
+
+   Do not manually edit the **Kubernetes Issuer URL** unless automatic discovery fails or your environment requires an explicit override. To independently confirm the cluster issuer, run:
+
+   ```bash
+   uds zarf tools kubectl get --raw /.well-known/openid-configuration
+   ```
+
+   The returned `issuer` should match the value shown in **Kubernetes Issuer URL**.
+
+5. **Create the `uds-fleet-admin` client**
 
    Go to **Clients** and create an OpenID Connect client.
 
@@ -91,13 +116,13 @@ Apply the following steps once per existing cluster after upgrading to the UDS C
 
    Save the client.
 
-5. **Set the client authenticator**
+6. **Set the client authenticator**
 
    Open the `uds-fleet-admin` client, then go to its credentials or authentication settings.
 
    Set the client authenticator to **Signed JWT - Federated** and save.
 
-6. **Add the federated JWT matching attributes**
+7. **Add the federated JWT matching attributes**
 
    Open the `uds-fleet-admin` client advanced settings or attributes view.
 
@@ -110,11 +135,13 @@ Apply the following steps once per existing cluster after upgrading to the UDS C
 
    Save the client.
 
-7. **Assign the service account role**
+8. **Assign the service account role**
 
    Open the `uds-fleet-admin` client and go to **Service account roles**.
 
-   Assign the `realm-management` client role:
+   Click **Assign role** and select **Client roles**.
+
+   In the assignment dialog, filter by the `realm-management` client and assign this role:
 
    ```text
    manage-clients

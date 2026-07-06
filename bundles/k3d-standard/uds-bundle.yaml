@@ -182,9 +182,6 @@ packages:
           values:
             - path: detailedObservability.alerts.enabled
               value: true
-            # TODO: Remove this temporary identity-config override once the Fleet admin changes are in an identity-config release.
-            - path: configImage
-              value: ttl.sh/uds-identity-config-fleet-jmccoy:168h
             - path: realmInitEnv
               value:
                 FLEET_CLIENT_ENABLED: "true"
