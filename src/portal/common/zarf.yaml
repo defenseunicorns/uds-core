@@ -25,3 +25,13 @@ components:
         gitPath: chart
         valuesFiles:
           - ../values/values.yaml
+    actions:
+      onDeploy:
+        before:
+          - description: Handle Helm ownership metadata change on upgrade
+            cmd: |
+              if ./zarf tools kubectl get package uds-portal -n uds-portal >/dev/null 2>&1; then
+                ./zarf tools kubectl label package uds-portal -n uds-portal app.kubernetes.io/managed-by=Helm --overwrite
+                ./zarf tools kubectl annotate package uds-portal -n uds-portal meta.helm.sh/release-name=uds-portal-config --overwrite
+                ./zarf tools kubectl annotate package uds-portal -n uds-portal meta.helm.sh/release-namespace=uds-portal --overwrite
+              fi
