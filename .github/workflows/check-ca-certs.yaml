@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: Check CA Cert Updates
@@ -13,6 +13,7 @@ on:
     types: [milestoned, opened, reopened, edited, synchronize]
     paths:
       - "certs/**"
+      - "scripts/root-ca-retriever/**"
       - "src/pepr/uds-operator-config/templates/uds-ca-certs.yaml"
       - ".github/workflows/check-ca-certs.yaml"
 
