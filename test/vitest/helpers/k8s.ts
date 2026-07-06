@@ -246,10 +246,21 @@ interface TempPodConfig {
   namespace: string;
   image?: string;
   command?: string[];
+  volumes?: k8s.V1Volume[];
+  volumeMounts?: k8s.V1VolumeMount[];
+  podSecurityContext?: k8s.V1PodSecurityContext;
 }
 
 export async function createTempPod(config: TempPodConfig): Promise<string> {
-  const { name, namespace, image = "alpine:latest", command = ["sleep", "3600"] } = config;
+  const {
+    name,
+    namespace,
+    image = "alpine:latest",
+    command = ["sleep", "3600"],
+    volumes,
+    volumeMounts,
+    podSecurityContext,
+  } = config;
 
   const podSpec: k8s.V1Pod = {
     metadata: {
@@ -262,11 +273,14 @@ export async function createTempPod(config: TempPodConfig): Promise<string> {
     },
     spec: {
       restartPolicy: "Never",
+      securityContext: podSecurityContext,
+      volumes,
       containers: [
         {
           name: "main",
           image,
           command,
+          volumeMounts,
           resources: {
             requests: {
               cpu: "10m",
