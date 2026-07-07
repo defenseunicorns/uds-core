@@ -1,21 +1,42 @@
 ---
-title: DRAFT - UDS Core 1.8
-description: Draft UDS Core 1.8 upgrade notes for manually adding the Fleet Keycloak admin client to existing uds realms.
-draft: true
+title: UDS Core 1.8
+description: UDS Core 1.8 release notes covering Fleet Command Keycloak client support, the uds-identity-config 0.29.0 bump, and manual realm steps for existing clusters.
 sidebar:
-  hidden: true
-  order: 3.988
+  order: 3.987
 ---
 
 import { Steps } from '@astrojs/starlight/components';
 
 > [!NOTE]
-> This is a draft upgrade note for PR review. It is intentionally not linked from the release notes overview yet, and the normal release summary, notable features, dependency table, and related documentation sections are intentionally omitted.
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-> [!IMPORTANT]
-> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/). These steps apply only to existing clusters with an already-imported Keycloak `uds` realm. New installs receive the realm changes automatically from `uds-identity-config`.
+UDS Core 1.8 adds a new `uds-fleet-admin` Keycloak client for Fleet Command, delivered through the `uds-identity-config` 0.29.0 bump. Existing clusters that run Fleet Command need to apply a few manual realm changes after upgrading, since Keycloak stores realm objects in its database and will not pick them up on its own. The rest of the release is Portal tile improvements, a Keycloak startup speedup, and dependency updates.
+
+### Notable features
+
+- **Fleet Command Keycloak client:** A new scoped `uds-fleet-admin` client lets Fleet Command authenticate to Keycloak. New installs get it automatically; existing clusters need the [manual realm changes](#manual-realm-changes-identity-config-0290) below ([#2734](https://github.com/defenseunicorns/uds-core/pull/2734)).
+- **Portal tile customization:** Portal 0.4.0 reads per-endpoint annotations from the `Package` CR, so you can set each tile's title, icon, and visibility. See the [Portal how-to guide](/how-to-guides/platform-features/portal/) ([#2789](https://github.com/defenseunicorns/uds-core/pull/2789)).
+- **Grafana Portal tile:** Grafana now shows up as `Grafana` with its own logo in the Portal ([#2790](https://github.com/defenseunicorns/uds-core/pull/2790), [#2793](https://github.com/defenseunicorns/uds-core/pull/2793), [#2794](https://github.com/defenseunicorns/uds-core/pull/2794)).
+- **Faster Keycloak startup:** Keycloak's limits are bumped to 2 CPU / 2Gi, trimming bootstrap time and speeding up demo bundles. An old Java heap workaround is also removed ([#2773](https://github.com/defenseunicorns/uds-core/pull/2773), [#2761](https://github.com/defenseunicorns/uds-core/pull/2761)).
+
+### Dependency updates
+
+| Package                           | Previous | Updated                                                                                                 |
+| --------------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| UDS Identity Config               | 0.28.0   | [0.29.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.29.0)                   |
+| Envoy Gateway                     | v1.8.0   | [v1.8.1](https://github.com/envoyproxy/gateway/releases/tag/v1.8.1)                                      |
+| Loki                              | 3.7.2    | [3.7.3](https://github.com/grafana/loki/releases/tag/v3.7.3)                                             |
+| Loki Helm chart                   | 17.4.10  | [18.4.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.4.0)                     |
+| kube-prometheus-stack Helm chart  | 87.0.1   | [87.2.0](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-87.2.0) |
+| Pepr                              | 1.2.1    | [1.2.2](https://github.com/defenseunicorns/pepr/releases/tag/v1.2.2)                                     |
+| UDS Portal                        | 0.3.0    | [0.4.0](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.4.0)                              |
+| Velero                            | 1.18.1   | [1.18.2](https://github.com/vmware-tanzu/velero/releases/tag/v1.18.2)                                    |
+| Velero Helm chart                 | 12.0.1   | [12.1.0](https://github.com/vmware-tanzu/helm-charts/releases/tag/velero-12.1.0)                        |
 
 ## Upgrade considerations
+
+> [!IMPORTANT]
+> The steps below are especially important if you run (or plan to run) UDS Fleet Command in your cluster. They apply only to existing clusters with an already-imported Keycloak `uds` realm. New installs receive the realm changes automatically from `uds-identity-config`.
 
 ### Identity Config updates (0.29.0)
 
@@ -32,7 +53,7 @@ Because Keycloak realm objects are persisted in the Keycloak database, upgrading
 > [!CAUTION]
 > These steps should be validated in a non-production environment first. The exact Keycloak UI labels can vary slightly by Keycloak version and theme, but the object names and values below should match exactly.
 
-#### Manual realm changes
+### Manual realm changes (Identity Config 0.29.0)
 
 Apply the following steps once per existing cluster after upgrading to the UDS Core release that contains the new identity-config image.
 
@@ -148,3 +169,10 @@ Apply the following steps once per existing cluster after upgrading to the UDS C
    ```
 
 </Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [UDS Core 1.8.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#180-2026-07-07) - full changelog
+- [UDS Identity Config 0.29.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0290-2026-06-26) - identity-config changelog
+- [Full diff (1.7.0...1.8.0)](https://github.com/defenseunicorns/uds-core/compare/v1.7.0...v1.8.0) - all changes between versions
