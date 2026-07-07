@@ -10,7 +10,7 @@ import { Steps } from '@astrojs/starlight/components';
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.8 adds a new `uds-fleet-admin` Keycloak client for Fleet Command, delivered through the `uds-identity-config` 0.29.0 bump. Existing clusters that run Fleet Command need to apply a few manual realm changes after upgrading, since Keycloak stores realm objects in its database and won't pick them up on its own. The rest of the release is Portal tile improvements, a Keycloak startup speedup, and dependency updates.
+UDS Core 1.8 adds a new `uds-fleet-admin` Keycloak client for Fleet Command, delivered through the `uds-identity-config` 0.29.0 bump. Existing clusters that run Fleet Command need to apply a few manual realm changes after upgrading, since Keycloak stores realm objects in its database and will not pick them up on its own. The rest of the release is Portal tile improvements, a Keycloak startup speedup, and dependency updates.
 
 ### Notable features
 
@@ -36,7 +36,7 @@ UDS Core 1.8 adds a new `uds-fleet-admin` Keycloak client for Fleet Command, del
 ## Upgrade considerations
 
 > [!IMPORTANT]
-> The steps below are especially important if you run (or plan to run) UDS Fleet Command in your cluster. They apply only to existing clusters with an already-imported Keycloak `uds` realm — new installs receive the realm changes automatically from `uds-identity-config`.
+> The steps below are especially important if you run (or plan to run) UDS Fleet Command in your cluster. They apply only to existing clusters with an already-imported Keycloak `uds` realm. New installs receive the realm changes automatically from `uds-identity-config`.
 
 ### Identity Config updates (0.29.0)
 
