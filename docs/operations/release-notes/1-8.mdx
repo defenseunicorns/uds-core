@@ -14,7 +14,7 @@ UDS Core 1.8 adds a new `uds-fleet-admin` Keycloak client for Fleet Command, del
 
 ### Notable features
 
-- **Fleet Command Keycloak client:** A new scoped `uds-fleet-admin` client lets Fleet Command authenticate to Keycloak. New installs get it automatically; existing clusters need the [manual realm changes](#manual-realm-changes) below ([#2734](https://github.com/defenseunicorns/uds-core/pull/2734)).
+- **Fleet Command Keycloak client:** A new scoped `uds-fleet-admin` client lets Fleet Command authenticate to Keycloak. New installs get it automatically; existing clusters need the [manual realm changes](#manual-realm-changes-identity-config-0290) below ([#2734](https://github.com/defenseunicorns/uds-core/pull/2734)).
 - **Portal tile customization:** Portal 0.4.0 reads per-endpoint annotations from the `Package` CR, so you can set each tile's title, icon, and visibility. See the [Portal how-to guide](/how-to-guides/platform-features/portal/) ([#2789](https://github.com/defenseunicorns/uds-core/pull/2789)).
 - **Grafana Portal tile:** Grafana now shows up as `Grafana` with its own logo in the Portal ([#2790](https://github.com/defenseunicorns/uds-core/pull/2790), [#2793](https://github.com/defenseunicorns/uds-core/pull/2793), [#2794](https://github.com/defenseunicorns/uds-core/pull/2794)).
 - **Faster Keycloak startup:** Keycloak's limits are bumped to 2 CPU / 2Gi, trimming bootstrap time and speeding up demo bundles. An old Java heap workaround is also removed ([#2773](https://github.com/defenseunicorns/uds-core/pull/2773), [#2761](https://github.com/defenseunicorns/uds-core/pull/2761)).
@@ -53,7 +53,7 @@ Because Keycloak realm objects are persisted in the Keycloak database, upgrading
 > [!CAUTION]
 > These steps should be validated in a non-production environment first. The exact Keycloak UI labels can vary slightly by Keycloak version and theme, but the object names and values below should match exactly.
 
-#### Manual realm changes
+### Manual realm changes (Identity Config 0.29.0)
 
 Apply the following steps once per existing cluster after upgrading to the UDS Core release that contains the new identity-config image.
 
