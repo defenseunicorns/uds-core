@@ -48,7 +48,7 @@ spec:
         port: 80
         targetPort: 3000
         annotations:
-          portal.uds.dev/title: "Grafana"
+          uds.dev/title: "Grafana"
         {{- if .Values.uptime.enabled }}
         uptime:
           checks:
