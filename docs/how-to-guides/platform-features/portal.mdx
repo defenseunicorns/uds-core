@@ -44,7 +44,7 @@ The Portal resolves tile title, icon, and visibility from multiple annotation so
 
 Per-endpoint annotations are set on `spec.network.expose[].annotations` in the `Package` CR. Zarf package metadata annotations are set on `metadata.annotations` in `zarf.yaml`.
 
-This layering lets upstream package authors set sensible defaults with `uds.dev/*`, while bundle authors override specific endpoints with `portal.uds.dev/*` without forking the package.
+This layering lets upstream package authors set sensible defaults with `uds.dev/*`, while bundle authors can override specific endpoints with `portal.uds.dev/*` when the chart exposes annotation values.
 
 The following per-endpoint annotation keys are supported:
 
@@ -52,7 +52,7 @@ The following per-endpoint annotation keys are supported:
 |-----|---------------------|---------------------------|---------|
 | Title | `uds.dev/title` | `portal.uds.dev/title` | Formatted package name |
 | Icon | `uds.dev/icon` | `portal.uds.dev/icon` | Default Portal logo |
-| Visibility | `uds.dev/visible` | `portal.uds.dev/visible` | `"true"` |
+| Visibility | `uds.dev/visible` | `portal.uds.dev/visible` | Visible (annotation absent) |
 
 ## Steps
 
@@ -77,7 +77,7 @@ The following per-endpoint annotation keys are supported:
              uds.dev/icon: "data:image/svg+xml;base64,<base64-encoded-svg>"
    ```
 
-   If `uds.dev/title` is absent, the title falls back to the Zarf package `dev.uds.title` annotation, then to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If `uds.dev/icon` is absent, the Portal shows a default logo.
+   If neither per-endpoint title annotation is set, the title falls back to the Zarf package `dev.uds.title` annotation, then to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If no icon annotation is set, the Portal shows a default logo.
 
    > [!TIP]
    > Provide the icon as a base64-encoded data URI so it renders without an external fetch and works in the airgap. A plain image URL only works if every user's browser can reach it, so avoid URLs in airgapped deployments.
@@ -120,20 +120,19 @@ The following per-endpoint annotation keys are supported:
 
 4. **(Optional) Override upstream defaults at the bundle level**
 
-   Bundle authors can override upstream package annotations without forking by using the `portal.uds.dev/*` namespace on the `Package` CR. These annotations take highest precedence.
+   Bundle authors can override upstream package annotations by using the `portal.uds.dev/*` namespace on the `Package` CR. These annotations take highest precedence.
+
+   This requires the upstream chart to expose a Helm value for additional expose annotations so the bundle can inject overrides via Zarf variables. For example, if the chart templates its annotations like this:
 
    ```yaml title="chart/templates/uds-package.yaml"
-   spec:
-     network:
-       expose:
-         - service: my-app
-           host: my-app
-           annotations:
-             uds.dev/title: "Upstream Title"
-             portal.uds.dev/title: "Custom Bundle Title"
+   annotations:
+     uds.dev/title: "Upstream Title"
+     {{- with .Values.exposeAnnotations }}
+     {{- toYaml . | nindent 10 }}
+     {{- end }}
    ```
 
-   In this example, the Portal displays "Custom Bundle Title" because `portal.uds.dev/title` takes precedence over `uds.dev/title`.
+   A bundle could then set `portal.uds.dev/title` through a Zarf variable targeting `exposeAnnotations`, and it would take precedence over `uds.dev/title`.
 
 5. **Deploy your application**
 
