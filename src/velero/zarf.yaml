@@ -21,9 +21,9 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - velero/velero:v1.18.1
-      - velero/velero-plugin-for-aws:v1.14.1
-      - velero/velero-plugin-for-microsoft-azure:v1.14.1
+      - velero/velero:v1.18.2
+      - velero/velero-plugin-for-aws:v1.14.2
+      - velero/velero-plugin-for-microsoft-azure:v1.14.2
 
   - name: velero
     required: true
@@ -36,9 +36,9 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.18.1
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.14.1
-      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.14.1
+      - registry1.dso.mil/ironbank/opensource/velero/velero:v1.18.2
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-aws:v1.14.2
+      - registry1.dso.mil/ironbank/opensource/velero/velero-plugin-for-microsoft-azure:v1.14.2
 
   - name: velero
     required: true
@@ -51,6 +51,6 @@ components:
         valuesFiles:
           - values/unicorn-values.yaml
     images:
-      - cgr.dev/defenseunicorns.com/velero-fips:v1.18.1
-      - cgr.dev/defenseunicorns.com/velero-plugin-for-aws-fips:v1.14.1
-      - cgr.dev/defenseunicorns.com/velero-plugin-for-microsoft-azure-fips:v1.14.1
+      - cgr.dev/defenseunicorns.com/velero-fips:v1.18.2
+      - cgr.dev/defenseunicorns.com/velero-plugin-for-aws-fips:v1.14.2
+      - cgr.dev/defenseunicorns.com/velero-plugin-for-microsoft-azure-fips:v1.14.2

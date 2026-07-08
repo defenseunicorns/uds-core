@@ -245,6 +245,10 @@ export interface AttachMetadata {
    *
    * The Prometheus service account must have the `list` and `watch`
    * permissions on the `Nodes` objects.
+   *
+   * Node metadata labels are not automatically added to scraped metrics. They are
+   * exposed as `__meta_kubernetes_node_*` labels and can be copied to timeseries
+   * with relabeling configuration.
    */
   node?: boolean;
 }
@@ -352,7 +356,8 @@ export interface Endpoint {
    */
   path?: string;
   /**
-   * port defines the name of the Service port which this endpoint refers to.
+   * port defines the name of the Service port which this endpoint refers to
+   * (e.g. `.spec.ports[].name`).
    *
    * It takes precedence over `targetPort`.
    */
@@ -402,8 +407,10 @@ export interface Endpoint {
    */
   scrapeTimeout?: string;
   /**
-   * targetPort defines the name or number of the target port of the `Pod` object behind the
-   * Service. The port must be specified with the container's port property.
+   * targetPort defines the name or number of a container port on Pods selected
+   * by the Service.
+   * If a name, it matches against `.spec.containers[].ports[].name` of the Pods.
+   * If a number, it matches against `.spec.containers[].ports[].containerPort` of the Pods.
    */
   targetPort?: number | string;
   /**

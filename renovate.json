@@ -187,6 +187,14 @@
         "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],
       "allowedVersions": "!/99.99.99/"
+    },
+    {
+      "matchPackageNames": [
+        "cgr.dev/defenseunicorns.com/envoy-fips",
+        "docker.io/envoyproxy/envoy"
+      ],
+      "versioning": "regex:^distroless-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
+      "description": "Envoy distroless images use a 'distroless-v<semver>' tag prefix that the default docker versioning rejects as invalid-value, blocking updates"
     }
   ]
 }

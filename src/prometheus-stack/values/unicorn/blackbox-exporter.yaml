@@ -10,4 +10,4 @@ configReloader:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/prometheus-config-reloader-fips
-    tag: 0.91.0
+    tag: v0.92.0

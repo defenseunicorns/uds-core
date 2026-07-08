@@ -25,8 +25,8 @@ components:
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
-      - docker.io/envoyproxy/gateway:v1.8.0
-      - docker.io/envoyproxy/envoy:distroless-v1.38.0
+      - docker.io/envoyproxy/gateway:v1.8.1
+      - docker.io/envoyproxy/envoy:distroless-v1.38.3
 
   - name: envoy-gateway
     required: false
@@ -45,8 +45,8 @@ components:
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
-      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.0
-      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.1
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.3
 
   - name: envoy-gateway
     required: false
@@ -65,5 +65,5 @@ components:
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
-      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:1.8.0
-      - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
+      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.1
+      - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
