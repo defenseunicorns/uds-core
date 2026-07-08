@@ -78,13 +78,13 @@ tasks:
         if: ${{ eq .inputs.validate_egress "true" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
 
-      - description: Apply Envoy Gateway UDP test overlay
-        if: ${{ eq .inputs.validate_udp_expose "true" }}
-        cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
-
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
+
+      - description: Apply Envoy Gateway UDP test overlay
+        if: ${{ eq .inputs.validate_udp_expose "true" }}
+        cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
 
       - description: Verify the admin app is accessible
         wait:
