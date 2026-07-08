@@ -93,6 +93,7 @@ const makeMockReq = (
 describe("Test validation of Package CRs", () => {
   afterEach(() => {
     vi.resetAllMocks();
+    PackageStore.init();
   });
 
   it("approves serviceAccount in Ambient mode with remoteHost", async () => {
@@ -284,7 +285,7 @@ describe("Test validation of Package CRs", () => {
 
   it("allows one package per namespace", async () => {
     const mockReqValidPkg = makeMockReq({}, [], [], [{}], [{}]);
-    await validator(mockReqValidPkg);
+    PackageStore.add(mockReqValidPkg.Raw);
     const mockReqInvalidPkg = makeMockReq(
       { metadata: { name: "should-be-denied" } },
       [],
@@ -312,7 +313,7 @@ describe("Test validation of Package CRs", () => {
 
   it("allows existing packages to be updated", async () => {
     const mockReqValidPkg = makeMockReq({}, [{}], [], [{}], [{}]);
-    await validator(mockReqValidPkg);
+    PackageStore.add(mockReqValidPkg.Raw);
     const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
     await validator(mockReqValidPkgUpdate);
     expect(mockReqValidPkgUpdate.Approve).toHaveBeenCalledTimes(1);
@@ -517,8 +518,8 @@ describe("Test validation of Package CRs", () => {
       const mockReq = makeMockReq(
         {},
         [
-          { ...validUDPExpose, description: "udp-game" },
-          { ...validUDPExpose, description: "udp-game" },
+          { ...validUDPExpose, description: "udp-game", port: 7777 },
+          { ...validUDPExpose, description: "udp-game", port: 8888 },
         ],
         [],
         [],
@@ -528,7 +529,7 @@ describe("Test validation of Package CRs", () => {
       expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("duplicate UDPRoute"));
     });
 
-    it("denies duplicate default-mode UDP ports in one package", async () => {
+    it("denies duplicate UDP ports on the same gateway in one package", async () => {
       const mockReq = makeMockReq(
         {},
         [
@@ -543,11 +544,30 @@ describe("Test validation of Package CRs", () => {
       await validator(mockReq);
 
       expect(mockReq.Deny).toHaveBeenCalledWith(
-        expect.stringContaining("Only one default-mode UDP expose entry can use port 8125"),
+        expect.stringContaining("Only one UDP expose entry can use port 8125"),
       );
     });
 
-    it("allows duplicate UDP ports when one entry uses a user-managed gateway", async () => {
+    it("denies duplicate UDP ports on the same user-managed gateway in one package", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a", gateway: "team-gateway" },
+          { ...validUDPExpose, description: "game-b", gateway: "team-gateway" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("Only one UDP expose entry can use port 8125"),
+      );
+    });
+
+    it("allows duplicate UDP ports when entries use different gateways", async () => {
       const mockReq = makeMockReq(
         {},
         [
@@ -558,6 +578,66 @@ describe("Test validation of Package CRs", () => {
         [],
         [],
       );
+
+      await validator(mockReq);
+
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies UDP gateway port already used by another package", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, description: "game" }], [], [], []);
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
+    it("denies custom UDP gateway port already used by another package", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other", gateway: "team-gateway" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "game", gateway: "team-gateway" }],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
+    it("allows UDP gateway port owned by current namespace during update", async () => {
+      const existingReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "existing" }],
+        [],
+        [],
+        [],
+      );
+      PackageStore.add(existingReq.Raw);
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, description: "updated" }], [], [], []);
 
       await validator(mockReq);
 

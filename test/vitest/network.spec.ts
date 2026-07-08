@@ -95,7 +95,7 @@ async function assertDefaultEnvoyUDPResources(port: number): Promise<string> {
 
   const policies = await networking.listNamespacedNetworkPolicy({
     namespace: "curl-ns-udp-server",
-    labelSelector: "uds/package=curl-pkg-udp-server,uds/managed-by=envoy-gateway",
+    labelSelector: "uds/package=curl-pkg-udp-server",
   });
   expect(policies.items.length).toBeGreaterThan(0);
   expect(

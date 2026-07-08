@@ -7,6 +7,7 @@ import { PeprValidateRequest } from "pepr";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
+import { getUDPGatewayName, getUDPGatewayPortKey } from "../../controllers/envoy-gateway/constants";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
@@ -63,8 +64,8 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const virtualServiceNames = new Set<string>();
   // Track the names of UDP routes to ensure they are unique
   const udpRouteNames = new Set<string>();
-  // Track default-mode UDP ports to prevent multiple routes targeting the same listener
-  const defaultModeUDPPorts = new Set<number>();
+  // Track UDP gateway/port pairs to prevent multiple routes targeting the same listener
+  const udpGatewayPortKeys = new Set<string>();
   // Track FQDNs for uptime probes to ensure no duplicates
   const uptimeFqdns = new Set<string>();
 
@@ -112,14 +113,24 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
       }
       udpRouteNames.add(udpRouteName);
 
-      if (!expose.gateway && defaultModeUDPPorts.has(expose.port!)) {
+      const udpGatewayPortKey = getUDPGatewayPortKey(expose.gateway, expose.port!);
+      const gatewayName = getUDPGatewayName(expose.gateway);
+      if (udpGatewayPortKeys.has(udpGatewayPortKey)) {
         return req.Deny(
-          `Only one default-mode UDP expose entry can use port ${expose.port} in a package. ` +
-            `Use a different port or a user-managed gateway for additional UDP entries.`,
+          `Only one UDP expose entry can use port ${expose.port} on gateway "${gatewayName}" in a package. ` +
+            `Use a different port or a different gateway.`,
         );
       }
-      if (!expose.gateway) {
-        defaultModeUDPPorts.add(expose.port!);
+      udpGatewayPortKeys.add(udpGatewayPortKey);
+
+      const namespacesWithUdpGatewayPort = PackageStore.findPackagesWithUdpGatewayPort(
+        expose.gateway,
+        expose.port!,
+      );
+      if (namespacesWithUdpGatewayPort.size > 0 && !namespacesWithUdpGatewayPort.has(ns)) {
+        return req.Deny(
+          `UDP expose port ${expose.port} on gateway "${gatewayName}" is already in use by another package.`,
+        );
       }
 
       continue;

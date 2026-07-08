@@ -11,17 +11,7 @@ vi.mock("../../config");
 vi.mock("../controllers/ca-bundles/ca-bundle", () => ({ caBundleConfigMap: vi.fn() }));
 vi.mock("../controllers/envoy-gateway/udp-route-resources", () => ({
   envoyGatewayResources: vi.fn(),
-  getEnvoyGatewayStatusConditions: vi.fn(result => {
-    if (result.defaultDisabled) {
-      return [{ type: "Ready", status: "False", reason: "EnvoyGatewayDefaultDisabled" }];
-    }
-    if (result.portConflict) {
-      return [{ type: "Ready", status: "False", reason: "UDPPortConflict" }];
-    }
-    return undefined;
-  }),
   hasDefaultModeUDPExpose: vi.fn(() => false),
-  isEnvoyGatewayDefaultEnabled: vi.fn(async () => false),
   reconcileDefaultGatewayListeners: vi.fn(),
 }));
 vi.mock("../controllers/istio/egress-orchestrator", () => ({ istioEgressResources: vi.fn() }));
@@ -89,7 +79,7 @@ import { caBundleConfigMap } from "../controllers/ca-bundles/ca-bundle";
 import {
   envoyGatewayResources,
   hasDefaultModeUDPExpose,
-  isEnvoyGatewayDefaultEnabled,
+  reconcileDefaultGatewayListeners,
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
@@ -103,7 +93,7 @@ import { purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
-import { networkPolicies } from "../controllers/network/policies";
+import { cleanupUDPGatewayNetworkPolicies, networkPolicies } from "../controllers/network/policies";
 import { probe } from "../controllers/uptime/probe";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -186,11 +176,7 @@ describe("packageReconciler", () => {
     (generateAuthorizationPolicies as Mock).mockResolvedValue([]);
     (enableIstio as Mock).mockResolvedValue(undefined);
     (istioResources as Mock).mockResolvedValue([]);
-    (envoyGatewayResources as Mock).mockResolvedValue({
-      networkPolicies: [],
-      defaultDisabled: false,
-      portConflict: false,
-    });
+    (envoyGatewayResources as Mock).mockResolvedValue(undefined);
     (istioEgressResources as Mock).mockResolvedValue(undefined);
     (podMonitor as Mock).mockResolvedValue([]);
     (serviceMonitor as Mock).mockResolvedValue([]);
@@ -208,42 +194,12 @@ describe("packageReconciler", () => {
     expect(Log.error).toHaveBeenCalled();
   });
 
-  test("marks package failed when default Envoy Gateway is disabled for UDP expose", async () => {
-    (envoyGatewayResources as Mock).mockResolvedValue({
-      networkPolicies: [],
-      defaultDisabled: true,
-      portConflict: false,
-    });
+  test("uses standard failure handling when Envoy Gateway reconciliation fails", async () => {
+    (envoyGatewayResources as Mock).mockRejectedValue(new Error("GatewayClass missing"));
 
     await packageReconciler(mockPackage);
 
-    expect(mockPatchStatus).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        status: expect.objectContaining({
-          phase: Phase.Failed,
-          conditions: [expect.objectContaining({ reason: "EnvoyGatewayDefaultDisabled" })],
-        }),
-      }),
-    );
-  });
-
-  test("marks package failed when UDP default Gateway port conflicts", async () => {
-    (envoyGatewayResources as Mock).mockResolvedValue({
-      networkPolicies: [],
-      defaultDisabled: false,
-      portConflict: true,
-    });
-
-    await packageReconciler(mockPackage);
-
-    expect(mockPatchStatus).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        status: expect.objectContaining({
-          phase: Phase.Failed,
-          conditions: [expect.objectContaining({ reason: "UDPPortConflict" })],
-        }),
-      }),
-    );
+    expect(Log.error).toHaveBeenCalled();
   });
 });
 
@@ -284,7 +240,9 @@ describe("packageFinalizer", () => {
     (purgeAuthserviceClients as Mock).mockImplementation(mockPurgeAuthservice);
     (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
     (writeEvent as Mock).mockImplementation(mockWriteEvent);
-    (isEnvoyGatewayDefaultEnabled as Mock).mockResolvedValue(false);
+    (cleanupUDPGatewayNetworkPolicies as Mock).mockResolvedValue(undefined);
+    (hasDefaultModeUDPExpose as Mock).mockReturnValue(false);
+    (reconcileDefaultGatewayListeners as Mock).mockResolvedValue(undefined);
   });
 
   test("should not remove the finalizer for pending packages", async () => {
@@ -450,7 +408,7 @@ describe("packageFinalizer", () => {
     );
   });
 
-  test("should re-reconcile default Envoy Gateway packages during finalization when package has default UDP expose", async () => {
+  test("should recompute default Envoy Gateway listeners during finalization when package has default UDP expose", async () => {
     mockPackage.status = { phase: Phase.Ready };
     mockPackage.spec = {
       network: {
@@ -465,48 +423,39 @@ describe("packageFinalizer", () => {
       },
     };
     (hasDefaultModeUDPExpose as Mock).mockReturnValue(true);
-    (K8s as Mock).mockImplementation(() => ({
-      Create: vi.fn(),
-      Get: vi.fn(async () => ({
-        items: [
-          {
-            metadata: {
-              name: "conflicting-package",
-              namespace: "conflicting-namespace",
-              generation: 1,
-              uid: "conflicting-uid",
-            },
-            spec: {
-              network: {
-                expose: [
-                  {
-                    protocol: ExposeProtocol.UDP,
-                    service: "udp-service",
-                    selector: { app: "udp" },
-                    port: 5000,
-                  },
-                ],
-              },
-            },
-          },
-        ],
-      })),
-      InNamespace: vi.fn().mockReturnThis(),
-      PatchStatus: mockPatchStatus,
-    }));
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(true);
-    expect(envoyGatewayResources).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: expect.objectContaining({ name: "conflicting-package" }),
-      }),
-      "conflicting-namespace",
-    );
+    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
+    expect(reconcileDefaultGatewayListeners).toHaveBeenCalledTimes(1);
   });
 
-  test("should handle default Envoy Gateway package re-reconciliation failure and set phase to RemovalFailed", async () => {
+  test("should clean up Envoy Gateway NetworkPolicies without recomputing listeners for user-managed UDP expose", async () => {
+    mockPackage.status = { phase: Phase.Ready };
+    mockPackage.spec = {
+      network: {
+        expose: [
+          {
+            protocol: ExposeProtocol.UDP,
+            gateway: "team-gateway",
+            service: "udp-service",
+            selector: { app: "udp" },
+            port: 5000,
+          },
+        ],
+      },
+    };
+    (hasDefaultModeUDPExpose as Mock).mockReturnValue(false);
+
+    const finalizerRemoved = await packageFinalizer(mockPackage);
+
+    expect(finalizerRemoved).toEqual(true);
+    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
+    expect(reconcileDefaultGatewayListeners).not.toHaveBeenCalled();
+  });
+
+  test("should handle default Envoy Gateway listener recompute failure and set phase to RemovalFailed", async () => {
     mockPackage.status = { phase: Phase.Ready };
     mockPackage.spec = {
       network: {
@@ -521,18 +470,14 @@ describe("packageFinalizer", () => {
       },
     };
     (hasDefaultModeUDPExpose as Mock).mockReturnValue(true);
-    (K8s as Mock).mockImplementation(() => ({
-      Create: vi.fn(),
-      Get: vi.fn(async () => {
-        throw new Error("gateway cleanup failed");
-      }),
-      InNamespace: vi.fn().mockReturnThis(),
-      PatchStatus: mockPatchStatus,
-    }));
+    (reconcileDefaultGatewayListeners as Mock).mockRejectedValue(
+      new Error("gateway cleanup failed"),
+    );
 
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(false);
+    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
     expect(mockPatchStatus).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: { name: "test-package", namespace: "test-namespace" },

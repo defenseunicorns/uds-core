@@ -7,21 +7,21 @@ import { V1OwnerReference } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import {
-  Direction,
   K8sGateway,
+  K8sGatewayClass,
   K8sGatewayFromType,
   K8sUDPRoute,
-  RemoteProtocol,
   UDSPackage,
 } from "../../crd";
 import { ParentRefElement } from "../../crd/generated/k8s/udproute-v1alpha2";
-import { Expose, ExposeProtocol, StatusEnum } from "../../crd/generated/package-v1alpha1";
-import { UDSConfig } from "../config/config";
-import { generate } from "../network/generate";
+import { Expose, ExposeProtocol } from "../../crd/generated/package-v1alpha1";
 import { validateNamespace, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
-
-export const envoyDefaultGatewayName = "envoy-default-gateway";
-export const envoyDefaultGatewayNamespace = "envoy-default-gateway";
+import {
+  envoyDefaultGatewayName,
+  envoyDefaultGatewayNamespace,
+  getUDPGatewayName,
+  getUDPGatewayNamespace,
+} from "./constants";
 
 const log = setupLogger(Component.OPERATOR_RECONCILERS);
 
@@ -31,15 +31,7 @@ type GatewayTarget = {
   defaultMode: boolean;
 };
 
-type UdpExposeEntry = {
-  expose: Expose;
-};
-
-export type EnvoyGatewayResourceResult = {
-  networkPolicies: kind.NetworkPolicy[];
-  defaultDisabled: boolean;
-  portConflict: boolean;
-};
+type UdpExposeEntry = { expose: Expose };
 
 let defaultGatewayReconcileInFlight: Promise<void> | null = null;
 let defaultGatewayReconcileDirty = false;
@@ -54,10 +46,7 @@ export function getUDPExposeEntries(pkg: UDSPackage): UdpExposeEntry[] {
     .filter(({ expose }) => expose.protocol === ExposeProtocol.UDP);
 }
 
-export async function envoyGatewayResources(
-  pkg: UDSPackage,
-  namespace: string,
-): Promise<EnvoyGatewayResourceResult> {
+export async function envoyGatewayResources(pkg: UDSPackage, namespace: string): Promise<void> {
   const pkgName = pkg.metadata?.name;
   if (!pkgName) {
     throw new Error("Package metadata.name is required");
@@ -66,29 +55,12 @@ export async function envoyGatewayResources(
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
   const udpEntries = getUDPExposeEntries(pkg);
-  const networkPolicies: kind.NetworkPolicy[] = [];
-  let defaultDisabled = false;
-  let portConflict = false;
-  let defaultGatewayEnabled: boolean | undefined;
-  let allPackages: UDSPackage[] | undefined;
-
-  const getDefaultGatewayEnabled = async () => {
-    defaultGatewayEnabled ??= await isEnvoyGatewayDefaultEnabled();
-    return defaultGatewayEnabled;
-  };
-
-  const getAllPackages = async () => {
-    allPackages ??= (await K8s(UDSPackage).Get()).items;
-    return allPackages;
-  };
 
   if (udpEntries.length === 0) {
-    const hasGeneratedUDPResources =
-      (await hasGeneratedUDPRoutes(namespace, pkgName)) ||
-      (await hasGeneratedUDPNetworkPolicies(namespace, pkgName));
+    const hasGeneratedUDPResources = await hasGeneratedUDPRoutes(namespace, pkgName);
 
     if (!hasGeneratedUDPResources) {
-      return { networkPolicies, defaultDisabled, portConflict };
+      return;
     }
   }
 
@@ -96,14 +68,7 @@ export async function envoyGatewayResources(
     const targetGateway = resolveGatewayTarget(entry.expose);
 
     if (targetGateway.defaultMode) {
-      if (!(await getDefaultGatewayEnabled())) {
-        defaultDisabled = true;
-        continue;
-      }
-      if (isLosingDefaultPortConflict(pkg, entry.expose, await getAllPackages())) {
-        portConflict = true;
-        continue;
-      }
+      await validateDefaultGatewayClass();
     } else {
       await validateNamespace(targetGateway.namespace);
     }
@@ -114,27 +79,11 @@ export async function envoyGatewayResources(
       `Applying UDPRoute ${udpRoute.metadata?.namespace}/${udpRoute.metadata?.name}`,
     );
     await K8s(K8sUDPRoute).Apply(udpRoute, { force: true });
-
-    const networkPolicy = generateUDPIngressNetworkPolicy(namespace, entry.expose, targetGateway);
-    addPackageLabels(networkPolicy, pkgName, generation, ownerRefs);
-    log.debug(
-      networkPolicy,
-      `Applying UDP ingress NetworkPolicy ${networkPolicy.metadata?.namespace}/${networkPolicy.metadata?.name}`,
-    );
-    await K8s(kind.NetworkPolicy).Apply(networkPolicy, { force: true });
-    networkPolicies.push(networkPolicy);
   }
 
   await purgeOrphans(generation, namespace, pkgName, K8sUDPRoute, log);
-  await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log, {
-    "uds/managed-by": "envoy-gateway",
-  });
 
-  if (await getDefaultGatewayEnabled()) {
-    await reconcileDefaultGatewayListeners(allPackages);
-  }
-
-  return { networkPolicies, defaultDisabled, portConflict };
+  await reconcileDefaultGatewayListeners();
 }
 
 export async function reconcileDefaultGatewayListeners(packages?: UDSPackage[]): Promise<void> {
@@ -161,38 +110,13 @@ export async function reconcileDefaultGatewayListeners(packages?: UDSPackage[]):
   }
 }
 
-export function getEnvoyGatewayStatusConditions(result: EnvoyGatewayResourceResult) {
-  if (result.defaultDisabled) {
-    return [
-      {
-        type: "Ready",
-        status: StatusEnum.False,
-        lastTransitionTime: new Date(),
-        message: "Envoy Gateway default Gateway is not enabled for UDP expose entries.",
-        reason: "EnvoyGatewayDefaultDisabled",
-      },
-    ];
-  }
-
-  if (result.portConflict) {
-    return [
-      {
-        type: "Ready",
-        status: StatusEnum.False,
-        lastTransitionTime: new Date(),
-        message:
-          "A UDP expose entry conflicts with an earlier package using the same Gateway port.",
-        reason: "UDPPortConflict",
-      },
-    ];
-  }
-
-  return undefined;
-}
-
 function resolveGatewayTarget(expose: Expose): GatewayTarget {
   if (expose.gateway) {
-    return { name: expose.gateway, namespace: expose.gateway, defaultMode: false };
+    return {
+      name: getUDPGatewayName(expose.gateway),
+      namespace: getUDPGatewayNamespace(expose.gateway),
+      defaultMode: false,
+    };
   }
 
   return {
@@ -250,53 +174,6 @@ function generateUDPRoute(
   };
 }
 
-function generateUDPIngressNetworkPolicy(
-  namespace: string,
-  expose: Expose,
-  targetGateway: GatewayTarget,
-): kind.NetworkPolicy {
-  return generate(namespace, {
-    direction: Direction.Ingress,
-    selector: expose.selector ?? {},
-    remoteNamespace: targetGateway.namespace,
-    remoteSelector: {
-      "gateway.envoyproxy.io/owning-gateway-name": targetGateway.name,
-    },
-    port: expose.targetPort ?? expose.port,
-    remoteProtocol: RemoteProtocol.UDP,
-    description: `${expose.targetPort ?? expose.port}-${Object.values(expose.selector ?? {}).join("-")} Envoy Gateway ${targetGateway.name}`,
-  });
-}
-
-function addPackageLabels(
-  networkPolicy: kind.NetworkPolicy,
-  pkgName: string,
-  generation: string,
-  ownerRefs: V1OwnerReference[],
-) {
-  networkPolicy.metadata = networkPolicy.metadata ?? {};
-  networkPolicy.metadata.labels = {
-    ...networkPolicy.metadata.labels,
-    "uds/package": pkgName,
-    "uds/generation": generation,
-    "uds/managed-by": "envoy-gateway",
-  };
-  networkPolicy.metadata.ownerReferences = ownerRefs;
-}
-
-async function hasGeneratedUDPNetworkPolicies(
-  namespace: string,
-  pkgName: string,
-): Promise<boolean> {
-  const policies = await K8s(kind.NetworkPolicy)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .WithLabel("uds/managed-by", "envoy-gateway")
-    .Get();
-
-  return policies.items.length > 0;
-}
-
 async function hasGeneratedUDPRoutes(namespace: string, pkgName: string): Promise<boolean> {
   const udpRoutes = await K8s(K8sUDPRoute)
     .InNamespace(namespace)
@@ -306,20 +183,16 @@ async function hasGeneratedUDPRoutes(namespace: string, pkgName: string): Promis
   return udpRoutes.items.length > 0;
 }
 
-export async function isEnvoyGatewayDefaultEnabled(): Promise<boolean> {
-  if (UDSConfig.isEnvoyGatewayDefaultEnabled) {
-    return true;
-  }
-
+async function validateDefaultGatewayClass(): Promise<void> {
   try {
-    await K8s(UDSPackage).InNamespace("envoy-gateway-system").Get("envoy-gateway");
-    UDSConfig.isEnvoyGatewayDefaultEnabled = true;
-    return true;
+    await K8s(K8sGatewayClass).Get("envoy-gateway");
   } catch (e) {
     if (e?.status !== 404) {
       throw e;
     }
-    return false;
+    throw new Error(
+      "GatewayClass 'envoy-gateway' was not found. Ensure Envoy Gateway is deployed before using default UDP expose entries.",
+    );
   }
 }
 
@@ -393,47 +266,15 @@ async function getWinningDefaultListenerEntries(
   const winners = new Map<number, { pkg: UDSPackage; expose: Expose; namespace: string }>();
 
   for (const entry of entries) {
-    const currentWinner = winners.get(entry.expose.port!);
-    if (!currentWinner || comparePackagePrecedence(entry.pkg, currentWinner.pkg) < 0) {
-      winners.set(entry.expose.port!, entry);
+    const currentEntry = winners.get(entry.expose.port!);
+    if (currentEntry) {
+      throw new Error(
+        `UDP expose port ${entry.expose.port} on default Envoy Gateway is already used by ` +
+          `${currentEntry.namespace}/${currentEntry.pkg.metadata?.name}.`,
+      );
     }
+    winners.set(entry.expose.port!, entry);
   }
 
   return [...winners.values()].sort((a, b) => a.expose.port! - b.expose.port!);
-}
-
-function isLosingDefaultPortConflict(
-  pkg: UDSPackage,
-  expose: Expose,
-  packages: UDSPackage[],
-): boolean {
-  const conflictingPackages = packages.filter(
-    otherPkg =>
-      !otherPkg.metadata?.deletionTimestamp &&
-      getUDPExposeEntries(otherPkg).some(
-        entry =>
-          resolveGatewayTarget(entry.expose).defaultMode && entry.expose.port === expose.port,
-      ),
-  );
-  const winner = conflictingPackages.sort(comparePackagePrecedence)[0];
-
-  return winner !== undefined && winner.metadata?.uid !== pkg.metadata?.uid;
-}
-
-function comparePackagePrecedence(a: UDSPackage, b: UDSPackage): number {
-  const aCreated = normalizeTimestamp(a.metadata?.creationTimestamp);
-  const bCreated = normalizeTimestamp(b.metadata?.creationTimestamp);
-  if (aCreated !== bCreated) {
-    return aCreated.localeCompare(bCreated);
-  }
-
-  return (a.metadata?.uid ?? "").localeCompare(b.metadata?.uid ?? "");
-}
-
-function normalizeTimestamp(timestamp: Date | string | undefined): string {
-  if (timestamp instanceof Date) {
-    return timestamp.toISOString();
-  }
-
-  return timestamp ?? "";
 }

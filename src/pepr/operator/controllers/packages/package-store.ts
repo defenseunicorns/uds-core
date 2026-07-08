@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -9,14 +9,16 @@
  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
  */
 import { Component, setupLogger } from "../../../logger";
+import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
 import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
+let udpGatewayPortIndex: Map<string, Set<string>>;
 
 /**
  * Initializes the package namespace map.
@@ -27,6 +29,7 @@ let ssoIndex: Map<string, Set<string>>;
 function init(): void {
   packageNamespaceMap = new Map();
   ssoIndex = new Map();
+  udpGatewayPortIndex = new Map();
 }
 
 /**
@@ -53,22 +56,15 @@ function add(pkg: UDSPackage, logger: boolean = true): void {
 
   const namespaceMap = packageNamespaceMap.get(namespace)!;
   const isUpdate = namespaceMap.has(name);
+  const existingPkg = namespaceMap.get(name);
+
+  if (existingPkg) {
+    removeIndexes(existingPkg);
+  }
 
   // Set the package
   namespaceMap.set(name, pkg);
-
-  // Add SSO index if necessary
-  const clients = pkg.spec?.sso;
-  if (clients) {
-    clients.forEach(client => {
-      const clientId = client.clientId;
-      if (!ssoIndex.has(clientId)) {
-        ssoIndex.set(clientId, new Set());
-      }
-      // Store based on namespace since we only allow a single Package per namespace
-      ssoIndex.get(clientId)!.add(namespace);
-    });
-  }
+  addIndexes(pkg);
 
   if (logger) {
     if (isUpdate) {
@@ -111,19 +107,7 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     packageNamespaceMap.delete(namespace);
   }
 
-  // Remove SSO index if necessary
-  const clients = pkg.spec?.sso;
-  if (clients) {
-    clients.forEach(client => {
-      const clientId = client.clientId;
-      const nsSet = ssoIndex.get(clientId);
-      if (!nsSet) return;
-      nsSet.delete(namespace);
-      if (nsSet.size === 0) {
-        ssoIndex.delete(clientId);
-      }
-    });
-  }
+  removeIndexes(pkg);
 
   if (logger) {
     log.debug(`Removed package: ${namespace}/${name} from package map`);
@@ -174,6 +158,61 @@ function findPackagesWithSsoClientId(clientId: string): Set<string> {
   return ssoIndex.get(clientId) ?? new Set<string>();
 }
 
+function findPackagesWithUdpGatewayPort(gateway: string | undefined, port: number): Set<string> {
+  return udpGatewayPortIndex.get(getUDPGatewayPortKey(gateway, port)) ?? new Set<string>();
+}
+
+function addIndexes(pkg: UDSPackage): void {
+  const namespace = pkg.metadata!.namespace!;
+
+  for (const client of pkg.spec?.sso ?? []) {
+    if (!ssoIndex.has(client.clientId)) {
+      ssoIndex.set(client.clientId, new Set());
+    }
+    // Store based on namespace since we only allow a single Package per namespace
+    ssoIndex.get(client.clientId)!.add(namespace);
+  }
+
+  for (const expose of pkg.spec?.network?.expose ?? []) {
+    if (expose.protocol !== ExposeProtocol.UDP || expose.port === undefined) {
+      continue;
+    }
+
+    const key = getUDPGatewayPortKey(expose.gateway, expose.port);
+    if (!udpGatewayPortIndex.has(key)) {
+      udpGatewayPortIndex.set(key, new Set());
+    }
+    udpGatewayPortIndex.get(key)!.add(namespace);
+  }
+}
+
+function removeIndexes(pkg: UDSPackage): void {
+  const namespace = pkg.metadata!.namespace!;
+
+  for (const client of pkg.spec?.sso ?? []) {
+    const nsSet = ssoIndex.get(client.clientId);
+    if (!nsSet) continue;
+    nsSet.delete(namespace);
+    if (nsSet.size === 0) {
+      ssoIndex.delete(client.clientId);
+    }
+  }
+
+  for (const expose of pkg.spec?.network?.expose ?? []) {
+    if (expose.protocol !== ExposeProtocol.UDP || expose.port === undefined) {
+      continue;
+    }
+
+    const key = getUDPGatewayPortKey(expose.gateway, expose.port);
+    const nsSet = udpGatewayPortIndex.get(key);
+    if (!nsSet) continue;
+    nsSet.delete(namespace);
+    if (nsSet.size === 0) {
+      udpGatewayPortIndex.delete(key);
+    }
+  }
+}
+
 /**
  * Finds all packages that have ambient waypoint enabled
  * @returns Array of UDSPackage objects with ambient waypoint enabled
@@ -211,6 +250,7 @@ export const PackageStore = {
   hasKey,
   getPkgName,
   findPackagesWithSsoClientId,
+  findPackagesWithUdpGatewayPort,
   getAmbientPackages,
   getPackageByNamespace,
 };

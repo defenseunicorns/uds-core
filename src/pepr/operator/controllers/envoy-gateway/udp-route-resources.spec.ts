@@ -4,16 +4,11 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 import { K8sGateway, K8sUDPRoute, UDSPackage } from "../../crd";
 import { ExposeProtocol } from "../../crd/generated/package-v1alpha1";
-import { UDSConfig } from "../config/config";
-import {
-  envoyDefaultGatewayName,
-  envoyDefaultGatewayNamespace,
-  envoyGatewayResources,
-  reconcileDefaultGatewayListeners,
-} from "./udp-route-resources";
+import { envoyDefaultGatewayName, envoyDefaultGatewayNamespace } from "./constants";
+import { envoyGatewayResources, reconcileDefaultGatewayListeners } from "./udp-route-resources";
 
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
@@ -74,7 +69,6 @@ describe("envoyGatewayResources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clients.clear();
-    UDSConfig.isEnvoyGatewayDefaultEnabled = true;
 
     vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
       const existingClient = clients.get(resourceKind);
@@ -101,7 +95,7 @@ describe("envoyGatewayResources", () => {
     return client;
   }
 
-  it("generates UDPRoute, UDP NetworkPolicy, and default Gateway listener for default mode", async () => {
+  it("generates UDPRoute and default Gateway listener for default mode", async () => {
     const pkg = packageFixture();
     vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
       const existingClient = clients.get(resourceKind);
@@ -119,9 +113,8 @@ describe("envoyGatewayResources", () => {
       return client;
     }) as never);
 
-    const result = await envoyGatewayResources(pkg, "game-ns");
+    await envoyGatewayResources(pkg, "game-ns");
 
-    expect(result).toMatchObject({ defaultDisabled: false, portConflict: false });
     expect(clientFor(K8sUDPRoute).Apply).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: expect.objectContaining({ name: "game-udp-game-server", namespace: "game-ns" }),
@@ -131,18 +124,6 @@ describe("envoyGatewayResources", () => {
               name: envoyDefaultGatewayName,
               namespace: envoyDefaultGatewayNamespace,
               sectionName: "udp-7777",
-            }),
-          ],
-        }),
-      }),
-      { force: true },
-    );
-    expect(clientFor(kind.NetworkPolicy).Apply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        spec: expect.objectContaining({
-          ingress: [
-            expect.objectContaining({
-              ports: [{ port: 7778, protocol: "UDP" }],
             }),
           ],
         }),
@@ -197,88 +178,7 @@ describe("envoyGatewayResources", () => {
       }),
       { force: true },
     );
-    expect(clientFor(kind.NetworkPolicy).Apply).toHaveBeenCalledTimes(1);
     expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
-  });
-
-  it("sets defaultDisabled and skips default-mode resources when Envoy Gateway is disabled", async () => {
-    UDSConfig.isEnvoyGatewayDefaultEnabled = false;
-    const pkg = packageFixture();
-    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
-      const existingClient = clients.get(resourceKind);
-      if (existingClient) return existingClient;
-
-      let namespace: string | undefined;
-      const client: K8sClient = {
-        Apply: vi.fn(async () => undefined),
-        Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => {
-          if (resourceKind === UDSPackage && namespace === "envoy-gateway-system") {
-            throw { status: 404 };
-          }
-          return { items: [] };
-        }),
-        InNamespace: vi.fn((value: string) => {
-          namespace = value;
-          return client;
-        }),
-        WithLabel: vi.fn(() => client),
-      };
-
-      clients.set(resourceKind, client);
-      return client;
-    }) as never);
-
-    const result = await envoyGatewayResources(pkg, "game-ns");
-
-    expect(result.defaultDisabled).toBe(true);
-    expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
-    expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
-    expect(clients.has(K8sGateway)).toBe(false);
-  });
-
-  it("reconciles default-mode resources when the Envoy Gateway package exists after operator restart", async () => {
-    UDSConfig.isEnvoyGatewayDefaultEnabled = false;
-    const pkg = packageFixture();
-    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
-      const existingClient = clients.get(resourceKind);
-      if (existingClient) return existingClient;
-
-      let namespace: string | undefined;
-      const client: K8sClient = {
-        Apply: vi.fn(async () => undefined),
-        Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async (name?: string) => {
-          if (
-            resourceKind === UDSPackage &&
-            namespace === "envoy-gateway-system" &&
-            name === "envoy-gateway"
-          ) {
-            return { metadata: { name: "envoy-gateway", namespace } };
-          }
-          if (resourceKind === UDSPackage) {
-            return { items: [pkg] };
-          }
-          return { items: [] };
-        }),
-        InNamespace: vi.fn((value: string) => {
-          namespace = value;
-          return client;
-        }),
-        WithLabel: vi.fn(() => client),
-      };
-
-      clients.set(resourceKind, client);
-      return client;
-    }) as never);
-
-    const result = await envoyGatewayResources(pkg, "game-ns");
-
-    expect(result).toMatchObject({ defaultDisabled: false, portConflict: false });
-    expect(UDSConfig.isEnvoyGatewayDefaultEnabled).toBe(true);
-    expect(clientFor(K8sUDPRoute).Apply).toHaveBeenCalled();
-    expect(clientFor(kind.NetworkPolicy).Apply).toHaveBeenCalled();
-    expect(clientFor(K8sGateway).Apply).toHaveBeenCalled();
   });
 
   it("skips applying Gateway API resources for packages without UDP expose entries", async () => {
@@ -297,15 +197,9 @@ describe("envoyGatewayResources", () => {
       },
     });
 
-    const result = await envoyGatewayResources(pkg, "web-ns");
+    await envoyGatewayResources(pkg, "web-ns");
 
-    expect(result).toMatchObject({
-      networkPolicies: [],
-      defaultDisabled: false,
-      portConflict: false,
-    });
     expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
-    expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
     expect(clients.has(K8sGateway)).toBe(false);
   });
 
@@ -359,16 +253,14 @@ describe("envoyGatewayResources", () => {
       return client;
     }) as never);
 
-    const result = await envoyGatewayResources(pkg, "web-ns");
+    await envoyGatewayResources(pkg, "web-ns");
 
-    expect(result).toMatchObject({ defaultDisabled: false, portConflict: false });
     expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
     );
-    expect(clientFor(kind.NetworkPolicy).Delete).not.toHaveBeenCalled();
   });
 
-  it("purges generated UDP resources when UDP expose entries were removed", async () => {
+  it("purges generated UDPRoutes when UDP expose entries were removed", async () => {
     const pkg = packageFixture({
       metadata: {
         name: "web",
@@ -392,26 +284,6 @@ describe("envoyGatewayResources", () => {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
         Get: vi.fn(async () => {
-          if (resourceKind === kind.NetworkPolicy) {
-            return {
-              items: [
-                {
-                  apiVersion: "networking.k8s.io/v1",
-                  kind: "NetworkPolicy",
-                  metadata: {
-                    name: "web-old-udp",
-                    namespace: "web-ns",
-                    labels: {
-                      "uds/package": "web",
-                      "uds/generation": "1",
-                      "uds/managed-by": "envoy-gateway",
-                    },
-                  },
-                },
-              ],
-            };
-          }
-
           if (resourceKind === K8sUDPRoute) {
             return {
               items: [
@@ -438,98 +310,12 @@ describe("envoyGatewayResources", () => {
       return client;
     }) as never);
 
-    const result = await envoyGatewayResources(pkg, "web-ns");
+    await envoyGatewayResources(pkg, "web-ns");
 
-    expect(result).toMatchObject({ defaultDisabled: false, portConflict: false });
     expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
     );
-    expect(clientFor(kind.NetworkPolicy).Delete).toHaveBeenCalledWith(
-      expect.objectContaining({ metadata: expect.objectContaining({ name: "web-old-udp" }) }),
-    );
     expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
-  });
-
-  it("detects deterministic default-mode port conflicts and skips losing package resources", async () => {
-    const winner = packageFixture();
-    const loser = packageFixture({
-      metadata: {
-        name: "other-game",
-        namespace: "other-ns",
-        uid: "uid-b",
-        generation: 1,
-        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
-      },
-    });
-
-    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
-      const existingClient = clients.get(resourceKind);
-      if (existingClient) return existingClient;
-
-      const client: K8sClient = {
-        Apply: vi.fn(async () => undefined),
-        Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () =>
-          resourceKind === UDSPackage ? { items: [winner, loser] } : { items: [] },
-        ),
-        InNamespace: vi.fn(() => client),
-        WithLabel: vi.fn(() => client),
-      };
-
-      clients.set(resourceKind, client);
-      return client;
-    }) as never);
-
-    const result = await envoyGatewayResources(loser, "other-ns");
-
-    expect(result.portConflict).toBe(true);
-    expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
-    expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
-  });
-
-  it("uses uid as the default-mode port conflict tie-breaker", async () => {
-    const winner = packageFixture({
-      metadata: {
-        name: "winner",
-        namespace: "winner-ns",
-        uid: "uid-a",
-        generation: 1,
-        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
-      },
-    });
-    const loser = packageFixture({
-      metadata: {
-        name: "loser",
-        namespace: "loser-ns",
-        uid: "uid-b",
-        generation: 1,
-        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
-      },
-    });
-
-    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
-      const existingClient = clients.get(resourceKind);
-      if (existingClient) return existingClient;
-
-      const client: K8sClient = {
-        Apply: vi.fn(async () => undefined),
-        Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () =>
-          resourceKind === UDSPackage ? { items: [loser, winner] } : { items: [] },
-        ),
-        InNamespace: vi.fn(() => client),
-        WithLabel: vi.fn(() => client),
-      };
-
-      clients.set(resourceKind, client);
-      return client;
-    }) as never);
-
-    const result = await envoyGatewayResources(loser, "loser-ns");
-
-    expect(result.portConflict).toBe(true);
-    expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
-    expect(clientFor(kind.NetworkPolicy).Apply).not.toHaveBeenCalled();
   });
 
   it("fetches fresh packages when a dirty default Gateway reconciliation re-runs", async () => {

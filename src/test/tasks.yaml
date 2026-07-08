@@ -16,15 +16,19 @@ tasks:
       validate_egress:
         description: Whether to validate egress controls with the egress gateway
         default: "true"
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
 
     actions:
       - description: "Run Test Apps E2E tests"
         task: create-deploy
         with:
           validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
       - description: "Run Network Tests"
         cmd: |
-          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_egress }} npx vitest run "network.spec.ts"
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "network.spec.ts"
         dir: test/vitest
       - description: "Run Test Resources Tests"
         cmd: |
@@ -59,6 +63,9 @@ tasks:
       validate_egress:
         description: Whether to validate egress controls with the egress gateway
         default: "true"
+      validate_udp_expose:
+        description: Whether to apply and validate UDP expose resources through the default Envoy Gateway
+        default: "true"
 
     actions:
       - description: "Create build output directory"
@@ -72,7 +79,7 @@ tasks:
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
 
       - description: Apply Envoy Gateway UDP test overlay
-        if: ${{ eq .inputs.validate_egress "true" }}
+        if: ${{ eq .inputs.validate_udp_expose "true" }}
         cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
 
       - description: Deploy the test resources

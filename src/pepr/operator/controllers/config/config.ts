@@ -39,7 +39,6 @@ export const UDSConfig: Config = {
   kubeApiCIDR: "",
   kubeNodeCIDRs: [],
   isIdentityDeployed: false,
-  isEnvoyGatewayDefaultEnabled: false,
   allowPublicClients: false,
 };
 

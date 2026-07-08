@@ -95,6 +95,12 @@ tasks:
         description: "System architecture that the test-apps package should be built for."
         required: true
         default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
     # Run each e2e test type from the e2e folder
     actions:
       - description: "Setup the Doug User for testing"
@@ -105,6 +111,8 @@ tasks:
         task: test-resources:create-deploy
         with:
           architecture: ${{ .inputs.architecture }}
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -117,7 +125,7 @@ tasks:
       - description: "Run E2E Tests"
         cmd: |
           npm ci
-          npx vitest run
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
@@ -161,6 +169,8 @@ tasks:
       - task: e2e-tests
         with:
           architecture: "amd64"
+          validate_egress: "false"
+          validate_udp_expose: "false"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"
@@ -222,6 +232,7 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
+          validate_udp_expose: "true"
 
   - name: uds-core-private-pki
     description: "Create and Deploy Private PKI Bundle"
