@@ -74,7 +74,7 @@ Our pre-commit and linting checks validate:
 1. **YAML formatting** using [yamllint](https://yamllint.readthedocs.io/)
 1. **Spelling** using [codespell](https://github.com/codespell-project/codespell)
 1. **License headers** using [addlicense](https://github.com/google/addlicense)
-1. **TypeScript formatting** using [Pepr](https://github.com/defenseunicorns/pepr)'s formatter (eslint)
+1. **TypeScript formatting** using [eslint](https://eslint.org/) and [prettier](https://prettier.io/)
 1. **Helm charts** using [helm-unittest](https://github.com/helm-unittest/helm-unittest)
 
 The easiest way to install all required dependencies is:
