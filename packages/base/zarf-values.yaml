@@ -8,6 +8,10 @@
 # namespace; see excludePaths in src/*/zarf.yaml for blocked paths.
 pepr: {}
 
+uds-operator-config:
+  cluster:
+    expose: {}
+
 istiod: {}
 
 uds-istio-config-admin: {}

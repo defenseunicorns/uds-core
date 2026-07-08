@@ -18,16 +18,14 @@ components:
         valuesFiles:
           - ../chart/values.yaml
         # Keycloak is a UDS-authored chart, so expose it broadly. Exclude keys that would
-        # break the package (image references, Service wiring), compromise its security or
-        # monitoring wiring, or are driven by Zarf variable templating (domain/adminDomain).
+        # break the package (image references, Service wiring), or compromise its security or
+        # monitoring wiring.
         values:
           - sourcePath: .keycloak
             targetPath: .
             excludePaths:
               - .keycloak.image
               - .keycloak.configImage
-              - .keycloak.domain
-              - .keycloak.adminDomain
               - .keycloak.service
               - .keycloak.podSecurityContext
               - .keycloak.securityContext

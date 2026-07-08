@@ -45,7 +45,7 @@ jobs:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
     # Increase the timeout for longer upgrades
-    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
+    timeout-minutes: ${{ (inputs.test_type == 'upgrade' || inputs.test_type == 'values') && 60 || 30 }}
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
@@ -68,10 +68,6 @@ jobs:
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
         run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
-      - name: Verify Zarf values override
-        if: ${{ inputs.package == 'identity-authorization' && inputs.test_type == 'install' }}
-        run: uds run test:values-e2e --no-progress
-
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
@@ -79,6 +75,10 @@ jobs:
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Test UDS Core values deploy equivalency
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

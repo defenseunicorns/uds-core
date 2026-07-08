@@ -115,13 +115,12 @@ components:
           - "values/config-admin.yaml"
         # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
-        # Deployment selector) and `domain` (driven by Zarf variable templating).
+        # Deployment selector).
         values:
           - sourcePath: .uds-istio-config-admin
             targetPath: .
             excludePaths:
               - .uds-istio-config-admin.name
-              - .uds-istio-config-admin.domain
 
   - name: istio-tenant-gateway
     required: true
@@ -147,13 +146,12 @@ components:
           - "values/config-tenant.yaml"
         # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
-        # Deployment selector) and `domain` (driven by Zarf variable templating).
+        # Deployment selector).
         values:
           - sourcePath: .uds-istio-config-tenant
             targetPath: .
             excludePaths:
               - .uds-istio-config-tenant.name
-              - .uds-istio-config-tenant.domain
 
   - name: istio-passthrough-gateway
     required: false

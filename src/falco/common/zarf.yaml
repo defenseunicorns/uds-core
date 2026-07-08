@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -18,9 +18,29 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
+        # UDS-authored config chart for Falco rules. Exclude internal UDS-managed disabled-rule
+        # lists so users cannot accidentally clear the UDS baseline suppressions.
+        values:
+          - sourcePath: .uds-falco-config
+            targetPath: .
+            excludePaths:
+              - .uds-falco-config.udsDefaultDisabledRulesStable
+              - .uds-falco-config.udsDefaultDisabledRulesIncubating
+              - .uds-falco-config.udsDefaultDisabledRulesSandbox
       - name: falco
         url: https://falcosecurity.github.io/charts
         version: 9.1.0
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
+        # Falco is an upstream chart exposed broadly. Exclude image references (to prevent pulling
+        # unauthorized images) and security contexts (to prevent privilege escalation).
+        values:
+          - sourcePath: .falco
+            targetPath: .
+            excludePaths:
+              - .falco.image
+              - .falco.falcosidekick.image
+              - .falco.podSecurityContext
+              - .falco.falcosidekick.podSecurityContext
+              - .falco.falcosidekick.securityContext

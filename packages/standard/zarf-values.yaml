@@ -9,6 +9,9 @@
 
 # --- base (pepr / istio) ---
 pepr: {}
+uds-operator-config:
+  cluster:
+    expose: {}
 istiod: {}
 uds-istio-config-admin: {}
 uds-istio-config-tenant: {}
@@ -16,7 +19,6 @@ tenant-gateway:
   service: {}
 
 # --- identity-authorization (keycloak / authservice) ---
-# keycloak.domain / adminDomain remain driven by ###ZARF_VAR### and are not exposed here.
 keycloak:
   insecureAdminPasswordGeneration:
     enabled: false
@@ -30,7 +32,10 @@ authservice: {}
 loki: {}
 
 # --- monitoring (grafana / uds-grafana-config) ---
-# uds-grafana-config.domain / adminDomain remain driven by ###ZARF_VAR### and are not exposed.
 uds-grafana-config:
   postgresql: {}
 grafana: {}
+
+# --- runtime-security (falco) ---
+uds-falco-config: {}
+falco: {}

@@ -17,15 +17,12 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
-        # UDS-authored config chart, exposed broadly. domain/adminDomain are excluded so they
-        # stay driven by Zarf variable templating (###ZARF_VAR###); sso is excluded because the
-        # Grafana OAuth client is wired to Keycloak by UDS and a careless override breaks auth.
+        # UDS-authored config chart, exposed broadly. sso is excluded because the Grafana OAuth
+        # client is wired to Keycloak by UDS and a careless override breaks auth.
         values:
           - sourcePath: .uds-grafana-config
             targetPath: .
             excludePaths:
-              - .uds-grafana-config.domain
-              - .uds-grafana-config.adminDomain
               - .uds-grafana-config.sso
       - name: grafana
         url: https://grafana-community.github.io/helm-charts

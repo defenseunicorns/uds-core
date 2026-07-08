@@ -4,11 +4,31 @@
   "additionalProperties": false,
   "properties": {
     "pepr": { "type": "object" },
+    "uds-operator-config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cluster": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expose": {
+              "type": "object",
+              "properties": {
+                "domain": { "type": "string" },
+                "adminDomain": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
     "istiod": { "type": "object" },
     "uds-istio-config-admin": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
         "tls": {
           "type": "object",
           "additionalProperties": false,
@@ -24,6 +44,7 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
         "tls": {
           "type": "object",
           "additionalProperties": false,
@@ -46,6 +67,8 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
+        "adminDomain": { "type": "string" },
         "insecureAdminPasswordGeneration": {
           "type": "object",
           "additionalProperties": false,
@@ -66,7 +89,8 @@
             "password": { "type": "string" },
             "host": { "type": "string" },
             "database": { "type": "string" },
-            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "egressCidr": { "type": "string" }
           }
         }
       }
@@ -82,6 +106,8 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
+        "adminDomain": { "type": "string" },
         "postgresql": {
           "type": "object",
           "additionalProperties": false,
@@ -91,11 +117,14 @@
             "user": { "type": "string" },
             "password": { "type": "string" },
             "ssl_mode": { "type": "string" },
-            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "egressCidr": { "type": "string" }
           }
         }
       }
     },
-    "grafana": { "type": "object" }
+    "grafana": { "type": "object" },
+    "uds-falco-config": { "type": "object" },
+    "falco": { "type": "object" }
   }
 }

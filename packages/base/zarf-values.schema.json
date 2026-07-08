@@ -4,11 +4,31 @@
   "additionalProperties": false,
   "properties": {
     "pepr": { "type": "object" },
+    "uds-operator-config": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cluster": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expose": {
+              "type": "object",
+              "properties": {
+                "domain": { "type": "string" },
+                "adminDomain": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
     "istiod": { "type": "object" },
     "uds-istio-config-admin": {
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
         "tls": {
           "type": "object",
           "additionalProperties": false,
@@ -24,6 +44,7 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "domain": { "type": "string" },
         "tls": {
           "type": "object",
           "additionalProperties": false,

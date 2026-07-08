@@ -1,0 +1,9 @@
+# Copyright 2025-2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core runtime-security layer (Falco).
+# An empty {} is a no-op — chart defaults are preserved while still allowing overrides
+# via --values. See excludePaths in the relevant src/*/zarf.yaml for blocked paths.
+
+uds-falco-config: {}
+falco: {}
