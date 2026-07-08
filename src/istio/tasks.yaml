@@ -87,5 +87,5 @@ tasks:
             exit 1
           fi
           $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/operator/crd/generated
-      - description: Pepr Format
-        cmd: "npx pepr format"
+      - description: Format
+        cmd: "npm run format"

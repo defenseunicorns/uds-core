@@ -43,7 +43,9 @@
   },
   "scripts": {
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
-    "test:unit": "vitest run src/pepr/"
+    "test:unit": "vitest run src/pepr/",
+    "format": "eslint \"**/*.ts\" --fix && prettier --write \"**/*.ts\"",
+    "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
   },
   "dependencies": {
     "pepr": "1.2.2"
