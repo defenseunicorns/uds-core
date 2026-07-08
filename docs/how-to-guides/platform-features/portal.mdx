@@ -1,6 +1,6 @@
 ---
 title: Customize UDS Portal app tiles
-description: "Customize how an application appears in the UDS Portal: set its tile title and icon, and hide specific exposed endpoints."
+description: "Customize how an application appears in the UDS Portal: set its tile title and icon, control endpoint visibility, and understand annotation precedence."
 sidebar:
   order: 10.004
 ---
@@ -29,45 +29,112 @@ The Portal has no access controls of its own. It reflects each application's SSO
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - define an application's SSO client.
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict which Keycloak groups can access an app, which in turn controls its tile visibility.
 
-The rest of this guide covers only the Portal-specific tile settings: title, icon, and endpoint hiding.
+The rest of this guide covers only the Portal-specific tile settings: title, icon, and endpoint visibility.
+
+## Annotation precedence
+
+The Portal resolves tile title, icon, and visibility from multiple annotation sources. When the same property is set at more than one level, the Portal uses the first value it finds in this order:
+
+| Priority | Source | Scope | Example key |
+|----------|--------|-------|-------------|
+| 1 (highest) | `portal.uds.dev/*` per-endpoint annotation | Single expose entry | `portal.uds.dev/title` |
+| 2 | `uds.dev/*` per-endpoint annotation | Single expose entry | `uds.dev/title` |
+| 3 | Zarf package metadata annotation | All endpoints in the package | `dev.uds.title` |
+| 4 (lowest) | Auto-generated | All endpoints in the package | Formatted package name |
+
+Per-endpoint annotations are set on `spec.network.expose[].annotations` in the `Package` CR. Zarf package metadata annotations are set on `metadata.annotations` in `zarf.yaml`.
+
+This layering lets upstream package authors set sensible defaults with `uds.dev/*`, while bundle authors can override specific endpoints with `portal.uds.dev/*` when the chart exposes annotation values.
+
+The following per-endpoint annotation keys are supported:
+
+| Key | `uds.dev/` variant | `portal.uds.dev/` variant | Default |
+|-----|---------------------|---------------------------|---------|
+| Title | `uds.dev/title` | `portal.uds.dev/title` | Formatted package name |
+| Icon | `uds.dev/icon` | `portal.uds.dev/icon` | Default Portal logo |
+| Visibility | `uds.dev/visible` | `portal.uds.dev/visible` | Visible (annotation absent) |
 
 ## Steps
 
 <Steps>
 
-1. **Set the tile title and icon**
+1. **Set per-endpoint title and icon**
 
-   Add the `dev.uds.title` and `dev.uds.icon` annotations to the Zarf package `metadata.annotations` in `zarf.yaml`. These annotations live on the Zarf package, not the `Package` CR.
+   Add `uds.dev/title` and `uds.dev/icon` to the `annotations` map on an `expose` entry in the `Package` CR. These annotations control how that specific endpoint appears as a tile in the Portal.
 
-   ```yaml title="zarf.yaml"
-   kind: ZarfPackageConfig
-   metadata:
-     name: my-app
-     annotations:
-       dev.uds.title: My Application  # display name shown on the tile
-       dev.uds.icon: "data:image/svg+xml;base64,<base64-encoded-svg>"  # tile logo as a base64 data URI
+   ```yaml title="chart/templates/uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-app
+           selector:
+             app.kubernetes.io/name: my-app
+           gateway: admin
+           host: my-app
+           port: 80
+           annotations:
+             uds.dev/title: "My Application"
+             uds.dev/icon: "data:image/svg+xml;base64,<base64-encoded-svg>"
    ```
 
-   If `dev.uds.title` is absent, the title falls back to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If `dev.uds.icon` is absent, the Portal shows a default logo.
+   If neither per-endpoint title annotation is set, the title falls back to the Zarf package `dev.uds.title` annotation, then to a formatted version of the package name (for example, `uds-registry` becomes `UDS Registry`). If no icon annotation is set, the Portal shows a default logo.
 
    > [!TIP]
    > Provide the icon as a base64-encoded data URI so it renders without an external fetch and works in the airgap. A plain image URL only works if every user's browser can reach it, so avoid URLs in airgapped deployments.
 
 2. **(Optional) Hide specific exposed endpoints**
 
-   A package that exposes multiple endpoints (for example, an application and its separate pages service) generates a tile for each one. To hide specific endpoints, set the `uds.dev/portal-hide-apps` annotation on the `Package` CR to a comma-separated list of `network.expose[].host` values.
+   To hide an endpoint from the Portal, set `uds.dev/visible` to `"false"` on the expose entry. Expose entries without this annotation are visible by default.
 
-   ```yaml title="package.yaml"
-   metadata:
-     name: my-app
-     annotations:
-       # Hide the tiles for these exposed hosts
-       uds.dev/portal-hide-apps: "my-app-pages,my-app-registry"
+   ```yaml title="chart/templates/uds-package.yaml"
+   spec:
+     network:
+       expose:
+         - service: my-app-internal
+           selector:
+             app.kubernetes.io/name: my-app
+           gateway: tenant
+           host: my-app-internal
+           port: 8080
+           annotations:
+             uds.dev/visible: "false"
    ```
 
    Expose entries with a wildcard `host` (for example, `*.pages`) are always excluded automatically.
 
-3. **Deploy your application**
+   > [!NOTE]
+   > You can also hide endpoints using the `uds.dev/portal-hide-apps` annotation on the `Package` CR `metadata.annotations`, which takes a comma-separated list of `network.expose[].host` values. Per-endpoint `uds.dev/visible` is preferred for new packages because it keeps visibility control next to the endpoint definition.
+
+3. **(Optional) Set package-level title and icon**
+
+   To set a default title and icon for all endpoints in a package, add `dev.uds.title` and `dev.uds.icon` to the Zarf package `metadata.annotations` in `zarf.yaml`. Per-endpoint annotations on the `Package` CR override these values.
+
+   ```yaml title="zarf.yaml"
+   kind: ZarfPackageConfig
+   metadata:
+     name: my-app
+     annotations:
+       dev.uds.title: My Application
+       dev.uds.icon: "data:image/svg+xml;base64,<base64-encoded-svg>"
+   ```
+
+4. **(Optional) Override upstream defaults at the bundle level**
+
+   Bundle authors can override upstream package annotations by using the `portal.uds.dev/*` namespace on the `Package` CR. These annotations take highest precedence.
+
+   This requires the upstream chart to expose a Helm value for additional expose annotations so the bundle can inject overrides via Zarf variables. For example, if the chart templates its annotations like this:
+
+   ```yaml title="chart/templates/uds-package.yaml"
+   annotations:
+     uds.dev/title: "Upstream Title"
+     {{- with .Values.exposeAnnotations }}
+     {{- toYaml . | nindent 10 }}
+     {{- end }}
+   ```
+
+   A bundle could then set `portal.uds.dev/title` through a Zarf variable targeting `exposeAnnotations`, and it would take precedence over `uds.dev/title`.
+
+5. **Deploy your application**
 
    Include the updated `zarf.yaml` and `Package` CR in your Zarf package, then create and deploy it. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -77,7 +144,7 @@ The rest of this guide covers only the Portal-specific tile settings: title, ico
    ```
 
    > [!NOTE]
-   > The title and icon come from the deployed Zarf package metadata, so they update only on `zarf package deploy`, not by applying the `Package` CR alone.
+   > Per-endpoint annotations on the `Package` CR take effect when the CR is applied. Zarf package metadata annotations (`dev.uds.title`, `dev.uds.icon`) update only on `zarf package deploy`, not by applying the `Package` CR alone.
 
 </Steps>
 
@@ -89,9 +156,9 @@ Log in to the Portal at `https://portal.<your-domain>` (for example, `https://po
 
 ### Problem: Title or icon does not update
 
-**Symptom:** The tile shows the default title or logo.
+**Symptom:** The tile shows the default title or logo despite setting annotations.
 
-**Solution:** The `dev.uds.title` and `dev.uds.icon` annotations must be on the Zarf package `metadata.annotations` in `zarf.yaml`, not the `Package` CR. Setting them on the `Package` CR has no effect. Repackage and redeploy after correcting them.
+**Solution:** Check that annotations are on the correct resource at the correct level. Per-endpoint annotations (`uds.dev/title`, `uds.dev/icon`) go on `spec.network.expose[].annotations` in the `Package` CR. Package-level annotations (`dev.uds.title`, `dev.uds.icon`) go on `metadata.annotations` in `zarf.yaml`. Mixing these up has no effect. For Zarf-level changes, repackage and redeploy.
 
 ### Problem: App tile does not appear
 
@@ -99,9 +166,16 @@ Log in to the Portal at `https://portal.<your-domain>` (for example, `https://po
 
 **Solution:** Confirm the `Package` CR has an `sso` section; a package without one produces no tiles. If the app restricts access with `groups.anyOf`, a missing tile is expected for users outside the allowed groups. See [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/).
 
+### Problem: Hidden endpoint still shows
+
+**Symptom:** An endpoint with `uds.dev/visible: "false"` still appears as a tile.
+
+**Solution:** Verify that `"false"` is quoted as a string in the YAML. An unquoted `false` is parsed as a boolean, not a string, and may not be recognized. Also confirm the annotation is on the correct expose entry, not on the `Package` CR `metadata.annotations`.
+
 ## Related documentation
 
 - [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - all available `spec.sso` and `network.expose` fields
+- [Package metadata](/concepts/configuration-and-packaging/package-metadata/) - Zarf package metadata annotations (`dev.uds.title`, `dev.uds.icon`, and others)
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - restrict which Keycloak groups can access an app, which in turn controls its tile visibility
 - [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - configure SSO clients and Keycloak groups
 - [Functional Layers](/concepts/platform/functional-layers/) - how the Portal layer fits into UDS Core and which flavors include it

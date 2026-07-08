@@ -6,13 +6,13 @@ metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "1.7.0"
+  version: "1.8.0"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.20.1-airgap
+    ref: 0.20.2-airgap
     overrides:
       uds-dev-stack:
         minio:
@@ -32,7 +32,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.79.0
+    ref: v0.80.0
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
@@ -40,7 +40,7 @@ packages:
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 1.7.0
+    ref: 1.8.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway
@@ -166,11 +166,6 @@ packages:
             - name: KEYCLOAK_DEVMODE
               description: "Enables Keycloak dev mode"
               path: devMode
-            # This is a workaround for Keycloak and Kernel 6.12+ memory issue. It will be removed once
-            # https://github.com/defenseunicorns/uds-core/issues/1212 is sorted
-            - name: KEYCLOAK_HEAP_OPTIONS
-              description: "Sets the JAVA_OPTS_KC_HEAP environment variable in Keycloak"
-              path: env[0].value
             - name: KEYCLOAK_EXTRA_VOLUME_MOUNTS
               description: "Extra volume mounts for Keycloak"
               path: extraVolumeMounts
@@ -189,6 +184,7 @@ packages:
               value: true
             - path: realmInitEnv
               value:
+                FLEET_CLIENT_ENABLED: "true"
                 GOOGLE_IDP_ENABLED: true
                 GOOGLE_IDP_ID: "C01881u7t"
                 GOOGLE_IDP_SIGNING_CERT: "MIIDdjCCAl6gAwIBAgIGAZUBt5zpMA0GCSqGSIb3DQEBCwUAMHwxFDASBgNVBAoTC0dvb2dsZSBJbmMuMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MQ8wDQYDVQQDEwZHb29nbGUxGTAXBgNVBAsTEEdvb2dsZSBXb3Jrc3BhY2UxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMB4XDTI1MDIxMzIzNDkyNVoXDTMwMDIxMjIzNDkyNVowfDEUMBIGA1UEChMLR29vZ2xlIEluYy4xFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxDzANBgNVBAMTBkdvb2dsZTEZMBcGA1UECxMQR29vZ2xlIFdvcmtzcGFjZTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCIhy74McJ/ykhQw2zTxfe4YiTkQbupa1fzQTZSglQm8FsGZbQoihdg98QmaxyQj20SIOt3svhGEeSdromX4LSxdwxUkPwMsKrQe7ywetsUYfe7KETYCiwDs9xSpq2x1BXqJoy/oi//R/YMMrAoT6HEpE6FiU1NMuNxDiTZx+eVQ5LNlodXdUkqdXa7xsO9BumWwBdCwJgk35dW0cSkxePEBkmpKgdMgUd9SgROo1mxJG77+dQ/C3PGA/i7Gx1n3S+jjvC9sR+b5GFNJpqPYFGnSinhN2o8jQj51U0Jve7EyTV3VFgGfDrbHjYeT1CVQX9vO51FzJPtUzRsDilwpKV3AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAFpeBvkGqtN43T615DxKpJxiz1y9EqDZzi6uyhSs3xbo2kdOduXpJlziXC3Q1l94/DmItZINRJYT3Y5yh9w4yGZQn5Tc+NajjoRND6SILkMeamvEHLagXy7Qh3HzS3sO5pg5GFjwswxHIsrKxhrIoSwyNiWjz3RSvXCUPEunWjNoF4pvyS3RRs7xvi5JHUuM4ThqMY6HvwoCJqcpRMOBJiDbTooz7SJS1fpK6tVMFnXoJ6Tq89+g+yjcmmZnjV0FkeiXcb7yBR/vkuUyAQhh0Mw14B72mDwqY8Ord1AdgCdVlvRSXCrKLF/ii3AxqJ9ET0rGn0HKk5wi/lYMa3AnEZo="
@@ -196,10 +192,6 @@ packages:
                 GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
                 GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
                 GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
-            - path: env[0]
-              value:
-                name: JAVA_OPTS_KC_HEAP
-                value: "-XX:MaxRAMPercentage=70 -XX:MinRAMPercentage=70 -XX:InitialRAMPercentage=50 -XX:MaxRAM=1G"
       grafana:
         grafana:
           variables:

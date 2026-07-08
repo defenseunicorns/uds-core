@@ -5,7 +5,7 @@ loki:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: loki-fips
-    tag: v3.7.2
+    tag: v3.7.3
 gateway:
   image:
     registry: cgr.dev/defenseunicorns.com
@@ -15,9 +15,9 @@ memcached:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: memcached-fips
-    tag: v1.6.42
+    tag: v1.6.43
 sidecar:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/k8s-sidecar-fips
-    tag: v2.7.4
+    tag: v2.8.1

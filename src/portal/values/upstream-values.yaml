@@ -4,4 +4,4 @@
 image:
   repository: ghcr.io/defenseunicorns/uds-portal
   # renovate: datasource=docker depName=ghcr.io/defenseunicorns/uds-portal versioning=semver
-  tag: "0.3.0"
+  tag: "0.4.0"

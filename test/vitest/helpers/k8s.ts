@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -167,16 +167,124 @@ export async function execInPod(
   });
 }
 
+interface WaitForPodReadyConfig {
+  name?: string;
+  labelSelector?: string | Record<string, string>;
+  containerName?: string;
+  timeoutMs?: number;
+  intervalMs?: number;
+}
+
+function toLabelSelector(labelSelector: string | Record<string, string>): string {
+  if (typeof labelSelector === "string") {
+    return labelSelector;
+  }
+
+  return Object.entries(labelSelector)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(",");
+}
+
+function isPodReady(pod: k8s.V1Pod, containerName?: string): boolean {
+  if (pod.status?.phase !== "Running") {
+    return false;
+  }
+
+  const containerStatuses = pod.status.containerStatuses ?? [];
+  if (containerName) {
+    return containerStatuses.some(status => status.name === containerName && status.ready);
+  }
+
+  return containerStatuses.length > 0 && containerStatuses.every(status => status.ready);
+}
+
+function isKubernetesNotFoundError(error: unknown): boolean {
+  const maybeError = error as {
+    statusCode?: number;
+    status?: number;
+    response?: { statusCode?: number; status?: number };
+  };
+
+  return (
+    maybeError.statusCode === 404 ||
+    maybeError.status === 404 ||
+    maybeError.response?.statusCode === 404 ||
+    maybeError.response?.status === 404
+  );
+}
+
+export async function waitForPodReady(
+  namespace: string,
+  config: WaitForPodReadyConfig,
+): Promise<k8s.V1Pod> {
+  const { name, labelSelector, containerName, timeoutMs = 120000, intervalMs = 2000 } = config;
+
+  if (!name && !labelSelector) {
+    throw new Error("waitForPodReady requires either name or labelSelector");
+  }
+
+  if (name && labelSelector) {
+    throw new Error("waitForPodReady accepts name or labelSelector, not both");
+  }
+
+  const selector = labelSelector ? toLabelSelector(labelSelector) : undefined;
+  const description = name
+    ? `pod ${namespace}/${name}`
+    : `pod in ${namespace} matching ${selector}`;
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    let pods: k8s.V1Pod[] = [];
+    if (name) {
+      try {
+        pods = [await core.readNamespacedPod({ namespace, name })];
+      } catch (error) {
+        if (!isKubernetesNotFoundError(error)) {
+          throw error;
+        }
+      }
+    } else {
+      pods = (await core.listNamespacedPod({ namespace, labelSelector: selector })).items;
+    }
+
+    for (const pod of pods) {
+      const phase = pod.status?.phase;
+      if (name && (phase === "Failed" || phase === "Succeeded")) {
+        throw new Error(`${description} reached unexpected phase ${phase}`);
+      }
+
+      if (isPodReady(pod, containerName)) {
+        return pod;
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+
+  throw new Error(`Timed out waiting for ${description} to become ready`);
+}
+
 // Temporary pod management
 interface TempPodConfig {
   name: string;
   namespace: string;
   image?: string;
   command?: string[];
+  volumes?: k8s.V1Volume[];
+  volumeMounts?: k8s.V1VolumeMount[];
+  podSecurityContext?: k8s.V1PodSecurityContext;
 }
 
 export async function createTempPod(config: TempPodConfig): Promise<string> {
-  const { name, namespace, image = "alpine:latest", command = ["sleep", "3600"] } = config;
+  const {
+    name,
+    namespace,
+    image = "alpine:latest",
+    command = ["sleep", "3600"],
+    volumes,
+    volumeMounts,
+    podSecurityContext,
+  } = config;
 
   const podSpec: k8s.V1Pod = {
     metadata: {
@@ -189,11 +297,14 @@ export async function createTempPod(config: TempPodConfig): Promise<string> {
     },
     spec: {
       restartPolicy: "Never",
+      securityContext: podSecurityContext,
+      volumes,
       containers: [
         {
           name: "main",
           image,
           command,
+          volumeMounts,
           resources: {
             requests: {
               cpu: "10m",
@@ -212,26 +323,8 @@ export async function createTempPod(config: TempPodConfig): Promise<string> {
   // Create the pod
   await core.createNamespacedPod({ namespace, body: podSpec });
 
-  // Wait for pod to be ready
-  let attempts = 0;
-  const maxAttempts = 30; // 30 seconds timeout
-
-  while (attempts < maxAttempts) {
-    const pod = await core.readNamespacedPod({ name, namespace });
-
-    if (pod.status?.phase === "Running") {
-      return name;
-    }
-
-    if (pod.status?.phase === "Failed") {
-      throw new Error(`Pod ${name} failed to start: ${pod.status.reason}`);
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    attempts++;
-  }
-
-  throw new Error(`Pod ${name} did not become ready within ${maxAttempts} seconds`);
+  await waitForPodReady(namespace, { name, timeoutMs: 30000, intervalMs: 1000 });
+  return name;
 }
 
 export async function deleteTempPod(name: string, namespace: string): Promise<void> {
