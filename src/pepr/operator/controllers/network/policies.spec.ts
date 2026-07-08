@@ -1068,7 +1068,9 @@ describe("networkPolicies", () => {
     const udpPolicy = policies.find(
       policy =>
         policy.metadata?.namespace === "udp-ns" &&
-        policy.spec?.ingress?.[0]?.ports?.some(port => port.port === 7777 && port.protocol === "UDP"),
+        policy.spec?.ingress?.[0]?.ports?.some(
+          port => port.port === 7777 && port.protocol === "UDP",
+        ),
     );
     const gatewayIngressPolicy = policies.find(
       policy =>
