@@ -84,13 +84,10 @@ components:
         localPath: uds-operator-config
         valuesFiles:
           - uds-operator-config/values.yaml
-        # Expose domain and adminDomain so direct zarf package deploy users can set them.
-        # adminDomain derives from domain in the chart template when unset.
+        # Expose domain so direct zarf package deploy users can set it.
         values:
           - sourcePath: .domain
             targetPath: .cluster.expose.domain
-          - sourcePath: .adminDomain
-            targetPath: .cluster.expose.adminDomain
     actions:
       onDeploy:
         after:

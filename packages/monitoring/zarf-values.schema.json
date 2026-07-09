@@ -4,7 +4,6 @@
   "additionalProperties": false,
   "properties": {
     "domain": { "type": "string" },
-    "adminDomain": { "type": "string" },
     "uds-grafana-config": {
       "type": "object",
       "additionalProperties": true,

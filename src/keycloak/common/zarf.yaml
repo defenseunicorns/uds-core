@@ -31,13 +31,9 @@ components:
               - .keycloak.securityContext
               - .keycloak.serviceMonitor
               - .keycloak.prometheusRule
-              # domain/adminDomain come from the shared top-level keys, not per-chart
               - .keycloak.domain
-              - .keycloak.adminDomain
           - sourcePath: .domain
             targetPath: .domain
-          - sourcePath: .adminDomain
-            targetPath: .adminDomain
     actions:
       onDeploy:
         before:

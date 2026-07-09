@@ -35,15 +35,17 @@ Each package validates its values against a JSON schema. Unknown top-level names
 
 ### Domain
 
-Set the stack domain once with the top-level `domain` key; it fans out to every domain-consuming chart (Keycloak, Grafana, the Istio gateways, the Pepr operator, and the portal).
+Set the tenant domain once with the top-level `domain` key; it fans out to Keycloak's public domain, the tenant Istio gateway, the Pepr operator (which drives all UDS Package routes), and the portal.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
 | `domain` | string | `uds.dev` | Tenant domain for the whole stack |
-| `adminDomain` | string | `admin.{domain}` | Admin domain; derives from `domain` when unset |
 
 > [!NOTE]
-> `domain`/`adminDomain` default to the `DOMAIN`/`ADMIN_DOMAIN` Zarf variables, so UDS bundles and existing `--set DOMAIN=` deploys are unaffected. Setting the top-level `domain` value overrides the variable for a direct `zarf package deploy`.
+> `domain` defaults to the `DOMAIN` Zarf variable, so UDS bundles and existing `--set DOMAIN=` deploys are unaffected. Setting the top-level `domain` value overrides the variable for a direct `zarf package deploy`.
+
+> [!WARNING]
+> There is no top-level `adminDomain` value. Admin domains, which front admin-exposed services (the admin Istio gateway, Grafana at `grafana.admin.<domain>`, and the Keycloak admin console), are still driven by the `DOMAIN`/`ADMIN_DOMAIN` Zarf variables. To deploy on a non-default domain, set `DOMAIN` (and `ADMIN_DOMAIN` when you need a custom admin domain) through the Zarf variables or your UDS bundle so the admin tier stays consistent with the tenant tier. Setting only the top-level `domain` value on a non-default domain leaves admin-exposed services on the variable-derived admin domain. The top-level `domain` value is fully supported on the default domain.
 
 ### Base (`core-base`)
 

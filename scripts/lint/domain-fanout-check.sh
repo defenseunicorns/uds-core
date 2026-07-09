@@ -13,14 +13,11 @@ YQ="uds zarf tools yq"
 # component is only needed when a chart name (e.g. "uds-istio-config") is reused
 # across multiple components in the same file and must be disambiguated.
 declare -a CHECKS=(
-  "src/keycloak/common/zarf.yaml:keycloak::domain,adminDomain"
-  "src/pepr/zarf.yaml:uds-operator-config::domain,adminDomain"
+  "src/keycloak/common/zarf.yaml:keycloak::domain"
+  "src/pepr/zarf.yaml:uds-operator-config::domain"
   "src/istio/zarf.yaml:uds-istio-config:istio-tenant-gateway:domain"
-  "src/istio/zarf.yaml:uds-istio-config:istio-admin-gateway:domain,adminDomain"
   "src/istio/zarf.yaml:uds-istio-config:istio-passthrough-gateway:domain"
-  "src/grafana/common/zarf.yaml:uds-grafana-config::domain,adminDomain"
-  "src/grafana/common/zarf.yaml:grafana::domain,adminDomain"
-  "src/portal/common/zarf.yaml:uds-portal::domain,adminDomain"
+  "src/portal/common/zarf.yaml:uds-portal::domain"
 )
 
 fail=0

@@ -3,7 +3,6 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "domain": { "type": "string" },
-    "adminDomain": { "type": "string" }
+    "domain": { "type": "string" }
   }
 }

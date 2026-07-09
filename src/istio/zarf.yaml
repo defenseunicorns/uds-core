@@ -121,12 +121,6 @@ components:
             targetPath: .
             excludePaths:
               - .uds-istio-config-admin.name
-              - .uds-istio-config-admin.domain
-              - .uds-istio-config-admin.adminDomain
-          - sourcePath: .domain
-            targetPath: .domain
-          - sourcePath: .adminDomain
-            targetPath: .adminDomain
 
   - name: istio-tenant-gateway
     required: true

@@ -5,4 +5,3 @@
 # Top-level domain defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables (backward-compat);
 # override via --values / --set-values.
 domain: "###ZARF_VAR_DOMAIN###"
-adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
