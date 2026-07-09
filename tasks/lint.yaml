@@ -50,6 +50,8 @@ tasks:
         task: helm-unittest
       - description: Lint packages that expose Zarf values
         task: values-lint
+      - description: "Assert every domain-consuming chart is in the top-level domain fan-out"
+        cmd: ./scripts/lint/domain-fanout-check.sh
 
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
@@ -64,7 +66,7 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          for pkg in base identity-authorization logging monitoring standard; do
+          for pkg in base identity-authorization logging monitoring portal standard; do
             echo "Linting packages/${pkg}"
             uds zarf dev lint "packages/${pkg}" --flavor upstream
           done
@@ -74,7 +76,7 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          for pkg in base identity-authorization logging monitoring standard; do
+          for pkg in base identity-authorization logging monitoring portal standard; do
             echo "Validating packages/${pkg}/zarf-values.yaml"
             uvx check-jsonschema \
               --schemafile "packages/${pkg}/zarf-values.schema.json" \

@@ -174,6 +174,8 @@ tasks:
           linux: bash
         cmd: |
           cat > /tmp/zv-values-e2e-test.yaml << 'EOF'
+          domain: "uds.dev"
+          adminDomain: ""
           keycloak:
             insecureAdminPasswordGeneration:
               enabled: true

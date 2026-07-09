@@ -19,3 +19,8 @@ components:
         gitPath: chart
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .domain
+            targetPath: .package.domain
+          - sourcePath: .adminDomain
+            targetPath: .package.adminDomain

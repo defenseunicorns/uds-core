@@ -33,6 +33,18 @@ The full UDS Core (`standard`) package exposes the union of every layer's values
 
 Each package validates its values against a JSON schema. Unknown top-level namespaces (for example, setting a key that doesn't correspond to any chart) are rejected. Within a chart namespace, sub-keys are validated according to the schema for that chart; pass-through charts accept any valid chart value.
 
+### Domain
+
+Set the stack domain once with the top-level `domain` key; it fans out to every domain-consuming chart (Keycloak, Grafana, the Istio gateways, the Pepr operator, and the portal).
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `domain` | string | `uds.dev` | Tenant domain for the whole stack |
+| `adminDomain` | string | `admin.{domain}` | Admin domain; derives from `domain` when unset |
+
+> [!NOTE]
+> `domain`/`adminDomain` default to the `DOMAIN`/`ADMIN_DOMAIN` Zarf variables, so UDS bundles and existing `--set DOMAIN=` deploys are unaffected. Setting the top-level `domain` value overrides the variable for a direct `zarf package deploy`.
+
 ### Base (`core-base`)
 
 This package is the UDS Core foundation layer, including the Pepr operator, Istio service mesh, Envoy Gateway, and supporting CRDs.
@@ -44,29 +56,22 @@ This package is the UDS Core foundation layer, including the Pepr operator, Isti
 | Pepr | `pepr.watcher.env`, `pepr.admission.env`, `pepr.watcher.extraVolumeMounts`, `pepr.watcher.extraVolumes`, `pepr.admission.extraVolumeMounts`, `pepr.admission.extraVolumes`, `pepr.watcher.serviceMonitor`, `pepr.admission.serviceMonitor`, `pepr.admission.webhookAnnotations` |
 | Istiod | `istiod.global` |
 
-**UDS operator config (`uds-operator-config.*`)** controls cluster-wide domain routing for all UDS Packages. It is deployed by Pepr as part of the base layer.
-
-| Field | Type | Default | Description |
-|---|---|---|---|
-| `uds-operator-config.cluster.expose.domain` | string | `uds.dev` | Tenant domain used by the Pepr operator when reconciling UDS Package virtual services |
-| `uds-operator-config.cluster.expose.adminDomain` | string | `admin.{domain}` | Admin domain used by the Pepr operator; derives from `domain` when unset |
+The Pepr operator's cluster-wide domain routing for UDS Package virtual services comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain).
 
 The `uds-istio-config-admin`, `uds-istio-config-tenant`, and `tenant-gateway` keys are UDS-authored config charts with the following enumerated values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `uds-istio-config-admin.domain` | string | `uds.dev` | Domain for the admin gateway |
 | `uds-istio-config-admin.tls.cert` | string | unset | Base64-encoded TLS certificate for the admin gateway |
 | `uds-istio-config-admin.tls.key` | string | unset | Base64-encoded TLS key for the admin gateway |
 | `uds-istio-config-admin.tls.supportTLSV1_2` | boolean | `false` | Allow TLS 1.2 on the admin gateway |
-| `uds-istio-config-tenant.domain` | string | `uds.dev` | Domain for the tenant gateway |
 | `uds-istio-config-tenant.tls.cert` | string | unset | Base64-encoded TLS certificate for the tenant gateway |
 | `uds-istio-config-tenant.tls.key` | string | unset | Base64-encoded TLS key for the tenant gateway |
 | `uds-istio-config-tenant.tls.supportTLSV1_2` | boolean | `false` | Allow TLS 1.2 on the tenant gateway |
 | `tenant-gateway.service` | object | chart default | Tenant gateway LoadBalancer service config, including `ports` for non-HTTP(S) traffic |
 
 > [!NOTE]
-> The gateway `name` is excluded from the `uds-istio-config` maps; it is bound to the `Gateway` resource and its Deployment selector and must not be overridden. `uds-istio-config-admin.domain` and `uds-istio-config-tenant.domain` are independent: changing one does not derive the other.
+> The gateway `name` is excluded from the `uds-istio-config` maps; it is bound to the `Gateway` resource and its Deployment selector and must not be overridden. Both gateways get their domain from the top-level `domain`/`adminDomain` keys; see [Domain](#domain).
 
 > [!NOTE]
 > The Istio sidecar proxy resource requests (`global.proxy.resources.requests`) are exposed through the existing Zarf `variables` (`PROXY_MEMORY_REQUEST`, `PROXY_CPU_REQUEST`), not through values, to avoid a double mapping.
@@ -77,12 +82,10 @@ This package exposes Keycloak and authservice settings.
 
 **Authservice (`authservice.*`)** is a pass-through namespace; any value from the upstream chart can be set. The following paths are excluded and will be silently dropped at deploy time: `authservice.image`, `authservice.securityContext`, `authservice.podSecurityContext`.
 
-**Keycloak (`keycloak.*`)** maps to the Keycloak chart broadly. The following paths are excluded: `keycloak.image`, `keycloak.configImage`, `keycloak.service`, `keycloak.podSecurityContext`, `keycloak.securityContext`, `keycloak.serviceMonitor`, `keycloak.prometheusRule`. Commonly used values:
+**Keycloak (`keycloak.*`)** maps to the Keycloak chart broadly. The following paths are excluded: `keycloak.image`, `keycloak.configImage`, `keycloak.service`, `keycloak.podSecurityContext`, `keycloak.securityContext`, `keycloak.serviceMonitor`, `keycloak.prometheusRule`, `keycloak.domain`, `keycloak.adminDomain` (Keycloak's domain comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain)). Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `keycloak.domain` | string | `uds.dev` | Domain for Keycloak |
-| `keycloak.adminDomain` | string | `admin.{domain}` | Admin domain for Keycloak; derives from `domain` when unset |
 | `keycloak.insecureAdminPasswordGeneration.enabled` | boolean | `false` | Generate an insecure admin password for dev/test |
 | `keycloak.autoscaling.enabled` | boolean | `false` | Enable Keycloak HA (horizontal autoscaling) |
 | `keycloak.devMode` | boolean | chart default (`true`) | Enable Keycloak dev mode |
@@ -115,7 +118,7 @@ This package includes the full Prometheus/Grafana observability stack.
 
 **Grafana (`grafana.*`)** is a pass-through namespace; any value from the upstream Grafana chart can be set. The following path is excluded and will be silently dropped at deploy time: `grafana.sidecar` (UDS configures the provisioning sidecars that wire Loki and Prometheus datasources; overriding them breaks datasource connectivity).
 
-**`uds-grafana-config.*`** is a UDS-authored config chart exposed broadly. The following path is excluded: `uds-grafana-config.sso` (UDS manages Grafana SSO integration internally via the Keycloak-backed authservice). Commonly used values:
+**`uds-grafana-config.*`** is a UDS-authored config chart exposed broadly. The following paths are excluded: `uds-grafana-config.sso` (UDS manages Grafana SSO integration internally via the Keycloak-backed authservice), `uds-grafana-config.domain`, `uds-grafana-config.adminDomain` (Grafana's domain comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain)). Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -129,9 +132,6 @@ This package includes the full Prometheus/Grafana observability stack.
 
 > [!WARNING]
 > External PostgreSQL configuration requires `host`, `database`, `user`, `password`, and `port` to be set together. Setting any one of `host`, `database`, `user`, or `password` without the others causes a hard failure at deploy time.
-
-> [!NOTE]
-> When setting `uds-grafana-config.domain`, `adminDomain` defaults to `admin.{domain}` if not also set. Set both explicitly when your admin domain differs from that pattern.
 
 ### Runtime security (`core-runtime-security`)
 

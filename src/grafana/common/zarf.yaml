@@ -24,6 +24,12 @@ components:
             targetPath: .
             excludePaths:
               - .uds-grafana-config.sso
+              - .uds-grafana-config.domain
+              - .uds-grafana-config.adminDomain
+          - sourcePath: .domain
+            targetPath: .domain
+          - sourcePath: .adminDomain
+            targetPath: .adminDomain
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3
@@ -37,3 +43,7 @@ components:
             targetPath: .
             excludePaths:
               - .grafana.sidecar
+          - sourcePath: .domain
+            targetPath: .udsDomain
+          - sourcePath: .adminDomain
+            targetPath: .udsAdminDomain

@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $domain := tpl .Values.domain . }}
+{{- if .Values.adminGateway }}
+{{- $domain = tpl (.Values.adminDomain | default (printf "admin.%s" .Values.domain)) . }}
+{{- end }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
 {{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}
 {{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}

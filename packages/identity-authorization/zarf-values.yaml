@@ -5,7 +5,12 @@
 # Each top-level key is a pass-through namespace that maps to the corresponding chart root.
 # An empty {} is a no-op — chart defaults are preserved while still allowing per-key overrides
 # via --values. See excludePaths in src/*/zarf.yaml for blocked paths.
-# keycloak.domain / adminDomain are excluded (remain driven by ###ZARF_VAR###).
+
+# Top-level domain for the whole stack; defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables
+# (backward-compat). Override via --values / --set-values to set the domain once for all charts.
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
 keycloak:
   insecureAdminPasswordGeneration:
     enabled: false

@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: uds-istio-config admin gateway domain derivation
+templates:
+  - gateway.yaml
+tests:
+  - it: derives admin.<domain> when adminGateway and adminDomain unset
+    set:
+      name: admin
+      adminGateway: true
+      domain: "custom.example.com"
+      adminDomain: ""
+      tls:
+        credentialName: gateway-tls
+        servers:
+          https:
+            hosts: ["keycloak"]
+            mode: SIMPLE
+    asserts:
+      - matchRegex:
+          path: spec.servers[0].hosts[0]
+          pattern: 'keycloak\.admin\.custom\.example\.com'
+  - it: uses explicit adminDomain when set
+    set:
+      name: admin
+      adminGateway: true
+      domain: "custom.example.com"
+      adminDomain: "mgmt.example.com"
+      tls:
+        credentialName: gateway-tls
+        servers:
+          https:
+            hosts: ["keycloak"]
+            mode: SIMPLE
+    asserts:
+      - matchRegex:
+          path: spec.servers[0].hosts[0]
+          pattern: 'keycloak\.mgmt\.example\.com'

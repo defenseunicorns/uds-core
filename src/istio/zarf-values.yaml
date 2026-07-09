@@ -3,6 +3,9 @@
 
 # Default Zarf values for the UDS Core Istio source package.
 # Required so `zarf dev deploy src/istio` has a backing values tree for all sourcePath mappings.
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
 istiod: {}
 
 uds-istio-config-admin: {}

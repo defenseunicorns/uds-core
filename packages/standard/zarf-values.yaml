@@ -7,11 +7,13 @@
 # An empty {} is a no-op — chart defaults are preserved while still allowing overrides via
 # --values. See excludePaths in the relevant src/*/zarf.yaml for blocked paths.
 
+# Top-level domain for the whole stack; defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables
+# (backward-compat). Override via --values / --set-values to set the domain once for all charts.
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
 # --- base (pepr / istio) ---
 pepr: {}
-uds-operator-config:
-  cluster:
-    expose: {}
 istiod: {}
 uds-istio-config-admin: {}
 uds-istio-config-tenant: {}

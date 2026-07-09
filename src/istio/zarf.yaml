@@ -121,6 +121,12 @@ components:
             targetPath: .
             excludePaths:
               - .uds-istio-config-admin.name
+              - .uds-istio-config-admin.domain
+              - .uds-istio-config-admin.adminDomain
+          - sourcePath: .domain
+            targetPath: .domain
+          - sourcePath: .adminDomain
+            targetPath: .adminDomain
 
   - name: istio-tenant-gateway
     required: true
@@ -152,6 +158,9 @@ components:
             targetPath: .
             excludePaths:
               - .uds-istio-config-tenant.name
+              - .uds-istio-config-tenant.domain
+          - sourcePath: .domain
+            targetPath: .domain
 
   - name: istio-passthrough-gateway
     required: false
@@ -169,6 +178,9 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+        values:
+          - sourcePath: .domain
+            targetPath: .domain
 
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-ambient

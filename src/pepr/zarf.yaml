@@ -87,8 +87,10 @@ components:
         # Expose domain and adminDomain so direct zarf package deploy users can set them.
         # adminDomain derives from domain in the chart template when unset.
         values:
-          - sourcePath: .uds-operator-config.cluster.expose
-            targetPath: .cluster.expose
+          - sourcePath: .domain
+            targetPath: .cluster.expose.domain
+          - sourcePath: .adminDomain
+            targetPath: .cluster.expose.adminDomain
     actions:
       onDeploy:
         after:

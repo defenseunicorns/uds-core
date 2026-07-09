@@ -3,5 +3,8 @@
 
 # Default Zarf values for the UDS Core Grafana source package.
 # Required so `zarf dev deploy src/grafana` has a backing values tree for all sourcePath mappings.
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+
 uds-grafana-config: {}
 grafana: {}
