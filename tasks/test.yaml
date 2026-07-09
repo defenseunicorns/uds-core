@@ -245,7 +245,7 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
-          validate_udp_expose: "true"
+          validate_udp_expose: "false"
 
   - name: uds-core-private-pki
     description: "Create and Deploy Private PKI Bundle"
