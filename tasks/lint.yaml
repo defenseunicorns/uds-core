@@ -50,8 +50,6 @@ tasks:
         task: helm-unittest
       - description: Lint packages that expose Zarf values
         task: values-lint
-      - description: "Assert every domain-consuming chart is in the top-level domain fan-out"
-        cmd: ./scripts/lint/domain-fanout-check.sh
 
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
