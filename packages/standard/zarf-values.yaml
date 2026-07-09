@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the full UDS Core (standard) package. This is the union of the
-# per-layer values files (base, identity-authorization, logging, monitoring).
+# per-layer values files (base, identity-authorization, logging, monitoring, runtime-security).
 # Each top-level key is a pass-through namespace mapping to the corresponding chart root.
 # An empty {} is a no-op — chart defaults are preserved while still allowing overrides via
 # --values. See excludePaths in the relevant src/*/zarf.yaml for blocked paths.
 
-# Top-level domain for the whole stack; defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables
+# Top-level domain for the whole stack; defaults to the DOMAIN Zarf variable
 # (backward-compat). Override via --values / --set-values to set the domain once for all charts.
 domain: "###ZARF_VAR_DOMAIN###"
 

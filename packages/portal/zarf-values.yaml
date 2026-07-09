@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the UDS Core Portal package.
-# Top-level domain defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables (backward-compat);
+# Top-level domain defaults to the DOMAIN Zarf variable (backward-compat);
 # override via --values / --set-values.
 domain: "###ZARF_VAR_DOMAIN###"

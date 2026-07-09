@@ -7,7 +7,7 @@
 # while still allowing per-key overrides via --values. Set any valid chart key under the
 # namespace; see excludePaths in src/*/zarf.yaml for blocked paths.
 
-# Top-level domain for the whole stack; defaults to the DOMAIN/ADMIN_DOMAIN Zarf variables
+# Top-level domain for the whole stack; defaults to the DOMAIN Zarf variable
 # (backward-compat). Override via --values / --set-values to set the domain once for all charts.
 domain: "###ZARF_VAR_DOMAIN###"
 

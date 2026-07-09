@@ -42,5 +42,7 @@ components:
               - .falco.image
               - .falco.falcosidekick.image
               - .falco.podSecurityContext
+              - .falco.containerSecurityContext
               - .falco.falcosidekick.podSecurityContext
               - .falco.falcosidekick.securityContext
+              - .falco.falcosidekick.containerSecurityContext

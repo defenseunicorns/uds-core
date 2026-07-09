@@ -35,7 +35,7 @@ Each package validates its values against a JSON schema. Unknown top-level names
 
 ### Domain
 
-Set the tenant domain once with the top-level `domain` key; it fans out to Keycloak's public domain, the tenant Istio gateway, the Pepr operator (which drives all UDS Package routes), and the portal.
+Set the tenant domain once with the top-level `domain` key; it fans out to Keycloak's public domain, the tenant and passthrough Istio gateways, the Pepr operator (which drives all UDS Package routes), and the portal.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -58,7 +58,7 @@ This package is the UDS Core foundation layer, including the Pepr operator, Isti
 | Pepr | `pepr.watcher.env`, `pepr.admission.env`, `pepr.watcher.extraVolumeMounts`, `pepr.watcher.extraVolumes`, `pepr.admission.extraVolumeMounts`, `pepr.admission.extraVolumes`, `pepr.watcher.serviceMonitor`, `pepr.admission.serviceMonitor`, `pepr.admission.webhookAnnotations` |
 | Istiod | `istiod.global` |
 
-The Pepr operator's cluster-wide domain routing for UDS Package virtual services comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain).
+The Pepr operator's cluster-wide domain routing for UDS Package virtual services comes from the top-level `domain` key; the admin domain follows the `ADMIN_DOMAIN` Zarf variable. See [Domain](#domain).
 
 The `uds-istio-config-admin`, `uds-istio-config-tenant`, and `tenant-gateway` keys are UDS-authored config charts with the following enumerated values:
 
@@ -73,7 +73,7 @@ The `uds-istio-config-admin`, `uds-istio-config-tenant`, and `tenant-gateway` ke
 | `tenant-gateway.service` | object | chart default | Tenant gateway LoadBalancer service config, including `ports` for non-HTTP(S) traffic |
 
 > [!NOTE]
-> The gateway `name` is excluded from the `uds-istio-config` maps; it is bound to the `Gateway` resource and its Deployment selector and must not be overridden. Both gateways get their domain from the top-level `domain`/`adminDomain` keys; see [Domain](#domain).
+> The gateway `name` is excluded from the `uds-istio-config` maps; it is bound to the `Gateway` resource and its Deployment selector and must not be overridden. The tenant and passthrough gateways get their domain from the top-level `domain` key; the admin gateway's domain follows the `DOMAIN`/`ADMIN_DOMAIN` Zarf variables. See [Domain](#domain).
 
 > [!NOTE]
 > The Istio sidecar proxy resource requests (`global.proxy.resources.requests`) are exposed through the existing Zarf `variables` (`PROXY_MEMORY_REQUEST`, `PROXY_CPU_REQUEST`), not through values, to avoid a double mapping.
@@ -84,7 +84,7 @@ This package exposes Keycloak and authservice settings.
 
 **Authservice (`authservice.*`)** is a pass-through namespace; any value from the upstream chart can be set. The following paths are excluded and will be silently dropped at deploy time: `authservice.image`, `authservice.securityContext`, `authservice.podSecurityContext`.
 
-**Keycloak (`keycloak.*`)** maps to the Keycloak chart broadly. The following paths are excluded: `keycloak.image`, `keycloak.configImage`, `keycloak.service`, `keycloak.podSecurityContext`, `keycloak.securityContext`, `keycloak.serviceMonitor`, `keycloak.prometheusRule`, `keycloak.domain`, `keycloak.adminDomain` (Keycloak's domain comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain)). Commonly used values:
+**Keycloak (`keycloak.*`)** maps to the Keycloak chart broadly. The following paths are excluded: `keycloak.image`, `keycloak.configImage`, `keycloak.service`, `keycloak.podSecurityContext`, `keycloak.securityContext`, `keycloak.serviceMonitor`, `keycloak.prometheusRule`, `keycloak.domain` (Keycloak's public domain comes from the top-level `domain` key; its admin domain follows the `ADMIN_DOMAIN` Zarf variable; see [Domain](#domain)). Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -120,7 +120,7 @@ This package includes the full Prometheus/Grafana observability stack.
 
 **Grafana (`grafana.*`)** is a pass-through namespace; any value from the upstream Grafana chart can be set. The following path is excluded and will be silently dropped at deploy time: `grafana.sidecar` (UDS configures the provisioning sidecars that wire Loki and Prometheus datasources; overriding them breaks datasource connectivity).
 
-**`uds-grafana-config.*`** is a UDS-authored config chart exposed broadly. The following paths are excluded: `uds-grafana-config.sso` (UDS manages Grafana SSO integration internally via the Keycloak-backed authservice), `uds-grafana-config.domain`, `uds-grafana-config.adminDomain` (Grafana's domain comes from the top-level `domain`/`adminDomain` keys; see [Domain](#domain)). Commonly used values:
+**`uds-grafana-config.*`** is a UDS-authored config chart exposed broadly. The following path is excluded: `uds-grafana-config.sso` (UDS manages Grafana SSO integration internally via the Keycloak-backed authservice). Grafana's domain follows the `DOMAIN`/`ADMIN_DOMAIN` Zarf variables; see [Domain](#domain). Commonly used values:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
