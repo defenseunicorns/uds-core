@@ -20,21 +20,14 @@ tenant-gateway:
   service: {}
 
 # --- identity-authorization (keycloak / authservice) ---
-keycloak:
-  insecureAdminPasswordGeneration:
-    enabled: false
-  autoscaling:
-    enabled: false
-  resources: {}
-  postgresql: {}
+keycloak: {}
 authservice: {}
 
 # --- logging (loki) ---
 loki: {}
 
 # --- monitoring (grafana / uds-grafana-config) ---
-uds-grafana-config:
-  postgresql: {}
+uds-grafana-config: {}
 grafana: {}
 
 # --- runtime-security (falco) ---

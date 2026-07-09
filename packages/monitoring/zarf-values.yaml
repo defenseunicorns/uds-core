@@ -10,7 +10,5 @@
 # (backward-compat). Override via --values / --set-values to set the domain once for all charts.
 domain: "###ZARF_VAR_DOMAIN###"
 
-uds-grafana-config:
-  postgresql: {}
-
+uds-grafana-config: {}
 grafana: {}

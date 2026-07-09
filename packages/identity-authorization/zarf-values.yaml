@@ -10,12 +10,5 @@
 # (backward-compat). Override via --values / --set-values to set the domain once for all charts.
 domain: "###ZARF_VAR_DOMAIN###"
 
-keycloak:
-  insecureAdminPasswordGeneration:
-    enabled: false
-  autoscaling:
-    enabled: false
-  resources: {}
-  postgresql: {}
-
+keycloak: {}
 authservice: {}
