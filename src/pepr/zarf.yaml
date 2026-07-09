@@ -108,9 +108,8 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
-        # env, extraVolume*, serviceMonitor, and webhookAnnotations are excluded because they
-        # carry UDS-specific wiring (Keycloak token mounts, ZARF_VAR substitutions, enforcer
-        # bypass) that must not be overridden.
+        # The excluded paths below carry UDS-specific wiring (Keycloak token mounts, ZARF_VAR
+        # substitutions, enforcer bypass) that must not be overridden.
         values:
           - sourcePath: .pepr
             targetPath: .

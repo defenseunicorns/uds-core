@@ -4,6 +4,5 @@
 # Default Zarf values for the UDS Core Logging package.
 # loki is a pass-through namespace that maps to the loki chart root (sourcePath: .loki,
 # targetPath: .). An empty {} is a no-op — chart defaults are preserved while still allowing
-# overrides via --values. auth_enabled, deploymentMode, and minio are excluded; see
-# src/loki/common/zarf.yaml for the full excludePaths list.
+# overrides via --values. See excludePaths in src/loki/common/zarf.yaml for blocked paths.
 loki: {}
