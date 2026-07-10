@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -9,6 +9,7 @@ import { Component, setupLogger } from "../../../logger";
 import { Sso, UDSPackage } from "../../crd";
 import { getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { credentialsCreateOrUpdate, credentialsDelete } from "./clients/client-credentials";
+import { throwErrorIfNeeded } from "./clients/common";
 import { Client, clientKeys } from "./types";
 
 const samlDescriptorUrl =
@@ -20,15 +21,16 @@ const secretTemplateRegex = new RegExp(
   "gm",
 );
 
-// Template regex to match IDPSSODescriptor in the SAML IDP Descriptor XML, see https://regex101.com/r/DGvzjd/1
-const idpSSODescriptorRegex = new RegExp(
-  /<[^>]*:IDPSSODescriptor[^>]*>((.|[\n\r])*)<\/[^>]*:IDPSSODescriptor>/,
-);
+// Matches a signing KeyDescriptor block, non-greedy so that a descriptor
+// advertising multiple signing keys (the normal state during signing key
+// rotation) does not collapse into one greedy match spanning every certificate,
+// which was the original bug. Keycloak sorts signing KeyDescriptors active-key
+// first, so the first match holds the realm's active signing key.
+const signingKeyDescriptorRegex =
+  /<[^>]*:KeyDescriptor[^>]*use="signing"[^>]*>([\s\S]*?)<\/[^>]*:KeyDescriptor>/;
 
-// Template regex to match the X509Certificate within the IDPSSODescriptor XML, see https://regex101.com/r/NjGZF5/1
-const x509CertRegex = new RegExp(
-  /<[^>]*:X509Certificate[^>]*>((.|[\n\r])*)<\/[^>]*:X509Certificate>/,
-);
+// Matches the X509Certificate within a KeyDescriptor block.
+const x509CertRegex = /<[^>]*:X509Certificate[^>]*>([\s\S]*?)<\/[^>]*:X509Certificate>/;
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_KEYCLOAK);
@@ -123,53 +125,51 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
   return client as Client;
 }
 
-export async function syncClient(
-  { secretConfig, ...clientReq }: Sso,
-  pkg: UDSPackage,
-  isRetry = false,
-) {
+/**
+ * Run a Keycloak operation, retrying once on failure to tolerate intermittent
+ * errors. If the retry also fails, an error carrying the provided context is
+ * thrown so the failure surfaces on the Package CR.
+ *
+ * @param operation the operation to run
+ * @param failureContext description of the operation used in error/log messages
+ */
+async function retryOnce<T>(operation: () => Promise<T>, failureContext: string): Promise<T> {
+  try {
+    return await operation();
+  } catch (err) {
+    const msg = `${failureContext}. Error: ${err.message}`;
+    log.error(`${msg}, retrying...`);
+    try {
+      return await operation();
+    } catch (retryErr) {
+      // Log the retry error but throw the original context since the retry failed
+      log.error(`${failureContext}, retry failed. Error: ${retryErr.message}`);
+      throw new Error(msg);
+    }
+  }
+}
+
+export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPackage) {
   log.debug(pkg.metadata, `Processing client request: ${clientReq.clientId}`);
 
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
   let client = convertSsoToClient(clientReq);
+  const pkgRef = `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
 
-  try {
-    client = await credentialsCreateOrUpdate(client);
-  } catch (err) {
-    const msg =
-      `Failed to process Keycloak request for client '${client.clientId}', package ` +
-      `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${err.message}`;
-
-    // Throw the error if this is the retry or was an initial client creation attempt
-    if (isRetry) {
-      log.error(`${msg}, retry failed.`);
-      // Throw the original error captured from the first attempt
-      throw new Error(msg);
-    } else {
-      // Retry the request in case it is an intermittent failure
-      log.error(`${msg}, retrying...`);
-
-      try {
-        // Ensure we pass the same inputs to this function, including the secretConfig
-        return await syncClient({ secretConfig, ...clientReq }, pkg, true);
-      } catch (retryErr) {
-        // If the retry fails, log the retry error and throw the original error
-        const retryMsg =
-          `Retry of Keycloak request failed for client '${client.clientId}', package ` +
-          `${pkg.metadata?.namespace}/${pkg.metadata?.name}. Error: ${retryErr.message}`;
-        log.error(retryMsg);
-        // Throw the error from the original attempt since our retry failed
-        throw new Error(msg);
-      }
-    }
-  }
+  client = await retryOnce(
+    () => credentialsCreateOrUpdate(client),
+    `Failed to process Keycloak request for client '${client.clientId}', package ${pkgRef}`,
+  );
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
   delete client.registrationAccessToken;
 
   if (client.protocol === "saml") {
-    client.samlIdpCertificate = await getSamlCertificate();
+    client.samlIdpCertificate = await retryOnce(
+      () => getSamlCertificate(),
+      `Failed to get SAML IdP certificate for client '${client.clientId}', package ${pkgRef}`,
+    );
   }
 
   // Create or update the client secret
@@ -239,17 +239,31 @@ export function generateSecretData(client: Client, secretTemplate?: { [key: stri
 
 export async function getSamlCertificate() {
   const resp = await fetch<string>(samlDescriptorUrl);
-
-  if (!resp.ok) {
-    return undefined;
-  }
-
+  await throwErrorIfNeeded(resp);
   return extractSamlCertificateFromXML(resp.data);
 }
 
-export function extractSamlCertificateFromXML(xmlString: string) {
-  const extractedIDPSSODescriptor = xmlString.match(idpSSODescriptorRegex)?.[1] || "";
-  return extractedIDPSSODescriptor.match(x509CertRegex)?.[1] || "";
+/**
+ * Extract the realm's active signing certificate from the SAML IdP descriptor XML.
+ *
+ * A realm can advertise multiple signing KeyDescriptors (normal during signing-key
+ * rotation). Keycloak sorts them active-key first, so the first signing
+ * KeyDescriptor holds the realm's active signing key. Matching that block
+ * non-greedily keeps the certificates from running together (the original bug).
+ *
+ * Throws when no signing certificate is found so the error surfaces on the Package
+ * CR instead of silently provisioning a broken secret.
+ */
+export function extractSamlCertificateFromXML(xmlString: string): string {
+  const signingKeyDescriptor = xmlString.match(signingKeyDescriptorRegex)?.[1];
+  // Keycloak may line-wrap the base64; strip all whitespace.
+  const cert = signingKeyDescriptor?.match(x509CertRegex)?.[1]?.replace(/\s+/g, "");
+
+  if (!cert) {
+    throw new Error("SAML IdP descriptor contains no signing X509Certificate");
+  }
+
+  return cert;
 }
 
 /**
