@@ -84,10 +84,16 @@ components:
         localPath: uds-operator-config
         valuesFiles:
           - uds-operator-config/values.yaml
-        # Expose domain so direct zarf package deploy users can set it.
+        # UDS-authored config chart, exposed broadly (no image/securityContext values to block).
+        # `domain` is fed from the top-level `domain` value (below) so `.cluster` is not excluded
+        # (excluding a key a sibling mapping targets breaks schema generation).
         values:
+          - sourcePath: .uds-operator-config.uds-operator-config
+            targetPath: .
           - sourcePath: .domain
             targetPath: .cluster.expose.domain
+          - sourcePath: .adminDomain
+            targetPath: .cluster.expose.udsAdminDomain
     actions:
       onDeploy:
         after:
@@ -108,21 +114,29 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
-        # The excluded paths below carry UDS-specific wiring (Keycloak token mounts, ZARF_VAR
-        # substitutions, enforcer bypass) that must not be overridden.
+        # Pass-through of the Pepr controller chart. The excluded paths carry UDS-specific wiring
+        # (Keycloak token mounts, ZARF_VAR substitutions, enforcer bypass, service monitors) that
+        # must not be overridden, plus the controller image and security contexts (blocked to
+        # prevent unauthorized images and privilege changes).
         values:
-          - sourcePath: .pepr
+          - sourcePath: .pepr-uds-core.module
             targetPath: .
             excludePaths:
-              - .pepr.watcher.env
-              - .pepr.admission.env
-              - .pepr.watcher.extraVolumeMounts
-              - .pepr.watcher.extraVolumes
-              - .pepr.admission.extraVolumeMounts
-              - .pepr.admission.extraVolumes
-              - .pepr.watcher.serviceMonitor
-              - .pepr.admission.serviceMonitor
-              - .pepr.admission.webhookAnnotations
+              - .pepr-uds-core.module.watcher.env
+              - .pepr-uds-core.module.admission.env
+              - .pepr-uds-core.module.watcher.extraVolumeMounts
+              - .pepr-uds-core.module.watcher.extraVolumes
+              - .pepr-uds-core.module.admission.extraVolumeMounts
+              - .pepr-uds-core.module.admission.extraVolumes
+              - .pepr-uds-core.module.watcher.serviceMonitor
+              - .pepr-uds-core.module.admission.serviceMonitor
+              - .pepr-uds-core.module.admission.webhookAnnotations
+              - .pepr-uds-core.module.admission.image
+              - .pepr-uds-core.module.watcher.image
+              - .pepr-uds-core.module.admission.securityContext
+              - .pepr-uds-core.module.admission.containerSecurityContext
+              - .pepr-uds-core.module.watcher.securityContext
+              - .pepr-uds-core.module.watcher.containerSecurityContext
     actions:
       onDeploy:
         after:

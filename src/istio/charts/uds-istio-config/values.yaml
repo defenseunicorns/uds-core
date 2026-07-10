@@ -7,6 +7,14 @@ name: change-me
 # Domain name for the gateway
 domain: "###ZARF_VAR_DOMAIN###"
 
+# Tenant (public) domain, fed by the top-level `domain` value; defaults to the DOMAIN variable.
+# Used by the admin gateway to derive admin.<domain> when no explicit admin domain is set.
+tenantDomain: "###ZARF_VAR_DOMAIN###"
+
+# Admin domain override, fed by the top-level `adminDomain` value; empty by default. When empty,
+# the admin gateway falls back to the ADMIN_DOMAIN variable, then derives admin.<tenantDomain>.
+adminDomain: ""
+
 # tls:
 #   # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)
 #   cert: ""

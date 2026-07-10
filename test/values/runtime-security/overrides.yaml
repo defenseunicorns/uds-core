@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Clusterless value-mapping test overrides for the runtime-security package.
+# For every chart: one settable field set to a recognizable sentinel (asserted PRESENT),
+# and one excludePaths entry set to SHOULD_NOT_APPEAR (asserted DROPPED).
+falco:
+  falco:
+    # Settable: pod label lands on the Falco daemonset pod template.
+    podLabels:
+      probe: PROBE_VISIBLE
+    # Excluded (.falco.falco.image): must be dropped before Helm renders.
+    image:
+      registry: SHOULD_NOT_APPEAR
+  uds-falco-config:
+    # Settable: disabled rule lands in the falco-disable-rules ConfigMap.
+    disabledRules:
+      - PROBE_VISIBLE
+    # Excluded (.falco.uds-falco-config.udsDefaultDisabledRulesStable): must be dropped.
+    udsDefaultDisabledRulesStable:
+      - SHOULD_NOT_APPEAR

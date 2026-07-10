@@ -62,6 +62,10 @@
             "adminDomain": {
               "type": "string",
               "description": "Admin domain for cluster exposure."
+            },
+            "udsAdminDomain": {
+              "type": "string",
+              "description": "Admin domain override fed by the top-level adminDomain value."
             }
           }
         },

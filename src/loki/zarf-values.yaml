@@ -1,6 +1,10 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Default Zarf values for the UDS Core Loki source package.
-# Required so `zarf dev deploy src/loki` has a backing values tree for all sourcePath mappings.
-loki: {}
+# Default Zarf values for the Loki package. The top-level key is the component; each nested
+# key maps to a chart root. An empty {} is a no-op — chart defaults are preserved while still
+# allowing overrides via --values. See excludePaths in common/zarf.yaml for blocked paths.
+
+loki:
+  loki: {}
+  uds-loki-config: {}

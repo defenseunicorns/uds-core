@@ -107,6 +107,16 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` is the chart's
+        # internal wrapper (users set fields at root, the chart merges) — excluded so it does not
+        # surface in the schema. global.hub/tag excluded to block unauthorized images.
+        values:
+          - sourcePath: .istio-admin-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-admin-gateway.gateway._internal_defaults_do_not_set
+              - .istio-admin-gateway.gateway.global.hub
+              - .istio-admin-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
@@ -117,10 +127,14 @@ components:
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
         # Deployment selector).
         values:
-          - sourcePath: .uds-istio-config-admin
+          - sourcePath: .istio-admin-gateway.uds-istio-config
             targetPath: .
             excludePaths:
-              - .uds-istio-config-admin.name
+              - .istio-admin-gateway.uds-istio-config.name
+          - sourcePath: .domain
+            targetPath: .tenantDomain
+          - sourcePath: .adminDomain
+            targetPath: .adminDomain
 
   - name: istio-tenant-gateway
     required: true
@@ -132,12 +146,16 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
-        # Only the tenant gateway exposes `service` (for non-HTTP(S) port overrides); the admin
-        # and passthrough gateways intentionally do not. Map the service object (not the ports
-        # list leaf) so an empty/partial override deep-merges and the chart default ports survive.
+        # Pass-through of the upstream gateway chart (full surface, incl. `service` for non-HTTP(S)
+        # port overrides). `_internal_defaults_do_not_set` is the chart's internal wrapper, excluded
+        # so it does not surface in the schema. global.hub/tag excluded to block unauthorized images.
         values:
-          - sourcePath: .tenant-gateway.service
-            targetPath: .service
+          - sourcePath: .istio-tenant-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-tenant-gateway.gateway._internal_defaults_do_not_set
+              - .istio-tenant-gateway.gateway.global.hub
+              - .istio-tenant-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
@@ -146,13 +164,13 @@ components:
           - "values/config-tenant.yaml"
         # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
-        # Deployment selector).
+        # Deployment selector). `domain` is fed from the top-level `domain` value (below) so it is
+        # not excluded here (excluding a key a sibling mapping targets breaks schema generation).
         values:
-          - sourcePath: .uds-istio-config-tenant
+          - sourcePath: .istio-tenant-gateway.uds-istio-config
             targetPath: .
             excludePaths:
-              - .uds-istio-config-tenant.name
-              - .uds-istio-config-tenant.domain
+              - .istio-tenant-gateway.uds-istio-config.name
           - sourcePath: .domain
             targetPath: .domain
 
@@ -166,13 +184,28 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` excluded
+        # (chart-internal wrapper). global.hub/tag excluded to block unauthorized images.
+        values:
+          - sourcePath: .istio-passthrough-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-passthrough-gateway.gateway._internal_defaults_do_not_set
+              - .istio-passthrough-gateway.gateway.global.hub
+              - .istio-passthrough-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+        # UDS-authored config chart. Exclude the gateway `name`. `domain` is fed from the top-level
+        # `domain` value so it is not excluded here (sibling-mapping constraint).
         values:
+          - sourcePath: .istio-passthrough-gateway.uds-istio-config
+            targetPath: .
+            excludePaths:
+              - .istio-passthrough-gateway.uds-istio-config.name
           - sourcePath: .domain
             targetPath: .domain
 
@@ -185,6 +218,10 @@ components:
         version: 0.1.0
         localPath: charts/uds-istio-egress-config
         namespace: istio-egress-ambient
+        # UDS-authored config chart, exposed broadly (no image/securityContext values to block).
+        values:
+          - sourcePath: .istio-egress-ambient.uds-istio-egress-config
+            targetPath: .
 
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-gateway
@@ -198,3 +235,12 @@ components:
         namespace: istio-egress-gateway
         valuesFiles:
           - "values/base-egress.yaml"
+        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` excluded
+        # (chart-internal wrapper). global.hub/tag excluded to block unauthorized images.
+        values:
+          - sourcePath: .istio-egress-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-egress-gateway.gateway._internal_defaults_do_not_set
+              - .istio-egress-gateway.gateway.global.hub
+              - .istio-egress-gateway.gateway.global.tag

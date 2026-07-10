@@ -5,4 +5,8 @@
 # Required so `zarf dev deploy src/pepr` has a backing values tree for all sourcePath mappings.
 domain: "###ZARF_VAR_DOMAIN###"
 
-pepr: {}
+pepr-uds-core:
+  module: {}
+
+uds-operator-config:
+  uds-operator-config: {}

@@ -21,19 +21,20 @@ components:
         # break the package (image references, Service wiring), or compromise its security or
         # monitoring wiring.
         values:
-          - sourcePath: .keycloak
+          - sourcePath: .keycloak.keycloak
             targetPath: .
             excludePaths:
-              - .keycloak.image
-              - .keycloak.configImage
-              - .keycloak.service
-              - .keycloak.podSecurityContext
-              - .keycloak.securityContext
-              - .keycloak.serviceMonitor
-              - .keycloak.prometheusRule
-              - .keycloak.domain
+              - .keycloak.keycloak.image
+              - .keycloak.keycloak.configImage
+              - .keycloak.keycloak.service
+              - .keycloak.keycloak.podSecurityContext
+              - .keycloak.keycloak.securityContext
+              - .keycloak.keycloak.serviceMonitor
+              - .keycloak.keycloak.prometheusRule
           - sourcePath: .domain
             targetPath: .domain
+          - sourcePath: .adminDomain
+            targetPath: .udsAdminDomain
     actions:
       onDeploy:
         before:

@@ -168,39 +168,6 @@ tasks:
         with:
           create_options: "--skip-sbom"
       - task: setup:k3d-test-cluster
-      - description: "Write test values override (matches k3d bundle sizing and test requirements)"
-        shell:
-          darwin: bash
-          linux: bash
-        cmd: |
-          # The admin Istio gateway (fronts grafana.admin, keycloak admin console) derives its
-          # domain from the DOMAIN Zarf variable, not this top-level value. The deploy step below
-          # sets --set DOMAIN=uds.dev so the admin gateway stays consistent with this value.
-          # Keep this `domain` value and that --set DOMAIN in sync until the admin value follow-up lands.
-          cat > /tmp/zv-values-e2e-test.yaml << 'EOF'
-          domain: "uds.dev"
-          keycloak:
-            insecureAdminPasswordGeneration:
-              enabled: true
-            detailedObservability:
-              alerts:
-                enabled: true
-            realmInitEnv:
-              FLEET_CLIENT_ENABLED: "true"
-          loki:
-            write:
-              replicas: 1
-            read:
-              replicas: 1
-            backend:
-              replicas: 1
-          falco:
-            falcosidekick:
-              replicaCount: 1
-          uds-falco-config:
-            sandboxRulesEnabled: true
-            incubatingRulesEnabled: true
-          EOF
       - description: "Deploy UDS Core standard package via Zarf values"
         shell:
           darwin: bash
@@ -208,21 +175,14 @@ tasks:
         cmd: |
           set -euo pipefail
           PKG=$(ls build/zarf-package-core-${UDS_ARCH}-*.tar.zst 2>/dev/null | head -1)
-          # DOMAIN variable drives the admin Istio gateway; keep it in sync with the `domain`
-          # value in the override above (see the note there and zarf-values.mdx Domain WARNING).
+          # The top-level domain value supplies the admin gateway tenant domain. With no
+          # adminDomain or ADMIN_DOMAIN, the gateway derives admin.<domain>.
           ./uds zarf package deploy "$PKG" \
             --set DOMAIN=uds.dev \
             --values packages/standard/zarf-values.yaml \
-            --values /tmp/zv-values-e2e-test.yaml \
-            --components istio-passthrough-gateway,istio-egress-gateway,metrics-server,envoy-gateway \
+            --values test/values/k3d-standard/values.yaml \
+            --components "*" \
             --confirm --no-progress
-      # Exclude velero from values validation: its BackupStorageLocation (bucket/prefix) is
-      # configured via Zarf variables and bundle overrides, not the Zarf values surface, so it
-      # cannot be pointed at the k3d MinIO's backups prefix through a pure --values deploy.
-      - description: "Exclude velero from values e2e validation (not exposed via Zarf values)"
-        cmd: echo "velero"
-        setVariables:
-          - name: EXCLUDED_PACKAGES
       - task: validate-packages
       - task: e2e-tests
 

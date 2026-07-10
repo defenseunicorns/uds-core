@@ -1,15 +1,33 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Default Zarf values for the UDS Core Istio source package.
-# Required so `zarf dev deploy src/istio` has a backing values tree for all sourcePath mappings.
+# Default Zarf values for the UDS Core Istio source package. Keys are namespaced by component
+# then chart (component.chart). Every mapped chart must have its component.chart key present here
+# (an absent sourcePath is a hard deploy error). An empty {} is a no-op. See excludePaths in
+# common/zarf.yaml and zarf.yaml for blocked paths.
 domain: "###ZARF_VAR_DOMAIN###"
 
-istiod: {}
+istio-controlplane:
+  base: {}
+  istiod: {}
+  uds-global-istio-config: {}
+  cni: {}
+  ztunnel: {}
 
-uds-istio-config-admin: {}
+istio-admin-gateway:
+  gateway: {}
+  uds-istio-config: {}
 
-uds-istio-config-tenant: {}
+istio-tenant-gateway:
+  gateway: {}
+  uds-istio-config: {}
 
-tenant-gateway:
-  service: {}
+istio-passthrough-gateway:
+  gateway: {}
+  uds-istio-config: {}
+
+istio-egress-ambient:
+  uds-istio-egress-config: {}
+
+istio-egress-gateway:
+  gateway: {}

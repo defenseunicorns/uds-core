@@ -21,12 +21,12 @@ components:
         # UDS-authored config chart for Falco rules. Exclude internal UDS-managed disabled-rule
         # lists so users cannot accidentally clear the UDS baseline suppressions.
         values:
-          - sourcePath: .uds-falco-config
+          - sourcePath: .falco.uds-falco-config
             targetPath: .
             excludePaths:
-              - .uds-falco-config.udsDefaultDisabledRulesStable
-              - .uds-falco-config.udsDefaultDisabledRulesIncubating
-              - .uds-falco-config.udsDefaultDisabledRulesSandbox
+              - .falco.uds-falco-config.udsDefaultDisabledRulesStable
+              - .falco.uds-falco-config.udsDefaultDisabledRulesIncubating
+              - .falco.uds-falco-config.udsDefaultDisabledRulesSandbox
       - name: falco
         url: https://falcosecurity.github.io/charts
         version: 9.1.0
@@ -36,13 +36,18 @@ components:
         # Falco is an upstream chart exposed broadly. Exclude image references (to prevent pulling
         # unauthorized images) and security contexts (to prevent privilege escalation).
         values:
-          - sourcePath: .falco
+          - sourcePath: .falco.falco
             targetPath: .
             excludePaths:
-              - .falco.image
-              - .falco.falcosidekick.image
-              - .falco.podSecurityContext
-              - .falco.containerSecurityContext
-              - .falco.falcosidekick.podSecurityContext
-              - .falco.falcosidekick.securityContext
-              - .falco.falcosidekick.containerSecurityContext
+              - .falco.falco.image
+              - .falco.falco.falcosidekick.image
+              - .falco.falco.podSecurityContext
+              - .falco.falco.containerSecurityContext
+              - .falco.falco.falcosidekick.podSecurityContext
+              - .falco.falco.falcosidekick.securityContext
+              - .falco.falco.falcosidekick.containerSecurityContext
+              - .falco.falco.driver.loader.initContainer.image
+              - .falco.falco.driver.loader.initContainer.securityContext
+              - .falco.falco.falcoctl.image
+              - .falco.falco.falcoctl.artifact.install.securityContext
+              - .falco.falco.falcoctl.artifact.follow.securityContext

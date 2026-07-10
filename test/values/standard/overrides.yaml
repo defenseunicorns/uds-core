@@ -1,0 +1,235 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Clusterless value-mapping test overrides for the standard (full core) package. For every
+# mapped chart this sets one genuinely-settable field to a recognizable sentinel (asserted
+# PRESENT) and, where the chart declares excludePaths, one excluded path to SHOULD_NOT_APPEAR
+# (asserted DROPPED). standard is the union of all layers, so metrics-server and velero -- which
+# appear in no other tested package -- are covered here.
+
+# --- base: pepr / operator config ---
+pepr-uds-core:
+  module:
+    admission:
+      podLabels:
+        probe: PROBE_PEPR
+      image:
+        repository: SHOULD_NOT_APPEAR
+uds-operator-config:
+  uds-operator-config:
+    cluster:
+      attributes:
+        clusterName: PROBE_OPERATOR
+
+# --- base: istio control plane ---
+istio-controlplane:
+  base:
+    global:
+      # Settable: imagePullSecrets flow onto the istio-reader ServiceAccount (the base chart's
+      # template renders each entry as a scalar name).
+      imagePullSecrets:
+        - PROBE_BASE
+      hub: SHOULD_NOT_APPEAR
+  istiod:
+    pilot:
+      podLabels:
+        probe: PROBE_ISTIOD
+    global:
+      hub: SHOULD_NOT_APPEAR
+  cni:
+    cni:
+      podLabels:
+        probe: PROBE_CNI
+    global:
+      hub: SHOULD_NOT_APPEAR
+  ztunnel:
+    podLabels:
+      probe: PROBE_ZTUNNEL
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-global-istio-config:
+    # text must satisfy the chart's classification-marking pattern; sentinel rides as the suffix.
+    classificationBanner:
+      text: "CUI//PROBE_GLOBALISTIO"
+      enabledHosts:
+        - "*"
+
+# --- base: istio gateways ---
+istio-admin-gateway:
+  gateway:
+    labels:
+      probe: PROBE_ADMINGW
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    tls:
+      credentialName: PROBE_ADMINCFG
+    name: SHOULD_NOT_APPEAR
+istio-tenant-gateway:
+  gateway:
+    labels:
+      probe: PROBE_TENANTGW
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    tls:
+      credentialName: PROBE_TENANTCFG
+    name: SHOULD_NOT_APPEAR
+istio-passthrough-gateway:
+  gateway:
+    labels:
+      probe: PROBE_PASSGW
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    # passthrough servers are all PASSTHROUGH mode (no credentialName), so add a SIMPLE-mode
+    # root-domain server whose credentialName carries the sentinel.
+    rootDomain:
+      enabled: true
+      tls:
+        mode: SIMPLE
+        credentialName: PROBE_PASSCFG
+    name: SHOULD_NOT_APPEAR
+istio-egress-ambient:
+  uds-istio-egress-config:
+    config:
+      serviceAccount:
+        metadata:
+          annotations:
+            probe: PROBE_EGRESS
+istio-egress-gateway:
+  gateway:
+    labels:
+      probe: PROBE_EGRESSGW
+    global:
+      hub: SHOULD_NOT_APPEAR
+
+# --- base: envoy gateway ---
+envoy-gateway:
+  envoy-gateway:
+    deployment:
+      pod:
+        labels:
+          probe: PROBE_ENVOY
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+  # uds-envoy-gateway-config is a static chart (no `.Values` refs, no excludePaths); it has no
+  # value surface to assert, so it only needs its mapped sourcePath present (supplied by defaults).
+  uds-envoy-gateway-config: {}
+
+# --- base: prometheus stack ---
+kube-prometheus-stack:
+  kube-prometheus-stack:
+    commonLabels:
+      probe: PROBE_KPS
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+  uds-prometheus-config:
+    additionalNetworkAllow:
+      - direction: Egress
+        description: PROBE_PROMCFG
+        remoteGenerated: Anywhere
+prometheus-blackbox-exporter:
+  prometheus-blackbox-exporter:
+    podAnnotations:
+      probe: PROBE_BLACKBOX
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+
+# --- identity-authorization ---
+keycloak:
+  keycloak:
+    additionalNetworkAllow:
+      - direction: Egress
+        description: PROBE_KEYCLOAK
+        remoteGenerated: Anywhere
+    image:
+      repository: SHOULD_NOT_APPEAR
+authservice:
+  authservice:
+    podAnnotations:
+      probe: PROBE_AUTHSERVICE
+    image:
+      repository: SHOULD_NOT_APPEAR
+
+# --- logging ---
+loki:
+  loki:
+    loki:
+      podLabels:
+        probe: PROBE_LOKI
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+  uds-loki-config:
+    additionalNetworkAllow:
+      - direction: Egress
+        description: PROBE_LOKICFG
+        remoteGenerated: Anywhere
+vector:
+  vector:
+    podLabels:
+      probe: PROBE_VECTOR
+    image:
+      repository: SHOULD_NOT_APPEAR
+  uds-vector-config:
+    additionalNetworkAllow:
+      - direction: Egress
+        description: PROBE_VECTORCFG
+        remoteGenerated: Anywhere
+
+# --- monitoring: grafana ---
+grafana:
+  grafana:
+    podLabels:
+      probe: PROBE_GRAFANA
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+  uds-grafana-config:
+    additionalNetworkAllow:
+      - direction: Egress
+        description: PROBE_GRAFANACFG
+        remoteGenerated: Anywhere
+    domain: SHOULD_NOT_APPEAR
+
+# --- runtime-security: falco ---
+falco:
+  falco:
+    podLabels:
+      probe: PROBE_FALCO
+    image:
+      repository: SHOULD_NOT_APPEAR
+  uds-falco-config:
+    disabledRules:
+      - PROBE_FALCOCFG
+    udsDefaultDisabledRulesStable:
+      - SHOULD_NOT_APPEAR
+
+# --- metrics-server (standard-only) ---
+metrics-server:
+  metrics-server:
+    podLabels:
+      probe: PROBE_METRICS
+    image:
+      repository: SHOULD_NOT_APPEAR
+  # uds-metrics-server-config is a static chart (empty values.yaml, no `.Values` refs, no
+  # excludePaths); no value surface to assert, so it only needs its mapped sourcePath present.
+  uds-metrics-server-config: {}
+
+# --- portal ---
+uds-portal:
+  uds-portal:
+    # Settable: replica count sentinel on the uds-portal Deployment.
+    replicaCount: 7
+    image:
+      repository: SHOULD_NOT_APPEAR
+
+# --- backup-restore: velero (standard-only) ---
+velero:
+  velero:
+    podLabels:
+      probe: PROBE_VELERO
+    image:
+      repository: SHOULD_NOT_APPEAR
+  uds-velero-config:
+    storage:
+      egressCidr: "10.234.56.78/32"

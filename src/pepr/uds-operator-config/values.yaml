@@ -21,6 +21,9 @@ cluster:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
     domain: "###ZARF_VAR_DOMAIN###"
     adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    # Admin domain override fed by the top-level `adminDomain` value; empty falls back to the
+    # ADMIN_DOMAIN variable, then admin.<domain>.
+    udsAdminDomain: ""
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:

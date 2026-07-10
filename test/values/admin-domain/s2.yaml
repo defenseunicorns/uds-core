@@ -1,0 +1,6 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# An explicit admin-domain value takes precedence over the admin-domain variable.
+domain: custom.example.com
+adminDomain: mgmt.example.com

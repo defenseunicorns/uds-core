@@ -45,7 +45,7 @@ jobs:
     # Use the 8 core runner for full-core or 4 core runner (with larger disk) for func layers tests
     runs-on: "${{ inputs.package == 'all' && 'uds-ubuntu-big-boy-8-core' || 'uds-ubuntu-big-boy-4-core'}}"
     # Increase the timeout for longer upgrades
-    timeout-minutes: ${{ (inputs.test_type == 'upgrade' || inputs.test_type == 'values') && 60 || 30 }}
+    timeout-minutes: ${{ inputs.test_type == 'upgrade' && 60 || 30 }}
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
@@ -61,7 +61,7 @@ jobs:
           registry1Username: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: 'true'
+          installK3d: "true"
 
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes

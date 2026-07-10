@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -15,9 +15,24 @@ components:
         namespace: metrics-server
         version: 0.1.0
         localPath: ../chart
+        # UDS-authored config chart, exposed broadly.
+        values:
+          - sourcePath: .metrics-server.uds-metrics-server-config
+            targetPath: .
       - name: metrics-server
         namespace: metrics-server
         url: https://kubernetes-sigs.github.io/metrics-server
         version: 3.13.0
         valuesFiles:
           - "../values/values.yaml"
+        # image/securityContext paths are excluded to prevent pulling
+        # unauthorized images and to preserve the UDS-hardened security contexts.
+        values:
+          - sourcePath: .metrics-server.metrics-server
+            targetPath: .
+            excludePaths:
+              - .metrics-server.metrics-server.image
+              - .metrics-server.metrics-server.podSecurityContext
+              - .metrics-server.metrics-server.securityContext
+              - .metrics-server.metrics-server.addonResizer.image
+              - .metrics-server.metrics-server.addonResizer.securityContext

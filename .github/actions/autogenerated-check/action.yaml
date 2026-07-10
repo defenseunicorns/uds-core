@@ -32,6 +32,9 @@ runs:
         # Update Velero CRDs
         uds run -f src/velero/tasks.yaml update-crds
 
+        # Generate Zarf values schemas
+        uds run -f tasks/lint.yaml values-generate
+
     - name: Check generated files for diffs
       shell: bash
       run: |
@@ -60,6 +63,12 @@ runs:
           # Diffs for Velero CRDs
           DIFFS=true
           echo -e "\033[33m⚠️ Velero CRDs are not up to date, please run \`uds run -f src/velero/tasks.yaml update-crds\` and commit the changes.\033[0m"
+        fi
+
+        if [ ! -z "$(git status -s packages/*/zarf-values.schema.json)" ]; then
+          # Diffs for Zarf values schemas
+          DIFFS=true
+          echo -e "\033[33m⚠️ Zarf values schemas are not up to date, please run \`uds run -f tasks/lint.yaml values-generate\` and commit the changes.\033[0m"
         fi
 
         if [ "${DIFFS}" = "true" ]; then

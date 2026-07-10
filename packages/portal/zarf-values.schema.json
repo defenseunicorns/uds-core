@@ -1,8 +1,106 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
   "additionalProperties": false,
   "properties": {
-    "domain": { "type": "string" }
-  }
+    "domain": {
+      "type": "string"
+    },
+    "uds-portal": {
+      "properties": {
+        "uds-portal": {
+          "properties": {
+            "adminApps": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "classificationBanner": {
+              "properties": {
+                "addFooter": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "extraVolumeMounts": {
+              "type": "array"
+            },
+            "extraVolumes": {
+              "type": "array"
+            },
+            "package": {
+              "properties": {
+                "adminDomain": {
+                  "type": "string"
+                },
+                "domain": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "gateway": {
+                  "type": "string"
+                },
+                "host": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "replicaCount": {
+              "type": "number"
+            },
+            "resources": {
+              "properties": {
+                "limits": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "requests": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "sso": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
 }

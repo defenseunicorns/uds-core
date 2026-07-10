@@ -1,0 +1,137 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Clusterless value-mapping test overrides for the base package. For every chart that base
+# actually deploys: one settable field set to a recognizable sentinel (asserted PRESENT) and,
+# where the chart declares excludePaths, one excluded path set to SHOULD_NOT_APPEAR (asserted
+# DROPPED). The three prometheus charts mapped in zarf-values.yaml (kube-prometheus-stack,
+# uds-prometheus-config, prometheus-blackbox-exporter) are NOT deployed by base — base only
+# imports prometheus-operator-crds — so they render nothing here and are covered by the
+# monitoring/standard packages instead.
+
+# --- pepr ---
+pepr-uds-core:
+  module:
+    # Settable: pod label lands on the admission Deployment pod template.
+    admission:
+      podLabels:
+        probe: PROBE_VISIBLE_PEPR
+      # Excluded (.pepr-uds-core.module.admission.image): must be dropped.
+      image: SHOULD_NOT_APPEAR
+uds-operator-config:
+  uds-operator-config:
+    # Settable: clusterName lands in the ClusterConfig CR spec.attributes. (no excludePaths)
+    cluster:
+      attributes:
+        clusterName: PROBE_VISIBLE_OPERATOR
+
+# --- istio ---
+istio-controlplane:
+  base:
+    # The base chart has settable fields such as global.imagePullSecrets, rendered on the
+    # istio-reader ServiceAccount. This test sets only excluded global.hub for absence coverage.
+    global:
+      hub: SHOULD_NOT_APPEAR
+  istiod:
+    # Settable: pod label lands on the istiod Deployment pod template.
+    podLabels:
+      probe: PROBE_VISIBLE_ISTIOD
+    # Excluded (.istio-controlplane.istiod.global.hub): must be dropped.
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-global-istio-config:
+    # Settable: enabled host lands in the classification-banner EnvoyFilter Lua enabled_hosts
+    # table. (classificationBanner.text is pattern-constrained by the chart schema, so the host
+    # entry is the sentinel here.) (no excludePaths)
+    classificationBanner:
+      enabledHosts:
+        - "probe-visible-global.uds.dev"
+  cni:
+    # Settable: pod label lands on the istio-cni-node DaemonSet pod template.
+    podLabels:
+      probe: PROBE_VISIBLE_CNI
+    # Excluded (.istio-controlplane.cni.global.hub): must be dropped.
+    global:
+      hub: SHOULD_NOT_APPEAR
+  ztunnel:
+    # Settable: pod label lands on the ztunnel DaemonSet pod template.
+    podLabels:
+      probe: PROBE_VISIBLE_ZTUNNEL
+    # Excluded (.istio-controlplane.ztunnel.image): must be dropped.
+    image: SHOULD_NOT_APPEAR
+istio-admin-gateway:
+  gateway:
+    # Settable: label lands on the admin-ingressgateway Deployment.
+    labels:
+      probe: PROBE_VISIBLE_ADMIN
+    # Excluded (.istio-admin-gateway.gateway.global.hub): must be dropped.
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    # Settable: root-domain credentialName lands in the admin Gateway resource.
+    rootDomain:
+      enabled: true
+      tls:
+        mode: SIMPLE
+        credentialName: PROBE_VISIBLE_ADMINCFG
+    # Excluded (.istio-admin-gateway.uds-istio-config.name): must be dropped.
+    name: SHOULD_NOT_APPEAR
+istio-tenant-gateway:
+  gateway:
+    labels:
+      probe: PROBE_VISIBLE_TENANT
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    rootDomain:
+      enabled: true
+      tls:
+        mode: SIMPLE
+        credentialName: PROBE_VISIBLE_TENANTCFG
+    name: SHOULD_NOT_APPEAR
+istio-passthrough-gateway:
+  gateway:
+    labels:
+      probe: PROBE_VISIBLE_PASSTHROUGH
+    global:
+      hub: SHOULD_NOT_APPEAR
+  uds-istio-config:
+    rootDomain:
+      enabled: true
+      tls:
+        mode: SIMPLE
+        credentialName: PROBE_VISIBLE_PASSTHROUGHCFG
+    name: SHOULD_NOT_APPEAR
+istio-egress-ambient:
+  uds-istio-egress-config:
+    # Settable: serviceAccount overlay lands in the egress-waypoint-config ConfigMap. (no excludePaths)
+    config:
+      serviceAccount:
+        metadata:
+          annotations:
+            probe: PROBE_VISIBLE_EGRESSCFG
+istio-egress-gateway:
+  gateway:
+    labels:
+      probe: PROBE_VISIBLE_EGRESS
+    global:
+      hub: SHOULD_NOT_APPEAR
+
+# --- envoy gateway ---
+envoy-gateway:
+  envoy-gateway:
+    # Settable: pod label lands on the envoy-gateway Deployment pod template.
+    deployment:
+      pod:
+        labels:
+          probe: PROBE_VISIBLE_ENVOY
+      # Excluded (.envoy-gateway.envoy-gateway.deployment.envoyGateway.image): must be dropped.
+      envoyGateway:
+        image: SHOULD_NOT_APPEAR
+  uds-envoy-gateway-config:
+    # This config chart's templates (GatewayClass + Package CR) are fully static — no settable
+    # value renders — so it has no presence sentinel. Excluded image path retained for coverage.
+    global:
+      images:
+        envoyGateway:
+          image: SHOULD_NOT_APPEAR

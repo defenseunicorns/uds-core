@@ -37,6 +37,10 @@ components:
         namespace: velero
         version: 0.1.0
         localPath: ../chart
+        # UDS-authored config chart, exposed broadly.
+        values:
+          - sourcePath: .velero.uds-velero-config
+            targetPath: .
       - name: velero
         namespace: velero
         url: https://vmware-tanzu.github.io/helm-charts
@@ -45,6 +49,20 @@ components:
         releaseName: velero
         valuesFiles:
           - ../values/values.yaml
+        # image/initContainers/securityContext paths are excluded to prevent pulling
+        # unauthorized images and to preserve the UDS-hardened security contexts.
+        values:
+          - sourcePath: .velero.velero
+            targetPath: .
+            excludePaths:
+              - .velero.velero.image
+              - .velero.velero.initContainers
+              - .velero.velero.podSecurityContext
+              - .velero.velero.containerSecurityContext
+              - .velero.velero.nodeAgent.podSecurityContext
+              - .velero.velero.nodeAgent.containerSecurityContext
+              - .velero.velero.kubectl.image
+              - .velero.velero.kubectl.containerSecurityContext
     actions:
       onDeploy:
         before:

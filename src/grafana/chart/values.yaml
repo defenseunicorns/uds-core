@@ -3,6 +3,7 @@
 
 domain: "###ZARF_VAR_DOMAIN###"
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+udsAdminDomain: ""
 
 # optional extra datasources to be added to configmap
 extraDatasources: []

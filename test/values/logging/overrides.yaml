@@ -1,0 +1,43 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Clusterless value-mapping test overrides for the logging package.
+# For every chart: one settable field set to a recognizable sentinel (asserted PRESENT),
+# and — where the chart defines excludePaths — one excluded path set to SHOULD_NOT_APPEAR
+# (asserted DROPPED). The uds-*-config charts define no excludePaths, so they carry a
+# settable sentinel only.
+loki:
+  loki:
+    # Settable: pod label lands on the loki write StatefulSet pod template.
+    write:
+      podLabels:
+        probe: PROBE_VISIBLE
+    # Excluded (.loki.loki.global.imageRegistry): must be dropped before Helm renders.
+    global:
+      imageRegistry: SHOULD_NOT_APPEAR
+  uds-loki-config:
+    # Settable: custom network rule lands in the loki Package CR spec.network.allow.
+    additionalNetworkAllow:
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: loki
+        remoteGenerated: Anywhere
+        port: 9999
+        description: PROBE_VISIBLE
+vector:
+  vector:
+    # Settable: pod label lands on the vector DaemonSet pod template.
+    podLabels:
+      probe: PROBE_VISIBLE
+    # Excluded (.vector.vector.image): must be dropped before Helm renders.
+    image:
+      repository: SHOULD_NOT_APPEAR
+  uds-vector-config:
+    # Settable: custom network rule lands in the vector Package CR spec.network.allow.
+    additionalNetworkAllow:
+      - direction: Egress
+        selector:
+          app.kubernetes.io/name: vector
+        remoteGenerated: Anywhere
+        port: 9999
+        description: PROBE_VISIBLE

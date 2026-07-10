@@ -50,6 +50,8 @@ tasks:
         task: helm-unittest
       - description: Lint packages that expose Zarf values
         task: values-lint
+      - description: Verify Zarf value mappings render correctly (clusterless)
+        task: values-verify
 
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
@@ -64,7 +66,10 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          for pkg in base identity-authorization logging monitoring portal runtime-security standard; do
+          # A package exposes native values when it provides this default values file.
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
             echo "Linting packages/${pkg}"
             uds zarf dev lint "packages/${pkg}" --flavor upstream
           done
@@ -74,11 +79,99 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          for pkg in base identity-authorization logging monitoring portal runtime-security standard; do
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
             echo "Validating packages/${pkg}/zarf-values.yaml"
             uvx check-jsonschema \
               --schemafile "packages/${pkg}/zarf-values.schema.json" \
               "packages/${pkg}/zarf-values.yaml"
+          done
+
+  - name: values-verify
+    description: "Render each values-bearing package through the Zarf values pipeline (no cluster) and assert overrides land and excluded paths are dropped"
+    actions:
+      - description: "Build the Pepr module (needed to compose the base and standard packages)"
+        cmd: |
+          npm ci
+          npx pepr build -z chart
+      - description: "Render each values-bearing package and run its assertions"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            for fixture in "test/values/${pkg}/overrides.yaml" "test/values/${pkg}/assertions.sh"; do
+              if [ ! -f "$fixture" ]; then
+                echo "ERROR: packages/${pkg} exposes Zarf values but is missing ${fixture}"
+                exit 1
+              fi
+            done
+            echo "Verifying value mappings for packages/${pkg}"
+            uds zarf dev inspect manifests "packages/${pkg}" \
+              --flavor upstream \
+              --values "packages/${pkg}/zarf-values.yaml" \
+              --values "test/values/${pkg}/overrides.yaml" \
+              --deploy-set-variables DOMAIN=uds.dev \
+              --no-color \
+              | bash "test/values/${pkg}/assertions.sh"
+          done
+      - description: "Verify admin-domain precedence across affected packages"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for scenario in s1 s2 s3 s4; do
+            case "$scenario" in
+              s1) expected=admin.custom.example.com; variables=DOMAIN=uds.dev ;;
+              s2) expected=mgmt.example.com; variables=DOMAIN=uds.dev ;;
+              s3) expected=myadmin.example.com; variables=DOMAIN=uds.dev,ADMIN_DOMAIN=myadmin.example.com ;;
+              s4) expected=admin.uds.dev; variables=DOMAIN=uds.dev ;;
+            esac
+            for values_file in packages/*/zarf-values.yaml; do
+              # Only packages with the top-level override participate in this precedence matrix.
+              if ! uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
+                continue
+              fi
+              pkg="${values_file#packages/}"
+              pkg="${pkg%/zarf-values.yaml}"
+              echo "Verifying admin-domain ${scenario} for packages/${pkg}"
+              uds zarf dev inspect manifests "packages/${pkg}" \
+                --flavor upstream \
+                --values "packages/${pkg}/zarf-values.yaml" \
+                --values "test/values/${pkg}/overrides.yaml" \
+                --values "test/values/admin-domain/${scenario}.yaml" \
+                --deploy-set-variables "$variables" \
+                --no-color \
+                | bash "test/values/${pkg}/assertions.sh" "$expected"
+            done
+          done
+
+  - name: values-generate
+    description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
+    actions:
+      - description: "Build the Pepr module (needed to compose the base and standard packages)"
+        cmd: |
+          npm ci
+          npx pepr build -z chart
+      - description: "Regenerate each package's values schema"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            echo "Generating packages/${pkg}/zarf-values.schema.json"
+            # Write to a temp file and move on success so a failed/flaky generate never truncates a committed schema.
+            tmp=$(mktemp)
+            uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"
+            mv "$tmp" "packages/${pkg}/zarf-values.schema.json"
           done
 
   - name: helm-unittest

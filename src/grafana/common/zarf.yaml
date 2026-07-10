@@ -17,13 +17,17 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
-        # UDS-authored config chart, exposed broadly. sso is excluded because the Grafana OAuth
-        # client is wired to Keycloak by UDS and a careless override breaks auth.
+        # UDS-authored config chart, exposed broadly. Its nested adminDomain is excluded so the
+        # top-level domain and adminDomain values below control Grafana's admin URLs.
         values:
-          - sourcePath: .uds-grafana-config
+          - sourcePath: .grafana.uds-grafana-config
             targetPath: .
             excludePaths:
-              - .uds-grafana-config.sso
+              - .grafana.uds-grafana-config.adminDomain
+          - sourcePath: .domain
+            targetPath: .domain
+          - sourcePath: .adminDomain
+            targetPath: .udsAdminDomain
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3
@@ -32,8 +36,28 @@ components:
           - ../values/values.yaml
         # sidecar is excluded because UDS configures the provisioning sidecars that wire
         # Loki and Prometheus datasources; overriding it breaks datasource connectivity.
+        # Image references and registries are excluded to prevent pulling unauthorized
+        # images, and security contexts to prevent privilege escalation.
         values:
-          - sourcePath: .grafana
+          - sourcePath: .grafana.grafana
             targetPath: .
             excludePaths:
-              - .grafana.sidecar
+              - .grafana.grafana.sidecar
+              - .grafana.grafana.image
+              - .grafana.grafana.initChownData.image
+              - .grafana.grafana.downloadDashboardsImage
+              - .grafana.grafana.global.imageRegistry
+              - .grafana.grafana.securityContext
+              - .grafana.grafana.containerSecurityContext
+              - .grafana.grafana.initChownData.securityContext
+              - .grafana.grafana.downloadDashboards.securityContext
+              - .grafana.grafana.imageRenderer.image
+              - .grafana.grafana.imageRenderer.securityContext
+              - .grafana.grafana.imageRenderer.containerSecurityContext
+              - .grafana.grafana.testFramework.image
+              - .grafana.grafana.testFramework.securityContext
+              - .grafana.grafana.testFramework.containerSecurityContext
+          - sourcePath: .domain
+            targetPath: .domain
+          - sourcePath: .adminDomain
+            targetPath: .udsAdminDomain

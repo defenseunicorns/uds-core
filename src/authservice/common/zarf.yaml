@@ -16,9 +16,9 @@ components:
         version: 1.0.1
         namespace: authservice
         values:
-          - sourcePath: .authservice
+          - sourcePath: .authservice.authservice
             targetPath: .
             excludePaths:
-              - .authservice.image
-              - .authservice.securityContext
-              - .authservice.podSecurityContext
+              - .authservice.authservice.image
+              - .authservice.authservice.securityContext
+              - .authservice.authservice.podSecurityContext

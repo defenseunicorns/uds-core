@@ -7,6 +7,10 @@ metadata:
   description: "UDS Core Envoy Gateway"
   url: https://github.com/envoyproxy/gateway
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: envoy-gateway
     required: false
@@ -24,6 +28,14 @@ components:
         localPath: chart
         valuesFiles:
           - "values/upstream-values.yaml"
+        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
+        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
       - docker.io/envoyproxy/gateway:v1.8.1
       - docker.io/envoyproxy/envoy:distroless-v1.38.3
@@ -44,6 +56,14 @@ components:
         localPath: chart
         valuesFiles:
           - "values/registry1-values.yaml"
+        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
+        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.1
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.3
@@ -64,6 +84,14 @@ components:
         localPath: chart
         valuesFiles:
           - "values/unicorn-values.yaml"
+        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
+        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.1
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3

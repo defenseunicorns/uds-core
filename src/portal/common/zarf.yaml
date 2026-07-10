@@ -19,6 +19,15 @@ components:
         gitPath: chart
         valuesFiles:
           - ../values/values.yaml
+        # Portal chart exposed broadly. Image references and security contexts are excluded to
+        # prevent pulling unauthorized images and privilege escalation. The .domain fan-out keeps
+        # setting .package.domain for backward-compat.
         values:
+          - sourcePath: .uds-portal.uds-portal
+            targetPath: .
+            excludePaths:
+              - .uds-portal.uds-portal.image
+              - .uds-portal.uds-portal.podSecurityContext
+              - .uds-portal.uds-portal.containerSecurityContext
           - sourcePath: .domain
             targetPath: .package.domain

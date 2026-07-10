@@ -221,6 +221,9 @@
     "adminDomain": {
       "type": "string"
     },
+    "udsAdminDomain": {
+      "type": "string"
+    },
     "enableServiceLinks": {
       "type": "boolean"
     },
