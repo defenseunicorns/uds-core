@@ -20,7 +20,7 @@ After completing this guide, your application will be accessible through one of 
   ```yaml title="uds-config.yaml"
   shared:
     domain: yourdomain.com
-    admin_domain: admin.yourdomain.com  # optional, defaults to admin.<domain>
+    admin_domain: admin.yourdomain.com # optional, defaults to admin.<domain>
   ```
 - Wildcard DNS records for `*.yourdomain.com` and `*.admin.yourdomain.com` pointing to the tenant and admin gateway load balancer IPs
 - Familiarity with [Zarf packages](https://docs.zarf.dev/ref/create/)
@@ -47,7 +47,7 @@ After completing this guide, your application will be accessible through one of 
                - path: rootDomain.tls.mode
                  value: SIMPLE
                - path: rootDomain.tls.credentialName
-                 value: ""  # Leave blank to auto-create the secret from cert data
+                 value: "" # Leave blank to auto-create the secret from cert data
                - path: rootDomain.tls.supportTLSV1_2
                  value: true
              variables:
@@ -76,79 +76,79 @@ After completing this guide, your application will be accessible through one of 
    Add an `expose` entry to route traffic through a gateway. The UDS Operator creates the necessary `VirtualService` and `AuthorizationPolicy` resources automatically. Use the **tenant** gateway for end-user traffic and the **admin** gateway for platform-administration interfaces. The root domain is served on the **tenant** gateway.
 
    <Tabs>
-     <TabItem label="Tenant gateway">
+  <TabItem label="Tenant gateway">
 
-     Expose on the **tenant gateway** for end-user traffic:
+   Expose on the **tenant gateway** for end-user traffic:
 
-     ```yaml title="uds-package.yaml"
-     apiVersion: uds.dev/v1alpha1
-     kind: Package
-     metadata:
-       name: my-app
-       namespace: my-app
-     spec:
-       network:
-         expose:
-           - service: my-app-service
-             selector:
-               app.kubernetes.io/name: my-app
-             host: my-app
-             gateway: tenant
-             port: 8080
-     ```
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app.kubernetes.io/name: my-app
+           host: my-app
+           gateway: tenant
+           port: 8080
+   ```
 
-     This exposes the application at `https://my-app.yourdomain.com`, routing traffic to port 8080 on pods matching the selector.
-
-     </TabItem>
-     <TabItem label="Admin gateway">
-
-     Expose on the **admin gateway** for admin-facing interfaces:
-
-     ```yaml title="uds-package.yaml"
-     apiVersion: uds.dev/v1alpha1
-     kind: Package
-     metadata:
-       name: my-app
-       namespace: my-app
-     spec:
-       network:
-         expose:
-           - service: my-app-admin
-             selector:
-               app.kubernetes.io/name: my-app
-             host: my-app
-             gateway: admin
-             port: 9090
-     ```
-
-     This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.). For the recommended pattern of restricting the admin gateway to internal networks at the load balancer layer, see [restrict the admin gateway to internal networks](/getting-started/production/build-your-bundle/#restrict-the-admin-gateway-to-internal-networks).
+   This exposes the application at `https://my-app.yourdomain.com`, routing traffic to port 8080 on pods matching the selector.
 
      </TabItem>
-     <TabItem label="Root domain">
+  <TabItem label="Admin gateway">
 
-     Expose on the **root (apex) domain** (requires step 1):
+   Expose on the **admin gateway** for admin-facing interfaces:
 
-     ```yaml title="uds-package.yaml"
-     apiVersion: uds.dev/v1alpha1
-     kind: Package
-     metadata:
-       name: my-app
-       namespace: my-app
-     spec:
-       network:
-         expose:
-           - service: my-app-service
-             selector:
-               app.kubernetes.io/name: my-app
-             host: "."
-             gateway: tenant
-             port: 80
-     ```
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       expose:
+         - service: my-app-admin
+           selector:
+             app.kubernetes.io/name: my-app
+           host: my-app
+           gateway: admin
+           port: 9090
+   ```
 
-     The special `host: "."` value routes traffic from `https://yourdomain.com` to your application.
+   This exposes the application at `https://my-app.admin.yourdomain.com`. Since the admin and tenant gateways are logically separated, you can apply different security controls to each (IP allowlisting, mTLS client certificates, etc.). For the recommended pattern of restricting the admin gateway to internal networks at the load balancer layer, see [restrict the admin gateway to internal networks](/getting-started/production/build-your-bundle/#restrict-the-admin-gateway-to-internal-networks).
 
      </TabItem>
-   </Tabs>
+  <TabItem label="Root domain">
+
+   Expose on the **root (apex) domain** (requires step 1):
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: my-app
+     namespace: my-app
+   spec:
+     network:
+       expose:
+         - service: my-app-service
+           selector:
+             app.kubernetes.io/name: my-app
+           host: "."
+           gateway: tenant
+           port: 80
+   ```
+
+   The special `host: "."` value routes traffic from `https://yourdomain.com` to your application.
+
+     </TabItem>
+</Tabs>
 
 3. **(Optional) Configure advanced HTTP routing**
 
@@ -211,7 +211,40 @@ After completing this guide, your application will be accessible through one of 
 
    All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
 
-4. **Deploy your application**
+4. **(Optional) Route multiple applications on a single domain using paths**
+
+   If your ingress design uses shared hosts with URL path segmentation, use `match.uri` to route by path and `advancedHTTP.rewrite` to normalize requests for your backend.
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: app1
+     namespace: app1
+   spec:
+     network:
+       expose:
+         - service: app1
+           selector:
+             app.kubernetes.io/name: app1
+           host: app1
+           gateway: tenant
+           port: 8080
+           match:
+             - uri:
+                 prefix: /app1
+           advancedHTTP:
+             rewrite:
+               # Strip /app1 before forwarding to the upstream application.
+               uri: /
+   ```
+
+   Use this pattern for each application path (for example, `/app1`, `/app2`) to route multiple services on the same host.
+
+   > [!TIP]
+   > Reference [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) for built-in service behavior (`pathRouting`, `contextPath`, and `adminContextPath`) and full configuration examples.
+
+5. **Deploy your application**
 
    **(Recommended)** Include the `Package` CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -251,6 +284,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Browser or curl returns connection refused or timeout.
 
 **Solution:**
+
 - Verify the `Package` CR was reconciled: `uds zarf tools kubectl get package my-app -n my-app` (check the `STATUS` column)
 - Ensure your DNS resolves the hostname to the gateway load balancer IP
 
@@ -259,6 +293,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Application accessible on an unexpected URL or not at all.
 
 **Solution:**
+
 - Check the `gateway` field in your `Package` CR matches your intent (`tenant` or `admin`)
 - Verify the `host` field, which becomes the subdomain prefix (e.g., `host: my-app` becomes `my-app.yourdomain.com`)
 - Check `shared.domain` in your `uds-config.yaml`
@@ -268,6 +303,7 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Subdomains work but `https://yourdomain.com` does not.
 
 **Solution:**
+
 - Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
 - Verify DNS has an A record for the root domain (not just a wildcard)
 - Check that TLS certificates are provided for the root domain configuration
@@ -276,6 +312,7 @@ curl -v https://my-app.yourdomain.com
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
 - [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) - Configure shared-host path routing and built-in service URL paths.
 - [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
 - [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.

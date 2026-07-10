@@ -1,0 +1,181 @@
+---
+title: Path routing issues
+description: Diagnose and resolve path-based routing failures for built-in services and application routes in UDS Core.
+sidebar:
+  order: 1.006
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## When to use this runbook
+
+Use this runbook when:
+
+- Requests to path-based URLs return `404`, `503`, or route to the wrong backend
+- Built-in URLs such as `/sso`, `/admin/keycloak`, or `/admin/grafana` are unreachable after enabling `pathRouting`
+- Applications behind `match.uri` rules receive unexpected request paths
+- Keycloak path-routed requests return a `400` response about path parameters
+
+**Example error:**
+
+```plaintext
+Path parameters may only appear after the final path segment
+```
+
+## Overview
+
+Path-routing issues are usually caused by one of the following:
+
+1. **Invalid expose path configuration**: `contextPath` or `adminContextPath` values are malformed or collide.
+2. **Route rule mismatch**: `match.uri` values do not match incoming requests, or a rewrite is missing.
+3. **Security filter rejection**: Keycloak path-parameter protections reject unsafe URL patterns.
+
+## Pre-checks
+
+<Steps>
+
+1. **Confirm path routing is enabled and values are correct**
+
+   ```bash
+   uds zarf tools kubectl get clusterconfig uds-cluster-config -o yaml
+   ```
+
+   **What to look for:**
+   - `spec.expose.pathRouting: true`
+   - `spec.expose.contextPath` and `spec.expose.adminContextPath` start with `/`
+   - No trailing `/` on either path
+   - Paths do not normalize to the same value
+
+2. **Verify built-in endpoints respond**
+
+   ```bash
+   curl -Ik https://<domain>/<contextPath>/sso
+   curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/keycloak
+   curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/grafana
+   ```
+
+   **What to look for:** `200`, `302`, or expected auth redirects. `404` or `503` indicates routing or gateway mismatch.
+
+3. **Inspect generated VirtualService rules for your app**
+
+   ```bash
+   uds zarf tools kubectl get virtualservice -A | grep -i <app-or-namespace>
+   uds zarf tools kubectl get virtualservice -n <namespace> <virtualservice-name> -o yaml
+   ```
+
+   **What to look for:** expected `match.uri` prefixes and any configured `rewrite` behavior.
+
+</Steps>
+
+## Procedure
+
+### Cause 1: Invalid expose path configuration
+
+If `pathRouting` is enabled but paths are malformed or colliding:
+
+<Steps>
+
+1. **Set valid path values**
+
+   Ensure both values use leading slashes and no trailing slashes.
+
+2. **Apply corrected configuration**
+
+   ```bash
+   uds zarf tools kubectl apply -f <clusterconfig-file>.yaml
+   ```
+
+3. **Wait for reconciliation and retest URLs**
+
+   ```bash
+   uds zarf tools kubectl get clusterconfig uds-cluster-config -o yaml
+   curl -Ik https://<domain>/<contextPath>/sso
+   ```
+
+</Steps>
+
+### Cause 2: Route rule mismatch or missing rewrite
+
+If requests match the host but not the expected backend route:
+
+<Steps>
+
+1. **Check your `Package` `match.uri` values**
+
+   Confirm incoming paths match your configured prefixes or exact values.
+
+2. **Add rewrite when backend expects `/`**
+
+   ```yaml
+   spec:
+     network:
+       expose:
+         - match:
+             - uri:
+                 prefix: /app1
+           advancedHTTP:
+             rewrite:
+               uri: /
+   ```
+
+3. **Redeploy and verify**
+
+   ```bash
+   uds zarf tools kubectl apply -f uds-package.yaml
+   curl -Ik https://<domain>/app1
+   ```
+
+</Steps>
+
+### Cause 3: Keycloak path-parameter security rejection
+
+If Keycloak path-routed requests return the path-parameter error:
+
+<Steps>
+
+1. **Inspect request URLs for semicolon path parameters**
+
+   Look for patterns such as `/sso;foo=bar/realms/...`.
+
+2. **Remove or normalize unsafe path parameters in the caller**
+
+   Update clients, ingress rewrites, or upstream redirects to avoid semicolon parameters in non-final path segments.
+
+3. **Retest the flow**
+
+   ```bash
+   curl -Ik "https://<domain>/<contextPath>/sso/realms/uds/.well-known/openid-configuration"
+   ```
+
+</Steps>
+
+## Verification
+
+After applying a fix, confirm path-routed endpoints and app routes are healthy:
+
+```bash
+curl -Ik https://<domain>/<contextPath>/sso
+curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/keycloak
+curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/grafana
+uds zarf tools kubectl get virtualservice -A | grep -i <app-or-namespace>
+```
+
+**Success indicators:**
+- Built-in path-routed URLs return expected status codes or redirects
+- Application routes resolve to the correct backend service
+- No recurring path-parameter `400` responses for normal client traffic
+
+## Additional help
+
+If this runbook does not resolve your issue:
+
+1. Collect the `ClusterConfig` expose values and relevant `VirtualService` snippets
+2. Check [UDS Core GitHub Issues](https://github.com/defenseunicorns/uds-core/issues) for known issues
+3. Open a new issue with request examples and diagnostics attached
+
+## Related documentation
+
+- [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) - Configure `pathRouting`, `contextPath`, and `adminContextPath`.
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Configure `Package` expose rules, URI matching, and rewrites.
+- [Clusterconfig CR (v1alpha1)](/reference/operator-and-crds/clusterconfig-v1alpha1-cr/) - Reference for expose path-routing fields and expected formats.
+- [Packages CR (v1alpha1)](/reference/operator-and-crds/packages-v1alpha1-cr/) - Full schema for `match` and `advancedHTTP.rewrite` fields.

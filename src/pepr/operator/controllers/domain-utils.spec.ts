@@ -7,9 +7,19 @@ import { describe, expect, it } from "vitest";
 import { Expose } from "../crd";
 import { UDSConfig } from "./config/config";
 import { getFqdn } from "./domain-utils";
+import {
+  getAdminAppUrl,
+  getAdminBaseUrl,
+  getPublicBaseUrl,
+  getSsoUrl,
+  normalizeContextPath,
+} from "./url-utils";
 
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
+UDSConfig.contextPath = "";
+UDSConfig.adminContextPath = "/admin";
+UDSConfig.pathRouting = false;
 
 describe("getFqdn", () => {
   it("should return fqdn for tenant gateway", () => {
@@ -35,5 +45,51 @@ describe("getFqdn", () => {
   it("should use expose.domain when specified for custom gateways", () => {
     const expose: Expose = { host: "app", gateway: "custom-gateway", domain: "custom.example.com" };
     expect(getFqdn(expose)).toEqual("app.custom.example.com");
+  });
+
+  it("should return the shared host for built-in services when path routing is enabled", () => {
+    UDSConfig.pathRouting = true;
+    const expose: Expose = { host: "grafana", gateway: "admin" };
+    expect(getFqdn(expose)).toEqual("admin.uds.dev");
+    UDSConfig.pathRouting = false;
+  });
+
+  it("should preserve package FQDNs when path routing is enabled", () => {
+    UDSConfig.pathRouting = true;
+    const expose: Expose = { host: "app", gateway: "tenant" };
+    expect(getFqdn(expose)).toEqual("uds.dev");
+    UDSConfig.pathRouting = false;
+  });
+});
+
+describe("path routing URL helpers", () => {
+  it.each([
+    [undefined, ""],
+    ["", ""],
+    ["/", ""],
+    ["bar", "/bar"],
+    ["/bar", "/bar"],
+  ])("normalizes context path %s", (path, expected) => {
+    expect(normalizeContextPath(path)).toEqual(expected);
+  });
+
+  it("computes single-host public and admin URLs", () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.contextPath = "/bar";
+    UDSConfig.adminContextPath = "/admin";
+
+    expect(getPublicBaseUrl(UDSConfig)).toEqual("https://uds.dev/bar");
+    expect(getAdminBaseUrl(UDSConfig)).toEqual("https://admin.uds.dev/bar/admin");
+    expect(getSsoUrl(UDSConfig)).toEqual("https://uds.dev/bar/sso");
+    expect(getAdminAppUrl(UDSConfig, "grafana")).toEqual("https://admin.uds.dev/bar/admin/grafana");
+
+    UDSConfig.pathRouting = false;
+    UDSConfig.contextPath = "";
+    UDSConfig.adminContextPath = "/admin";
+  });
+
+  it("preserves legacy SSO and admin URLs when path routing is disabled", () => {
+    expect(getSsoUrl(UDSConfig)).toEqual("https://sso.uds.dev");
+    expect(getAdminAppUrl(UDSConfig, "grafana")).toEqual("https://grafana.admin.uds.dev");
   });
 });

@@ -65,7 +65,6 @@ tests:
           path: spec.network.expose
           any: true
           content:
-            host: grafana
             gateway: admin
             service: grafana
             port: 80

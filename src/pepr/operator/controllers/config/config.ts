@@ -17,6 +17,7 @@ import { reconcileAuthservice } from "../keycloak/authservice/authservice";
 import { Action, AuthServiceEvent } from "../keycloak/authservice/types";
 import { initAPIServerCIDR } from "../network/generators/kubeAPI";
 import { initAllNodesTarget } from "../network/generators/kubeNodes";
+import { normalizeContextPath } from "../url-utils";
 import { registerWatchEventHandlers, watchCfg } from "../utils";
 import { Config, KeycloakClientMode } from "./types";
 
@@ -26,6 +27,9 @@ export const configLog = setupLogger(Component.OPERATOR_CONFIG);
 export const UDSConfig: Config = {
   domain: "",
   adminDomain: "",
+  contextPath: "",
+  adminContextPath: "",
+  pathRouting: false,
   caBundle: {
     certs: "",
     includeDoDCerts: false,
@@ -359,17 +363,28 @@ export async function handleCfg(cfg: ClusterConfig, action: ConfigAction) {
       }
     }
 
-    if (expose.domain !== UDSConfig.domain || expose.adminDomain !== UDSConfig.adminDomain) {
-      if (expose.domain && expose.domain !== "###ZARF_VAR_DOMAIN###") {
-        UDSConfig.domain = expose.domain;
-      } else {
-        UDSConfig.domain = "uds.dev";
-      }
-      if (expose.adminDomain && expose.adminDomain !== "###ZARF_VAR_ADMIN_DOMAIN###") {
-        UDSConfig.adminDomain = expose.adminDomain;
-      } else {
-        UDSConfig.adminDomain = `admin.${UDSConfig.domain}`;
-      }
+    const domain =
+      expose.domain && expose.domain !== "###ZARF_VAR_DOMAIN###" ? expose.domain : "uds.dev";
+    const adminDomain =
+      expose.adminDomain && expose.adminDomain !== "###ZARF_VAR_ADMIN_DOMAIN###"
+        ? expose.adminDomain
+        : `admin.${domain}`;
+    const contextPath = normalizeContextPath(expose.contextPath);
+    const adminContextPath = normalizeContextPath(expose.adminContextPath, "/admin");
+    const pathRouting = expose.pathRouting === true;
+
+    if (
+      domain !== UDSConfig.domain ||
+      adminDomain !== UDSConfig.adminDomain ||
+      contextPath !== UDSConfig.contextPath ||
+      adminContextPath !== UDSConfig.adminContextPath ||
+      pathRouting !== UDSConfig.pathRouting
+    ) {
+      UDSConfig.domain = domain;
+      UDSConfig.adminDomain = adminDomain;
+      UDSConfig.contextPath = contextPath;
+      UDSConfig.adminContextPath = adminContextPath;
+      UDSConfig.pathRouting = pathRouting;
       // todo: Add logic to handle domain changes and update across virtualservices, authservice config, etc
     }
 

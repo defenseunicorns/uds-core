@@ -14,6 +14,7 @@ import {
 } from "../../../crd";
 import { UDSConfig } from "../../config/config";
 import { matchesLabels } from "../../istio/waypoint-utils";
+import { getSsoUrl } from "../../url-utils";
 import { PROMETHEUS_PRINCIPAL, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../../utils";
 import { log } from "./authservice";
 import { AddOrRemoveClientEvent, Action as AuthServiceAction } from "./types";
@@ -188,9 +189,10 @@ function jwtAuthZAuthorizationPolicy(
   const nonMetricsOps = buildNonMetricsOperations(monitorExemptions);
 
   const rules: NonNullable<IstioAuthorizationPolicy["spec"]>["rules"] = [];
+  const issuer = `${getSsoUrl(UDSConfig)}/realms/uds`;
 
   const ssoJwtSource = {
-    notRequestPrincipals: [`https://sso.${UDSConfig.domain}/realms/uds/*`],
+    notRequestPrincipals: [`${issuer}/*`],
   };
 
   const prometheusOrSsoJwtSource = {
@@ -254,6 +256,7 @@ function authNRequestAuthentication(
   isAmbient = false,
   waypointName?: string,
 ): IstioRequestAuthentication {
+  const issuer = `${getSsoUrl(UDSConfig)}/realms/uds`;
   // Create base policy with spec explicitly typed
   const policy: IstioRequestAuthentication & {
     spec: NonNullable<IstioRequestAuthentication["spec"]>;
@@ -268,8 +271,8 @@ function authNRequestAuthentication(
         {
           audiences: [name],
           forwardOriginalToken: true,
-          issuer: `https://sso.${UDSConfig.domain}/realms/uds`,
-          jwksUri: `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/certs`,
+          issuer,
+          jwksUri: `${issuer}/protocol/openid-connect/certs`,
         },
       ],
     },

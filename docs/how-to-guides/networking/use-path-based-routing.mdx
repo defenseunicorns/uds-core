@@ -1,0 +1,140 @@
+---
+title: Use path-based routing
+description: Configure UDS Core to route built-in services on shared domains by URL path, then use Package match rules for application path routing.
+sidebar:
+  order: 2.012
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+This guide shows you how to enable path-based routing in UDS Core and verify the resulting URLs. You will configure `ClusterConfig` expose fields for shared-domain routing and apply `Package` route matching so multiple apps can share one host.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster with UDS Core deployed
+- Familiarity with [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/)
+
+## Before you begin
+
+UDS Core defaults to domain and subdomain routing. If you do not set `pathRouting: true`, built-in services continue to use hostnames such as `sso.<domain>` and `<app>.<adminDomain>`.
+
+Path-based routing in this release applies to built-in Keycloak and Grafana routes. Other services continue to use domain and subdomain routing unless you define additional `Package` routing behavior.
+
+## Steps
+
+<Steps>
+
+1. **Enable path routing in your core bundle overrides**
+
+   Set `pathRouting` and optional path prefixes in your core override. Use leading slashes and avoid trailing slashes.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         uds-operator-config:
+           uds-operator-config:
+             values:
+               - path: clusterConfig.spec.expose.pathRouting
+                 value: true
+               - path: clusterConfig.spec.expose.contextPath
+                 value: "/platform"
+               - path: clusterConfig.spec.expose.adminContextPath
+                 value: "/admin"
+   ```
+
+   > [!IMPORTANT]
+   > `contextPath` and `adminContextPath` must not collide after normalization. For example, using `/admin` for both fields is invalid.
+
+2. **Set your shared domains**
+
+   Configure the public and admin domains in your deployment config.
+
+   ```yaml title="uds-config.yaml"
+   shared:
+     domain: "example.mil"
+     admin_domain: "admin.example.mil"
+   ```
+
+   With the example values above, built-in paths resolve as follows:
+   - SSO: `https://example.mil/platform/sso`
+   - Keycloak admin UI: `https://admin.example.mil/platform/admin/keycloak`
+   - Grafana: `https://admin.example.mil/platform/admin/grafana`
+
+3. **Route application paths with `Package` match rules**
+
+   Use URI matching to pin requests to a service path, and rewrite when the backend expects `/` instead of the external path prefix.
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: app1
+     namespace: app1
+   spec:
+     network:
+       expose:
+         - service: app1
+           selector:
+             app: app1
+           host: app1
+           gateway: tenant
+           port: 8080
+           match:
+             - uri:
+                 prefix: /app1
+           advancedHTTP:
+             rewrite:
+               # Strip the external path prefix before forwarding to the app service.
+               uri: /
+   ```
+
+   If your backend already handles the prefixed path, omit the rewrite.
+
+4. **Create and deploy your bundle**
+
+   Build and deploy the updated configuration.
+
+   ```bash
+   uds create --confirm
+   uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Verify the cluster routing configuration and test the built-in endpoints.
+
+```bash
+uds zarf tools kubectl get clusterconfig uds-cluster-config -o yaml | grep -A6 "expose:"
+curl -I https://example.mil/platform/sso
+curl -I https://admin.example.mil/platform/admin/grafana
+```
+
+## Troubleshooting
+
+### Problem: Requests return 404 after enabling path routing
+
+**Symptom:** Built-in service URLs return `404` or route to the wrong app.
+
+**Solution:** Confirm `contextPath` and `adminContextPath` include a leading `/`, do not include a trailing `/`, and do not normalize to the same value.
+
+### Problem: Backend receives an unexpected prefixed path
+
+**Symptom:** Your app logs show requests such as `/app1/healthz` when it expects `/healthz`.
+
+**Solution:** Add `advancedHTTP.rewrite.uri: /` to the matching expose entry, then redeploy.
+
+## Related documentation
+
+- [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Configure gateway exposure and route behavior with `Package` resources.
+- [Build your bundle](/getting-started/production/build-your-bundle/) - Set core bundle overrides and deploy production-ready bundles.
+- [Clusterconfig CR (v1alpha1)](/reference/operator-and-crds/clusterconfig-v1alpha1-cr/) - Field-level reference for `pathRouting`, `contextPath`, and `adminContextPath`.
+- [Packages CR (v1alpha1)](/reference/operator-and-crds/packages-v1alpha1-cr/) - Full schema for `match` and `advancedHTTP` route controls.

@@ -119,6 +119,23 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
                   description:
                     "Domain all cluster services on the admin gateway will be exposed on",
                 },
+                contextPath: {
+                  type: "string",
+                  description:
+                    "Optional public URL context path used when pathRouting is enabled, for example /bar",
+                },
+                adminContextPath: {
+                  type: "string",
+                  description:
+                    "Optional admin URL context path appended after contextPath when pathRouting is enabled",
+                  default: "",
+                },
+                pathRouting: {
+                  type: "boolean",
+                  description:
+                    "Route built-in public and admin services on a single host using URL paths",
+                  default: false,
+                },
               },
               required: ["domain"],
             },

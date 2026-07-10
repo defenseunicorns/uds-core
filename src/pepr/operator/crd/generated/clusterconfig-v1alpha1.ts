@@ -56,13 +56,25 @@ export interface CABundle {
 
 export interface Expose {
   /**
+   * Optional admin URL context path appended after contextPath when pathRouting is enabled
+   */
+  adminContextPath?: string;
+  /**
    * Domain all cluster services on the admin gateway will be exposed on
    */
   adminDomain?: string;
   /**
+   * Optional public URL context path used when pathRouting is enabled, for example /bar
+   */
+  contextPath?: string;
+  /**
    * Domain all cluster services will be exposed on
    */
   domain: string;
+  /**
+   * Route built-in public and admin services on a single host using URL paths
+   */
+  pathRouting?: boolean;
 }
 
 export interface Networking {

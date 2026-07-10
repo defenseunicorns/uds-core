@@ -6,6 +6,7 @@
 import { K8s, kind } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import { UDSConfig } from "../config/config";
+import { getSsoUrl } from "../url-utils";
 import { Mutex } from "../utils";
 import type { BlackboxConfig } from "./types";
 
@@ -60,7 +61,7 @@ export async function updateBlackboxConfig(
       Object.entries(currentConfig.modules).filter(([name]) => !name.startsWith(namespacePrefix)),
     );
 
-    const tokenUrl = `https://sso.${UDSConfig.domain}/realms/uds/protocol/openid-connect/token`;
+    const tokenUrl = `${getSsoUrl(UDSConfig)}/realms/uds/protocol/openid-connect/token`;
 
     // Regenerate SSO modules for each probe client in this namespace
     for (const { clientId, secret: clientSecret } of probeClients) {

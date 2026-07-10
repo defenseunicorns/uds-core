@@ -23,6 +23,10 @@ export function getFqdn(expose: Expose): string {
     domain = UDSConfig.adminDomain;
   }
 
+  if (UDSConfig.pathRouting) {
+    return domain;
+  }
+
   // Add the host to the domain, unless this is the reserved root domain host (`.`)
   return host === "." ? domain : `${host}.${domain}`;
 }

@@ -16,6 +16,9 @@ configImage: ghcr.io/defenseunicorns/uds/identity-config:0.29.0
 domain: "###ZARF_VAR_DOMAIN###"
 # The admin domain for hosts to trust clients on
 adminDomain: '{{ "###ZARF_VAR_ADMIN_DOMAIN###" | default "admin.###ZARF_VAR_DOMAIN###" }}'
+contextPath: "###ZARF_VAR_CONTEXT_PATH###"
+adminContextPath: "###ZARF_VAR_ADMIN_CONTEXT_PATH###"
+pathRouting: "###ZARF_VAR_PATH_ROUTING###"
 
 # Additional Istio Gateways that expose Keycloak, to allow for client cert usage
 # A prefix of `istio-` is required for namespaces to prevent accidental misconfiguration

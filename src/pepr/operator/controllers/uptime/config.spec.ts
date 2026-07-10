@@ -63,6 +63,10 @@ describe("updateBlackboxConfig", () => {
 
   beforeEach(() => {
     UDSConfig.domain = "uds.dev";
+    UDSConfig.adminDomain = "admin.uds.dev";
+    UDSConfig.contextPath = "";
+    UDSConfig.adminContextPath = "/admin";
+    UDSConfig.pathRouting = false;
     secretClient = createMockK8sClient();
     vi.mocked(K8s as Mock).mockReturnValue(secretClient);
   });
@@ -94,6 +98,20 @@ describe("updateBlackboxConfig", () => {
       token_url: "https://sso.uds.dev/realms/uds/protocol/openid-connect/token",
       endpoint_params: { grant_type: "client_credentials" },
     });
+  });
+
+  it("generates OAuth2 config with the path-routed SSO token URL", async () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.contextPath = "/bar";
+    secretClient.Get.mockResolvedValue(makeBlackboxSecret({ modules: {} }));
+
+    await updateBlackboxConfig("my-ns", [{ clientId: "app-probe", secret: "mysecret" }]);
+
+    const applied = getAppliedConfig(secretClient);
+    const oauth2 = applied.modules["http_200x_sso_my-ns_app-probe"].http.oauth2;
+    expect(oauth2.token_url).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/token",
+    );
   });
 
   it("removes all SSO modules for a namespace when probeClients is empty", async () => {

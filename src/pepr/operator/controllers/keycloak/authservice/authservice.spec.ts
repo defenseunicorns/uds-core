@@ -13,6 +13,7 @@ vi.mock("../../ca-bundles/ca-bundle", () => ({
 import { Sso, UDSPackage } from "../../../crd";
 import { AuthserviceClient, Mode } from "../../../crd/generated/package-v1alpha1";
 import { buildCABundleContent } from "../../ca-bundles/ca-bundle";
+import { UDSConfig } from "../../config/config";
 import { cleanupWaypointLabels } from "../../istio/ambient-waypoint";
 import { getWaypointName } from "../../istio/waypoint-utils";
 import { Client } from "../types";
@@ -120,6 +121,10 @@ vi.mock("./config", () => {
 vi.mock("../../config/config", () => ({
   UDSConfig: {
     domain: "uds.dev",
+    adminDomain: "admin.uds.dev",
+    contextPath: "",
+    adminContextPath: "/admin",
+    pathRouting: false,
   },
 }));
 
@@ -128,6 +133,10 @@ vi.mock("./authorization-policy", () => ({
   updatePolicy: vi.fn().mockResolvedValue(undefined),
   UDSConfig: {
     domain: "uds.dev",
+    adminDomain: "admin.uds.dev",
+    contextPath: "",
+    adminContextPath: "/admin",
+    pathRouting: false,
   },
 }));
 
@@ -326,6 +335,16 @@ describe("authservice", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    UDSConfig.domain = "uds.dev";
+    UDSConfig.adminDomain = "admin.uds.dev";
+    UDSConfig.contextPath = "";
+    UDSConfig.adminContextPath = "/admin";
+    UDSConfig.pathRouting = false;
+    authorizationPolicy.UDSConfig.domain = "uds.dev";
+    authorizationPolicy.UDSConfig.adminDomain = "admin.uds.dev";
+    authorizationPolicy.UDSConfig.contextPath = "";
+    authorizationPolicy.UDSConfig.adminContextPath = "/admin";
+    authorizationPolicy.UDSConfig.pathRouting = false;
 
     mockClient = {
       clientId: "test-client",
@@ -492,6 +511,29 @@ describe("authservice", () => {
       expect(chain.filters[0].oidc_override.client_secret).toEqual(mockClient.secret);
       expect(chain.filters[0].oidc_override.callback_uri).toEqual(mockClient.redirectUris[0]);
     }
+  });
+
+  test("should build authservice chain with path-routed SSO URLs", async () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.contextPath = "/bar";
+    authorizationPolicy.UDSConfig.pathRouting = true;
+    authorizationPolicy.UDSConfig.contextPath = "/bar";
+
+    const chain = buildChain({
+      client: mockClient,
+      name: "sso-client-test",
+      action: Action.AddClient,
+    } as unknown as AuthServiceEvent);
+
+    expect(chain.filters[0].oidc_override?.authorization_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/auth",
+    );
+    expect(chain.filters[0].oidc_override?.token_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/token",
+    );
+    expect(chain.filters[0].oidc_override?.logout?.redirect_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/logout",
+    );
   });
 
   test("should test authservice chain removal", async () => {

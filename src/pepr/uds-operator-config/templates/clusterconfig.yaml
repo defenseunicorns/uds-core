@@ -36,10 +36,13 @@ spec:
   {{- end }}
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}
-    {{- if .Values.cluster.expose.adminDomain }}
-    adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
-    {{- else }}
-    adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
+    adminDomain: {{ include "uds-operator-config.adminDomain" . | quote }}
+    {{- if .Values.cluster.expose.contextPath }}
+    contextPath: {{ .Values.cluster.expose.contextPath | quote }}
     {{- end }}
+    {{- if .Values.cluster.expose.adminContextPath }}
+    adminContextPath: {{ .Values.cluster.expose.adminContextPath | quote }}
+    {{- end }}
+    pathRouting: {{ .Values.cluster.expose.pathRouting | default false | toString | eq "true" }}
   policy:
     allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}

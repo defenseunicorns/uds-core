@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: tenant
+rootDomain:
+  enabled: ###ZARF_VAR_PATH_ROUTING###
+  tls:
+    credentialName: gateway-tls
 tls:
   servers:
     keycloak:

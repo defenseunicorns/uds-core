@@ -126,7 +126,7 @@ sidebar:
     </tr>
   </thead>
   <tbody>
-    <tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr><tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateway will be exposed on</td></tr>
+    <tr><td style="white-space: nowrap;">domain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services will be exposed on</td></tr><tr><td style="white-space: nowrap;">adminDomain</td><td style="white-space: nowrap;">string</td><td>Domain all cluster services on the admin gateway will be exposed on</td></tr><tr><td style="white-space: nowrap;">contextPath</td><td style="white-space: nowrap;">string</td><td>Optional public URL context path used when pathRouting is enabled, for example /bar</td></tr><tr><td style="white-space: nowrap;">adminContextPath</td><td style="white-space: nowrap;">string</td><td>Optional admin URL context path appended after contextPath when pathRouting is enabled</td></tr><tr><td style="white-space: nowrap;">pathRouting</td><td style="white-space: nowrap;">boolean</td><td>Route built-in public and admin services on a single host using URL paths</td></tr>
   </tbody>
 </table>
 </div>
