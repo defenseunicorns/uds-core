@@ -1072,17 +1072,6 @@ describe("networkPolicies", () => {
           port => port.port === 7777 && port.protocol === "UDP",
         ),
     );
-    const gatewayIngressPolicy = policies.find(
-      policy =>
-        policy.metadata?.namespace === "envoy-gateway-system" &&
-        policy.metadata?.labels?.["uds/udp-envoy-gateway-ingress"] === "true",
-    );
-    const gatewayEgressPolicy = policies.find(
-      policy =>
-        policy.metadata?.namespace === "envoy-gateway-system" &&
-        policy.metadata?.labels?.["uds/udp-envoy-gateway-egress"] === "true",
-    );
-
     expect(policies.some(policy => policy.metadata?.name?.includes("Istio tenant gateway"))).toBe(
       false,
     );
@@ -1099,25 +1088,12 @@ describe("networkPolicies", () => {
     });
     expect(udpPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 7777, protocol: "UDP" });
     expect(udpPolicy?.spec?.ingress?.[0]?.ports?.map(port => port.port)).not.toContain(15008);
-    expect(gatewayIngressPolicy?.spec?.podSelector?.matchLabels).toEqual({
-      "gateway.envoyproxy.io/owning-gateway-name": "envoy-default-gateway",
-      "gateway.envoyproxy.io/owning-gateway-namespace": "envoy-default-gateway",
-    });
-    expect(gatewayIngressPolicy?.spec?.ingress?.[0]?.from).toContainEqual({
-      namespaceSelector: {},
-    });
-    expect(gatewayIngressPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({
-      port: 7777,
-      protocol: "UDP",
-    });
-    expect(gatewayEgressPolicy?.spec?.egress?.[0]?.to?.[0]).toEqual({
-      namespaceSelector: { matchLabels: { "kubernetes.io/metadata.name": "udp-ns" } },
-      podSelector: { matchLabels: { app: "game" } },
-    });
-    expect(gatewayEgressPolicy?.spec?.egress?.[0]?.ports).toContainEqual({
-      port: 7777,
-      protocol: "UDP",
-    });
+    // The ingress-from-anywhere and egress-to-backend rules for managed Envoy Gateway
+    // proxies are now static Allow rules on the envoy-gateway package itself, not
+    // generated per-package here.
+    expect(
+      policies.some(policy => policy.metadata?.namespace === "envoy-gateway-system"),
+    ).toBe(false);
   });
 
   it("should generate HTTP and UDP expose NetworkPolicies", async () => {

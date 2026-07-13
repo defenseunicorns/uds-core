@@ -51,37 +51,11 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
 
-const udpEnvoyGatewayIngressLabel = "uds/udp-envoy-gateway-ingress";
-const udpEnvoyGatewayEgressLabel = "uds/udp-envoy-gateway-egress";
-
-function getUDPGatewayPolicyLabels(namespace: string, directionLabel: string) {
-  return {
-    [directionLabel]: "true",
-    "uds/package-namespace": namespace,
-  };
-}
-
 function getUDPGatewaySelector(gateway?: string) {
   return {
     "gateway.envoyproxy.io/owning-gateway-name": getUDPGatewayName(gateway),
     "gateway.envoyproxy.io/owning-gateway-namespace": getUDPGatewayNamespace(gateway),
   };
-}
-
-async function purgeUDPGatewayNetworkPolicies(
-  generation: string,
-  pkgName: string,
-  namespace: string,
-) {
-  for (const directionLabel of [udpEnvoyGatewayIngressLabel, udpEnvoyGatewayEgressLabel]) {
-    await purgeOrphans(generation, envoyGatewaySystemNamespace, pkgName, kind.NetworkPolicy, log, {
-      ...getUDPGatewayPolicyLabels(namespace, directionLabel),
-    });
-  }
-}
-
-export async function cleanupUDPGatewayNetworkPolicies(pkg: UDSPackage) {
-  await purgeUDPGatewayNetworkPolicies("", pkg.metadata!.name!, pkg.metadata!.namespace!);
 }
 
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
@@ -170,8 +144,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
 
   for (const expose of exposeList.filter(exp => exp.protocol === ExposeProtocol.UDP)) {
     const gatewayName = getUDPGatewayName(expose.gateway);
-    const gatewayNamespace = getUDPGatewayNamespace(expose.gateway);
-    const gatewaySelector = getUDPGatewaySelector(expose.gateway);
     const policyPort = expose.targetPort ?? expose.port;
     const selector = expose.selector ?? {};
 
@@ -179,36 +151,13 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
       direction: Direction.Ingress,
       selector,
       remoteNamespace: envoyGatewaySystemNamespace,
-      remoteSelector: gatewaySelector,
+      remoteSelector: getUDPGatewaySelector(expose.gateway),
       port: policyPort,
       remoteProtocol: RemoteProtocol.UDP,
       description: `${policyPort}-${Object.values(selector).join("-")} Envoy Gateway ${gatewayName}`,
     };
 
-    const gatewayPolicy: Allow = {
-      direction: Direction.Ingress,
-      selector: gatewaySelector,
-      remoteGenerated: RemoteGenerated.Anywhere,
-      port: expose.port,
-      remoteProtocol: RemoteProtocol.UDP,
-      labels: getUDPGatewayPolicyLabels(namespace, udpEnvoyGatewayIngressLabel),
-      description: `${expose.port}-Envoy Gateway ${gatewayNamespace}-${gatewayName}`,
-    };
-
-    const gatewayEgressPolicy: Allow = {
-      direction: Direction.Egress,
-      selector: gatewaySelector,
-      remoteNamespace: namespace,
-      remoteSelector: selector,
-      port: policyPort,
-      remoteProtocol: RemoteProtocol.UDP,
-      labels: getUDPGatewayPolicyLabels(namespace, udpEnvoyGatewayEgressLabel),
-      description: `${policyPort}-Envoy Gateway ${gatewayNamespace}-${gatewayName} backend`,
-    };
-
     policies.push(generate(namespace, backendPolicy, istioMode as Mode));
-    policies.push(generate(envoyGatewaySystemNamespace, gatewayPolicy, istioMode as Mode));
-    policies.push(generate(envoyGatewaySystemNamespace, gatewayEgressPolicy, istioMode as Mode));
   }
 
   // Add network policies for each SSO client with authservice enabled
@@ -402,7 +351,6 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   }
 
   await purgeOrphans(generation, namespace, pkgName, kind.NetworkPolicy, log);
-  await purgeUDPGatewayNetworkPolicies(generation, pkgName, namespace);
 
   // Return the list of policies
   return policies;

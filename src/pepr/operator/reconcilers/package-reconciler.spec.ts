@@ -13,6 +13,7 @@ vi.mock("../controllers/envoy-gateway/udp-route-resources", () => ({
   envoyGatewayResources: vi.fn(),
   hasDefaultModeUDPExpose: vi.fn(() => false),
   reconcileDefaultGatewayListeners: vi.fn(),
+  removeDefaultListenerMapEntry: vi.fn(),
 }));
 vi.mock("../controllers/istio/egress-orchestrator", () => ({ istioEgressResources: vi.fn() }));
 vi.mock("../controllers/istio/istio-resources", async () => {
@@ -80,6 +81,7 @@ import {
   envoyGatewayResources,
   hasDefaultModeUDPExpose,
   reconcileDefaultGatewayListeners,
+  removeDefaultListenerMapEntry,
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
@@ -93,7 +95,7 @@ import { purgeSSOClients } from "../controllers/keycloak/client-sync";
 import { podMonitor } from "../controllers/monitoring/pod-monitor";
 import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
-import { cleanupUDPGatewayNetworkPolicies, networkPolicies } from "../controllers/network/policies";
+import { networkPolicies } from "../controllers/network/policies";
 import { probe } from "../controllers/uptime/probe";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
@@ -240,9 +242,9 @@ describe("packageFinalizer", () => {
     (purgeAuthserviceClients as Mock).mockImplementation(mockPurgeAuthservice);
     (reconcileSharedEgressResources as Mock).mockImplementation(mockReconcileSharedEgressResources);
     (writeEvent as Mock).mockImplementation(mockWriteEvent);
-    (cleanupUDPGatewayNetworkPolicies as Mock).mockResolvedValue(undefined);
     (hasDefaultModeUDPExpose as Mock).mockReturnValue(false);
     (reconcileDefaultGatewayListeners as Mock).mockResolvedValue(undefined);
+    (removeDefaultListenerMapEntry as Mock).mockReturnValue(undefined);
   });
 
   test("should not remove the finalizer for pending packages", async () => {
@@ -427,11 +429,11 @@ describe("packageFinalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(true);
-    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
+    expect(removeDefaultListenerMapEntry).toHaveBeenCalledWith(mockPackage);
     expect(reconcileDefaultGatewayListeners).toHaveBeenCalledTimes(1);
   });
 
-  test("should clean up Envoy Gateway NetworkPolicies without recomputing listeners for user-managed UDP expose", async () => {
+  test("should not recompute default Gateway listeners for user-managed-only UDP expose", async () => {
     mockPackage.status = { phase: Phase.Ready };
     mockPackage.spec = {
       network: {
@@ -451,7 +453,7 @@ describe("packageFinalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(true);
-    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
+    expect(removeDefaultListenerMapEntry).not.toHaveBeenCalled();
     expect(reconcileDefaultGatewayListeners).not.toHaveBeenCalled();
   });
 
@@ -477,7 +479,7 @@ describe("packageFinalizer", () => {
     const finalizerRemoved = await packageFinalizer(mockPackage);
 
     expect(finalizerRemoved).toEqual(false);
-    expect(cleanupUDPGatewayNetworkPolicies).toHaveBeenCalledWith(mockPackage);
+    expect(removeDefaultListenerMapEntry).toHaveBeenCalledWith(mockPackage);
     expect(mockPatchStatus).toHaveBeenCalledWith(
       expect.objectContaining({
         metadata: { name: "test-package", namespace: "test-namespace" },

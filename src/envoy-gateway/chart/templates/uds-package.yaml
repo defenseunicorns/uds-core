@@ -49,3 +49,15 @@ spec:
           app.kubernetes.io/managed-by: envoy-gateway
         remoteGenerated: IntraNamespace
         description: "xDS and SDS connections from managed Envoy pods to controller"
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: Anywhere
+        remoteProtocol: UDP
+        description: "UDP ingress for managed Gateway proxies"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: Anywhere
+        remoteProtocol: UDP
+        description: "UDP egress for managed Gateway proxies to backends"

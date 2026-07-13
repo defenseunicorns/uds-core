@@ -8,7 +8,11 @@ import { K8s } from "pepr";
 import { K8sGateway, K8sUDPRoute, UDSPackage } from "../../crd";
 import { ExposeProtocol } from "../../crd/generated/package-v1alpha1";
 import { envoyDefaultGatewayName, envoyDefaultGatewayNamespace } from "./constants";
-import { envoyGatewayResources, reconcileDefaultGatewayListeners } from "./udp-route-resources";
+import {
+  defaultListenerMap,
+  envoyGatewayResources,
+  reconcileDefaultGatewayListeners,
+} from "./udp-route-resources";
 
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
@@ -69,6 +73,7 @@ describe("envoyGatewayResources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     clients.clear();
+    defaultListenerMap.clear();
 
     vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
       const existingClient = clients.get(resourceKind);
@@ -97,21 +102,6 @@ describe("envoyGatewayResources", () => {
 
   it("generates UDPRoute and default Gateway listener for default mode", async () => {
     const pkg = packageFixture();
-    vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
-      const existingClient = clients.get(resourceKind);
-      if (existingClient) return existingClient;
-
-      const client: K8sClient = {
-        Apply: vi.fn(async () => undefined),
-        Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => (resourceKind === UDSPackage ? { items: [pkg] } : { items: [] })),
-        InNamespace: vi.fn(() => client),
-        WithLabel: vi.fn(() => client),
-      };
-
-      clients.set(resourceKind, client);
-      return client;
-    }) as never);
 
     await envoyGatewayResources(pkg, "game-ns");
 
@@ -200,7 +190,9 @@ describe("envoyGatewayResources", () => {
     await envoyGatewayResources(pkg, "web-ns");
 
     expect(clientFor(K8sUDPRoute).Apply).not.toHaveBeenCalled();
-    expect(clients.has(K8sGateway)).toBe(false);
+    // No default-mode listeners exist, so reconciliation deletes any stale Gateway
+    // (a no-op 404 here) rather than applying one.
+    expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
   });
 
   it("purges stale UDPRoutes even when generated UDP NetworkPolicies are gone", async () => {
@@ -318,9 +310,11 @@ describe("envoyGatewayResources", () => {
     expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
   });
 
-  it("fetches fresh packages when a dirty default Gateway reconciliation re-runs", async () => {
-    const pkg = packageFixture();
+  it("serializes concurrent reconciliations and reflects the latest listener map state", async () => {
+    defaultListenerMap.set("game-ns/game", [{ namespace: "game-ns", port: 7777 }]);
+
     let releaseFirstApply: () => void = () => undefined;
+    let gatewayApplyCount = 0;
     const firstApplyStarted = new Promise<void>(resolve => {
       vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
         const existingClient = clients.get(resourceKind);
@@ -329,14 +323,17 @@ describe("envoyGatewayResources", () => {
         const client: K8sClient = {
           Apply: vi.fn(async () => {
             if (resourceKind === K8sGateway) {
-              resolve();
-              await new Promise<void>(release => {
-                releaseFirstApply = release;
-              });
+              gatewayApplyCount++;
+              if (gatewayApplyCount === 1) {
+                resolve();
+                await new Promise<void>(release => {
+                  releaseFirstApply = release;
+                });
+              }
             }
           }),
           Delete: vi.fn(async () => undefined),
-          Get: vi.fn(async () => (resourceKind === UDSPackage ? { items: [] } : { items: [] })),
+          Get: vi.fn(async () => ({ items: [] })),
           InNamespace: vi.fn(() => client),
           WithLabel: vi.fn(() => client),
         };
@@ -346,18 +343,29 @@ describe("envoyGatewayResources", () => {
       }) as never);
     });
 
-    const firstReconcile = reconcileDefaultGatewayListeners([pkg]);
+    // First reconcile starts and blocks mid-apply.
+    const firstReconcile = reconcileDefaultGatewayListeners();
     await firstApplyStarted;
 
+    // A second package updates the shared map and requests a reconcile while the
+    // first is still in flight; the Mutex should queue it rather than coalesce it.
+    defaultListenerMap.set("web-ns/web", [{ namespace: "web-ns", port: 8888 }]);
     const secondReconcile = reconcileDefaultGatewayListeners();
+
     releaseFirstApply();
     await Promise.all([firstReconcile, secondReconcile]);
 
-    expect(clientFor(UDSPackage).Get).toHaveBeenCalled();
-    expect(clientFor(K8sGateway).Delete).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: { name: envoyDefaultGatewayName, namespace: envoyDefaultGatewayNamespace },
-      }),
-    );
+    expect(clientFor(K8sGateway).Apply).toHaveBeenCalledTimes(2);
+
+    const firstApplyCall = clientFor(K8sGateway).Apply.mock.calls[0][0];
+    expect(firstApplyCall.spec.listeners).toEqual([expect.objectContaining({ name: "udp-7777" })]);
+
+    // The second, queued reconciliation reflects the map state at the time it ran,
+    // not a stale snapshot from when it was requested.
+    const secondApplyCall = clientFor(K8sGateway).Apply.mock.calls[1][0];
+    expect(secondApplyCall.spec.listeners).toEqual([
+      expect.objectContaining({ name: "udp-7777" }),
+      expect.objectContaining({ name: "udp-8888" }),
+    ]);
   });
 });

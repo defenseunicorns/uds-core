@@ -15,7 +15,7 @@ import {
 } from "../../crd";
 import { ParentRefElement } from "../../crd/generated/k8s/udproute-v1alpha2";
 import { Expose, ExposeProtocol } from "../../crd/generated/package-v1alpha1";
-import { validateNamespace, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import { Mutex, validateNamespace, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import {
   envoyDefaultGatewayName,
   envoyDefaultGatewayNamespace,
@@ -33,8 +33,14 @@ type GatewayTarget = {
 
 type UdpExposeEntry = { expose: Expose };
 
-let defaultGatewayReconcileInFlight: Promise<void> | null = null;
-let defaultGatewayReconcileDirty = false;
+type DefaultListenerEntry = { namespace: string; port: number };
+
+// In-memory map of default-mode UDP listeners, keyed by package id (namespace/name).
+// Each package reconcile updates only its own entry; the shared Gateway's listener
+// list is rebuilt from this map, avoiding a cluster-wide package list on every call.
+export const defaultListenerMap = new Map<string, DefaultListenerEntry[]>();
+
+const defaultGatewayMutex = new Mutex();
 
 export function hasDefaultModeUDPExpose(pkg: UDSPackage): boolean {
   return getUDPExposeEntries(pkg).some(({ expose }) => resolveGatewayTarget(expose).defaultMode);
@@ -46,6 +52,28 @@ export function getUDPExposeEntries(pkg: UDSPackage): UdpExposeEntry[] {
     .filter(({ expose }) => expose.protocol === ExposeProtocol.UDP);
 }
 
+function getPkgId(pkg: UDSPackage): string {
+  return `${pkg.metadata!.namespace}/${pkg.metadata!.name}`;
+}
+
+function updateDefaultListenerMap(pkg: UDSPackage, entries: UdpExposeEntry[]): void {
+  const namespace = pkg.metadata!.namespace!;
+  const defaultEntries = entries
+    .filter(({ expose }) => resolveGatewayTarget(expose).defaultMode)
+    .map(({ expose }) => ({ namespace, port: expose.port! }));
+
+  if (defaultEntries.length === 0) {
+    defaultListenerMap.delete(getPkgId(pkg));
+  } else {
+    defaultListenerMap.set(getPkgId(pkg), defaultEntries);
+  }
+}
+
+/** Removes a package's default-mode listeners from the in-memory map. Call during finalization. */
+export function removeDefaultListenerMapEntry(pkg: UDSPackage): void {
+  defaultListenerMap.delete(getPkgId(pkg));
+}
+
 export async function envoyGatewayResources(pkg: UDSPackage, namespace: string): Promise<void> {
   const pkgName = pkg.metadata?.name;
   if (!pkgName) {
@@ -55,14 +83,6 @@ export async function envoyGatewayResources(pkg: UDSPackage, namespace: string):
   const generation = (pkg.metadata?.generation ?? 0).toString();
   const ownerRefs = getOwnerRef(pkg);
   const udpEntries = getUDPExposeEntries(pkg);
-
-  if (udpEntries.length === 0) {
-    const hasGeneratedUDPResources = await hasGeneratedUDPRoutes(namespace, pkgName);
-
-    if (!hasGeneratedUDPResources) {
-      return;
-    }
-  }
 
   for (const entry of udpEntries) {
     const targetGateway = resolveGatewayTarget(entry.expose);
@@ -83,30 +103,16 @@ export async function envoyGatewayResources(pkg: UDSPackage, namespace: string):
 
   await purgeOrphans(generation, namespace, pkgName, K8sUDPRoute, log);
 
+  updateDefaultListenerMap(pkg, udpEntries);
   await reconcileDefaultGatewayListeners();
 }
 
-export async function reconcileDefaultGatewayListeners(packages?: UDSPackage[]): Promise<void> {
-  if (defaultGatewayReconcileInFlight) {
-    defaultGatewayReconcileDirty = true;
-    await defaultGatewayReconcileInFlight;
-    return;
-  }
-
-  defaultGatewayReconcileDirty = true;
-  let packagesForReconcile = packages;
-  defaultGatewayReconcileInFlight = (async () => {
-    while (defaultGatewayReconcileDirty) {
-      defaultGatewayReconcileDirty = false;
-      await performDefaultGatewayReconciliation(packagesForReconcile);
-      packagesForReconcile = undefined;
-    }
-  })();
-
+export async function reconcileDefaultGatewayListeners(): Promise<void> {
+  const release = await defaultGatewayMutex.acquire();
   try {
-    await defaultGatewayReconcileInFlight;
+    await performDefaultGatewayReconciliation();
   } finally {
-    defaultGatewayReconcileInFlight = null;
+    release();
   }
 }
 
@@ -174,15 +180,6 @@ function generateUDPRoute(
   };
 }
 
-async function hasGeneratedUDPRoutes(namespace: string, pkgName: string): Promise<boolean> {
-  const udpRoutes = await K8s(K8sUDPRoute)
-    .InNamespace(namespace)
-    .WithLabel("uds/package", pkgName)
-    .Get();
-
-  return udpRoutes.items.length > 0;
-}
-
 async function validateDefaultGatewayClass(): Promise<void> {
   try {
     await K8s(K8sGatewayClass).Get("envoy-gateway");
@@ -196,8 +193,8 @@ async function validateDefaultGatewayClass(): Promise<void> {
   }
 }
 
-async function performDefaultGatewayReconciliation(packages?: UDSPackage[]): Promise<void> {
-  const listenerEntries = await getWinningDefaultListenerEntries(packages);
+async function performDefaultGatewayReconciliation(): Promise<void> {
+  const listenerEntries = getDefaultListenerEntries();
 
   if (listenerEntries.length === 0) {
     try {
@@ -230,10 +227,10 @@ async function performDefaultGatewayReconciliation(packages?: UDSPackage[]): Pro
       },
       spec: {
         gatewayClassName: "envoy-gateway",
-        listeners: listenerEntries.map(({ expose, namespace }) => ({
-          name: `udp-${expose.port}`,
+        listeners: listenerEntries.map(({ port, namespace }) => ({
+          name: `udp-${port}`,
           protocol: "UDP",
-          port: expose.port!,
+          port,
           allowedRoutes: {
             namespaces: {
               from: K8sGatewayFromType.Selector,
@@ -251,30 +248,10 @@ async function performDefaultGatewayReconciliation(packages?: UDSPackage[]): Pro
   );
 }
 
-async function getWinningDefaultListenerEntries(
-  packages?: UDSPackage[],
-): Promise<{ pkg: UDSPackage; expose: Expose; namespace: string }[]> {
-  const packageItems = packages ?? (await K8s(UDSPackage).Get()).items;
-  const entries = packageItems.flatMap(pkg =>
-    pkg.metadata?.deletionTimestamp
-      ? []
-      : getUDPExposeEntries(pkg)
-          .filter(({ expose }) => resolveGatewayTarget(expose).defaultMode)
-          .map(({ expose }) => ({ pkg, expose, namespace: pkg.metadata!.namespace! })),
-  );
-
-  const winners = new Map<number, { pkg: UDSPackage; expose: Expose; namespace: string }>();
-
-  for (const entry of entries) {
-    const currentEntry = winners.get(entry.expose.port!);
-    if (currentEntry) {
-      throw new Error(
-        `UDP expose port ${entry.expose.port} on default Envoy Gateway is already used by ` +
-          `${currentEntry.namespace}/${currentEntry.pkg.metadata?.name}.`,
-      );
-    }
-    winners.set(entry.expose.port!, entry);
+function getDefaultListenerEntries(): DefaultListenerEntry[] {
+  const entries: DefaultListenerEntry[] = [];
+  for (const pkgEntries of defaultListenerMap.values()) {
+    entries.push(...pkgEntries);
   }
-
-  return [...winners.values()].sort((a, b) => a.expose.port! - b.expose.port!);
+  return entries.sort((a, b) => a.port - b.port);
 }

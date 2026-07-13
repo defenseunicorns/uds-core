@@ -11,6 +11,7 @@ import {
   envoyGatewayResources,
   hasDefaultModeUDPExpose,
   reconcileDefaultGatewayListeners,
+  removeDefaultListenerMapEntry,
 } from "../controllers/envoy-gateway/udp-route-resources";
 import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
@@ -28,15 +29,10 @@ import { serviceMonitor } from "../controllers/monitoring/service-monitor";
 import { generateAuthorizationPolicies } from "../controllers/network/authorizationPolicies";
 import { probe } from "../controllers/uptime/probe";
 import { updateBlackboxConfig } from "../controllers/uptime/config";
-import { cleanupUDPGatewayNetworkPolicies, networkPolicies } from "../controllers/network/policies";
+import { networkPolicies } from "../controllers/network/policies";
 import { retryWithDelay } from "../controllers/utils";
 import { Phase, UDSPackage } from "../crd";
-import {
-  AuthserviceClient,
-  ExposeProtocol,
-  Mode,
-  StatusObject,
-} from "../crd/generated/package-v1alpha1";
+import { AuthserviceClient, Mode, StatusObject } from "../crd/generated/package-v1alpha1";
 import { migrate } from "../crd/migrate";
 
 // @lulaStart 5c6d86fa-5206-4bb5-a685-62ec52ff5694
@@ -322,19 +318,12 @@ export async function packageFinalizer(pkg: UDSPackage) {
   }
 
   // Recompute the shared default UDP Gateway after package removal. Owner references clean up
-  // generated UDPRoutes, but the shared Gateway has no package owner.
+  // generated UDPRoutes and NetworkPolicies, but the shared Gateway has no package owner.
   try {
-    const hasUDPExpose = pkg.spec?.network?.expose?.some(
-      expose => expose.protocol === ExposeProtocol.UDP,
-    );
-    const hasDefaultUDPExpose = hasDefaultModeUDPExpose(pkg);
-
-    if (hasUDPExpose) {
-      await retryWithDelay(async function cleanupEnvoyGatewayUDPResources() {
-        await cleanupUDPGatewayNetworkPolicies(pkg);
-        if (hasDefaultUDPExpose) {
-          await reconcileDefaultGatewayListeners();
-        }
+    if (hasDefaultModeUDPExpose(pkg)) {
+      await retryWithDelay(async function recomputeDefaultGateway() {
+        removeDefaultListenerMapEntry(pkg);
+        await reconcileDefaultGatewayListeners();
       }, log);
     }
   } catch (e) {
