@@ -5,6 +5,24 @@ sidebar:
   order: 3.989
 ---
 
+import { Steps, Code } from "@astrojs/starlight/components";
+
+export const jsonCode = `{
+  "name": "usercertificateSKI",
+  "displayName": "x509 User SKI",
+  "validations": {},
+  "annotations": {},
+  "permissions": {
+    "view": [
+      "admin"
+    ],
+    "edit": [
+      "admin"
+    ]
+  },
+  "multivalued": false
+}`
+
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
@@ -46,7 +64,25 @@ Identity Config [0.28.0](https://github.com/defenseunicorns/uds-identity-config/
 - Bumps the internal Keycloak compile dependency to 26.6.3 (security update); the deployed Keycloak server version remains 26.6.2.
 - Updates branding references to "Unified Defense Stack".
 
-No manual realm changes are required for this release.
+#### Manual realm changes (Identity Config 0.28.0)
+
+Apply the following steps once per cluster after upgrading to UDS Core 1.7:
+
+<Steps>
+1. **Open the Keycloak admin console and switch to the `uds` realm**
+
+   Sign in with an admin account, then select the `uds` realm from the realm selector.
+
+2. **Navigate to the User Profile JSON Editor**
+
+   In the left sidebar click **Realm Settings**, select the **User Profile** tab, then select the **JSON Editor** tab.
+
+3. **Create the `usercertificateSKI` attribute**
+
+   Add the following json to the attributes array below usercertificateCN:
+   <Code code={jsonCode} lang="json" />
+
+</Steps>
 
 ## Related documentation
 
