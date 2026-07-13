@@ -4,6 +4,6 @@
 global:
   images:
     envoyGateway:
-      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.1
+      image: registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.2
     envoyProxy:
       image: registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.3
