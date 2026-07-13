@@ -25,7 +25,7 @@ const secretTemplateRegex = new RegExp(
 // advertising multiple signing keys (the normal state during signing key
 // rotation) does not collapse into one greedy match spanning every certificate,
 // which was the original bug. Keycloak sorts signing KeyDescriptors active-key
-// first, so the first match holds the realm's active signing key.
+// first, so the first match holds the realm's active signing key. See https://regex101.com/r/YrDx8V/1
 const signingKeyDescriptorRegex =
   /<[^>]*:KeyDescriptor[^>]*use="signing"[^>]*>([\s\S]*?)<\/[^>]*:KeyDescriptor>/;
 
