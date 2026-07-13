@@ -120,6 +120,14 @@
               },
               "type": "object"
             },
+            "crds": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
             "createNamespace": {
               "type": "boolean"
             },
