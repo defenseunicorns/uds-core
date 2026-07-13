@@ -15,7 +15,7 @@ memcached:
   image:
     registry: cgr.dev/defenseunicorns.com
     repository: memcached-fips
-    tag: v1.6.43
+    tag: v1.6.45
 sidecar:
   image:
     registry: cgr.dev
