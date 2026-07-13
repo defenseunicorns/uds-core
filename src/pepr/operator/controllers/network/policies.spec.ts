@@ -1091,9 +1091,9 @@ describe("networkPolicies", () => {
     // The ingress-from-anywhere and egress-to-backend rules for managed Envoy Gateway
     // proxies are now static Allow rules on the envoy-gateway package itself, not
     // generated per-package here.
-    expect(
-      policies.some(policy => policy.metadata?.namespace === "envoy-gateway-system"),
-    ).toBe(false);
+    expect(policies.some(policy => policy.metadata?.namespace === "envoy-gateway-system")).toBe(
+      false,
+    );
   });
 
   it("should generate HTTP and UDP expose NetworkPolicies", async () => {

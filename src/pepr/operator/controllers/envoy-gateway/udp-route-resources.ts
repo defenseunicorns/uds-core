@@ -15,7 +15,13 @@ import {
 } from "../../crd";
 import { ParentRefElement } from "../../crd/generated/k8s/udproute-v1alpha2";
 import { Expose, ExposeProtocol } from "../../crd/generated/package-v1alpha1";
-import { Mutex, validateNamespace, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
+import {
+  Mutex,
+  validateNamespace,
+  getOwnerRef,
+  purgeOrphans,
+  sanitizeResourceName,
+} from "../utils";
 import {
   envoyDefaultGatewayName,
   envoyDefaultGatewayNamespace,
