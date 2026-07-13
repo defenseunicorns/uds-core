@@ -29,7 +29,7 @@ const secretTemplateRegex = new RegExp(
 const signingKeyDescriptorRegex =
   /<[^>]*:KeyDescriptor[^>]*use="signing"[^>]*>([\s\S]*?)<\/[^>]*:KeyDescriptor>/;
 
-// Matches the X509Certificate within a KeyDescriptor block.
+// Matches the X509Certificate within a KeyDescriptor block. See https://regex101.com/r/NjGZF5/4
 const x509CertRegex = /<[^>]*:X509Certificate[^>]*>([\s\S]*?)<\/[^>]*:X509Certificate>/;
 
 // configure subproject logger
