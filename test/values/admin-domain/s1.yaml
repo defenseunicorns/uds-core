@@ -1,6 +1,0 @@
-# Copyright 2026 Defense Unicorns
-# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
-
-# A domain value overrides the DOMAIN variable; admin derives from that effective domain.
-domain: custom.example.com
-adminDomain: ""

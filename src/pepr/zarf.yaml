@@ -21,11 +21,11 @@ variables:
 
   - name: CA_BUNDLE_INCLUDE_DOD_CERTS
     description: "Whether to include DoD root and intermediate certificates in the cluster CA bundle"
-    default: false
+    default: "false"
 
   - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
     description: "Whether to include public root and intermediate certificates in the cluster CA bundle"
-    default: false
+    default: "false"
 
   - name: UDS_LOG_LEVEL
     description: "UDS Operator log level"

@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+values:
+  uds-portal:
+    uds-portal:
+      replicaCount: 7
+      image:
+        repository: SHOULD_NOT_APPEAR
+checks:
+  - name: portal-replicas
+    description: UDS Portal Deployment has seven replicas
+    expression: '[select(.kind == "Deployment" and .metadata.name == "uds-portal") |
+      .spec.replicas == 7] | any'
+  - name: excluded-values-removed
+    description: Excluded values do not appear in rendered manifests
+    expression: '[.. | select(tag == "!!str")] | any_c(test("SHOULD_NOT_APPEAR")) |
+      not'

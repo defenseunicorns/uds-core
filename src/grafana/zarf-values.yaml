@@ -5,6 +5,9 @@
 # each nested key maps to a chart root. An empty {} is a no-op — chart defaults are preserved while
 # still allowing overrides via --values. See excludePaths in common/zarf.yaml for blocked paths.
 
+domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: ""
+
 grafana:
   grafana: {}
   uds-grafana-config: {}

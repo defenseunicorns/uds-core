@@ -1,0 +1,180 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+values:
+  pepr-uds-core:
+    module:
+      admission:
+        podLabels:
+          probe: PROBE_VISIBLE_PEPR
+        image: SHOULD_NOT_APPEAR
+  uds-operator-config:
+    uds-operator-config:
+      cluster:
+        attributes:
+          clusterName: PROBE_VISIBLE_OPERATOR
+  istio-controlplane:
+    base:
+      global:
+        hub: SHOULD_NOT_APPEAR
+    istiod:
+      podLabels:
+        probe: PROBE_VISIBLE_ISTIOD
+      global:
+        hub: SHOULD_NOT_APPEAR
+    uds-global-istio-config:
+      classificationBanner:
+        enabledHosts:
+          - probe-visible-global.uds.dev
+    cni:
+      podLabels:
+        probe: PROBE_VISIBLE_CNI
+      global:
+        hub: SHOULD_NOT_APPEAR
+    ztunnel:
+      podLabels:
+        probe: PROBE_VISIBLE_ZTUNNEL
+      image: SHOULD_NOT_APPEAR
+  istio-admin-gateway:
+    gateway:
+      labels:
+        probe: PROBE_VISIBLE_ADMIN
+      global:
+        hub: SHOULD_NOT_APPEAR
+    uds-istio-config:
+      rootDomain:
+        enabled: true
+        tls:
+          mode: SIMPLE
+          credentialName: PROBE_VISIBLE_ADMINCFG
+      name: SHOULD_NOT_APPEAR
+  istio-tenant-gateway:
+    gateway:
+      labels:
+        probe: PROBE_VISIBLE_TENANT
+      global:
+        hub: SHOULD_NOT_APPEAR
+    uds-istio-config:
+      rootDomain:
+        enabled: true
+        tls:
+          mode: SIMPLE
+          credentialName: PROBE_VISIBLE_TENANTCFG
+      name: SHOULD_NOT_APPEAR
+  istio-passthrough-gateway:
+    gateway:
+      labels:
+        probe: PROBE_VISIBLE_PASSTHROUGH
+      global:
+        hub: SHOULD_NOT_APPEAR
+    uds-istio-config:
+      rootDomain:
+        enabled: true
+        tls:
+          mode: SIMPLE
+          credentialName: PROBE_VISIBLE_PASSTHROUGHCFG
+      name: SHOULD_NOT_APPEAR
+  istio-egress-ambient:
+    uds-istio-egress-config:
+      config:
+        serviceAccount:
+          metadata:
+            annotations:
+              probe: PROBE_VISIBLE_EGRESSCFG
+  istio-egress-gateway:
+    gateway:
+      labels:
+        probe: PROBE_VISIBLE_EGRESS
+      global:
+        hub: SHOULD_NOT_APPEAR
+  envoy-gateway:
+    envoy-gateway:
+      deployment:
+        pod:
+          labels:
+            probe: PROBE_VISIBLE_ENVOY
+        envoyGateway:
+          image: SHOULD_NOT_APPEAR
+    uds-envoy-gateway-config:
+      global:
+        images:
+          envoyGateway:
+            image: SHOULD_NOT_APPEAR
+checks:
+  - name: pepr-pod-label
+    description: Pepr Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "pepr-uds-core"
+      and .metadata.namespace == "pepr-system") | .spec.template.metadata.labels.probe
+      == "PROBE_VISIBLE_PEPR"] | any'
+  - name: operator-cluster-name
+    description: ClusterConfig has the supplied cluster name
+    expression: '[select(.kind == "ClusterConfig" and .metadata.name == "uds-cluster-config")
+      | .spec.attributes.clusterName == "PROBE_VISIBLE_OPERATOR"] | any'
+  - name: istiod-pod-label
+    description: Istiod Deployment has the supplied probe label
+    expression:
+      '[select(.kind == "Deployment" and .metadata.name == "istiod") | .spec.template.metadata.labels.probe
+      == "PROBE_VISIBLE_ISTIOD"] | any'
+  - name: classification-banner-host
+    description: Classification banner includes the supplied host
+    expression: '[select(.kind == "EnvoyFilter" and .metadata.name == "classification-banner")
+      | .. | select(tag == "!!str") | test("probe-visible-global")] | any'
+  - name: cni-pod-label
+    description: Istio CNI DaemonSet has the supplied probe label
+    expression: '[select(.kind == "DaemonSet" and .metadata.name == "istio-cni-node")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE_CNI"] | any'
+  - name: ztunnel-pod-label
+    description: Ztunnel DaemonSet has the supplied probe label
+    expression:
+      '[select(.kind == "DaemonSet" and .metadata.name == "ztunnel") | .spec.template.metadata.labels.probe
+      == "PROBE_VISIBLE_ZTUNNEL"] | any'
+  - name: admin-gateway-pod-label
+    description: Admin gateway Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "admin-ingressgateway")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE_ADMIN"] | any'
+  - name: admin-gateway-tls
+    description: Admin Gateway has the supplied TLS credential
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-admin-gateway")
+      | .. | select(tag == "!!str") | test("PROBE_VISIBLE_ADMINCFG")] | any'
+  - name: tenant-gateway-pod-label
+    description: Tenant gateway Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "tenant-ingressgateway")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE_TENANT"] | any'
+  - name: tenant-gateway-tls
+    description: Tenant Gateway has the supplied TLS credential
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-tenant-gateway")
+      | .. | select(tag == "!!str") | test("PROBE_VISIBLE_TENANTCFG")] | any'
+  - name: passthrough-gateway-pod-label
+    description: Passthrough gateway Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "passthrough-ingressgateway")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE_PASSTHROUGH"] | any'
+  - name: passthrough-gateway-tls
+    description: Passthrough Gateway has the supplied TLS credential
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-passthrough-gateway")
+      | .. | select(tag == "!!str") | test("PROBE_VISIBLE_PASSTHROUGHCFG")] | any'
+  - name: egress-waypoint-config
+    description: Egress waypoint ConfigMap has the supplied service account annotation
+    expression: '[select(.kind == "ConfigMap" and .metadata.name == "egress-waypoint-config")
+      | .data.serviceAccount | test("PROBE_VISIBLE_EGRESSCFG")] | any'
+  - name: egress-gateway-pod-label
+    description: Egress gateway Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "egressgateway")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE_EGRESS"] | any'
+  - name: envoy-gateway-pod-label
+    description: Envoy gateway Deployment has the supplied probe label
+    expression: '[select(.kind == "Deployment" and .metadata.name == "envoy-gateway"
+      and .metadata.namespace == "envoy-gateway-system") | .spec.template.metadata.labels.probe
+      == "PROBE_VISIBLE_ENVOY"] | any'
+  - name: excluded-values-removed
+    description: Excluded values do not appear in rendered manifests
+    expression: '[.. | select(tag == "!!str")] | any_c(test("SHOULD_NOT_APPEAR")) |
+      not'
+adminDomainChecks:
+  - name: admin-gateway-host
+    description: Admin Gateway host uses the expected admin domain
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-admin-gateway")
+      | .spec.servers[].hosts[] | test("{{ adminDomain }}$")] | any'
+  - name: cluster-config-admin-domain
+    description: ClusterConfig uses the expected admin domain
+    expression: '[select(.kind == "ClusterConfig" and .metadata.name == "uds-cluster-config")
+      | .spec.expose.adminDomain == "{{ adminDomain }}"] | any'

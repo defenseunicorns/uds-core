@@ -4,5 +4,7 @@
 # Default Zarf values for the UDS Core Keycloak source package.
 # Required so `zarf dev deploy src/keycloak` has a backing values tree for all sourcePath mappings.
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: ""
 
-keycloak: {}
+keycloak:
+  keycloak: {}

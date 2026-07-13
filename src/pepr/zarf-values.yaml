@@ -4,6 +4,7 @@
 # Default Zarf values for the UDS Core Pepr source package.
 # Required so `zarf dev deploy src/pepr` has a backing values tree for all sourcePath mappings.
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: ""
 
 pepr-uds-core:
   module: {}

@@ -3,4 +3,5 @@
 
 # Default Zarf values for the UDS Core Authservice source package.
 # Required so `zarf dev deploy src/authservice` has a backing values tree for all sourcePath mappings.
-authservice: {}
+authservice:
+  authservice: {}

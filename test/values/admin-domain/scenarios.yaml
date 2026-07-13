@@ -1,0 +1,32 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+scenarios:
+  - name: domain-variable-fallback
+    values: {}
+    variables:
+      DOMAIN: fallback.example.com
+    expectedAdminDomain: admin.fallback.example.com
+  - name: domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+    expectedAdminDomain: admin.custom.example.com
+  - name: admin-domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: mgmt.example.com
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: ignored.example.com
+    expectedAdminDomain: mgmt.example.com
+  - name: admin-domain-variable
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: myadmin.example.com
+    expectedAdminDomain: myadmin.example.com

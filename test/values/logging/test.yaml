@@ -1,0 +1,55 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+values:
+  loki:
+    loki:
+      write:
+        podLabels:
+          probe: PROBE_VISIBLE
+      global:
+        imageRegistry: SHOULD_NOT_APPEAR
+    uds-loki-config:
+      additionalNetworkAllow:
+        - direction: Egress
+          selector:
+            app.kubernetes.io/name: loki
+          remoteGenerated: Anywhere
+          port: 9999
+          description: PROBE_VISIBLE
+  vector:
+    vector:
+      podLabels:
+        probe: PROBE_VISIBLE
+      image:
+        repository: SHOULD_NOT_APPEAR
+    uds-vector-config:
+      additionalNetworkAllow:
+        - direction: Egress
+          selector:
+            app.kubernetes.io/name: vector
+          remoteGenerated: Anywhere
+          port: 9999
+          description: PROBE_VISIBLE
+checks:
+  - name: loki-write-pod-label
+    description: Loki write StatefulSet has the supplied probe label
+    expression: '[select(.kind == "StatefulSet" and .metadata.name == "loki-write")
+      | .spec.template.metadata.labels.probe == "PROBE_VISIBLE"] | any'
+  - name: loki-network-allow
+    description: Loki Package has the supplied network rule
+    expression: '[select(.kind == "Package" and .metadata.name == "loki") | .spec.network.allow[]
+      | .description == "PROBE_VISIBLE"] | any'
+  - name: vector-pod-label
+    description: Vector DaemonSet has the supplied probe label
+    expression:
+      '[select(.kind == "DaemonSet" and .metadata.name == "vector") | .spec.template.metadata.labels.probe
+      == "PROBE_VISIBLE"] | any'
+  - name: vector-network-allow
+    description: Vector Package has the supplied network rule
+    expression: '[select(.kind == "Package" and .metadata.name == "vector") | .spec.network.allow[]
+      | .description == "PROBE_VISIBLE"] | any'
+  - name: excluded-values-removed
+    description: Excluded values do not appear in rendered manifests
+    expression: '[.. | select(tag == "!!str")] | any_c(test("SHOULD_NOT_APPEAR")) |
+      not'

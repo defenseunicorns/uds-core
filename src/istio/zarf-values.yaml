@@ -6,6 +6,7 @@
 # (an absent sourcePath is a hard deploy error). An empty {} is a no-op. See excludePaths in
 # common/zarf.yaml and zarf.yaml for blocked paths.
 domain: "###ZARF_VAR_DOMAIN###"
+adminDomain: ""
 
 istio-controlplane:
   base: {}

@@ -55,6 +55,10 @@ tasks:
 
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
+    inputs:
+      package:
+        description: "Optional values-bearing package to lint"
+        default: ""
     actions:
       - description: "Build the Pepr module (needed to compose the base and standard packages)"
         cmd: |
@@ -66,12 +70,23 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
           # A package exposes native values when it provides this default values file.
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
             echo "Linting packages/${pkg}"
-            uds zarf dev lint "packages/${pkg}" --flavor upstream
+            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream; then
+              echo "ERROR: values lint failed for packages/${pkg}"
+              exit 1
+            fi
           done
       - description: "Validate default values files against their schemas"
         shell:
@@ -79,45 +94,86 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
             echo "Validating packages/${pkg}/zarf-values.yaml"
-            uvx check-jsonschema \
+            if ! uvx check-jsonschema \
               --schemafile "packages/${pkg}/zarf-values.schema.json" \
-              "packages/${pkg}/zarf-values.yaml"
+              "packages/${pkg}/zarf-values.yaml"; then
+              echo "ERROR: values schema validation failed for packages/${pkg}"
+              exit 1
+            fi
           done
 
   - name: values-verify
     description: "Render each values-bearing package through the Zarf values pipeline (no cluster) and assert overrides land and excluded paths are dropped"
+    inputs:
+      package:
+        description: "Optional values-bearing package to verify"
+        default: ""
     actions:
       - description: "Build the Pepr module (needed to compose the base and standard packages)"
         cmd: |
           npm ci
           npx pepr build -z chart
+      - description: "Render each source package's default values tree"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ]; then
+            exit 0
+          fi
+          for values_file in src/*/zarf-values.yaml; do
+            source_package="${values_file%/zarf-values.yaml}"
+            echo "Verifying source values for ${source_package}"
+            if ! uds zarf dev inspect manifests "$source_package" \
+              --flavor upstream \
+              --values "$values_file" \
+              --deploy-set-variables DOMAIN=uds.dev \
+              --no-color >/dev/null; then
+              echo "ERROR: source values verification failed for ${source_package}"
+              exit 1
+            fi
+          done
       - description: "Render each values-bearing package and run its assertions"
         shell:
           darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
-            for fixture in "test/values/${pkg}/overrides.yaml" "test/values/${pkg}/assertions.sh"; do
-              if [ ! -f "$fixture" ]; then
-                echo "ERROR: packages/${pkg} exposes Zarf values but is missing ${fixture}"
-                exit 1
-              fi
-            done
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            test_file="test/values/${pkg}/test.yaml"
+            if [ ! -f "$test_file" ]; then
+              echo "ERROR: packages/${pkg} exposes Zarf values but is missing ${test_file}"
+              exit 1
+            fi
             echo "Verifying value mappings for packages/${pkg}"
-            uds zarf dev inspect manifests "packages/${pkg}" \
-              --flavor upstream \
-              --values "packages/${pkg}/zarf-values.yaml" \
-              --values "test/values/${pkg}/overrides.yaml" \
-              --deploy-set-variables DOMAIN=uds.dev \
-              --no-color \
-              | bash "test/values/${pkg}/assertions.sh"
+            if ! bash test/values/run.sh "$pkg"; then
+              echo "ERROR: value mapping verification failed for packages/${pkg}"
+              exit 1
+            fi
           done
       - description: "Verify admin-domain precedence across affected packages"
         shell:
@@ -125,34 +181,72 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
-          for scenario in s1 s2 s3 s4; do
-            case "$scenario" in
-              s1) expected=admin.custom.example.com; variables=DOMAIN=uds.dev ;;
-              s2) expected=mgmt.example.com; variables=DOMAIN=uds.dev ;;
-              s3) expected=myadmin.example.com; variables=DOMAIN=uds.dev,ADMIN_DOMAIN=myadmin.example.com ;;
-              s4) expected=admin.uds.dev; variables=DOMAIN=uds.dev ;;
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
+          admin_packages_file="test/values/admin-domain/packages.txt"
+
+          is_admin_package() {
+            while IFS= read -r expected; do
+              case "$expected" in
+                ""|\#*) continue ;;
+              esac
+              [ "$expected" = "$1" ] && return 0
+            done < "$admin_packages_file"
+            return 1
+          }
+
+          # A package with adminDomain must join the matrix; listed packages must keep the value.
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            if uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
+              if ! is_admin_package "$pkg"; then
+                echo "ERROR: packages/${pkg} exposes adminDomain but is missing from ${admin_packages_file}"
+                exit 1
+              fi
+            fi
+          done
+
+          while IFS= read -r pkg; do
+            case "$pkg" in
+              ""|\#*) continue ;;
             esac
-            for values_file in packages/*/zarf-values.yaml; do
-              # Only packages with the top-level override participate in this precedence matrix.
-              if ! uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
+            values_file="packages/${pkg}/zarf-values.yaml"
+            if [ ! -f "$values_file" ]; then
+              echo "ERROR: ${admin_packages_file} lists ${pkg}, but ${values_file} does not exist"
+              exit 1
+            fi
+            if ! uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
+              echo "ERROR: ${admin_packages_file} lists ${pkg}, but it no longer exposes adminDomain"
+              exit 1
+            fi
+          done < "$admin_packages_file"
+
+          for scenario in $(uds zarf tools yq -r '.scenarios[].name' test/values/admin-domain/scenarios.yaml); do
+            while IFS= read -r pkg; do
+              case "$pkg" in
+                ""|\#*) continue ;;
+              esac
+              if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
                 continue
               fi
-              pkg="${values_file#packages/}"
-              pkg="${pkg%/zarf-values.yaml}"
               echo "Verifying admin-domain ${scenario} for packages/${pkg}"
-              uds zarf dev inspect manifests "packages/${pkg}" \
-                --flavor upstream \
-                --values "packages/${pkg}/zarf-values.yaml" \
-                --values "test/values/${pkg}/overrides.yaml" \
-                --values "test/values/admin-domain/${scenario}.yaml" \
-                --deploy-set-variables "$variables" \
-                --no-color \
-                | bash "test/values/${pkg}/assertions.sh" "$expected"
-            done
+              if ! bash test/values/run.sh "$pkg" "$scenario"; then
+                echo "ERROR: admin-domain ${scenario} verification failed for packages/${pkg}"
+                exit 1
+              fi
+            done < "$admin_packages_file"
           done
 
   - name: values-generate
     description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
+    inputs:
+      package:
+        description: "Optional values-bearing package to regenerate"
+        default: ""
     actions:
       - description: "Build the Pepr module (needed to compose the base and standard packages)"
         cmd: |
@@ -164,13 +258,25 @@ tasks:
           linux: bash
         cmd: |
           set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
             echo "Generating packages/${pkg}/zarf-values.schema.json"
             # Write to a temp file and move on success so a failed/flaky generate never truncates a committed schema.
             tmp=$(mktemp)
-            uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"
+            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"; then
+              rm -f "$tmp"
+              echo "ERROR: values schema generation failed for packages/${pkg}"
+              exit 1
+            fi
             mv "$tmp" "packages/${pkg}/zarf-values.schema.json"
           done
 
