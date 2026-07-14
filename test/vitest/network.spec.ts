@@ -41,8 +41,16 @@ type UDPRouteObject = k8s.KubernetesObject & {
   };
 };
 
-async function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
-  const deadline = Date.now() + 120000;
+// Polls until `extract` returns a value from the default Gateway's managed UDP Service,
+// backing getDefaultEnvoyUDPServiceTarget/getDefaultEnvoyExternalAddress/
+// getDefaultEnvoyNodePort below.
+async function pollDefaultEnvoyUDPService<T>(
+  port: number,
+  extract: (service: k8s.V1Service) => T | undefined,
+  description: string,
+  timeoutMs: number,
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const services = await core.listServiceForAllNamespaces({
       labelSelector: `${ENVOY_OWNING_GATEWAY_LABEL}=${ENVOY_DEFAULT_GATEWAY_NAME}`,
@@ -52,17 +60,66 @@ async function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
         servicePort => servicePort.port === port && servicePort.protocol === "UDP",
       ),
     );
-    const name = service?.metadata?.name;
-    const namespace = service?.metadata?.namespace;
 
-    if (name && namespace) {
-      return `${name}.${namespace}.svc.cluster.local`;
+    if (service) {
+      const value = extract(service);
+      if (value !== undefined) {
+        return value;
+      }
     }
 
     await new Promise(resolve => setTimeout(resolve, 5000));
   }
 
-  throw new Error(`Timeout waiting for default Envoy Service UDP port ${port}`);
+  throw new Error(`Timeout waiting for ${description} on default Envoy Service port ${port}`);
+}
+
+function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
+  return pollDefaultEnvoyUDPService(
+    port,
+    service => {
+      const name = service.metadata?.name;
+      const namespace = service.metadata?.namespace;
+      return name && namespace ? `${name}.${namespace}.svc.cluster.local` : undefined;
+    },
+    "cluster-local Service DNS name",
+    120000,
+  );
+}
+
+function getDefaultEnvoyExternalAddress(port: number, timeoutMs = 300000): Promise<string> {
+  return pollDefaultEnvoyUDPService(
+    port,
+    service => {
+      const ingress = service.status?.loadBalancer?.ingress?.[0];
+      return ingress?.ip ?? ingress?.hostname;
+    },
+    "LoadBalancer external address",
+    timeoutMs,
+  );
+}
+
+function getDefaultEnvoyNodePort(port: number, timeoutMs = 120000): Promise<number> {
+  return pollDefaultEnvoyUDPService(
+    port,
+    service => service.spec?.ports?.find(p => p.port === port && p.protocol === "UDP")?.nodePort,
+    "assigned NodePort",
+    timeoutMs,
+  );
+}
+
+// The k3d node's own docker-network address, reachable directly from a test process
+// running on the same docker host (as this one does, whether locally or in CI) without
+// needing any host port mapping.
+async function getK3dNodeAddress(): Promise<string> {
+  const nodes = await core.listNode();
+  const address = nodes.items[0]?.status?.addresses?.find(a => a.type === "InternalIP")?.address;
+
+  if (!address) {
+    throw new Error("Could not determine an InternalIP address for any cluster node");
+  }
+
+  return address;
 }
 
 async function assertDefaultEnvoyUDPResources(port: number): Promise<string> {
@@ -217,10 +274,12 @@ function expectUdpPingLog(log: string, message: string) {
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 const runUDPExposeTests = process.env.UDP_EXPOSE_TESTS === "true";
-// Only true when the test runner mapped a host UDP port to the k3d server node (see
-// uds-core-e2e's K3D_EXTRA_ARGS input), so this test can exercise the real external
-// path: this process -> mapped host port -> k3d node -> MetalLB LoadBalancer ->
-// Envoy Gateway -> backend, instead of just pod-to-pod traffic inside the cluster.
+// Only true when the environment can actually reach the default Gateway through a real
+// external path: on k3d that's the node's own address plus the Service's NodePort (see
+// UDP_EXPOSE_LB_USE_NODEPORT, since MetalLB's LoadBalancer IP isn't reachable outside
+// the docker network); on a real cloud cluster (EKS/AKS) the provisioned LoadBalancer
+// address is reachable directly. This lets the test exercise the real external path
+// instead of just pod-to-pod traffic in-cluster.
 const runUDPExposeLBTest = process.env.UDP_EXPOSE_LB_TEST === "true";
 
 // Sends every message from a single socket (one source port): busybox nc's UDP listener
@@ -787,18 +846,36 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
 
 (runUDPExposeLBTest ? test : test.skip)(
   "UDP expose reaches the backend through the real external LoadBalancer path",
-  { retry: 2, timeout: 60000 },
+  { retry: 2, timeout: 300000 },
   async () => {
     await assertDefaultEnvoyUDPResources(5000);
     await clearUdpLog(udpServerPodName);
 
-    // Sent directly from this test process (not execInPod) to the host port k3d mapped
-    // onto the server node, exercising the full external path a real consumer would use:
-    // localhost -> k3d node port -> MetalLB LoadBalancer -> Envoy Gateway -> backend.
-    await sendUdpFromHost("localhost", 5000, ["ping", "ping", "ping", "ping", "ping"]);
+    let host: string;
+    let port: number;
+    if (process.env.UDP_EXPOSE_LB_USE_NODEPORT === "true") {
+      // k3d: MetalLB's L2-announced LoadBalancer IP isn't reachable from outside the
+      // docker network, but kube-proxy's NodePort forwarding works directly on the k3d
+      // node's own address, which is reachable from this test process (running on the
+      // same docker host, whether locally or in CI).
+      host = process.env.UDP_EXPOSE_LB_HOST || (await getK3dNodeAddress());
+      port = await getDefaultEnvoyNodePort(5000);
+    } else {
+      // Cloud clusters (EKS/AKS) provision a real, externally-reachable LoadBalancer
+      // address on the Service's own port.
+      host = await getDefaultEnvoyExternalAddress(5000);
+      port = 5000;
+    }
+
+    // Sent directly from this test process (not execInPod), exercising the full external
+    // path a real consumer would use: LoadBalancer/NodePort -> Envoy Gateway -> backend.
+    await sendUdpFromHost(host, port, ["ping\n", "ping\n", "ping\n", "ping\n", "ping\n"]);
 
     const receivedLog = await waitForUdpLog(udpServerPodName, "ping", 30000, 1000);
-    expectUdpPingLog(receivedLog, `UDP Envoy Gateway expose via external LB: log="${receivedLog}"`);
+    expectUdpPingLog(
+      receivedLog,
+      `UDP Envoy Gateway expose via external LB: log="${receivedLog}" host="${host}" port="${port}"`,
+    );
   },
 );
 

@@ -192,7 +192,7 @@ const expose = {
       },
       gateway: {
         description:
-          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed Gateways, this value is used as both the Gateway name and namespace.",
+          "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted. UDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed Gateways, this value is used as both the Gateway name and namespace, and that namespace must be deployed via a Zarf package (for the private registry image pull secret) and enrolled in the cluster's service mesh (for the mTLS-protected connection to the Envoy Gateway controller); otherwise the managed proxy will fail to start.",
         type: "string",
       },
       domain: {

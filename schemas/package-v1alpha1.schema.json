@@ -330,7 +330,7 @@
         },
         "gateway": {
           "type": "string",
-          "description": "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted.\nUDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed\nGateways, this value is used as both the Gateway name and namespace."
+          "description": "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted.\nUDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed\nGateways, this value is used as both the Gateway name and namespace, and that namespace\nmust be deployed via a Zarf package (for the private registry image pull secret) and\nenrolled in the cluster's service mesh (for the mTLS-protected connection to the Envoy\nGateway controller); otherwise the managed proxy will fail to start."
         },
         "host": {
           "type": "string",
