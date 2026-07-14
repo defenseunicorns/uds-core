@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import * as dgram from "node:dgram";
 import * as k8s from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { beforeAll, describe, expect, test, vi } from "vitest";
@@ -170,7 +171,11 @@ async function clearUdpLog(serverPodName: string): Promise<void> {
   await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
     "sh",
     "-c",
-    "> /tmp/udp.log",
+    // busybox nc's UDP listener locks onto whichever peer sends the first datagram for
+    // its entire process lifetime, ignoring any other peer thereafter. Killing it forces
+    // the server's respawn loop to bind a fresh listener so each test gets its own peer,
+    // instead of silently losing to whichever earlier test (or client pod) contacted it first.
+    "> /tmp/udp.log; pkill -f 'nc -u -l -p 5000' || true; sleep 0.2",
   ]);
 }
 
@@ -212,6 +217,41 @@ function expectUdpPingLog(log: string, message: string) {
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 const runUDPExposeTests = process.env.UDP_EXPOSE_TESTS === "true";
+// Only true when the test runner mapped a host UDP port to the k3d server node (see
+// uds-core-e2e's K3D_EXTRA_ARGS input), so this test can exercise the real external
+// path: this process -> mapped host port -> k3d node -> MetalLB LoadBalancer ->
+// Envoy Gateway -> backend, instead of just pod-to-pod traffic inside the cluster.
+const runUDPExposeLBTest = process.env.UDP_EXPOSE_LB_TEST === "true";
+
+// Sends every message from a single socket (one source port): busybox nc's UDP listener
+// on the backend latches onto whichever peer sends the first datagram and ignores any
+// others, so messages sent from separate sockets would be silently dropped.
+function sendUdpFromHost(host: string, port: number, messages: string[]): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket("udp4");
+    let remaining = messages.length;
+
+    socket.on("error", err => {
+      socket.close();
+      reject(err);
+    });
+
+    for (const message of messages) {
+      socket.send(message, port, host, err => {
+        if (err) {
+          socket.close();
+          reject(err);
+          return;
+        }
+        remaining -= 1;
+        if (remaining === 0) {
+          socket.close();
+          resolve();
+        }
+      });
+    }
+  });
+}
 
 let curlPodName1 = "";
 let testAdminApp = "";
@@ -697,7 +737,10 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
+    // Send all datagrams from a single nc client process (one source port): busybox nc's
+    // UDP listener latches onto whichever peer sends the first datagram and ignores any
+    // others, so packets sent from separate client processes would be silently dropped.
+    `(for i in 1 2 3; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
   const allowedLog = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
   expectUdpPingLog(
@@ -713,7 +756,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   const deniedSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
     "sh",
     "-c",
-    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
+    `(for i in 1 2 3; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
   const deniedLog = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
   expect(deniedLog, `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`).toBe(
@@ -731,7 +774,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
     const send = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
       "sh",
       "-c",
-      `for i in 1 2 3 4 5; do echo ping | nc -u -w 1 ${serviceTarget} 5000 2>&1; sleep 0.2; done`,
+      `(for i in 1 2 3 4 5; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serviceTarget} 5000 2>&1`,
     ]);
     const receivedLog = await waitForUdpLog(udpServerPodName, "ping", 30000, 1000);
 
@@ -739,6 +782,23 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
       receivedLog,
       `UDP Envoy Gateway expose: log="${receivedLog}" nc="${send.stdout}" target="${serviceTarget}"`,
     );
+  },
+);
+
+(runUDPExposeLBTest ? test : test.skip)(
+  "UDP expose reaches the backend through the real external LoadBalancer path",
+  { retry: 2, timeout: 60000 },
+  async () => {
+    await assertDefaultEnvoyUDPResources(5000);
+    await clearUdpLog(udpServerPodName);
+
+    // Sent directly from this test process (not execInPod) to the host port k3d mapped
+    // onto the server node, exercising the full external path a real consumer would use:
+    // localhost -> k3d node port -> MetalLB LoadBalancer -> Envoy Gateway -> backend.
+    await sendUdpFromHost("localhost", 5000, ["ping", "ping", "ping", "ping", "ping"]);
+
+    const receivedLog = await waitForUdpLog(udpServerPodName, "ping", 30000, 1000);
+    expectUdpPingLog(receivedLog, `UDP Envoy Gateway expose via external LB: log="${receivedLog}"`);
   },
 );
 

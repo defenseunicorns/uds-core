@@ -1078,7 +1078,9 @@ describe("networkPolicies", () => {
     expect(udpPolicy).toBeDefined();
     expect(udpPolicy?.spec?.podSelector?.matchLabels).toEqual({ app: "game" });
     expect(udpPolicy?.spec?.ingress?.[0]?.from?.[0]).toEqual({
-      namespaceSelector: { matchLabels: { "kubernetes.io/metadata.name": "envoy-gateway-system" } },
+      namespaceSelector: {
+        matchLabels: { "kubernetes.io/metadata.name": "envoy-default-gateway" },
+      },
       podSelector: {
         matchLabels: {
           "gateway.envoyproxy.io/owning-gateway-name": "envoy-default-gateway",
@@ -1089,9 +1091,9 @@ describe("networkPolicies", () => {
     expect(udpPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 7777, protocol: "UDP" });
     expect(udpPolicy?.spec?.ingress?.[0]?.ports?.map(port => port.port)).not.toContain(15008);
     // The ingress-from-anywhere and egress-to-backend rules for managed Envoy Gateway
-    // proxies are now static Allow rules on the envoy-gateway package itself, not
-    // generated per-package here.
-    expect(policies.some(policy => policy.metadata?.namespace === "envoy-gateway-system")).toBe(
+    // proxies are static Allow rules on the Gateway's own namespace package (envoy-gateway
+    // or the per-gateway default/custom namespace), not generated per-package here.
+    expect(policies.some(policy => policy.metadata?.namespace === "envoy-default-gateway")).toBe(
       false,
     );
   });
@@ -1167,7 +1169,7 @@ describe("networkPolicies", () => {
 
     expect(udpPolicy).toBeDefined();
     expect(udpPolicy?.spec?.ingress?.[0]?.from?.[0]).toEqual({
-      namespaceSelector: { matchLabels: { "kubernetes.io/metadata.name": "envoy-gateway-system" } },
+      namespaceSelector: { matchLabels: { "kubernetes.io/metadata.name": "team-gateway" } },
       podSelector: {
         matchLabels: {
           "gateway.envoyproxy.io/owning-gateway-name": "team-gateway",

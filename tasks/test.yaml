@@ -165,8 +165,14 @@ tasks:
 
   - name: uds-core-e2e
     description: "Build and test UDS Core e2e"
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
+        description: "Extra args for k3d, e.g. a UDP port mapping to test the default Gateway's expose path through MetalLB"
     actions:
       - task: uds-core
+        with:
+          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: e2e-tests
 
   - name: uds-core-non-k3d

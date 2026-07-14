@@ -4,7 +4,7 @@
  */
 
 import { V1OwnerReference } from "@kubernetes/client-node";
-import { K8s, kind } from "pepr";
+import { K8s } from "pepr";
 import { Component, setupLogger } from "../../../logger";
 import {
   K8sGateway,
@@ -216,12 +216,6 @@ async function performDefaultGatewayReconciliation(): Promise<void> {
     }
     return;
   }
-
-  await K8s(kind.Namespace).Apply({
-    apiVersion: "v1",
-    kind: "Namespace",
-    metadata: { name: envoyDefaultGatewayNamespace },
-  });
 
   await K8s(K8sGateway).Apply(
     {

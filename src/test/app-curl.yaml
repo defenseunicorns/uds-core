@@ -360,7 +360,7 @@ spec:
             [
               "sh",
               "-c",
-              "printf 'server-mode:nc-loop-w1\n' >> /tmp/udp.meta; while true; do nc -u -l -p 5000 -w 1 >> /tmp/udp.log; done",
+              "printf 'server-mode:nc-loop\n' >> /tmp/udp.meta; while true; do nc -u -l -p 5000 >> /tmp/udp.log; done",
             ]
           resources:
             limits:

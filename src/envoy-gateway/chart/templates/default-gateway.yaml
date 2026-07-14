@@ -1,0 +1,42 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# The default UDP Gateway and its managed Envoy proxy live in their own namespace
+# (matching how Istio's tenant/admin gateways get their own namespace), rather than
+# alongside the envoy-gateway controller. This namespace, and the base network
+# policies for whatever proxy the operator creates in it, are provisioned statically
+# here so Zarf handles the normal namespace bootstrapping (image pull secrets, etc.)
+# The operator only ever creates/deletes the Gateway object itself, on demand.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: envoy-default-gateway
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: envoy-default-gateway
+  namespace: envoy-default-gateway
+spec:
+  network:
+    allow:
+      - direction: Ingress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: Anywhere
+        remoteProtocol: UDP
+        description: "UDP ingress for the managed default Gateway proxy"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteGenerated: Anywhere
+        remoteProtocol: UDP
+        description: "UDP egress for the managed default Gateway proxy to backends"
+      - direction: Egress
+        selector:
+          app.kubernetes.io/managed-by: envoy-gateway
+        remoteNamespace: envoy-gateway-system
+        remoteSelector:
+          control-plane: envoy-gateway
+        port: 18000
+        description: "xDS connection from the managed default Gateway proxy to the controller"

@@ -52,7 +52,7 @@ spec:
         port: 5000
         remoteProtocol: UDP
       - direction: Egress
-        remoteNamespace: envoy-gateway-system
+        remoteNamespace: envoy-default-gateway
         remoteSelector:
           gateway.envoyproxy.io/owning-gateway-name: envoy-default-gateway
           gateway.envoyproxy.io/owning-gateway-namespace: envoy-default-gateway

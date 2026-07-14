@@ -9,11 +9,7 @@ import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
 import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
-import {
-  envoyGatewaySystemNamespace,
-  getUDPGatewayName,
-  getUDPGatewayNamespace,
-} from "../envoy-gateway/constants";
+import { getUDPGatewayName, getUDPGatewayNamespace } from "../envoy-gateway/constants";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -150,7 +146,7 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     const backendPolicy: Allow = {
       direction: Direction.Ingress,
       selector,
-      remoteNamespace: envoyGatewaySystemNamespace,
+      remoteNamespace: getUDPGatewayNamespace(expose.gateway),
       remoteSelector: getUDPGatewaySelector(expose.gateway),
       port: policyPort,
       remoteProtocol: RemoteProtocol.UDP,

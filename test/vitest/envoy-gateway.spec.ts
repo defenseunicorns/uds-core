@@ -48,8 +48,38 @@ async function createNamespace(): Promise<void> {
           name: TEST_NAMESPACE,
           labels: {
             "app.kubernetes.io/name": "envoy-gateway-e2e",
+            // The controller enforces mesh-wide strict mTLS, so the proxy's namespace
+            // must be ambient-enrolled too or it can't complete the xDS handshake with
+            // the controller. A real custom Gateway would set this via its own Package
+            // CR's network.serviceMesh.mode, same as our own default Gateway namespace.
+            "istio.io/dataplane-mode": "ambient",
           },
         },
+      },
+    });
+  } catch (error) {
+    if (!isConflict(error)) throw error;
+  }
+
+  await copyPrivateRegistrySecret();
+}
+
+// Namespaces Zarf creates as part of a package deploy automatically get the
+// "private-registry" image pull secret so their pods can pull through the
+// internal registry mirror. This namespace is created directly via the k8s
+// API (simulating a real user's own custom Gateway namespace, which they
+// would normally deploy via their own Zarf package), so it needs the same
+// secret copied in manually to reproduce that expected end state.
+async function copyPrivateRegistrySecret(): Promise<void> {
+  const source = await core.readNamespacedSecret({ name: "private-registry", namespace: "zarf" });
+
+  try {
+    await core.createNamespacedSecret({
+      namespace: TEST_NAMESPACE,
+      body: {
+        metadata: { name: "private-registry" },
+        type: source.type,
+        data: source.data,
       },
     });
   } catch (error) {
