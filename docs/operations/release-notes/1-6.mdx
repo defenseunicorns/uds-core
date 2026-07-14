@@ -5,23 +5,7 @@ sidebar:
   order: 3.989
 ---
 
-import { Steps, Code } from "@astrojs/starlight/components";
-
-export const jsonCode = `{
-  "name": "usercertificateSKI",
-  "displayName": "x509 User SKI",
-  "validations": {},
-  "annotations": {},
-  "permissions": {
-    "view": [
-      "admin"
-    ],
-    "edit": [
-      "admin"
-    ]
-  },
-  "multivalued": false
-}`
+import { Steps } from "@astrojs/starlight/components";
 
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
@@ -80,7 +64,23 @@ Apply the following steps once per cluster after upgrading to UDS Core 1.6:
 3. **Create the `usercertificateSKI` attribute**
 
    Add the following JSON to the attributes array below `usercertificateCN`:
-   <Code code={jsonCode} lang="json" />
+   ```json
+   {
+     "name": "usercertificateSKI",
+     "displayName": "x509 User SKI",
+     "validations": {},
+     "annotations": {},
+     "permissions": {
+       "view": [
+         "admin"
+       ],
+       "edit": [
+         "admin"
+       ]
+     },
+     "multivalued": false
+   }
+   ```
 
 </Steps>
 
