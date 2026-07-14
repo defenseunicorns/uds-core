@@ -24,6 +24,10 @@
           "$ref": "#/definitions/CABundle",
           "description": "CA bundle configuration for the package"
         },
+        "kubevirt": {
+          "$ref": "#/definitions/Kubevirt",
+          "description": "KubeVirt configuration for the package"
+        },
         "monitor": {
           "type": "array",
           "items": {
@@ -45,6 +49,19 @@
       },
       "required": [],
       "title": "Spec"
+    },
+    "Kubevirt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enables KubeVirt workload support for this package. When true, the operator labels the namespace uds.dev/kubevirt-workload=true",
+          "default": false
+        }
+      },
+      "required": [],
+      "title": "Kubevirt"
     },
     "CABundle": {
       "type": "object",

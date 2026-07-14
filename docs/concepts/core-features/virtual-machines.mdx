@@ -1,0 +1,111 @@
+---
+title: Virtual Machines
+description: How UDS Core integrates KubeVirt and CDI to run virtual machines alongside containers, with Istio service mesh support and native policy enforcement.
+sidebar:
+  order: 2.008
+---
+
+UDS Core supports running virtual machines alongside containers using [KubeVirt](https://kubevirt.io/), a CNCF project that adds VM workload capabilities to Kubernetes. This integration allows teams to migrate legacy applications that require VM environments without maintaining separate infrastructure.
+
+## Why virtual machines on Kubernetes?
+
+Not all workloads can be containerized. Legacy applications may depend on specific kernel versions, device drivers, or system libraries that are difficult to containerize. KubeVirt addresses this by enabling full VM lifecycle management through the Kubernetes API, allowing teams to:
+
+- Run legacy applications alongside modern containerized services
+- Use Kubernetes scheduling, networking, and storage for VM workloads
+- Apply the same operational patterns (GitOps, monitoring, logging) to VMs and containers
+- Gradually migrate VM workloads to containers over time
+
+## Architecture
+
+UDS Core uses an out-of-core architecture for VM support:
+
+| Component | Location | Purpose |
+|---|---|---|
+| KubeVirt operator | Standalone deployment | Manages VM lifecycle, virt-api, virt-controller, virt-handler |
+| Containerized Data Importer (CDI) | Standalone deployment | Manages VM disk image imports and storage provisioning |
+| Core integration | UDS Core Pepr policies + operator | Namespace labeling, Istio policy exceptions, Package CRD extension |
+| VM application package | User-managed Zarf package | Defines VMs, data volumes, services, and network policies |
+
+The KubeVirt and CDI operators are deployed independently from UDS Core. This separation allows teams to manage VM infrastructure updates without affecting the core platform, and vice versa.
+
+## Mesh mode rules
+
+VM workloads require specific Istio configuration to function correctly:
+
+| Namespace mode | Allowed behavior |
+|---|---|
+| Ambient (default) | KubeVirt VMs operate without sidecar injection; traffic routing handled by ztunnel |
+| Sidecar | VM namespaces must use sidecar mode; KubeVirt generates `virt-launcher` pods that require special Istio annotations |
+
+> [!IMPORTANT]
+> VM namespaces should use sidecar mode, not ambient mode. KubeVirt-generated pods need per-pod sidecar injection with specific annotations for virtual network interface routing.
+
+## Pepr policy allowances
+
+UDS Core Pepr policies automatically allow specific KubeVirt and CDI annotations in namespaces labeled `uds.dev/kubevirt-workload: "true"`:
+
+| Pod type | Allowed annotations | Purpose |
+|---|---|---|
+| `virt-launcher-*` pods | `traffic.sidecar.istio.io/kubevirtInterfaces`, `istio.io/reroute-virtual-interfaces` | Route traffic through virtual network interfaces |
+| CDI pods (`importer-*`, `cdi-upload-*`, `cdi-clone-*`) | `sidecar.istio.io/inject: "false"` | Disable sidecar for disk import operations |
+
+These exceptions are scoped to specific pod naming patterns and namespace labels. Regular pods in kubevirt namespaces are not exempt from policy enforcement.
+
+## Package CRD extension
+
+The `Package` CRD includes a `spec.kubevirt.enabled` field that signals the operator to apply the `uds.dev/kubevirt-workload: "true"` label to the namespace. This label triggers the Pepr policy exceptions needed for KubeVirt-generated pods.
+
+```yaml title="uds-package.yaml"
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: my-vm-app
+  namespace: vm-app
+spec:
+  kubevirt:
+    enabled: true
+  network:
+    serviceMesh:
+      mode: sidecar
+```
+
+The operator tracks per-package kubevirt intent via annotations to prevent conflicts when multiple packages share a namespace.
+
+## VM application contract
+
+A minimal VM application on UDS Core requires:
+
+| Resource | Purpose |
+|---|---|
+| Namespace | Application isolation with kubevirt workload label |
+| Package CR | Declares kubevirt.enabled, sidecar mode, network/expose config |
+| VirtualMachine | Defines VM spec (CPU, memory, disks, network interfaces) |
+| DataVolume (optional) | Imports VM disk images from URLs or existing PVCs |
+| Service | Exposes VM services for ingress or mesh routing |
+
+## Monitoring and logging
+
+VM workloads integrate with existing UDS Core observability:
+
+- **Metrics**: KubeVirt exposes Prometheus metrics on `virt-handler` and `virt-controller` endpoints
+- **Logs**: VM console output and virt-launcher logs flow through the standard logging pipeline
+- **Alerts**: KubeVirt health alerts can be configured via Prometheus rules
+
+## Storage requirements
+
+KubeVirt requires storage for VM disk images. UDS Core supports:
+
+- **PVC-backed VMs**: Use CDI DataVolumes to import disk images into PVCs
+- **Container disk VMs**: Use pre-built container images containing VM disks (no persistent storage)
+- **Storage classes**: Any standard Kubernetes StorageClass that supports ReadWriteMany access mode
+
+> [!NOTE]
+> For production workloads, PVC-backed VMs with CDI are recommended over container disks, as container disks lose data on VM restart.
+
+## Related documentation
+
+- [KubeVirt Documentation](https://kubevirt.io/user-guide/) - Official KubeVirt user guide
+- [CDI Documentation](https://kubevirt.io/cdi/latest/) - Containerized Data Importer documentation
+- [Networking](/concepts/core-features/networking/) - Istio service mesh configuration
+- [Policy and Compliance](/concepts/core-features/policy-and-compliance/) - Pepr policy enforcement details

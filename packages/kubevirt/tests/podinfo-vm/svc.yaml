@@ -1,0 +1,18 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: podinfo-vm
+  namespace: podinfo-vm
+  labels:
+    app.kubernetes.io/name: podinfo-vm
+spec:
+  selector:
+    app.kubernetes.io/name: podinfo-vm
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

@@ -1,0 +1,262 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+tasks:
+  - name: all
+    actions:
+      - task: health-check
+      - task: vm-test
+      - task: live-migration-test
+      - task: podinfo-vm-test
+
+  - name: health-check
+    actions:
+      - description: virt-api Health Check
+        wait:
+          cluster:
+            kind: Deployment
+            name: virt-api
+            namespace: kubevirt
+            condition: Available
+      - description: virt-controller Health Check
+        wait:
+          cluster:
+            kind: Deployment
+            name: virt-controller
+            namespace: kubevirt
+            condition: Available
+      - description: virt-operator Health Check
+        wait:
+          cluster:
+            kind: Deployment
+            name: virt-operator
+            namespace: kubevirt
+            condition: Available
+      - description: virt-handler Health Check
+        wait:
+          cluster:
+            kind: DaemonSet
+            name: virt-handler
+            namespace: kubevirt
+      - description: KubeVirt CR Health Check
+        wait:
+          cluster:
+            kind: KubeVirt
+            name: kubevirt
+            namespace: kubevirt
+            condition: Available
+      - description: cdi-operator Health Check
+        wait:
+          cluster:
+            kind: Deployment
+            name: cdi-operator
+            namespace: cdi
+            condition: Available
+      - description: CDI CR Health Check
+        wait:
+          cluster:
+            kind: CDI
+            name: cdi
+            condition: Available
+
+  - name: vm-test
+    description: "Deploy and verify a basic container-disk VM"
+    actions:
+      - description: Create vm-test zarf package
+        cmd: ./uds zarf package create packages/kubevirt/tests/vm-test --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+      - description: Deploy vm-test zarf package
+        cmd: ./uds zarf package deploy build/zarf-package-vm-test-"${ZARF_ARCHITECTURE}"-0.0.1.tar.zst --confirm --no-progress
+      - description: Start testvm
+        cmd: ./uds zarf tools kubectl patch virtualmachine testvm -n vm-test --type merge -p '{"spec":{"runStrategy":"Always"}}'
+      - description: Wait for testvm VirtualMachine to be ready
+        wait:
+          cluster:
+            kind: VirtualMachine
+            name: testvm
+            namespace: vm-test
+            condition: Ready
+      - description: Wait for testvm VirtualMachineInstance to be ready
+        wait:
+          cluster:
+            kind: VirtualMachineInstance
+            name: testvm
+            namespace: vm-test
+            condition: Ready
+      - description: Test HTTP server running in VM
+        cmd: |
+          ./uds zarf tools kubectl port-forward svc/testvm-svc -n vm-test 58835:80 &
+          PORT_FORWARD_PID=$!
+          sleep 5
+          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:58835)
+          kill $PORT_FORWARD_PID
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "HTTP test passed."
+          else
+            echo "HTTP test failed. status=${HTTP_STATUS}"
+            exit 1
+          fi
+
+  - name: podinfo-vm-test
+    description: "Deploy and verify a UDS-managed VM app with Istio sidecar (requires native KubeVirt Pepr support)"
+    actions:
+      - description: Create podinfo-vm zarf package
+        cmd: ./uds zarf package create packages/kubevirt/tests/podinfo-vm --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+      - description: Deploy podinfo-vm zarf package
+        cmd: ./uds zarf package deploy build/zarf-package-podinfo-vm-"${ZARF_ARCHITECTURE}"-0.0.1.tar.zst --confirm --no-progress
+      - description: Wait for podinfo-vm UDS Package to be ready
+        wait:
+          cluster:
+            kind: Package
+            name: podinfo-vm
+            namespace: podinfo-vm
+            condition: Ready
+      - description: Verify podinfo-vm namespace registry secret
+        cmd: ./uds zarf tools kubectl get secret private-registry -n podinfo-vm
+      - description: Verify podinfo-vm uses native KubeVirt policy allowance path
+        cmd: |
+          ./uds zarf tools kubectl get namespace podinfo-vm -o jsonpath='{.metadata.labels.uds\.dev/kubevirt-workload}' | grep true
+          if ./uds zarf tools kubectl get exemption kubevirt -n uds-policy-exemptions -o yaml | grep -q 'namespace: podinfo-vm'; then
+            echo "podinfo-vm still has centralized exemption"
+            exit 1
+          fi
+      - description: Start podinfo-vm
+        cmd: ./uds zarf tools kubectl patch virtualmachine podinfo-vm -n podinfo-vm --type merge -p '{"spec":{"runStrategy":"Always"}}'
+      - description: Wait for podinfo-vm VirtualMachine to be ready
+        wait:
+          cluster:
+            kind: VirtualMachine
+            name: podinfo-vm
+            namespace: podinfo-vm
+            condition: Ready
+      - description: Wait for podinfo-vm VirtualMachineInstance to be ready
+        wait:
+          cluster:
+            kind: VirtualMachineInstance
+            name: podinfo-vm
+            namespace: podinfo-vm
+            condition: Ready
+      - description: Verify virt-launcher Istio sidecar and native policy allowance
+        cmd: |
+          POD_NAME=$(./uds zarf tools kubectl get pod -n podinfo-vm -l app.kubernetes.io/name=podinfo-vm -o jsonpath='{.items[0].metadata.name}')
+          echo "virt-launcher pod: ${POD_NAME}"
+          echo "${POD_NAME}" | grep '^virt-launcher-'
+          ./uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.metadata.annotations.traffic\.sidecar\.istio\.io/kubevirtInterfaces}' | grep k6t-eth0
+          PEPR_EXEMPTION=$(./uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.metadata.annotations.uds-core\.pepr\.dev/uds-core-policies\.RestrictIstioTrafficOverrides}')
+          if [ -n "${PEPR_EXEMPTION}" ]; then
+            echo "unexpected Pepr exemption annotation: ${PEPR_EXEMPTION}"
+            exit 1
+          fi
+          ./uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.spec.initContainers[*].name}' | grep istio-proxy
+      - description: Verify non-virt-launcher pod cannot use KubeVirt Istio annotation
+        cmd: |
+          if ./uds zarf tools kubectl apply -f packages/kubevirt/tests/podinfo-vm/non-virt-kubevirt-annotation-pod.yaml >/tmp/non-virt-kubevirt-annotation.out 2>&1; then
+            echo "non-virt-launcher pod unexpectedly admitted"
+            exit 1
+          fi
+          grep 'traffic.sidecar.istio.io/kubevirtInterfaces' /tmp/non-virt-kubevirt-annotation.out
+      - description: Verify non-importer pod cannot disable Istio sidecar
+        cmd: |
+          if ./uds zarf tools kubectl run non-importer-sidecar-disable -n podinfo-vm --image=busybox:1.37.0 --restart=Never --overrides='{"metadata":{"annotations":{"sidecar.istio.io/inject":"false"}},"spec":{"containers":[{"name":"non-importer-sidecar-disable","image":"busybox:1.37.0","command":["sh","-c","sleep 30"]}]}}' >/tmp/non-importer-sidecar-disable.out 2>&1; then
+            echo "non-importer pod unexpectedly admitted"
+            ./uds zarf tools kubectl delete pod non-importer-sidecar-disable -n podinfo-vm --ignore-not-found
+            exit 1
+          fi
+          grep 'sidecar.istio.io/inject' /tmp/non-importer-sidecar-disable.out
+      - description: Wait for CDI DataVolume import
+        cmd: ./uds zarf tools kubectl wait datavolume cirros-import -n podinfo-vm --for=jsonpath='{.status.phase}'=Succeeded --timeout=900s
+      - description: Verify CDI DataVolume import artifacts
+        cmd: |
+          ./uds zarf tools kubectl get datavolume cirros-import -n podinfo-vm -o yaml
+          ./uds zarf tools kubectl get pvc cirros-import -n podinfo-vm
+      - description: Start PVC-backed cirros VM
+        cmd: ./uds zarf tools kubectl patch virtualmachine cirros-pvc-vm -n podinfo-vm --type merge -p '{"spec":{"runStrategy":"Always"}}'
+      - description: Wait for PVC-backed cirros VMI to be ready
+        wait:
+          cluster:
+            kind: VirtualMachineInstance
+            name: cirros-pvc-vm
+            namespace: podinfo-vm
+            condition: Ready
+      - description: Test HTTP server running in podinfo-vm via Service
+        cmd: |
+          ./uds zarf tools kubectl port-forward svc/podinfo-vm -n podinfo-vm 58836:80 &
+          PORT_FORWARD_PID=$!
+          sleep 5
+          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:58836)
+          BODY=$(curl -s http://localhost:58836)
+          kill $PORT_FORWARD_PID
+          if [ "$HTTP_STATUS" -eq 200 ] && echo "$BODY" | grep -q 'podinfo-vm'; then
+            echo "podinfo-vm service test passed."
+          else
+            echo "podinfo-vm service test failed. status=${HTTP_STATUS} body=${BODY}"
+            exit 1
+          fi
+      - description: Test podinfo-vm through tenant gateway
+        cmd: |
+          HTTP_STATUS=$(curl -k -o /dev/null -s -w "%{http_code}\n" --resolve podinfo-vm.uds.dev:443:127.0.0.1 https://podinfo-vm.uds.dev)
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "podinfo-vm gateway test passed."
+          else
+            echo "podinfo-vm gateway test failed. status=${HTTP_STATUS}"
+            exit 1
+          fi
+
+  - name: live-migration-test
+    description: "Trigger and verify a container disk VM live migration (requires 2+ nodes; run after vm-test)"
+    actions:
+      - description: Verify at least two nodes are available
+        cmd: |
+          NODE_COUNT=$(./uds zarf tools kubectl get nodes --no-headers | wc -l)
+          if [ "$NODE_COUNT" -lt 2 ]; then
+            echo "live-migration-test requires 2+ nodes, found ${NODE_COUNT} — skipping"
+            exit 0
+          fi
+          echo "node count OK: ${NODE_COUNT}"
+      - description: Wait for testvm VMI to be Running
+        wait:
+          cluster:
+            kind: VirtualMachineInstance
+            name: testvm
+            namespace: vm-test
+            condition: Ready
+      - description: Verify testvm is live-migratable
+        cmd: |
+          LIVE=$(./uds zarf tools kubectl get vmi testvm -n vm-test \
+            -o jsonpath='{.status.conditions[?(@.type=="LiveMigratable")].status}')
+          if [ "$LIVE" != "True" ]; then
+            echo "testvm is not live-migratable: ${LIVE}"
+            exit 1
+          fi
+          echo "testvm is live-migratable"
+      - description: Record source node before migration
+        cmd: |
+          SOURCE_NODE=$(./uds zarf tools kubectl get vmi testvm -n vm-test -o jsonpath='{.status.nodeName}')
+          echo "${SOURCE_NODE}" > /tmp/testvm-source-node
+          echo "source node: ${SOURCE_NODE}"
+      - description: Trigger live migration
+        cmd: |
+          ./uds zarf tools kubectl apply -f - <<'EOF'
+          apiVersion: kubevirt.io/v1
+          kind: VirtualMachineInstanceMigration
+          metadata:
+            name: testvm-migration
+            namespace: vm-test
+          spec:
+            vmiName: testvm
+          EOF
+      - description: Wait for migration to Succeed
+        cmd: |
+          ./uds zarf tools kubectl wait vmim testvm-migration -n vm-test \
+            --for=jsonpath='{.status.phase}'=Succeeded \
+            --timeout=300s
+          echo "migration Succeeded"
+      - description: Verify VM moved to a different node
+        cmd: |
+          SOURCE_NODE=$(cat /tmp/testvm-source-node)
+          TARGET_NODE=$(./uds zarf tools kubectl get vmi testvm -n vm-test -o jsonpath='{.status.nodeName}')
+          echo "source: ${SOURCE_NODE} -> target: ${TARGET_NODE}"
+          if [ "${SOURCE_NODE}" = "${TARGET_NODE}" ]; then
+            echo "ERROR: VM is still on the same node after migration"
+            exit 1
+          fi
+          echo "live-migration-test passed"

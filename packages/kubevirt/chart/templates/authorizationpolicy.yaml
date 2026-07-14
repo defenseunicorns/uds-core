@@ -1,0 +1,17 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-kubevirt-webhooks
+  namespace: {{ .Release.Namespace }}
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      kubevirt.io: virt-operator
+  rules:
+  - to:
+    - operation:
+        ports: ["8443", "8444"]

@@ -1,0 +1,28 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+kind: ZarfPackageConfig
+metadata:
+  name: podinfo-vm
+  description: "Tests a UDS-managed VM app with KubeVirt and Istio sidecar support"
+  architecture: "amd64"
+  version: "0.0.1"
+
+components:
+  - name: podinfo-vm
+    required: true
+    manifests:
+      - name: podinfo-vm
+        namespace: podinfo-vm
+        noWait: true
+        files:
+          - namespace.yaml
+          - uds-package.yaml
+          - svc.yaml
+          - datavolume.yaml
+          - pvc-vm.yaml
+          - vm.yaml
+    images:
+      - kubevirt/fedora-cloud-container-disk-demo
+      - quay.io/kubevirt/cirros-container-disk-demo:latest

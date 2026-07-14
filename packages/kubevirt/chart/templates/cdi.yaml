@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.cdi.enabled }}
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: CDI
+metadata:
+  name: cdi
+spec:
+  imagePullPolicy: IfNotPresent
+  config:
+    imagePullSecrets:
+      - name: "private-registry"
+    {{- if .Values.cdi.scratchSpaceStorageClass }}
+    scratchSpaceStorageClass: {{ .Values.cdi.scratchSpaceStorageClass }}
+    {{- end }}
+  {{- if .Values.cdi.infra.nodeSelector }}
+  infra:
+    nodeSelector:
+      {{- toYaml .Values.cdi.infra.nodeSelector | nindent 6 }}
+  {{- end }}
+  {{- if .Values.cdi.workload.nodeSelector }}
+  workload:
+    nodeSelector:
+      {{- toYaml .Values.cdi.workload.nodeSelector | nindent 6 }}
+  {{- end }}
+  customizeComponents:
+    patches:
+      - resourceName: cdi-uploadproxy
+        resourceType: Deployment
+        type: strategic
+        patch: '{"spec":{"template":{"metadata":{"labels":{"istio.io/dataplane-mode":"none"}}}}}'
+{{- end }}

@@ -95,3 +95,5 @@ export {
 } from "./generated/k8s/gateway-v1";
 
 export { UDPRoute as K8sUDPRoute } from "./generated/k8s/udproute-v1alpha2";
+
+export { VirtualMachine as KubevirtVirtualMachine } from "./generated/kubevirt/virtualmachine-v1";

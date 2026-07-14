@@ -11,6 +11,8 @@ import {
   checkIstioTrafficInterceptionOverrides,
   findContainerUsingIstioUserID,
   isPodUsingIstioUserID,
+  isKubeVirtGeneratedPodName,
+  isCDIGeneratedPodName,
 } from "./istio";
 
 describe("isPodUsingIstioUserID", () => {
@@ -196,5 +198,124 @@ describe("checkIstioTrafficInterceptionOverrides", () => {
     });
 
     expect(checkIstioTrafficInterceptionOverrides(waypointContainers, pod as V1Pod)).toEqual([]);
+  });
+
+  it("should allow kubevirtInterfaces on virt-launcher pods", () => {
+    const pod = {
+      metadata: {
+        name: "virt-launcher-vm-test-abc123",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "traffic.sidecar.istio.io/kubevirtInterfaces": "keth0",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toEqual([]);
+  });
+
+  it("should block kubevirtInterfaces on non-virt-launcher pods", () => {
+    const pod = {
+      metadata: {
+        name: "my-app-pod",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "traffic.sidecar.istio.io/kubevirtInterfaces": "keth0",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toContain(
+      "annotation traffic.sidecar.istio.io/kubevirtInterfaces",
+    );
+  });
+
+  it("should allow inject=false on CDI importer pods", () => {
+    const pod = {
+      metadata: {
+        name: "importer-test-vol-pvc123",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "sidecar.istio.io/inject": "false",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toEqual([]);
+  });
+
+  it("should allow inject=false on cdi-upload pods", () => {
+    const pod = {
+      metadata: {
+        name: "cdi-upload-test-abc123",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "sidecar.istio.io/inject": "false",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toEqual([]);
+  });
+
+  it("should allow inject=false on cdi-clone pods", () => {
+    const pod = {
+      metadata: {
+        name: "cdi-clone-test-abc123",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "sidecar.istio.io/inject": "false",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toEqual([]);
+  });
+
+  it("should still block inject=false on regular pods", () => {
+    const pod = {
+      metadata: {
+        name: "my-regular-app",
+        namespace: "kubevirt-ns",
+        annotations: {
+          "sidecar.istio.io/inject": "false",
+        },
+      },
+    } as V1Pod;
+
+    expect(checkIstioTrafficInterceptionOverrides(mockContainers, pod)).toContain(
+      "annotation sidecar.istio.io/inject",
+    );
+  });
+});
+
+describe("isKubeVirtGeneratedPodName", () => {
+  it("should match virt-launcher pod names", () => {
+    expect(isKubeVirtGeneratedPodName("virt-launcher-vm-test-abc123")).toBe(true);
+  });
+
+  it("should not match non-virt-launcher pod names", () => {
+    expect(isKubeVirtGeneratedPodName("my-app-pod")).toBe(false);
+    expect(isKubeVirtGeneratedPodName("virt-")).toBe(false);
+    expect(isKubeVirtGeneratedPodName("")).toBe(false);
+  });
+});
+
+describe("isCDIGeneratedPodName", () => {
+  it("should match importer pod names", () => {
+    expect(isCDIGeneratedPodName("importer-test-vol-pvc123")).toBe(true);
+  });
+
+  it("should match cdi-upload pod names", () => {
+    expect(isCDIGeneratedPodName("cdi-upload-test-abc123")).toBe(true);
+  });
+
+  it("should match cdi-clone pod names", () => {
+    expect(isCDIGeneratedPodName("cdi-clone-test-abc123")).toBe(true);
+  });
+
+  it("should not match non-CDI pod names", () => {
+    expect(isCDIGeneratedPodName("my-app-pod")).toBe(false);
+    expect(isCDIGeneratedPodName("import")).toBe(false);
   });
 });

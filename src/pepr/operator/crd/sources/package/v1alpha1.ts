@@ -572,6 +572,19 @@ const sso = {
   } as V1JSONSchemaProps,
 } as V1JSONSchemaProps;
 
+const kubevirt = {
+  description: "KubeVirt configuration for the package",
+  type: "object",
+  properties: {
+    enabled: {
+      description:
+        "Enables KubeVirt workload support for this package. When true, the operator labels the namespace uds.dev/kubevirt-workload=true",
+      type: "boolean",
+      default: false,
+    },
+  },
+} as V1JSONSchemaProps;
+
 const caBundle = {
   description: "CA bundle configuration for the package",
   type: "object",
@@ -791,6 +804,7 @@ export const v1alpha1: V1CustomResourceDefinitionVersion = {
             },
             monitor,
             sso,
+            kubevirt,
             caBundle,
           },
         } as V1JSONSchemaProps,

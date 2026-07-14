@@ -1,0 +1,24 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+kind: ZarfPackageConfig
+metadata:
+  name: vm-test
+  description: "Tests functionality of the VM CRD provided by KubeVirt"
+  architecture: "amd64"
+  version: "0.0.1"
+
+components:
+  - name: vm-test
+    required: true
+    manifests:
+      - name: vm-test
+        namespace: vm-test
+        noWait: true
+        files:
+          - namespace.yaml
+          - vm.yaml
+          - svc.yaml
+    images:
+      - kubevirt/fedora-cloud-container-disk-demo

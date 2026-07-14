@@ -1,0 +1,7 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+image:
+  registry: quay.io/kubevirt
+  # renovate: datasource=docker depName=quay.io/kubevirt/virt-api
+  tag: v1.8.2

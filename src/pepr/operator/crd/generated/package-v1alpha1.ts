@@ -16,6 +16,10 @@ export interface Spec {
    */
   caBundle?: CABundle;
   /**
+   * KubeVirt configuration for the package
+   */
+  kubevirt?: Kubevirt;
+  /**
    * Create Service or Pod Monitor configurations
    */
   monitor?: Monitor[];
@@ -27,6 +31,17 @@ export interface Spec {
    * Create SSO client configurations
    */
   sso?: Sso[];
+}
+
+/**
+ * KubeVirt configuration for the package
+ */
+export interface Kubevirt {
+  /**
+   * Enables KubeVirt workload support for this package. When true, the operator labels
+   * the namespace uds.dev/kubevirt-workload=true
+   */
+  enabled?: boolean;
 }
 
 /**

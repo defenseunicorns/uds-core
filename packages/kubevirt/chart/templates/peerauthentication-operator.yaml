@@ -1,0 +1,17 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: virt-operator-peerauth
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      kubevirt.io: virt-operator
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8444:
+      mode: PERMISSIVE

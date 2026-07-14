@@ -86,10 +86,18 @@ When(a.Pod)
     return request.Approve();
   });
 
-export function checkIstioTrafficInterceptionOverrides(podContainers: V1Container[], pod: V1Pod) {
+export function checkIstioTrafficInterceptionOverrides(
+  podContainers: V1Container[],
+  pod: V1Pod,
+) {
   const namespace = pod.metadata?.namespace || "default";
   const annotations = pod.metadata?.annotations || {};
   const labels = pod.metadata?.labels || {};
+  const podName = pod.metadata?.name || "";
+
+  const isKubeVirtPod = isKubeVirtGeneratedPodName(podName);
+  const isCDIPod = isCDIGeneratedPodName(podName);
+
   const blockedTrafficAnnotations = [
     "sidecar.istio.io/inject", // Can disable sidecar injection
     "traffic.sidecar.istio.io/excludeInboundPorts", // Can bypass inbound port interception
@@ -102,6 +110,7 @@ export function checkIstioTrafficInterceptionOverrides(podContainers: V1Containe
     "sidecar.istio.io/interceptionMode", // Can change interception mode (REDIRECT/TPROXY)
     "traffic.sidecar.istio.io/kubevirtInterfaces", // Can modify kubevirt interface handling
     "istio.io/redirect-virtual-interfaces", // Can modify virtual interface traffic handling
+    "istio.io/reroute-virtual-interfaces", // Can reroute virtual interface traffic for KubeVirt
   ];
   const blockedTrafficLabels = [
     "sidecar.istio.io/inject", // Can disable sidecar injection
@@ -114,6 +123,26 @@ export function checkIstioTrafficInterceptionOverrides(podContainers: V1Containe
         (key === "sidecar.istio.io/inject" && namespace === "istio-system") ||
         // Ignore 'sidecar.istio.io/inject=true' annotation
         (key === "sidecar.istio.io/inject" && annotations[key].trim() === "true")
+      ) {
+        return false;
+      }
+
+      // Allow kubevirtInterfaces and reroute-virtual-interfaces on virt-launcher pods
+      // (identified by KubeVirt's distinctive pod name pattern)
+      if (
+        isKubeVirtPod &&
+        (key === "traffic.sidecar.istio.io/kubevirtInterfaces" ||
+          key === "istio.io/reroute-virtual-interfaces")
+      ) {
+        return false;
+      }
+
+      // Allow sidecar.istio.io/inject=false on CDI pods
+      // (identified by CDI's distinctive pod name pattern)
+      if (
+        isCDIPod &&
+        key === "sidecar.istio.io/inject" &&
+        annotations[key].trim() === "false"
       ) {
         return false;
       }
@@ -253,3 +282,20 @@ export function findContainerUsingIstioUserID(podContainers: V1Container[]): str
   }
   return undefined;
 }
+
+/**
+ * Check if a pod name matches the KubeVirt virt-launcher naming pattern.
+ * virt-launcher pods are created by KubeVirt and need special Istio annotation allowances.
+ */
+export function isKubeVirtGeneratedPodName(name: string): boolean {
+  return name.startsWith("virt-launcher-");
+}
+
+/**
+ * Check if a pod name matches CDI-generated pod naming patterns.
+ * CDI importer, upload, and clone pods need sidecar injection disabled.
+ */
+export function isCDIGeneratedPodName(name: string): boolean {
+  return name.startsWith("importer-") || name.startsWith("cdi-upload-") || name.startsWith("cdi-clone-");
+}
+

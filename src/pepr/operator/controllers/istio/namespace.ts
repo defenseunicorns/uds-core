@@ -16,7 +16,16 @@ const log = setupLogger(Component.OPERATOR_ISTIO);
 const INJECTION_LABEL = "istio-injection";
 const AMBIENT_LABEL = "istio.io/dataplane-mode";
 const ISTIO_STATE_ANNOTATION = "uds.dev/original-istio-state";
-const MANAGED_LABEL_FIELDS = new Set([`f:${INJECTION_LABEL}`, `f:${AMBIENT_LABEL}`]);
+const KUBEVIRT_WORKLOAD_LABEL = "uds.dev/kubevirt-workload";
+const KUBEVIRT_PKG_ANNOTATION_PREFIX = "uds.dev/kubevirt-pkg-";
+const PRIVATE_REGISTRY_SECRET = "private-registry";
+const PRIVATE_REGISTRY_SECRET_TYPE = "kubernetes.io/dockerconfigjson";
+const SOURCE_NAMESPACE_CANDIDATES = ["pepr-system", "zarf", "uds-crds"];
+const MANAGED_LABEL_FIELDS = new Set([
+  `f:${INJECTION_LABEL}`,
+  `f:${AMBIENT_LABEL}`,
+  `f:${KUBEVIRT_WORKLOAD_LABEL}`,
+]);
 
 export enum IstioState {
   Sidecar = Mode.Sidecar,
@@ -60,6 +69,14 @@ export async function enableIstio(pkg: UDSPackage) {
     targetIstioState = IstioState.Ambient;
   }
 
+  // Track kubevirt workload intent per-package via annotations
+  setKubeVirtWorkloadLabel(pkg, labels, annotations);
+
+  // Ensure the private-registry secret exists in kubevirt namespaces for image pulls
+  if (pkg.spec?.kubevirt?.enabled) {
+    await ensurePrivateRegistrySecret(pkg.metadata.namespace);
+  }
+
   const result = getIstioLabels(labels, targetIstioState, currentIstioState);
 
   // Apply namespace updates and restart pods if needed
@@ -95,6 +112,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
   // Remove the package annotation
   delete annotations[`uds.dev/pkg-${pkg.metadata.name}`];
 
+  // Remove kubevirt package annotation
+  delete annotations[`${KUBEVIRT_PKG_ANNOTATION_PREFIX}${pkg.metadata.name}`];
+
   // Check if there are any other package annotations
   // Backwards compatibility for multiple package CRs in a single namespace
   const hasOtherPackages = Object.keys(annotations).some(key => key.startsWith("uds.dev/pkg-"));
@@ -111,6 +131,9 @@ export async function cleanupNamespace(pkg: UDSPackage) {
     // Delete the annotation since we're restoring to original state
     delete annotations[ISTIO_STATE_ANNOTATION];
   }
+
+  // Clear kubevirt workload label if no kubevirt packages remain in the namespace
+  clearKubeVirtWorkloadLabel(labels, annotations);
 
   // Apply the updated Namespace
   await applyNamespaceUpdates(
@@ -214,7 +237,10 @@ export function nsEntryIsOverClaimed(entry: V1ManagedFieldsEntry): boolean {
     Object.keys(meta).some(k => k !== "f:labels" && k !== "f:annotations") ||
     Object.keys(labels).some(k => !MANAGED_LABEL_FIELDS.has(k)) ||
     Object.keys(annotations).some(
-      k => k !== `f:${ISTIO_STATE_ANNOTATION}` && !k.startsWith("f:uds.dev/pkg-"),
+      k =>
+        k !== `f:${ISTIO_STATE_ANNOTATION}` &&
+        !k.startsWith("f:uds.dev/pkg-") &&
+        !k.startsWith(`f:${KUBEVIRT_PKG_ANNOTATION_PREFIX}`),
     )
   );
 }
@@ -225,6 +251,8 @@ function pickManagedLabels(labels: Record<string, string> | undefined): Record<s
   const result: Record<string, string> = {};
   if (labels?.[INJECTION_LABEL] !== undefined) result[INJECTION_LABEL] = labels[INJECTION_LABEL];
   if (labels?.[AMBIENT_LABEL] !== undefined) result[AMBIENT_LABEL] = labels[AMBIENT_LABEL];
+  if (labels?.[KUBEVIRT_WORKLOAD_LABEL] !== undefined)
+    result[KUBEVIRT_WORKLOAD_LABEL] = labels[KUBEVIRT_WORKLOAD_LABEL];
   return result;
 }
 
@@ -234,7 +262,10 @@ function pickManagedAnnotations(
 ): Record<string, string> {
   return Object.fromEntries(
     Object.entries(annotations || {}).filter(
-      ([k]) => k === ISTIO_STATE_ANNOTATION || k.startsWith("uds.dev/pkg-"),
+      ([k]) =>
+        k === ISTIO_STATE_ANNOTATION ||
+        k.startsWith("uds.dev/pkg-") ||
+        k.startsWith(KUBEVIRT_PKG_ANNOTATION_PREFIX),
     ),
   );
 }
@@ -365,4 +396,104 @@ export function getIstioLabels(
   }
 
   return { labels, shouldRestartPods };
+}
+
+/**
+ * Track kubevirt workload intent per-package via annotations and derive the namespace label.
+ * When any package has spec.kubevirt.enabled=true, the namespace gets the workload label.
+ */
+function setKubeVirtWorkloadLabel(
+  pkg: UDSPackage,
+  labels: Record<string, string>,
+  annotations: Record<string, string>,
+) {
+  const pkgName = pkg.metadata!.name!;
+  const annotationKey = `${KUBEVIRT_PKG_ANNOTATION_PREFIX}${pkgName}`;
+
+  if (pkg.spec?.kubevirt?.enabled) {
+    annotations[annotationKey] = "true";
+  } else {
+    delete annotations[annotationKey];
+  }
+
+  // Derive the label: if any kubevirt-pkg annotation is "true", set the label
+  const hasKubevirt = Object.keys(annotations).some(
+    k => k.startsWith(KUBEVIRT_PKG_ANNOTATION_PREFIX) && annotations[k] === "true",
+  );
+  if (hasKubevirt) {
+    labels[KUBEVIRT_WORKLOAD_LABEL] = "true";
+  } else {
+    delete labels[KUBEVIRT_WORKLOAD_LABEL];
+  }
+}
+
+/**
+ * Clear the kubevirt workload label if no kubevirt package annotations remain.
+ */
+function clearKubeVirtWorkloadLabel(
+  labels: Record<string, string>,
+  annotations: Record<string, string>,
+) {
+  const hasKubevirt = Object.keys(annotations).some(
+    k => k.startsWith(KUBEVIRT_PKG_ANNOTATION_PREFIX) && annotations[k] === "true",
+  );
+  if (!hasKubevirt) {
+    delete labels[KUBEVIRT_WORKLOAD_LABEL];
+  }
+}
+
+/**
+ * Ensure the private-registry Docker config secret exists in the target namespace.
+ * KubeVirt pods need this to pull images from the Zarf registry.
+ * Copies from a known system namespace if missing.
+ */
+async function ensurePrivateRegistrySecret(targetNS: string): Promise<void> {
+  try {
+    await K8s(kind.Secret).Get(PRIVATE_REGISTRY_SECRET, targetNS);
+    log.debug(`private-registry secret already exists in ${targetNS}`);
+    return;
+  } catch {
+    // Secret doesn't exist in target namespace, need to copy it
+  }
+
+  // Try known source namespaces first, then scan
+  let sourceSecret: kind.Secret | undefined;
+  for (const ns of SOURCE_NAMESPACE_CANDIDATES) {
+    try {
+      sourceSecret = await K8s(kind.Secret).Get(PRIVATE_REGISTRY_SECRET, ns);
+      break;
+    } catch {
+      // Continue to next candidate
+    }
+  }
+
+  // Fall back to scanning all namespaces if candidates didn't work
+  if (!sourceSecret) {
+    try {
+      const secrets = await K8s(kind.Secret).Get();
+      sourceSecret = secrets.items.find(
+        s =>
+          s.metadata?.name === PRIVATE_REGISTRY_SECRET &&
+          s.type === PRIVATE_REGISTRY_SECRET_TYPE &&
+          s.metadata?.namespace !== targetNS,
+      );
+    } catch {
+      // Global scan failed, will fall through to warn
+    }
+  }
+
+  if (!sourceSecret?.data) {
+    log.warn(`Could not find ${PRIVATE_REGISTRY_SECRET} secret to copy to ${targetNS}`);
+    return;
+  }
+
+  await K8s(kind.Secret).Create({
+    metadata: {
+      name: PRIVATE_REGISTRY_SECRET,
+      namespace: targetNS,
+    },
+    type: PRIVATE_REGISTRY_SECRET_TYPE,
+    data: sourceSecret.data,
+  });
+  log.info(`Copied ${PRIVATE_REGISTRY_SECRET} secret to ${targetNS}`);
 }

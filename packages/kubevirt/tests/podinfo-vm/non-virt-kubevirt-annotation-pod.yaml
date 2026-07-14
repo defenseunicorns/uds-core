@@ -1,0 +1,15 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-virt-kubevirt-annotation
+  namespace: podinfo-vm
+  annotations:
+    traffic.sidecar.istio.io/kubevirtInterfaces: k6t-eth0
+spec:
+  restartPolicy: Never
+  containers:
+    - name: pause
+      image: registry.k8s.io/pause:3.10

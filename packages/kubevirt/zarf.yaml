@@ -1,0 +1,99 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
+kind: ZarfPackageConfig
+metadata:
+  name: core-kubevirt
+  description: "KubeVirt and CDI for UDS Core — VM workload support with native Istio mesh integration"
+  authors: "Defense Unicorns - Product"
+  # x-release-please-start-version
+  version: "1.7.0"
+  # x-release-please-end
+  annotations:
+    dev.uds.title: UDS Core (KubeVirt)
+    dev.uds.tagline: Native VM workload support for UDS Core
+    dev.uds.categories: UDS-Core,Virtualization
+    dev.uds.keywords: uds,kubevirt,cdi,virtualmachine,vm
+
+components:
+  - name: kubevirt-crd
+    required: true
+    description: "KubeVirt and CDI CRDs and operator manifests"
+    only:
+      flavor: upstream
+    manifests:
+      - name: crds
+        files:
+          # renovate: datasource=github-releases depName=kubevirt/kubevirt
+          - https://github.com/kubevirt/kubevirt/releases/download/v1.8.2/kubevirt-operator.yaml
+          # renovate: datasource=github-releases depName=kubevirt/containerized-data-importer
+          - https://github.com/kubevirt/containerized-data-importer/releases/download/v1.65.0/cdi-operator.yaml
+    images:
+      # renovate: datasource=docker depName=quay.io/kubevirt/virt-operator versioning=semver
+      - quay.io/kubevirt/virt-operator:v1.8.2
+      - quay.io/kubevirt/virt-api:v1.8.2
+      - quay.io/kubevirt/virt-controller:v1.8.2
+      - quay.io/kubevirt/virt-launcher:v1.8.2
+      - quay.io/kubevirt/virt-handler:v1.8.2
+      - quay.io/kubevirt/virtio-container-disk:v1.8.2
+      - quay.io/kubevirt/virt-exportproxy:v1.8.2
+      - quay.io/kubevirt/virt-exportserver:v1.8.2
+      # renovate: datasource=docker depName=quay.io/kubevirt/cdi-operator versioning=semver
+      - quay.io/kubevirt/cdi-operator:v1.65.0
+      - quay.io/kubevirt/cdi-controller:v1.65.0
+      - quay.io/kubevirt/cdi-importer:v1.65.0
+      - quay.io/kubevirt/cdi-cloner:v1.65.0
+      - quay.io/kubevirt/cdi-apiserver:v1.65.0
+      - quay.io/kubevirt/cdi-uploadserver:v1.65.0
+      - quay.io/kubevirt/cdi-uploadproxy:v1.65.0
+      - quay.io/kubevirt/cirros-container-disk-demo:latest
+      - quay.io/containerdisks/fedora:latest
+
+  - name: kubevirt
+    required: true
+    description: "KubeVirt and CDI UDS Package configuration"
+    only:
+      flavor: upstream
+    charts:
+      - name: uds-kubevirt-config
+        namespace: kubevirt
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - values/common-values.yaml
+          - values/upstream-values.yaml
+    actions:
+      onDeploy:
+        after:
+          - description: Validate KubeVirt UDS Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: packages.uds.dev
+                name: kubevirt
+                namespace: kubevirt
+                condition: "'{.status.phase}'=Ready"
+          - description: Validate CDI UDS Package
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: packages.uds.dev
+                name: cdi
+                namespace: cdi
+                condition: "'{.status.phase}'=Ready"
+          - description: Validate KubeVirt CR
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: KubeVirt
+                name: kubevirt
+                namespace: kubevirt
+                condition: Available
+          - description: Validate CDI CR
+            maxTotalSeconds: 300
+            wait:
+              cluster:
+                kind: CDI
+                name: cdi
+                condition: Available
