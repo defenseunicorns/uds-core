@@ -7,7 +7,8 @@ import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { pollUntilSuccess } from "./helpers/polling";
 
-vi.setConfig({ hookTimeout: 180000, testTimeout: 180000 });
+// hookTimeout must exceed waitForNamespaceDeleted's own timeout below.
+vi.setConfig({ hookTimeout: 270000, testTimeout: 180000 });
 
 const TEST_NAMESPACE = "envoy-gateway-e2e";
 const GATEWAY_NAME = "uds-core-eg-e2e";
@@ -48,10 +49,7 @@ async function createNamespace(): Promise<void> {
           name: TEST_NAMESPACE,
           labels: {
             "app.kubernetes.io/name": "envoy-gateway-e2e",
-            // The controller enforces mesh-wide strict mTLS, so the proxy's namespace
-            // must be ambient-enrolled too or it can't complete the xDS handshake with
-            // the controller. A real custom Gateway would set this via its own Package
-            // CR's network.serviceMesh.mode, same as our own default Gateway namespace.
+            // Required for the proxy to complete xDS mTLS with the controller.
             "istio.io/dataplane-mode": "ambient",
           },
         },
@@ -64,12 +62,8 @@ async function createNamespace(): Promise<void> {
   await copyPrivateRegistrySecret();
 }
 
-// Namespaces Zarf creates as part of a package deploy automatically get the
-// "private-registry" image pull secret so their pods can pull through the
-// internal registry mirror. This namespace is created directly via the k8s
-// API (simulating a real user's own custom Gateway namespace, which they
-// would normally deploy via their own Zarf package), so it needs the same
-// secret copied in manually to reproduce that expected end state.
+// Mirrors the "private-registry" secret Zarf provisions automatically for
+// namespaces it creates, needed here since this namespace is created directly.
 async function copyPrivateRegistrySecret(): Promise<void> {
   const source = await core.readNamespacedSecret({ name: "private-registry", namespace: "zarf" });
 
@@ -107,8 +101,10 @@ async function waitForNamespaceDeleted(): Promise<void> {
       }
     },
     deleted => deleted,
+    // Measured 117-159s on a busy cluster (cascading cleanup competing with everything
+    // else deploying concurrently), so 120s isn't enough; 240s gives real margin.
     `namespace ${TEST_NAMESPACE} deleted`,
-    120000,
+    240000,
     5000,
   );
 }
