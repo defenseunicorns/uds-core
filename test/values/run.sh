@@ -22,6 +22,7 @@ fi
 
 uds zarf tools yq '.values' "$TEST_FILE" > "$VALUES_FILE"
 EXPECTED_ADMIN_DOMAIN=""
+EXPECTED_DOMAIN=""
 VARIABLES="DOMAIN=uds.dev"
 RENDER_VALUES=(--values "packages/$PACKAGE/zarf-values.yaml" --values "$VALUES_FILE")
 
@@ -34,6 +35,7 @@ if [ -n "$SCENARIO" ]; then
   fi
   uds zarf tools yq "$SCENARIO_FILTER | .values" "$SCENARIOS_FILE" > "$SCENARIO_FILE"
   EXPECTED_ADMIN_DOMAIN="$(uds zarf tools yq -r "$SCENARIO_FILTER | .expectedAdminDomain" "$SCENARIOS_FILE")"
+  EXPECTED_DOMAIN="$(uds zarf tools yq -r "$SCENARIO_FILTER | .expectedDomain // \"\"" "$SCENARIOS_FILE")"
   VARIABLES="$(uds zarf tools yq -r "$SCENARIO_FILTER | .variables | to_entries | map(.key + \"=\" + .value) | join(\",\")" "$SCENARIOS_FILE")"
   RENDER_VALUES+=(--values "$SCENARIO_FILE")
 fi
@@ -54,10 +56,11 @@ run_checks() {
     name="$(uds zarf tools yq -r ".$key[$index].name" "$TEST_FILE")"
     description="$(uds zarf tools yq -r ".$key[$index].description" "$TEST_FILE")"
     expression="$(uds zarf tools yq -r ".$key[$index].expression" "$TEST_FILE")"
-    if [ -z "$SCENARIO" ] && [[ "$expression" == *"{{ adminDomain }}"* ]]; then
+    if [ -z "$SCENARIO" ] && ([[ "$expression" == *"{{ adminDomain }}"* ]] || [[ "$expression" == *"{{ domain }}"* ]]); then
       continue
     fi
     expression="${expression//\{\{ adminDomain \}\}/$EXPECTED_ADMIN_DOMAIN}"
+    expression="${expression//\{\{ domain \}\}/$EXPECTED_DOMAIN}"
     echo "  [$name] $description"
     if ! uds zarf tools yq ea -e "$expression" "$MANIFESTS" >/dev/null; then
       echo "FAIL $PACKAGE/$name: $description"

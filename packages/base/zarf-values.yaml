@@ -1,19 +1,13 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Default Zarf values for the UDS Core Base package. Keys are namespaced by component then chart
-# (component.chart); each maps to that chart root. An empty {} is a no-op — chart defaults are
-# preserved while still allowing overrides via --values. Every mapped chart must have its
-# component.chart key present here (an absent sourcePath is a hard deploy error). See excludePaths
-# in src/*/zarf.yaml for blocked paths.
+# Default Zarf values for the UDS Core Base package.
 
 # Top-level domain for the whole stack; defaults to the DOMAIN Zarf variable
 # (backward-compat). Override via --values / --set-values to set the domain once for all charts.
 domain: "###ZARF_VAR_DOMAIN###"
 
-# Admin domain override for admin-exposed services. Empty by default: when unset, admin services
-# fall back to the ADMIN_DOMAIN variable, then derive admin.<domain>. Set this to force a specific
-# admin domain across all admin services via values.
+# Admin domain override; empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 # --- pepr ---

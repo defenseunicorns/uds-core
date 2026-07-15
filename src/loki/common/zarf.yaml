@@ -14,8 +14,6 @@ components:
         namespace: loki
         version: 0.2.0
         localPath: ../chart
-        # UDS-authored config chart, exposed broadly. It carries no image or security-context
-        # values, so all keys stay settable.
         values:
           - sourcePath: .loki.uds-loki-config
             targetPath: .
@@ -25,10 +23,6 @@ components:
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
-        # Loki is an upstream chart exposed broadly. Exclude image references (to prevent pulling
-        # unauthorized images) and security contexts (to prevent privilege escalation). auth_enabled,
-        # deploymentMode, and minio are excluded to protect the loki security model, scalable
-        # topology, and to prevent enabling the built-in minio instance.
         values:
           - sourcePath: .loki.loki
             targetPath: .

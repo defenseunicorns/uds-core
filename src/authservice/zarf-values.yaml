@@ -2,6 +2,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the UDS Core Authservice source package.
-# Required so `zarf dev deploy src/authservice` has a backing values tree for all sourcePath mappings.
 authservice:
   authservice: {}

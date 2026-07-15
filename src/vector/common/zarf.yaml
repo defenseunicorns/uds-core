@@ -15,7 +15,6 @@ components:
         namespace: vector
         version: 0.1.0
         localPath: ../chart
-        # UDS-authored config chart, exposed broadly.
         values:
           - sourcePath: .vector.uds-vector-config
             targetPath: .
@@ -26,8 +25,6 @@ components:
         gitPath: charts/vector
         valuesFiles:
           - ../values/values.yaml
-        # image/securityContext paths are excluded to prevent pulling
-        # unauthorized images and to preserve the UDS-hardened security contexts.
         values:
           - sourcePath: .vector.vector
             targetPath: .

@@ -15,8 +15,6 @@ components:
         namespace: monitoring
         version: 0.1.0
         localPath: ../chart
-        # UDS-authored config chart, exposed broadly. It carries no image or security-context
-        # values, so all keys stay settable.
         values:
           - sourcePath: .kube-prometheus-stack.uds-prometheus-config
             targetPath: .
@@ -28,9 +26,6 @@ components:
         version: 87.2.0
         valuesFiles:
           - "../values/kube-prometheus-stack-values.yaml"
-        # kube-prometheus-stack is an upstream umbrella chart exposed broadly. Image references and
-        # registries are excluded to prevent pulling unauthorized images, and security contexts to
-        # prevent privilege escalation, across the operator and every bundled subcomponent.
         values:
           - sourcePath: .kube-prometheus-stack.kube-prometheus-stack
             targetPath: .
@@ -71,8 +66,6 @@ components:
         version: 11.13.0
         valuesFiles:
           - "../values/blackbox-exporter-values.yaml"
-        # Upstream chart exposed broadly. Image references and registries are excluded to prevent
-        # pulling unauthorized images, and security contexts to prevent privilege escalation.
         values:
           - sourcePath: .prometheus-blackbox-exporter.prometheus-blackbox-exporter
             targetPath: .

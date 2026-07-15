@@ -173,6 +173,14 @@ checks:
     description: Admin Gateway host uses the expected admin domain
     expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-admin-gateway")
       | .spec.servers[].hosts[] | test("{{ adminDomain }}$")] | any'
+  - name: tenant-gateway-host
+    description: Tenant Gateway host uses the expected domain
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-tenant-gateway")
+      | .spec.servers[].hosts[] | test("{{ domain }}$")] | any'
+  - name: passthrough-gateway-host
+    description: Passthrough Gateway host uses the expected domain
+    expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-passthrough-gateway")
+      | .spec.servers[].hosts[] | test("{{ domain }}$")] | any'
   - name: cluster-config-admin-domain
     description: ClusterConfig uses the expected admin domain
     expression: '[select(.kind == "ClusterConfig" and .metadata.name == "uds-cluster-config")
@@ -183,6 +191,7 @@ adminDomainScenarios:
     variables:
       DOMAIN: fallback.example.com
     expectedAdminDomain: admin.fallback.example.com
+    expectedDomain: fallback.example.com
   - name: domain-value
     values:
       domain: custom.example.com
@@ -190,6 +199,7 @@ adminDomainScenarios:
     variables:
       DOMAIN: uds.dev
     expectedAdminDomain: admin.custom.example.com
+    expectedDomain: custom.example.com
   - name: admin-domain-value
     values:
       domain: custom.example.com
@@ -198,6 +208,7 @@ adminDomainScenarios:
       DOMAIN: uds.dev
       ADMIN_DOMAIN: ignored.example.com
     expectedAdminDomain: mgmt.example.com
+    expectedDomain: custom.example.com
   - name: admin-domain-variable
     values:
       domain: custom.example.com
@@ -206,3 +217,4 @@ adminDomainScenarios:
       DOMAIN: uds.dev
       ADMIN_DOMAIN: myadmin.example.com
     expectedAdminDomain: myadmin.example.com
+    expectedDomain: custom.example.com

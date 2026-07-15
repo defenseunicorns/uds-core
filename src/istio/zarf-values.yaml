@@ -1,10 +1,7 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-# Default Zarf values for the UDS Core Istio source package. Keys are namespaced by component
-# then chart (component.chart). Every mapped chart must have its component.chart key present here
-# (an absent sourcePath is a hard deploy error). An empty {} is a no-op. See excludePaths in
-# common/zarf.yaml and zarf.yaml for blocked paths.
+# Default Zarf values for the UDS Core Istio source package.
 domain: "###ZARF_VAR_DOMAIN###"
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 

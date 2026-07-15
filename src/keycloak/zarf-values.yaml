@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the UDS Core Keycloak source package.
-# Required so `zarf dev deploy src/keycloak` has a backing values tree for all sourcePath mappings.
 domain: "###ZARF_VAR_DOMAIN###"
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 

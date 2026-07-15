@@ -3070,9 +3070,6 @@
               },
               "type": "object"
             },
-            "tenantDomain": {
-              "type": "string"
-            },
             "tls": {
               "properties": {
                 "cacert": {
@@ -3552,9 +3549,6 @@
               },
               "type": "object"
             },
-            "tenantDomain": {
-              "type": "string"
-            },
             "tls": {
               "properties": {
                 "servers": {
@@ -3629,9 +3623,6 @@
                 }
               },
               "type": "object"
-            },
-            "tenantDomain": {
-              "type": "string"
             },
             "tls": {
               "properties": {
@@ -19277,6 +19268,20 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "env": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
                 "envFrom": {
                   "type": "array"
                 },
@@ -19524,6 +19529,20 @@
                 },
                 "enabled": {
                   "type": "boolean"
+                },
+                "env": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
                 },
                 "envFrom": {
                   "type": "array"

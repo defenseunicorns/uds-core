@@ -37,7 +37,6 @@ components:
         namespace: velero
         version: 0.1.0
         localPath: ../chart
-        # UDS-authored config chart, exposed broadly.
         values:
           - sourcePath: .velero.uds-velero-config
             targetPath: .
@@ -49,8 +48,6 @@ components:
         releaseName: velero
         valuesFiles:
           - ../values/values.yaml
-        # image/initContainers/securityContext paths are excluded to prevent pulling
-        # unauthorized images and to preserve the UDS-hardened security contexts.
         values:
           - sourcePath: .velero.velero
             targetPath: .

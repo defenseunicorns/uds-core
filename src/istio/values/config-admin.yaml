@@ -2,9 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: admin
-# Admin domain precedence: the adminDomain value/variable if set, else admin.<tenant domain>.
-# adminDomain and tenantDomain are fed by the top-level `adminDomain` and `domain` values
-# (defaulting to the ADMIN_DOMAIN and DOMAIN variables), so a value wins over the variable.
 domain: ""
 tls:
   servers:

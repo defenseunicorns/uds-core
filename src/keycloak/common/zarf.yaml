@@ -19,9 +19,6 @@ components:
           - ../chart/values.yaml
         templatedValuesFiles:
           - ../values/templated-values.yaml
-        # Keycloak is a UDS-authored chart, so expose it broadly. Exclude keys that would
-        # break the package (image references, Service wiring), or compromise its security or
-        # monitoring wiring.
         values:
           - sourcePath: .keycloak.keycloak
             targetPath: .

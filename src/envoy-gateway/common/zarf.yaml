@@ -23,8 +23,6 @@ components:
         serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
-        # image/registry and securityContext paths are excluded to prevent pulling
-        # unauthorized images and to preserve the UDS-hardened security contexts.
         values:
           - sourcePath: .envoy-gateway.envoy-gateway
             targetPath: .

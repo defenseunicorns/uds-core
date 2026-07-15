@@ -28,8 +28,6 @@ components:
         localPath: chart
         valuesFiles:
           - "values/upstream-values.yaml"
-        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
-        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
         values:
           - sourcePath: .envoy-gateway.uds-envoy-gateway-config
             targetPath: .
@@ -56,8 +54,6 @@ components:
         localPath: chart
         valuesFiles:
           - "values/registry1-values.yaml"
-        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
-        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
         values:
           - sourcePath: .envoy-gateway.uds-envoy-gateway-config
             targetPath: .
@@ -84,8 +80,6 @@ components:
         localPath: chart
         valuesFiles:
           - "values/unicorn-values.yaml"
-        # UDS-authored config chart, exposed broadly. The global.images.*.image paths are
-        # injected by the flavor valuesFiles and excluded to prevent pulling unauthorized images.
         values:
           - sourcePath: .envoy-gateway.uds-envoy-gateway-config
             targetPath: .

@@ -1,18 +1,12 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- $tenantDomain := tpl .Values.tenantDomain . }}
-{{- if or (not $tenantDomain) (eq $tenantDomain "###ZARF_VAR_DOMAIN###") }}
-  {{- $tenantDomain = tpl .Values.domain . }}
-{{- end }}
-{{- $domain := $tenantDomain }}
+{{- $domain := tpl .Values.domain . }}
 {{- if eq .Values.name "admin" }}
-  {{- $domain = tpl .Values.adminDomain . }}
+  {{- $domain = tpl (.Values.adminDomain | default "") . }}
   {{- if or (not $domain) (eq $domain "###ZARF_VAR_ADMIN_DOMAIN###") }}
-    {{- $domain = printf "admin.%s" $tenantDomain }}
+    {{- $domain = printf "admin.%s" (tpl .Values.domain .) }}
   {{- end }}
-{{- else }}
-  {{- $domain = $tenantDomain }}
 {{- end }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
 {{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}

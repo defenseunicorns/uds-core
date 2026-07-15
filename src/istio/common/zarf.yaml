@@ -25,8 +25,6 @@ components:
         # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
         # This should be fixed in a future Istio version
         serverSideApply: "false"
-        # Pass-through; the chart wraps defaults under `_internal_defaults_do_not_set` (excluded so
-        # it does not surface in the schema). global.hub/tag are excluded to block unauthorized images.
         values:
           - sourcePath: .istio-controlplane.base
             targetPath: .
@@ -50,7 +48,6 @@ components:
           - name: PROXY_CPU_REQUEST
             description: "CPU requests for sidecars in cluster"
             path: "global.proxy.resources.requests.cpu"
-        # Pass-through; exclude chart internals, registries, and protected image paths.
         values:
           - sourcePath: .istio-controlplane.istiod
             targetPath: .
@@ -67,7 +64,6 @@ components:
         localPath: chart
         valuesFiles:
           - "chart/values.yaml"
-        # UDS-authored config chart, exposed broadly (no image/securityContext values to block).
         values:
           - sourcePath: .istio-controlplane.uds-global-istio-config
             targetPath: .
@@ -77,8 +73,6 @@ components:
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml"
-        # Pass-through; `_internal_defaults_do_not_set` excluded (chart-internal wrapper).
-        # global.hub/tag excluded to block unauthorized images.
         values:
           - sourcePath: .istio-controlplane.cni
             targetPath: .
@@ -92,8 +86,6 @@ components:
         namespace: istio-system
         valuesFiles:
           - "../values/base-ztunnel.yaml"
-        # Pass-through; `_internal_defaults_do_not_set` excluded (chart-internal wrapper).
-        # global.hub/tag and the ztunnel image are excluded to block unauthorized images.
         values:
           - sourcePath: .istio-controlplane.ztunnel
             targetPath: .

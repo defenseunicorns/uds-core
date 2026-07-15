@@ -15,7 +15,6 @@ components:
         namespace: metrics-server
         version: 0.1.0
         localPath: ../chart
-        # UDS-authored config chart, exposed broadly.
         values:
           - sourcePath: .metrics-server.uds-metrics-server-config
             targetPath: .
@@ -25,8 +24,6 @@ components:
         version: 3.13.0
         valuesFiles:
           - "../values/values.yaml"
-        # image/securityContext paths are excluded to prevent pulling
-        # unauthorized images and to preserve the UDS-hardened security contexts.
         values:
           - sourcePath: .metrics-server.metrics-server
             targetPath: .

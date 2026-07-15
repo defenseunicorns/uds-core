@@ -18,8 +18,6 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
-        # UDS-authored config chart for Falco rules. Exclude internal UDS-managed disabled-rule
-        # lists so users cannot accidentally clear the UDS baseline suppressions.
         values:
           - sourcePath: .falco.uds-falco-config
             targetPath: .
@@ -33,8 +31,6 @@ components:
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
-        # Falco is an upstream chart exposed broadly. Exclude image references (to prevent pulling
-        # unauthorized images) and security contexts (to prevent privilege escalation).
         values:
           - sourcePath: .falco.falco
             targetPath: .

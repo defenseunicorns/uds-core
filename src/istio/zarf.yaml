@@ -107,9 +107,6 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
-        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` is the chart's
-        # internal wrapper (users set fields at root, the chart merges) — excluded so it does not
-        # surface in the schema. global.hub/tag excluded to block unauthorized images.
         values:
           - sourcePath: .istio-admin-gateway.gateway
             targetPath: .
@@ -124,10 +121,7 @@ components:
         valuesFiles:
           - "values/config-admin.yaml"
         templatedValuesFiles:
-          - "values/templated-effective-admin.yaml"
-        # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
-        # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
-        # Deployment selector).
+          - "values/templated-values.yaml"
         values:
           - sourcePath: .istio-admin-gateway.uds-istio-config
             targetPath: .
@@ -144,9 +138,6 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
-        # Pass-through of the upstream gateway chart (full surface, incl. `service` for non-HTTP(S)
-        # port overrides). `_internal_defaults_do_not_set` is the chart's internal wrapper, excluded
-        # so it does not surface in the schema. global.hub/tag excluded to block unauthorized images.
         values:
           - sourcePath: .istio-tenant-gateway.gateway
             targetPath: .
@@ -161,11 +152,7 @@ components:
         valuesFiles:
           - "values/config-tenant.yaml"
         templatedValuesFiles:
-          - "values/templated-effective-admin.yaml"
-        # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
-        # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
-        # Deployment selector). `domain` is fed from the top-level `domain` value (below) so it is
-        # not excluded here (excluding a key a sibling mapping targets breaks schema generation).
+          - "values/templated-values.yaml"
         values:
           - sourcePath: .istio-tenant-gateway.uds-istio-config
             targetPath: .
@@ -182,8 +169,6 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
-        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` excluded
-        # (chart-internal wrapper). global.hub/tag excluded to block unauthorized images.
         values:
           - sourcePath: .istio-passthrough-gateway.gateway
             targetPath: .
@@ -198,9 +183,7 @@ components:
         valuesFiles:
           - "values/config-passthrough.yaml"
         templatedValuesFiles:
-          - "values/templated-effective-admin.yaml"
-        # UDS-authored config chart. Exclude the gateway `name`. `domain` is fed from the top-level
-        # `domain` value so it is not excluded here (sibling-mapping constraint).
+          - "values/templated-values.yaml"
         values:
           - sourcePath: .istio-passthrough-gateway.uds-istio-config
             targetPath: .
@@ -216,7 +199,6 @@ components:
         version: 0.1.0
         localPath: charts/uds-istio-egress-config
         namespace: istio-egress-ambient
-        # UDS-authored config chart, exposed broadly (no image/securityContext values to block).
         values:
           - sourcePath: .istio-egress-ambient.uds-istio-egress-config
             targetPath: .
@@ -233,8 +215,6 @@ components:
         namespace: istio-egress-gateway
         valuesFiles:
           - "values/base-egress.yaml"
-        # Pass-through of the upstream gateway chart. `_internal_defaults_do_not_set` excluded
-        # (chart-internal wrapper). global.hub/tag excluded to block unauthorized images.
         values:
           - sourcePath: .istio-egress-gateway.gateway
             targetPath: .

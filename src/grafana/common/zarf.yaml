@@ -19,8 +19,6 @@ components:
           - ../chart/values.yaml
         templatedValuesFiles:
           - ../values/templated-config-values.yaml
-        # UDS-authored config chart, exposed broadly. Its nested adminDomain is excluded so the
-        # top-level domain and adminDomain values below control Grafana's admin URLs.
         values:
           - sourcePath: .grafana.uds-grafana-config
             targetPath: .
@@ -32,10 +30,6 @@ components:
         namespace: grafana
         valuesFiles:
           - ../values/values.yaml
-        # sidecar is excluded because UDS configures the provisioning sidecars that wire
-        # Loki and Prometheus datasources; overriding it breaks datasource connectivity.
-        # Image references and registries are excluded to prevent pulling unauthorized
-        # images, and security contexts to prevent privilege escalation.
         values:
           - sourcePath: .grafana.grafana
             targetPath: .
