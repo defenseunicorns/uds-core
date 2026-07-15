@@ -1,0 +1,74 @@
+<!--
+  Copyright 2025-2026 Defense Unicorns
+  SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Representative Keycloak SAML IdP descriptor for realm "uds", captured during a
+  signing-key rotation: two active signing keys. Keycloak sorts signing
+  KeyDescriptors active-key first, so the first signing KeyDescriptor (KID Xk9LpWv7yZ0aB1cD4eF5gH6iJ8kL9mN0oPq3nRfT2mQ)
+  is the realm's active signing key.
+
+  This descriptor is signed (dsig:Signature below), and the signer is that same
+  first/active key. Keycloak only emits the Signature block when realm metadata
+  signing is enabled, so it is not always present; the operator therefore does not
+  rely on it and simply takes the first signing KeyDescriptor. See issue #2798.
+
+  KIDs are synthetic and certificates are self-signed test certs (not from a
+  production realm). To refresh this fixture, curl the in-cluster descriptor
+  endpoint: /realms/uds/protocol/saml/descriptor
+-->
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion" ID="ID_7bf3c9e21a4d4e8b9c2f5d6a7b8c9d0e1f2a3b4c" entityID="https://sso.uds.dev/realms/uds">
+  <dsig:Signature xmlns:dsig="http://www.w3.org/2000/09/xmldsig#">
+    <dsig:SignedInfo>
+      <dsig:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      <dsig:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>
+      <dsig:Reference URI="#ID_7bf3c9e21a4d4e8b9c2f5d6a7b8c9d0e1f2a3b4c">
+        <dsig:Transforms>
+          <dsig:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+          <dsig:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+        </dsig:Transforms>
+        <dsig:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+        <dsig:DigestValue>bxM9aQ2Zk1p0Rv7yZ0aB1cD4eF5gH6iJ8kL9mN0oPq=</dsig:DigestValue>
+      </dsig:Reference>
+    </dsig:SignedInfo>
+    <dsig:SignatureValue>c2lnbmF0dXJldmFsdWVwbGFjZWhvbGRlcmZvcnRlc3RmaXh0dXJl</dsig:SignatureValue>
+    <dsig:KeyInfo>
+      <dsig:KeyName>Xk9LpWv7yZ0aB1cD4eF5gH6iJ8kL9mN0oPq3nRfT2mQ</dsig:KeyName>
+      <dsig:X509Data>
+        <dsig:X509Certificate>MIIDFTCCAf2gAwIBAgIUJmYlnwvJEh8VoJTH1DrWXBllE7IwDQYJKoZIhvcNAQELBQAwGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0xMB4XDTI2MDcxMDE5NDA1M1oXDTM2MDcwNzE5NDA1M1owGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0xMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAskYwWSj04g2M6sXO5nuo0loLgpRhGjnnqhIsT5vBacM7dE8WLECEwkykHIizs7qd1YsRljJcwUpkT8n7KZap1qMH2bHL0Nj2acdTyBSBRu0wv4LjzrkptdlvjUvjrrNYjApGq/C4Za3iEyD3URiQzxGMRJMxPY4kRU3PmV4MTFPMsWqWSWvW8JiIzts2vd07e9nR+8joAFP2gASHckIqRcJTnqYl6NkAm8zIQvDYkBXrZ+eK/59caQPR7Dj7LBWitWh2uL7Wwd4w9SkjsFIhJBGFGTCajq2P0C0dHn6pf6tqwQTjYMKx2CuvwM2ht2Duy6Ph11ZCMgj0R9yrTb8nCQIDAQABo1MwUTAdBgNVHQ4EFgQUO/qldFl1bG50d7X340A/ltCXfkkwHwYDVR0jBBgwFoAUO/qldFl1bG50d7X340A/ltCXfkkwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAd2HjPrKMJ14oj9vY2/0jvtpZPQn1HmYuH/pCFzWSgRZwwc3ytxAszKMsoq3d+wO5G8aXvoxK1JN0oU7RlMc2eEePZxSyTepBiWjk/a9trS7jSYHvLIJ0eXw9IIkexX9RkCSmVZZP/jNRL2GQAUUuP+M+zGMuSvP66F+xmGWPLX0SvP5wdCNfFNvgza9Kiupve8akiMtLZtVL6AKGnnW/Z/Bbvrnzu5I79jogV8aojghK7JUicdRKb4x1WuupyBMe+kJvvVKP28oO/FUaX63dATd9vxm9TzpDZOi+GoPGyntu9gpguiyuLxj6nSxTG9IiAJyleNm/p+/dFg2CtP2iDg==</dsig:X509Certificate>
+      </dsig:X509Data>
+    </dsig:KeyInfo>
+  </dsig:Signature>
+  <md:IDPSSODescriptor WantAuthnRequestsSigned="true" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:KeyName>Xk9LpWv7yZ0aB1cD4eF5gH6iJ8kL9mN0oPq3nRfT2mQ</ds:KeyName>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDFTCCAf2gAwIBAgIUJmYlnwvJEh8VoJTH1DrWXBllE7IwDQYJKoZIhvcNAQELBQAwGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0xMB4XDTI2MDcxMDE5NDA1M1oXDTM2MDcwNzE5NDA1M1owGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0xMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAskYwWSj04g2M6sXO5nuo0loLgpRhGjnnqhIsT5vBacM7dE8WLECEwkykHIizs7qd1YsRljJcwUpkT8n7KZap1qMH2bHL0Nj2acdTyBSBRu0wv4LjzrkptdlvjUvjrrNYjApGq/C4Za3iEyD3URiQzxGMRJMxPY4kRU3PmV4MTFPMsWqWSWvW8JiIzts2vd07e9nR+8joAFP2gASHckIqRcJTnqYl6NkAm8zIQvDYkBXrZ+eK/59caQPR7Dj7LBWitWh2uL7Wwd4w9SkjsFIhJBGFGTCajq2P0C0dHn6pf6tqwQTjYMKx2CuvwM2ht2Duy6Ph11ZCMgj0R9yrTb8nCQIDAQABo1MwUTAdBgNVHQ4EFgQUO/qldFl1bG50d7X340A/ltCXfkkwHwYDVR0jBBgwFoAUO/qldFl1bG50d7X340A/ltCXfkkwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAd2HjPrKMJ14oj9vY2/0jvtpZPQn1HmYuH/pCFzWSgRZwwc3ytxAszKMsoq3d+wO5G8aXvoxK1JN0oU7RlMc2eEePZxSyTepBiWjk/a9trS7jSYHvLIJ0eXw9IIkexX9RkCSmVZZP/jNRL2GQAUUuP+M+zGMuSvP66F+xmGWPLX0SvP5wdCNfFNvgza9Kiupve8akiMtLZtVL6AKGnnW/Z/Bbvrnzu5I79jogV8aojghK7JUicdRKb4x1WuupyBMe+kJvvVKP28oO/FUaX63dATd9vxm9TzpDZOi+GoPGyntu9gpguiyuLxj6nSxTG9IiAJyleNm/p+/dFg2CtP2iDg==</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:KeyName>q8SbsBY9Lf0_Atgo3UNfpbnByCn8IOYl_pT31U0e9cg</ds:KeyName>
+        <ds:X509Data>
+          <ds:X509Certificate>MIIDFTCCAf2gAwIBAgIUB3wD3NT8tUiGX2l5MSS4JEpVkZkwDQYJKoZIhvcNAQELBQAwGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0yMB4XDTI2MDcxMDE5NDA1M1oXDTM2MDcwNzE5NDA1M1owGjEYMBYGA1UEAwwPdWRzLXJlYWxtLWtleS0yMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApGWDkAfKifbgVgdXDV38rY1fNouEmEf1rpVVIfbc3tw7AOxwJYk/jJTMAmspgvvy8xlGjrkvlcdDgq+1w3z542pjTEPoVShg+q5oOcSApQy+Nq4wBvzVaRiZ+/3vrNOBI2TDc9gyBELArhladV0PFhVNhU1rznkJSK08fC0EcCvTrRLRqiYa7pZXwRpr1ee4CRBgDnlJvSglph/fnSIr5yZeYilZO973OJn50vUEAf02JLrozDQi4dRtCt7aaDz8tDeJQMWcbXt3kyOcZ6jDW4LXnnhJGjAy/s0wa9lg2E9dRdPD4I1zBjoqewjs6uRPb+73rlughlpExsARvaWX6wIDAQABo1MwUTAdBgNVHQ4EFgQUTrpJc7a1owOxGy7qcCsOh4hoHjQwHwYDVR0jBBgwFoAUTrpJc7a1owOxGy7qcCsOh4hoHjQwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOCAQEAl9oBxlguB8L+HkpfCd1Yw5uByyYXk0+TO3ifkk99wu1CSCr98FvM0pzV/TErZBR2Q0AyvhAHGyrK9hZNplAhz7yNSXLMYSttjLAkWn0L6P8Cx01FESu3jIDR4h5HkP3d336iMoiwQirx54StpU6y9nS74oVpfGP0AAa+yk61FlbYzHIyUo1O8GOgqjDDOWUIyBGbJUaDDzVHfvEdbuqT4GhzVJg0TrCu/0FuQduxanm6fnEOVl7bDAFhuDjGalGQZx4PV97YSE4svdK2LVwM6s76pKGxEGbNkBqkmrO3S9HAz5DAStk3gknVUxuGrexPurQ5qqLRQksHibgSZU+mFg==</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:ArtifactResolutionService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://sso.uds.dev/realms/uds/protocol/saml/resolve" index="0"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleLogoutService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</md:NameIDFormat>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:transient</md:NameIDFormat>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress</md:NameIDFormat>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Artifact" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:SOAP" Location="https://sso.uds.dev/realms/uds/protocol/saml"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>
