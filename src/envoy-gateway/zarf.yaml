@@ -68,13 +68,7 @@ components:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.1
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
 
-  # The default UDP Gateway and its managed Envoy proxy live in their own namespace
-  # (matching how the Istio gateways get their own namespace), rather than alongside the
-  # envoy-gateway controller. This is deployed as its own component, same pattern as the
-  # istio-admin-gateway/istio-tenant-gateway components, so Zarf handles the namespace
-  # bootstrapping (image pull secret, etc.) instead of a raw Namespace manifest.
-  # Optional like envoy-gateway itself: deployments that don't select the controller
-  # shouldn't get an orphaned namespace/Package with nothing to use it.
+  # Default Gateway's namespace, same pattern as the istio-*-gateway components.
   - name: envoy-default-gateway
     required: false
     charts:
