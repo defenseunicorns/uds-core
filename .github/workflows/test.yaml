@@ -70,16 +70,7 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        # MetalLB's LoadBalancer IP isn't reachable from outside the docker network on
-        # k3d, but kube-proxy's NodePort forwarding works directly on the k3d node's own
-        # address, which is reachable from this runner (same docker host). udp_expose_lb_
-        # use_nodeport routes the UDP expose e2e test through that real external path
-        # instead of just pod-to-pod traffic in-cluster.
-        run: |
-          uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} \
-            --with validate_udp_expose_lb=true \
-            --with udp_expose_lb_use_nodeport=true \
-            --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}

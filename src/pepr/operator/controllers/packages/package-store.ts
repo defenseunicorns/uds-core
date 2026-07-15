@@ -21,10 +21,8 @@ let ssoIndex: Map<string, Set<string>>;
 let udpGatewayPortIndex: Map<string, Set<string>>;
 
 /**
- * Initializes the package namespace map.
- *
- * This function creates a new `Map` object and assigns it to the `packageNamespaceMap` variable.
- * The `packageNamespaceMap` is used to store packages, using their namespace as the key.
+ * Initializes the package namespace map, along with the SSO client index and
+ * UDP Gateway port index.
  */
 function init(): void {
   packageNamespaceMap = new Map();

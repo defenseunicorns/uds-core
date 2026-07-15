@@ -321,8 +321,8 @@ export async function packageFinalizer(pkg: UDSPackage) {
   // generated UDPRoutes and NetworkPolicies, but the shared Gateway has no package owner.
   try {
     if (hasDefaultModeUDPExpose(pkg)) {
+      removeDefaultListenerMapEntry(pkg);
       await retryWithDelay(async function recomputeDefaultGateway() {
-        removeDefaultListenerMapEntry(pkg);
         await reconcileDefaultGatewayListeners();
       }, log);
     }

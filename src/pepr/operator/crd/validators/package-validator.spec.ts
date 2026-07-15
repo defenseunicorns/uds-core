@@ -603,6 +603,31 @@ describe("Test validation of Package CRs", () => {
       );
     });
 
+    it("denies UDP gateway port already used by another package when gateway is an empty string", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "game", gateway: "" }],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
     it("denies custom UDP gateway port already used by another package", async () => {
       PackageStore.add({
         metadata: { namespace: "other-system", name: "other" },

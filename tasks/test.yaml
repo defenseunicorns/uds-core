@@ -101,28 +101,6 @@ tasks:
       validate_udp_expose:
         description: Whether to validate UDP expose routes through the default Envoy Gateway
         default: "true"
-      validate_udp_expose_lb:
-        description: >-
-          Whether to validate the UDP expose path through the default Gateway's real
-          external LoadBalancer address, rather than just pod-to-pod traffic in-cluster.
-          Requires the LoadBalancer address to actually be reachable from the test
-          runner (see udp_expose_lb_host for the k3d case).
-        default: "false"
-      udp_expose_lb_host:
-        description: >-
-          Overrides the target host for validate_udp_expose_lb when
-          udp_expose_lb_use_nodeport is also set (the k3d case). Leave unset to resolve
-          the k3d node's own address from the Kubernetes API automatically, or override
-          if the test runner needs a different address to reach it.
-        default: ""
-      udp_expose_lb_use_nodeport:
-        description: >-
-          For validate_udp_expose_lb on k3d: MetalLB's LoadBalancer IP isn't reachable
-          from outside the docker network, but kube-proxy's NodePort forwarding works
-          directly on the k3d node's own address (reachable from the test runner on the
-          same docker host). Setting this targets the node address at the Service's
-          dynamically-assigned NodePort instead of the LoadBalancer address.
-        default: "false"
       # TODO: Remove this input once Fleet admin realm updates are included in a released Core baseline.
       skip_fleet_admin:
         description: "Skip the Fleet Keycloak admin integration test."
@@ -157,7 +135,7 @@ tasks:
           if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
             set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} UDP_EXPOSE_LB_TEST=${{ .inputs.validate_udp_expose_lb }} UDP_EXPOSE_LB_HOST=${{ .inputs.udp_expose_lb_host }} UDP_EXPOSE_LB_USE_NODEPORT=${{ .inputs.udp_expose_lb_use_nodeport }} npx vitest run "$@"
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
@@ -191,44 +169,18 @@ tasks:
       K3D_EXTRA_ARGS:
         default: ""
         description: "Extra args for k3d"
-      validate_udp_expose_lb:
-        description: >-
-          Whether to validate the UDP expose path through the default Gateway's real
-          external LoadBalancer address, rather than just pod-to-pod traffic in-cluster.
-          On k3d, pair with udp_expose_lb_use_nodeport="true" to reach it via the k3d
-          node's own address and the Service's NodePort instead (see e2e-tests).
-        default: "false"
-      udp_expose_lb_host:
-        description: "Overrides the target host for validate_udp_expose_lb (see e2e-tests)"
-        default: ""
-      udp_expose_lb_use_nodeport:
-        description: "For validate_udp_expose_lb on k3d (see e2e-tests)"
-        default: "false"
     actions:
       - task: uds-core
         with:
           K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: e2e-tests
-        with:
-          validate_udp_expose_lb: "${{ .inputs.validate_udp_expose_lb }}"
-          udp_expose_lb_host: "${{ .inputs.udp_expose_lb_host }}"
-          udp_expose_lb_use_nodeport: "${{ .inputs.udp_expose_lb_use_nodeport }}"
 
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
     inputs:
-      # The pod-to-pod UDP expose test only depends on the operator/Gateway
-      # reconciling correctly, not on any cloud-specific LoadBalancer behavior, so
-      # it's safe to run against any real cluster by default.
       validate_udp_expose:
         description: Whether to validate UDP expose routes through the default Envoy Gateway
         default: "true"
-      # Whether the LoadBalancer provisioned here is expected to get a real,
-      # externally-reachable address is cluster/infra dependent, so this defaults off
-      # and each calling workflow opts in where it's known to be supported (e.g. EKS, AKS).
-      validate_udp_expose_lb:
-        description: Whether to validate the UDP expose path through a real external LoadBalancer address
-        default: "false"
     actions:
       - task: util:setup-hosts
       - task: validate-packages
@@ -237,9 +189,7 @@ tasks:
       - task: e2e-tests
         with:
           architecture: "amd64"
-          validate_egress: "false"
           validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
-          validate_udp_expose_lb: "${{ .inputs.validate_udp_expose_lb }}"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"

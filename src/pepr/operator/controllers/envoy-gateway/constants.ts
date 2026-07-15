@@ -8,13 +8,13 @@ export const envoyDefaultGatewayNamespace = "envoy-default-gateway";
 export const envoyGatewaySystemNamespace = "envoy-gateway-system";
 
 export function getUDPGatewayPortKey(gateway: string | undefined, port: number): string {
-  return `${gateway ?? envoyDefaultGatewayName}:${port}`;
+  return `${gateway || envoyDefaultGatewayName}:${port}`;
 }
 
 export function getUDPGatewayName(gateway: string | undefined): string {
-  return gateway ?? envoyDefaultGatewayName;
+  return gateway || envoyDefaultGatewayName;
 }
 
 export function getUDPGatewayNamespace(gateway: string | undefined): string {
-  return gateway ?? envoyDefaultGatewayNamespace;
+  return gateway || envoyDefaultGatewayNamespace;
 }
