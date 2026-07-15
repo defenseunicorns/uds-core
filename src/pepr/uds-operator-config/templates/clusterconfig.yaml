@@ -37,11 +37,13 @@ spec:
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}
     adminDomain: {{ include "uds-operator-config.adminDomain" . | quote }}
-    {{- if .Values.cluster.expose.contextPath }}
-    contextPath: {{ .Values.cluster.expose.contextPath | quote }}
+    {{- $contextPath := .Values.cluster.expose.contextPath | default "" }}
+    {{- if and (ne $contextPath "") (not (hasPrefix "###ZARF_VAR_" $contextPath)) }}
+    contextPath: {{ $contextPath | quote }}
     {{- end }}
-    {{- if .Values.cluster.expose.adminContextPath }}
-    adminContextPath: {{ .Values.cluster.expose.adminContextPath | quote }}
+    {{- $adminContextPath := .Values.cluster.expose.adminContextPath | default "" }}
+    {{- if and (ne $adminContextPath "") (not (hasPrefix "###ZARF_VAR_" $adminContextPath)) }}
+    adminContextPath: {{ $adminContextPath | quote }}
     {{- end }}
     pathRouting: {{ .Values.cluster.expose.pathRouting | default false | toString | eq "true" }}
   policy:

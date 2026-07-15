@@ -21,6 +21,7 @@ variables:
 
   - name: CONTEXT_PATH
     description: "Optional public context path for single-host path routing"
+    default: ""
 
   - name: ADMIN_CONTEXT_PATH
     description: "Optional admin context path for single-host path routing"

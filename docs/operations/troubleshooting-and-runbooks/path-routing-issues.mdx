@@ -49,9 +49,9 @@ Path-routing issues are usually caused by one of the following:
 2. **Verify built-in endpoints respond**
 
    ```bash
-   curl -Ik https://<domain>/<contextPath>/sso
-   curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/keycloak
-   curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/grafana
+   curl -Ik https://<domain><contextPath>/sso
+   curl -Ik https://<adminDomain><contextPath><adminContextPath>/keycloak
+   curl -Ik https://<adminDomain><contextPath><adminContextPath>/grafana
    ```
 
    **What to look for:** `200`, `302`, or expected auth redirects. `404` or `503` indicates routing or gateway mismatch.
@@ -89,7 +89,7 @@ If `pathRouting` is enabled but paths are malformed or colliding:
 
    ```bash
    uds zarf tools kubectl get clusterconfig uds-cluster-config -o yaml
-   curl -Ik https://<domain>/<contextPath>/sso
+   curl -Ik https://<domain><contextPath>/sso
    ```
 
 </Steps>
@@ -144,7 +144,7 @@ If Keycloak path-routed requests return the path-parameter error:
 3. **Retest the flow**
 
    ```bash
-   curl -Ik "https://<domain>/<contextPath>/sso/realms/uds/.well-known/openid-configuration"
+   curl -Ik "https://<domain><contextPath>/sso/realms/uds/.well-known/openid-configuration"
    ```
 
 </Steps>
@@ -154,9 +154,9 @@ If Keycloak path-routed requests return the path-parameter error:
 After applying a fix, confirm path-routed endpoints and app routes are healthy:
 
 ```bash
-curl -Ik https://<domain>/<contextPath>/sso
-curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/keycloak
-curl -Ik https://<adminDomain>/<contextPath>/<adminContextPath>/grafana
+curl -Ik https://<domain><contextPath>/sso
+curl -Ik https://<adminDomain><contextPath><adminContextPath>/keycloak
+curl -Ik https://<adminDomain><contextPath><adminContextPath>/grafana
 uds zarf tools kubectl get virtualservice -A | grep -i <app-or-namespace>
 ```
 

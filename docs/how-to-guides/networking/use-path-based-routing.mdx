@@ -22,7 +22,7 @@ This guide shows you how to enable path-based routing in UDS Core and verify the
 
 UDS Core defaults to domain and subdomain routing. If you do not set `pathRouting: true`, built-in services continue to use hostnames such as `sso.<domain>` and `<app>.<adminDomain>`.
 
-Path-based routing in this release applies to built-in Keycloak and Grafana routes. Other services continue to use domain and subdomain routing unless you define additional `Package` routing behavior.
+With `pathRouting: true`, UDS Core uses shared hosts for exposed services. Use `Package` `match.uri` rules (and rewrites when needed) to route applications by path and avoid collisions.
 
 ## Steps
 
