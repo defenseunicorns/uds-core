@@ -29,10 +29,16 @@ spec:
                 local path = request_handle:headers():get(":path")
                 local host = request_handle:headers():get(":authority")
 
+                {{- $domain := tpl .Values.domain . }}
+                {{- $adminDomain := tpl .Values.adminDomain . }}
+                {{- if or (not $adminDomain) (eq $adminDomain "###ZARF_VAR_ADMIN_DOMAIN###") }}
+                  {{- $adminDomain = printf "admin.%s" $domain }}
+                {{- end }}
+
                 -- Only apply to keycloak endpoints
                 if host and (
-                  host == "sso.{{ .Values.domain }}" or
-                  host == "keycloak.{{ tpl (.Values.udsAdminDomain | default (.Values.adminDomain | default (printf "admin.%s" .Values.domain))) . }}"
+                  host == "sso.{{ $domain }}" or
+                  host == "keycloak.{{ $adminDomain }}"
                 ) then
                   if path then
                     local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")

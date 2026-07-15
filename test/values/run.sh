@@ -26,8 +26,8 @@ VARIABLES="DOMAIN=uds.dev"
 RENDER_VALUES=(--values "packages/$PACKAGE/zarf-values.yaml" --values "$VALUES_FILE")
 
 if [ -n "$SCENARIO" ]; then
-  SCENARIOS_FILE="$ROOT/test/values/admin-domain/scenarios.yaml"
-  SCENARIO_FILTER=".scenarios[] | select(.name == \"$SCENARIO\")"
+  SCENARIOS_FILE="$TEST_FILE"
+  SCENARIO_FILTER=".adminDomainScenarios[] | select(.name == \"$SCENARIO\")"
   if ! uds zarf tools yq -e "$SCENARIO_FILTER" "$SCENARIOS_FILE" >/dev/null; then
     echo "ERROR: admin-domain scenario $SCENARIO does not exist"
     exit 1
@@ -54,6 +54,9 @@ run_checks() {
     name="$(uds zarf tools yq -r ".$key[$index].name" "$TEST_FILE")"
     description="$(uds zarf tools yq -r ".$key[$index].description" "$TEST_FILE")"
     expression="$(uds zarf tools yq -r ".$key[$index].expression" "$TEST_FILE")"
+    if [ -z "$SCENARIO" ] && [[ "$expression" == *"{{ adminDomain }}"* ]]; then
+      continue
+    fi
     expression="${expression//\{\{ adminDomain \}\}/$EXPECTED_ADMIN_DOMAIN}"
     echo "  [$name] $description"
     if ! uds zarf tools yq ea -e "$expression" "$MANIFESTS" >/dev/null; then
@@ -64,8 +67,5 @@ run_checks() {
 }
 
 run_checks checks
-if [ -n "$SCENARIO" ]; then
-  run_checks adminDomainChecks
-fi
 
 echo "packages/$PACKAGE: OK"

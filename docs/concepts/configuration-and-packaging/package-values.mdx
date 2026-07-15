@@ -17,10 +17,7 @@ Define the top-level `values` key in your root `zarf.yaml` and reference:
 - A `zarf-values.yaml` for defaults
 - A `zarf-values.schema.json` for validation
 
-The schema should follow [JSON Schema](https://json-schema.org/) and focus on validating common user-facing values. Keep deeply nested validation practical to avoid fragile schemas as charts and Kubernetes APIs evolve.
-
-> [!TIP]
-> There is an open Zarf issue to support schema generation: [zarf-dev/zarf#4918](https://github.com/zarf-dev/zarf/issues/4918).
+The schema should follow [JSON Schema](https://json-schema.org/). Consider using `uds zarf dev generate-schema` to generate it from the package definition, chart values, and value mappings.
 
 Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (commonly in `common/zarf.yaml`). Keep mappings as flat as practical and expose the highest sensible node in the values tree.
 

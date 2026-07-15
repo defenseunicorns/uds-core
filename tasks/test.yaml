@@ -175,10 +175,7 @@ tasks:
         cmd: |
           set -euo pipefail
           PKG=$(ls build/zarf-package-core-${UDS_ARCH}-*.tar.zst 2>/dev/null | head -1)
-          # The top-level domain value supplies the admin gateway tenant domain. With no
-          # adminDomain or ADMIN_DOMAIN, the gateway derives admin.<domain>.
           ./uds zarf package deploy "$PKG" \
-            --set DOMAIN=uds.dev \
             --values packages/standard/zarf-values.yaml \
             --values test/values/k3d-standard/values.yaml \
             --components "*" \

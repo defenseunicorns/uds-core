@@ -123,6 +123,8 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/config-admin.yaml"
+        templatedValuesFiles:
+          - "values/templated-effective-admin.yaml"
         # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
         # Deployment selector).
@@ -131,10 +133,6 @@ components:
             targetPath: .
             excludePaths:
               - .istio-admin-gateway.uds-istio-config.name
-          - sourcePath: .domain
-            targetPath: .tenantDomain
-          - sourcePath: .adminDomain
-            targetPath: .adminDomain
 
   - name: istio-tenant-gateway
     required: true
@@ -162,6 +160,8 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/config-tenant.yaml"
+        templatedValuesFiles:
+          - "values/templated-effective-admin.yaml"
         # UDS-authored config chart, exposed broadly (TLS cert/key/supportTLSV1_2, etc.).
         # Exclude the gateway `name` (overriding breaks the Gateway resource and the gateway
         # Deployment selector). `domain` is fed from the top-level `domain` value (below) so it is
@@ -171,8 +171,6 @@ components:
             targetPath: .
             excludePaths:
               - .istio-tenant-gateway.uds-istio-config.name
-          - sourcePath: .domain
-            targetPath: .domain
 
   - name: istio-passthrough-gateway
     required: false
@@ -199,6 +197,8 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/config-passthrough.yaml"
+        templatedValuesFiles:
+          - "values/templated-effective-admin.yaml"
         # UDS-authored config chart. Exclude the gateway `name`. `domain` is fed from the top-level
         # `domain` value so it is not excluded here (sibling-mapping constraint).
         values:
@@ -206,8 +206,6 @@ components:
             targetPath: .
             excludePaths:
               - .istio-passthrough-gateway.uds-istio-config.name
-          - sourcePath: .domain
-            targetPath: .domain
 
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-ambient

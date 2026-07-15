@@ -6,7 +6,7 @@
 # still allowing overrides via --values. See excludePaths in common/zarf.yaml for blocked paths.
 
 domain: "###ZARF_VAR_DOMAIN###"
-adminDomain: ""
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 grafana:
   grafana: {}

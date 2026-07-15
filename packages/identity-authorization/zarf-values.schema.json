@@ -638,9 +638,6 @@
               },
               "type": "array"
             },
-            "udsAdminDomain": {
-              "type": "string"
-            },
             "updateStrategy": {
               "type": "string"
             },

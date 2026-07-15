@@ -17,6 +17,8 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
+        templatedValuesFiles:
+          - ../values/templated-config-values.yaml
         # UDS-authored config chart, exposed broadly. Its nested adminDomain is excluded so the
         # top-level domain and adminDomain values below control Grafana's admin URLs.
         values:
@@ -24,10 +26,6 @@ components:
             targetPath: .
             excludePaths:
               - .grafana.uds-grafana-config.adminDomain
-          - sourcePath: .domain
-            targetPath: .domain
-          - sourcePath: .adminDomain
-            targetPath: .udsAdminDomain
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3
@@ -57,7 +55,3 @@ components:
               - .grafana.grafana.testFramework.image
               - .grafana.grafana.testFramework.securityContext
               - .grafana.grafana.testFramework.containerSecurityContext
-          - sourcePath: .domain
-            targetPath: .domain
-          - sourcePath: .adminDomain
-            targetPath: .udsAdminDomain

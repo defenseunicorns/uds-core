@@ -14,13 +14,16 @@
 domain: "###ZARF_VAR_DOMAIN###"
 
 # Admin domain override; empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
-adminDomain: ""
+adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
 
 # --- base (pepr / istio / envoy / metrics) ---
 pepr-uds-core:
   module: {}
 uds-operator-config:
   uds-operator-config: {}
+
+uds-exemptions:
+  uds-exemptions: {}
 istio-controlplane:
   base: {}
   istiod: {}

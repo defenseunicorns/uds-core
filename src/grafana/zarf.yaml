@@ -34,6 +34,8 @@ components:
       - name: grafana
         valuesFiles:
           - values/upstream-values.yaml
+        templatedValuesFiles:
+          - values/templated-values.yaml
     images:
       - docker.io/grafana/grafana:13.0.1
       - docker.io/curlimages/curl:8.20.0

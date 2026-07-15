@@ -26,9 +26,37 @@ checks:
     description: Excluded values do not appear in rendered manifests
     expression: '[.. | select(tag == "!!str")] | any_c(test("SHOULD_NOT_APPEAR")) |
       not'
-adminDomainChecks:
   - name: keycloak-admin-domain
     description: Keycloak UDS_ADMIN_DOMAIN uses the expected admin domain
     expression: '[select(.kind == "StatefulSet" and .metadata.name == "keycloak") |
       .spec.template.spec.containers[].env[] | select(.name == "UDS_ADMIN_DOMAIN") |
       .value == "{{ adminDomain }}"] | any'
+adminDomainScenarios:
+  - name: domain-variable-fallback
+    values: {}
+    variables:
+      DOMAIN: fallback.example.com
+    expectedAdminDomain: admin.fallback.example.com
+  - name: domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+    expectedAdminDomain: admin.custom.example.com
+  - name: admin-domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: mgmt.example.com
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: ignored.example.com
+    expectedAdminDomain: mgmt.example.com
+  - name: admin-domain-variable
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: myadmin.example.com
+    expectedAdminDomain: myadmin.example.com

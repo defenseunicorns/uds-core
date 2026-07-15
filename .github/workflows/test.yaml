@@ -76,6 +76,13 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
+      - name: Verify Zarf values mappings
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: |
+          uds run -f tasks/lint.yaml install-pepr-deps --no-progress
+          uds run -f tasks/lint.yaml build-pepr --no-progress
+          uds run -f tasks/lint.yaml values-verify --no-progress
+
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
         run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress

@@ -1,6 +1,0 @@
-# Packages whose top-level adminDomain value must satisfy the precedence matrix.
-# Add a package here when it exposes adminDomain; CI verifies this list matches package defaults.
-base
-identity-authorization
-monitoring
-standard

@@ -346,7 +346,6 @@ checks:
     description: Excluded values do not appear in rendered manifests
     expression: '[.. | select(tag == "!!str")] | any_c(test("SHOULD_NOT_APPEAR")) |
       not'
-adminDomainChecks:
   - name: admin-gateway-host
     description: Admin Gateway host uses the expected admin domain
     expression: '[select(.kind == "Gateway" and .metadata.namespace == "istio-admin-gateway")
@@ -361,3 +360,32 @@ adminDomainChecks:
     expression:
       '[select(.kind == "ConfigMap" and .metadata.name == "grafana") | .data["grafana.ini"]
       | test("root_url = https://grafana\\.{{ adminDomain }}")] | any'
+adminDomainScenarios:
+  - name: domain-variable-fallback
+    values: {}
+    variables:
+      DOMAIN: fallback.example.com
+    expectedAdminDomain: admin.fallback.example.com
+  - name: domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+    expectedAdminDomain: admin.custom.example.com
+  - name: admin-domain-value
+    values:
+      domain: custom.example.com
+      adminDomain: mgmt.example.com
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: ignored.example.com
+    expectedAdminDomain: mgmt.example.com
+  - name: admin-domain-variable
+    values:
+      domain: custom.example.com
+      adminDomain: ""
+    variables:
+      DOMAIN: uds.dev
+      ADMIN_DOMAIN: myadmin.example.com
+    expectedAdminDomain: myadmin.example.com

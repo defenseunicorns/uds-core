@@ -1085,6 +1085,61 @@
                 "envFrom": {
                   "type": "array"
                 },
+                "extraVolumeMounts": {
+                  "items": {
+                    "properties": {
+                      "mountPath": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "extraVolumes": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "projected": {
+                        "properties": {
+                          "sources": {
+                            "items": {
+                              "properties": {
+                                "serviceAccountToken": {
+                                  "properties": {
+                                    "audience": {
+                                      "type": "string"
+                                    },
+                                    "expirationSeconds": {
+                                      "type": "number"
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
                 "failurePolicy": {
                   "type": "string"
                 },
@@ -1278,6 +1333,61 @@
                 "envFrom": {
                   "type": "array"
                 },
+                "extraVolumeMounts": {
+                  "items": {
+                    "properties": {
+                      "mountPath": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "extraVolumes": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "projected": {
+                        "properties": {
+                          "sources": {
+                            "items": {
+                              "properties": {
+                                "serviceAccountToken": {
+                                  "properties": {
+                                    "audience": {
+                                      "type": "string"
+                                    },
+                                    "expirationSeconds": {
+                                      "type": "number"
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
                 "labels": {
                   "properties": {
                     "app": {
@@ -1399,6 +1509,38 @@
       },
       "type": "object"
     },
+    "uds-exemptions": {
+      "properties": {
+        "uds-exemptions": {
+          "properties": {
+            "exemptions": {
+              "properties": {
+                "custom": {
+                  "type": "array"
+                },
+                "istioGatewayNodeport": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "gateways": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "uds-operator-config": {
       "properties": {
         "uds-operator-config": {
@@ -1436,9 +1578,6 @@
                       "type": "string"
                     },
                     "domain": {
-                      "type": "string"
-                    },
-                    "udsAdminDomain": {
                       "type": "string"
                     }
                   },

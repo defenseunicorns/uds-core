@@ -36,10 +36,12 @@ spec:
   {{- end }}
   expose:
     domain: {{ .Values.cluster.expose.domain | quote }}
-    {{- if .Values.cluster.expose.udsAdminDomain }}
-    adminDomain: {{ .Values.cluster.expose.udsAdminDomain | quote }}
-    {{- else if .Values.cluster.expose.adminDomain }}
-    adminDomain: {{ .Values.cluster.expose.adminDomain | quote }}
+    {{- $adminDomain := .Values.cluster.expose.adminDomain | default "" }}
+    {{- if eq $adminDomain "###ZARF_VAR_ADMIN_DOMAIN###" }}
+      {{- $adminDomain = "" }}
+    {{- end }}
+    {{- if $adminDomain }}
+    adminDomain: {{ $adminDomain | quote }}
     {{- else }}
     adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
     {{- end }}

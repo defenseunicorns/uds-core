@@ -218,7 +218,13 @@
     "domain": {
       "type": "string"
     },
+    "effectiveDomain": {
+      "type": "string"
+    },
     "adminDomain": {
+      "type": "string"
+    },
+    "effectiveAdminDomain": {
       "type": "string"
     },
     "udsAdminDomain": {

@@ -1,23 +1,22 @@
 ---
 title: Zarf values
-description: Reference for overriding UDS Core Helm configuration with native Zarf values, including the component.chart namespace, the generated per-package schemas, excluded paths, and how values relate to UDS bundle overrides.
+description: Reference for overriding UDS Core Helm configuration with native Zarf values, including chart namespaces, committed schemas, domain precedence, and protected paths.
 sidebar:
   order: 3.004
 ---
 
-UDS Core exposes its Helm configuration as native [Zarf values](https://docs.zarf.dev/ref/examples/values-templating/), so you can override settings with a values file when you deploy a Core package directly with `uds zarf package deploy`, without building a UDS bundle. Every chart is reachable under a `<component>.<chart>.*` namespace, and each package validates your input against a committed JSON schema. This page covers how the namespace maps to upstream charts, where to find the authoritative schema, which paths are excluded, and how values relate to UDS bundle overrides.
+UDS Core exposes its Helm configuration as native [Zarf values](https://docs.zarf.dev/ref/examples/values-templating/). You can override settings with a values file when you deploy a Core package directly with `uds zarf package deploy`, without building a UDS bundle.
 
 ## Deploying with values
 
-Zarf `v0.78.0` and later enable values by default, including UDS CLI `v0.33` and later. Pass a values file with `--values` (repeatable), or set individual paths inline with `--set-values <component>.<chart>.<path>=<value>`. Only the paths you set are applied; every other value keeps its chart default.
+UDS Core package deployment requires UDS CLI `v0.34.0` or later (Zarf `v0.79.0` or later). Pass a values file with `--values`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`.
 
-The following values file enables Keycloak horizontal autoscaling and scales authservice:
+For example, this values file enables Keycloak horizontal autoscaling and scales authservice:
 
 ```yaml title="values.yaml"
 keycloak:
   keycloak:
     autoscaling:
-      # Run Keycloak in HA (horizontal autoscaling)
       enabled: true
 authservice:
   authservice:
@@ -32,151 +31,73 @@ uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
   --confirm
 ```
 
-To set a single path without a file, use `--set-values`:
-
-```bash
-uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
-  --set-values keycloak.keycloak.autoscaling.enabled=true \
-  --confirm
-```
-
-> [!NOTE]
-> Zarf deep-merges your values onto the chart defaults. Object overrides preserve sibling defaults; list values (for example, a gateway's `service.ports`) replace the chart default entirely, so include the full list when you override one.
+Zarf deep-merges object values onto chart defaults. List values replace the chart default, so include the full list when you override one.
 
 ## How values map to charts
 
-Every chart in UDS Core is namespaced as `<component>.<chart>`, and each `<component>.<chart>.*` path maps directly to that chart's upstream Helm values. For example, `keycloak.keycloak.*` sets values on the Keycloak chart, `grafana.grafana.*` on the Grafana chart, and `grafana.uds-grafana-config.*` on the UDS-authored Grafana config chart. A single component can carry more than one chart: the `loki` component exposes both `loki.loki` (the upstream Loki chart) and `loki.uds-loki-config` (the UDS config chart).
+Every chart uses a `<component>.<chart>` namespace. For example, `keycloak.keycloak.*` sets values on the Keycloak chart, `grafana.grafana.*` sets values on the Grafana chart, and `grafana.uds-grafana-config.*` sets values on the UDS-authored Grafana config chart.
 
-The mapping is a pass-through. Any value the upstream chart accepts is settable under `<component>.<chart>.*`, except the paths listed in [Excluded paths](#excluded-paths).
+The mapping is a pass-through except for protected paths. Each package validates values against its committed schema, which is the authoritative list of settable paths:
 
-Each package validates your values against a committed JSON schema at `packages/<package>/zarf-values.schema.json`. That schema is the authoritative list of every settable path; consult it rather than an enumerated table here, which would drift as charts change. The shipped defaults live alongside it at `packages/<package>/zarf-values.yaml`. Schemas exist for the `base`, `identity-authorization`, `logging`, `monitoring`, `portal`, `runtime-security`, and `standard` packages. The `standard` package is the full UDS Core deployment: its schema is the union of the layer packages plus the `metrics-server` and `velero` charts.
+- [Base schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/base/zarf-values.schema.json)
+- [Identity and authorization schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/identity-authorization/zarf-values.schema.json)
+- [Logging schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/logging/zarf-values.schema.json)
+- [Monitoring schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/monitoring/zarf-values.schema.json)
+- [Portal schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/portal/zarf-values.schema.json)
+- [Runtime security schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/runtime-security/zarf-values.schema.json)
+- [Standard schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf-values.schema.json)
+
+The component mapping files define the exact pass-through and protected paths:
+
+- [Base and Istio mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/zarf.yaml)
+- [Identity and authorization mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/common/zarf.yaml)
+- [Logging mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/loki/common/zarf.yaml)
+- [Monitoring mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/grafana/common/zarf.yaml)
+- [Portal mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/portal/common/zarf.yaml)
+- [Runtime security mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/common/zarf.yaml)
+- [Pepr mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml)
 
 ## Domains
 
-Set the tenant and admin domains once with the top-level `domain` and `adminDomain` values. The tenant domain fans out to Keycloak's public domain, the tenant and passthrough Istio gateways, the Pepr operator (which drives all UDS `Package` routes), and the portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, and the Pepr operator.
+Set the tenant and admin domains with the top-level `domain` and `adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, and Pepr.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `domain` | string | `uds.dev` | Tenant domain for the whole stack |
+| `domain` | string | `uds.dev` | Tenant domain for the stack |
 | `adminDomain` | string | Empty | Admin domain for admin-exposed services |
 
-> [!NOTE]
-> `domain` defaults to the `DOMAIN` Zarf variable, so UDS bundles and existing `--set DOMAIN=` deploys are unaffected. If you set the top-level `domain` value, it overrides the variable for a direct `uds zarf package deploy`. If you leave it unset, it falls back to the `DOMAIN` variable.
+`domain` uses the value when set, then the `DOMAIN` Zarf variable. `adminDomain` uses the value when set, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<domain>`.
 
-`adminDomain` uses this precedence chain: the `adminDomain` value, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<effective-domain>`. The effective domain uses the `domain` value when set, then the `DOMAIN` Zarf variable. Leave `adminDomain` empty to derive `admin.<effective-domain>`, or set it when your admin services use a custom domain.
+The precedence rules are:
+
+| Setting | First choice | Second choice | Final fallback |
+|---|---|---|---|
+| `domain` | Top-level `domain` value | `DOMAIN` Zarf variable | None |
+| `adminDomain` | Top-level `adminDomain` value | `ADMIN_DOMAIN` Zarf variable | `admin.<domain>` |
+
+For example, this deployment uses the explicit tenant domain and the admin-domain variable:
+
+```yaml title="values.yaml"
+domain: example.com
+adminDomain: ""
+```
+
+```bash
+uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
+  --values values.yaml \
+  --set ADMIN_DOMAIN=admin.example.net \
+  --confirm
+```
+
+The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAIN` is also unset, the admin domain becomes `admin.example.com`.
 
 ## Excluded paths
 
-Some paths are excluded from the pass-through and are silently dropped at deploy time. Exclusions fall into three groups: image and registry references (to block unauthorized images), security contexts (to preserve the UDS-hardened defaults), and UDS-owned wiring (config that Core manages and must not be overridden). In the tables below, the Chart column gives the `<component>.<chart>` namespace and the excluded paths are relative to that chart, so `keycloak.keycloak` plus `image` is the full path `keycloak.keycloak.image`.
+Protected paths are silently dropped at deploy time. UDS Core protects UDS-owned wiring, image and registry references, and security contexts. Consult the committed schemas and component mappings linked above instead of an inventory here, because those files change with the charts.
 
-UDS-authored config charts that carry no image, security-context, or protected wiring expose every key with no exclusions: `istio-controlplane.uds-global-istio-config`, `istio-egress-ambient.uds-istio-egress-config`, `loki.uds-loki-config`, `vector.uds-vector-config`, `velero.uds-velero-config`, `metrics-server.uds-metrics-server-config`, and `kube-prometheus-stack.uds-prometheus-config`.
-
-### Base (`core-base`)
-
-This package is the UDS Core foundation layer: the Pepr operator, the Istio service mesh and gateways, and Envoy Gateway.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `pepr-uds-core.module` | `watcher.env`, `admission.env`, `watcher.extraVolumeMounts`, `watcher.extraVolumes`, `admission.extraVolumeMounts`, `admission.extraVolumes`, `watcher.serviceMonitor`, `admission.serviceMonitor`, `admission.webhookAnnotations` | UDS-owned operator wiring (Keycloak token mounts, `###ZARF_VAR###` substitutions, monitoring) |
-| `pepr-uds-core.module` | `watcher.image`, `admission.image`, `watcher.securityContext`, `watcher.containerSecurityContext`, `admission.securityContext`, `admission.containerSecurityContext` | Blocks unauthorized images and privilege changes |
-| `istio-controlplane.base`, `.cni` | `_internal_defaults_do_not_set`, `global.hub`, `global.tag` | Chart-internal defaults wrapper; image registry pinning |
-| `istio-controlplane.istiod` | `_internal_defaults_do_not_set`, `global.hub`, `global.tag`, `pilot.image`, `global.proxy.image`, `global.proxy_init.image` | Chart-internal defaults wrapper; blocks unauthorized images |
-| `istio-controlplane.ztunnel` | `_internal_defaults_do_not_set`, `global.hub`, `global.tag`, `image` | Chart-internal defaults wrapper; blocks unauthorized images |
-| `istio-admin-gateway.gateway`, `istio-tenant-gateway.gateway`, `istio-passthrough-gateway.gateway`, `istio-egress-gateway.gateway` | `_internal_defaults_do_not_set`, `global.hub`, `global.tag` | Chart-internal defaults wrapper; image registry pinning |
-| `istio-admin-gateway.uds-istio-config`, `istio-tenant-gateway.uds-istio-config`, `istio-passthrough-gateway.uds-istio-config` | `name` | Bound to the `Gateway` resource and its Deployment selector; overriding breaks routing |
-| `envoy-gateway.envoy-gateway` | `global.imageRegistry`, `global.images.envoyGateway.image`, `global.images.ratelimit.image`, `global.images.envoyProxy.image`, `deployment.envoyGateway.image`, `deployment.envoyGateway.securityContext`, `certgen.job.securityContext` | Blocks unauthorized images and privilege changes |
-| `envoy-gateway.uds-envoy-gateway-config` | `global.images.envoyGateway.image`, `global.images.envoyProxy.image` | Flavor-injected image references |
-
-> [!NOTE]
-> The Istio sidecar proxy resource requests (`istio-controlplane.istiod.global.proxy.resources.requests`) also remain settable through the existing `PROXY_MEMORY_REQUEST` and `PROXY_CPU_REQUEST` Zarf variables.
-
-The `metrics-server` charts deploy only in the full `standard` package.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `metrics-server.metrics-server` | `image`, `podSecurityContext`, `securityContext`, `addonResizer.image`, `addonResizer.securityContext` | Blocks unauthorized images and preserves hardened security contexts |
-
-### Identity and authorization (`core-identity-authorization`)
-
-This package exposes Keycloak and authservice.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `keycloak.keycloak` | `image`, `configImage`, `service`, `podSecurityContext`, `securityContext`, `serviceMonitor`, `prometheusRule` | Blocks unauthorized images, preserves hardened security contexts, and protects Service and monitoring wiring |
-| `authservice.authservice` | `image`, `securityContext`, `podSecurityContext` | Blocks unauthorized images and preserves hardened security contexts |
-
-Keycloak's public domain comes from the top-level `domain` value. Its admin console follows the shared [`adminDomain` precedence chain](#domains).
-
-### Logging (`core-logging`)
-
-This package includes Loki and Vector for log storage and collection.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `loki.loki` | `loki.auth_enabled` | UDS runs Loki in single-tenant, no-auth mode; changing this breaks the configuration |
-| `loki.loki` | `deploymentMode` | Changing the deployment mode (for example `SingleBinary` versus `SimpleScalable`) requires a full reinstall and breaks the existing topology |
-| `loki.loki` | `minio` | UDS does not deploy the built-in MinIO instance; object storage is configured separately |
-| `loki.loki` | all `*.image` references, `global.image`, `global.imageRegistry`, and all `*.podSecurityContext` / `*.containerSecurityContext` paths | Blocks unauthorized images and preserves hardened security contexts |
-| `vector.vector` | `image`, `podSecurityContext`, `securityContext`, `haproxy.image`, `haproxy.podSecurityContext`, `haproxy.securityContext` | Blocks unauthorized images and preserves hardened security contexts |
-
-See [Loki storage](/reference/configuration/loki-storage/) for object storage configuration.
-
-### Monitoring (`core-monitoring`)
-
-This package includes the Prometheus stack, the blackbox exporter, and Grafana.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `kube-prometheus-stack.kube-prometheus-stack` | `global.imageRegistry`, every `*.image` path across the operator and bundled subcomponents, and every `*.securityContext` / `*.podSecurityContext` / `*.containerSecurityContext` path | Blocks unauthorized images and preserves hardened security contexts |
-| `prometheus-blackbox-exporter.prometheus-blackbox-exporter` | `global.imageRegistry`, `image`, `configReloader.image`, `podSecurityContext`, `securityContext`, `configReloader.securityContext` | Blocks unauthorized images and preserves hardened security contexts |
-| `grafana.grafana` | `sidecar` | UDS configures the provisioning sidecars that wire the Loki and Prometheus datasources; overriding them breaks datasource connectivity |
-| `grafana.grafana` | `image`, `global.imageRegistry`, `initChownData.image`, `downloadDashboardsImage`, `imageRenderer.image`, `testFramework.image`, and the matching `securityContext` / `containerSecurityContext` paths | Blocks unauthorized images and preserves hardened security contexts |
-| `grafana.uds-grafana-config` | `adminDomain` | The nested admin-domain value is excluded; use the top-level [`adminDomain` value](#domains) for Grafana admin URLs |
-
-### Portal (`core-portal`)
-
-This package exposes the UDS Core portal.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `uds-portal.uds-portal` | `image`, `podSecurityContext`, `containerSecurityContext` | Blocks unauthorized images and preserves hardened security contexts |
-
-### Runtime security (`core-runtime-security`)
-
-This package includes Falco and its Falcosidekick event forwarder.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `falco.falco` | `image`, `falcosidekick.image`, `driver.loader.initContainer.image`, `falcoctl.image`, and the matching `podSecurityContext` / `securityContext` / `containerSecurityContext` paths | Blocks unauthorized images and preserves hardened security contexts |
-| `falco.uds-falco-config` | `udsDefaultDisabledRulesStable`, `udsDefaultDisabledRulesIncubating`, `udsDefaultDisabledRulesSandbox` | UDS-managed suppression lists; overriding them clears the UDS baseline rule suppressions |
-
-### Velero (`standard` only)
-
-The `velero` charts deploy only in the full `standard` package.
-
-| Chart | Excluded paths | Reason |
-|---|---|---|
-| `velero.velero` | `image`, `initContainers`, `podSecurityContext`, `containerSecurityContext`, `nodeAgent.podSecurityContext`, `nodeAgent.containerSecurityContext`, `kubectl.image`, `kubectl.containerSecurityContext` | Blocks unauthorized images and preserves hardened security contexts |
-
-## Relationship to bundle overrides
-
-Within a direct Zarf values deployment, native values override `###ZARF_VAR###`-substituted chart values at the same Helm path. UDS CLI v0 bundle deployments use bundle `variables` and `values` overrides instead of native Zarf values.
-
-Bundle overrides are intended to be deprecated in favor of Zarf values. Prefer Zarf values for new configuration wherever the deployment path supports them.
-
-Precedence rarely comes up in practice, because each deployment path supports one mechanism at a time: the current UDS CLI supports bundle overrides only, while a direct `uds zarf package deploy` and the next-generation UDS CLI support Zarf values only. Within a single values deploy, Zarf deep-merges your values onto the chart defaults, as described in [Deploying with values](#deploying-with-values).
-
-### Backward compatibility
-
-The values feature does not change existing bundle-override workflows:
-
-- The `DOMAIN` and `ADMIN_DOMAIN` Zarf variables, and the `###ZARF_VAR###` chart defaults they populate, are untouched.
-- Zarf `v0.78.0` and later enable values by default. Older Zarf versions require `--features values=true`.
-- Bundle overrides operate at the Helm level and bypass `excludePaths`. The excluded-path protections above apply only to Zarf values.
+UDS-authored config charts generally expose their full values surface. Upstream charts use pass-through mappings with exclusions for protected paths.
 
 ## Related documentation
 
-- [Zarf values templating](https://docs.zarf.dev/ref/examples/values-templating/) - upstream Zarf documentation for the values feature
-- [Package Values](/concepts/configuration-and-packaging/package-values/) - how UDS Packages author and expose Zarf values
-- [Loki storage](/reference/configuration/loki-storage/) - bundle override reference for Loki object storage
-- [Identity and authorization](/reference/configuration/identity-and-authorization/) - Keycloak configuration reference
+- [Zarf values templating](https://docs.zarf.dev/ref/examples/values-templating/) - upstream documentation for the values feature
+- [Package Values](/concepts/configuration-and-packaging/package-values/) - how UDS packages author and expose values

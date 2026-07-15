@@ -3,7 +3,6 @@
 #
 domain: "###ZARF_VAR_DOMAIN###"
 adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
-udsAdminDomain: ""
 
 sidecar:
   dashboards:
@@ -50,8 +49,6 @@ extraConfigmapMounts:
     optional: true
 
 grafana.ini:
-  server:
-    root_url: https://grafana.{{ .Values.udsAdminDomain | default (.Values.adminDomain | default (printf "admin.%s" .Values.domain)) }}
   # Disable telemetry that doesn't function in the airgap
   analytics:
     reporting_enabled: false
@@ -74,10 +71,7 @@ grafana.ini:
     login_attribute_path: preferred_username
     name_attribute_path: name
     name: UDS Identity Service
-    auth_url: https://sso.{{ .Values.domain }}/realms/uds/protocol/openid-connect/auth
-    # Note: this has to be the external URL to ensure that the token issuer checks in Grafana line up with this URL
-    token_url: https://sso.{{ .Values.domain }}/realms/uds/protocol/openid-connect/token
-    signout_redirect_url: https://sso.{{ .Values.domain }}/realms/uds/protocol/openid-connect/logout?post_logout_redirect_uri=https%3A%2F%2Fgrafana.{{ .Values.udsAdminDomain | default (.Values.adminDomain | default (printf "admin.%s" .Values.domain)) }}%2Flogin
+    # Note: the external URLs are supplied by templated-values.yaml.
     use_refresh_token: true
     allow_sign_up: true
     # Require a UDS Core group to access Grafana

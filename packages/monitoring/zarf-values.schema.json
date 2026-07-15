@@ -1142,9 +1142,6 @@
             "topologySpreadConstraints": {
               "type": "array"
             },
-            "udsAdminDomain": {
-              "type": "string"
-            },
             "useStatefulSet": {
               "type": "boolean"
             },
@@ -1257,9 +1254,6 @@
                 }
               },
               "type": "object"
-            },
-            "udsAdminDomain": {
-              "type": "string"
             },
             "uptime": {
               "properties": {

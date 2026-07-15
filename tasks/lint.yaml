@@ -34,7 +34,11 @@ tasks:
       - description: Ensure uv is installed
         task: ensure-uv
       - description: install pepr deps
-        cmd: npm ci
+        task: install-pepr-deps
+      - description: Build the Pepr module for values lint
+        task: build-pepr
+      - description: Lint packages that expose Zarf values
+        task: values-lint
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
       - description: yaml lint
@@ -48,11 +52,6 @@ tasks:
         task: license
       - description: Run helm unittest on all charts
         task: helm-unittest
-      - description: Lint packages that expose Zarf values
-        task: values-lint
-      - description: Verify Zarf value mappings render correctly (clusterless)
-        task: values-verify
-
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
     inputs:
@@ -60,10 +59,6 @@ tasks:
         description: "Optional values-bearing package to lint"
         default: ""
     actions:
-      - description: "Build the Pepr module (needed to compose the base and standard packages)"
-        cmd: |
-          npm ci
-          npx pepr build -z chart
       - description: "Lint each values-bearing package"
         shell:
           darwin: bash
@@ -121,10 +116,6 @@ tasks:
         description: "Optional values-bearing package to verify"
         default: ""
     actions:
-      - description: "Build the Pepr module (needed to compose the base and standard packages)"
-        cmd: |
-          npm ci
-          npx pepr build -z chart
       - description: "Render each source package's default values tree"
         shell:
           darwin: bash
@@ -186,60 +177,48 @@ tasks:
             echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
             exit 1
           fi
-          admin_packages_file="test/values/admin-domain/packages.txt"
-
-          is_admin_package() {
-            while IFS= read -r expected; do
-              case "$expected" in
-                ""|\#*) continue ;;
-              esac
-              [ "$expected" = "$1" ] && return 0
-            done < "$admin_packages_file"
-            return 1
-          }
-
-          # A package with adminDomain must join the matrix; listed packages must keep the value.
           for values_file in packages/*/zarf-values.yaml; do
             pkg="${values_file#packages/}"
             pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
             if uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
-              if ! is_admin_package "$pkg"; then
-                echo "ERROR: packages/${pkg} exposes adminDomain but is missing from ${admin_packages_file}"
+              test_file="test/values/${pkg}/test.yaml"
+              if [ ! -f "$test_file" ]; then
+                echo "ERROR: packages/${pkg} exposes adminDomain but is missing ${test_file}"
                 exit 1
               fi
+              for scenario in $(uds zarf tools yq -r '.adminDomainScenarios[].name' "$test_file"); do
+                echo "Verifying admin-domain ${scenario} for packages/${pkg}"
+                if ! bash test/values/run.sh "$pkg" "$scenario"; then
+                  echo "ERROR: admin-domain ${scenario} verification failed for packages/${pkg}"
+                  exit 1
+                fi
+              done
             fi
           done
 
-          while IFS= read -r pkg; do
-            case "$pkg" in
-              ""|\#*) continue ;;
-            esac
-            values_file="packages/${pkg}/zarf-values.yaml"
-            if [ ! -f "$values_file" ]; then
-              echo "ERROR: ${admin_packages_file} lists ${pkg}, but ${values_file} does not exist"
-              exit 1
-            fi
-            if ! uds zarf tools yq -e 'has("adminDomain")' "$values_file" >/dev/null 2>&1; then
-              echo "ERROR: ${admin_packages_file} lists ${pkg}, but it no longer exposes adminDomain"
-              exit 1
-            fi
-          done < "$admin_packages_file"
+  - name: install-pepr-deps
+    description: "Install Pepr dependencies"
+    actions:
+      - cmd: npm ci
 
-          for scenario in $(uds zarf tools yq -r '.scenarios[].name' test/values/admin-domain/scenarios.yaml); do
-            while IFS= read -r pkg; do
-              case "$pkg" in
-                ""|\#*) continue ;;
-              esac
-              if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
-                continue
-              fi
-              echo "Verifying admin-domain ${scenario} for packages/${pkg}"
-              if ! bash test/values/run.sh "$pkg" "$scenario"; then
-                echo "ERROR: admin-domain ${scenario} verification failed for packages/${pkg}"
-                exit 1
-              fi
-            done < "$admin_packages_file"
-          done
+  - name: build-pepr
+    description: "Build the Pepr module required by values checks"
+    inputs:
+      package:
+        description: "Optional values-bearing package being checked"
+        default: ""
+    actions:
+      - description: Build the Pepr module when required
+        cmd: |
+          package="${{ .inputs.package }}"
+          if [ -z "$package" ] || [ "$package" = "base" ] || [ "$package" = "standard" ]; then
+            npx pepr build -z chart
+          else
+            echo "Skipping Pepr build for packages/${package}"
+          fi
 
   - name: values-generate
     description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
@@ -248,10 +227,10 @@ tasks:
         description: "Optional values-bearing package to regenerate"
         default: ""
     actions:
-      - description: "Build the Pepr module (needed to compose the base and standard packages)"
-        cmd: |
-          npm ci
-          npx pepr build -z chart
+      - task: install-pepr-deps
+      - task: build-pepr
+        with:
+          package: "${{ .inputs.package }}"
       - description: "Regenerate each package's values schema"
         shell:
           darwin: bash

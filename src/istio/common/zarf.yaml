@@ -50,12 +50,7 @@ components:
           - name: PROXY_CPU_REQUEST
             description: "CPU requests for sidecars in cluster"
             path: "global.proxy.resources.requests.cpu"
-        # Pass-through of the istiod chart. `_internal_defaults_do_not_set` is excluded because
-        # the chart wraps all its real defaults under that key (users set fields at root and the
-        # chart merges them) — mapping it would just surface an internal key in the schema.
-        # global.hub/tag and the pilot/proxy images are excluded to prevent pulling unauthorized
-        # images. Mesh proxy resource requests remain settable via both this values surface and
-        # the PROXY_MEMORY_REQUEST/PROXY_CPU_REQUEST variables above.
+        # Pass-through; exclude chart internals, registries, and protected image paths.
         values:
           - sourcePath: .istio-controlplane.istiod
             targetPath: .
