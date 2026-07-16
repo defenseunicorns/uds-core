@@ -199,17 +199,6 @@ function isResponseError(curlOutput: { stdout: string; stderr: string }) {
   return httpResponseCode < 100 || httpResponseCode > 399;
 }
 
-async function clearUdpLog(serverPodName: string): Promise<void> {
-  await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    // busybox nc's UDP listener locks onto whichever peer sends the first datagram for
-    // its entire process lifetime, ignoring any other peer thereafter. Killing it forces
-    // the server's respawn loop to bind a fresh listener so each test gets its own peer,
-    // instead of silently losing to whichever earlier test (or client pod) contacted it first.
-    "> /tmp/udp.log; pkill -f 'nc -u -l -p 5000' || true; sleep 0.2",
-  ]);
-}
 
 async function readUdpLog(serverPodName: string): Promise<string> {
   const result = await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
@@ -783,7 +772,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
 
   // Validate the NetworkPolicy behavior via direct pod IP so the test stays focused on UDP
   // policy enforcement rather than kube-proxy ClusterIP DNAT timing on EKS.
-  await clearUdpLog(udpServerPodName);
+
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
@@ -802,7 +791,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
   // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
   // Either policy alone would block the traffic.
-  await clearUdpLog(udpServerPodName);
+
   const deniedSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
     "sh",
     "-c",
@@ -820,7 +809,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   async () => {
     const serviceTarget = await assertDefaultEnvoyUDPResources(5000);
 
-    await clearUdpLog(udpServerPodName);
+  
     const send = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
       "sh",
       "-c",
@@ -840,7 +829,7 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   { retry: 2, timeout: 300000 },
   async () => {
     await assertDefaultEnvoyUDPResources(5000);
-    await clearUdpLog(udpServerPodName);
+  
 
     const host = await getDefaultEnvoyExternalAddress(5000);
     const port = 5000;

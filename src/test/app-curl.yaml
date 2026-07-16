@@ -360,7 +360,7 @@ spec:
             [
               "sh",
               "-c",
-              "mkfifo /tmp/fifo; while true; do nc -u -l -p 5000 < /tmp/fifo | tee -a /tmp/udp.log > /tmp/fifo; done",
+              "mkfifo /tmp/fifo; while true; do nc -u -l -p 5000 -w 1 < /tmp/fifo | tee -a /tmp/udp.log > /tmp/fifo; done",
             ]
           resources:
             limits:
