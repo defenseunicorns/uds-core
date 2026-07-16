@@ -18,6 +18,6 @@ components:
       - name: metrics-server
         namespace: metrics-server
         url: https://kubernetes-sigs.github.io/metrics-server
-        version: 3.13.0
+        version: 3.13.1
         valuesFiles:
           - "../values/values.yaml"
