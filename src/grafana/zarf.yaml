@@ -34,8 +34,6 @@ components:
       - name: grafana
         valuesFiles:
           - values/upstream-values.yaml
-        templatedValuesFiles:
-          - values/templated-values.yaml
     images:
       - docker.io/grafana/grafana:13.0.1
       - docker.io/curlimages/curl:8.20.0
@@ -52,8 +50,6 @@ components:
       - name: grafana
         valuesFiles:
           - values/registry1-values.yaml
-        templatedValuesFiles:
-          - values/templated-values.yaml
     images:
       - registry1.dso.mil/ironbank/opensource/grafana/grafana:13.0.1
       - registry1.dso.mil/ironbank/redhat/ubi/ubi9-minimal:9.8
@@ -69,8 +65,6 @@ components:
       - name: grafana
         valuesFiles:
           - values/unicorn-values.yaml
-        templatedValuesFiles:
-          - values/templated-values.yaml
     images:
       - cgr.dev/defenseunicorns.com/grafana-fips:v13.0.1
       - cgr.dev/defenseunicorns.com/busybox-fips:1.37.0

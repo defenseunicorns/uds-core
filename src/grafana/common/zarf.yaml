@@ -15,10 +15,8 @@ components:
         namespace: grafana
         version: 0.1.0
         localPath: ../chart
-        valuesFiles:
-          - ../chart/values.yaml
         templatedValuesFiles:
-          - ../values/templated-config-values.yaml
+          - ../chart/values.yaml
         values:
           - sourcePath: .grafana.uds-grafana-config
             targetPath: .
@@ -28,7 +26,7 @@ components:
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3
         namespace: grafana
-        valuesFiles:
+        templatedValuesFiles:
           - ../values/values.yaml
         values:
           - sourcePath: .grafana.grafana

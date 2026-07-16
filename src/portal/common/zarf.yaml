@@ -17,10 +17,8 @@ components:
         version: "v0.4.0"
         url: https://github.com/defenseunicorns/uds-portal.git
         gitPath: chart
-        valuesFiles:
-          - ../values/values.yaml
         templatedValuesFiles:
-          - ../values/templated-values.yaml
+          - ../values/values.yaml
         values:
           - sourcePath: .uds-portal.uds-portal
             targetPath: .

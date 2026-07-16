@@ -82,10 +82,8 @@ components:
         namespace: pepr-system
         version: 0.1.0
         localPath: uds-operator-config
-        valuesFiles:
-          - uds-operator-config/values.yaml
         templatedValuesFiles:
-          - uds-operator-config/templated-values.yaml
+          - uds-operator-config/values.yaml
         values:
           - sourcePath: .uds-operator-config.uds-operator-config
             targetPath: .

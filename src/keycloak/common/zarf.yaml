@@ -18,7 +18,7 @@ components:
         valuesFiles:
           - ../chart/values.yaml
         templatedValuesFiles:
-          - ../values/templated-values.yaml
+          - ../values/values.yaml
         values:
           - sourcePath: .keycloak.keycloak
             targetPath: .

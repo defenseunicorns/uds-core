@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: tenant
+domain: '{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}'
+adminDomain: '{{if and .Values.adminDomain (ne .Values.adminDomain (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Values.adminDomain}}{{else if and .Variables.ADMIN_DOMAIN (ne .Variables.ADMIN_DOMAIN (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Variables.ADMIN_DOMAIN}}{{else}}admin.{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}{{end}}'
 tls:
   servers:
     keycloak:

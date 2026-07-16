@@ -19,8 +19,8 @@ cluster:
     includePublicCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_PUBLIC_CERTS###"
   expose:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
-    domain: "###ZARF_VAR_DOMAIN###"
-    adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+    domain: '{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}'
+    adminDomain: '{{if and .Values.adminDomain (ne .Values.adminDomain (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Values.adminDomain}}{{else if and .Variables.ADMIN_DOMAIN (ne .Variables.ADMIN_DOMAIN (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Variables.ADMIN_DOMAIN}}{{else}}admin.{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}{{end}}'
   policy:
     allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
   networking:
