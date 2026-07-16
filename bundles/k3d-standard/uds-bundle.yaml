@@ -98,15 +98,15 @@ packages:
             - name: LOKI_WRITE_REPLICAS
               path: write.replicas
               description: "Loki write replicas"
-              default: "0"
+              default: "1"
             - name: LOKI_READ_REPLICAS
               path: read.replicas
               description: "Loki read replicas"
-              default: "0"
+              default: "1"
             - name: LOKI_BACKEND_REPLICAS
               path: backend.replicas
               description: "Loki backend replicas"
-              default: "0"
+              default: "1"
       istio-admin-gateway:
         uds-istio-config:
           variables:

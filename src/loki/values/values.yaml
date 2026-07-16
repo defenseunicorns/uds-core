@@ -145,13 +145,14 @@ rbac:
 test:
   enabled: false
 
-deploymentMode: Monolithic
+# Deploys both Monolithic and SimpleScalable, but cuts traffic over to Monolithic via the loki-gateway
+# Traffic will slowly cutover to the Monolithic pod(s)
+deploymentMode: Monolithic<->SimpleScalable
 
 # Configuration for the single binary node(s)
 singleBinary:
   # Remove default anti-affinity to support single node
   affinity: null
-  # -- Number of replicas for the single binary
   persistence:
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false
