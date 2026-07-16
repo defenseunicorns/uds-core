@@ -2,6 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { randomUUID } from "node:crypto";
 import * as dgram from "node:dgram";
 import * as k8s from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
@@ -199,18 +200,6 @@ function isResponseError(curlOutput: { stdout: string; stderr: string }) {
   return httpResponseCode < 100 || httpResponseCode > 399;
 }
 
-async function clearUdpLog(serverPodName: string): Promise<void> {
-  await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    // busybox nc's UDP listener locks onto whichever peer sends the first datagram for
-    // its entire process lifetime, ignoring any other peer thereafter. Killing it forces
-    // the server's respawn loop to bind a fresh listener so each test gets its own peer,
-    // instead of silently losing to whichever earlier test (or client pod) contacted it first.
-    "> /tmp/udp.log; pkill -f 'nc -u -l -p 5000' || true; sleep 0.2",
-  ]);
-}
-
 async function readUdpLog(serverPodName: string): Promise<string> {
   const result = await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
     "sh",
@@ -221,37 +210,31 @@ async function readUdpLog(serverPodName: string): Promise<string> {
   return result.stdout.trim();
 }
 
+// Log is never cleared, so match on a nonce rather than exact content.
 async function waitForUdpLog(
   serverPodName: string,
-  expected: string,
+  expectedNonce: string,
   timeoutMs = 5000,
   intervalMs = 250,
 ): Promise<string> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const log = await readUdpLog(serverPodName);
-    if (log === expected) return log;
+    if (log.includes(expectedNonce)) return log;
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
   return readUdpLog(serverPodName);
 }
 
-function expectUdpPingLog(log: string, message: string) {
-  const lines = log.trim().split("\n").filter(Boolean);
-
-  expect(lines.length > 0, `${message} lines=${JSON.stringify(lines)}`).toBe(true);
-  expect(
-    lines.every(line => line === "ping"),
-    `${message} lines=${JSON.stringify(lines)}`,
-  ).toBe(true);
+function expectLogContainsNonce(log: string, nonce: string, message: string) {
+  expect(log.split("\n").includes(nonce), `${message} log=${JSON.stringify(log)}`).toBe(true);
 }
 
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
 const runUDPExposeTests = process.env.UDP_EXPOSE_TESTS === "true";
 
-// Sends messages from a single socket and collects echo responses. Single socket
-// is required because busybox nc's UDP listener latches onto the first peer.
+// Sends messages from a single socket and collects echo responses.
 function sendUdpFromHost(
   host: string,
   port: number,
@@ -783,18 +766,16 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
 
   // Validate the NetworkPolicy behavior via direct pod IP so the test stays focused on UDP
   // policy enforcement rather than kube-proxy ClusterIP DNAT timing on EKS.
-  await clearUdpLog(udpServerPodName);
+  const allowedNonce = `allow-${randomUUID()}`;
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    // Send all datagrams from a single nc client process (one source port): busybox nc's
-    // UDP listener latches onto whichever peer sends the first datagram and ignores any
-    // others, so packets sent from separate client processes would be silently dropped.
-    `(for i in 1 2 3; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
+    `(for i in 1 2 3; do echo ${allowedNonce}; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
-  const allowedLog = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expectUdpPingLog(
+  const allowedLog = await waitForUdpLog(udpServerPodName, allowedNonce, 5000, 250);
+  expectLogContainsNonce(
     allowedLog,
+    allowedNonce,
     `UDP allowed: log="${allowedLog}" nc="${allowedSend.stdout}" ${placement}`,
   );
 
@@ -802,16 +783,17 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
   // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
   // Either policy alone would block the traffic.
-  await clearUdpLog(udpServerPodName);
+  const deniedNonce = `deny-${randomUUID()}`;
   const deniedSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
     "sh",
     "-c",
-    `(for i in 1 2 3; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
+    `(for i in 1 2 3; do echo ${deniedNonce}; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
-  const deniedLog = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
-  expect(deniedLog, `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`).toBe(
-    "",
-  );
+  const deniedLog = await waitForUdpLog(udpServerPodName, deniedNonce, 2000, 250);
+  expect(
+    deniedLog.includes(deniedNonce),
+    `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`,
+  ).toBe(false);
 });
 
 (runUDPExposeTests ? test : test.skip)(
@@ -820,16 +802,17 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   async () => {
     const serviceTarget = await assertDefaultEnvoyUDPResources(5000);
 
-    await clearUdpLog(udpServerPodName);
+    const nonce = `expose-${randomUUID()}`;
     const send = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
       "sh",
       "-c",
-      `(for i in 1 2 3 4 5; do echo ping; sleep 0.2; done) | nc -u -w 1 ${serviceTarget} 5000 2>&1`,
+      `(for i in 1 2 3 4 5; do echo ${nonce}; sleep 0.2; done) | nc -u -w 1 ${serviceTarget} 5000 2>&1`,
     ]);
-    const receivedLog = await waitForUdpLog(udpServerPodName, "ping", 30000, 1000);
+    const receivedLog = await waitForUdpLog(udpServerPodName, nonce, 30000, 1000);
 
-    expectUdpPingLog(
+    expectLogContainsNonce(
       receivedLog,
+      nonce,
       `UDP Envoy Gateway expose: log="${receivedLog}" nc="${send.stdout}" target="${serviceTarget}"`,
     );
   },
@@ -840,7 +823,6 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   { retry: 2, timeout: 300000 },
   async () => {
     await assertDefaultEnvoyUDPResources(5000);
-    await clearUdpLog(udpServerPodName);
 
     const host = await getDefaultEnvoyExternalAddress(5000);
     const port = 5000;

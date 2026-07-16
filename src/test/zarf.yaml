@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -69,6 +69,7 @@ components:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest
       - curlimages/curl:latest
+      - alpine/socat:latest
 
   - name: podinfo
     required: true
