@@ -32,7 +32,7 @@ beforeAll(async () => {
 });
 
 describe("standard package values", () => {
-  it("pepr deployment has probe label", () => {
+  it("pepr deployment has expected memory request", () => {
     const r = findResource(manifests, "Deployment", "pepr-uds-core", "pepr-system");
     expect(
       resourceString(

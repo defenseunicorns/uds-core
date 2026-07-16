@@ -3,15 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { exec } from "node:child_process";
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { openSync, closeSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import { expect } from "vitest";
 import { parseAllDocuments } from "yaml";
-
-const execAsync = promisify(exec);
 
 export interface K8sResource {
   apiVersion?: string;
@@ -55,7 +52,10 @@ export async function renderManifests(pkg: string, opts?: RenderOptions): Promis
   const cached = renderCache.get(key);
   if (cached) return cached;
 
-  const promise = renderManifestsUncached(pkg, opts);
+  const promise = renderManifestsUncached(pkg, opts).catch(err => {
+    renderCache.delete(key);
+    throw err;
+  });
   renderCache.set(key, promise);
   return promise;
 }
@@ -63,7 +63,17 @@ export async function renderManifests(pkg: string, opts?: RenderOptions): Promis
 async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promise<K8sResource[]> {
   const tmp = mkdtempSync(join(tmpdir(), "zarf-values-test-"));
   try {
-    const renderValues = [`--values`, `packages/${pkg}/zarf-values.yaml`];
+    const args = [
+      "zarf",
+      "dev",
+      "inspect",
+      "manifests",
+      `packages/${pkg}`,
+      "--flavor",
+      "upstream",
+      "--values",
+      `packages/${pkg}/zarf-values.yaml`,
+    ];
 
     if (opts?.values && Object.keys(opts.values).length > 0) {
       const overridePath = join(tmp, "override.yaml");
@@ -71,32 +81,20 @@ async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promi
         .map(([k, v]) => `${k}: ${JSON.stringify(v)}`)
         .join("\n");
       writeFileSync(overridePath, yaml);
-      renderValues.push("--values", overridePath);
+      args.push("--values", overridePath);
     }
 
-    const vars = opts?.variables;
-    const varArgs: string[] = [];
-    if (vars && Object.keys(vars).length > 0) {
-      const varString = Object.entries(vars)
+    if (opts?.variables && Object.keys(opts.variables).length > 0) {
+      const varString = Object.entries(opts.variables)
         .map(([k, v]) => `${k}=${v}`)
         .join(",");
-      varArgs.push(`--deploy-set-variables`, varString);
+      args.push("--deploy-set-variables", varString);
     }
 
-    const cmd = [
-      "uds zarf dev inspect manifests",
-      `packages/${pkg}`,
-      "--flavor upstream",
-      ...renderValues,
-      ...varArgs,
-      "--no-color",
-    ].join(" ");
+    args.push("--no-color");
 
     const outPath = join(tmp, "manifests.yaml");
-    await execAsync(`${cmd} > ${outPath}`, {
-      cwd: ROOT,
-      timeout: 120_000,
-    });
+    await spawnToFile("uds", args, outPath, ROOT);
     const stdout = readFileSync(outPath, "utf-8");
 
     const docs = parseAllDocuments(stdout);
@@ -106,6 +104,35 @@ async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promi
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
+}
+
+function spawnToFile(cmd: string, args: string[], outPath: string, cwd: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const fd = openSync(outPath, "w");
+    const child = spawn(cmd, args, { cwd, stdio: ["ignore", fd, "pipe"] });
+    let stderr = "";
+    child.stderr!.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString();
+    });
+    const timer = setTimeout(() => {
+      child.kill();
+      reject(new Error(`Timed out after 120s: ${cmd} ${args.join(" ")}`));
+    }, 120_000);
+    child.on("close", code => {
+      clearTimeout(timer);
+      closeSync(fd);
+      if (code !== 0) {
+        reject(new Error(`${cmd} exited with code ${code}: ${stderr}`));
+      } else {
+        resolve();
+      }
+    });
+    child.on("error", err => {
+      clearTimeout(timer);
+      closeSync(fd);
+      reject(err);
+    });
+  });
 }
 
 export function findResource(
