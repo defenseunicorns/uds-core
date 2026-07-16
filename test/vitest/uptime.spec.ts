@@ -97,10 +97,8 @@ describe("Uptime Recording Rules", { timeout: 210000 }, () => {
     "uds:falco:up",
     "uds:falcosidekick:up",
     // Logging
-    "uds:loki_backend:up",
-    "uds:loki_write:up",
+    "uds:loki:up",
     "uds:loki_gateway:up",
-    "uds:loki_read:up",
     "uds:vector:up",
     // Backup & Restore
     "uds:velero:up",

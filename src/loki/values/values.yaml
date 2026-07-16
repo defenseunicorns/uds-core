@@ -145,20 +145,13 @@ rbac:
 test:
   enabled: false
 
-deploymentMode: SimpleScalable
+deploymentMode: Monolithic
 
 # Configuration for the single binary node(s)
 singleBinary:
+  # Remove default anti-affinity to support single node
+  affinity: null
   # -- Number of replicas for the single binary
-  replicas: 0
-  # -- Resource requests and limits for the single binary
-  resources:
-    limits:
-      cpu: 100m
-      memory: 256Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi
   persistence:
     # -- Enable StatefulSetAutoDeletePVC feature
     enableStatefulSetAutoDeletePVC: false

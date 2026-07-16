@@ -11,14 +11,14 @@ import { queryLoki } from "./helpers/loki";
 import { pollUntilSuccess } from "./helpers/polling";
 
 describe("Falco Integration e2e Tests", () => {
-  let lokiRead: { server: net.Server; url: string };
+  let lokiGateway: { server: net.Server; url: string };
 
   beforeAll(async () => {
-    lokiRead = await getForward("loki-read", "loki", 3100);
+    lokiGateway = await getForward("loki-gateway", "loki", 8080);
   });
 
   afterAll(async () => {
-    await closeForward(lokiRead.server);
+    await closeForward(lokiGateway.server);
   });
 
   /*
@@ -47,7 +47,7 @@ describe("Falco Integration e2e Tests", () => {
               "main",
             );
             const queryResult = await queryLoki(
-              lokiRead,
+              lokiGateway,
               `{rule="Search Private Keys or Passwords"} |= "test-${randomString}"`,
             );
 

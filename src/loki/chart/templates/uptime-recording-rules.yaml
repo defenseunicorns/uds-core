@@ -11,21 +11,12 @@ spec:
   groups:
     - name: uds-logging-uptime
       rules:
-        - record: uds:loki_backend:up
+        - record: uds:loki:up
           labels:
             uds_layer: logging
-            uds_component: loki-backend
+            uds_component: loki
           expr: |
-            (max(statefulset:up{statefulset="loki-backend", namespace="loki"}) or on() vector(0))
-            and on()
-            (kube_state_metrics:up == 1)
-
-        - record: uds:loki_write:up
-          labels:
-            uds_layer: logging
-            uds_component: loki-write
-          expr: |
-            (max(statefulset:up{statefulset="loki-write", namespace="loki"}) or on() vector(0))
+            (max(statefulset:up{statefulset="loki", namespace="loki"}) or on() vector(0))
             and on()
             (kube_state_metrics:up == 1)
 
@@ -38,12 +29,4 @@ spec:
             and on()
             (kube_state_metrics:up == 1)
 
-        - record: uds:loki_read:up
-          labels:
-            uds_layer: logging
-            uds_component: loki-read
-          expr: |
-            (max(deployment:up{deployment="loki-read", namespace="loki"}) or on() vector(0))
-            and on()
-            (kube_state_metrics:up == 1)
 {{- end }}

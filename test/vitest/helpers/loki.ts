@@ -10,13 +10,13 @@ export interface LokiQueryResult {
 }
 
 export const queryLoki = async (
-  lokiRead: { server: net.Server; url: string },
+  lokiEndpoint: { server: net.Server; url: string },
   query: string,
   limit = 100,
 ): Promise<LokiQueryResult> => {
   try {
     const response = await fetch(
-      `${lokiRead.url}/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
+      `${lokiEndpoint.url}/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
       {
         method: "GET",
       },

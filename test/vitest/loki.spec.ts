@@ -7,9 +7,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 
 // Global variables
-let lokiBackend: { server: net.Server; url: string };
-let lokiRead: { server: net.Server; url: string };
-let lokiWrite: { server: net.Server; url: string };
+let lokiMonolithic: { server: net.Server; url: string };
 let lokiGateway: { server: net.Server; url: string };
 
 // Helper functions
@@ -27,7 +25,7 @@ const sendLog = async (
   };
 
   try {
-    const response = await fetch(getLokiUrl("/loki/api/v1/push", lokiWrite), {
+    const response = await fetch(getLokiUrl("/loki/api/v1/push", lokiGateway), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(logEntry),
@@ -55,7 +53,7 @@ const queryLogs = async (
     const response = await fetch(
       getLokiUrl(
         `/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
-        lokiRead,
+        lokiGateway,
       ),
       {
         method: "GET",
@@ -115,22 +113,18 @@ const validateLogInQuery = (
 // Vitest test cases
 describe("Loki Tests", () => {
   beforeAll(async () => {
-    [lokiBackend, lokiRead, lokiWrite, lokiGateway] = await Promise.all([
-      getForward("loki-backend", "loki", 3100),
-      getForward("loki-read", "loki", 3100),
-      getForward("loki-write", "loki", 3100),
+    [lokiMonolithic, lokiGateway] = await Promise.all([
+      getForward("loki", "loki", 3100),
       getForward("loki-gateway", "loki", 8080),
     ]);
   }, 30000);
 
   afterAll(async () => {
-    await closeForward(lokiBackend.server);
-    await closeForward(lokiRead.server);
-    await closeForward(lokiWrite.server);
+    await closeForward(lokiMonolithic.server);
     await closeForward(lokiGateway.server);
   });
 
-  test("Validate Vector logs are present in Loki (loki-read)", async () => {
+  test("Validate Vector logs are present in Loki", async () => {
     const data = await queryLogs('{collector="vector"}');
     expect(data).toHaveProperty("status", "success");
     expect(Array.isArray(data.data.result)).toBe(true);
@@ -148,56 +142,26 @@ describe("Loki Tests", () => {
     expect(Array.isArray(data.data.result)).toBe(true);
   });
 
-  test("Send log to Loki-write and validate in Loki-read", async () => {
+  test("Send and query a log through Loki gateway", async () => {
     const logMessage = "Test log from vitest";
     await sendLog(logMessage, { job: "test-job", level: "info" });
     const data = await queryLogs('{job="test-job"}');
     validateLogInQuery(data, logMessage);
   });
 
-  test("Check services are running for loki-read", async () => {
-    const expectedServices = [
-      "querier",
-      "server",
-      "runtime-config",
-      "ring",
-      "query-scheduler-ring",
-      "memberlist-kv",
-      "cache-generation-loader",
-      "ingester-querier",
-    ];
-    await checkLokiServices("loki-read", expectedServices, lokiRead);
-  });
-
-  test("Check services are running for loki-write", async () => {
-    const expectedServices = [
-      "ring",
-      "store",
-      "ingester",
-      "distributor",
-      "runtime-config",
-      "server",
-      "memberlist-kv",
-    ];
-    await checkLokiServices("loki-write", expectedServices, lokiWrite);
-  });
-
-  test("Check services are running for loki-backend", async () => {
+  test("Check services are running for monolithic Loki", async () => {
     const expectedServices = [
       "compactor",
-      "index-gateway",
-      "ring",
-      "query-scheduler-ring",
-      "index-gateway-ring",
-      "ingester-querier",
-      "store",
-      "server",
-      "memberlist-kv",
-      "runtime-config",
-      "query-scheduler",
+      "distributor",
+      "ingester",
+      "querier",
+      "query-frontend",
       "ruler",
+      "server",
+      "runtime-config",
+      "memberlist-kv",
     ];
-    await checkLokiServices("loki-backend", expectedServices, lokiBackend);
+    await checkLokiServices("monolithic Loki", expectedServices, lokiMonolithic);
   });
 
   test("Validate Loki Gateway is responsive", async () => {
@@ -205,7 +169,7 @@ describe("Loki Tests", () => {
     expect(response.status).toBe(200);
   });
 
-  test("Send log to Loki-gateway and validate it in Loki-read and Loki-write", async () => {
+  test("Send log to Loki gateway and validate it can be queried", async () => {
     const logMessage = "Test log via gateway";
     const labels = { job: "gateway-test", level: "info" };
 
@@ -221,12 +185,7 @@ describe("Loki Tests", () => {
 
     expect(response.ok).toBe(true);
 
-    // Validate the log appears in Loki-read
-    const readData = await queryLogs(`{job="gateway-test"}`);
-    validateLogInQuery(readData, logMessage);
-
-    // Validate the log appears in Loki-write
-    const writeData = await queryLogs(`{job="gateway-test"}`);
-    validateLogInQuery(writeData, logMessage);
+    const queryData = await queryLogs(`{job="gateway-test"}`);
+    validateLogInQuery(queryData, logMessage);
   });
 });

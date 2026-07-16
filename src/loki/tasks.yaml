@@ -111,8 +111,8 @@ tasks:
 
           diagnostics() {
             echo "Loki push and flush diagnostics:"
-            echo "Loki write pods:"
-            uds zarf tools kubectl get pods -n loki -l app.kubernetes.io/component=write || true
+            echo "Loki pods:"
+            uds zarf tools kubectl get pods -n loki || true
             echo "Port-forward output:"
             if [ -s "${PORT_FORWARD_LOG}" ]; then
               while IFS= read -r line; do
@@ -131,20 +131,20 @@ tasks:
 
           trap cleanup EXIT
 
-          uds zarf tools kubectl port-forward -n loki svc/loki-write "${LOKI_PORT}:3100" >"${PORT_FORWARD_LOG}" 2>&1 &
+          uds zarf tools kubectl port-forward -n loki svc/loki-gateway "${LOKI_PORT}:80" >"${PORT_FORWARD_LOG}" 2>&1 &
           PORT_FORWARD_PID="$!"
 
           for attempt in $(seq 1 30); do
-            echo "Attempt ${attempt}/30: checking Loki write port-forward readiness..."
+            echo "Attempt ${attempt}/30: checking Loki gateway port-forward readiness..."
             if curl -fsS "http://127.0.0.1:${LOKI_PORT}/ready" >/dev/null 2>&1; then
-              echo "Loki write port-forward is ready."
+              echo "Loki gateway port-forward is ready."
               break
             fi
             if ! kill -0 "${PORT_FORWARD_PID}" >/dev/null 2>&1; then
-              fail "Loki write port-forward exited before becoming ready."
+              fail "Loki gateway port-forward exited before becoming ready."
             fi
             if [ "${attempt}" -eq 30 ]; then
-              fail "Timed out waiting for Loki write port-forward to become ready."
+              fail "Timed out waiting for Loki gateway port-forward to become ready."
             fi
             sleep 2
           done
@@ -175,10 +175,10 @@ tasks:
             -X POST \
             --data-raw "${PAYLOAD}" \
             "http://127.0.0.1:${LOKI_PORT}/loki/api/v1/push" \
-            || fail "Failed to push test log to Loki write endpoint."
+            || fail "Failed to push test log through the Loki gateway."
 
           curl -fsS -X POST "http://127.0.0.1:${LOKI_PORT}/flush" >/dev/null \
-            || fail "Failed to flush Loki write endpoint."
+            || fail "Failed to flush Loki through the gateway."
 
           echo "Pushed test log and flushed Loki chunks."
 
