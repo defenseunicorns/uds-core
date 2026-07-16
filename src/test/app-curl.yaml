@@ -354,14 +354,14 @@ spec:
     spec:
       containers:
         - name: udp-echo-server
-          image: alpine/socat
+          image: curlimages/curl
           imagePullPolicy: IfNotPresent
           command:
             [
               "sh",
               "-c",
-              # fork: reply to each peer independently, no restart needed between clients
-              "socat UDP-RECVFROM:5000,fork SYSTEM:'tee -a /tmp/udp.log'",
+              # -w 1: idle timeout, so the loop auto-respawns a fresh listener between peers
+              "mkfifo /tmp/fifo; while true; do nc -u -l -p 5000 -w 1 < /tmp/fifo | tee -a /tmp/udp.log > /tmp/fifo; done",
             ]
           resources:
             limits:
