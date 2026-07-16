@@ -41,12 +41,12 @@ With `pathRouting: true`, UDS Core uses shared hosts for exposed services. Use `
          uds-operator-config:
            uds-operator-config:
              values:
-               - path: clusterConfig.spec.expose.pathRouting
-                 value: true
-               - path: clusterConfig.spec.expose.contextPath
-                 value: "/platform"
-               - path: clusterConfig.spec.expose.adminContextPath
-                 value: "/admin"
+                - path: cluster.expose.pathRouting
+                  value: true
+                - path: cluster.expose.contextPath
+                  value: "/platform"
+                - path: cluster.expose.adminContextPath
+                  value: "/admin"
    ```
 
    > [!IMPORTANT]
