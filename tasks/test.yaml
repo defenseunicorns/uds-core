@@ -137,6 +137,7 @@ tasks:
     actions:
       - cmd: |
           npm ci
+          npx pepr build -z chart
           npx vitest run
 
   - name: uds-core

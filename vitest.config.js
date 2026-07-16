@@ -13,6 +13,8 @@ export default defineConfig({
     environment: 'node',
     include: ['**/*.spec.ts'],
     exclude: ['test/vitest/**', 'scripts/**', 'uds-docs/**'],
+    testTimeout: 120_000,
+    hookTimeout: 120_000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
