@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "lib": ["ES2022"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "rootDir": ".",
+    "strict": true,
+    "target": "ES2022",
+    "types": ["vitest/globals"]
+  },
+  "include": [
+    "tests/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "build"
+  ]
+}

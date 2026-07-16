@@ -1,0 +1,70 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: save-logs
+description: "Save debug logs"
+
+inputs:
+  suffix:
+    description: "Suffix to append to the debug log"
+    required: false
+    default: ""
+  distro:
+    description: "Kubernetes distribution used in this CI run"
+    required: false
+    default: "k3d"
+
+runs:
+  using: composite
+  steps:
+    - name: Pull logs from containerd
+      if: ${{ inputs.distro == 'k3d' }}
+      run: |
+        CONTAINER_NAME="k3d-uds-server-0"
+        if docker ps | grep -q "$CONTAINER_NAME"; then
+          echo "Container $CONTAINER_NAME is running. Proceeding with log copy..."
+          docker cp ${CONTAINER_NAME}:/var/log/ /tmp/uds-containerd-logs
+        else
+          echo "Container $CONTAINER_NAME is not running. Skipping log copy."
+        fi
+      shell: bash
+
+    - name: Dump node logs
+      if: ${{ inputs.distro == 'k3d' }}
+      run: |
+        docker ps --filter "name=k3d" --format "{{.Names}}" | while read line; do
+          docker logs "$line" 2> /tmp/$line.log
+        done
+      shell: bash
+
+    - name: Fix log permissions
+      run: |
+        sudo chown $USER /tmp/zarf-*.log || echo ""
+        sudo chown $USER /tmp/uds-*.log || echo ""
+      shell: bash
+
+    - name: Cluster pod logs
+      run: |
+        echo "::group::Collecting logs for all pods"
+        mkdir -p /tmp/pod-logs
+        uds zarf tools kubectl get pods -A -o jsonpath='{range .items[*]}{.metadata.namespace}{" "}{.metadata.name}{"\n"}{end}' \
+          | xargs -P 8 -n 2 bash -c '
+            ns="$1"; pod="$2"
+            base="/tmp/pod-logs/${ns}-${pod}"
+            uds zarf tools kubectl logs --all-containers=true -n "$ns" "$pod" --tail=-1 > "${base}.log" 2>&1 || true
+            uds zarf tools kubectl logs --all-containers=true -n "$ns" "$pod" --previous --tail=-1 > "${base}-previous.log" 2>&1 || true
+          ' _
+        echo "::endgroup::"
+      shell: bash
+
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: debug-log${{ inputs.suffix }}
+        retention-days: 7
+        path: |
+          /tmp/zarf-*.log
+          /tmp/uds-*.log
+          /tmp/debug-*.log
+          /tmp/pod-logs
+          /tmp/uds-containerd-logs
+          /tmp/k3d-uds-*.log

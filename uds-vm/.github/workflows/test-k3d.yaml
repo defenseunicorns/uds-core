@@ -1,0 +1,64 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: k3d integration
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - .github/workflows/test-k3d.yaml
+      - .github/actions/**
+      - k3d-kubevirt-dev/**
+      - package/**
+      - tests/**
+      - '!**/*.md'
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+defaults:
+  run:
+    shell: bash -e -o pipefail {0}
+
+concurrency:
+  group: test-k3d-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    name: k3d integration
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          installK3d: 'true'
+
+      - name: Clean up runner disk
+        continue-on-error: true
+        run: |
+          sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+
+      - name: Deploy k3d cluster and UDS VM package
+        run: uds run -f package/tasks.yaml deploy-k3d --no-progress
+
+      - name: Run container-disk VM smoke test
+        run: uds run -f package/tasks.yaml vm-test --no-progress
+
+      - name: Debug output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -k3d

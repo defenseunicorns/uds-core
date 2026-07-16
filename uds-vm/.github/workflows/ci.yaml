@@ -1,0 +1,61 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+    types: [opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.jpg"
+      - "**.png"
+      - "**.gif"
+      - "**.svg"
+      - docs/**
+      - .vscode/**
+      - .gitignore
+      - LICENSE
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash -e -o pipefail {0}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Type check
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Setup environment
+        uses: ./.github/actions/setup
+      - name: Run lint checks
+        uses: ./.github/actions/lint-check
+
+  build-check:
+    runs-on: ubuntu-latest
+    name: Build Validation
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          installK3d: "false"
+      - name: Build kubevirt package
+        run: uds zarf package create package --architecture=amd64 --confirm --no-progress
+      - name: Validate Zarf package
+        run: |
+          ls -la zarf-package-core-kubevirt-*.tar.zst
+          echo "Package built successfully"

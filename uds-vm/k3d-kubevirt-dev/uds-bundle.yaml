@@ -39,7 +39,7 @@ packages:
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
   - name: core-base
-    path: ../../build/
+    repository: registry.defenseunicorns.com/<MY-ORG>/core-base
     # x-release-please-start-version
     ref: 1.7.0
     # x-release-please-end
@@ -110,7 +110,7 @@ packages:
               path: tls.key
 
   - name: core-identity-authorization
-    path: ../../build/
+    repository: registry.defenseunicorns.com/<MY-ORG>/core-identity-authorization
     # x-release-please-start-version
     ref: 1.7.0
     # x-release-please-end
@@ -124,7 +124,7 @@ packages:
               default: "true"
 
   - name: core-kubevirt
-    path: ../../build/
+    path: ../build/
     # x-release-please-start-version
     ref: 1.7.0
     # x-release-please-end

@@ -1,0 +1,16 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: lint-check
+description: "Check Project for Linting Errors"
+
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      run: npm install
+      shell: bash
+
+    - name: Run TypeScript type check
+      run: npm run typecheck
+      shell: bash

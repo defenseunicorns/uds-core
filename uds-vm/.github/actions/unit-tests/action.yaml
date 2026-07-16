@@ -1,0 +1,16 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: unit-tests
+description: "Run UDS VM Unit Tests"
+
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      run: npm ci
+      shell: bash
+
+    - name: Run unit tests
+      run: npx vitest run
+      shell: bash
