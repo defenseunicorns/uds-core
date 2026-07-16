@@ -83,7 +83,7 @@ With `pathRouting: true`, UDS Core uses shared hosts for exposed services. Use `
          - service: app1
            selector:
              app: app1
-           host: app1
+           host: "."
            gateway: tenant
            port: 8080
            match:

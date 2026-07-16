@@ -1,10 +1,10 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { PeprValidateRequest } from "pepr";
 import { X509Certificate } from "crypto";
+import { PeprValidateRequest } from "pepr";
 import { normalizeContextPath } from "../../controllers/url-utils";
 import { isBase64 } from "../../controllers/utils";
 import { ClusterConfig } from "../generated/clusterconfig-v1alpha1";

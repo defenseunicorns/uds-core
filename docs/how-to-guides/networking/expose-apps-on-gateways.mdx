@@ -227,7 +227,7 @@ After completing this guide, your application will be accessible through one of 
          - service: app1
            selector:
              app.kubernetes.io/name: app1
-           host: app1
+           host: "."
            gateway: tenant
            port: 8080
            match:
