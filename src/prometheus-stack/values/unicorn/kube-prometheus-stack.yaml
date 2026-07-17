@@ -6,7 +6,7 @@ alertmanager:
     image:
       registry: cgr.dev
       repository: defenseunicorns.com/prometheus-alertmanager-fips
-      tag: v0.33.0
+      tag: v0.33.1
 kube-state-metrics:
   image:
     registry: cgr.dev
@@ -23,12 +23,12 @@ prometheus:
     image:
       registry: cgr.dev
       repository: defenseunicorns.com/prometheus-fips
-      tag: v3.12.0
+      tag: v3.13.1
 prometheus-node-exporter:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/prometheus-node-exporter-fips
-    tag: 1.11.1
+    tag: v1.12.1
     distroless: false
 prometheusOperator:
   admissionWebhooks:
@@ -50,9 +50,9 @@ prometheusOperator:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/prometheus-operator-fips
-    tag: v0.92.0
+    tag: v0.92.1
   prometheusConfigReloader:
     image:
       registry: cgr.dev
       repository: defenseunicorns.com/prometheus-config-reloader-fips
-      tag: v0.92.0
+      tag: v0.92.1
