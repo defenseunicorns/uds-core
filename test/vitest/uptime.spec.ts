@@ -33,6 +33,7 @@ describe("Uptime Probes", { timeout: 210000 }, () => {
     "https://sso.uds.dev/realms/uds/.well-known/openid-configuration",
     "https://keycloak.admin.uds.dev/",
     "https://grafana.admin.uds.dev/healthz",
+    "https://portal.uds.dev/healthz",
     "https://ambient-protected.uds.dev/",
     "https://ambient2-protected.uds.dev/",
     "https://protected.uds.dev/",
