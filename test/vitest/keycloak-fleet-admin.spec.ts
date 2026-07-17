@@ -135,7 +135,8 @@ set -eu
 token_response="$(mktemp)"
 trap 'rm -f "$token_response"' EXIT
 
-token_status="$(curl -sS -o "$token_response" -w "%{http_code}" -X POST "${keycloakPath(`/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`)}" \
+token_status="$(curl -sS --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 20 \
+  -o "$token_response" -w "%{http_code}" -X POST "${keycloakPath(`/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`)}" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   --data-urlencode "grant_type=client_credentials" \
   --data-urlencode "client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer" \
