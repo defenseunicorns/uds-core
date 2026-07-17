@@ -46,4 +46,4 @@ spec:
     adminDomain: "admin.{{ .Values.cluster.expose.domain }}"
     {{- end }}
   policy:
-    allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions }}
+    allowAllNsExemptions: {{ .Values.cluster.policy.allowAllNsExemptions | default false | toString | eq "true" }}
