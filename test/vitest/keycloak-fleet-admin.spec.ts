@@ -190,12 +190,14 @@ trap 'rm -f "$response_body" "$request_body"' EXIT
 
 if [ -n "$body" ]; then
   printf '%s' "$body" > "$request_body"
-  status="$(curl -sS -o "$response_body" -w "%{http_code}" -X "$method" "$url" \
+  status="$(curl -sS --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 20 \
+    -o "$response_body" -w "%{http_code}" -X "$method" "$url" \
     -H "Authorization: Bearer $(cat "${ACCESS_TOKEN_PATH}")" \
     -H "Content-Type: application/json" \
     --data-binary "@$request_body")"
 else
-  status="$(curl -sS -o "$response_body" -w "%{http_code}" -X "$method" "$url" \
+  status="$(curl -sS --retry 5 --retry-all-errors --retry-delay 1 --retry-max-time 20 \
+    -o "$response_body" -w "%{http_code}" -X "$method" "$url" \
     -H "Authorization: Bearer $(cat "${ACCESS_TOKEN_PATH}")")"
 fi
 
