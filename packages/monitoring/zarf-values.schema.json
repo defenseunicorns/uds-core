@@ -1336,6 +1336,10 @@
                     "clusterPushpullInterval": {
                       "type": "string"
                     },
+                    "clusterTLS": {
+                      "properties": {},
+                      "type": "object"
+                    },
                     "configMaps": {
                       "type": "array"
                     },
@@ -1349,11 +1353,17 @@
                     "dnsPolicy": {
                       "type": "string"
                     },
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
                     "externalUrl": {
                       "type": "string"
                     },
                     "forceEnableClusterMode": {
                       "type": "boolean"
+                    },
+                    "hostAliases": {
+                      "type": "array"
                     },
                     "hostNetwork": {
                       "type": "boolean"
@@ -1363,6 +1373,10 @@
                     },
                     "initContainers": {
                       "type": "array"
+                    },
+                    "limits": {
+                      "properties": {},
+                      "type": "object"
                     },
                     "listenLocal": {
                       "type": "boolean"
@@ -1417,6 +1431,9 @@
                       "type": "string"
                     },
                     "routePrefix": {
+                      "type": "string"
+                    },
+                    "schedulerName": {
                       "type": "string"
                     },
                     "scheme": {
@@ -1789,6 +1806,74 @@
                         },
                         "hostnames": {
                           "type": "array"
+                        },
+                        "httpsRedirect": {
+                          "type": "boolean"
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "labels": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "matches": {
+                          "items": {
+                            "properties": {
+                              "path": {
+                                "properties": {
+                                  "type": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "parentRefs": {
+                          "type": "array"
+                        },
+                        "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "routePerReplica": {
+                  "properties": {
+                    "main": {
+                      "properties": {
+                        "additionalRules": {
+                          "type": "array"
+                        },
+                        "annotations": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "apiVersion": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "filters": {
+                          "type": "array"
+                        },
+                        "hostDomain": {
+                          "type": "string"
+                        },
+                        "hostPrefix": {
+                          "type": "string"
                         },
                         "httpsRedirect": {
                           "type": "boolean"
@@ -4189,6 +4274,9 @@
                     "automountServiceAccountToken": {
                       "type": "boolean"
                     },
+                    "bodySizeLimit": {
+                      "type": "string"
+                    },
                     "configMaps": {
                       "type": "array"
                     },
@@ -4222,6 +4310,12 @@
                     },
                     "enableRemoteWriteReceiver": {
                       "type": "boolean"
+                    },
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
+                    "enforcedBodySizeLimit": {
+                      "type": "string"
                     },
                     "enforcedKeepDroppedTargets": {
                       "type": "number"
@@ -4276,6 +4370,18 @@
                     "initContainers": {
                       "type": "array"
                     },
+                    "keepDroppedTargets": {
+                      "type": "number"
+                    },
+                    "labelLimit": {
+                      "type": "number"
+                    },
+                    "labelNameLengthLimit": {
+                      "type": "number"
+                    },
+                    "labelValueLengthLimit": {
+                      "type": "number"
+                    },
                     "listenLocal": {
                       "type": "boolean"
                     },
@@ -4290,6 +4396,9 @@
                     },
                     "minReadySeconds": {
                       "type": "number"
+                    },
+                    "nameEscapingScheme": {
+                      "type": "string"
                     },
                     "nameValidationScheme": {
                       "type": "string"
@@ -4384,6 +4493,9 @@
                     "queryLogFile": {
                       "type": "boolean"
                     },
+                    "reloadStrategy": {
+                      "type": "string"
+                    },
                     "remoteRead": {
                       "type": "array"
                     },
@@ -4392,6 +4504,9 @@
                     },
                     "remoteWriteDashboards": {
                       "type": "boolean"
+                    },
+                    "remoteWriteReceiverMessageVersions": {
+                      "type": "array"
                     },
                     "replicaExternalLabelName": {
                       "type": "string"
@@ -4442,6 +4557,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "ruleQueryOffset": {
+                      "type": "string"
+                    },
                     "ruleSelector": {
                       "properties": {},
                       "type": "object"
@@ -4449,8 +4567,15 @@
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
+                    "runtime": {
+                      "properties": {},
+                      "type": "object"
+                    },
                     "sampleLimit": {
                       "type": "boolean"
+                    },
+                    "schedulerName": {
+                      "type": "string"
                     },
                     "scrapeClasses": {
                       "type": "array"
@@ -4504,6 +4629,14 @@
                     "serviceName": {
                       "type": "string"
                     },
+                    "shardRetentionPolicy": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "shardingStrategy": {
+                      "properties": {},
+                      "type": "object"
+                    },
                     "shards": {
                       "type": "number"
                     },
@@ -4540,6 +4673,9 @@
                         }
                       },
                       "type": "object"
+                    },
+                    "targetLimit": {
+                      "type": "number"
                     },
                     "terminationGracePeriodSeconds": {
                       "type": "string"
@@ -4647,6 +4783,74 @@
                         },
                         "hostnames": {
                           "type": "array"
+                        },
+                        "httpsRedirect": {
+                          "type": "boolean"
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "labels": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "matches": {
+                          "items": {
+                            "properties": {
+                              "path": {
+                                "properties": {
+                                  "type": {
+                                    "type": "string"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "parentRefs": {
+                          "type": "array"
+                        },
+                        "sessionPersistence": {
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "routePerReplica": {
+                  "properties": {
+                    "main": {
+                      "properties": {
+                        "additionalRules": {
+                          "type": "array"
+                        },
+                        "annotations": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "apiVersion": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "filters": {
+                          "type": "array"
+                        },
+                        "hostDomain": {
+                          "type": "string"
+                        },
+                        "hostPrefix": {
+                          "type": "string"
                         },
                         "httpsRedirect": {
                           "type": "boolean"
@@ -5709,6 +5913,10 @@
                 "extraVolumes": {
                   "type": "array"
                 },
+                "featureGates": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "fullnameOverride": {
                   "type": "string"
                 },
@@ -6362,6 +6570,22 @@
                     "alertDropLabels": {
                       "type": "array"
                     },
+                    "alertRelabelConfigFile": {
+                      "type": "string"
+                    },
+                    "alertRelabelConfigs": {
+                      "properties": {
+                        "existingSecret": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "secret": {
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "alertmanagersConfig": {
                       "properties": {
                         "existingSecret": {
@@ -6378,8 +6602,27 @@
                     "containers": {
                       "type": "array"
                     },
+                    "dnsConfig": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "dnsPolicy": {
+                      "type": "string"
+                    },
+                    "enableFeatures": {
+                      "type": "array"
+                    },
+                    "enableServiceLinks": {
+                      "type": "string"
+                    },
+                    "enforcedNamespaceLabel": {
+                      "type": "string"
+                    },
                     "evaluationInterval": {
                       "type": "string"
+                    },
+                    "excludedFromEnforcement": {
+                      "type": "array"
                     },
                     "externalPrefix": {
                       "type": "string"
@@ -6390,7 +6633,17 @@
                     "extraEnv": {
                       "type": "array"
                     },
+                    "grpcServerTlsConfig": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "hostAliases": {
+                      "type": "array"
+                    },
                     "hostUsers": {
+                      "type": "string"
+                    },
+                    "imagePullPolicy": {
                       "type": "string"
                     },
                     "initContainers": {
@@ -6409,6 +6662,9 @@
                     "logLevel": {
                       "type": "string"
                     },
+                    "minReadySeconds": {
+                      "type": "string"
+                    },
                     "nodeSelector": {
                       "properties": {},
                       "type": "object"
@@ -6425,6 +6681,9 @@
                         }
                       },
                       "type": "object"
+                    },
+                    "objectStorageConfigFile": {
+                      "type": "string"
                     },
                     "paused": {
                       "type": "boolean"
@@ -6464,8 +6723,14 @@
                     "queryEndpoints": {
                       "type": "array"
                     },
+                    "remoteWrite": {
+                      "type": "array"
+                    },
                     "replicas": {
                       "type": "number"
+                    },
+                    "resendDelay": {
+                      "type": "string"
                     },
                     "resources": {
                       "properties": {},
@@ -6477,9 +6742,21 @@
                     "routePrefix": {
                       "type": "string"
                     },
+                    "ruleConcurrentEval": {
+                      "type": "string"
+                    },
+                    "ruleGracePeriod": {
+                      "type": "string"
+                    },
                     "ruleNamespaceSelector": {
                       "properties": {},
                       "type": "object"
+                    },
+                    "ruleOutageTolerance": {
+                      "type": "string"
+                    },
+                    "ruleQueryOffset": {
+                      "type": "string"
                     },
                     "ruleSelector": {
                       "properties": {},
@@ -6504,9 +6781,28 @@
                     "topologySpreadConstraints": {
                       "type": "array"
                     },
+                    "tracingConfig": {
+                      "properties": {
+                        "existingSecret": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "secret": {
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "tracingConfigFile": {
+                      "type": "string"
+                    },
                     "updateStrategy": {
                       "properties": {},
                       "type": "object"
+                    },
+                    "version": {
+                      "type": "string"
                     },
                     "volumeMounts": {
                       "type": "array"
