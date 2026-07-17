@@ -69,6 +69,10 @@ runs:
           # Diffs for Zarf values schemas
           DIFFS=true
           echo -e "\033[33m⚠️ Zarf values schemas are not up to date, please run \`uds run -f tasks/lint.yaml values-generate\` and commit the changes.\033[0m"
+          echo "Changed schema files:"
+          git status --short -- packages/*/zarf-values.schema.json
+          git diff --stat -- packages/*/zarf-values.schema.json
+          echo "This check runs against the pull request merge ref. If local generation is clean, sync the branch with main and regenerate the schemas."
         fi
 
         if [ "${DIFFS}" = "true" ]; then
