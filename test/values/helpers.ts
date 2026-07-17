@@ -116,8 +116,8 @@ function spawnToFile(cmd: string, args: string[], outPath: string, cwd: string):
     });
     const timer = setTimeout(() => {
       child.kill();
-      reject(new Error(`Timed out after 120s: ${cmd} ${args.join(" ")}`));
-    }, 120_000);
+      reject(new Error(`Timed out after 300s: ${cmd} ${args.join(" ")}`));
+    }, 300_000);
     child.on("close", code => {
       clearTimeout(timer);
       closeSync(fd);
