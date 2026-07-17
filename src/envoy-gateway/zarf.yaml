@@ -22,6 +22,8 @@ components:
         namespace: envoy-gateway-system
         version: 0.1.0
         localPath: chart
+        # EnvoyProxy never populates .status, so Zarf's generic readiness wait hangs until timeout
+        noWait: true
         valuesFiles:
           - "values/upstream-values.yaml"
     images:
@@ -42,6 +44,8 @@ components:
         namespace: envoy-gateway-system
         version: 0.1.0
         localPath: chart
+        # EnvoyProxy never populates .status, so Zarf's generic readiness wait hangs until timeout
+        noWait: true
         valuesFiles:
           - "values/registry1-values.yaml"
     images:
@@ -62,6 +66,8 @@ components:
         namespace: envoy-gateway-system
         version: 0.1.0
         localPath: chart
+        # EnvoyProxy never populates .status, so Zarf's generic readiness wait hangs until timeout
+        noWait: true
         valuesFiles:
           - "values/unicorn-values.yaml"
     images:
