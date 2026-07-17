@@ -27,7 +27,7 @@ memcached:
   image:
     registry: registry1.dso.mil
     repository: ironbank/opensource/memcached/memcached
-    tag: 1.6.43
+    tag: 1.6.45
 
 sidecar:
   image:
