@@ -4,6 +4,7 @@
 
 import { randomUUID } from "node:crypto";
 import * as dgram from "node:dgram";
+import * as dns from "node:dns/promises";
 import * as k8s from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { beforeAll, describe, expect, test, vi } from "vitest";
@@ -84,6 +85,42 @@ function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
     "cluster-local Service DNS name",
     120000,
   );
+}
+
+// A fresh load balancer's hostname can take a minute+ to actually resolve
+async function resolveHostWithRetry(
+  host: string,
+  timeoutMs = 90000,
+  intervalMs = 5000,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      return (await dns.lookup(host)).address;
+    } catch (err) {
+      lastError = err;
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+  }
+  throw new Error(`DNS resolution for ${host} did not succeed within ${timeoutMs}ms: ${lastError}`);
+}
+
+async function sendUdpEchoWithRetry(
+  host: string,
+  port: number,
+  message: string,
+  timeoutMs = 120000,
+  intervalMs = 10000,
+): Promise<string[]> {
+  const deadline = Date.now() + timeoutMs;
+  let echoes: string[] = [];
+  while (Date.now() < deadline) {
+    echoes = await sendUdpFromHost(host, port, [message], true);
+    if (echoes.length > 0) return echoes;
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+  return echoes;
 }
 
 function getDefaultEnvoyExternalAddress(port: number, timeoutMs = 300000): Promise<string> {
@@ -639,13 +676,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_gateway_http_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" http://bing.com`,
+      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" http://bing.com`,
     ];
 
     const egress_gateway_tls_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://bing.com`,
+      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" https://bing.com`,
     ];
 
     // Validate successful tls request when using Egress Gateway for egress-gw-1
@@ -825,11 +862,12 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
     await assertDefaultEnvoyUDPResources(5000);
 
     const host = await getDefaultEnvoyExternalAddress(5000);
+    const ip = await resolveHostWithRetry(host);
     const port = 5000;
 
     // Sent directly from this test process (not execInPod), exercising the full
     // external path: LoadBalancer -> Envoy Gateway -> backend -> echo response.
-    const echoes = await sendUdpFromHost(host, port, ["ping"], true);
+    const echoes = await sendUdpEchoWithRetry(ip, port, "ping");
 
     expect(echoes.length, `No echo received from ${host}:${port}`).toBeGreaterThan(0);
     expect(echoes[0]).toBe("ping");

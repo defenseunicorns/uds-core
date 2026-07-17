@@ -108,23 +108,7 @@ UDS Core supports two Gateway modes for UDP exposes:
      </TabItem>
    </Tabs>
 
-3. **Add a network policy via the `Package` CR**
-
-   UDS Core enforces strict network policies by default. Allow ingress from the Envoy Gateway managed proxy in your `Package` CR:
-
-   ```yaml title="uds-package.yaml"
-   spec:
-     network:
-       allow:
-         - direction: Ingress
-           selector:
-             app.kubernetes.io/name: my-udp-app
-           remoteGenerated: Anywhere
-           remoteProtocol: UDP
-           description: "UDP ingress from the managed Envoy Gateway proxy"
-   ```
-
-4. **Deploy your application**
+3. **Deploy your application**
 
    **(Recommended)** Include the `Package` CR in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
