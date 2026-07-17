@@ -60,6 +60,6 @@ components:
           - ./values/unicorn-values.yaml
     images:
       - cgr.dev/defenseunicorns.com/loki-fips:v3.7.3
-      - cgr.dev/defenseunicorns.com/nginx-fips:v1.31.2
+      - cgr.dev/defenseunicorns.com/nginx-fips:v1.31.3
       - cgr.dev/defenseunicorns.com/memcached-fips:v1.6.45
       - cgr.dev/defenseunicorns.com/k8s-sidecar-fips:v2.8.1
