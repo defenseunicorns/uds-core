@@ -3,12 +3,11 @@
 
 # Default Zarf values for the UDS Core Base package.
 
-# Top-level domain for the whole stack; defaults to the DOMAIN Zarf variable
-# (backward-compat). Override via --values / --set-values to set the domain once for all charts.
-domain: "###ZARF_VAR_DOMAIN###"
+# Top-level domain for the whole stack. Override via --values / --set-values to set the domain once for all charts.
+domain: ""
 
 # Admin domain override; empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
-adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+adminDomain: ""
 
 # --- pepr ---
 pepr-uds-core:

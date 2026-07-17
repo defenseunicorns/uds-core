@@ -61,10 +61,10 @@ The component mapping files define the exact pass-through and protected paths:
 
 Set the tenant and admin domains with the top-level `domain` and `adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
 
-| Field | Type | Default | Description |
+| Field | Type | Effective default | Description |
 |---|---|---|---|
 | `domain` | string | `uds.dev` | Tenant domain for the stack |
-| `adminDomain` | string | Empty | Admin domain for admin-exposed services |
+| `adminDomain` | string | `admin.uds.dev` | Admin domain for admin-exposed services |
 
 `domain` uses the value when set, then the `DOMAIN` Zarf variable. `adminDomain` uses the value when set, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<domain>`.
 
@@ -90,6 +90,12 @@ uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
 ```
 
 The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAIN` is also unset, the admin domain becomes `admin.example.com`.
+
+## Values files and variables
+
+UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Use `.Variables.<NAME>` in `templatedValuesFiles` when the file must combine package variables with explicit values. In that phase, explicit values take precedence over variables, and templates can provide a final fallback such as `admin.<domain>`.
+
+Do not place a literal `###ZARF_VAR_*###` token inside a Go template that compares values. Zarf can substitute the token before the Go template evaluates it, which removes the distinction between a default variable placeholder and an explicit value.
 
 ## Excluded paths
 

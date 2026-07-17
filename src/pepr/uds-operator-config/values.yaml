@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 operator:
-  AUTHSERVICE_REDIS_URI: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  AUTHSERVICE_REDIS_URI: '{{.Variables.AUTHSERVICE_REDIS_URI}}'
   KEYCLOAK_CLIENT_MODE: "CLIENT_SECRET"
   # When true, the UDS Operator admits SSO clients with publicClient: true that
   # use flows beyond device flow (PKCE S256 is required). Defaults to false so
@@ -14,15 +14,16 @@ cluster:
     clusterName: ""
     clusterTags: []
   caBundle:
-    certs: "###ZARF_VAR_CA_BUNDLE_CERTS###"
-    includeDoDCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_DOD_CERTS###"
-    includePublicCerts: "###ZARF_VAR_CA_BUNDLE_INCLUDE_PUBLIC_CERTS###"
+    certs: '{{.Variables.CA_BUNDLE_CERTS}}'
+    includeDoDCerts: '{{.Variables.CA_BUNDLE_INCLUDE_DOD_CERTS}}'
+    includePublicCerts: '{{.Variables.CA_BUNDLE_INCLUDE_PUBLIC_CERTS}}'
   expose:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
-    domain: '{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}'
-    adminDomain: '{{if and .Values.adminDomain (ne .Values.adminDomain (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Values.adminDomain}}{{else if and .Variables.ADMIN_DOMAIN (ne .Variables.ADMIN_DOMAIN (printf "###ZARF_VAR_%s###" "ADMIN_DOMAIN"))}}{{.Variables.ADMIN_DOMAIN}}{{else}}admin.{{if and .Values.domain (ne .Values.domain (printf "###ZARF_VAR_%s###" "DOMAIN"))}}{{.Values.domain}}{{else}}{{.Variables.DOMAIN}}{{end}}{{end}}'
+    # Explicit values take precedence, then package variables, then admin.<domain>.
+    domain: '{{default .Variables.DOMAIN .Values.domain}}'
+    adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.domain)) .Variables.ADMIN_DOMAIN) .Values.adminDomain}}'
   policy:
-    allowAllNsExemptions: "###ZARF_VAR_ALLOW_ALL_NS_EXEMPTIONS###"
+    allowAllNsExemptions: '{{.Variables.ALLOW_ALL_NS_EXEMPTIONS}}'
   networking:
     kubeApiCIDR: ""
     kubeNodeCIDRs: []

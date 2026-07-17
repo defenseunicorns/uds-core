@@ -32,6 +32,8 @@ components:
       - name: uds-portal
         valuesFiles:
           - values/upstream-values.yaml
+        templatedValuesFiles:
+          - values/values.yaml
 
   - name: uds-portal
     required: true
@@ -45,3 +47,5 @@ components:
       - name: uds-portal
         valuesFiles:
           - values/unicorn-values.yaml
+        templatedValuesFiles:
+          - values/values.yaml

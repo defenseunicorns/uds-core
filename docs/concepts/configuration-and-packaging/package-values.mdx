@@ -8,7 +8,7 @@ sidebar:
 UDS Packages expose configuration through [Zarf Values](https://docs.zarf.dev/ref/examples/values-templating/), a structured mechanism for passing Helm chart values at deploy time. In general, expose most non-sensitive chart values and restrict values that would break package integrity or weaken security, such as image references, ingress, or security settings.
 
 > [!NOTE]
-> Zarf Values is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). This guidance will evolve with the feature. Packages **MAY** still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/). If you adopt Values today, feedback in the [Zarf repository](https://github.com/zarf-dev/zarf) is strongly encouraged.
+> Zarf Values is currently an **Alpha** feature and may change as it matures (see [zarf-dev/zarf#3946](https://github.com/zarf-dev/zarf/issues/3946)). UDS Core requires UDS CLI `v0.34.0` or later for its values workflow. Packages can still use [Zarf Variables](https://docs.zarf.dev/ref/examples/variables/) for deploy-time inputs.
 
 ## Values structure
 
@@ -24,6 +24,8 @@ Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (
 If the list of mappings gets unwieldy, consider inverting the mappings using higher level keys with `excludePaths` instead.
 
 For shared values across multiple charts (for example `domain`), use a shared key to reduce configuration drift.
+
+Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when a variable should be substituted directly. Use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over variables or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
 
 ## Example configuration
 
