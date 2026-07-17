@@ -2,11 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 include:
-  - commonName: "Entrust Root Certification Authority"
-    owner: "Sectigo"
-    certificateIssuerOrganization: "Entrust, Inc."
-    geographicFocus: "USA, UK, Global"
-    companyWebsite: "https://sectigo.com/"
   - commonName: "QuoVadis Root CA 2"
     owner: "QuoVadis"
     certificateIssuerOrganization: "QuoVadis Limited"
