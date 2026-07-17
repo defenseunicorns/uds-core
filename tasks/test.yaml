@@ -177,7 +177,6 @@ tasks:
           set -euo pipefail
           PKG=$(ls build/zarf-package-core-${UDS_ARCH}-*.tar.zst 2>/dev/null | head -1)
           ./uds zarf package deploy "$PKG" \
-            --values packages/standard/zarf-values.yaml \
             --values test/values/k3d-standard/values.yaml \
             --components "*" \
             --confirm --no-progress
