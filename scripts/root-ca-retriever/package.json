@@ -9,10 +9,10 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^6.0.0",
+    "typescript": "^7.0.0",
     "vitest": "^4.0.0",
     "@types/adm-zip": "^0.5.7",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.0",
     "csv-parse": "^7.0.0",
     "js-yaml": "^5.0.0",
     "@types/js-yaml": "^4.0.9"
