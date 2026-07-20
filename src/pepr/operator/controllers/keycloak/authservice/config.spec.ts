@@ -5,9 +5,11 @@
 
 import { K8s, kind } from "pepr";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
+import { UDSConfig } from "../../config/config";
 import {
   buildInitialSecret,
   getAuthserviceConfig,
+  initializeOperatorConfig,
   setupAuthserviceSecret,
   updateAuthServiceSecret,
 } from "./config";
@@ -119,6 +121,12 @@ describe("AuthService Config Tests", () => {
 
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
+    UDSConfig.domain = "uds.dev";
+    UDSConfig.adminDomain = "admin.uds.dev";
+    UDSConfig.contextPath = "";
+    UDSConfig.adminContextPath = "/admin";
+    UDSConfig.pathRouting = false;
+    initializeOperatorConfig();
     vi.useFakeTimers();
   });
 
@@ -145,6 +153,23 @@ describe("AuthService Config Tests", () => {
       threads: 8,
       chains: expect.any(Array),
     });
+  });
+
+  it("buildInitialSecret should use path-routed SSO URLs", () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.contextPath = "/bar";
+    initializeOperatorConfig();
+
+    const secret = buildInitialSecret();
+    expect(secret.default_oidc_config.authorization_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/auth",
+    );
+    expect(secret.default_oidc_config.token_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/token",
+    );
+    expect(secret.default_oidc_config.jwks_fetcher?.jwks_uri).toEqual(
+      "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/certs",
+    );
   });
 
   it("setupAuthserviceSecret should skip creation if secret exists", async () => {

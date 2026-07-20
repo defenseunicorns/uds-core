@@ -1,0 +1,138 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - Path Routing
+set:
+  domain: example.com
+  adminDomain: admin.example.com
+  pathRouting: true
+  contextPath: /bar
+  adminContextPath: /admin
+templates:
+  - uds-package.yaml
+  - statefulset.yaml
+  - path-parameter-envoyfilter.yaml
+  - istio-authpol-admin.yaml
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+
+tests:
+  - it: should render public and admin path routes
+    template: uds-package.yaml
+    asserts:
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[0].uri.exact
+          value: /bar/sso
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[1].uri.exact
+          value: /bar/sso/
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.redirect.uri
+          value: /bar/sso/realms/uds/account
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[3].uri.exact
+          value: /bar/sso/realms/master
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[4].uri.exact
+          value: /bar/sso/realms/master/
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.match[0].uri.regex
+          value: ^/bar/sso/(.+)$
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.rewrite.uriRegexRewrite.match
+          value: ^/bar/sso/(.+)$
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.rewrite.uriRegexRewrite.rewrite
+          value: /\1
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.match[0].uri.exact
+          value: /bar/admin/keycloak
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.match[1].uri.exact
+          value: /bar/admin/keycloak/
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.match[2].uri.exact
+          value: /bar/admin/keycloak/admin
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.match[3].uri.exact
+          value: /bar/admin/keycloak/admin/
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.redirect.uri
+          value: /bar/admin/keycloak/admin/master/console/
+      - equal:
+          path: spec.network.expose[3].advancedHTTP.match[0].uri.regex
+          value: ^/bar/admin/keycloak/([^/]+/.+)$
+      - equal:
+          path: spec.network.expose[3].advancedHTTP.rewrite.uriRegexRewrite.match
+          value: ^/bar/admin/keycloak/([^/]+/.+)$
+      - equal:
+          path: spec.network.expose[3].advancedHTTP.rewrite.uriRegexRewrite.rewrite
+          value: /\1
+
+  - it: should configure Keycloak frontend and admin URLs
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --hostname=https://example.com/bar/sso
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: --hostname-admin=https://admin.example.com/bar/admin/keycloak
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_URL
+            value: https://example.com/bar/sso
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_ADMIN_URL
+            value: https://admin.example.com/bar/admin/keycloak
+
+  - it: should protect the shared host from path parameter bypasses
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: host == "example.com"
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: host == "admin.example.com"
+
+  - it: should allow master realm browser auth endpoints for admin console
+    template: istio-authpol-admin.yaml
+    asserts:
+      - contains:
+          path: spec.rules[0].to[0].operation.notPaths
+          content: /realms/master/protocol/openid-connect/*
+      - contains:
+          path: spec.rules[0].to[0].operation.notPaths
+          content: /realms/master/login-actions/*
+
+  - it: should keep master realm browser auth blocked when path routing is disabled
+    set:
+      pathRouting: false
+    template: istio-authpol-admin.yaml
+    asserts:
+      - notExists:
+          path: spec.rules[0].to[0].operation.notPaths
+
+  - it: should keep legacy master realm redirect matching when path routing is disabled
+    set:
+      pathRouting: false
+    template: uds-package.yaml
+    asserts:
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[2].name
+          value: redirect-master-realm
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.match[2].uri.prefix
+          value: /realms/master
+      - notContains:
+          path: spec.network.expose[0].advancedHTTP.match
+          any: true
+          content:
+            name: redirect-master-realm-slash

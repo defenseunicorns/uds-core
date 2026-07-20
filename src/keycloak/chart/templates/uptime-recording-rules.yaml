@@ -34,9 +34,11 @@ spec:
             uds_layer: identity-authorization
             uds_component: keycloak-sso-endpoint
           expr: min(probe_success{job="probe/keycloak/uds-sso-tenant-uptime"})
+        {{- if ne (include "keycloak.pathRouting.enabled" .) "true" }}
         - record: uds:keycloak_admin_endpoint:up
           labels:
             uds_layer: identity-authorization
             uds_component: keycloak-admin-endpoint
           expr: min(probe_success{job="probe/keycloak/uds-keycloak-admin-uptime"})
+        {{- end }}
 {{- end }}

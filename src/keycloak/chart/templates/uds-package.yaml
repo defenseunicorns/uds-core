@@ -127,7 +127,7 @@ spec:
     # @lulaStart 506992d2-64cf-4fb3-95de-40a8ad127626
     expose:
       - description: "remove private paths from public gateway"
-        host: sso
+        host: {{ ternary "." "sso" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
         service: keycloak-http
         selector:
           app.kubernetes.io/name: keycloak
@@ -136,25 +136,39 @@ spec:
         uptime:
           checks:
             paths:
-              - /
-              - /realms/uds/.well-known/openid-configuration
+              - {{ ternary (include "keycloak.ssoPath" .) "/" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
+              - {{ ternary (printf "%s/realms/%s/.well-known/openid-configuration" (include "keycloak.ssoPath" .) .Values.realm) (printf "/realms/%s/.well-known/openid-configuration" .Values.realm) (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
         {{- end }}
         advancedHTTP:
           match:
             - name: redirect-welcome
               uri:
-                exact: /
+                exact: {{ ternary (include "keycloak.ssoPath" .) "/" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
+            {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+            - name: redirect-welcome-slash
+              uri:
+                exact: {{ printf "%s/" (include "keycloak.ssoPath" .) | quote }}
+            {{- end }}
             - name: redirect-admin
               uri:
-                prefix: /admin
+                prefix: {{ ternary (printf "%s/admin" (include "keycloak.ssoPath" .)) "/admin" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
             - name: redirect-master-realm
               uri:
-                prefix: /realms/master
+                {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+                exact: {{ printf "%s/realms/master" (include "keycloak.ssoPath" .) | quote }}
+                {{- else }}
+                prefix: "/realms/master"
+                {{- end }}
+            {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+            - name: redirect-master-realm-slash
+              uri:
+                exact: {{ printf "%s/realms/master/" (include "keycloak.ssoPath" .) | quote }}
+            {{- end }}
             - name: redirect-metrics
               uri:
-                prefix: /metrics
+                prefix: {{ ternary (printf "%s/metrics" (include "keycloak.ssoPath" .)) "/metrics" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
           redirect:
-            uri: "/realms/{{ .Values.realm }}/account"
+            uri: {{ ternary (printf "%s/realms/%s/account" (include "keycloak.ssoPath" .) .Values.realm) (printf "/realms/%s/account" .Values.realm) (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
           {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
           headers:
             request:
@@ -168,9 +182,27 @@ spec:
         service: keycloak-http
         selector:
           app.kubernetes.io/name: keycloak
-        host: sso
+        host: {{ ternary "." "sso" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
         port: 8080
-        {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+        {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+        advancedHTTP:
+          match:
+            - name: keycloak-public-path
+              uri:
+                regex: {{ include "keycloak.ssoPathForwardRegex" . | quote }}
+          rewrite:
+            uriRegexRewrite:
+              match: {{ include "keycloak.ssoPathForwardRegex" . | quote }}
+              rewrite: "/\\1"
+          {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+          {{- end }}
+        {{- else if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:
@@ -180,20 +212,64 @@ spec:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
         {{- end }}
 
+      {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+      - description: "redirect admin landing and console shortcut paths"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        gateway: admin
+        host: {{ ternary "." "keycloak" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: redirect-admin-welcome
+              uri:
+                exact: {{ include "keycloak.adminPath" . | quote }}
+            - name: redirect-admin-welcome-slash
+              uri:
+                exact: {{ printf "%s/" (include "keycloak.adminPath" .) | quote }}
+            - name: redirect-admin-console-shortcut
+              uri:
+                exact: {{ printf "%s/admin" (include "keycloak.adminPath" .) | quote }}
+            - name: redirect-admin-console-shortcut-slash
+              uri:
+                exact: {{ printf "%s/admin/" (include "keycloak.adminPath" .) | quote }}
+          redirect:
+            uri: {{ printf "%s/admin/master/console/" (include "keycloak.adminPath" .) | quote }}
+      {{- end }}
+
       - description: "admin access with optional client certificate"
         service: keycloak-http
         selector:
           app.kubernetes.io/name: keycloak
         gateway: admin
-        host: keycloak
+        host: {{ ternary "." "keycloak" (eq (include "keycloak.pathRouting.enabled" .) "true") | quote }}
         port: 8080
-        {{- if .Values.uptime.enabled }}
+        {{- if and (ne (include "keycloak.pathRouting.enabled" .) "true") .Values.uptime.enabled }}
         uptime:
           checks:
             paths:
               - /
         {{- end }}
-        {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+        {{- if eq (include "keycloak.pathRouting.enabled" .) "true" }}
+        advancedHTTP:
+          match:
+            - name: keycloak-admin-path
+              uri:
+                regex: {{ include "keycloak.adminPathForwardRegex" . | quote }}
+          rewrite:
+            uriRegexRewrite:
+              match: {{ include "keycloak.adminPathForwardRegex" . | quote }}
+              rewrite: "/\\1"
+          {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+          {{- end }}
+        {{- else if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
             request:

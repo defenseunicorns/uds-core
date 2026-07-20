@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -136,6 +136,54 @@ invalid-cert-data
       },
     };
     expect(() => validateCfg(emptyCaBundle)).not.toThrowError();
+  });
+
+  it("allows normalized path routing context paths", () => {
+    const pathCfg = {
+      ...mockCfg,
+      spec: {
+        ...mockCfg.spec!,
+        expose: {
+          ...mockCfg.spec!.expose,
+          pathRouting: true,
+          contextPath: "/bar",
+          adminContextPath: "/admin",
+        },
+      },
+    };
+    expect(() => validateCfg(pathCfg)).not.toThrowError();
+  });
+
+  it("throws error when context paths do not start with slash", () => {
+    const pathCfg = {
+      ...mockCfg,
+      spec: {
+        ...mockCfg.spec!,
+        expose: {
+          ...mockCfg.spec!.expose,
+          contextPath: "bar",
+        },
+      },
+    };
+    expect(() => validateCfg(pathCfg)).toThrowError(
+      "ClusterConfig: expose.contextPath must start with /",
+    );
+  });
+
+  it("throws error when context paths end with slash", () => {
+    const pathCfg = {
+      ...mockCfg,
+      spec: {
+        ...mockCfg.spec!,
+        expose: {
+          ...mockCfg.spec!.expose,
+          adminContextPath: "/admin/",
+        },
+      },
+    };
+    expect(() => validateCfg(pathCfg)).toThrowError(
+      "ClusterConfig: expose.adminContextPath must not end with /",
+    );
   });
 });
 

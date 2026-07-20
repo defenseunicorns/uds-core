@@ -60,3 +60,12 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{- define "uds-operator-config.adminDomain" -}}
+{{- $adminDomain := .Values.cluster.expose.adminDomain | default "" -}}
+{{- if or (eq $adminDomain "") (hasPrefix "###ZARF_VAR_" $adminDomain) -}}
+{{- printf "admin.%s" .Values.cluster.expose.domain -}}
+{{- else -}}
+{{- tpl $adminDomain . -}}
+{{- end -}}
+{{- end }}

@@ -211,7 +211,40 @@ After completing this guide, your application will be accessible through one of 
 
    All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
 
-4. **Deploy your application**
+4. **(Optional) Route multiple applications on a single domain using paths**
+
+   If your ingress design uses shared hosts with URL path segmentation, use `match.uri` to route by path and `advancedHTTP.rewrite` to normalize requests for your backend.
+
+   ```yaml title="uds-package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: app1
+     namespace: app1
+   spec:
+     network:
+       expose:
+         - service: app1
+           selector:
+             app.kubernetes.io/name: app1
+           host: "."
+           gateway: tenant
+           port: 8080
+           match:
+             - uri:
+                 prefix: /app1
+           advancedHTTP:
+             rewrite:
+               # Strip /app1 before forwarding to the upstream application.
+               uri: /
+   ```
+
+   Use this pattern for each application path (for example, `/app1`, `/app2`) to route multiple services on the same host.
+
+   > [!TIP]
+   > Reference [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) for built-in service behavior (`pathRouting`, `contextPath`, and `adminContextPath`) and full configuration examples.
+
+5. **Deploy your application**
 
    **(Recommended)** Include the `Package` CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -276,6 +309,7 @@ curl -v https://my-app.yourdomain.com
 
 - [Networking & Service Mesh Concepts](/concepts/core-features/networking/) - how the service mesh, gateways, and network policies work together in UDS Core
 - [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full CR schema and field reference for network, SSO, and monitoring configuration
+- [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) - Configure shared-host path routing and built-in service URL paths.
 - [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
 - [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.

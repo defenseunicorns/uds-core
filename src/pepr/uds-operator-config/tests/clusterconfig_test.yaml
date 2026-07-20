@@ -99,6 +99,26 @@ tests:
       - notExists:
           path: spec.networking
 
+  - it: should render path routing expose values
+    set:
+      cluster:
+        expose:
+          domain: "example.com"
+          contextPath: "/bar"
+          adminContextPath: "/admin"
+          pathRouting: true
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.expose
+          value:
+            domain: "example.com"
+            adminDomain: "admin.example.com"
+            contextPath: "/bar"
+            adminContextPath: "/admin"
+            pathRouting: true
+
   - it: should fail when using removed operator.KUBEAPI_CIDR value
     set:
       operator:

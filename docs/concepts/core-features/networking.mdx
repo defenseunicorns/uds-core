@@ -53,6 +53,27 @@ The Tenant and Admin gateways are deployed as separate Istio gateways with their
 
 By default, gateways only support HTTP/HTTPS traffic. Non-HTTP TCP ingress (e.g., SSH) requires additional configuration. See [Set up non-HTTP ingress](/how-to-guides/networking/configure-non-http-ingress/).
 
+## Domain-based vs path-based routing
+
+UDS Core defaults to domain-based routing, where each exposed application uses a dedicated hostname. You can optionally enable path-based routing for built-in services when your ingress model needs fewer DNS entries and explicit path segmentation on shared hosts.
+
+The routing models differ as follows:
+
+| Model | URL pattern | Best fit | Notes |
+|---|---|---|---|
+| Domain-based (default) | `https://app.yourdomain.com` | Most platform and app deployments | Clear isolation by hostname and straightforward DNS ownership |
+| Path-based (optional) | `https://yourdomain.com/<context>/<app-path>` | Environments that prefer shared hosts with path segmentation | In this release, built-in Keycloak and Grafana routes are path-aware |
+
+When path routing is enabled with `pathRouting: true`, UDS Core builds built-in routes from `domain`, `adminDomain`, `contextPath`, and `adminContextPath` values in `ClusterConfig`.
+
+For example, with `domain=example.mil`, `adminDomain=admin.example.mil`, `contextPath=/platform`, and `adminContextPath=/admin`:
+
+- Keycloak SSO is exposed at `https://example.mil/platform/sso`
+- Keycloak admin is exposed at `https://admin.example.mil/platform/admin/keycloak`
+- Grafana is exposed at `https://admin.example.mil/platform/admin/grafana`
+
+Application teams can still use `Package` route matching (`match.uri`) and rewrites (`advancedHTTP.rewrite`) to route multiple app paths on shared hosts. Reference [Use path-based routing](/how-to-guides/networking/use-path-based-routing/) for the end-to-end configuration flow.
+
 ## How application traffic flows
 
 When a team deploys a UDS Package, they declare their networking intent in a `Package` CR.

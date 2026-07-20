@@ -97,3 +97,59 @@ Create the name of the service account to use
 {{- default "true" "" }}
 {{- end }}
 {{- end }}
+
+{{- define "grafana.pathRouting.enabled" -}}
+{{- eq (toString .Values.pathRouting) "true" -}}
+{{- end -}}
+
+{{- define "grafana.contextPath" -}}
+{{- $path := .Values.contextPath | default "" -}}
+{{- if or (eq $path "") (eq $path "/") (hasPrefix "###ZARF_VAR_" $path) -}}
+{{- "" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.adminContextPath" -}}
+{{- $path := .Values.adminContextPath | default "" -}}
+{{- if or (eq $path "") (eq $path "/") (hasPrefix "###ZARF_VAR_" $path) -}}
+{{- "" -}}
+{{- else -}}
+{{- $withLeading := ternary $path (printf "/%s" $path) (hasPrefix "/" $path) -}}
+{{- trimSuffix "/" $withLeading -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.adminDomain" -}}
+{{- if .Values.adminDomain -}}
+{{- tpl .Values.adminDomain . -}}
+{{- else -}}
+{{- printf "admin.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.host" -}}
+{{- .Values.domain -}}
+{{- end -}}
+
+{{- define "grafana.adminHost" -}}
+{{- include "grafana.adminDomain" . -}}
+{{- end -}}
+
+{{- define "grafana.externalUrl" -}}
+{{- if eq (include "grafana.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s%s/grafana" (include "grafana.adminHost" .) (include "grafana.contextPath" .) (include "grafana.adminContextPath" .) -}}
+{{- else -}}
+{{- printf "https://grafana.%s" (include "grafana.adminDomain" .) -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "grafana.ssoUrl" -}}
+{{- if eq (include "grafana.pathRouting.enabled" .) "true" -}}
+{{- printf "https://%s%s/sso" (include "grafana.host" .) (include "grafana.contextPath" .) -}}
+{{- else -}}
+{{- printf "https://sso.%s" .Values.domain -}}
+{{- end -}}
+{{- end -}}
