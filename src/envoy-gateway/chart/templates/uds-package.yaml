@@ -26,12 +26,16 @@ spec:
         selector:
           control-plane: envoy-gateway
         remoteGenerated: IntraNamespace
-        description: "Intra-namespace communication for managed proxies and cert generation"
+        description: "Intra-namespace communication for cert generation"
       - direction: Ingress
         selector:
           control-plane: envoy-gateway
-        remoteGenerated: IntraNamespace
-        description: "Intra-namespace communication from managed proxies"
+        # Managed proxies now live in their own Gateway's namespace (default or
+        # user-managed), not alongside the controller, so this can't be scoped to
+        # IntraNamespace. Restricted to the xDS port to limit exposure.
+        remoteGenerated: Anywhere
+        port: 18000
+        description: "xDS connections from managed Gateway proxies in any namespace"
       - direction: Ingress
         selector:
           control-plane: envoy-gateway
@@ -44,8 +48,3 @@ spec:
           app: certgen
         remoteGenerated: KubeAPI
         description: "KubeAPI access for certgen pre-install job"
-      - direction: Egress
-        selector:
-          app.kubernetes.io/managed-by: envoy-gateway
-        remoteGenerated: IntraNamespace
-        description: "xDS and SDS connections from managed Envoy pods to controller"

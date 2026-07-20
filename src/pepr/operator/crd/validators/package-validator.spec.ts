@@ -9,6 +9,7 @@ import {
   Allow,
   Direction,
   Expose,
+  ExposeProtocol,
   Gateway,
   Monitor,
   Protocol,
@@ -92,6 +93,7 @@ const makeMockReq = (
 describe("Test validation of Package CRs", () => {
   afterEach(() => {
     vi.resetAllMocks();
+    PackageStore.init();
   });
 
   it("approves serviceAccount in Ambient mode with remoteHost", async () => {
@@ -256,6 +258,19 @@ describe("Test validation of Package CRs", () => {
     });
   });
 
+  it("denies implicit HTTP expose without host (defense in depth)", async () => {
+    const mockReq = makeMockReq(
+      {},
+      [{ host: undefined } as unknown as Partial<Expose>],
+      [],
+      [],
+      [],
+    );
+    await validator(mockReq);
+    expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+    expect(mockReq.Deny).toHaveBeenCalledWith("host must be set");
+  });
+
   it("allows packages that have no issues", async () => {
     const mockReq = makeMockReq({}, [], [], [], []);
     await validator(mockReq);
@@ -270,7 +285,7 @@ describe("Test validation of Package CRs", () => {
 
   it("allows one package per namespace", async () => {
     const mockReqValidPkg = makeMockReq({}, [], [], [{}], [{}]);
-    await validator(mockReqValidPkg);
+    PackageStore.add(mockReqValidPkg.Raw);
     const mockReqInvalidPkg = makeMockReq(
       { metadata: { name: "should-be-denied" } },
       [],
@@ -298,7 +313,7 @@ describe("Test validation of Package CRs", () => {
 
   it("allows existing packages to be updated", async () => {
     const mockReqValidPkg = makeMockReq({}, [{}], [], [{}], [{}]);
-    await validator(mockReqValidPkg);
+    PackageStore.add(mockReqValidPkg.Raw);
     const mockReqValidPkgUpdate = makeMockReq({ spec: { network: {} } }, [], [], [], []);
     await validator(mockReqValidPkgUpdate);
     expect(mockReqValidPkgUpdate.Approve).toHaveBeenCalledTimes(1);
@@ -403,6 +418,276 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq({}, [{}, {}], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  describe("UDP expose validation", () => {
+    const validUDPExpose = {
+      protocol: ExposeProtocol.UDP,
+      host: undefined,
+      service: "udp-service",
+      selector: { app: "udp" },
+      port: 8125,
+    };
+
+    it("allows UDP expose entries without a host", async () => {
+      const mockReq = makeMockReq({}, [validUDPExpose], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows UDP expose entries with user-managed gateways", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            ...validUDPExpose,
+            gateway: "team-gateway",
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies UDP expose entries with host", async () => {
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, host: "app" }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("host cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with domain", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, domain: "custom.example.com" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("domain cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with advancedHTTP", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, advancedHTTP: { directResponse: { status: 403 } } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("advancedHTTP cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with match", async () => {
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, match: [] }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("match cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with uptime", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, uptime: { checks: { paths: ["/"] } } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("uptime cannot be set when protocol is UDP");
+    });
+
+    it("denies UDP expose entries with podLabels", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, selector: undefined, podLabels: { app: "udp" } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        "podLabels cannot be set when protocol is UDP; use selector",
+      );
+    });
+
+    it("denies duplicate UDP expose entries that would generate the same UDPRoute name", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "udp-game", port: 7777 },
+          { ...validUDPExpose, description: "udp-game", port: 8888 },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("duplicate UDPRoute"));
+    });
+
+    it("denies duplicate UDP ports on the same gateway in one package", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a" },
+          { ...validUDPExpose, description: "game-b" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("Only one UDP expose entry can use port 8125"),
+      );
+    });
+
+    it("denies duplicate UDP ports on the same user-managed gateway in one package", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a", gateway: "team-gateway" },
+          { ...validUDPExpose, description: "game-b", gateway: "team-gateway" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("Only one UDP expose entry can use port 8125"),
+      );
+    });
+
+    it("allows duplicate UDP ports when entries use different gateways", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { ...validUDPExpose, description: "game-a" },
+          { ...validUDPExpose, description: "game-b", gateway: "team-gateway" },
+        ],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies UDP gateway port already used by another package", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, description: "game" }], [], [], []);
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
+    it("denies UDP gateway port already used by another package when gateway is an empty string", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "game", gateway: "" }],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
+    it("denies custom UDP gateway port already used by another package", async () => {
+      PackageStore.add({
+        metadata: { namespace: "other-system", name: "other" },
+        spec: {
+          network: {
+            expose: [{ ...validUDPExpose, description: "other", gateway: "team-gateway" }],
+          },
+        },
+      } as UDSPackage);
+
+      const mockReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "game", gateway: "team-gateway" }],
+        [],
+        [],
+        [],
+      );
+
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        expect.stringContaining("already in use by another package"),
+      );
+    });
+
+    it("allows UDP gateway port owned by current namespace during update", async () => {
+      const existingReq = makeMockReq(
+        {},
+        [{ ...validUDPExpose, description: "existing" }],
+        [],
+        [],
+        [],
+      );
+      PackageStore.add(existingReq.Raw);
+      const mockReq = makeMockReq({}, [{ ...validUDPExpose, description: "updated" }], [], [], []);
+
+      await validator(mockReq);
+
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies HTTP expose entries without a host", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          {
+            protocol: ExposeProtocol.HTTP,
+            host: undefined,
+            service: "http-service",
+            selector: { app: "http" },
+            port: 8080,
+          },
+        ],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith("host must be set when protocol is HTTP");
+    });
   });
 
   it("denies network policies that specify both remoteGenerated and remoteNamespace", async () => {

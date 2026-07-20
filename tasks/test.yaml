@@ -14,7 +14,7 @@ includes:
   - test-resources: ../src/test/tasks.yaml
   - base-layer: ../packages/base/tasks.yaml
   - idam-layer: ../packages/identity-authorization/tasks.yaml
-  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.25.0/tasks/setup.yaml
+  - common-setup: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.26.3/tasks/setup.yaml
   - private-pki: ../test/playwright/private-pki/tasks.yaml
   - trust-bundle: ../test/vitest/trust-bundle/tasks.yaml
 
@@ -95,6 +95,12 @@ tasks:
         description: "System architecture that the test-apps package should be built for."
         required: true
         default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
       # TODO: Remove this input once Fleet admin realm updates are included in a released Core baseline.
       skip_fleet_admin:
         description: "Skip the Fleet Keycloak admin integration test."
@@ -109,6 +115,8 @@ tasks:
         task: test-resources:create-deploy
         with:
           architecture: ${{ .inputs.architecture }}
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -127,7 +135,7 @@ tasks:
           if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
             set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-          npx vitest run "$@"
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
@@ -157,12 +165,22 @@ tasks:
 
   - name: uds-core-e2e
     description: "Build and test UDS Core e2e"
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
+        description: "Extra args for k3d"
     actions:
       - task: uds-core
+        with:
+          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: e2e-tests
 
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
+    inputs:
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
     actions:
       - task: util:setup-hosts
       - task: validate-packages
@@ -171,6 +189,7 @@ tasks:
       - task: e2e-tests
         with:
           architecture: "amd64"
+          validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"
@@ -235,6 +254,7 @@ tasks:
       - task: test-resources:e2e-test
         with:
           validate_egress: "false"
+          validate_udp_expose: "false"
 
   - name: uds-core-private-pki
     description: "Create and Deploy Private PKI Bundle"

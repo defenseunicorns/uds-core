@@ -7,18 +7,25 @@ import { PeprValidateRequest } from "pepr";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
+import { getUDPGatewayName, getUDPGatewayPortKey } from "../../controllers/envoy-gateway/constants";
 import { generateVSName } from "../../controllers/istio/virtual-service";
 import { generateMonitorName } from "../../controllers/monitoring/common";
 import { generateName } from "../../controllers/network/generate";
 import { PackageStore } from "../../controllers/packages/package-store";
 import { getFqdn } from "../../controllers/domain-utils";
 import { sanitizeResourceName } from "../../controllers/utils";
-import { Kind, Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Kind, Mode } from "../../crd/generated/package-v1alpha1";
 import { migrate } from "../migrate";
 
 const invalidNamespaces = ["kube-system", "kube-public", "_unknown_", "pepr-system"];
 
 export async function validator(req: PeprValidateRequest<UDSPackage>) {
+  const rawExposeList = req.Raw.spec?.network?.expose ?? [];
+
+  // We need to detect deprecated `expose.match` even after migrate() moves it to `advancedHTTP.match`.
+  // This relies on migrate() preserving expose[] length and order. If a future migration changes that,
+  // this check must be updated to avoid misattributing a match from a different entry.
+  const exposeHadMatch = rawExposeList.map(expose => expose.match !== undefined);
   const pkg = migrate(req.Raw);
 
   const pkgName = pkg.metadata?.name ?? "_unknown_";
@@ -47,12 +54,22 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
   const exposeList = pkg.spec?.network?.expose ?? [];
 
+  if (rawExposeList.length !== exposeList.length) {
+    return req.Deny(
+      "internal error: migration changed spec.network.expose order or length; cannot safely validate deprecated fields",
+    );
+  }
+
   // Track the names of the virtual services to ensure they are unique
   const virtualServiceNames = new Set<string>();
+  // Track the names of UDP routes to ensure they are unique
+  const udpRouteNames = new Set<string>();
+  // Track UDP gateway/port pairs to prevent multiple routes targeting the same listener
+  const udpGatewayPortKeys = new Set<string>();
   // Track FQDNs for uptime probes to ensure no duplicates
   const uptimeFqdns = new Set<string>();
 
-  for (const expose of exposeList) {
+  for (const [index, expose] of exposeList.entries()) {
     // Validate gateway name format if it's a custom gateway
     if (expose.gateway && !isStandardGateway(expose.gateway)) {
       // Check if gateway name is a valid Kubernetes resource name
@@ -63,6 +80,72 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
         );
       }
     }
+
+    if (expose.protocol === ExposeProtocol.UDP) {
+      if (expose.host !== undefined) {
+        return req.Deny("host cannot be set when protocol is UDP");
+      }
+      if (expose.domain !== undefined) {
+        return req.Deny("domain cannot be set when protocol is UDP");
+      }
+      if (exposeHadMatch[index]) {
+        return req.Deny("match cannot be set when protocol is UDP");
+      }
+      if (expose.advancedHTTP) {
+        return req.Deny("advancedHTTP cannot be set when protocol is UDP");
+      }
+      if (expose.uptime) {
+        return req.Deny("uptime cannot be set when protocol is UDP");
+      }
+      if (expose.podLabels) {
+        return req.Deny("podLabels cannot be set when protocol is UDP; use selector");
+      }
+
+      const udpRouteName = sanitizeResourceName(
+        `${pkgName}-udp-${expose.description ?? expose.port}`,
+      );
+      if (udpRouteNames.has(udpRouteName)) {
+        return req.Deny(
+          `The combination of characteristics of this expose entry would create a duplicate UDPRoute. ` +
+            `Verify you do not have duplicate values, or add a unique "description" field for this rule. ` +
+            `The duplicate rule would be named "${udpRouteName}".`,
+        );
+      }
+      udpRouteNames.add(udpRouteName);
+
+      const udpGatewayPortKey = getUDPGatewayPortKey(expose.gateway, expose.port!);
+      const gatewayName = getUDPGatewayName(expose.gateway);
+      if (udpGatewayPortKeys.has(udpGatewayPortKey)) {
+        return req.Deny(
+          `Only one UDP expose entry can use port ${expose.port} on gateway "${gatewayName}" in a package. ` +
+            `Use a different port or a different gateway.`,
+        );
+      }
+      udpGatewayPortKeys.add(udpGatewayPortKey);
+
+      const namespacesWithUdpGatewayPort = PackageStore.findPackagesWithUdpGatewayPort(
+        expose.gateway,
+        expose.port!,
+      );
+      if (namespacesWithUdpGatewayPort.size > 0 && !namespacesWithUdpGatewayPort.has(ns)) {
+        return req.Deny(
+          `UDP expose port ${expose.port} on gateway "${gatewayName}" is already in use by another package.`,
+        );
+      }
+
+      continue;
+    }
+
+    if (expose.protocol === ExposeProtocol.HTTP && !expose.host) {
+      return req.Deny("host must be set when protocol is HTTP");
+    }
+
+    // Defense in depth: historically host was enforced at the CRD schema level.
+    // Keep a webhook-level guard so stale CRDs or future schema changes do not allow hostless HTTP exposes.
+    if (!expose.protocol && !expose.host) {
+      return req.Deny("host must be set");
+    }
+
     if (expose.gateway && isStandardGateway(expose.gateway) && expose.domain) {
       return req.Deny(
         "domain cannot be set for the standard gateways (tenant, admin, or passthrough)",

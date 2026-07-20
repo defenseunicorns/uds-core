@@ -47,7 +47,15 @@ packages:
       - metrics-server
       - istio-egress-gateway
       - envoy-gateway
+      - envoy-default-gateway
     overrides:
+      envoy-gateway:
+        uds-envoy-gateway-config:
+          values:
+            - path: envoyService.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       istio-admin-gateway:
         gateway:
           values:

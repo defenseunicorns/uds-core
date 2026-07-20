@@ -1,0 +1,21 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- if .Values.envoyService.annotations }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: envoy-gateway-proxy-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      # Repeats the proxy image since this EnvoyProxy replaces, not merges with, the default
+      envoyDeployment:
+        container:
+          image: {{ .Values.global.images.envoyProxy.image }}
+      envoyService:
+        annotations:
+          {{- toYaml .Values.envoyService.annotations | nindent 10 }}
+{{- end }}
