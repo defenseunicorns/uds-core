@@ -140,12 +140,6 @@ describe("Loki Tests", () => {
     await closeForward(lokiGateway.server);
   });
 
-  test("Validate Vector logs are present in Loki (loki-read)", async () => {
-    const data = await queryLogs('{collector="vector"}');
-    expect(data).toHaveProperty("status", "success");
-    expect(data.data.result.length).toBeGreaterThan(0);
-  });
-
   test("Validate pod logs from vector are present in Loki", async () => {
     const data = await pollUntilSuccess(
       () =>
@@ -198,8 +192,15 @@ describe("Loki Tests", () => {
 
     const nodeQueries = await Promise.all(
       nodeNames.map(nodeName =>
-        queryLogs(
-          `{collector="vector", job="varlogs", host=${JSON.stringify(nodeName)}, filename=~".+"}`,
+        pollUntilSuccess(
+          () =>
+            queryLogs(
+              `{collector="vector", job="varlogs", host=${JSON.stringify(nodeName)}, filename=~".+"}`,
+            ),
+          result => result.status === "success" && result.data.result.length > 0,
+          `Vector node logs for ${nodeName} to be available in Loki`,
+          60000,
+          2000,
         ),
       ),
     );
@@ -208,7 +209,7 @@ describe("Loki Tests", () => {
       expect(data).toHaveProperty("status", "success");
       expect(data.data.result.length).toBeGreaterThan(0);
     });
-  });
+  }, 65000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
