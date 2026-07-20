@@ -15,6 +15,8 @@ components:
         localPath: ../chart
         version: 1.0.1
         namespace: authservice
+        templatedValuesFiles:
+          - ../values/values.yaml
         values:
           - sourcePath: .authservice.authservice
             targetPath: .

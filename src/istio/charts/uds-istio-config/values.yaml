@@ -5,7 +5,7 @@
 name: change-me
 
 # Domain name for the gateway
-domain: "###ZARF_VAR_DOMAIN###"
+domain: ""
 
 # Admin domain override, populated by the Zarf templated values file for the admin gateway.
 adminDomain: ""

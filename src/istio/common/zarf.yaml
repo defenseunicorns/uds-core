@@ -62,7 +62,7 @@ components:
         namespace: istio-system
         version: 0.1.0
         localPath: chart
-        valuesFiles:
+        templatedValuesFiles:
           - "chart/values.yaml"
         values:
           - sourcePath: .istio-controlplane.uds-global-istio-config

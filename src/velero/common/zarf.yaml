@@ -46,7 +46,7 @@ components:
         version: 12.1.0
         repoName: velero
         releaseName: velero
-        valuesFiles:
+        templatedValuesFiles:
           - ../values/values.yaml
         values:
           - sourcePath: .velero.velero

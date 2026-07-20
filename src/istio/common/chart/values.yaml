@@ -7,11 +7,11 @@ classificationBanner:
   # Hosts to enable the banner on
   enabledHosts: []
   # Examples (supports helm templating)
-  # - keycloak.{{ .Values.adminDomain }}
-  # - sso.{{ .Values.domain }}
+  # - keycloak.<adminDomain>
+  # - sso.<domain>
   # - grafana.admin.uds.dev
-domain: "###ZARF_VAR_DOMAIN###"
-adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+  domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
+  adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) (get .Values.global "adminDomain")}}'
 
 # Optional annotations for grouping dashboards in Grafana folders.
 # see docs for more info: https://docs.defenseunicorns.com/core/how-to-guides/monitoring--observability/add-custom-dashboards/

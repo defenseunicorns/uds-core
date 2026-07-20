@@ -26,9 +26,36 @@ const expectedDomain = "uds.dev";
 const expectedAdminDomain = "admin.uds.dev";
 
 let manifests: K8sResource[];
+let variableManifests: K8sResource[];
+let nativeOverrideManifests: K8sResource[];
 
 beforeAll(async () => {
   manifests = await renderManifests(PKG, { values: sharedValues });
+  variableManifests = await renderManifests(PKG, {
+    variables: {
+      DOMAIN: "variable.example.com",
+      ADMIN_DOMAIN: "admin.variable.example.com",
+      VELERO_BUCKET: "variable-bucket",
+      VELERO_BUCKET_REGION: "variable-region",
+      VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
+      AUTHSERVICE_REDIS_URI: "redis://variable.example.com:6379",
+    },
+  });
+  nativeOverrideManifests = await renderManifests(PKG, {
+    values: {
+      ...sharedValues,
+      authservice: {
+        authservice: {
+          redis: { uri: "" },
+        },
+      },
+    },
+    variables: {
+      VELERO_BUCKET: "variable-bucket",
+      VELERO_BUCKET_REGION: "variable-region",
+      VELERO_BUCKET_PROVIDER_URL: "https://variable.example.com",
+    },
+  });
 });
 
 describe("standard package values", () => {
@@ -106,6 +133,31 @@ describe("standard package values", () => {
 
   it("excludePaths block SHOULD_NOT_APPEAR values", () => {
     expectNoExcludedValues(manifests);
+  });
+});
+
+describe("standard variable fallbacks", () => {
+  it("Velero uses variable-backed storage defaults", () => {
+    const r = findResource(variableManifests, "BackupStorageLocation", "default", "velero");
+    expect(resourceString(r, "spec", "objectStorage", "bucket")).toBe("variable-bucket");
+    expect(resourceString(r, "spec", "config", "region")).toBe("variable-region");
+    expect(resourceString(r, "spec", "config", "s3Url")).toBe("https://variable.example.com");
+  });
+
+  it("Authservice uses the Redis URI variable fallback", () => {
+    const r = findResource(variableManifests, "Package", "authservice");
+    expect(JSON.stringify(r)).toContain("Redis Session Store");
+  });
+
+  it("native Velero values override variable-backed defaults", () => {
+    const r = findResource(nativeOverrideManifests, "BackupStorageLocation", "default", "velero");
+    expect(resourceString(r, "spec", "objectStorage", "bucket")).toBe("uds");
+    expect(resourceString(r, "spec", "config", "region")).toBe("uds-dev-stack");
+  });
+
+  it("native Authservice values override the Redis URI variable fallback", () => {
+    const r = findResource(nativeOverrideManifests, "Package", "authservice");
+    expect(JSON.stringify(r)).not.toContain("Redis Session Store");
   });
 });
 
