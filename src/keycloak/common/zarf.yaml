@@ -24,7 +24,6 @@ components:
             targetPath: .
             excludePaths:
               - .keycloak.keycloak.image
-              - .keycloak.keycloak.configImage
               - .keycloak.keycloak.service
               - .keycloak.keycloak.podSecurityContext
               - .keycloak.keycloak.securityContext

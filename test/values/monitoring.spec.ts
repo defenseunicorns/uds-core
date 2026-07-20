@@ -56,7 +56,6 @@ describe("monitoring package values", () => {
             additionalNetworkAllow: [
               { direction: "Egress", remoteGenerated: "Anywhere", description: "PROBE_VISIBLE" },
             ],
-            adminDomain: "SHOULD_NOT_APPEAR",
           },
         },
       },

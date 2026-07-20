@@ -20,8 +20,6 @@ components:
         values:
           - sourcePath: .grafana.uds-grafana-config
             targetPath: .
-            excludePaths:
-              - .grafana.uds-grafana-config.adminDomain
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.3.3

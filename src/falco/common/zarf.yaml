@@ -21,10 +21,6 @@ components:
         values:
           - sourcePath: .falco.uds-falco-config
             targetPath: .
-            excludePaths:
-              - .falco.uds-falco-config.udsDefaultDisabledRulesStable
-              - .falco.uds-falco-config.udsDefaultDisabledRulesIncubating
-              - .falco.uds-falco-config.udsDefaultDisabledRulesSandbox
       - name: falco
         url: https://falcosecurity.github.io/charts
         version: 9.1.0

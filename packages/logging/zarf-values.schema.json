@@ -736,6 +736,10 @@
                   },
                   "type": "object"
                 },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "appProtocol": {
                   "properties": {
                     "grpc": {
@@ -780,6 +784,13 @@
                 },
                 "initContainers": {
                   "type": "array"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "livenessProbe": {
                   "properties": {},
@@ -872,6 +883,9 @@
                 "podLabels": {
                   "properties": {},
                   "type": "object"
+                },
+                "podManagementPolicy": {
+                  "type": "string"
                 },
                 "priorityClassName": {
                   "type": "string"
@@ -967,6 +981,27 @@
                   "properties": {},
                   "type": "object"
                 },
+                "statefulSetRecreateJob": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "strategy": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "partition": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
                 "terminationGracePeriodSeconds": {
                   "type": "number"
                 },
@@ -1018,6 +1053,10 @@
                   },
                   "type": "object"
                 },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "appProtocol": {
                   "properties": {
                     "grpc": {
@@ -1062,6 +1101,13 @@
                 },
                 "initContainers": {
                   "type": "array"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "livenessProbe": {
                   "properties": {},
@@ -1155,6 +1201,9 @@
                   "properties": {},
                   "type": "object"
                 },
+                "podManagementPolicy": {
+                  "type": "string"
+                },
                 "priorityClassName": {
                   "type": "string"
                 },
@@ -1247,6 +1296,27 @@
                 },
                 "startupProbe": {
                   "properties": {},
+                  "type": "object"
+                },
+                "statefulSetRecreateJob": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "strategy": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "partition": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": "object"
                 },
                 "terminationGracePeriodSeconds": {

@@ -203,6 +203,9 @@
             "clusterDomain": {
               "type": "string"
             },
+            "configImage": {
+              "type": "string"
+            },
             "dashboardAnnotations": {
               "properties": {},
               "type": "object"

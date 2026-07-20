@@ -127,6 +127,13 @@ describe("base package values", () => {
             global: { images: { envoyGateway: { image: "SHOULD_NOT_APPEAR" } } },
           },
         },
+        "prometheus-operator-crds": {
+          "prometheus-operator-crds": {
+            crds: {
+              annotations: { probe: "PROBE_VISIBLE_PROMETHEUS_CRD" },
+            },
+          },
+        },
       },
     });
   });
@@ -230,6 +237,17 @@ describe("base package values", () => {
     const r = findResource(manifests, "Deployment", "envoy-gateway", "envoy-gateway-system");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
       "PROBE_VISIBLE_ENVOY",
+    );
+  });
+
+  it("prometheus operator CRDs have probe annotation", () => {
+    const r = findResource(
+      manifests,
+      "CustomResourceDefinition",
+      "prometheuses.monitoring.coreos.com",
+    );
+    expect(resourceString(r, "metadata", "annotations", "probe")).toBe(
+      "PROBE_VISIBLE_PROMETHEUS_CRD",
     );
   });
 

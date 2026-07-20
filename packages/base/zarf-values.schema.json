@@ -108,6 +108,19 @@
                     },
                     "provider": {
                       "properties": {
+                        "kubernetes": {
+                          "properties": {
+                            "deploy": {
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
                         "type": {
                           "type": "string"
                         }
@@ -354,6 +367,15 @@
         },
         "uds-envoy-gateway-config": {
           "properties": {
+            "envoyService": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
             "global": {
               "properties": {
                 "images": {
@@ -1523,6 +1545,105 @@
       "properties": {
         "prometheus-blackbox-exporter": {
           "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "prometheus-operator-crds": {
+      "properties": {
+        "prometheus-operator-crds": {
+          "properties": {
+            "crds": {
+              "properties": {
+                "alertmanagerconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "alertmanagers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podmonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "probes": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusagents": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheuses": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusrules": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "scrapeconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "servicemonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "thanosrulers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
           "type": "object"
         }
       },

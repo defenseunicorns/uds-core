@@ -34,6 +34,7 @@ describe("identity-authorization package values", () => {
           keycloak: {
             podLabels: { probe: "PROBE_VISIBLE" },
             image: { repository: "SHOULD_NOT_APPEAR" },
+            configImage: "ghcr.io/example/uds-identity-config:custom",
           },
         },
         authservice: {
@@ -50,6 +51,13 @@ describe("identity-authorization package values", () => {
     const r = findResource(manifests, "StatefulSet", "keycloak");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
       "PROBE_VISIBLE",
+    );
+  });
+
+  it("keycloak uses the configured config image", () => {
+    const r = findResource(manifests, "StatefulSet", "keycloak");
+    expect(resourceString(r, "spec", "template", "spec", "initContainers", 0, "image")).toBe(
+      "ghcr.io/example/uds-identity-config:custom",
     );
   });
 

@@ -186,6 +186,19 @@
                     },
                     "provider": {
                       "properties": {
+                        "kubernetes": {
+                          "properties": {
+                            "deploy": {
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
                         "type": {
                           "type": "string"
                         }
@@ -432,6 +445,15 @@
         },
         "uds-envoy-gateway-config": {
           "properties": {
+            "envoyService": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
             "global": {
               "properties": {
                 "images": {
@@ -1751,6 +1773,21 @@
             },
             "sandboxRulesEnabled": {
               "type": "boolean"
+            },
+            "udsDefaultDisabledRulesIncubating": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "udsDefaultDisabledRulesSandbox": {
+              "type": "array"
+            },
+            "udsDefaultDisabledRulesStable": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "type": "object"
@@ -2947,6 +2984,9 @@
             "additionalNetworkAllow": {
               "type": "array"
             },
+            "adminDomain": {
+              "type": "string"
+            },
             "domain": {
               "type": "string"
             },
@@ -3786,6 +3826,9 @@
               "type": "object"
             },
             "clusterDomain": {
+              "type": "string"
+            },
+            "configImage": {
               "type": "string"
             },
             "dashboardAnnotations": {
@@ -10716,6 +10759,10 @@
                   },
                   "type": "object"
                 },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "appProtocol": {
                   "properties": {
                     "grpc": {
@@ -10760,6 +10807,13 @@
                 },
                 "initContainers": {
                   "type": "array"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "livenessProbe": {
                   "properties": {},
@@ -10852,6 +10906,9 @@
                 "podLabels": {
                   "properties": {},
                   "type": "object"
+                },
+                "podManagementPolicy": {
+                  "type": "string"
                 },
                 "priorityClassName": {
                   "type": "string"
@@ -10947,6 +11004,27 @@
                   "properties": {},
                   "type": "object"
                 },
+                "statefulSetRecreateJob": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "strategy": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "partition": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
                 "terminationGracePeriodSeconds": {
                   "type": "number"
                 },
@@ -10998,6 +11076,10 @@
                   },
                   "type": "object"
                 },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "appProtocol": {
                   "properties": {
                     "grpc": {
@@ -11042,6 +11124,13 @@
                 },
                 "initContainers": {
                   "type": "array"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "livenessProbe": {
                   "properties": {},
@@ -11135,6 +11224,9 @@
                   "properties": {},
                   "type": "object"
                 },
+                "podManagementPolicy": {
+                  "type": "string"
+                },
                 "priorityClassName": {
                   "type": "string"
                 },
@@ -11227,6 +11319,27 @@
                 },
                 "startupProbe": {
                   "properties": {},
+                  "type": "object"
+                },
+                "statefulSetRecreateJob": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "strategy": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "partition": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
                   "type": "object"
                 },
                 "terminationGracePeriodSeconds": {
@@ -20811,6 +20924,105 @@
       },
       "type": "object"
     },
+    "prometheus-operator-crds": {
+      "properties": {
+        "prometheus-operator-crds": {
+          "properties": {
+            "crds": {
+              "properties": {
+                "alertmanagerconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "alertmanagers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podmonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "probes": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusagents": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheuses": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusrules": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "scrapeconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "servicemonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "thanosrulers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
     "uds-exemptions": {
       "properties": {
         "uds-exemptions": {
@@ -20966,9 +21178,6 @@
                 },
                 "domain": {
                   "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
                 },
                 "gateway": {
                   "type": "string"

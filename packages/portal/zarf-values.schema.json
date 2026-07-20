@@ -48,9 +48,6 @@
                 "domain": {
                   "type": "string"
                 },
-                "enabled": {
-                  "type": "boolean"
-                },
                 "gateway": {
                   "type": "string"
                 },

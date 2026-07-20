@@ -23,6 +23,9 @@ components:
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
+        values:
+          - sourcePath: .prometheus-operator-crds.prometheus-operator-crds
+            targetPath: .
 
   - name: kube-prometheus-stack
     required: true

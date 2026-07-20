@@ -39,6 +39,10 @@ envoy-gateway:
   envoy-gateway: {}
   uds-envoy-gateway-config: {}
 
+# --- prometheus operator CRDs ---
+prometheus-operator-crds:
+  prometheus-operator-crds: {}
+
 # --- identity-authorization (keycloak / authservice) ---
 keycloak:
   keycloak: {}

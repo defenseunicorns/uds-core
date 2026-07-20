@@ -39,15 +39,11 @@ istio-egress-ambient:
 istio-egress-gateway:
   gateway: {}
 
+# --- prometheus operator CRDs ---
+prometheus-operator-crds:
+  prometheus-operator-crds: {}
+
 # --- envoy gateway ---
 envoy-gateway:
   envoy-gateway: {}
   uds-envoy-gateway-config: {}
-
-# --- prometheus stack (generate-schema surfaces these from the imported src package even
-# though base ships only prometheus-operator-crds; the charts themselves deploy via monitoring) ---
-kube-prometheus-stack:
-  kube-prometheus-stack: {}
-  uds-prometheus-config: {}
-prometheus-blackbox-exporter:
-  prometheus-blackbox-exporter: {}

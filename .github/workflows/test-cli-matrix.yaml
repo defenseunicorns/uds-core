@@ -34,15 +34,16 @@ jobs:
     strategy:
       matrix:
         include:
-          # Both versions intentionally frozen on last compatible CLI version
+          # The install phase uses the last compatible CLI for the released package.
+          # The upgrade phase must support native values in the current branch.
           - scenario: old-old
             flavor: upstream
-            install_cli: v0.32.0
-            upgrade_cli: v0.32.0
-          # install_cli intentionally frozen (last compatible version); upgrade_cli tracks new releases via Renovate
+            install_cli: v0.34.0
+            upgrade_cli: v0.34.0
+          # Install with the minimum values-capable CLI; upgrade_cli tracks new releases via Renovate.
           - scenario: old-new
             flavor: upstream
-            install_cli: v0.32.0
+            install_cli: v0.34.0
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             upgrade_cli: v0.34.2
 
@@ -56,7 +57,7 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           installK3d: 'true'
 
-      # Override the CLI installed by setup with the install-phase version (old CLI)
+      # Override the CLI installed by setup with the install-phase version.
       - name: Install CLI for install phase
         uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
         with:
@@ -71,7 +72,7 @@ jobs:
       - name: Deploy latest release test resources
         run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
 
-      # Switch to the upgrade-phase CLI version before building and deploying current branch
+      # Switch to the values-capable CLI before building and deploying the current branch.
       - name: Install CLI for upgrade phase
         uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
         with:
@@ -96,7 +97,7 @@ jobs:
   cli-install:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
-    name: "Test Install (old, upstream)"
+    name: "Test Install (minimum supported, upstream)"
 
     steps:
       - name: Checkout repository
@@ -108,17 +109,16 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           installK3d: 'true'
 
-      # Override the CLI installed by setup with the old CLI to verify current branch installs cleanly without new CLI
-      # Intentionally frozen — represents the last compatible CLI version
-      - name: Install old CLI
+      # Use the minimum CLI version that supports the current package's native values.
+      - name: Install minimum supported CLI
         uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
         with:
-          version: v0.32.0
+          version: v0.34.0
 
       - name: Print CLI version for debug
         run: uds version
 
-      - name: Test UDS Core Install (old CLI)
+      - name: Test UDS Core Install (minimum supported CLI)
         run: uds run test:uds-core-e2e --set FLAVOR=upstream --no-progress
 
       - name: Debug Output

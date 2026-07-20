@@ -1297,6 +1297,21 @@
             },
             "sandboxRulesEnabled": {
               "type": "boolean"
+            },
+            "udsDefaultDisabledRulesIncubating": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "udsDefaultDisabledRulesSandbox": {
+              "type": "array"
+            },
+            "udsDefaultDisabledRulesStable": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "type": "object"

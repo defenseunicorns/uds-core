@@ -27,7 +27,7 @@ describe("runtime-security package values", () => {
           },
           "uds-falco-config": {
             disabledRules: ["PROBE_VISIBLE"],
-            udsDefaultDisabledRulesStable: ["SHOULD_NOT_APPEAR"],
+            udsDefaultDisabledRulesStable: ["PROBE_DEFAULT"],
           },
         },
       },
@@ -44,6 +44,11 @@ describe("runtime-security package values", () => {
   it("falco disabled rules config has probe rule", () => {
     const r = findResource(manifests, "ConfigMap", "falco-disable-rules");
     expect(r!.data!["disable-rules.yaml"]).toContain("PROBE_VISIBLE");
+  });
+
+  it("falco default disabled rules are overridable", () => {
+    const r = findResource(manifests, "ConfigMap", "falco-disable-rules");
+    expect(r!.data!["disable-rules.yaml"]).toContain("PROBE_DEFAULT");
   });
 
   it("excludePaths block SHOULD_NOT_APPEAR values", () => {

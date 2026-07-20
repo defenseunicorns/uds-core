@@ -1197,6 +1197,9 @@
             "additionalNetworkAllow": {
               "type": "array"
             },
+            "adminDomain": {
+              "type": "string"
+            },
             "domain": {
               "type": "string"
             },
