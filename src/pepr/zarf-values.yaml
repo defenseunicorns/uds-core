@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 # Default Zarf values for the UDS Core Pepr source package.
-domain: ""
-adminDomain: ""
+global:
+  domain: ""
+  adminDomain: ""
 
 pepr-uds-core:
   module: {}

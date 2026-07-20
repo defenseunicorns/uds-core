@@ -29,11 +29,8 @@ spec:
                 local path = request_handle:headers():get(":path")
                 local host = request_handle:headers():get(":authority")
 
-                {{- $domain := tpl .Values.domain . }}
-                {{- $adminDomain := tpl .Values.adminDomain . }}
-                {{- if or (not $adminDomain) (eq $adminDomain "###ZARF_VAR_ADMIN_DOMAIN###") }}
-                  {{- $adminDomain = printf "admin.%s" $domain }}
-                {{- end }}
+                {{- $domain := .Values.domain }}
+                {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
 
                 -- Only apply to keycloak endpoints
                 if host and (

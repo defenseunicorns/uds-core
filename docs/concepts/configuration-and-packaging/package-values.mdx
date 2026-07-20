@@ -23,7 +23,7 @@ Add value mappings (`sourcePath` and `targetPath`) near your chart definitions (
 
 If the list of mappings gets unwieldy, consider inverting the mappings using higher level keys with `excludePaths` instead.
 
-For shared values across multiple charts (for example `domain`), use a shared key to reduce configuration drift.
+For values shared across multiple charts, use the reserved top-level `global` key to reduce configuration drift. For example, use `global.domain` rather than repeating `domain` under each chart.
 
 Use values for package configuration. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` only when an existing variable must remain compatible. Use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over an existing variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
 
@@ -100,7 +100,8 @@ The `zarf-values.yaml` provides defaults that deployers can override:
 
 ```yaml title="zarf-values.yaml"
 uds-nginx-config:
-  domain: uds.dev
+  global:
+    domain: uds.dev
 
 nginx:
   replicaCount: 1

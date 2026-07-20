@@ -20,8 +20,8 @@ cluster:
   expose:
     # Domain configuration (admin defaults to `admin.UDS_DOMAIN`)
     # Explicit values take precedence, then package variables, then admin.<domain>.
-    domain: '{{default .Variables.DOMAIN .Values.domain}}'
-    adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.domain)) .Variables.ADMIN_DOMAIN) .Values.adminDomain}}'
+    domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
+    adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) .Values.global.adminDomain}}'
   policy:
     allowAllNsExemptions: '{{.Variables.ALLOW_ALL_NS_EXEMPTIONS}}'
   networking:

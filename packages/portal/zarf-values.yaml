@@ -3,11 +3,11 @@
 
 # Default Zarf values for the UDS Core Portal package.
 
-# Top-level domain for the whole stack. Override via --values / --set-values to set the domain once for all charts.
-domain: ""
-
-# Admin domain override; empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
-adminDomain: ""
+# Shared domains for the whole stack. Override via --values / --set-values to configure all charts.
+global:
+  domain: ""
+  # Empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
+  adminDomain: ""
 
 uds-portal:
   uds-portal: {}

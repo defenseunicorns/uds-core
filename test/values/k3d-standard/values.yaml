@@ -7,9 +7,10 @@
 # the dynamic deploy-time settings (Postgres creds, S3 keys, TLS certs) stay as Zarf variables
 # injected by the dev stack.
 
-# The admin Istio gateway receives this top-level domain as its tenant domain. With no adminDomain
+# The admin Istio gateway receives this shared domain as its tenant domain. With no global.adminDomain
 # or ADMIN_DOMAIN, it derives admin.uds.dev.
-domain: "uds.dev"
+global:
+  domain: "uds.dev"
 
 # --- base: pepr (bundle pepr var defaults) ---
 pepr-uds-core:

@@ -12,10 +12,9 @@ image:
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
 configImage: ghcr.io/defenseunicorns/uds/identity-config:0.29.0
 
-# The public domain name of the Keycloak server
-domain: "###ZARF_VAR_DOMAIN###"
-# The admin domain for hosts to trust clients on
-adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+# Standalone Helm defaults; Zarf deployments override these in templatedValuesFiles.
+domain: "uds.dev"
+adminDomain: "admin.uds.dev"
 
 # Additional Istio Gateways that expose Keycloak, to allow for client cert usage
 # A prefix of `istio-` is required for namespaces to prevent accidental misconfiguration

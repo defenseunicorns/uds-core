@@ -206,11 +206,8 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := tpl .Values.domain . }}
-            {{- $adminDomain := tpl .Values.adminDomain . }}
-            {{- if or (not $adminDomain) (eq $adminDomain "###ZARF_VAR_ADMIN_DOMAIN###") }}
-              {{- $adminDomain = printf "admin.%s" $domain }}
-            {{- end }}
+            {{- $domain := .Values.domain }}
+            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN

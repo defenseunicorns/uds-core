@@ -2,9 +2,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "properties": {
-    "adminDomain": {
-      "type": "string"
-    },
     "authservice": {
       "properties": {
         "authservice": {
@@ -82,9 +79,6 @@
         }
       },
       "type": "object"
-    },
-    "domain": {
-      "type": "string"
     },
     "envoy-gateway": {
       "properties": {
@@ -1791,6 +1785,17 @@
             }
           },
           "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "global": {
+      "properties": {
+        "adminDomain": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
         }
       },
       "type": "object"

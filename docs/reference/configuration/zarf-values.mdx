@@ -59,27 +59,28 @@ The component mapping files define the exact pass-through and protected paths:
 
 ## Domains
 
-Set the tenant and admin domains with the top-level `domain` and `adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
+Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
 
 | Field | Type | Effective default | Description |
 |---|---|---|---|
-| `domain` | string | `uds.dev` | Tenant domain for the stack |
-| `adminDomain` | string | `admin.uds.dev` | Admin domain for admin-exposed services |
+| `global.domain` | string | `uds.dev` | Tenant domain for the stack |
+| `global.adminDomain` | string | `admin.uds.dev` | Admin domain for admin-exposed services |
 
-`domain` uses the value when set, then the `DOMAIN` Zarf variable. `adminDomain` uses the value when set, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<domain>`.
+`global.domain` uses the value when set, then the `DOMAIN` Zarf variable. `global.adminDomain` uses the value when set, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<global.domain>`.
 
 The precedence rules are:
 
 | Setting | First choice | Second choice | Final fallback |
 |---|---|---|---|
-| `domain` | Top-level `domain` value | `DOMAIN` Zarf variable | None |
-| `adminDomain` | Top-level `adminDomain` value | `ADMIN_DOMAIN` Zarf variable | `admin.<domain>` |
+| `global.domain` | `global.domain` value | `DOMAIN` Zarf variable | None |
+| `global.adminDomain` | `global.adminDomain` value | `ADMIN_DOMAIN` Zarf variable | `admin.<global.domain>` |
 
 For example, this deployment uses the explicit tenant domain and the admin-domain variable:
 
 ```yaml title="values.yaml"
-domain: example.com
-adminDomain: ""
+global:
+  domain: example.com
+  adminDomain: ""
 ```
 
 ```bash
