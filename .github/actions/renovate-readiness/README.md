@@ -50,7 +50,7 @@ If you want to force a PR to run CI regardless of its readiness status, add the 
 
 ## Implementation Details
 
-- **TypeScript Scripts**: The core logic for extracting and comparing images and charts is implemented in TypeScript scripts located in the `scripts/renovate` directory.
+- **TypeScript Scripts**: The core logic for extracting and comparing images and charts is implemented in TypeScript scripts located in the `scripts/renovate` directory and executed with `tsx`.
   - `getImagesAndCharts.ts`: Extracts images and charts from zarf.yaml files in a directory.
   - `compareImagesAndCharts.ts`: Compares extracted images and charts between two directories and determines if the PR is ready for testing.
 - **GitHub Action**: The GitHub Action orchestrates the process, handling special cases and applying labels based on the script outputs.
@@ -61,15 +61,15 @@ If you want to force a PR to run CI regardless of its readiness status, add the 
 
 ## Testing
 
-The TypeScript scripts are thoroughly tested using Jest:
+The TypeScript scripts are thoroughly tested using Vitest:
 
-- **getImagesAndCharts.test.ts**: Tests the extraction of images and charts from zarf.yaml files, including edge cases like:
+- **getImagesAndCharts.spec.ts**: Tests the extraction of images and charts from zarf.yaml files, including edge cases like:
   - Empty directories
   - Invalid YAML files
   - Missing components
   - Images without version tags
 
-- **compareImagesAndCharts.test.ts**: Tests the comparison of images and charts, including:
+- **compareImagesAndCharts.spec.ts**: Tests the comparison of images and charts, including:
   - Helm chart updates (both regular and major)
   - Image updates (including major updates)
   - Waiting conditions for Ironbank and Unicorn images
