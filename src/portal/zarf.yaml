@@ -27,7 +27,7 @@ components:
     import:
       path: common
     images:
-      - ghcr.io/defenseunicorns/uds-portal:0.4.0
+      - ghcr.io/defenseunicorns/uds-portal:0.5.0
     charts:
       - name: uds-portal
         valuesFiles:
@@ -42,7 +42,7 @@ components:
     import:
       path: common
     images:
-      - ghcr.io/defenseunicorns/uds-portal:0.4.0
+      - ghcr.io/defenseunicorns/uds-portal:0.5.0
     charts:
       - name: uds-portal
         valuesFiles:

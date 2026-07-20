@@ -87,3 +87,8 @@ components:
     required: false
     import:
       path: ../../src/envoy-gateway
+
+  - name: envoy-default-gateway
+    required: false
+    import:
+      path: ../../src/envoy-gateway

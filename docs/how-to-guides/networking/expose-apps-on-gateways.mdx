@@ -150,7 +150,11 @@ After completing this guide, your application will be accessible through one of 
      </TabItem>
    </Tabs>
 
-3. **(Optional) Configure advanced HTTP routing**
+3. **(Optional) Select a protocol**
+
+   The `protocol` field on an expose entry controls how the UDS Operator routes the traffic. It defaults to `HTTP`, which routes through Istio and supports hostname-based fields (`host`, `domain`, `advancedHTTP`, `match`). Set `protocol: UDP` to route through Envoy Gateway instead; the `Package` CR is denied if any hostname-based field is set on a UDP entry, and UDP traffic isn't protected by Istio `AuthorizationPolicy` or mTLS. See [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/) for the full UDP workflow.
+
+4. **(Optional) Configure advanced HTTP routing**
 
    Add an `advancedHTTP` block to an expose entry to configure routing rules like header manipulation, CORS policies, URI rewrites, redirects, retries, and timeouts. The `advancedHTTP` fields map directly to [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute); refer to the Istio docs for the full field reference.
 
@@ -211,7 +215,7 @@ After completing this guide, your application will be accessible through one of 
 
    All `advancedHTTP` options are composable; you can combine match conditions, headers, CORS, retries, and timeouts in a single expose entry. See the [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) for the full list of supported fields.
 
-4. **Deploy your application**
+5. **Deploy your application**
 
    **(Recommended)** Include the `Package` CR manifest in your [Zarf package](https://docs.zarf.dev/ref/create/) alongside your application's Helm chart and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
@@ -279,4 +283,5 @@ curl -v https://my-app.yourdomain.com
 - [Enable the passthrough gateway](/how-to-guides/networking/enable-passthrough-gateway/) - Deploy the optional passthrough gateway for apps that handle their own TLS.
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.
 - [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.
+- [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/) - Route UDP traffic through Envoy Gateway.
 - [Istio VirtualService HTTPRoute](https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRoute) - upstream reference for the full set of `advancedHTTP` fields

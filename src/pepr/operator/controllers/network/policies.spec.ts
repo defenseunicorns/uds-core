@@ -6,7 +6,7 @@
 import { V1NetworkPolicy } from "@kubernetes/client-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Direction, Gateway, UDSPackage } from "../../crd";
-import { Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { findMatchingClient, networkPolicies } from "./policies";
 
 // Mock dependencies
@@ -1045,5 +1045,138 @@ describe("networkPolicies", () => {
     const ports = udpPolicy?.spec?.egress?.[0]?.ports ?? [];
     expect(ports).toContainEqual({ port: 53, protocol: "UDP" });
     expect(ports.map(p => p.port)).not.toContain(15008);
+  });
+
+  it("should generate Envoy Gateway NetworkPolicies for UDP expose entries", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          expose: [
+            {
+              protocol: ExposeProtocol.UDP,
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "udp-ns", Mode.Ambient);
+    const udpPolicy = policies.find(
+      policy =>
+        policy.metadata?.namespace === "udp-ns" &&
+        policy.spec?.ingress?.[0]?.ports?.some(
+          port => port.port === 7777 && port.protocol === "UDP",
+        ),
+    );
+    expect(policies.some(policy => policy.metadata?.name?.includes("Istio tenant gateway"))).toBe(
+      false,
+    );
+    expect(udpPolicy).toBeDefined();
+    expect(udpPolicy?.spec?.podSelector?.matchLabels).toEqual({ app: "game" });
+    expect(udpPolicy?.spec?.ingress?.[0]?.from?.[0]).toEqual({
+      namespaceSelector: {
+        matchLabels: { "kubernetes.io/metadata.name": "envoy-default-gateway" },
+      },
+      podSelector: {
+        matchLabels: {
+          "gateway.envoyproxy.io/owning-gateway-name": "envoy-default-gateway",
+          "gateway.envoyproxy.io/owning-gateway-namespace": "envoy-default-gateway",
+        },
+      },
+    });
+    expect(udpPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 7777, protocol: "UDP" });
+    expect(udpPolicy?.spec?.ingress?.[0]?.ports?.map(port => port.port)).not.toContain(15008);
+    // The ingress-from-anywhere and egress-to-backend rules for managed Envoy Gateway
+    // proxies are static Allow rules on the Gateway's own namespace package (envoy-gateway
+    // or the per-gateway default/custom namespace), not generated per-package here.
+    expect(policies.some(policy => policy.metadata?.namespace === "envoy-default-gateway")).toBe(
+      false,
+    );
+  });
+
+  it("should generate HTTP and UDP expose NetworkPolicies", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          expose: [
+            {
+              service: "web",
+              host: "web.example.com",
+              selector: { app: "web" },
+              port: 8080,
+            },
+            {
+              protocol: ExposeProtocol.UDP,
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "mixed-ns", Mode.Ambient);
+
+    expect(
+      policies.some(
+        policy =>
+          policy.metadata?.name?.includes("8080-web") &&
+          policy.metadata?.name?.includes("Istio tenant gateway"),
+      ),
+    ).toBe(true);
+    expect(
+      policies.some(
+        policy =>
+          policy.spec?.ingress?.[0]?.ports?.some(
+            port => port.port === 7777 && port.protocol === "UDP",
+          ) &&
+          policy.spec?.ingress?.[0]?.from?.[0]?.podSelector?.matchLabels?.[
+            "gateway.envoyproxy.io/owning-gateway-name"
+          ] === "envoy-default-gateway",
+      ),
+    ).toBe(true);
+  });
+
+  it("should generate UDP expose NetworkPolicies for user-managed gateways", async () => {
+    const pkg: UDSPackage = {
+      ...mockPkg,
+      spec: {
+        network: {
+          expose: [
+            {
+              protocol: ExposeProtocol.UDP,
+              gateway: "team-gateway",
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+              targetPort: 8888,
+            },
+          ],
+        },
+      },
+    };
+
+    const policies = await networkPolicies(pkg, "udp-ns", Mode.Ambient);
+    const udpPolicy = policies.find(policy =>
+      policy.spec?.ingress?.[0]?.ports?.some(port => port.port === 8888 && port.protocol === "UDP"),
+    );
+
+    expect(udpPolicy).toBeDefined();
+    expect(udpPolicy?.spec?.ingress?.[0]?.from?.[0]).toEqual({
+      namespaceSelector: { matchLabels: { "kubernetes.io/metadata.name": "team-gateway" } },
+      podSelector: {
+        matchLabels: {
+          "gateway.envoyproxy.io/owning-gateway-name": "team-gateway",
+          "gateway.envoyproxy.io/owning-gateway-namespace": "team-gateway",
+        },
+      },
+    });
+    expect(udpPolicy?.spec?.ingress?.[0]?.ports).toContainEqual({ port: 8888, protocol: "UDP" });
   });
 });

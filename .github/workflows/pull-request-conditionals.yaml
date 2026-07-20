@@ -96,7 +96,7 @@ jobs:
       # Noting that adding `predicate-quantifier` produces a false warning message about an unexpected input, despite still being evaluated by the action
       - name: Check src paths - all
         id: path-filter-all
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         with:
           predicate-quantifier: "every"
           filters: |
@@ -112,7 +112,7 @@ jobs:
       # Uses a custom action to filter paths for source packages.
       - name: Check src paths - packages
         id: path-filter
-        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+        uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         with:
           filters: .github/filters.yaml
 

@@ -14,7 +14,7 @@ components:
       - name: uds-portal
         namespace: uds-portal
         # renovate: datasource=github-releases depName=defenseunicorns/uds-portal
-        version: "v0.4.0"
+        version: "v0.5.0"
         url: https://github.com/defenseunicorns/uds-portal.git
         gitPath: chart
         values:

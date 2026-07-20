@@ -2,6 +2,10 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { randomUUID } from "node:crypto";
+import * as dgram from "node:dgram";
+import * as dns from "node:dns/promises";
+import * as k8s from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { execInPod } from "./helpers/k8s";
@@ -10,6 +14,171 @@ import { execInPod } from "./helpers/k8s";
 vi.setConfig({ testTimeout: 30000 });
 
 const CURL_GATEWAY = ["curl", "-s", "-w", " HTTP_CODE:%{http_code}", "https://demo-8080.uds.dev"];
+const ENVOY_DEFAULT_GATEWAY_NAME = "envoy-default-gateway";
+const ENVOY_OWNING_GATEWAY_LABEL = "gateway.envoyproxy.io/owning-gateway-name";
+
+const kc = new k8s.KubeConfig();
+kc.loadFromDefault();
+const customObjects = kc.makeApiClient(k8s.CustomObjectsApi);
+const core = kc.makeApiClient(k8s.CoreV1Api);
+const networking = kc.makeApiClient(k8s.NetworkingV1Api);
+
+type GatewayObject = k8s.KubernetesObject & {
+  spec?: {
+    listeners?: {
+      name?: string;
+      protocol?: string;
+      port?: number;
+    }[];
+  };
+};
+
+type UDPRouteObject = k8s.KubernetesObject & {
+  spec?: {
+    parentRefs?: {
+      name?: string;
+      namespace?: string;
+      sectionName?: string;
+    }[];
+  };
+};
+
+// Polls until `extract` returns a value from the default Gateway's managed UDP Service.
+async function pollDefaultEnvoyUDPService<T>(
+  port: number,
+  extract: (service: k8s.V1Service) => T | undefined,
+  description: string,
+  timeoutMs: number,
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const services = await core.listServiceForAllNamespaces({
+      labelSelector: `${ENVOY_OWNING_GATEWAY_LABEL}=${ENVOY_DEFAULT_GATEWAY_NAME}`,
+    });
+    const service = services.items.find(item =>
+      item.spec?.ports?.some(
+        servicePort => servicePort.port === port && servicePort.protocol === "UDP",
+      ),
+    );
+
+    if (service) {
+      const value = extract(service);
+      if (value !== undefined) {
+        return value;
+      }
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+
+  throw new Error(`Timeout waiting for ${description} on default Envoy Service port ${port}`);
+}
+
+function getDefaultEnvoyUDPServiceTarget(port: number): Promise<string> {
+  return pollDefaultEnvoyUDPService(
+    port,
+    service => {
+      const name = service.metadata?.name;
+      const namespace = service.metadata?.namespace;
+      return name && namespace ? `${name}.${namespace}.svc.cluster.local` : undefined;
+    },
+    "cluster-local Service DNS name",
+    120000,
+  );
+}
+
+// A fresh load balancer's hostname can take a minute+ to actually resolve
+async function resolveHostWithRetry(
+  host: string,
+  timeoutMs = 90000,
+  intervalMs = 5000,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+  while (Date.now() < deadline) {
+    try {
+      return (await dns.lookup(host)).address;
+    } catch (err) {
+      lastError = err;
+      await new Promise(resolve => setTimeout(resolve, intervalMs));
+    }
+  }
+  throw new Error(`DNS resolution for ${host} did not succeed within ${timeoutMs}ms: ${lastError}`);
+}
+
+async function sendUdpEchoWithRetry(
+  host: string,
+  port: number,
+  message: string,
+  timeoutMs = 120000,
+  intervalMs = 10000,
+): Promise<string[]> {
+  const deadline = Date.now() + timeoutMs;
+  let echoes: string[] = [];
+  while (Date.now() < deadline) {
+    echoes = await sendUdpFromHost(host, port, [message], true);
+    if (echoes.length > 0) return echoes;
+    await new Promise(resolve => setTimeout(resolve, intervalMs));
+  }
+  return echoes;
+}
+
+function getDefaultEnvoyExternalAddress(port: number, timeoutMs = 300000): Promise<string> {
+  return pollDefaultEnvoyUDPService(
+    port,
+    service => {
+      const ingress = service.status?.loadBalancer?.ingress?.[0];
+      return ingress?.ip ?? ingress?.hostname;
+    },
+    "LoadBalancer external address",
+    timeoutMs,
+  );
+}
+
+async function assertDefaultEnvoyUDPResources(port: number): Promise<string> {
+  const gateway = (await customObjects.getNamespacedCustomObject({
+    group: "gateway.networking.k8s.io",
+    version: "v1",
+    namespace: "envoy-default-gateway",
+    plural: "gateways",
+    name: ENVOY_DEFAULT_GATEWAY_NAME,
+  })) as GatewayObject;
+
+  expect(gateway.spec?.listeners).toContainEqual(
+    expect.objectContaining({ name: `udp-${port}`, protocol: "UDP", port }),
+  );
+
+  const route = (await customObjects.getNamespacedCustomObject({
+    group: "gateway.networking.k8s.io",
+    version: "v1alpha2",
+    namespace: "curl-ns-udp-server",
+    plural: "udproutes",
+    name: "curl-pkg-udp-server-udp-envoy-gateway-e2e",
+  })) as UDPRouteObject;
+
+  expect(route.spec?.parentRefs).toContainEqual(
+    expect.objectContaining({
+      name: ENVOY_DEFAULT_GATEWAY_NAME,
+      namespace: "envoy-default-gateway",
+      sectionName: `udp-${port}`,
+    }),
+  );
+
+  const policies = await networking.listNamespacedNetworkPolicy({
+    namespace: "curl-ns-udp-server",
+    labelSelector: "uds/package=curl-pkg-udp-server",
+  });
+  expect(policies.items.length).toBeGreaterThan(0);
+  expect(
+    policies.items.some(policy =>
+      policy.spec?.ingress?.some(rule =>
+        rule.ports?.some(policyPort => policyPort.protocol === "UDP" && policyPort.port === port),
+      ),
+    ),
+  ).toBe(true);
+
+  return getDefaultEnvoyUDPServiceTarget(port);
+}
 
 function getCurlCommand(serviceName: string, namespaceName: string, port = 8080) {
   return [
@@ -68,14 +237,6 @@ function isResponseError(curlOutput: { stdout: string; stderr: string }) {
   return httpResponseCode < 100 || httpResponseCode > 399;
 }
 
-async function clearUdpLog(serverPodName: string): Promise<void> {
-  await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
-    "sh",
-    "-c",
-    "> /tmp/udp.log",
-  ]);
-}
-
 async function readUdpLog(serverPodName: string): Promise<string> {
   const result = await execInPod("curl-ns-udp-server", serverPodName, "udp-echo-server", [
     "sh",
@@ -86,33 +247,81 @@ async function readUdpLog(serverPodName: string): Promise<string> {
   return result.stdout.trim();
 }
 
+// Log is never cleared, so match on a nonce rather than exact content.
 async function waitForUdpLog(
   serverPodName: string,
-  expected: string,
+  expectedNonce: string,
   timeoutMs = 5000,
   intervalMs = 250,
 ): Promise<string> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const log = await readUdpLog(serverPodName);
-    if (log === expected) return log;
+    if (log.includes(expectedNonce)) return log;
     await new Promise(resolve => setTimeout(resolve, intervalMs));
   }
   return readUdpLog(serverPodName);
 }
 
-function expectUdpPingLog(log: string, message: string) {
-  const lines = log.trim().split("\n").filter(Boolean);
-
-  expect(lines.length > 0, `${message} lines=${JSON.stringify(lines)}`).toBe(true);
-  expect(
-    lines.every(line => line === "ping"),
-    `${message} lines=${JSON.stringify(lines)}`,
-  ).toBe(true);
+function expectLogContainsNonce(log: string, nonce: string, message: string) {
+  expect(log.split("\n").includes(nonce), `${message} log=${JSON.stringify(log)}`).toBe(true);
 }
 
 // Check if egress tests should run
 const runEgressTests = process.env.EGRESS_TESTS === "true";
+const runUDPExposeTests = process.env.UDP_EXPOSE_TESTS === "true";
+
+// Sends messages from a single socket and collects echo responses.
+function sendUdpFromHost(
+  host: string,
+  port: number,
+  messages: string[],
+  expectEcho = false,
+): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const socket = dgram.createSocket("udp4");
+    const echoes: string[] = [];
+    let sendRemaining = messages.length;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+
+    socket.on("error", err => {
+      if (timeout) clearTimeout(timeout);
+      socket.close();
+      reject(err);
+    });
+
+    if (expectEcho) {
+      socket.on("message", msg => {
+        echoes.push(msg.toString().trim());
+        if (echoes.length >= messages.length) {
+          if (timeout) clearTimeout(timeout);
+          socket.close();
+          resolve(echoes);
+        }
+      });
+      timeout = setTimeout(() => {
+        socket.close();
+        resolve(echoes);
+      }, 10000);
+    }
+
+    for (const message of messages) {
+      socket.send(message, port, host, err => {
+        if (err) {
+          if (timeout) clearTimeout(timeout);
+          socket.close();
+          reject(err);
+          return;
+        }
+        sendRemaining -= 1;
+        if (sendRemaining === 0 && !expectEcho) {
+          socket.close();
+          resolve(echoes);
+        }
+      });
+    }
+  });
+}
 
 let curlPodName1 = "";
 let testAdminApp = "";
@@ -467,13 +676,13 @@ describe("Network Policy Validation", { retry: 2 }, () => {
     const egress_gateway_http_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" http://bing.com`,
+      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" http://bing.com`,
     ];
 
     const egress_gateway_tls_curl = [
       "sh",
       "-c",
-      `curl -s -w " HTTP_CODE:%{http_code}" https://bing.com`,
+      `curl -s -m 10 -w " HTTP_CODE:%{http_code}" https://bing.com`,
     ];
 
     // Validate successful tls request when using Egress Gateway for egress-gw-1
@@ -594,15 +803,16 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
 
   // Validate the NetworkPolicy behavior via direct pod IP so the test stays focused on UDP
   // policy enforcement rather than kube-proxy ClusterIP DNAT timing on EKS.
-  await clearUdpLog(udpServerPodName);
+  const allowedNonce = `allow-${randomUUID()}`;
   const allowedSend = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
     "sh",
     "-c",
-    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
+    `(for i in 1 2 3; do echo ${allowedNonce}; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
-  const allowedLog = await waitForUdpLog(udpServerPodName, "ping", 5000, 250);
-  expectUdpPingLog(
+  const allowedLog = await waitForUdpLog(udpServerPodName, allowedNonce, 5000, 250);
+  expectLogContainsNonce(
     allowedLog,
+    allowedNonce,
     `UDP allowed: log="${allowedLog}" nc="${allowedSend.stdout}" ${placement}`,
   );
 
@@ -610,17 +820,59 @@ test("UDP NetworkPolicy - custom allow and deny", { retry: 2, timeout: 60000 }, 
   // port 5000) is the first enforcement point; the server's ingress NetworkPolicy
   // (curl-pkg-udp-server only permits ingress from curl-ns-udp-allow) provides defense-in-depth.
   // Either policy alone would block the traffic.
-  await clearUdpLog(udpServerPodName);
+  const deniedNonce = `deny-${randomUUID()}`;
   const deniedSend = await execInPod("curl-ns-deny-all-1", curlPodName1, "curl-pkg-deny-all-1", [
     "sh",
     "-c",
-    `for i in 1 2 3; do echo ping | nc -u -w 1 ${serverPodIP} 5000 2>&1; printf ' attempt:%s' "$i"; sleep 0.2; done; echo; echo nc-exit:$?`,
+    `(for i in 1 2 3; do echo ${deniedNonce}; sleep 0.2; done) | nc -u -w 1 ${serverPodIP} 5000 2>&1; echo nc-exit:$?`,
   ]);
-  const deniedLog = await waitForUdpLog(udpServerPodName, "ping", 2000, 250);
-  expect(deniedLog, `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`).toBe(
-    "",
-  );
+  const deniedLog = await waitForUdpLog(udpServerPodName, deniedNonce, 2000, 250);
+  expect(
+    deniedLog.includes(deniedNonce),
+    `UDP blocked: log="${deniedLog}" nc="${deniedSend.stdout}" ${placement}`,
+  ).toBe(false);
 });
+
+(runUDPExposeTests ? test : test.skip)(
+  "UDP expose routes through default Envoy Gateway",
+  { retry: 2, timeout: 180000 },
+  async () => {
+    const serviceTarget = await assertDefaultEnvoyUDPResources(5000);
+
+    const nonce = `expose-${randomUUID()}`;
+    const send = await execInPod("curl-ns-udp-allow", udpClientPodName, "udp-echo-client", [
+      "sh",
+      "-c",
+      `(for i in 1 2 3 4 5; do echo ${nonce}; sleep 0.2; done) | nc -u -w 1 ${serviceTarget} 5000 2>&1`,
+    ]);
+    const receivedLog = await waitForUdpLog(udpServerPodName, nonce, 30000, 1000);
+
+    expectLogContainsNonce(
+      receivedLog,
+      nonce,
+      `UDP Envoy Gateway expose: log="${receivedLog}" nc="${send.stdout}" target="${serviceTarget}"`,
+    );
+  },
+);
+
+(runUDPExposeTests ? test : test.skip)(
+  "UDP expose reaches the backend through the real external LoadBalancer path",
+  { retry: 2, timeout: 300000 },
+  async () => {
+    await assertDefaultEnvoyUDPResources(5000);
+
+    const host = await getDefaultEnvoyExternalAddress(5000);
+    const ip = await resolveHostWithRetry(host);
+    const port = 5000;
+
+    // Sent directly from this test process (not execInPod), exercising the full
+    // external path: LoadBalancer -> Envoy Gateway -> backend -> echo response.
+    const echoes = await sendUdpEchoWithRetry(ip, port, "ping");
+
+    expect(echoes.length, `No echo received from ${host}:${port}`).toBeGreaterThan(0);
+    expect(echoes[0]).toBe("ping");
+  },
+);
 
 test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const SSO_CURL = [
