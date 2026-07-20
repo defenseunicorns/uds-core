@@ -204,7 +204,7 @@ runs:
       shell: bash
       run: |
         cd scripts/renovate
-        npx tsx getImagesAndCharts.ts $GITHUB_WORKSPACE/old
+        npx --no-install tsx getImagesAndCharts.ts $GITHUB_WORKSPACE/old
 
     # Extract images and charts from new branch
     - name: Extract images and charts from new branch
@@ -212,7 +212,7 @@ runs:
       shell: bash
       run: |
         cd scripts/renovate
-        npx tsx getImagesAndCharts.ts $GITHUB_WORKSPACE/new
+        npx --no-install tsx getImagesAndCharts.ts $GITHUB_WORKSPACE/new
 
     # Compare images and charts
     - name: Compare images and charts
@@ -221,7 +221,7 @@ runs:
       shell: bash
       run: |
         cd scripts/renovate
-        OUTPUT=$(npx tsx compareImagesAndCharts.ts $GITHUB_WORKSPACE/old/extract $GITHUB_WORKSPACE/new/extract)
+        OUTPUT=$(npx --no-install tsx compareImagesAndCharts.ts $GITHUB_WORKSPACE/old/extract $GITHUB_WORKSPACE/new/extract)
         echo "$OUTPUT"
 
         # Extract labels from output

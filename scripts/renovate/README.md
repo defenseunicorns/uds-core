@@ -15,7 +15,7 @@ Extracts images and charts from zarf.yaml files in a given directory path.
 **Usage:**
 ```bash
 # From within the scripts/renovate directory
-npx tsx getImagesAndCharts.ts <directory-path>
+npx --no-install tsx getImagesAndCharts.ts <directory-path>
 ```
 
 This script will:
@@ -30,7 +30,7 @@ Compares images and charts between two extract folders (outputs of getImagesAndC
 **Usage:**
 ```bash
 # From within the scripts/renovate directory
-npx tsx compareImagesAndCharts.ts <old-extract-path> <new-extract-path>
+npx --no-install tsx compareImagesAndCharts.ts <old-extract-path> <new-extract-path>
 ```
 
 This script will:
