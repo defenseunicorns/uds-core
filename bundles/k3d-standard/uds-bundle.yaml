@@ -47,6 +47,7 @@ packages:
       - istio-egress-gateway
       - metrics-server
       - envoy-gateway
+      - envoy-default-gateway
     overrides:
       pepr-uds-core:
         module:

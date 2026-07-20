@@ -67,3 +67,12 @@ components:
     images:
       - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.2
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
+
+  # Default Gateway's namespace, same pattern as the istio-*-gateway components.
+  - name: envoy-default-gateway
+    required: false
+    charts:
+      - name: uds-envoy-default-gateway-config
+        namespace: envoy-default-gateway
+        version: 0.1.0
+        localPath: default-gateway

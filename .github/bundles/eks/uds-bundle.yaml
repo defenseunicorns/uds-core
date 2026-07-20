@@ -26,7 +26,15 @@ packages:
       - metrics-server # note: metrics-server is not available as an EKS addon in govcloud
       - istio-egress-gateway
       - envoy-gateway
+      - envoy-default-gateway
     overrides:
+      envoy-gateway:
+        uds-envoy-gateway-config:
+          values:
+            - path: envoyService.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       velero:
         velero:
           variables:

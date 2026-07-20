@@ -169,7 +169,8 @@ export interface Network {
    */
   allow?: Allow[];
   /**
-   * Expose a service on an Istio Gateway
+   * Expose a service through UDS Core managed ingress. HTTP entries use Istio; UDP entries
+   * use Envoy Gateway.
    */
   expose?: Expose[];
   /**
@@ -296,7 +297,7 @@ export interface Expose {
    */
   annotations?: { [key: string]: string };
   /**
-   * A description of this expose entry, this will become part of the VirtualService name
+   * A description of this expose entry, this will become part of the generated resource name
    */
   description?: string;
   /**
@@ -305,13 +306,18 @@ export interface Expose {
    */
   domain?: string;
   /**
-   * The name of the gateway to expose the service on (default: tenant)
+   * The name of the gateway to expose the service on. HTTP defaults to tenant when omitted.
+   * UDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed
+   * Gateways, this value is used as both the Gateway name and namespace, and that namespace
+   * must be deployed via a Zarf package (for the private registry image pull secret) and
+   * enrolled in the cluster's service mesh (for the mTLS-protected connection to the Envoy
+   * Gateway controller); otherwise the managed proxy will fail to start.
    */
   gateway?: string;
   /**
    * The hostname to expose the service on
    */
-  host: string;
+  host?: string;
   /**
    * Match conditions to be satisfied for the rule to be activated. Not permitted when using
    * the passthrough gateway.
@@ -325,6 +331,13 @@ export interface Expose {
    * The port number to expose
    */
   port?: number;
+  /**
+   * The routing protocol for this expose entry. When set to `UDP`, the entry routes through
+   * Envoy Gateway instead of Istio. Hostname routing fields (`host`, `domain`,
+   * `advancedHTTP`, `match`) are invalid for UDP entries. UDP traffic is not protected by
+   * Istio AuthorizationPolicy or mTLS.
+   */
+  protocol?: ExposeProtocol;
   /**
    * Selector for Pods targeted by the selected Services (so the NetworkPolicy can be
    * generated correctly).
@@ -719,6 +732,17 @@ export interface FluffyURI {
 }
 
 /**
+ * The routing protocol for this expose entry. When set to `UDP`, the entry routes through
+ * Envoy Gateway instead of Istio. Hostname routing fields (`host`, `domain`,
+ * `advancedHTTP`, `match`) are invalid for UDP entries. UDP traffic is not protected by
+ * Istio AuthorizationPolicy or mTLS.
+ */
+export enum ExposeProtocol {
+  HTTP = "HTTP",
+  UDP = "UDP",
+}
+
+/**
  * Uptime monitoring configuration for this exposed service. Presence of checks.paths
  * enables monitoring.
  */
@@ -816,7 +840,7 @@ export interface Sso {
   /**
    * Specifies the protocol of the client, either 'openid-connect' or 'saml'
    */
-  protocol?: Protocol;
+  protocol?: SsoProtocol;
   /**
    * Protocol Mappers to configure on the client
    */
@@ -898,7 +922,7 @@ export interface Groups {
  *
  * Protocol of the mapper
  */
-export enum Protocol {
+export enum SsoProtocol {
   OpenidConnect = "openid-connect",
   Saml = "saml",
 }
@@ -919,7 +943,7 @@ export interface ProtocolMapper {
   /**
    * Protocol of the mapper
    */
-  protocol: Protocol;
+  protocol: SsoProtocol;
   /**
    * Protocol Mapper type of the mapper
    */

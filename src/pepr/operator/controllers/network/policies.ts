@@ -7,8 +7,9 @@ import { K8s, kind } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { Allow, Direction, Gateway, RemoteGenerated, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode, RemoteProtocol } from "../../crd/generated/package-v1alpha1";
 import { UDSConfig } from "../config/config";
+import { getUDPGatewayName, getUDPGatewayNamespace } from "../envoy-gateway/constants";
 import { getPodSelector, getWaypointName, shouldUseAmbientWaypoint } from "../istio/waypoint-utils";
 import { getAuthserviceClients, getOwnerRef, purgeOrphans, sanitizeResourceName } from "../utils";
 import { allowEgressDNS } from "./defaults/allow-egress-dns";
@@ -45,6 +46,13 @@ export function findMatchingClient(pkg: UDSPackage, podLabels: Record<string, st
 
 // configure subproject logger
 const log = setupLogger(Component.OPERATOR_NETWORK);
+
+function getUDPGatewaySelector(gateway?: string) {
+  return {
+    "gateway.envoyproxy.io/owning-gateway-name": getUDPGatewayName(gateway),
+    "gateway.envoyproxy.io/owning-gateway-namespace": getUDPGatewayNamespace(gateway),
+  };
+}
 
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b16a
 // @lulaStart cd540e07-153b-424c-90e0-c0daec56b18f
@@ -99,7 +107,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
   // Generate NetworkPolicies for any VirtualServices that are generated
   const exposeList = pkg.spec?.network?.expose ?? [];
   // Iterate over each exposed service, excluding directResponse services
-  for (const expose of exposeList.filter(exp => !exp.advancedHTTP?.directResponse)) {
+  for (const expose of exposeList.filter(
+    exp => exp.protocol !== ExposeProtocol.UDP && !exp.advancedHTTP?.directResponse,
+  )) {
     const { gateway = Gateway.Tenant, port, selector = {}, targetPort } = expose;
     const policyPort = targetPort ?? port;
 
@@ -126,6 +136,24 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     // Generate the policy
     const generatedPolicy = generate(namespace, policy, istioMode as Mode);
     policies.push(generatedPolicy);
+  }
+
+  for (const expose of exposeList.filter(exp => exp.protocol === ExposeProtocol.UDP)) {
+    const gatewayName = getUDPGatewayName(expose.gateway);
+    const policyPort = expose.targetPort ?? expose.port;
+    const selector = expose.selector ?? {};
+
+    const backendPolicy: Allow = {
+      direction: Direction.Ingress,
+      selector,
+      remoteNamespace: getUDPGatewayNamespace(expose.gateway),
+      remoteSelector: getUDPGatewaySelector(expose.gateway),
+      port: policyPort,
+      remoteProtocol: RemoteProtocol.UDP,
+      description: `${policyPort}-${Object.values(selector).join("-")} Envoy Gateway ${gatewayName}`,
+    };
+
+    policies.push(generate(namespace, backendPolicy, istioMode as Mode));
   }
 
   // Add network policies for each SSO client with authservice enabled
@@ -293,7 +321,9 @@ export async function networkPolicies(pkg: UDSPackage, namespace: string, istioM
     policy.metadata.name = sanitizeResourceName(policy.metadata.name);
 
     // Use the CR as the owner ref for each NetworkPolicy
-    policy.metadata.ownerReferences = getOwnerRef(pkg);
+    if (policy.metadata.namespace === namespace) {
+      policy.metadata.ownerReferences = getOwnerRef(pkg);
+    }
 
     // Apply the NetworkPolicy and force overwrite any existing policy
     try {

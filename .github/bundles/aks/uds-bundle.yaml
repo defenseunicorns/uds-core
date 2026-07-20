@@ -25,6 +25,7 @@ packages:
     optionalComponents:
       - istio-egress-gateway
       - envoy-gateway
+      - envoy-default-gateway
     overrides:
       istio-admin-gateway:
         gateway:

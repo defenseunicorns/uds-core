@@ -7,3 +7,10 @@ metadata:
   name: envoy-gateway
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  {{- if .Values.envoyService.annotations }}
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: envoy-gateway-proxy-config
+    namespace: {{ .Release.Namespace }}
+  {{- end }}

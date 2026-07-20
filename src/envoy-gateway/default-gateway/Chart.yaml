@@ -1,0 +1,7 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v2
+name: uds-envoy-default-gateway-config
+description: "Namespace bootstrap and base network policies for the default Envoy Gateway"
+version: 0.1.0

@@ -7,12 +7,13 @@ export {
   Allow,
   Direction,
   Expose,
+  ExposeProtocol,
   Monitor,
   Phase,
   StatusObject as PkgStatus,
-  Protocol,
   RemoteGenerated,
   RemoteProtocol,
+  SsoProtocol as Protocol,
   Sso,
   Package as UDSPackage,
 } from "./generated/package-v1alpha1";
@@ -93,5 +94,7 @@ export {
   K8SGateway as K8sGateway,
   FluffyFrom as K8sGatewayFromType,
 } from "./generated/k8s/gateway-v1";
+
+export { K8SGatewayClass as K8sGatewayClass } from "./generated/k8s/gatewayclass-v1";
 
 export { UDPRoute as K8sUDPRoute } from "./generated/k8s/udproute-v1alpha2";

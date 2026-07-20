@@ -89,6 +89,11 @@ components:
     import:
       path: ../base
 
+  - name: envoy-default-gateway
+    required: false
+    import:
+      path: ../base
+
   - name: keycloak
     required: true
     import:
