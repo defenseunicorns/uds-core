@@ -6,6 +6,7 @@ import * as net from "net";
 import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { pollUntilSuccess } from "./helpers/polling";
 
 // Global variables
 let lokiBackend: { server: net.Server; url: string };
@@ -146,12 +147,20 @@ describe("Loki Tests", () => {
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
-    const data = await queryLogs(
-      '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
+    const data = await pollUntilSuccess(
+      () =>
+        queryLogs(
+          '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
+        ),
+      result => result.status === "success" && result.data.result.length > 0,
+      "Vector pod logs to be available in Loki",
+      60000,
+      2000,
     );
+
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  });
+  }, 65000);
 
   const podLabelQueries = {
     namespace: '{collector="vector", namespace=~".+"}',
