@@ -4,7 +4,7 @@
  */
 
 import { PeprValidateRequest } from "pepr";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   Allow,
   Direction,
@@ -22,6 +22,8 @@ import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 PackageStore.init();
+UDSConfig.domain = "uds.dev";
+UDSConfig.adminDomain = "admin.uds.dev";
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -403,6 +405,92 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq({}, [{}, {}], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  describe("cross-package FQDN collision", () => {
+    beforeEach(() => {
+      PackageStore.init();
+    });
+
+    afterEach(() => {
+      PackageStore.init();
+    });
+
+    it("denies a package that exposes an FQDN already owned by another namespace", async () => {
+      // Seed the store with a package that owns doom.uds.dev
+      PackageStore.add({
+        metadata: { namespace: "dos-games", name: "dos-games" },
+        spec: { network: { expose: [{ host: "doom" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      // Second package in a different namespace tries to expose the same FQDN
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "dos-games-2", name: "dos-games-2" } },
+        [{ host: "doom" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("doom.uds.dev"));
+    });
+
+    it("allows a package to update and retain its own exposed FQDN", async () => {
+      // Seed the store with the same package that will be updated
+      PackageStore.add({
+        metadata: { namespace: "application-system", name: "application" },
+        spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows two packages that expose the same host string on tenant vs admin gateway", async () => {
+      // tenant: app.uds.dev, admin: app.admin.uds.dev — different FQDNs, no collision
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", gateway: Gateway.Admin }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows two packages that expose the same host string on tenant vs passthrough gateway", async () => {
+      // Different gateways — not a routing conflict
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", gateway: Gateway.Passthrough }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("denies network policies that specify both remoteGenerated and remoteNamespace", async () => {

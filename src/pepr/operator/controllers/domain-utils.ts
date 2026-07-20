@@ -26,3 +26,15 @@ export function getFqdn(expose: Expose): string {
   // Add the host to the domain, unless this is the reserved root domain host (`.`)
   return host === "." ? domain : `${host}.${domain}`;
 }
+
+/**
+ * Get a unique index key for an expose entry that distinguishes by both gateway and FQDN.
+ * Two expose entries only conflict if they share the same gateway AND the same FQDN.
+ *
+ * @param expose The expose entry
+ * @returns A compound key in the form "gateway:fqdn"
+ */
+export function getExposureKey(expose: Expose): string {
+  const gateway = expose.gateway ?? Gateway.Tenant;
+  return `${gateway}:${getFqdn(expose)}`;
+}

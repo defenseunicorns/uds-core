@@ -96,6 +96,15 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // Add the name to the set to track it
     virtualServiceNames.add(name);
 
+    // Check for FQDN collisions across packages in other namespaces
+    const ownerNs = PackageStore.findNamespaceForExpose(expose);
+    if (ownerNs && ownerNs !== ns) {
+      return req.Deny(
+        `The endpoint "${getFqdn(expose)}" is already exposed by a package in namespace "${ownerNs}". ` +
+          `Each exposed endpoint must be unique across all packages.`,
+      );
+    }
+
     // Validate uptime probe configuration (paths presence enables uptime)
     if (expose.uptime?.checks?.paths?.length) {
       // Validate paths start with /
