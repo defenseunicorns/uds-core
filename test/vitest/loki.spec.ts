@@ -3,6 +3,7 @@
  */
 
 import * as net from "net";
+import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 
@@ -50,7 +51,10 @@ const sendLog = async (
 const queryLogs = async (
   query: string,
   limit = 1,
-): Promise<{ status: string; data: { result: Array<{ values: string[][] }> } }> => {
+): Promise<{
+  status: string;
+  data: { result: Array<{ values: string[][] }> };
+}> => {
   try {
     const response = await fetch(
       getLokiUrl(
@@ -61,7 +65,9 @@ const queryLogs = async (
         method: "GET",
       },
     );
-    if (!response.ok) throw new Error("Error in querying logs");
+    if (!response.ok) {
+      throw new Error(`Loki query failed (${response.status}): ${await response.text()}`);
+    }
     return (await response.json()) as unknown as {
       status: string;
       data: { result: Array<{ values: string[][] }> };
@@ -101,7 +107,10 @@ const checkLokiServices = async (
 
 // Unified log validation function
 const validateLogInQuery = (
-  queryData: { status: string; data: { result: Array<{ values: string[][] }> } },
+  queryData: {
+    status: string;
+    data: { result: Array<{ values: string[][] }> };
+  },
   logMessage: string,
 ): void => {
   expect(queryData).toHaveProperty("status", "success");
@@ -133,19 +142,63 @@ describe("Loki Tests", () => {
   test("Validate Vector logs are present in Loki (loki-read)", async () => {
     const data = await queryLogs('{collector="vector"}');
     expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
-  });
-
-  test("Validate node logs from vector are present in Loki", async () => {
-    const data = await queryLogs('{service_name="varlogs", collector="vector"}');
-    expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
+    expect(data.data.result.length).toBeGreaterThan(0);
   });
 
   test("Validate pod logs from vector are present in Loki", async () => {
-    const data = await queryLogs('{service_name="pepr-uds-core", collector="vector"}');
+    const data = await queryLogs(
+      '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
+    );
     expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
+    expect(data.data.result.length).toBeGreaterThan(0);
+  });
+
+  const podLabelQueries = {
+    namespace: '{collector="vector", namespace=~".+"}',
+    app: '{collector="vector", namespace=~".+", app=~".+"}',
+    job: '{collector="vector", namespace=~".+", job=~".+/.+"}',
+    container: '{collector="vector", namespace=~".+", container=~".+"}',
+    component: '{collector="vector", namespace=~".+", component=~".+"}',
+    host: '{collector="vector", namespace=~".+", host=~".+"}',
+    filename: '{collector="vector", namespace=~".+", filename=~".+"}',
+    collector: '{collector="vector", namespace=~".+"}',
+  };
+
+  test.each(Object.entries(podLabelQueries))(
+    "Validate Vector pod label %s is queryable in Loki",
+    async (_label, query) => {
+      const data = await queryLogs(query);
+      expect(data).toHaveProperty("status", "success");
+      expect(data.data.result.length).toBeGreaterThan(0);
+    },
+  );
+
+  // Get the nodes running Vector, then query Loki to verify each node name is passed through as the host label.
+  test("Validate all Vector host labels and NODE_HOSTNAME values", async () => {
+    const kubeConfig = new k8s.KubeConfig();
+    kubeConfig.loadFromDefault();
+    const core = kubeConfig.makeApiClient(k8s.CoreV1Api);
+    const nodeNames = (
+      await core.listNamespacedPod({
+        namespace: "vector",
+        labelSelector: "app.kubernetes.io/name=vector",
+      })
+    ).items.flatMap(pod => (pod.spec?.nodeName ? [pod.spec.nodeName] : []));
+
+    expect(nodeNames.length).toBeGreaterThan(0);
+
+    const nodeQueries = await Promise.all(
+      nodeNames.map(nodeName =>
+        queryLogs(
+          `{collector="vector", job="varlogs", host=${JSON.stringify(nodeName)}, filename=~".+"}`,
+        ),
+      ),
+    );
+
+    nodeQueries.forEach(data => {
+      expect(data).toHaveProperty("status", "success");
+      expect(data.data.result.length).toBeGreaterThan(0);
+    });
   });
 
   test("Send log to Loki-write and validate in Loki-read", async () => {

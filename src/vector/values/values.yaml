@@ -67,7 +67,7 @@ customConfig:
       type: remap
       inputs: ["node_logs"]
       source: |
-        .node_name = "${NODE_HOSTNAME}"
+        .node_name = get_env_var!("NODE_HOSTNAME")
         if contains(string!(.file), "/var/log/kubernetes/") {
           .job = "kubernetes-logs"
         } else {
@@ -81,6 +81,12 @@ customConfig:
       inputs: ["pod_logs_labelled"]
       endpoint: "http://loki-gateway.loki.svc.cluster.local:80"
       path: "/loki/api/v1/push"
+      # Vector 0.57 confines event-driven sink values behind a fixed prefix for security.
+      # A prefix would change our Loki labels and break existing queries, so this issue
+      # tracks whether and how to migrate them:
+      # https://linear.app/defense-unicorns/issue/CORE-648/migrate-vector-loki-labels-away-from-unconfined-template-resolution
+      # Upstream change: https://vector.dev/releases/0.57.0/
+      dangerously_allow_unconfined_template_resolution: true
       encoding:
         codec: "raw_message"
       labels:
@@ -100,6 +106,12 @@ customConfig:
       inputs: ["node_logs_labelled"]
       endpoint: "http://loki-gateway.loki.svc.cluster.local:80"
       path: "/loki/api/v1/push"
+      # Vector 0.57 confines event-driven sink values behind a fixed prefix for security.
+      # A prefix would change our Loki labels and break existing queries, so this issue
+      # tracks whether and how to migrate them:
+      # https://linear.app/defense-unicorns/issue/CORE-648/migrate-vector-loki-labels-away-from-unconfined-template-resolution
+      # Upstream change: https://vector.dev/releases/0.57.0/
+      dangerously_allow_unconfined_template_resolution: true
       encoding:
         codec: "raw_message"
       labels:
