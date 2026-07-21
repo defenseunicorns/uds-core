@@ -213,12 +213,12 @@ describe("Loki Tests", () => {
 
     const data = isK3d
       ? await pollUntilSuccess(
-        () => queryLogs(`${nodeLogQuery} |= ${JSON.stringify(logMessage)}`),
-        result => result.status === "success" && result.data.result.length > 0,
-        "k3d node log to be available in Loki",
-        60000,
-        2000,
-      )
+          () => queryLogs(`${nodeLogQuery} |= ${JSON.stringify(logMessage)}`),
+          result => result.status === "success" && result.data.result.length > 0,
+          "k3d node log to be available in Loki",
+          60000,
+          2000,
+        )
       : await queryLogs(nodeLogQuery);
 
     expect(data).toHaveProperty("status", "success");
