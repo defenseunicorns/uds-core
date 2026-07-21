@@ -9305,6 +9305,9 @@
                           },
                           "type": "object"
                         },
+                        "dangerously_allow_unconfined_template_resolution": {
+                          "type": "boolean"
+                        },
                         "encoding": {
                           "properties": {
                             "codec": {
@@ -9360,6 +9363,9 @@
                             }
                           },
                           "type": "object"
+                        },
+                        "dangerously_allow_unconfined_template_resolution": {
+                          "type": "boolean"
                         },
                         "encoding": {
                           "properties": {
