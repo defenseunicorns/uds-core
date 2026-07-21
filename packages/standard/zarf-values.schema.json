@@ -2416,9 +2416,6 @@
                     "enabled": {
                       "type": "boolean"
                     },
-                    "interval": {
-                      "type": "string"
-                    },
                     "labels": {
                       "properties": {},
                       "type": "object"
@@ -2430,9 +2427,6 @@
                       "type": "array"
                     },
                     "scheme": {
-                      "type": "string"
-                    },
-                    "scrapeTimeout": {
                       "type": "string"
                     },
                     "targetLabels": {
@@ -2516,6 +2510,37 @@
             },
             "lifecycleHooks": {
               "properties": {},
+              "type": "object"
+            },
+            "listenerSet": {
+              "properties": {
+                "main": {
+                  "properties": {
+                    "annotations": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "apiVersion": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "labels": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "listeners": {
+                      "type": "array"
+                    },
+                    "parentRef": {
+                      "properties": {},
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
               "type": "object"
             },
             "livenessProbe": {
@@ -2626,6 +2651,10 @@
                 },
                 "lookupVolumeName": {
                   "type": "boolean"
+                },
+                "persistentVolumeClaimRetentionPolicy": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "size": {
                   "type": "string"
@@ -2855,9 +2884,6 @@
                 "enabled": {
                   "type": "boolean"
                 },
-                "interval": {
-                  "type": "string"
-                },
                 "labels": {
                   "properties": {},
                   "type": "object"
@@ -2872,9 +2898,6 @@
                   "type": "array"
                 },
                 "scheme": {
-                  "type": "string"
-                },
-                "scrapeTimeout": {
                   "type": "string"
                 },
                 "targetLabels": {
