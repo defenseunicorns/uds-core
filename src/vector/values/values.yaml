@@ -123,9 +123,8 @@ customConfig:
         filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
-        type: memory
-        max_events: 500
-        when_full: block
+        type: disk
+        max_size: 1073741824 # 1GiB
     prom_exporter:
       type: prometheus_exporter
       inputs: [internal_metrics]

@@ -9296,13 +9296,10 @@
                       "properties": {
                         "buffer": {
                           "properties": {
-                            "max_events": {
+                            "max_size": {
                               "type": "number"
                             },
                             "type": {
-                              "type": "string"
-                            },
-                            "when_full": {
                               "type": "string"
                             }
                           },

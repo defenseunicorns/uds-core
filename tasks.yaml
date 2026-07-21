@@ -7,6 +7,9 @@ variables:
 
   - name: LAYER
 
+  - name: K3D_DEBUG_EXTRA_ARGS
+    default: "--k3s-arg=--debug@server:* --k3s-arg=--log=/var/log/k3s.log@server:*"
+
 includes:
   - create: ./tasks/create.yaml
   - setup: ./tasks/setup.yaml
@@ -123,7 +126,7 @@ tasks:
     actions:
       - task: test:uds-core
         with:
-          K3D_EXTRA_ARGS: "--servers 3 --agents 2"
+          K3D_EXTRA_ARGS: "${K3D_DEBUG_EXTRA_ARGS} --servers 3 --agents 2"
 
   - name: test-uds-core-ha
     description: "Build and test UDS Core"

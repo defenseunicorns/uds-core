@@ -152,7 +152,7 @@ tasks:
     description: "Build and test UDS Core"
     inputs:
       K3D_EXTRA_ARGS:
-        default: ""
+        default: "${K3D_DEBUG_EXTRA_ARGS}"
         description: "Extra args for k3d"
     actions:
       - task: create:standard-package
@@ -168,7 +168,7 @@ tasks:
     description: "Build and test UDS Core e2e"
     inputs:
       K3D_EXTRA_ARGS:
-        default: ""
+        default: "${K3D_DEBUG_EXTRA_ARGS}"
         description: "Extra args for k3d"
     actions:
       - task: uds-core
