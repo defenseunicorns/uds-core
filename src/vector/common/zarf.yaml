@@ -20,7 +20,7 @@ components:
             targetPath: .
       - name: vector
         url: https://helm.vector.dev
-        version: 0.56.0
+        version: 0.57.0
         namespace: vector
         gitPath: charts/vector
         valuesFiles:
