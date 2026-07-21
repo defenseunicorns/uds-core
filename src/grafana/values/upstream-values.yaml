@@ -11,13 +11,13 @@ sidecar:
 image:
   registry: docker.io
   repository: grafana/grafana
-  tag: 13.1.0
+  tag: 13.1.1
 
 initChownData:
   image:
     registry: docker.io
     repository: library/busybox
-    tag: 1.37.0
+    tag: 1.38.0
 
 downloadDashboardsImage:
   registry: docker.io

@@ -4,7 +4,7 @@
 image:
   registry: cgr.dev
   repository: defenseunicorns.com/grafana-fips
-  tag: v13.1.0
+  tag: v13.1.1
 
 initChownData:
   image:
