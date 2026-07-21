@@ -21342,10 +21342,13 @@
                       "properties": {
                         "buffer": {
                           "properties": {
-                            "max_size": {
+                            "max_events": {
                               "type": "number"
                             },
                             "type": {
+                              "type": "string"
+                            },
+                            "when_full": {
                               "type": "string"
                             }
                           },
