@@ -183,12 +183,19 @@ describe("Loki Tests", () => {
 
     expect(nodeName).toBeDefined();
 
-    const data = await queryLogs(
-      `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
+    const data = await pollUntilSuccess(
+      () =>
+        queryLogs(
+          `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
+        ),
+      result => result.status === "success" && result.data.result.length > 0,
+      "Vector node logs with the expected host label to be available in Loki",
+      60000,
+      2000,
     );
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  });
+  }, 65000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
