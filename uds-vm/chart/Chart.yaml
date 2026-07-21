@@ -1,0 +1,15 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v2
+name: uds-kubevirt-config
+description: UDS VM chart for KubeVirt and CDI integration with UDS Core
+
+type: application
+
+# x-release-please-start-version
+version: 1.7.0
+# x-release-please-end
+# x-release-please-start-version
+appVersion: 1.7.0
+# x-release-please-end

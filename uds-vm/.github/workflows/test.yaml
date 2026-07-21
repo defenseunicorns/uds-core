@@ -1,0 +1,86 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Test
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+on:
+  pull_request:
+    branches: [main]
+    types: [milestoned, opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.png"
+      - "**.jpg"
+      - "**.svg"
+      - "**.gif"
+      - "CODEOWNERS"
+      - "LICENSE*"
+  workflow_call:
+
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Build uds-vm package
+        run: uds run -f tasks.yaml build --set ZARF_ARCHITECTURE=${{ matrix.architecture }} --no-progress
+
+      - name: Read package version
+        id: version
+        run: echo "value=$(uds zarf tools yq e '.metadata.version' zarf.yaml)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: uds-vm-package-${{ matrix.architecture }}
+          path: build/zarf-package-uds-vm-${{ matrix.architecture }}-${{ steps.version.outputs.value }}-upstream.tar.zst
+          retention-days: 1
+
+  k3d-integration:
+    needs: build-package
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+        with:
+          installK3d: "true"
+
+      - name: Clean up runner disk
+        continue-on-error: true
+        run: sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+
+      # This currently fails until a released uds-core includes the KubeVirt Istio policy exceptions from this worktree.
+      - name: Run k3d integration suite against latest released uds-core baseline
+        run: uds run -f tasks.yaml test-k3d --no-progress
+
+      - name: Debug output
+        if: ${{ always() }}
+        uses: ./.github/actions/debug-output
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -k3d

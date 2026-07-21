@@ -4,17 +4,18 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/zarf/main/zarf.schema.json
 kind: ZarfPackageConfig
 metadata:
-  name: core-kubevirt
-  description: "KubeVirt and CDI for UDS Core — VM workload support with native Istio mesh integration"
+  name: uds-vm
+  description: "UDS VM runtime package with KubeVirt and CDI for VM workload support on UDS Core"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
   version: "1.7.0"
   # x-release-please-end
   annotations:
-    dev.uds.title: UDS Core (KubeVirt)
+    dev.uds.title: UDS VM
     dev.uds.tagline: Native VM workload support for UDS Core
     dev.uds.categories: UDS-Core,Virtualization
     dev.uds.keywords: uds,kubevirt,cdi,virtualmachine,vm
+    org.opencontainers.image.source: https://github.com/defenseunicorns/uds-vm
 
 components:
   - name: kubevirt-crd
@@ -58,7 +59,9 @@ components:
     charts:
       - name: uds-kubevirt-config
         namespace: kubevirt
-        version: 0.1.0
+        # x-release-please-start-version
+        version: 1.7.0
+        # x-release-please-end
         localPath: chart
         valuesFiles:
           - values/common-values.yaml

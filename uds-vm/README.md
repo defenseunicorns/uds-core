@@ -1,36 +1,41 @@
-# UDS KubeVirt
+# UDS VM
 
-Virtual machine support for [UDS Core](https://github.com/defenseunicorns/uds-core). Deploys [KubeVirt](https://kubevirt.io) and [CDI](https://kubevirt.io/containerized-data-importer/) with Istio mesh integration, monitoring, and policy enforcement.
+UDS VM is the UDS capability for virtual machine workloads on [UDS Core](https://github.com/defenseunicorns/uds-core). It deploys [KubeVirt](https://kubevirt.io) and [CDI](https://kubevirt.io/containerized-data-importer/) with Istio mesh integration, monitoring, and policy enforcement.
 
 ## Prerequisites
 
 - UDS Core deployed on the cluster
 - Kubernetes cluster with hardware virtualization (or `useEmulation: true` for k3d)
-- `zarf` CLI
+- `uds` CLI
 
 ## Quick Start
 
 ```bash
 # Build the package
-zarf package create .
+uds zarf package create . --flavor upstream
 
 # Deploy (standalone, assumes UDS Core is already running)
-zarf package deploy zarf-package-core-kubevirt-*.tar.zst --set KUBEVIRT_USE_EMULATION=true
+uds zarf package deploy build/zarf-package-uds-vm-amd64-$(uds zarf tools yq e '.metadata.version' zarf.yaml)-upstream.tar.zst --set KUBEVIRT_USE_EMULATION=true
 ```
 
-Or use the integrated deploy tasks:
+You can also use the repo tasks as the source of truth for local workflows:
 
 ```bash
 # Real cluster with UDS Core already running
-uds run -f package/tasks.yaml deploy
+uds run -f tasks.yaml deploy
 
-# k3d (deploys published slim-dev core, then builds and deploys VM support)
-uds run -f package/tasks.yaml deploy-k3d
+# k3d (clones the latest released uds-core baseline, deploys its slim-dev bundle, then builds and deploys VM support)
+uds run -f tasks.yaml deploy-k3d
+
+# Full k3d integration flow, including cluster-backed Vitest assertions
+uds run -f tasks.yaml test-k3d
 ```
 
-The `deploy` task builds the local `core-kubevirt` package and deploys it onto an existing UDS Core cluster. The `deploy-k3d` task deploys the published `k3d-core-slim-dev` bundle, then builds and deploys the local `core-kubevirt` package and imports container disk images for k3d.
+The `deploy` task builds the local `uds-vm` package and deploys it onto an existing UDS Core cluster. The `deploy-k3d` task clones the latest released `uds-core` tag, builds and deploys that release's `k3d-core-slim-dev` bundle, then builds and deploys the local `uds-vm` package and imports container disk images for k3d.
 
 ## What Gets Deployed
+
+The package installs the following components:
 
 | Component | Namespace | Purpose |
 |-----------|-----------|---------|
@@ -44,7 +49,7 @@ The `deploy` task builds the local `core-kubevirt` package and deploys it onto a
 
 ## Deploying a VM
 
-1. Create a namespace with a Package CR:
+Start by creating a namespace with a `Package` CR:
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -59,7 +64,7 @@ spec:
     peerauthentication: {}
 ```
 
-2. Create a VirtualMachine (no Istio annotations needed):
+Next, create a `VirtualMachine`. You do not need to add Istio annotations yourself:
 
 ```yaml
 apiVersion: kubevirt.io/v1
@@ -95,7 +100,7 @@ The `status.sidecar.istio.io/port: "0"` annotation removes the istio-proxy readi
 
 ## Integration with UDS Core
 
-This package requires the following UDS Core capabilities:
+This package relies on the following UDS Core capabilities:
 
 | Capability | Purpose |
 |------------|---------|
@@ -107,7 +112,7 @@ This package requires the following UDS Core capabilities:
 
 ## k3d Development
 
-Running on k3d requires additional setup:
+Running on k3d requires additional setup.
 
 ### Emulation Mode
 
@@ -135,22 +140,24 @@ This is a k3d-specific workaround. On real clusters with routable registries, im
 CDI needs a writable scratch space. Patch the CDI CR after deploy:
 
 ```bash
-kubectl patch cdi cdi --type merge -p '{"spec":{"scratchSpaceStorageClass":"local-path"}}'
+uds zarf tools kubectl patch cdi cdi --type merge -p '{"spec":{"scratchSpaceStorageClass":"local-path"}}'
 ```
 
 ## Testing
 
-Run the integration tests:
+Use the repo tasks to run the integration coverage:
 
 ```bash
-# All tests
-zarf tools yq eval '.tasks.all' tasks.yaml
+uds run -f tasks.yaml all
+uds run -f tasks.yaml test-k3d
 
 # Individual tests
-zarf tools yq eval '.tasks.vm-test' tasks.yaml
-zarf tools yq eval '.tasks.podinfo-vm-test' tasks.yaml
-zarf tools yq eval '.tasks.live-migration-test' tasks.yaml
+uds run -f tasks.yaml vm-test
+uds run -f tasks.yaml podinfo-vm-test
+uds run -f tasks.yaml live-migration-test
 ```
+
+`npm test` runs the Vitest cluster integration suite and requires an active kube context. `uds run -f tasks.yaml test-k3d` is the closest match to CI because it stands up the latest released `uds-core` baseline before it runs the VM-specific assertions.
 
 ## Windows VMs
 

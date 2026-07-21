@@ -1,0 +1,38 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Lint
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+    types: [milestoned, opened, reopened, synchronize]
+    paths-ignore:
+      - "**.md"
+      - "**.png"
+      - "**.jpg"
+      - "**.svg"
+      - "**.gif"
+      - "CODEOWNERS"
+      - "LICENSE*"
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Run lint checks
+        uses: ./.github/actions/lint-check

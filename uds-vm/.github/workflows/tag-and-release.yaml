@@ -1,0 +1,59 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Release UDS VM
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-new-version:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      release_created: ${{ steps.tag.outputs.release_created }}
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+      version: ${{ steps.tag.outputs.version }}
+    steps:
+      - name: Create release tag
+        id: tag
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          target-branch: ${{ github.ref_name }}
+
+  release:
+    needs: tag-new-version
+    if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
+    permissions:
+      contents: write
+      id-token: write
+      packages: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ needs.tag-new-version.outputs.tag_name }}
+
+      - name: Setup environment
+        uses: ./.github/actions/setup
+
+      - name: Build release package
+        run: uds run -f tasks.yaml build --set ZARF_ARCHITECTURE=${{ matrix.architecture }} --no-progress
+
+      - name: Upload package to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload ${{ needs.tag-new-version.outputs.tag_name }} build/zarf-package-uds-vm-${{ matrix.architecture }}-${{ needs.tag-new-version.outputs.version }}-upstream.tar.zst --clobber

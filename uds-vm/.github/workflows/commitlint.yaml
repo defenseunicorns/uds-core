@@ -1,0 +1,22 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: PR Title and Commit Lint
+
+permissions:
+  pull-requests: read
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+    types: [milestoned, opened, reopened, edited, synchronize]
+
+concurrency:
+  group: commitlint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-title-lint:
+    name: PR Title Lint
+    uses: defenseunicorns/uds-common/.github/workflows/callable-commitlint.yaml@3a225748bd88edb257a3e827f40b22167fe75412 # v1.26.1

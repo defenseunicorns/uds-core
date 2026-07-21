@@ -30,8 +30,8 @@ describe("kubevirt istio policy exceptions", () => {
 
   describe("virt-launcher traffic interception allowances", () => {
     it("should allow kubevirtInterfaces annotation on virt-launcher pod in kubevirt namespace", async () => {
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "virt-launcher-test-vm1",
             namespace: KV_WORKLOAD_NS,
@@ -50,20 +50,18 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(pod => {
-          expect(pod).toMatchObject({
-            metadata: {
-              name: "virt-launcher-test-vm1",
-              namespace: KV_WORKLOAD_NS,
-            },
-          });
-        });
+        }),
+      ).resolves.toMatchObject({
+        metadata: {
+          name: "virt-launcher-test-vm1",
+          namespace: KV_WORKLOAD_NS,
+        },
+      });
     });
 
     it("should allow reroute-virtual-interfaces annotation on virt-launcher pod in kubevirt namespace", async () => {
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "virt-launcher-test-vm2",
             namespace: KV_WORKLOAD_NS,
@@ -82,30 +80,18 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(pod => {
-          expect(pod).toMatchObject({
-            metadata: {
-              name: "virt-launcher-test-vm2",
-              namespace: KV_WORKLOAD_NS,
-            },
-          });
-        });
+        }),
+      ).resolves.toMatchObject({
+        metadata: {
+          name: "virt-launcher-test-vm2",
+          namespace: KV_WORKLOAD_NS,
+        },
+      });
     });
 
     it("should deny kubevirtInterfaces annotation on non-virt-launcher pod in kubevirt namespace", async () => {
-      const expected = (e: Error) =>
-        expect(e).toMatchObject({
-          ok: false,
-          data: {
-            message: expect.stringContaining(
-              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
-            ),
-          },
-        });
-
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "regular-pod-kubevirt-annotation",
             namespace: KV_WORKLOAD_NS,
@@ -121,24 +107,20 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(failIfReached)
-        .catch(expected);
+        }),
+      ).rejects.toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining(
+            "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
+          ),
+        },
+      });
     });
 
     it("should deny kubevirtInterfaces annotation on virt-launcher pod in non-kubevirt namespace", async () => {
-      const expected = (e: Error) =>
-        expect(e).toMatchObject({
-          ok: false,
-          data: {
-            message: expect.stringContaining(
-              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
-            ),
-          },
-        });
-
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "virt-launcher-wrong-ns",
             namespace: "policy-tests",
@@ -154,16 +136,22 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(failIfReached)
-        .catch(expected);
+        }),
+      ).rejects.toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining(
+            "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
+          ),
+        },
+      });
     });
   });
 
   describe("CDI pod sidecar injection allowances", () => {
     it("should allow inject=false on importer pod in kubevirt namespace", async () => {
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "importer-test-dv1",
             namespace: KV_WORKLOAD_NS,
@@ -182,20 +170,18 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(pod => {
-          expect(pod).toMatchObject({
-            metadata: {
-              name: "importer-test-dv1",
-              namespace: KV_WORKLOAD_NS,
-            },
-          });
-        });
+        }),
+      ).resolves.toMatchObject({
+        metadata: {
+          name: "importer-test-dv1",
+          namespace: KV_WORKLOAD_NS,
+        },
+      });
     });
 
     it("should allow inject=false on cdi-upload pod in kubevirt namespace", async () => {
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "cdi-upload-test-dv1",
             namespace: KV_WORKLOAD_NS,
@@ -214,20 +200,18 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(pod => {
-          expect(pod).toMatchObject({
-            metadata: {
-              name: "cdi-upload-test-dv1",
-              namespace: KV_WORKLOAD_NS,
-            },
-          });
-        });
+        }),
+      ).resolves.toMatchObject({
+        metadata: {
+          name: "cdi-upload-test-dv1",
+          namespace: KV_WORKLOAD_NS,
+        },
+      });
     });
 
     it("should allow inject=false on cdi-clone pod in kubevirt namespace", async () => {
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "cdi-clone-test-dv1",
             namespace: KV_WORKLOAD_NS,
@@ -246,30 +230,18 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(pod => {
-          expect(pod).toMatchObject({
-            metadata: {
-              name: "cdi-clone-test-dv1",
-              namespace: KV_WORKLOAD_NS,
-            },
-          });
-        });
+        }),
+      ).resolves.toMatchObject({
+        metadata: {
+          name: "cdi-clone-test-dv1",
+          namespace: KV_WORKLOAD_NS,
+        },
+      });
     });
 
     it("should deny inject=false on regular pod in kubevirt namespace", async () => {
-      const expected = (e: Error) =>
-        expect(e).toMatchObject({
-          ok: false,
-          data: {
-            message: expect.stringContaining(
-              "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation sidecar.istio.io/inject",
-            ),
-          },
-        });
-
-      return K8s(kind.Pod)
-        .Apply({
+      await expect(
+        K8s(kind.Pod).Apply({
           metadata: {
             name: "regular-pod-inject-false",
             namespace: KV_WORKLOAD_NS,
@@ -285,9 +257,15 @@ describe("kubevirt istio policy exceptions", () => {
               },
             ],
           },
-        })
-        .then(failIfReached)
-        .catch(expected);
+        }),
+      ).rejects.toMatchObject({
+        ok: false,
+        data: {
+          message: expect.stringContaining(
+            "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation sidecar.istio.io/inject",
+          ),
+        },
+      });
     });
   });
 });

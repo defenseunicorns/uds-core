@@ -12,7 +12,7 @@ This guide walks you through deploying a Windows Server 2022 VM on KubeVirt with
 
 ## Before you begin
 
-This approach uploads a stock Windows ISO via CDI, then uses a ConfigMap-backed `sysprep` volume to provide the autounattend answer file at boot time. Unlike the Packer-based approach in `package/windows-image/`, this does not require KVM on the build host or a pre-built QCOW2. The tradeoff is that the Windows installer runs inside the cluster (taking 15-30 minutes depending on hardware).
+This approach uploads a stock Windows ISO via CDI, then uses a ConfigMap-backed `sysprep` volume to provide the autounattend answer file at boot time. Unlike a Packer-based image build flow, this does not require KVM on the build host or a pre-built QCOW2. The tradeoff is that the Windows installer runs inside the cluster (taking 15-30 minutes depending on hardware).
 
 The key insight that makes this work: KubeVirt's `sysprep` volume type injects an answer file as a CD-ROM, but you must also add an explicit `cdrom` disk entry with `bus: sata` for Windows Setup to detect it. Without the explicit disk entry, KubeVirt attaches it as a hard disk and Windows Setup ignores it.
 
@@ -408,4 +408,4 @@ Then delete the stuck ztunnel pod to trigger a restart.
 - [KubeVirt User Guide: CDI](https://kubevirt.io/user-guide/storage/containerized_data_importer/)
 - [UDS VM Architecture](./uds-vm-architecture.md) - Architecture decisions for VM support
 - [Out-of-Core VM Support POC](./out-of-core-vm-support-poc.md) - POC status and integration contract
-- [Windows Server Core ContainerDisk](../package/windows-image/README.md) - Packer-based image building alternative
+- Packer-based Windows image build flow is not yet present in this extracted repo layout

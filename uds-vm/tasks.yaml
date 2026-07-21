@@ -10,7 +10,7 @@ tasks:
       - task: health-check
 
   - name: deploy-k3d
-    description: "Deploy published slim-dev core, then build and deploy UDS VM on k3d"
+    description: "Clone the latest released uds-core baseline, deploy its slim-dev bundle, then build and deploy UDS VM on k3d"
     actions:
       - task: deploy-core
       - task: build
@@ -18,17 +18,69 @@ tasks:
       - task: import-k3d-images
       - task: health-check
 
+  - name: test-k3d
+    description: "Run the full k3d integration flow against the latest released uds-core baseline"
+    actions:
+      - task: deploy-k3d
+      - task: vm-test
+      - task: podinfo-vm-test
+      - task: test-node
+
   - name: build
     description: "Build the UDS VM Zarf package"
     actions:
-      - description: Build core-kubevirt package
-        cmd: uds zarf package create package --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+      - description: Clean build output
+        cmd: rm -rf build && mkdir -p build
+      - description: Build uds-vm package
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          uds zarf package create . --flavor upstream --architecture="${ARCHITECTURE}" --confirm --no-progress --output build
+
+  - name: typecheck
+    description: "Run TypeScript type checks"
+    actions:
+      - description: Install dependencies
+        cmd: npm ci
+      - description: Run typecheck
+        cmd: npm run typecheck
+
+  - name: test-node
+    description: "Run Vitest cluster integration tests against the active kube context"
+    actions:
+      - description: Install dependencies
+        cmd: npm ci
+      - description: Run Vitest suite
+        cmd: npm test
 
   - name: deploy-core
-    description: "Deploy the published UDS Core slim-dev bundle on k3d"
+    description: "Clone and deploy the latest released uds-core slim-dev baseline on k3d"
     actions:
-      - description: Deploy the published slim-dev bundle
-        cmd: uds deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-slim-dev:latest --set INSECURE_ADMIN_PASSWORD_GENERATION=true --confirm --no-progress
+      - description: Resolve the latest uds-core release tag
+        cmd: |
+          set -e
+          mkdir -p .cache
+          git ls-remote --refs --tags https://github.com/defenseunicorns/uds-core.git "v*" \
+            | awk '{print $2}' \
+            | sed 's#refs/tags/##' \
+            | sort -V \
+            | tail -n 1 > .cache/latest-uds-core-tag
+          test -s .cache/latest-uds-core-tag
+          printf 'Using uds-core release %s\n' "$(cat .cache/latest-uds-core-tag)"
+      - description: Clone the latest uds-core release for this test run
+        cmd: |
+          set -e
+          CORE_REF="$(cat .cache/latest-uds-core-tag)"
+          mkdir -p .cache
+          rm -rf .cache/uds-core
+          git clone --depth 1 --branch "${CORE_REF}" https://github.com/defenseunicorns/uds-core.git .cache/uds-core
+          ln -sf "$(command -v uds)" .cache/uds-core/uds
+      - description: Build and deploy the released uds-core slim-dev bundle from the cloned checkout
+        cmd: |
+          set -e
+          ROOT_DIR="$(pwd)"
+          ARCHITECTURE="$("${ROOT_DIR}/scripts/resolve-architecture.sh" "${ZARF_ARCHITECTURE:-}")"
+          cd .cache/uds-core
+          ./uds run slim-dev --set ZARF_ARCHITECTURE="${ARCHITECTURE}" --set INSECURE_ADMIN_PASSWORD_GENERATION=true --no-progress
       - description: Wait for Istiod
         wait:
           cluster:
@@ -48,7 +100,10 @@ tasks:
     description: "Deploy UDS VM (KubeVirt + CDI) on a real cluster"
     actions:
       - description: Deploy UDS VM package
-        cmd: uds zarf package deploy build/zarf-package-core-kubevirt-"${ZARF_ARCHITECTURE}"-1.7.0.tar.zst --confirm --no-progress
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          PACKAGE_VERSION="$(uds zarf tools yq e '.metadata.version' zarf.yaml)"
+          uds zarf package deploy build/zarf-package-uds-vm-"${ARCHITECTURE}"-"${PACKAGE_VERSION}"-upstream.tar.zst --confirm --no-progress
       - description: Wait for KubeVirt operator
         wait:
           cluster:
@@ -74,7 +129,10 @@ tasks:
     description: "Deploy UDS VM on k3d (emulation + CDI scratch space)"
     actions:
       - description: Deploy UDS VM package with emulation
-        cmd: uds zarf package deploy build/zarf-package-core-kubevirt-"${ZARF_ARCHITECTURE}"-1.7.0.tar.zst --set KUBEVIRT_USE_EMULATION=true --confirm --no-progress
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          PACKAGE_VERSION="$(uds zarf tools yq e '.metadata.version' zarf.yaml)"
+          uds zarf package deploy build/zarf-package-uds-vm-"${ARCHITECTURE}"-"${PACKAGE_VERSION}"-upstream.tar.zst --set KUBEVIRT_USE_EMULATION=true --confirm --no-progress
       - description: Wait for KubeVirt operator
         wait:
           cluster:
@@ -120,8 +178,9 @@ tasks:
     actions:
       - task: health-check
       - task: vm-test
-      - task: live-migration-test
       - task: podinfo-vm-test
+      - task: test-node
+      - task: live-migration-test
 
   - name: health-check
     actions:
@@ -177,9 +236,15 @@ tasks:
     description: "Deploy and verify a basic container-disk VM"
     actions:
       - description: Create vm-test zarf package
-        cmd: uds zarf package create package/tests/vm-test --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          rm -f build/zarf-package-vm-test-"${ARCHITECTURE}"-*.tar.zst
+          uds zarf package create tests/packages/vm-test --architecture="${ARCHITECTURE}" --confirm --no-progress --output build
       - description: Deploy vm-test zarf package
-        cmd: uds zarf package deploy build/zarf-package-vm-test-"${ZARF_ARCHITECTURE}"-0.0.1.tar.zst --confirm --no-progress
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          PACKAGE_VERSION="$(uds zarf tools yq e '.metadata.version' tests/packages/vm-test/zarf.yaml)"
+          uds zarf package deploy build/zarf-package-vm-test-"${ARCHITECTURE}"-"${PACKAGE_VERSION}".tar.zst --confirm --no-progress
       - description: Start testvm
         cmd: uds zarf tools kubectl patch virtualmachine testvm -n vm-test --type merge -p '{"spec":{"runStrategy":"Always"}}'
       - description: Wait for testvm VirtualMachine to be ready
@@ -214,9 +279,15 @@ tasks:
     description: "Deploy and verify a UDS-managed VM app with Istio sidecar (requires native KubeVirt Pepr support)"
     actions:
       - description: Create podinfo-vm zarf package
-        cmd: uds zarf package create package/tests/podinfo-vm --architecture="${ZARF_ARCHITECTURE}" --confirm --no-progress --output build
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          rm -f build/zarf-package-podinfo-vm-"${ARCHITECTURE}"-*.tar.zst
+          uds zarf package create tests/packages/podinfo-vm --architecture="${ARCHITECTURE}" --confirm --no-progress --output build
       - description: Deploy podinfo-vm zarf package
-        cmd: uds zarf package deploy build/zarf-package-podinfo-vm-"${ZARF_ARCHITECTURE}"-0.0.1.tar.zst --confirm --no-progress
+        cmd: |
+          ARCHITECTURE="$(./scripts/resolve-architecture.sh "${ZARF_ARCHITECTURE:-}")"
+          PACKAGE_VERSION="$(uds zarf tools yq e '.metadata.version' tests/packages/podinfo-vm/zarf.yaml)"
+          uds zarf package deploy build/zarf-package-podinfo-vm-"${ARCHITECTURE}"-"${PACKAGE_VERSION}".tar.zst --confirm --no-progress
       - description: Wait for podinfo-vm UDS Package to be ready
         wait:
           cluster:
@@ -263,7 +334,7 @@ tasks:
           uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.spec.initContainers[*].name}' | grep istio-proxy
       - description: Verify non-virt-launcher pod cannot use KubeVirt Istio annotation
         cmd: |
-          if uds zarf tools kubectl apply -f package/tests/podinfo-vm/non-virt-kubevirt-annotation-pod.yaml >/tmp/non-virt-kubevirt-annotation.out 2>&1; then
+          if uds zarf tools kubectl apply -f tests/packages/podinfo-vm/non-virt-kubevirt-annotation-pod.yaml >/tmp/non-virt-kubevirt-annotation.out 2>&1; then
             echo "non-virt-launcher pod unexpectedly admitted"
             exit 1
           fi

@@ -1,0 +1,58 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>defenseunicorns/uds-common//config/renovate.json5",
+    ":semanticCommits",
+    ":semanticPrefixFixDepsChoreOthers",
+    "replacements:all",
+    "workarounds:all"
+  ],
+  "branchConcurrentLimit": 0,
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "packageRules": [
+    {
+      "matchFileNames": [
+        ".github/workflows/**",
+        ".github/actions/**"
+      ],
+      "groupName": "support-deps",
+      "commitMessageTopic": "support-deps"
+    },
+    {
+      "matchFileNames": [
+        "chart/**",
+        "values/*.yaml",
+        "zarf.yaml",
+        "tasks.yaml",
+        "k3d-kubevirt-dev/uds-bundle.yaml",
+        "tests/packages/**/zarf.yaml"
+      ],
+      "groupName": "vm-stack",
+      "commitMessageTopic": "vm-stack"
+    },
+    {
+      "matchFileNames": [
+        "package.json",
+        "package-lock.json",
+        "tsconfig.json",
+        "tests/**/*.ts"
+      ],
+      "groupName": "node-tooling",
+      "commitMessageTopic": "node-tooling"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/\\.github/workflows/.*\\.ya?ml$/",
+        "/\\.github/actions/.*/action\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\n\\s+version: ?[\\\"']?(?<currentValue>[^\\\"'\\n]+)[\\\"']?"
+      ],
+      "versioningTemplate": "{{{versioning}}}"
+    }
+  ]
+}

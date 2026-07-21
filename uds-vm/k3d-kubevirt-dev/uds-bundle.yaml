@@ -4,8 +4,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/defenseunicorns/uds-cli/refs/heads/main/uds.schema.json
 kind: UDSBundle
 metadata:
-  name: k3d-core-kubevirt-dev
-  description: UDS Core slim-dev with KubeVirt — for local development and teammate experimentation
+  name: k3d-uds-vm-dev
+  description: UDS Core slim-dev with UDS VM for local development and teammate experimentation
   # x-release-please-start-version
   version: "1.7.0"
   # x-release-please-end
@@ -123,7 +123,7 @@ packages:
               path: insecureAdminPasswordGeneration.enabled
               default: "true"
 
-  - name: core-kubevirt
+  - name: uds-vm
     path: ../build/
     # x-release-please-start-version
     ref: 1.7.0

@@ -1,0 +1,37 @@
+yaml-files:
+  - "**/*.y*ml"
+  - .yamllint
+
+ignore:
+  - chart/templates/
+
+rules:
+  anchors: enable
+  braces: enable
+  brackets: enable
+  colons: enable
+  commas: enable
+  comments:
+    level: warning
+  comments-indentation:
+    level: warning
+  document-end: disable
+  document-start:
+    level: warning
+  empty-lines: enable
+  empty-values: disable
+  float-values: disable
+  hyphens: enable
+  indentation: enable
+  key-duplicates: enable
+  key-ordering: disable
+  line-length: disable
+  new-line-at-end-of-file: enable
+  new-lines: enable
+  octal-values: disable
+  quoted-strings:
+    required: only-when-needed
+    quote-type: double
+  trailing-spaces: enable
+  truthy:
+    level: warning

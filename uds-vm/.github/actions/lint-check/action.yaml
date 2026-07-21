@@ -8,7 +8,7 @@ runs:
   using: composite
   steps:
     - name: Install dependencies
-      run: npm install
+      run: npm ci
       shell: bash
 
     - name: Run TypeScript type check

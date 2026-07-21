@@ -1,12 +1,12 @@
 {
   "name": "uds-vm",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.7.0",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

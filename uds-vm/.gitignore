@@ -1,0 +1,10 @@
+.cache/
+.idea/
+build/
+dist/
+node_modules/
+.DS_Store
+*.tar
+*.tar.zst
+zarf-config.yaml
+zarf-sbom/

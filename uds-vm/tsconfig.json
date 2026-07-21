@@ -7,6 +7,7 @@
     "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "rootDir": ".",
+    "skipLibCheck": true,
     "strict": true,
     "target": "ES2022",
     "types": ["vitest/globals"]

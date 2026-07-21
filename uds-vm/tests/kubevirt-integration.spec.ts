@@ -37,13 +37,13 @@ describe("kubevirt namespace label integration", () => {
       },
     });
 
-    const ns = await K8s(kind.Namespace).Get(KV_INTEGRATION_NS);
-    expect(ns.metadata?.labels?.["uds.dev/kubevirt-workload"]).toBe("true");
+    const namespace = await K8s(kind.Namespace).Get(KV_INTEGRATION_NS);
+    expect(namespace.metadata?.labels?.["uds.dev/kubevirt-workload"]).toBe("true");
   });
 
   it("should allow virt-launcher pod in kubevirt-labeled namespace", async () => {
-    return K8s(kind.Pod)
-      .Apply({
+    await expect(
+      K8s(kind.Pod).Apply({
         metadata: {
           name: "virt-launcher-integration-vm1",
           namespace: KV_INTEGRATION_NS,
@@ -63,20 +63,18 @@ describe("kubevirt namespace label integration", () => {
             },
           ],
         },
-      })
-      .then(pod => {
-        expect(pod).toMatchObject({
-          metadata: {
-            name: "virt-launcher-integration-vm1",
-            namespace: KV_INTEGRATION_NS,
-          },
-        });
-      });
+      }),
+    ).resolves.toMatchObject({
+      metadata: {
+        name: "virt-launcher-integration-vm1",
+        namespace: KV_INTEGRATION_NS,
+      },
+    });
   });
 
   it("should allow CDI importer pod with inject=false in kubevirt-labeled namespace", async () => {
-    return K8s(kind.Pod)
-      .Apply({
+    await expect(
+      K8s(kind.Pod).Apply({
         metadata: {
           name: "importer-integration-dv1",
           namespace: KV_INTEGRATION_NS,
@@ -95,30 +93,18 @@ describe("kubevirt namespace label integration", () => {
             },
           ],
         },
-      })
-      .then(pod => {
-        expect(pod).toMatchObject({
-          metadata: {
-            name: "importer-integration-dv1",
-            namespace: KV_INTEGRATION_NS,
-          },
-        });
-      });
+      }),
+    ).resolves.toMatchObject({
+      metadata: {
+        name: "importer-integration-dv1",
+        namespace: KV_INTEGRATION_NS,
+      },
+    });
   });
 
   it("should deny kubevirtInterfaces on regular pod even in kubevirt namespace", async () => {
-    const expected = (e: Error) =>
-      expect(e).toMatchObject({
-        ok: false,
-        data: {
-          message: expect.stringContaining(
-            "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
-          ),
-        },
-      });
-
-    return K8s(kind.Pod)
-      .Apply({
+    await expect(
+      K8s(kind.Pod).Apply({
         metadata: {
           name: "regular-pod-integration",
           namespace: KV_INTEGRATION_NS,
@@ -134,9 +120,15 @@ describe("kubevirt namespace label integration", () => {
             },
           ],
         },
-      })
-      .then(() => expect(true).toBe(false))
-      .catch(expected);
+      }),
+    ).rejects.toMatchObject({
+      ok: false,
+      data: {
+        message: expect.stringContaining(
+          "The following istio annotations or labels can modify secure traffic interception are not allowed: annotation traffic.sidecar.istio.io/kubevirtInterfaces",
+        ),
+      },
+    });
   });
 
   it("should remove kubevirt-workload label from namespace", async () => {
@@ -145,13 +137,12 @@ describe("kubevirt namespace label integration", () => {
         name: KV_INTEGRATION_NS,
         labels: {
           "istio-injection": "disabled",
-          "uds.dev/kubevirt-workload": null,
           "zarf.dev/agent": "ignore",
         },
       },
     });
 
-    const ns = await K8s(kind.Namespace).Get(KV_INTEGRATION_NS);
-    expect(ns.metadata?.labels?.["uds.dev/kubevirt-workload"]).toBeUndefined();
+    const namespace = await K8s(kind.Namespace).Get(KV_INTEGRATION_NS);
+    expect(namespace.metadata?.labels?.["uds.dev/kubevirt-workload"]).toBeUndefined();
   });
 });
