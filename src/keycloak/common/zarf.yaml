@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -15,8 +15,18 @@ components:
         # renovate: datasource=docker depName=quay.io/keycloak/keycloak versioning=semver
         version: 26.7.0
         localPath: ../chart
-        valuesFiles:
-          - ../chart/values.yaml
+        templatedValuesFiles:
+          - ../values/values.yaml
+        values:
+          - sourcePath: .keycloak.keycloak
+            targetPath: .
+            excludePaths:
+              - .keycloak.keycloak.image
+              - .keycloak.keycloak.service
+              - .keycloak.keycloak.podSecurityContext
+              - .keycloak.keycloak.securityContext
+              - .keycloak.keycloak.serviceMonitor
+              - .keycloak.keycloak.prometheusRule
     actions:
       onDeploy:
         before:

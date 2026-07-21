@@ -15,6 +15,9 @@ components:
         namespace: monitoring
         version: 0.1.0
         localPath: ../chart
+        values:
+          - sourcePath: .kube-prometheus-stack.uds-prometheus-config
+            targetPath: .
       # @lulaStart 4yw40198-a55e-4769-a5de-44ffe7636093
       - name: kube-prometheus-stack
         namespace: monitoring
@@ -23,6 +26,36 @@ components:
         version: 87.16.1
         valuesFiles:
           - "../values/kube-prometheus-stack-values.yaml"
+        values:
+          - sourcePath: .kube-prometheus-stack.kube-prometheus-stack
+            targetPath: .
+            excludePaths:
+              - .kube-prometheus-stack.kube-prometheus-stack.global.imageRegistry
+              - .kube-prometheus-stack.kube-prometheus-stack.alertmanager.alertmanagerSpec.image
+              - .kube-prometheus-stack.kube-prometheus-stack.crds.upgradeJob.image
+              - .kube-prometheus-stack.kube-prometheus-stack.kube-state-metrics.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheus.prometheusSpec.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheus-node-exporter.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.deployment.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patch.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.prometheusConfigReloader.image
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.thanosImage
+              - .kube-prometheus-stack.kube-prometheus-stack.thanosRuler.thanosRulerSpec.image
+              - .kube-prometheus-stack.kube-prometheus-stack.alertmanager.alertmanagerSpec.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.crds.upgradeJob.containerSecurityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.crds.upgradeJob.podSecurityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.kube-state-metrics.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheus-node-exporter.containerSecurityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheus.prometheusSpec.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.containerSecurityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.createSecretJob.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.deployment.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.deployment.containerSecurityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patch.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patchWebhookJob.securityContext
+              - .kube-prometheus-stack.kube-prometheus-stack.thanosRuler.thanosRulerSpec.securityContext
   - name: prometheus-blackbox-exporter
     required: false
     description: "UDS Core Prometheus Blackbox Exporter"
@@ -33,3 +66,13 @@ components:
         version: 11.15.1
         valuesFiles:
           - "../values/blackbox-exporter-values.yaml"
+        values:
+          - sourcePath: .prometheus-blackbox-exporter.prometheus-blackbox-exporter
+            targetPath: .
+            excludePaths:
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.global.imageRegistry
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.image
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.configReloader.image
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.podSecurityContext
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.securityContext
+              - .prometheus-blackbox-exporter.prometheus-blackbox-exporter.configReloader.securityContext

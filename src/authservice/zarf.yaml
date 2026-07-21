@@ -9,6 +9,15 @@ metadata:
   description: "UDS Core Authservice"
   url: https://github.com/istio-ecosystem/authservice
 
+variables:
+  - name: AUTHSERVICE_REDIS_URI
+    description: "UDS Authservice Redis URI"
+    default: ""
+
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: authservice
     required: true

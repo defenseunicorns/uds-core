@@ -22,6 +22,20 @@ tests:
           path: spec.caBundle.certs
           value: "LS0tLS1CRUdJTi...new-ca-bundle-certs"
 
+  - it: should render allowAllNsExemptions as a boolean
+    set:
+      cluster:
+        expose:
+          domain: "example.com"
+        policy:
+          allowAllNsExemptions: true
+    asserts:
+      - isKind:
+          of: ClusterConfig
+      - equal:
+          path: spec.policy.allowAllNsExemptions
+          value: true
+
   - it: should not render certs field when caBundle.certs is empty
     set:
       cluster:

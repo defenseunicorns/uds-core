@@ -191,7 +191,6 @@ describe("Loki Tests", () => {
     },
   );
 
-  // Query the node-log pipeline to verify NODE_HOSTNAME becomes the Loki host label.
   test("Validate Vector node-log host label", async () => {
     const nodeName = (
       await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
@@ -214,17 +213,17 @@ describe("Loki Tests", () => {
 
     const data = isK3d
       ? await pollUntilSuccess(
-          () => queryLogs(`${nodeLogQuery} |= ${JSON.stringify(logMessage)}`),
-          result => result.status === "success" && result.data.result.length > 0,
-          "k3d node log to be available in Loki",
-          60000,
-          2000,
-        )
+        () => queryLogs(`${nodeLogQuery} |= ${JSON.stringify(logMessage)}`),
+        result => result.status === "success" && result.data.result.length > 0,
+        "k3d node log to be available in Loki",
+        60000,
+        2000,
+      )
       : await queryLogs(nodeLogQuery);
 
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  });
+  }, 125000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";

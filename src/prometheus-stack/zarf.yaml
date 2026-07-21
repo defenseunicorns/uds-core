@@ -8,6 +8,10 @@ metadata:
   # @lulaEnd ed10edbf-7e7d-4dd4-be96-b19842c75bdc
   description: "UDS Core Prometheus-Stack"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: prometheus-operator-crds
     required: true
@@ -19,6 +23,9 @@ components:
         namespace: uds-crds
         valuesFiles:
           - "values/crd-values.yaml"
+        values:
+          - sourcePath: .prometheus-operator-crds.prometheus-operator-crds
+            targetPath: .
 
   - name: kube-prometheus-stack
     required: true

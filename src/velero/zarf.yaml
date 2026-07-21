@@ -9,6 +9,10 @@ metadata:
   url: https://velero.io/
   # @lulaEnd 95b605a4-c57d-4776-9e4d-37888602b2df
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: velero
     required: true

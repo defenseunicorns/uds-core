@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -18,9 +18,28 @@ components:
         localPath: ../chart
         valuesFiles:
           - ../chart/values.yaml
+        values:
+          - sourcePath: .falco.uds-falco-config
+            targetPath: .
       - name: falco
         url: https://falcosecurity.github.io/charts
         version: 9.1.0
         namespace: falco
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .falco.falco
+            targetPath: .
+            excludePaths:
+              - .falco.falco.image
+              - .falco.falco.falcosidekick.image
+              - .falco.falco.podSecurityContext
+              - .falco.falco.containerSecurityContext
+              - .falco.falco.falcosidekick.podSecurityContext
+              - .falco.falco.falcosidekick.securityContext
+              - .falco.falco.falcosidekick.containerSecurityContext
+              - .falco.falco.driver.loader.initContainer.image
+              - .falco.falco.driver.loader.initContainer.securityContext
+              - .falco.falco.falcoctl.image
+              - .falco.falco.falcoctl.artifact.install.securityContext
+              - .falco.falco.falcoctl.artifact.follow.securityContext

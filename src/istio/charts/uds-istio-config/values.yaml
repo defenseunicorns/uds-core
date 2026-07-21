@@ -5,7 +5,7 @@
 name: change-me
 
 # Domain name for the gateway
-domain: "###ZARF_VAR_DOMAIN###"
+domain: ""
 
 # tls:
 #   # The TLS certificate for the gateway, if not in 'PASSTHROUGH' mode (base64 encoded)

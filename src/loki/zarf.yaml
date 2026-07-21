@@ -12,6 +12,10 @@ metadata:
   # @lulaEnd 21e01692-d68c-42a1-86ea-e2ce744e1736
   description: "UDS Core Loki"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: loki
     required: true

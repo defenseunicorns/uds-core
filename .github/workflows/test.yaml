@@ -61,7 +61,7 @@ jobs:
           registry1Username: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: 'true'
+          installK3d: "true"
 
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
@@ -75,6 +75,10 @@ jobs:
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Test UDS Core values deploy equivalency
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
