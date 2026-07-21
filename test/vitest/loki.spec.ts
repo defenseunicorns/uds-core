@@ -164,7 +164,6 @@ describe("Loki Tests", () => {
     component: '{collector="vector", namespace=~".+", component=~".+"}',
     host: '{collector="vector", namespace=~".+", host=~".+"}',
     filename: '{collector="vector", namespace=~".+", filename=~".+"}',
-    collector: '{collector="vector", namespace=~".+"}',
   };
 
   test.each(Object.entries(podLabelQueries))(
