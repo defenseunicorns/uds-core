@@ -1,0 +1,110 @@
+---
+title: Zarf values
+description: Reference for overriding UDS Core Helm configuration with native Zarf values, including chart namespaces, committed schemas, domain precedence, and protected paths.
+sidebar:
+  order: 3.004
+---
+
+UDS Core exposes its Helm configuration as native [Zarf values](https://docs.zarf.dev/ref/examples/values-templating/). You can override settings with a values file when you deploy a Core package directly with `uds zarf package deploy`, without building a UDS bundle.
+
+## Deploying with values
+
+UDS Core package deployment requires UDS CLI `v0.34.0` or later (Zarf `v0.79.0` or later). Pass a values file with `--values`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`.
+
+For example, this values file enables Keycloak horizontal autoscaling and scales authservice:
+
+```yaml title="values.yaml"
+keycloak:
+  keycloak:
+    autoscaling:
+      enabled: true
+authservice:
+  authservice:
+    replicaCount: 3
+```
+
+Deploy the package with the values file:
+
+```bash
+uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
+  --values values.yaml \
+  --confirm
+```
+
+Zarf deep-merges object values onto chart defaults. List values replace the chart default, so include the full list when you override one.
+
+## How values map to charts
+
+Every chart uses a `<component>.<chart>` namespace. For example, `keycloak.keycloak.*` sets values on the Keycloak chart, `grafana.grafana.*` sets values on the Grafana chart, and `grafana.uds-grafana-config.*` sets values on the UDS-authored Grafana config chart.
+
+The mapping is a pass-through except for protected paths. Each package validates values against its committed schema, which is the authoritative list of settable paths:
+
+- [Base schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/base/zarf-values.schema.json)
+- [Identity and authorization schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/identity-authorization/zarf-values.schema.json)
+- [Logging schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/logging/zarf-values.schema.json)
+- [Monitoring schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/monitoring/zarf-values.schema.json)
+- [Portal schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/portal/zarf-values.schema.json)
+- [Runtime security schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/runtime-security/zarf-values.schema.json)
+- [Standard schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/standard/zarf-values.schema.json)
+
+The component mapping files define the exact pass-through and protected paths:
+
+- [Base and Istio mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/zarf.yaml)
+- [Identity and authorization mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/common/zarf.yaml)
+- [Logging mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/loki/common/zarf.yaml)
+- [Monitoring mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/grafana/common/zarf.yaml)
+- [Portal mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/portal/common/zarf.yaml)
+- [Runtime security mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/common/zarf.yaml)
+- [Pepr mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml)
+
+## Domains
+
+Set the tenant and admin domains with the shared `global.domain` and `global.adminDomain` values. The tenant domain fans out to Keycloak, the tenant and passthrough Istio gateways, Pepr, and Portal. The admin domain configures the admin Istio gateway, Keycloak, Grafana, Pepr, and Portal.
+
+| Field | Type | Effective default | Description |
+|---|---|---|---|
+| `global.domain` | string | `uds.dev` | Tenant domain for the stack |
+| `global.adminDomain` | string | `admin.uds.dev` | Admin domain for admin-exposed services |
+
+`global.domain` uses the value when set, then the `DOMAIN` Zarf variable. `global.adminDomain` uses the value when set, then the `ADMIN_DOMAIN` Zarf variable, then `admin.<global.domain>`.
+
+The precedence rules are:
+
+| Setting | First choice | Second choice | Final fallback |
+|---|---|---|---|
+| `global.domain` | `global.domain` value | `DOMAIN` Zarf variable | None |
+| `global.adminDomain` | `global.adminDomain` value | `ADMIN_DOMAIN` Zarf variable | `admin.<global.domain>` |
+
+For example, this deployment uses the explicit tenant domain and the admin-domain variable:
+
+```yaml title="values.yaml"
+global:
+  domain: example.com
+  adminDomain: ""
+```
+
+```bash
+uds zarf package deploy zarf-package-core-amd64-x.x.x.tar.zst \
+  --values values.yaml \
+  --set ADMIN_DOMAIN=admin.example.net \
+  --confirm
+```
+
+The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAIN` is also unset, the admin domain becomes `admin.example.com`.
+
+## Values files and variables
+
+UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Declare that variable in the package definition, then use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
+
+Do not place a literal `###ZARF_VAR_*###` token inside a Go template that compares values. Zarf can substitute the token before the Go template evaluates it, which removes the distinction between a default variable placeholder and an explicit value.
+
+## Excluded paths
+
+Protected paths are silently dropped at deploy time. UDS Core protects UDS-owned wiring, image and registry references, and security contexts. Consult the committed schemas and component mappings linked above instead of an inventory here, because those files change with the charts.
+
+UDS-authored config charts generally expose their full values surface. Upstream charts use pass-through mappings with exclusions for protected paths.
+
+## Related documentation
+
+- [Zarf values templating](https://docs.zarf.dev/ref/examples/values-templating/) - upstream documentation for the values feature
+- [Package Values](/concepts/configuration-and-packaging/package-values/) - how UDS packages author and expose values

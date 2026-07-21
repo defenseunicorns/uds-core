@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- if .Values.pathParameterProtection }}
@@ -29,10 +29,13 @@ spec:
                 local path = request_handle:headers():get(":path")
                 local host = request_handle:headers():get(":authority")
 
+                {{- $domain := .Values.domain }}
+                {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+
                 -- Only apply to keycloak endpoints
                 if host and (
-                  host == "sso.{{ .Values.domain }}" or
-                  host == "keycloak.{{ tpl .Values.adminDomain . }}"
+                  host == "sso.{{ $domain }}" or
+                  host == "keycloak.{{ $adminDomain }}"
                 ) then
                   if path then
                     local invalid_semicolon = string.match(path, "^[^;]*;[^/]*/")

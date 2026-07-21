@@ -1,0 +1,1766 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "envoy-gateway": {
+      "properties": {
+        "envoy-gateway": {
+          "properties": {
+            "certgen": {
+              "properties": {
+                "job": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "annotations": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "args": {
+                      "type": "array"
+                    },
+                    "nodeSelector": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "pod": {
+                      "properties": {
+                        "annotations": {
+                          "properties": {},
+                          "type": "object"
+                        },
+                        "labels": {
+                          "properties": {},
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "resources": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "tolerations": {
+                      "type": "array"
+                    },
+                    "ttlSecondsAfterFinished": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "rbac": {
+                  "properties": {
+                    "annotations": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "labels": {
+                      "properties": {},
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "commonLabels": {
+              "properties": {},
+              "type": "object"
+            },
+            "config": {
+              "properties": {
+                "envoyGateway": {
+                  "properties": {
+                    "extensionApis": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "gateway": {
+                      "properties": {
+                        "controllerName": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "logging": {
+                      "properties": {
+                        "level": {
+                          "properties": {
+                            "default": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "provider": {
+                      "properties": {
+                        "kubernetes": {
+                          "properties": {
+                            "deploy": {
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "crds": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "createNamespace": {
+              "type": "boolean"
+            },
+            "deployment": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "envoyGateway": {
+                  "properties": {
+                    "extraEnv": {
+                      "type": "array"
+                    },
+                    "imagePullPolicy": {
+                      "type": "string"
+                    },
+                    "imagePullSecrets": {
+                      "type": "array"
+                    },
+                    "resources": {
+                      "properties": {
+                        "limits": {
+                          "properties": {
+                            "memory": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "requests": {
+                          "properties": {
+                            "cpu": {
+                              "type": "string"
+                            },
+                            "memory": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "pod": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "annotations": {
+                      "properties": {
+                        "prometheus.io/port": {
+                          "type": "string"
+                        },
+                        "prometheus.io/scrape": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "extraVolumeMounts": {
+                      "type": "array"
+                    },
+                    "extraVolumes": {
+                      "type": "array"
+                    },
+                    "labels": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "nodeSelector": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "tolerations": {
+                      "type": "array"
+                    },
+                    "topologySpreadConstraints": {
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "ports": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "number"
+                      },
+                      "targetPort": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "priorityClassName": {
+                  "type": "string"
+                },
+                "replicas": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "global": {
+              "properties": {
+                "imagePullSecrets": {
+                  "type": "array"
+                },
+                "images": {
+                  "properties": {
+                    "envoyGateway": {
+                      "properties": {
+                        "pullPolicy": {
+                          "type": "string"
+                        },
+                        "pullSecrets": {
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "envoyProxy": {
+                      "properties": {
+                        "pullPolicy": {
+                          "type": "string"
+                        },
+                        "pullSecrets": {
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "ratelimit": {
+                      "properties": {
+                        "pullPolicy": {
+                          "type": "string"
+                        },
+                        "pullSecrets": {
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "hpa": {
+              "properties": {
+                "behavior": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxReplicas": {
+                  "type": "number"
+                },
+                "metrics": {
+                  "type": "array"
+                },
+                "minReplicas": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "kubernetesClusterDomain": {
+              "type": "string"
+            },
+            "namespaceOverride": {
+              "type": "string"
+            },
+            "podDisruptionBudget": {
+              "properties": {
+                "minAvailable": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "service": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "trafficDistribution": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "topologyInjector": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "uds-envoy-gateway-config": {
+          "properties": {
+            "envoyService": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "global": {
+              "properties": {
+                "images": {
+                  "properties": {
+                    "envoyGateway": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "envoyProxy": {
+                      "properties": {},
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "global": {
+      "properties": {
+        "adminDomain": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "istio-admin-gateway": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "uds-istio-config": {
+          "properties": {
+            "domain": {
+              "type": "string"
+            },
+            "proxyProtocol": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "rootDomain": {
+              "properties": {
+                "enableHttpsRedirect": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "tls": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "tls": {
+              "properties": {
+                "cacert": {
+                  "type": "string"
+                },
+                "cert": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "servers": {
+                  "properties": {
+                    "admin": {
+                      "properties": {
+                        "mode": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "keycloak": {
+                      "properties": {
+                        "hosts": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "mode": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "istio-controlplane": {
+      "properties": {
+        "base": {
+          "properties": {},
+          "type": "object"
+        },
+        "cni": {
+          "properties": {
+            "ambient": {
+              "properties": {
+                "reconcileIptablesOnStartup": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "cni": {
+              "properties": {
+                "image": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "cniBinDir": {
+              "type": "string"
+            },
+            "cniConfDir": {
+              "type": "string"
+            },
+            "excludeNamespaces": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "profile": {
+              "type": "string"
+            },
+            "seLinuxOptions": {
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "istiod": {
+          "properties": {
+            "affinity": {
+              "properties": {
+                "podAntiAffinity": {
+                  "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {
+                      "items": {
+                        "properties": {
+                          "podAffinityTerm": {
+                            "properties": {
+                              "labelSelector": {
+                                "properties": {
+                                  "matchExpressions": {
+                                    "items": {
+                                      "properties": {
+                                        "key": {
+                                          "type": "string"
+                                        },
+                                        "operator": {
+                                          "type": "string"
+                                        },
+                                        "values": {
+                                          "items": {
+                                            "type": "string"
+                                          },
+                                          "type": "array"
+                                        }
+                                      },
+                                      "type": "object"
+                                    },
+                                    "type": "array"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "topologyKey": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "weight": {
+                            "type": "number"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "proxy": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "proxy_init": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "meshConfig": {
+              "properties": {
+                "accessLogFile": {
+                  "type": "string"
+                },
+                "defaultConfig": {
+                  "properties": {
+                    "gatewayTopology": {
+                      "properties": {
+                        "forwardClientCertDetails": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "holdApplicationUntilProxyStarts": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "extensionProviders": {
+                  "items": {
+                    "properties": {
+                      "envoyExtAuthzGrpc": {
+                        "properties": {
+                          "port": {
+                            "type": "string"
+                          },
+                          "service": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "outboundTrafficPolicy": {
+                  "properties": {
+                    "mode": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "pathNormalization": {
+                  "properties": {
+                    "normalization": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "pilot": {
+              "properties": {
+                "env": {
+                  "properties": {
+                    "ENABLE_NATIVE_SIDECARS": {
+                      "type": "boolean"
+                    },
+                    "PILOT_JWT_ENABLE_REMOTE_JWKS": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "profile": {
+              "type": "string"
+            },
+            "volumeMounts": {
+              "items": {
+                "properties": {
+                  "mountPath": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "volumes": {
+              "items": {
+                "properties": {
+                  "configMap": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "uds-global-istio-config": {
+          "properties": {
+            "adminDomain": {
+              "type": "string"
+            },
+            "classificationBanner": {
+              "properties": {
+                "addFooter": {
+                  "type": "boolean"
+                },
+                "enabledHosts": {
+                  "type": "array"
+                },
+                "text": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "dashboardAnnotations": {
+              "properties": {},
+              "type": "object"
+            },
+            "domain": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "ztunnel": {
+          "properties": {
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "seLinuxOptions": {
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "istio-egress-ambient": {
+      "properties": {
+        "uds-istio-egress-config": {
+          "properties": {
+            "config": {
+              "properties": {
+                "deployment": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "horizontalPodAutoscaler": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podDisruptionBudget": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "service": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "serviceAccount": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "istio-egress-gateway": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "service": {
+              "properties": {
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "istio-passthrough-gateway": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "uds-istio-config": {
+          "properties": {
+            "domain": {
+              "type": "string"
+            },
+            "proxyProtocol": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "rootDomain": {
+              "properties": {
+                "enableHttpsRedirect": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "tls": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "tls": {
+              "properties": {
+                "servers": {
+                  "properties": {
+                    "passthrough": {
+                      "properties": {
+                        "mode": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "istio-tenant-gateway": {
+      "properties": {
+        "gateway": {
+          "properties": {
+            "global": {
+              "properties": {
+                "networkPolicy": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "uds-istio-config": {
+          "properties": {
+            "domain": {
+              "type": "string"
+            },
+            "proxyProtocol": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "rootDomain": {
+              "properties": {
+                "enableHttpsRedirect": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "tls": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "tls": {
+              "properties": {
+                "cacert": {
+                  "type": "string"
+                },
+                "cert": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "servers": {
+                  "properties": {
+                    "keycloak": {
+                      "properties": {
+                        "hosts": {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        "mode": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "tenant": {
+                      "properties": {
+                        "mode": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "kube-prometheus-stack": {
+      "properties": {
+        "kube-prometheus-stack": {
+          "properties": {},
+          "type": "object"
+        },
+        "uds-prometheus-config": {
+          "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "pepr-uds-core": {
+      "properties": {
+        "module": {
+          "properties": {
+            "additionalIgnoredNamespaces": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "admission": {
+              "properties": {
+                "affinity": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "annotations": {
+                  "properties": {
+                    "pepr.dev/description": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "antiAffinity": {
+                  "type": "boolean"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "env": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "envFrom": {
+                  "type": "array"
+                },
+                "extraVolumeMounts": {
+                  "items": {
+                    "properties": {
+                      "mountPath": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "extraVolumes": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "projected": {
+                        "properties": {
+                          "sources": {
+                            "items": {
+                              "properties": {
+                                "serviceAccountToken": {
+                                  "properties": {
+                                    "audience": {
+                                      "type": "string"
+                                    },
+                                    "expirationSeconds": {
+                                      "type": "number"
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "failurePolicy": {
+                  "type": "string"
+                },
+                "labels": {
+                  "properties": {
+                    "app": {
+                      "type": "string"
+                    },
+                    "pepr.dev/controller": {
+                      "type": "string"
+                    },
+                    "pepr.dev/uuid": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "livenessProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "nodeSelector": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podAnnotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podLabels": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "readinessProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "resources": {
+                  "properties": {
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "terminationGracePeriodSeconds": {
+                  "type": "number"
+                },
+                "tolerations": {
+                  "type": "array"
+                },
+                "webhookLabels": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "hash": {
+              "type": "string"
+            },
+            "imagePullSecrets": {
+              "type": "array"
+            },
+            "namespace": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "labels": {
+                  "properties": {
+                    "pepr.dev": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "rbac": {
+              "items": {
+                "properties": {
+                  "apiGroups": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "resources": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "verbs": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "secrets": {
+              "properties": {
+                "apiPath": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "uuid": {
+              "type": "string"
+            },
+            "watcher": {
+              "properties": {
+                "affinity": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "annotations": {
+                  "properties": {
+                    "pepr.dev/description": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "env": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "envFrom": {
+                  "type": "array"
+                },
+                "extraVolumeMounts": {
+                  "items": {
+                    "properties": {
+                      "mountPath": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "extraVolumes": {
+                  "items": {
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "projected": {
+                        "properties": {
+                          "sources": {
+                            "items": {
+                              "properties": {
+                                "serviceAccountToken": {
+                                  "properties": {
+                                    "audience": {
+                                      "type": "string"
+                                    },
+                                    "expirationSeconds": {
+                                      "type": "number"
+                                    },
+                                    "path": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "type": "object"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "type": "array"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "labels": {
+                  "properties": {
+                    "app": {
+                      "type": "string"
+                    },
+                    "pepr.dev/controller": {
+                      "type": "string"
+                    },
+                    "pepr.dev/uuid": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "livenessProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "nodeSelector": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podAnnotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podLabels": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "readinessProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "resources": {
+                  "properties": {
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "terminationGracePeriodSeconds": {
+                  "type": "number"
+                },
+                "tolerations": {
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "prometheus-blackbox-exporter": {
+      "properties": {
+        "prometheus-blackbox-exporter": {
+          "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "prometheus-operator-crds": {
+      "properties": {
+        "prometheus-operator-crds": {
+          "properties": {
+            "crds": {
+              "properties": {
+                "alertmanagerconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "alertmanagers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "podmonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "probes": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusagents": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheuses": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "prometheusrules": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "scrapeconfigs": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "servicemonitors": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "thanosrulers": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "uds-exemptions": {
+      "properties": {
+        "uds-exemptions": {
+          "properties": {
+            "exemptions": {
+              "properties": {
+                "custom": {
+                  "type": "array"
+                },
+                "istioGatewayNodeport": {
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "gateways": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "uds-operator-config": {
+      "properties": {
+        "uds-operator-config": {
+          "properties": {
+            "cluster": {
+              "properties": {
+                "attributes": {
+                  "properties": {
+                    "clusterName": {
+                      "type": "string"
+                    },
+                    "clusterTags": {
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "caBundle": {
+                  "properties": {
+                    "certs": {
+                      "type": "string"
+                    },
+                    "includeDoDCerts": {
+                      "type": "string"
+                    },
+                    "includePublicCerts": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "expose": {
+                  "properties": {
+                    "adminDomain": {
+                      "type": "string"
+                    },
+                    "domain": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "networking": {
+                  "properties": {
+                    "kubeApiCIDR": {
+                      "type": "string"
+                    },
+                    "kubeNodeCIDRs": {
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
+                "policy": {
+                  "properties": {
+                    "allowAllNsExemptions": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "operator": {
+              "properties": {
+                "ALLOW_PUBLIC_CLIENTS": {
+                  "type": "boolean"
+                },
+                "AUTHSERVICE_REDIS_URI": {
+                  "type": "string"
+                },
+                "KEYCLOAK_CLIENT_MODE": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}

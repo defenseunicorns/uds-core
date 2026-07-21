@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -15,3 +15,12 @@ components:
         localPath: ../chart
         version: 1.0.1
         namespace: authservice
+        templatedValuesFiles:
+          - ../values/values.yaml
+        values:
+          - sourcePath: .authservice.authservice
+            targetPath: .
+            excludePaths:
+              - .authservice.authservice.image
+              - .authservice.authservice.securityContext
+              - .authservice.authservice.podSecurityContext

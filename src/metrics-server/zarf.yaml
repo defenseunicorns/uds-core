@@ -7,6 +7,10 @@ metadata:
   description: "UDS Metrics Server"
   url: https://github.com/kubernetes-sigs/metrics-server
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: metrics-server
     required: false

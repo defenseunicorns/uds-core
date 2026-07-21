@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -15,6 +15,9 @@ components:
         namespace: vector
         version: 0.1.0
         localPath: ../chart
+        values:
+          - sourcePath: .vector.uds-vector-config
+            targetPath: .
       - name: vector
         url: https://helm.vector.dev
         version: 0.57.0
@@ -22,3 +25,13 @@ components:
         gitPath: charts/vector
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .vector.vector
+            targetPath: .
+            excludePaths:
+              - .vector.vector.image
+              - .vector.vector.podSecurityContext
+              - .vector.vector.securityContext
+              - .vector.vector.haproxy.image
+              - .vector.vector.haproxy.podSecurityContext
+              - .vector.vector.haproxy.securityContext

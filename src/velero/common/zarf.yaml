@@ -37,14 +37,29 @@ components:
         namespace: velero
         version: 0.1.0
         localPath: ../chart
+        values:
+          - sourcePath: .velero.uds-velero-config
+            targetPath: .
       - name: velero
         namespace: velero
         url: https://vmware-tanzu.github.io/helm-charts
         version: 12.1.0
         repoName: velero
         releaseName: velero
-        valuesFiles:
+        templatedValuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .velero.velero
+            targetPath: .
+            excludePaths:
+              - .velero.velero.image
+              - .velero.velero.initContainers
+              - .velero.velero.podSecurityContext
+              - .velero.velero.containerSecurityContext
+              - .velero.velero.nodeAgent.podSecurityContext
+              - .velero.velero.nodeAgent.containerSecurityContext
+              - .velero.velero.kubectl.image
+              - .velero.velero.kubectl.containerSecurityContext
     actions:
       onDeploy:
         before:
