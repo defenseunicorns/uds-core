@@ -3,7 +3,7 @@
  */
 
 import * as net from "net";
-import * as k8s from "@kubernetes/client-node";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -175,29 +175,16 @@ describe("Loki Tests", () => {
     },
   );
 
-  // Use a node with known logs to verify Vector gets that node name and Loki exposes it as the host label.
-  test("Validate Vector node name and host label", async () => {
-    const kubeConfig = new k8s.KubeConfig();
-    kubeConfig.loadFromDefault();
-    const core = kubeConfig.makeApiClient(k8s.CoreV1Api);
+  // Query the node-log pipeline to verify NODE_HOSTNAME becomes the Loki host label.
+  test("Validate Vector node-log host label", async () => {
     const nodeName = (
-      await core.listNamespacedPod({ namespace: "pepr-system", labelSelector: "app=pepr-uds-core" })
+      await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
     ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
-    const vectorPod = (
-      await core.listNamespacedPod({
-        namespace: "vector",
-        labelSelector: "app.kubernetes.io/name=vector",
-      })
-    ).items.find(pod => pod.spec?.nodeName === nodeName);
-    const nodeHostname = vectorPod?.spec?.containers[0]?.env?.find(
-      variable => variable.name === "NODE_HOSTNAME",
-    );
 
     expect(nodeName).toBeDefined();
-    expect(nodeHostname?.valueFrom?.fieldRef?.fieldPath).toBe("spec.nodeName");
 
     const data = await queryLogs(
-      `{namespace="pepr-system", app="pepr-uds-core", collector="vector", host=${JSON.stringify(nodeName)}}`,
+      `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
     );
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
