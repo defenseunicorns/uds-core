@@ -33,7 +33,7 @@ components:
     images:
       - docker.io/grafana/grafana:13.1.0
       - docker.io/curlimages/curl:8.21.0
-      - docker.io/library/busybox:1.38.0
+      - docker.io/library/busybox:1.37.0
       - ghcr.io/kiwigrid/k8s-sidecar:2.8.1
 
   - name: grafana
