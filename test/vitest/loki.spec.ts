@@ -3,8 +3,10 @@
  */
 
 import * as net from "net";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { pollUntilSuccess } from "./helpers/polling";
 
 // Global variables
 let lokiBackend: { server: net.Server; url: string };
@@ -50,7 +52,10 @@ const sendLog = async (
 const queryLogs = async (
   query: string,
   limit = 1,
-): Promise<{ status: string; data: { result: Array<{ values: string[][] }> } }> => {
+): Promise<{
+  status: string;
+  data: { result: Array<{ values: string[][] }> };
+}> => {
   try {
     const response = await fetch(
       getLokiUrl(
@@ -61,7 +66,9 @@ const queryLogs = async (
         method: "GET",
       },
     );
-    if (!response.ok) throw new Error("Error in querying logs");
+    if (!response.ok) {
+      throw new Error(`Loki query failed (${response.status}): ${await response.text()}`);
+    }
     return (await response.json()) as unknown as {
       status: string;
       data: { result: Array<{ values: string[][] }> };
@@ -101,7 +108,10 @@ const checkLokiServices = async (
 
 // Unified log validation function
 const validateLogInQuery = (
-  queryData: { status: string; data: { result: Array<{ values: string[][] }> } },
+  queryData: {
+    status: string;
+    data: { result: Array<{ values: string[][] }> };
+  },
   logMessage: string,
 ): void => {
   expect(queryData).toHaveProperty("status", "success");
@@ -130,22 +140,54 @@ describe("Loki Tests", () => {
     await closeForward(lokiGateway.server);
   });
 
-  test("Validate Vector logs are present in Loki (loki-read)", async () => {
-    const data = await queryLogs('{collector="vector"}');
-    expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
-  });
-
-  test("Validate node logs from vector are present in Loki", async () => {
-    const data = await queryLogs('{service_name="varlogs", collector="vector"}');
-    expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
-  });
-
   test("Validate pod logs from vector are present in Loki", async () => {
-    const data = await queryLogs('{service_name="pepr-uds-core", collector="vector"}');
+    const data = await pollUntilSuccess(
+      () =>
+        queryLogs(
+          '{namespace="pepr-system", app="pepr-uds-core", job="pepr-system/pepr-uds-core", collector="vector"}',
+        ),
+      result => result.status === "success" && result.data.result.length > 0,
+      "Vector pod logs to be available in Loki",
+      60000,
+      2000,
+    );
+
     expect(data).toHaveProperty("status", "success");
-    expect(Array.isArray(data.data.result)).toBe(true);
+    expect(data.data.result.length).toBeGreaterThan(0);
+  }, 65000);
+
+  const podLabelQueries = {
+    namespace: '{collector="vector", namespace=~".+"}',
+    app: '{collector="vector", namespace=~".+", app=~".+"}',
+    job: '{collector="vector", namespace=~".+", job=~".+/.+"}',
+    container: '{collector="vector", namespace=~".+", container=~".+"}',
+    component: '{collector="vector", namespace=~".+", component=~".+"}',
+    host: '{collector="vector", namespace=~".+", host=~".+"}',
+    filename: '{collector="vector", namespace=~".+", filename=~".+"}',
+  };
+
+  test.each(Object.entries(podLabelQueries))(
+    "Validate Vector pod label %s is queryable in Loki",
+    async (_label, query) => {
+      const data = await queryLogs(query);
+      expect(data).toHaveProperty("status", "success");
+      expect(data.data.result.length).toBeGreaterThan(0);
+    },
+  );
+
+  // Query the node-log pipeline to verify NODE_HOSTNAME becomes the Loki host label.
+  test("Validate Vector node-log host label", async () => {
+    const nodeName = (
+      await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
+    ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
+
+    expect(nodeName).toBeDefined();
+
+    const data = await queryLogs(
+      `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
+    );
+    expect(data).toHaveProperty("status", "success");
+    expect(data.data.result.length).toBeGreaterThan(0);
   });
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
