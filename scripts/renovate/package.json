@@ -4,7 +4,8 @@
   "description": "Scripts for renovate readiness checks",
   "private": true,
   "scripts": {
-    "test": "vitest run"
+    "test": "npm run typecheck && vitest run",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "semver": "^7.5.4",
@@ -13,8 +14,8 @@
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/semver": "^7.5.6",
+    "tsx": "^4.23.1",
     "vitest": "^4.0.0",
-    "ts-node": "^10.9.2",
     "typescript": "^7.0.0"
   }
 }
