@@ -31,9 +31,6 @@
               },
               "type": "object"
             },
-            "adminDomain": {
-              "type": "string"
-            },
             "adminUser": {
               "type": "string"
             },
@@ -170,9 +167,6 @@
               "type": "object"
             },
             "dnsPolicy": {
-              "type": "string"
-            },
-            "domain": {
               "type": "string"
             },
             "downloadDashboards": {

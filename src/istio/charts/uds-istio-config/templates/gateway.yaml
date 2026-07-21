@@ -2,12 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $domain := tpl .Values.domain . }}
-{{- if eq .Values.name "admin" }}
-  {{- $domain = tpl (.Values.adminDomain | default "") . }}
-  {{- if or (not $domain) (eq $domain "###ZARF_VAR_ADMIN_DOMAIN###") }}
-    {{- $domain = printf "admin.%s" (tpl .Values.domain .) }}
-  {{- end }}
-{{- end }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
 {{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}
 {{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}

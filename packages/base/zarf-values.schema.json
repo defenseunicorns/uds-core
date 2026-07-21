@@ -427,9 +427,6 @@
         },
         "uds-istio-config": {
           "properties": {
-            "adminDomain": {
-              "type": "string"
-            },
             "domain": {
               "type": "string"
             },
@@ -762,16 +759,13 @@
         },
         "uds-global-istio-config": {
           "properties": {
+            "adminDomain": {
+              "type": "string"
+            },
             "classificationBanner": {
               "properties": {
                 "addFooter": {
                   "type": "boolean"
-                },
-                "adminDomain": {
-                  "type": "string"
-                },
-                "domain": {
-                  "type": "string"
                 },
                 "enabledHosts": {
                   "type": "array"
@@ -785,6 +779,9 @@
             "dashboardAnnotations": {
               "properties": {},
               "type": "object"
+            },
+            "domain": {
+              "type": "string"
             }
           },
           "type": "object"
@@ -906,9 +903,6 @@
         },
         "uds-istio-config": {
           "properties": {
-            "adminDomain": {
-              "type": "string"
-            },
             "domain": {
               "type": "string"
             },
@@ -981,9 +975,6 @@
         },
         "uds-istio-config": {
           "properties": {
-            "adminDomain": {
-              "type": "string"
-            },
             "domain": {
               "type": "string"
             },

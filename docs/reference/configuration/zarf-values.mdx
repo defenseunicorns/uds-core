@@ -94,7 +94,7 @@ The resulting domains are `example.com` and `admin.example.net`. If `ADMIN_DOMAI
 
 ## Values files and variables
 
-UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Use `.Variables.<NAME>` in `templatedValuesFiles` when the file must combine package variables with explicit values. In that phase, explicit values take precedence over variables, and templates can provide a final fallback such as `admin.<domain>`.
+UDS Core uses two Zarf values-file phases. Use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles` when Zarf should substitute a package variable directly. Declare that variable in the package definition, then use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence over the variable or need a computed fallback. Keep those phases separate because Zarf substitutes variable tokens before evaluating Go templates.
 
 Do not place a literal `###ZARF_VAR_*###` token inside a Go template that compares values. Zarf can substitute the token before the Go template evaluates it, which removes the distinction between a default variable placeholder and an explicit value.
 
