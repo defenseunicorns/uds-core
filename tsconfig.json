@@ -24,6 +24,7 @@
     "test/playwright",
     "test/vitest",
     "scripts/",
-    "uds-docs"
+    "uds-docs",
+    "uds-vm"
   ]
 }

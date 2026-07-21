@@ -262,7 +262,7 @@ spec:
         devices:
           disks:
             - name: cdrom-disk
-              disk:
+              cdrom:
                 bus: sata
               bootOrder: 1
             - name: rootdisk
@@ -404,6 +404,7 @@ Then delete the stuck ztunnel pod to trigger a restart.
 
 ## Related documentation
 
+- [Headlamp deployment](./headlamp-deployment.md) - Browser-based VM management with the KubeVirt plugin
 - [KubeVirt User Guide: Windows VirtIO Drivers](https://kubevirt.io/user-guide/user_workloads/windows_virtio_drivers/)
 - [KubeVirt User Guide: CDI](https://kubevirt.io/user-guide/storage/containerized_data_importer/)
 - [UDS VM Architecture](./uds-vm-architecture.md) - Architecture decisions for VM support

@@ -449,7 +449,7 @@ function clearKubeVirtWorkloadLabel(
  */
 async function ensurePrivateRegistrySecret(targetNS: string): Promise<void> {
   try {
-    await K8s(kind.Secret).Get(PRIVATE_REGISTRY_SECRET, targetNS);
+    await K8s(kind.Secret).InNamespace(targetNS).Get(PRIVATE_REGISTRY_SECRET);
     log.debug(`private-registry secret already exists in ${targetNS}`);
     return;
   } catch {
@@ -460,7 +460,7 @@ async function ensurePrivateRegistrySecret(targetNS: string): Promise<void> {
   let sourceSecret: kind.Secret | undefined;
   for (const ns of SOURCE_NAMESPACE_CANDIDATES) {
     try {
-      sourceSecret = await K8s(kind.Secret).Get(PRIVATE_REGISTRY_SECRET, ns);
+      sourceSecret = await K8s(kind.Secret).InNamespace(ns).Get(PRIVATE_REGISTRY_SECRET);
       break;
     } catch {
       // Continue to next candidate

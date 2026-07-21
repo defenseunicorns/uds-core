@@ -15,7 +15,6 @@ const REQUIRED_ISTIO_ANNOTATIONS: Record<string, string> = {
   "sidecar.istio.io/inject": "true",
   "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
   "istio.io/reroute-virtual-interfaces": "k6t-eth0",
-  "status.sidecar.istio.io/port": "0",
 };
 
 /**

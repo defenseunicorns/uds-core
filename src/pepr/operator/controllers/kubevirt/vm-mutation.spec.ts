@@ -46,7 +46,7 @@ describe("mutateVirtualMachine", () => {
             }
           : undefined,
       },
-    } as never;
+    } as any;
   }
 
   test("skips mutation when namespace has no kubevirt-workload label", async () => {
@@ -69,7 +69,6 @@ describe("mutateVirtualMachine", () => {
       "sidecar.istio.io/inject": "true",
       "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
       "istio.io/reroute-virtual-interfaces": "k6t-eth0",
-      "status.sidecar.istio.io/port": "0",
     });
   });
 
@@ -88,7 +87,6 @@ describe("mutateVirtualMachine", () => {
     expect(annotations["custom-annotation"]).toBe("value");
     expect(annotations["traffic.sidecar.istio.io/kubevirtInterfaces"]).toBe("k6t-eth0");
     expect(annotations["istio.io/reroute-virtual-interfaces"]).toBe("k6t-eth0");
-    expect(annotations["status.sidecar.istio.io/port"]).toBe("0");
   });
 
   test("does not overwrite existing required annotations", async () => {
@@ -120,7 +118,7 @@ describe("mutateVirtualMachine", () => {
         metadata: { name: "test-vm" },
         spec: { template: { metadata: {} } },
       },
-    } as never;
+    } as any;
     await mutateVirtualMachine(vm);
   });
 
@@ -137,7 +135,6 @@ describe("mutateVirtualMachine", () => {
       "sidecar.istio.io/inject": "true",
       "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
       "istio.io/reroute-virtual-interfaces": "k6t-eth0",
-      "status.sidecar.istio.io/port": "0",
     });
   });
 
@@ -149,7 +146,6 @@ describe("mutateVirtualMachine", () => {
       "sidecar.istio.io/inject": "true",
       "traffic.sidecar.istio.io/kubevirtInterfaces": "k6t-eth0",
       "istio.io/reroute-virtual-interfaces": "k6t-eth0",
-      "status.sidecar.istio.io/port": "0",
     };
     const vm = makeVM("test-ns", existing);
     const original = { ...vm.Raw.spec!.template!.metadata!.annotations };
