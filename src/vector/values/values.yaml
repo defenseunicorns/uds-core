@@ -4,6 +4,9 @@
 # Run as an agent daemonset
 role: "Agent"
 
+# Temporarily capture detailed buffer activity while validating the Vector disk buffer issue.
+logLevel: "trace"
+
 # Add trust bundle configuration using vector's supported pattern
 # Because of this https://github.com/rustls/openssl-probe/blob/main/src/lib.rs#L138-L139
 # the rust based image should accept this `/etc/ssl/certs/ca-bundle.pem` path
@@ -120,8 +123,9 @@ customConfig:
         filename: "{{`{{ file }}`}}"
         collector: "vector"
       buffer:
-        type: disk
-        max_size: 1073741824 # 1GiB
+        type: memory
+        max_events: 500
+        when_full: block
     prom_exporter:
       type: prometheus_exporter
       inputs: [internal_metrics]

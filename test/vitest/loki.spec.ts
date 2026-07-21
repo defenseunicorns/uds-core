@@ -175,8 +175,7 @@ describe("Loki Tests", () => {
     },
   );
 
-  // Temporarily skipped because node-log availability is environment-dependent.
-  test.skip("Validate Vector node-log host label", async () => {
+  test("Validate Vector node-log host label", async () => {
     const nodeName = (
       await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
     ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
