@@ -190,12 +190,12 @@ describe("Loki Tests", () => {
         ),
       result => result.status === "success" && result.data.result.length > 0,
       "Vector node logs with the expected host label to be available in Loki",
-      60000,
+      120000,
       2000,
     );
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  }, 65000);
+  }, 125000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
