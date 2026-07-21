@@ -78,7 +78,7 @@ tasks:
 
       - task: gen-docs
 
-      - cmd: "npx pepr format"
+      - cmd: "npm run format"
 
   - name: gen-docs
     description: "Generate Docs for generated CRDs"

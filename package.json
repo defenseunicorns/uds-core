@@ -43,7 +43,9 @@
   },
   "scripts": {
     "k3d-setup": "k3d cluster delete pepr-dev && k3d cluster create pepr-dev --k3s-arg '--debug@server:0'",
-    "test:unit": "vitest run src/pepr/"
+    "test:unit": "vitest run src/pepr/",
+    "format": "eslint \"**/*.ts\" --fix && prettier --write \"**/*.ts\"",
+    "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
   },
   "dependencies": {
     "pepr": "1.2.2"
@@ -53,11 +55,15 @@
     "@commitlint/config-conventional": "21.2.0",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.0",
+    "eslint": "^9.39.0",
     "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.59.4",
+    "@typescript-eslint/parser": "^8.59.4",
     "@vitest/coverage-v8": "^4.0.0",
     "globals": "^17.0.0",
     "husky": "9.1.7",
     "lint-staged": "17.0.8",
+    "prettier": "^3.6.2",
     "vitest": "^4.0.0"
   }
 }

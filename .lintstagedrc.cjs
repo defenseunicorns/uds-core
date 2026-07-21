@@ -4,8 +4,6 @@
  */
 
 module.exports = {
-    '*': 'codespell',
-    '*.ts': (stagedFiles) => [
-        'npx pepr format --validate-only'
-    ]
-}
+  "*": "codespell",
+  "*.ts": stagedFiles => "npm run format:check",
+};
