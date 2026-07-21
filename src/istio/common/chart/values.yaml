@@ -10,8 +10,8 @@ classificationBanner:
   # - keycloak.<adminDomain>
   # - sso.<domain>
   # - grafana.admin.uds.dev
-  domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
-  adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) (get .Values.global "adminDomain")}}'
+domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
+adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) (get .Values.global "adminDomain")}}'
 
 # Optional annotations for grouping dashboards in Grafana folders.
 # see docs for more info: https://docs.defenseunicorns.com/core/how-to-guides/monitoring--observability/add-custom-dashboards/
