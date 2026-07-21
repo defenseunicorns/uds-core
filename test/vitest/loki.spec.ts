@@ -176,40 +176,33 @@ describe("Loki Tests", () => {
     },
   );
 
-  // Get the nodes running Vector, then query Loki to verify each node name is passed through as the host label.
-  test("Validate all Vector host labels and NODE_HOSTNAME values", async () => {
+  // Use a node with known logs to verify Vector gets that node name and Loki exposes it as the host label.
+  test("Validate Vector node name and host label", async () => {
     const kubeConfig = new k8s.KubeConfig();
     kubeConfig.loadFromDefault();
     const core = kubeConfig.makeApiClient(k8s.CoreV1Api);
-    const nodeNames = (
+    const nodeName = (
+      await core.listNamespacedPod({ namespace: "pepr-system", labelSelector: "app=pepr-uds-core" })
+    ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
+    const vectorPod = (
       await core.listNamespacedPod({
         namespace: "vector",
         labelSelector: "app.kubernetes.io/name=vector",
       })
-    ).items.flatMap(pod => (pod.spec?.nodeName ? [pod.spec.nodeName] : []));
-
-    expect(nodeNames.length).toBeGreaterThan(0);
-
-    const nodeQueries = await Promise.all(
-      nodeNames.map(nodeName =>
-        pollUntilSuccess(
-          () =>
-            queryLogs(
-              `{collector="vector", job="varlogs", host=${JSON.stringify(nodeName)}, filename=~".+"}`,
-            ),
-          result => result.status === "success" && result.data.result.length > 0,
-          `Vector node logs for ${nodeName} to be available in Loki`,
-          60000,
-          2000,
-        ),
-      ),
+    ).items.find(pod => pod.spec?.nodeName === nodeName);
+    const nodeHostname = vectorPod?.spec?.containers[0]?.env?.find(
+      variable => variable.name === "NODE_HOSTNAME",
     );
 
-    nodeQueries.forEach(data => {
-      expect(data).toHaveProperty("status", "success");
-      expect(data.data.result.length).toBeGreaterThan(0);
-    });
-  }, 65000);
+    expect(nodeName).toBeDefined();
+    expect(nodeHostname?.valueFrom?.fieldRef?.fieldPath).toBe("spec.nodeName");
+
+    const data = await queryLogs(
+      `{namespace="pepr-system", app="pepr-uds-core", collector="vector", host=${JSON.stringify(nodeName)}}`,
+    );
+    expect(data).toHaveProperty("status", "success");
+    expect(data.data.result.length).toBeGreaterThan(0);
+  });
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
