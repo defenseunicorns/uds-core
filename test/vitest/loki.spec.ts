@@ -15,11 +15,24 @@ let lokiRead: { server: net.Server; url: string };
 let lokiWrite: { server: net.Server; url: string };
 let lokiGateway: { server: net.Server; url: string };
 
-const appendK3dNodeLog = (nodeName: string, logMessage: string): Promise<void> =>
+const appendK3dNodeLog = (
+  nodeName: string,
+  logMessage: string,
+  lineCount: number = 25,
+): Promise<void> =>
   new Promise((resolve, reject) => {
     execFile(
       "docker",
-      ["exec", nodeName, "sh", "-c", 'printf "%s\\n" "$1" >> /var/log/test', "sh", logMessage],
+      [
+        "exec",
+        nodeName,
+        "sh",
+        "-c",
+        'i=0; while [ "$i" -lt "$2" ]; do printf "%s\\n" "$1"; i=$((i + 1)); done >> /var/log/test',
+        "sh",
+        logMessage,
+        String(lineCount),
+      ],
       error => {
         if (error) {
           reject(error);
