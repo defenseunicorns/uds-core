@@ -206,10 +206,12 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
+            {{- $domain := .Values.domain }}
+            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
-              value: "{{ .Values.domain }}"
+              value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
-              value: "{{ tpl .Values.adminDomain . }}"
+              value: "{{ $adminDomain }}"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED

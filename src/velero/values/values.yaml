@@ -22,27 +22,27 @@ credentials:
   secretContents:
     cloud: |
       [default]
-      aws_access_key_id=###ZARF_VAR_VELERO_BUCKET_KEY###
-      aws_secret_access_key=###ZARF_VAR_VELERO_BUCKET_KEY_SECRET###
+      aws_access_key_id={{.Variables.VELERO_BUCKET_KEY}}
+      aws_secret_access_key={{.Variables.VELERO_BUCKET_KEY_SECRET}}
 configuration:
   backupStorageLocation:
     - name: default
       provider: aws
-      bucket: "###ZARF_VAR_VELERO_BUCKET###"
+      bucket: "{{.Variables.VELERO_BUCKET}}"
       config:
-        region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+        region: "{{.Variables.VELERO_BUCKET_REGION}}"
         s3ForcePathStyle: true
-        s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
+        s3Url: "{{.Variables.VELERO_BUCKET_PROVIDER_URL}}"
       credential:
-        name: "###ZARF_VAR_VELERO_BUCKET_CREDENTIAL_NAME###"
-        key: "###ZARF_VAR_VELERO_BUCKET_CREDENTIAL_KEY###"
+        name: "{{.Variables.VELERO_BUCKET_CREDENTIAL_NAME}}"
+        key: "{{.Variables.VELERO_BUCKET_CREDENTIAL_KEY}}"
   # volumeSnapshotLocation:
   #   - name: default
   #     provider: aws
   #     config:
-  #       region: "###ZARF_VAR_VELERO_BUCKET_REGION###"
+  #       region: "{{.Variables.VELERO_BUCKET_REGION}}"
   #       s3ForcePathStyle: true
-  #       s3Url: "###ZARF_VAR_VELERO_BUCKET_PROVIDER_URL###"
+  #       s3Url: "{{.Variables.VELERO_BUCKET_PROVIDER_URL}}"
   #     credential:
   #       name: "velero-bucket-credentials"
   #       key: "cloud"

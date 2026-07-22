@@ -93,7 +93,7 @@ The template repository provides the standard directory structure:
 
    The root `zarf.yaml` defines package metadata and per-flavor components. Each flavor imports from `common/zarf.yaml` and adds its own values file and container images:
 
-   The `variables` block declares Zarf package variables that deployers can set at deploy time via `uds-config.yaml` or `--set` flags. They are injected into Helm values using the `###ZARF_VAR_<NAME>###` syntax; you can see this in `chart/values.yaml` where `domain: "###ZARF_VAR_DOMAIN###"` picks up the deployer-supplied domain at deploy time. Use `sensitive: true` on variables that contain secrets so their values are never logged. See the [Zarf variables reference](https://docs.zarf.dev/ref/packages/#variables) for all available options.
+   Use Zarf Values for package configuration and let deployers provide overrides with `--values` or `--set-values`. Keep the `variables` block for existing variable-based workflows or values that cannot yet be migrated. When a variable must remain compatible, use `###ZARF_VAR_<NAME>###` in ordinary `valuesFiles`; use `templatedValuesFiles` with `.Variables.<NAME>` when explicit package values must take precedence or a template needs a computed fallback. Use `sensitive: true` on variables that contain secrets so their values are never logged. See the [Zarf variables reference](https://docs.zarf.dev/ref/packages/#variables) for the remaining variable options.
 
    ```yaml title="zarf.yaml"
    kind: ZarfPackageConfig

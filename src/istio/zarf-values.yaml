@@ -1,0 +1,32 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Istio source package.
+global:
+  domain: ""
+  adminDomain: ""
+
+istio-controlplane:
+  base: {}
+  istiod: {}
+  uds-global-istio-config: {}
+  cni: {}
+  ztunnel: {}
+
+istio-admin-gateway:
+  gateway: {}
+  uds-istio-config: {}
+
+istio-tenant-gateway:
+  gateway: {}
+  uds-istio-config: {}
+
+istio-passthrough-gateway:
+  gateway: {}
+  uds-istio-config: {}
+
+istio-egress-ambient:
+  uds-istio-egress-config: {}
+
+istio-egress-gateway:
+  gateway: {}

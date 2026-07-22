@@ -23,3 +23,14 @@ components:
         serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
+        values:
+          - sourcePath: .envoy-gateway.envoy-gateway
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.envoy-gateway.global.imageRegistry
+              - .envoy-gateway.envoy-gateway.global.images.envoyGateway.image
+              - .envoy-gateway.envoy-gateway.global.images.ratelimit.image
+              - .envoy-gateway.envoy-gateway.global.images.envoyProxy.image
+              - .envoy-gateway.envoy-gateway.deployment.envoyGateway.image
+              - .envoy-gateway.envoy-gateway.deployment.envoyGateway.securityContext
+              - .envoy-gateway.envoy-gateway.certgen.job.securityContext

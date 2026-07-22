@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -21,11 +21,11 @@ variables:
 
   - name: CA_BUNDLE_INCLUDE_DOD_CERTS
     description: "Whether to include DoD root and intermediate certificates in the cluster CA bundle"
-    default: false
+    default: "false"
 
   - name: CA_BUNDLE_INCLUDE_PUBLIC_CERTS
     description: "Whether to include public root and intermediate certificates in the cluster CA bundle"
-    default: false
+    default: "false"
 
   - name: UDS_LOG_LEVEL
     description: "UDS Operator log level"
@@ -42,6 +42,10 @@ variables:
   - name: ALLOW_ALL_NS_EXEMPTIONS
     description: "Whether to allow exemptions to be created in all namespaces"
     default: "false"
+
+values:
+  files:
+    - zarf-values.yaml
 
 components:
   - name: uds-crds
@@ -78,8 +82,11 @@ components:
         namespace: pepr-system
         version: 0.1.0
         localPath: uds-operator-config
-        valuesFiles:
+        templatedValuesFiles:
           - uds-operator-config/values.yaml
+        values:
+          - sourcePath: .uds-operator-config.uds-operator-config
+            targetPath: .
     actions:
       onDeploy:
         after:
@@ -100,6 +107,19 @@ components:
       - name: module
         valuesFiles:
           - values.yaml
+        values:
+          - sourcePath: .pepr-uds-core.module
+            targetPath: .
+            excludePaths:
+              - .pepr-uds-core.module.watcher.serviceMonitor
+              - .pepr-uds-core.module.admission.serviceMonitor
+              - .pepr-uds-core.module.admission.webhookAnnotations
+              - .pepr-uds-core.module.admission.image
+              - .pepr-uds-core.module.watcher.image
+              - .pepr-uds-core.module.admission.securityContext
+              - .pepr-uds-core.module.admission.containerSecurityContext
+              - .pepr-uds-core.module.watcher.securityContext
+              - .pepr-uds-core.module.watcher.containerSecurityContext
     actions:
       onDeploy:
         after:
@@ -120,3 +140,6 @@ components:
         localPath: uds-exemptions
         valuesFiles:
           - uds-exemptions/values.yaml
+        values:
+          - sourcePath: .uds-exemptions.uds-exemptions
+            targetPath: .

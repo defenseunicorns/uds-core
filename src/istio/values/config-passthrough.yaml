@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: passthrough
+# Explicit values take precedence, then package variables, then admin.<domain>.
+domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
 
 tls:
   servers:

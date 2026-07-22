@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -34,7 +34,11 @@ tasks:
       - description: Ensure uv is installed
         task: ensure-uv
       - description: install pepr deps
-        cmd: npm ci
+        task: install-pepr-deps
+      - description: Build the Pepr module for values lint
+        task: build-pepr
+      - description: Lint packages that expose Zarf values
+        task: values-lint
       - description: "Pepr Format check"
         cmd: npx pepr format --validate-only
       - description: yaml lint
@@ -48,6 +52,123 @@ tasks:
         task: license
       - description: Run helm unittest on all charts
         task: helm-unittest
+  - name: values-lint
+    description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
+    inputs:
+      package:
+        description: "Optional values-bearing package to lint"
+        default: ""
+    actions:
+      - description: "Lint each values-bearing package"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
+          # A package exposes native values when it provides this default values file.
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            echo "Linting packages/${pkg}"
+            if ! uds zarf dev lint "packages/${pkg}" --flavor upstream; then
+              echo "ERROR: values lint failed for packages/${pkg}"
+              exit 1
+            fi
+          done
+      - description: "Validate default values files against their schemas"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            echo "Validating packages/${pkg}/zarf-values.yaml"
+            if ! uvx check-jsonschema \
+              --schemafile "packages/${pkg}/zarf-values.schema.json" \
+              "packages/${pkg}/zarf-values.yaml"; then
+              echo "ERROR: values schema validation failed for packages/${pkg}"
+              exit 1
+            fi
+          done
+
+
+  - name: install-pepr-deps
+    description: "Install Pepr dependencies"
+    actions:
+      - cmd: npm ci
+
+  - name: build-pepr
+    description: "Build the Pepr module required by values checks"
+    inputs:
+      package:
+        description: "Optional values-bearing package being checked"
+        default: ""
+    actions:
+      - description: Build the Pepr module when required
+        cmd: |
+          package="${{ .inputs.package }}"
+          if [ -z "$package" ] || [ "$package" = "base" ] || [ "$package" = "standard" ]; then
+            npx pepr build -z chart
+          else
+            echo "Skipping Pepr build for packages/${package}"
+          fi
+
+  - name: values-generate
+    description: "Regenerate each values-bearing package's zarf-values.schema.json from its package definition"
+    inputs:
+      package:
+        description: "Optional values-bearing package to regenerate"
+        default: ""
+    actions:
+      - task: install-pepr-deps
+      - task: build-pepr
+        with:
+          package: "${{ .inputs.package }}"
+      - description: "Regenerate each package's values schema"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          package="${{ .inputs.package }}"
+          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
+            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
+            exit 1
+          fi
+          for values_file in packages/*/zarf-values.yaml; do
+            pkg="${values_file#packages/}"
+            pkg="${pkg%/zarf-values.yaml}"
+            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
+              continue
+            fi
+            echo "Generating packages/${pkg}/zarf-values.schema.json"
+            # Write to a temp file and move on success so a failed/flaky generate never truncates a committed schema.
+            tmp=$(mktemp)
+            if ! uds zarf dev generate-schema "packages/${pkg}" --flavor upstream --delete-not-found > "$tmp"; then
+              rm -f "$tmp"
+              echo "ERROR: values schema generation failed for packages/${pkg}"
+              exit 1
+            fi
+            mv "$tmp" "packages/${pkg}/zarf-values.schema.json"
+          done
 
   - name: helm-unittest
     description: "Run helm unittest on all charts"

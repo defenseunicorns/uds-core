@@ -11,6 +11,10 @@ metadata:
   description: "UDS Core Vector"
   url: "https://vector.dev/"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: vector
     required: true

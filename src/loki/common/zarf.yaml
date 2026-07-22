@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -14,9 +14,63 @@ components:
         namespace: loki
         version: 0.2.0
         localPath: ../chart
+        values:
+          - sourcePath: .loki.uds-loki-config
+            targetPath: .
       - name: loki
         url: https://grafana-community.github.io/helm-charts/
         version: 18.5.1
         namespace: loki
         valuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .loki.loki
+            targetPath: .
+            excludePaths:
+              - .loki.loki.loki.auth_enabled
+              - .loki.loki.deploymentMode
+              - .loki.loki.minio
+              - .loki.loki.backend.image
+              - .loki.loki.bloomBuilder.image
+              - .loki.loki.bloomGateway.image
+              - .loki.loki.bloomPlanner.image
+              - .loki.loki.compactor.image
+              - .loki.loki.defaults.statefulSetRecreateJob.image
+              - .loki.loki.distributor.image
+              - .loki.loki.gateway.image
+              - .loki.loki.gateway.metrics.image
+              - .loki.loki.global.image
+              - .loki.loki.global.imageRegistry
+              - .loki.loki.indexGateway.image
+              - .loki.loki.ingester.image
+              - .loki.loki.loki.image
+              - .loki.loki.lokiCanary.image
+              - .loki.loki.memcached.image
+              - .loki.loki.memcachedExporter.image
+              - .loki.loki.overridesExporter.image
+              - .loki.loki.patternIngester.image
+              - .loki.loki.querier.image
+              - .loki.loki.queryFrontend.image
+              - .loki.loki.queryScheduler.image
+              - .loki.loki.read.image
+              - .loki.loki.ruler.image
+              - .loki.loki.sidecar.image
+              - .loki.loki.singleBinary.image
+              - .loki.loki.tableManager.image
+              - .loki.loki.test.image
+              - .loki.loki.write.image
+              - .loki.loki.defaults.containerSecurityContext
+              - .loki.loki.defaults.podSecurityContext
+              - .loki.loki.gateway.containerSecurityContext
+              - .loki.loki.gateway.metrics.containerSecurityContext
+              - .loki.loki.gateway.podSecurityContext
+              - .loki.loki.loki.containerSecurityContext
+              - .loki.loki.loki.podSecurityContext
+              - .loki.loki.lokiCanary.containerSecurityContext
+              - .loki.loki.lokiCanary.podSecurityContext
+              - .loki.loki.memcached.containerSecurityContext
+              - .loki.loki.memcached.podSecurityContext
+              - .loki.loki.memcachedExporter.containerSecurityContext
+              - .loki.loki.rollout_operator.podSecurityContext
+              - .loki.loki.rollout_operator.securityContext
+              - .loki.loki.sidecar.securityContext

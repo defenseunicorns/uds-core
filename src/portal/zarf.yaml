@@ -15,6 +15,10 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: uds-portal
     required: true

@@ -25,6 +25,13 @@ components:
         # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
         # This should be fixed in a future Istio version
         serverSideApply: "false"
+        values:
+          - sourcePath: .istio-controlplane.base
+            targetPath: .
+            excludePaths:
+              - .istio-controlplane.base._internal_defaults_do_not_set
+              - .istio-controlplane.base.global.hub
+              - .istio-controlplane.base.global.tag
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.29.3
@@ -41,24 +48,52 @@ components:
           - name: PROXY_CPU_REQUEST
             description: "CPU requests for sidecars in cluster"
             path: "global.proxy.resources.requests.cpu"
+        values:
+          - sourcePath: .istio-controlplane.istiod
+            targetPath: .
+            excludePaths:
+              - .istio-controlplane.istiod._internal_defaults_do_not_set
+              - .istio-controlplane.istiod.global.hub
+              - .istio-controlplane.istiod.global.tag
+              - .istio-controlplane.istiod.pilot.image
+              - .istio-controlplane.istiod.global.proxy.image
+              - .istio-controlplane.istiod.global.proxy_init.image
       - name: uds-global-istio-config
         namespace: istio-system
         version: 0.1.0
         localPath: chart
-        valuesFiles:
+        templatedValuesFiles:
           - "chart/values.yaml"
+        values:
+          - sourcePath: .istio-controlplane.uds-global-istio-config
+            targetPath: .
       - name: cni
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.29.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml"
+        values:
+          - sourcePath: .istio-controlplane.cni
+            targetPath: .
+            excludePaths:
+              - .istio-controlplane.cni._internal_defaults_do_not_set
+              - .istio-controlplane.cni.global.hub
+              - .istio-controlplane.cni.global.tag
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
         version: 1.29.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-ztunnel.yaml"
+        values:
+          - sourcePath: .istio-controlplane.ztunnel
+            targetPath: .
+            excludePaths:
+              - .istio-controlplane.ztunnel._internal_defaults_do_not_set
+              - .istio-controlplane.ztunnel.global.hub
+              - .istio-controlplane.ztunnel.global.tag
+              - .istio-controlplane.ztunnel.image
     actions:
       onDeploy:
         before:

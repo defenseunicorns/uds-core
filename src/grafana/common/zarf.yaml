@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -15,11 +15,33 @@ components:
         namespace: grafana
         version: 0.1.0
         localPath: ../chart
-        valuesFiles:
+        templatedValuesFiles:
           - ../chart/values.yaml
+        values:
+          - sourcePath: .grafana.uds-grafana-config
+            targetPath: .
       - name: grafana
         url: https://grafana-community.github.io/helm-charts
         version: 12.7.2
         namespace: grafana
-        valuesFiles:
+        templatedValuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .grafana.grafana
+            targetPath: .
+            excludePaths:
+              - .grafana.grafana.sidecar
+              - .grafana.grafana.image
+              - .grafana.grafana.initChownData.image
+              - .grafana.grafana.downloadDashboardsImage
+              - .grafana.grafana.global.imageRegistry
+              - .grafana.grafana.securityContext
+              - .grafana.grafana.containerSecurityContext
+              - .grafana.grafana.initChownData.securityContext
+              - .grafana.grafana.downloadDashboards.securityContext
+              - .grafana.grafana.imageRenderer.image
+              - .grafana.grafana.imageRenderer.securityContext
+              - .grafana.grafana.imageRenderer.containerSecurityContext
+              - .grafana.grafana.testFramework.image
+              - .grafana.grafana.testFramework.securityContext
+              - .grafana.grafana.testFramework.containerSecurityContext
