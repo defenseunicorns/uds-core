@@ -1,11 +1,37 @@
 {
   "name": "uds-vm",
   "version": "1.7.0",
+  "description": "UDS VM capability package and Pepr module",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
   },
+  "pepr": {
+    "name": "UDS VM",
+    "uuid": "uds-vm",
+    "onError": "reject",
+    "logLevel": "info",
+    "alwaysIgnore": {
+      "namespaces": []
+    },
+    "admission": {
+      "alwaysIgnore": {
+        "namespaces": [
+          "zarf"
+        ]
+      }
+    },
+    "watch": {
+      "alwaysIgnore": {
+        "namespaces": [
+          "zarf"
+        ]
+      }
+    }
+  },
   "scripts": {
+    "build:pepr": "npx pepr build",
+    "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -13,6 +39,11 @@
     "pepr": "1.2.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "eslint": "^9.39.0",
+    "globals": "^17.0.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.0"
   }

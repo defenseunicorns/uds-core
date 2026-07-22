@@ -5,7 +5,23 @@
 
 import { K8s, kind } from "pepr";
 import { beforeEach, describe, expect, Mock, test, vi } from "vitest";
-import { mutateVirtualMachine } from "./vm-mutation";
+import { mutateVirtualMachine } from "../../../../../src/pepr/operator/controllers/kubevirt/vm-mutation.js";
+
+type TestVirtualMachine = {
+  Raw: {
+    metadata: {
+      name: string;
+      namespace?: string;
+    };
+    spec?: {
+      template?: {
+        metadata?: {
+          annotations?: Record<string, string>;
+        };
+      };
+    };
+  };
+};
 
 vi.mock("pepr", async () => {
   const originalModule = (await vi.importActual("pepr")) as object;
@@ -32,7 +48,7 @@ describe("mutateVirtualMachine", () => {
     ns: string,
     annotations?: Record<string, string>,
     specPresent = true,
-  ) {
+  ): TestVirtualMachine {
     return {
       Raw: {
         metadata: { name: "test-vm", namespace: ns },
@@ -46,7 +62,7 @@ describe("mutateVirtualMachine", () => {
             }
           : undefined,
       },
-    } as any;
+    };
   }
 
   test("skips mutation when namespace has no kubevirt-workload label", async () => {
@@ -99,9 +115,7 @@ describe("mutateVirtualMachine", () => {
     await mutateVirtualMachine(vm);
 
     expect(
-      vm.Raw.spec!.template!.metadata!.annotations![
-        "traffic.sidecar.istio.io/kubevirtInterfaces"
-      ],
+      vm.Raw.spec!.template!.metadata!.annotations!["traffic.sidecar.istio.io/kubevirtInterfaces"],
     ).toBe("custom-value");
   });
 
@@ -113,12 +127,12 @@ describe("mutateVirtualMachine", () => {
   });
 
   test("skips when namespace is undefined", async () => {
-    const vm = {
+    const vm: TestVirtualMachine = {
       Raw: {
         metadata: { name: "test-vm" },
         spec: { template: { metadata: {} } },
       },
-    } as any;
+    };
     await mutateVirtualMachine(vm);
   });
 

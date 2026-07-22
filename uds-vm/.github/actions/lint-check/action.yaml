@@ -11,6 +11,10 @@ runs:
       run: npm ci
       shell: bash
 
+    - name: Run ESLint
+      run: npm run lint
+      shell: bash
+
     - name: Run TypeScript type check
       run: npm run typecheck
       shell: bash

@@ -49,7 +49,11 @@ The package installs the following components:
 
 ## Deploying a VM
 
-Start by creating a namespace with a `Package` CR:
+The supported path starts from a Zarf package that bundles a `Package` CR and a native KubeVirt `VirtualMachine`. The `Package` CR enables UDS platform integration (namespace labels, secret copy, Istio mutation). The `VirtualMachine` is a standard `kubevirt.io/v1` resource -- there is no UDS-owned abstraction layer on top of it.
+
+A minimal package contains two key manifests:
+
+**Package CR** -- enables UDS platform integration for the namespace:
 
 ```yaml
 apiVersion: uds.dev/v1alpha1
@@ -60,11 +64,9 @@ metadata:
 spec:
   kubevirt:
     enabled: true
-  network:
-    peerauthentication: {}
 ```
 
-Next, create a `VirtualMachine`. You do not need to add Istio annotations yourself:
+**VirtualMachine** -- a native KubeVirt resource. The uds-vm mutation controller injects Istio annotations automatically when the namespace has the `uds.dev/kubevirt-workload=true` label:
 
 ```yaml
 apiVersion: kubevirt.io/v1
@@ -92,23 +94,23 @@ spec:
             image: registry.example.com/containerdisks/fedora:latest
 ```
 
-The operator automatically injects the required Istio annotations (`sidecar.istio.io/inject`, `traffic.sidecar.istio.io/kubevirtInterfaces`, `istio.io/reroute-virtual-interfaces`, `status.sidecar.istio.io/port: "0"`) when the namespace has `spec.kubevirt.enabled: true` on its Package CR.
+See `tests/packages/podinfo-vm/` for a complete working example that bundles these manifests into a Zarf package with a Service and UDS network exposure.
 
-## Readiness Probe Fix
+## Enablement Contract
 
-The `status.sidecar.istio.io/port: "0"` annotation removes the istio-proxy readiness probe from virt-launcher pods. This is required because KubeVirt's masquerade networking breaks the default sidecar readiness check. The operator injects this automatically.
+Setting `spec.kubevirt.enabled: true` on a Package CR signals VM workload intent. The uds-vm Pepr module watches for this, applies the `uds.dev/kubevirt-workload=true` label to the namespace, and propagates the `private-registry` secret. The namespace label is the runtime signal that triggers Istio annotation injection on VirtualMachine resources.
 
-## Integration with UDS Core
+The `kubevirt.enabled` field is owned by uds-vm as a user-facing contract. UDS Core keeps the field in the CRD schema but does not interpret it.
 
-This package relies on the following UDS Core capabilities:
+## Ownership Boundary
 
-| Capability | Purpose |
-|------------|---------|
-| `spec.kubevirt.enabled` on Package CR | Triggers namespace label and secret copy |
-| `uds.dev/kubevirt-workload` label | Set by operator, used by Pepr policies |
-| `private-registry` secret copy | Ensures image pull access in VM namespaces |
-| Pepr policy exceptions | Allows `kubevirtInterfaces` and `reroute-virtual-interfaces` on `virt-launcher-*` pods |
-| VM mutation controller | Auto-injects Istio annotations on VirtualMachine resources |
+| Capability | Owner |
+|------------|-------|
+| `spec.kubevirt.enabled` on Package CR | uds-vm (user-facing contract) |
+| `uds.dev/kubevirt-workload` namespace label | uds-vm (applies and manages) |
+| `private-registry` secret propagation | uds-vm |
+| VM mutation controller (Istio annotations) | uds-vm |
+| KubeVirt/CDI policy exceptions (pod-name-level) | UDS Core (cannot be expressed via Pepr exemption mechanism) |
 
 ## k3d Development
 
@@ -145,19 +147,27 @@ uds zarf tools kubectl patch cdi cdi --type merge -p '{"spec":{"scratchSpaceStor
 
 ## Testing
 
-Use the repo tasks to run the integration coverage:
+This package has two layers of tests:
+
+| Layer | Location | What it tests |
+|-------|----------|---------------|
+| Pepr unit tests | `tests/pepr/` | VM mutation logic, namespace label handling |
+| Cluster integration tests | `tests/*.spec.ts` | Full-stack behavior (requires live cluster + KubeVirt) |
+
+The integration tests (`kubevirt-istio.spec.ts`, `kubevirt-integration.spec.ts`) are cross-cutting. They verify core policy exceptions (pod-name-level allowances for virt-launcher, CDI pods) alongside uds-vm namespace lifecycle behavior. The unit tests for the core policy logic live in uds-core (`src/pepr/policies/istio.spec.ts`).
 
 ```bash
-uds run -f tasks.yaml all
-uds run -f tasks.yaml test-k3d
+# Unit tests (no cluster needed)
+npx vitest run tests/pepr/
 
-# Individual tests
+# Integration tests (requires active kube context)
+npx vitest run tests/kubevirt-istio.spec.ts tests/kubevirt-integration.spec.ts
+
+# Full task-driven validation
 uds run -f tasks.yaml vm-test
 uds run -f tasks.yaml podinfo-vm-test
 uds run -f tasks.yaml live-migration-test
 ```
-
-`npm test` runs the Vitest cluster integration suite and requires an active kube context. `uds run -f tasks.yaml test-k3d` is the closest match to CI because it stands up the latest released `uds-core` baseline before it runs the VM-specific assertions.
 
 ## Windows VMs
 
@@ -167,4 +177,4 @@ See [Windows VM Deployment](docs/windows-vm-deployment.md) for the full walkthro
 
 ## Air-Gapped Environments
 
-The Zarf package bundles all required images including container disk demos (`fedora`, `cirros`). No external access is needed after package creation.
+The Zarf package bundles the required runtime and Linux demo images, including the Fedora container disk used by the current package-driven flow. No external access is needed after package creation.

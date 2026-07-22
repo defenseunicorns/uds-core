@@ -13,6 +13,8 @@
     "types": ["vitest/globals"]
   },
   "include": [
+    "pepr.ts",
+    "src/pepr/**/*.ts",
     "tests/**/*.ts"
   ],
   "exclude": [

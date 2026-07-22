@@ -38,8 +38,8 @@ export interface Spec {
  */
 export interface Kubevirt {
   /**
-   * Enables KubeVirt workload support for this package. When true, the operator labels
-   * the namespace uds.dev/kubevirt-workload=true
+   * Enables KubeVirt workload support for this package. When true, uds-vm applies
+   * the uds.dev/kubevirt-workload label to the namespace and propagates the private-registry secret
    */
   enabled?: boolean;
 }

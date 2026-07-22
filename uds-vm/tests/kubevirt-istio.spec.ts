@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+// Integration tests for KubeVirt/CDI Istio policy exceptions.
+// The policy code that enforces these rules lives in uds-core (src/pepr/policies/istio.ts).
+// Unit tests for the same logic: src/pepr/policies/istio.spec.ts lines 203-321.
+// These integration tests stay in uds-vm because they require the full stack (core + KubeVirt installed).
+
 import { K8s, kind } from "pepr";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-
-const failIfReached = () => expect(true).toBe(false);
 
 const KV_WORKLOAD_NS = "policy-tests-kubevirt";
 

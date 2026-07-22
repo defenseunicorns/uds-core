@@ -28,7 +28,7 @@ import {
 } from "./controllers/network/generators/kubeNodes";
 
 // CRD imports
-import { ClusterConfig, KubevirtVirtualMachine, UDSExemption, UDSPackage } from "./crd";
+import { ClusterConfig, UDSExemption, UDSPackage } from "./crd";
 import { validator } from "./crd/validators/package-validator";
 
 // Reconciler imports
@@ -41,7 +41,7 @@ import {
   UDSConfig,
 } from "./controllers/config/config";
 import { reconcilePod, reconcileService } from "./controllers/istio/ambient-waypoint";
-import { mutateVirtualMachine } from "./controllers/kubevirt/vm-mutation";
+
 import { restartGatewayPods } from "./controllers/istio/istio-configmap-sync";
 import {
   KEYCLOAK_CLIENTS_SECRET_NAME,
@@ -83,11 +83,6 @@ When(a.Service)
 When(a.Pod)
   .IsCreatedOrUpdated()
   .Mutate(req => reconcilePod(req.Raw));
-
-// Watch for VirtualMachine mutations to inject Istio annotations in kubevirt namespaces
-When(KubevirtVirtualMachine)
-  .IsCreatedOrUpdated()
-  .Mutate(vm => mutateVirtualMachine(vm));
 
 // Watch for changes to the UDSPackage CRD for processing
 When(UDSPackage)

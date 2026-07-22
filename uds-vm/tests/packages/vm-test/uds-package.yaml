@@ -1,7 +1,14 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-apiVersion: v1
-kind: Namespace
+apiVersion: uds.dev/v1alpha1
+kind: Package
 metadata:
   name: vm-test
+  namespace: vm-test
+spec:
+  kubevirt:
+    enabled: true
+  network:
+    serviceMesh:
+      mode: sidecar

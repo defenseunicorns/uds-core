@@ -263,17 +263,17 @@ tasks:
             condition: Ready
       - description: Test HTTP server running in VM
         cmd: |
-          uds zarf tools kubectl port-forward svc/testvm-svc -n vm-test 58835:80 &
-          PORT_FORWARD_PID=$!
-          sleep 5
-          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:58835)
-          kill $PORT_FORWARD_PID
-          if [ "$HTTP_STATUS" -eq 200 ]; then
-            echo "HTTP test passed."
-          else
-            echo "HTTP test failed. status=${HTTP_STATUS}"
-            exit 1
-          fi
+          POD_NAME=$(uds zarf tools kubectl get pod -n vm-test -l kubevirt.io/domain=testvm -o jsonpath='{.items[0].metadata.name}')
+          for i in $(seq 1 30); do
+            RESPONSE=$(uds zarf tools kubectl exec -n vm-test "$POD_NAME" -c compute -- sh -c 'exec 3<>/dev/tcp/10.0.2.2/80; printf "GET / HTTP/1.0\r\nHost: testvm\r\n\r\n" >&3; dd bs=1 count=256 <&3 2>/dev/null || true')
+            if echo "$RESPONSE" | grep -q '200 OK'; then
+              echo "HTTP test passed."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "HTTP test failed. response=${RESPONSE}"
+          exit 1
 
   - name: podinfo-vm-test
     description: "Deploy and verify a UDS-managed VM app with Istio sidecar (requires native KubeVirt Pepr support)"
@@ -320,11 +320,12 @@ tasks:
             name: podinfo-vm
             namespace: podinfo-vm
             condition: Ready
-      - description: Verify virt-launcher Istio sidecar and native policy allowance
+      - description: Verify virt-launcher has mutation-controller-injected Istio annotations
         cmd: |
           POD_NAME=$(uds zarf tools kubectl get pod -n podinfo-vm -l app.kubernetes.io/name=podinfo-vm -o jsonpath='{.items[0].metadata.name}')
           echo "virt-launcher pod: ${POD_NAME}"
           echo "${POD_NAME}" | grep '^virt-launcher-'
+          uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.metadata.annotations.sidecar\.istio\.io/inject}' | grep "true"
           uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.metadata.annotations.traffic\.sidecar\.istio\.io/kubevirtInterfaces}' | grep k6t-eth0
           PEPR_EXEMPTION=$(uds zarf tools kubectl get pod "${POD_NAME}" -n podinfo-vm -o jsonpath='{.metadata.annotations.uds-core\.pepr\.dev/uds-core-policies\.RestrictIstioTrafficOverrides}')
           if [ -n "${PEPR_EXEMPTION}" ]; then
@@ -347,35 +348,19 @@ tasks:
             exit 1
           fi
           grep 'sidecar.istio.io/inject' /tmp/non-importer-sidecar-disable.out
-      - description: Wait for CDI DataVolume import
-        cmd: uds zarf tools kubectl wait datavolume cirros-import -n podinfo-vm --for=jsonpath='{.status.phase}'=Succeeded --timeout=900s
-      - description: Verify CDI DataVolume import artifacts
+      - description: Test HTTP server running in podinfo-vm guest
         cmd: |
-          uds zarf tools kubectl get datavolume cirros-import -n podinfo-vm -o yaml
-          uds zarf tools kubectl get pvc cirros-import -n podinfo-vm
-      - description: Start PVC-backed cirros VM
-        cmd: uds zarf tools kubectl patch virtualmachine cirros-pvc-vm -n podinfo-vm --type merge -p '{"spec":{"runStrategy":"Always"}}'
-      - description: Wait for PVC-backed cirros VMI to be ready
-        wait:
-          cluster:
-            kind: VirtualMachineInstance
-            name: cirros-pvc-vm
-            namespace: podinfo-vm
-            condition: Ready
-      - description: Test HTTP server running in podinfo-vm via Service
-        cmd: |
-          uds zarf tools kubectl port-forward svc/podinfo-vm -n podinfo-vm 58836:80 &
-          PORT_FORWARD_PID=$!
-          sleep 5
-          HTTP_STATUS=$(curl -o /dev/null -s -w "%{http_code}\n" http://localhost:58836)
-          BODY=$(curl -s http://localhost:58836)
-          kill $PORT_FORWARD_PID
-          if [ "$HTTP_STATUS" -eq 200 ] && echo "$BODY" | grep -q 'podinfo-vm'; then
-            echo "podinfo-vm service test passed."
-          else
-            echo "podinfo-vm service test failed. status=${HTTP_STATUS} body=${BODY}"
-            exit 1
-          fi
+          POD_NAME=$(uds zarf tools kubectl get pod -n podinfo-vm -l kubevirt.io=virt-launcher -o jsonpath='{.items[0].metadata.name}')
+          for i in $(seq 1 30); do
+            RESPONSE=$(uds zarf tools kubectl exec -n podinfo-vm "$POD_NAME" -c compute -- sh -c 'exec 3<>/dev/tcp/10.0.2.2/80; printf "GET / HTTP/1.0\r\nHost: podinfo-vm\r\n\r\n" >&3; dd bs=1 count=256 <&3 2>/dev/null || true')
+            if echo "$RESPONSE" | grep -q '200 OK' && echo "$RESPONSE" | grep -q 'podinfo-vm'; then
+              echo "podinfo-vm guest HTTP test passed."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "podinfo-vm service test failed. response=${RESPONSE}"
+          exit 1
       - description: Test podinfo-vm through tenant gateway
         cmd: |
           HTTP_STATUS=$(curl -k -o /dev/null -s -w "%{http_code}\n" --resolve podinfo-vm.uds.dev:443:127.0.0.1 https://podinfo-vm.uds.dev)

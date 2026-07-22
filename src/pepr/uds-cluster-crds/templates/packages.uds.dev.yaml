@@ -1243,6 +1243,17 @@ spec:
                             type: array
                             items:
                               type: string
+                kubevirt:
+                  description: KubeVirt configuration for the package
+                  type: object
+                  properties:
+                    enabled:
+                      description: >-
+                        Enables KubeVirt workload support for this package. When
+                        true, uds-vm applies the uds.dev/kubevirt-workload label
+                        to the namespace and propagates the private-registry secret
+                      type: boolean
+                      default: false
                 caBundle:
                   description: CA bundle configuration for the package
                   type: object

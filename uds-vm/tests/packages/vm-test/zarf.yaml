@@ -18,6 +18,7 @@ components:
         noWait: true
         files:
           - namespace.yaml
+          - uds-package.yaml
           - vm.yaml
           - svc.yaml
     images:

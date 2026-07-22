@@ -48,8 +48,24 @@ components:
       - quay.io/kubevirt/cdi-apiserver:v1.65.0
       - quay.io/kubevirt/cdi-uploadserver:v1.65.0
       - quay.io/kubevirt/cdi-uploadproxy:v1.65.0
-      - quay.io/kubevirt/cirros-container-disk-demo:latest
       - quay.io/containerdisks/fedora:latest
+
+  - name: pepr-vm
+    required: true
+    description: "UDS VM KubeVirt enablement controller"
+    only:
+      flavor: upstream
+    actions:
+      onDeploy:
+        before:
+          - cmd: npm ci
+            dir: .
+          - cmd: npm run build:pepr
+            dir: .
+    manifests:
+      - name: pepr-uds-vm
+        files:
+          - dist/pepr-module-uds-vm.yaml
 
   - name: kubevirt
     required: true

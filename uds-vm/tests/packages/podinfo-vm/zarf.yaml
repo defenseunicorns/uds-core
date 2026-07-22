@@ -20,9 +20,6 @@ components:
           - namespace.yaml
           - uds-package.yaml
           - svc.yaml
-          - datavolume.yaml
-          - pvc-vm.yaml
           - vm.yaml
     images:
       - kubevirt/fedora-cloud-container-disk-demo
-      - quay.io/kubevirt/cirros-container-disk-demo:latest

@@ -4,10 +4,10 @@
  */
 
 import { K8s, kind } from "pepr";
-import { Component, setupLogger } from "../../../logger";
-import { KubevirtVirtualMachine } from "../../crd";
+import { Component, setupLogger } from "../../../logger.js";
+import { VirtualMachine as KubevirtVirtualMachine } from "../../crd/kubevirt/virtualmachine-v1.js";
 
-const log = setupLogger(Component.OPERATOR_ISTIO);
+const log = setupLogger(Component.OPERATOR_KUBEVIRT);
 
 const KUBEVIRT_WORKLOAD_LABEL = "uds.dev/kubevirt-workload";
 
@@ -56,8 +56,6 @@ export async function mutateVirtualMachine(vm: KubevirtVirtualMachine): Promise<
 
   if (changed) {
     vm.Raw.spec.template.metadata!.annotations = annotations;
-    log.info(
-      `Injected Istio annotations into VirtualMachine ${ns}/${vm.Raw.metadata?.name}`,
-    );
+    log.info(`Injected Istio annotations into VirtualMachine ${ns}/${vm.Raw.metadata?.name}`);
   }
 }
