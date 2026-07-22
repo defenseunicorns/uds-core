@@ -25,7 +25,7 @@
         "values/*.yaml",
         "zarf.yaml",
         "tasks.yaml",
-        "k3d-kubevirt-dev/uds-bundle.yaml",
+        "bundle/uds-bundle.yaml",
         "tests/packages/**/zarf.yaml"
       ],
       "groupName": "vm-stack",

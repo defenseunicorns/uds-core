@@ -13,7 +13,7 @@
       "versioning": "default",
       "extra-files": [
         "zarf.yaml",
-        "k3d-kubevirt-dev/uds-bundle.yaml",
+        "bundle/uds-bundle.yaml",
         {
           "type": "generic",
           "path": "chart/Chart.yaml"
