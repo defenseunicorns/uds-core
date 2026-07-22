@@ -17,7 +17,7 @@ variables:
     default: "uds"
   - name: K3D_EXTRA_ARGS
     description: "Optionally pass k3d arguments to the default"
-    default: ""
+    default: "--k3s-arg --debug@server:* --k3s-arg --log=/var/log/k3s.log@server:* --k3s-arg --alsologtostderr@server:*"
   - name: NGINX_EXTRA_PORTS
     description: "Optionally allow more ports through Nginx (combine with K3D_EXTRA_ARGS '-p <port>:<port>@server:*')"
     default: "[]"

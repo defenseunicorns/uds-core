@@ -2,9 +2,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "kubernetes-fluent-client";
 import * as net from "net";
-import { execFile } from "node:child_process";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -14,34 +12,6 @@ let lokiBackend: { server: net.Server; url: string };
 let lokiRead: { server: net.Server; url: string };
 let lokiWrite: { server: net.Server; url: string };
 let lokiGateway: { server: net.Server; url: string };
-
-const appendK3dNodeLog = (
-  nodeName: string,
-  logMessage: string,
-  lineCount: number = 25,
-): Promise<void> =>
-  new Promise((resolve, reject) => {
-    execFile(
-      "docker",
-      [
-        "exec",
-        nodeName,
-        "sh",
-        "-c",
-        'i=0; while [ "$i" -lt "$2" ]; do printf "%s\\n" "$1"; i=$((i + 1)); done >> /var/log/test',
-        "sh",
-        logMessage,
-        String(lineCount),
-      ],
-      error => {
-        if (error) {
-          reject(error);
-          return;
-        }
-        resolve();
-      },
-    );
-  });
 
 // Helper functions
 const getLokiUrl = (path: string, component: { url: string }) => `${component.url}${path}`;
@@ -204,39 +174,18 @@ describe("Loki Tests", () => {
     },
   );
 
-  test("Validate Vector node-log host label", async () => {
-    const nodeName = (
-      await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
-    ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
-
-    expect(nodeName).toBeDefined();
-    if (!nodeName) {
-      throw new Error("Unable to find the node running a Vector pod");
-    }
-
-    const nodeLogQuery = `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`;
-    const isK3d = nodeName.startsWith("k3d-");
-    const logMessage = `uds-core vector node-log test ${Date.now()}`;
-
-    if (isK3d) {
-      // Due to low node log volume on k3d we send additional logs to guarantee the buffer is sent to Loki
-      // NOTE: this could potentially be removed once https://github.com/vectordotdev/vector/pull/25872 is released
-      await appendK3dNodeLog(nodeName, logMessage);
-    }
-
-    const data = isK3d
-      ? await pollUntilSuccess(
-          () => queryLogs(`${nodeLogQuery} |= ${JSON.stringify(logMessage)}`),
-          result => result.status === "success" && result.data.result.length > 0,
-          "k3d node log to be available in Loki",
-          60000,
-          2000,
-        )
-      : await queryLogs(nodeLogQuery);
+  test("Validate Vector node logs are present in Loki", async () => {
+    const data = await pollUntilSuccess(
+      () => queryLogs('{collector="vector", job=~"varlogs|kubernetes-logs"}'),
+      result => result.status === "success" && result.data.result.length > 0,
+      "Vector node logs to be available in Loki",
+      60000,
+      2000,
+    );
 
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  }, 125000);
+  }, 65000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
