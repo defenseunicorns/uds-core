@@ -1,0 +1,60 @@
+---
+title: UDS Core 1.9
+description: UDS Core 1.9 release notes covering native Zarf values, UDP exposure through Envoy Gateway, and the UDS CLI v0.34.0 and Zarf v0.79.0 minimum versions required for deployment.
+sidebar:
+  order: 3.986
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.9 delivers two major capabilities: native Zarf values for direct, validated package customization, and UDP exposure managed by the UDS Operator through Envoy Gateway. You can now override supported Helm settings without building a bundle solely for customization, and declaratively expose UDP services through the existing `Package` CR. This release also fixes SAML SSO certificate selection during Keycloak signing key rotation.
+
+> [!IMPORTANT]
+> UDS Core 1.9 requires UDS CLI `v0.34.0` or later for package installation and upgrades. If you invoke Zarf directly, use Zarf `v0.79.0` or later. Earlier versions do not include the package pull behavior required to retrieve the values files and schemas shipped with UDS Core 1.9. Upgrade your deployment tooling before installing or upgrading UDS Core.
+
+### Notable features
+
+- **Direct package customization with native Zarf values:** Customize a UDS Core package during deployment with `--values values.yaml`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`. You no longer need to create or rebuild a UDS bundle solely to override supported Helm settings. UDS Core publishes values files and generated schemas across all seven package layers. During deployment, each package validates supplied settings and protects configuration that UDS Core owns, including image references, registries, and security contexts. Shared `global.domain` and `global.adminDomain` values configure applicable charts across the stack. Existing Zarf variable workflows remain supported, and explicit values take precedence. Zarf values remain an alpha feature. See the [Zarf values reference](/reference/configuration/zarf-values/) ([#2762](https://github.com/defenseunicorns/uds-core/pull/2762)).
+- **Declarative UDP exposure through Envoy Gateway:** You can now expose UDP services through the existing `Package` CR by setting `protocol: UDP` on a `spec.network.expose` entry. Enable the optional `envoy-gateway` component, plus `envoy-default-gateway` for the shared Gateway mode. Omit `gateway` to use the shared Gateway managed by UDS Core, or set it to a Gateway that you manage. The UDS Operator creates, reconciles, and cleans up the required Gateway API `UDPRoute` and ingress `NetworkPolicy`, plus Gateway listeners in shared mode, so you no longer manage those resources manually. UDP routes use ports rather than hostnames, and admission rejects conflicting port assignments on the same Gateway. UDP traffic bypasses Istio, so Istio `AuthorizationPolicy` and mTLS do not protect it. See [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/) ([#2760](https://github.com/defenseunicorns/uds-core/pull/2760)).
+- **SAML signing key rotation fix:** The UDS Operator now selects the active signing certificate when Keycloak publishes multiple certificates during key rotation. It also reports failures to fetch the descriptor or find a signing certificate on the `Package` CR instead of writing an invalid SSO secret ([#2799](https://github.com/defenseunicorns/uds-core/pull/2799)).
+
+### Dependency updates
+
+| Package                                 | Previous | Updated                                                                                                          |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Envoy Gateway                           | v1.8.1   | [v1.8.2](https://github.com/envoyproxy/gateway/releases/tag/v1.8.2)                                              |
+| Grafana                                 | 13.0.1   | [13.1.0](https://github.com/grafana/grafana/releases/tag/v13.1.0)                                                |
+| Grafana Helm chart                      | 12.3.3   | [12.7.2](https://github.com/grafana-community/helm-charts/releases/tag/grafana-12.7.2)                           |
+| k8s-sidecar                             | 2.7.3    | [2.8.1](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.8.1)                                              |
+| Keycloak                                | 26.6.2   | [26.7.0](https://github.com/keycloak/keycloak/releases/tag/26.7.0)                                               |
+| Loki Helm chart                         | 18.4.0   | [18.5.1](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.5.1)                              |
+| Metrics Server                          | v0.8.1   | [v0.9.0](https://github.com/kubernetes-sigs/metrics-server/releases/tag/v0.9.0)                                  |
+| Metrics Server Helm chart               | 3.13.0   | [3.13.1](https://github.com/kubernetes-sigs/metrics-server/releases/tag/metrics-server-helm-chart-3.13.1)        |
+| UDS Portal                              | 0.4.0    | [0.5.0](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.0)                                       |
+| Prometheus                              | v3.12.0  | [v3.13.1](https://github.com/prometheus/prometheus/releases/tag/v3.13.1)                                         |
+| Alertmanager                            | v0.33.0  | [v0.33.1](https://github.com/prometheus/alertmanager/releases/tag/v0.33.1)                                       |
+| Node Exporter                           | v1.11.1  | [v1.12.1](https://github.com/prometheus/node_exporter/releases/tag/v1.12.1)                                      |
+| Prometheus Operator                     | v0.92.0  | [v0.92.1](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.92.1)                       |
+| kube-prometheus-stack Helm chart        | 87.2.0   | [87.16.1](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-87.16.1)        |
+| Prometheus Blackbox Exporter Helm chart | 11.13.0  | [11.15.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.15.1) |
+| prometheus-operator-crds Helm chart     | 30.0.0   | [30.0.1](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-30.0.1)       |
+| Vector                                  | 0.56.0   | [0.57.0](https://github.com/vectordotdev/vector/releases/tag/v0.57.0)                                            |
+| Vector Helm chart                       | 0.56.0   | [0.57.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.57.0)                                 |
+| Public root CA certificates             | n/a      | Updated                                                                                                          |
+
+## Upgrade considerations
+
+### Upgrade UDS CLI or Zarf before deploying
+
+Before you install or upgrade UDS Core 1.9, update to UDS CLI `v0.34.0` or later. If your workflow invokes Zarf directly, use Zarf `v0.79.0` or later. These versions include the package pull behavior required to retrieve and validate the values files and schemas shipped with UDS Core 1.9.
+
+Existing Zarf variables remain compatible. You do not need to migrate `DOMAIN`, `ADMIN_DOMAIN`, or other configuration based on variables to Zarf values for this release.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
+- [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/) - route UDP traffic through Envoy Gateway
+- [UDS Core 1.9.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#190-2026-07-21) - full changelog
+- [Full diff (1.8.0...1.9.0)](https://github.com/defenseunicorns/uds-core/compare/v1.8.0...v1.9.0) - all changes between versions
