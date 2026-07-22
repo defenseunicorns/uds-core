@@ -3,6 +3,7 @@
  */
 
 import * as net from "net";
+import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -175,17 +176,26 @@ describe("Loki Tests", () => {
   );
 
   test("Validate Vector node logs are present in Loki", async () => {
+    const nodeName = (
+      await K8s(kind.Pod).InNamespace("vector").WithLabel("app.kubernetes.io/name", "vector").Get()
+    ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
+
+    expect(nodeName).toBeDefined();
+
     const data = await pollUntilSuccess(
-      () => queryLogs('{collector="vector", job=~"varlogs|kubernetes-logs"}'),
+      () =>
+        queryLogs(
+          `{collector="vector", job=~"varlogs|kubernetes-logs", host=${JSON.stringify(nodeName)}}`,
+        ),
       result => result.status === "success" && result.data.result.length > 0,
-      "Vector node logs to be available in Loki",
-      60000,
+      "Vector node logs with the expected host label to be available in Loki",
+      120000,
       2000,
     );
 
     expect(data).toHaveProperty("status", "success");
     expect(data.data.result.length).toBeGreaterThan(0);
-  }, 65000);
+  }, 125000);
 
   test("Send log to Loki-write and validate in Loki-read", async () => {
     const logMessage = "Test log from vitest";
