@@ -45,6 +45,28 @@ describe("Uptime Probes", { timeout: 210000 }, () => {
     const result = await expectProbeSuccess(url);
     expect(result).toBe(1);
   });
+
+  // Certain packages may not be deployed every test
+  const conditionalBlackboxTargets = new Map<string, string>([
+    ["https://portal.uds.dev/healthz", "portal"],
+  ]);
+
+  const excludedPackages = new Set(
+    (process.env.EXCLUDED_PACKAGES ?? "")
+      .split(",")
+      .map(packageName => packageName.trim())
+      .filter(Boolean),
+  );
+
+  for (const [url, packageName] of conditionalBlackboxTargets) {
+    test.skipIf(excludedPackages.has(packageName))(
+      `probe_success metric should be 1 for ${url}`,
+      async () => {
+        const result = await expectProbeSuccess(url);
+        expect(result).toBe(1);
+      },
+    );
+  }
 });
 
 describe("Uptime Recording Rules", { timeout: 210000 }, () => {
