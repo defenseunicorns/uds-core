@@ -30,7 +30,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ghcr.io/istio-ecosystem/authservice/authservice:1.1.5
+      - ttl.sh/authservice-sentinel-ed882ced:24h
 
   - name: authservice
     required: true

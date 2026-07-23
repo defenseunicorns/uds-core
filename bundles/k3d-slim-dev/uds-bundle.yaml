@@ -120,6 +120,62 @@ packages:
               description: "The ports that are exposed from the tenant gateway LoadBalancer (useful for non-HTTP(S) traffic)"
               path: "service.ports"
 
+  - name: authservice-deps
+    repository: ghcr.io/uds-packages/valkey
+    ref: 8.1.3-uds.4-upstream
+    overrides:
+      valkey:
+        uds-valkey-config:
+          namespace: valkey
+          values:
+            - path: replicas
+              value: 3
+            - path: additionalNetworkAllow
+              value:
+                - direction: Ingress
+                  selector:
+                    app.kubernetes.io/name: valkey
+                  remoteNamespace: authservice
+                  port: 6379
+                  description: "Ingress from AuthService"
+                - direction: Ingress
+                  selector:
+                    app.kubernetes.io/name: valkey
+                  remoteNamespace: authservice
+                  port: 26379
+                  description: "Ingress from AuthService (sentinel)"
+            - path: ambient
+              value: true
+        valkey:
+          namespace: valkey
+          values:
+            - path: architecture
+              value: replication
+            - path: sentinel.enabled
+              value: true
+            # Pin the password so the sentinel URI in uds-ha-config.yaml can carry it;
+            # sentinel ports accept no auth (scoped by network policy + mesh mTLS)
+            - path: auth.existingSecret
+              value: ""
+            - path: auth.password
+              value: authservice
+            - path: auth.sentinel
+              value: false
+            - path: sentinel.downAfterMilliseconds
+              value: 2000
+            - path: sentinel.failoverTimeout
+              value: 18000
+          variables:
+            - name: VALKEY_RESOURCES
+              path: "primary.resources"
+              default:
+                limits:
+                  cpu: 100m
+                  memory: 300Mi
+                requests:
+                  cpu: 100m
+                  memory: 300Mi
+
   - name: core-identity-authorization
     path: ../../build/
     # x-release-please-start-version
@@ -133,6 +189,13 @@ packages:
               description: "Number of authservice replicas"
               default: 1
               path: replicaCount
+          values:
+            - path: redis.internal
+              value:
+                enabled: true
+                remoteSelector:
+                  app.kubernetes.io/name: valkey
+                remoteNamespace: valkey
       keycloak:
         keycloak:
           variables:

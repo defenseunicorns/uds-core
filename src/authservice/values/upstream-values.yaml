@@ -1,6 +1,6 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: ghcr.io/istio-ecosystem/authservice/authservice
-  tag: "1.1.5"
+  repository: ttl.sh/authservice-sentinel-ed882ced
+  tag: "24h"
