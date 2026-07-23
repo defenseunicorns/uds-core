@@ -35,8 +35,8 @@ components:
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
-      - docker.io/envoyproxy/gateway:v1.8.2
-      - docker.io/envoyproxy/envoy:distroless-v1.38.3
+      - docker.io/envoyproxy/gateway:v1.8.3
+      - docker.io/envoyproxy/envoy:distroless-v1.39.0
 
   - name: envoy-gateway
     required: false
@@ -62,7 +62,7 @@ components:
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
       - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.2
-      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.3
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.39.0
 
   - name: envoy-gateway
     required: false
@@ -87,7 +87,7 @@ components:
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
               - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
     images:
-      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.2
+      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.3
       - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
 
   # Default Gateway's namespace, same pattern as the istio-*-gateway components.
