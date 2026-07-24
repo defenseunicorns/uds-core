@@ -62,6 +62,10 @@ keycloak:
 
 Before you install or upgrade UDS Core 1.9, update to UDS CLI `v0.34.0` or later. If your workflow invokes Zarf directly, use Zarf `v0.79.0` or later. These versions include the package pull behavior required to retrieve and validate the values files and schemas shipped with UDS Core 1.9.
 
+### Keycloak stateless mode
+
+Before upgrading, review the CAUTION above for the database capacity impact and possible startup failure. If you must remain on UDS Core 1.9, use the `KC_FEATURE_STATELESS=disabled` override shown above to disable stateless mode.
+
 Existing Zarf variables remain compatible. You do not need to migrate `DOMAIN`, `ADMIN_DOMAIN`, or other configuration based on variables to Zarf values for this release.
 
 ## Related documentation

@@ -27,6 +27,18 @@ tests:
           path: spec.template.spec.containers[0].args
           content: "--features=fips,preview"
 
+  - it: should include multiple explicitly configured additional features
+    set:
+      features:
+        additional:
+          - spiffe:v1
+          - workflows:v1
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--features=fips,spiffe:v1,workflows:v1"
+
   - it: should always include FIPS strict mode in container args
     template: statefulset.yaml
     asserts:
