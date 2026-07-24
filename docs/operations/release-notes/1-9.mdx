@@ -26,8 +26,6 @@ keycloak:
         value: disabled
 ```
 
-`KC_FEATURE_STATELESS=disabled` takes precedence over the generic `preview` feature list. Do not use `KC_FEATURES_DISABLED=stateless` with UDS Core 1.9, because Keycloak rejects a feature that appears in both the enabled and disabled feature lists. Upgrade to UDS Core 1.10 when possible; it no longer enables the generic `preview` feature group by default.
-
 ### Notable features
 
 - **Direct package customization with native Zarf values:** Customize a UDS Core package during deployment with `--values values.yaml`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`. You no longer need to create or rebuild a UDS bundle solely to override supported Helm settings. UDS Core publishes values files and generated schemas across all seven package layers. During deployment, each package validates supplied settings and protects configuration that UDS Core owns, including image references, registries, and security contexts. Shared `global.domain` and `global.adminDomain` values configure applicable charts across the stack. Existing Zarf variable workflows remain supported, and explicit values take precedence. Zarf values remain an alpha feature. See the [Zarf values reference](/reference/configuration/zarf-values/) ([#2762](https://github.com/defenseunicorns/uds-core/pull/2762)).
