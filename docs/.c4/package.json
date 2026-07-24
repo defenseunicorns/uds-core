@@ -6,7 +6,7 @@
     },
     "devDependencies": {
         "@types/node": "^24.0.0",
-        "likec4": "^1.43.0",
+        "likec4": "^1.59.2",
         "typescript": "^7.0.0",
         "playwright": "^1.48.2"
     }
