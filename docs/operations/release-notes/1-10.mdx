@@ -7,11 +7,6 @@ sidebar:
 
 import { Steps } from "@astrojs/starlight/components";
 
-> [!NOTE]
-> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
-
-UDS Core 1.10 changes the default Keycloak feature configuration. FIPS mode remains enabled, but UDS Core no longer enables Keycloak's generic `preview` feature group. Configure additional features explicitly when your deployment requires them.
-
 ### ⚠ Breaking changes
 
 | Change | Impact | Action required |
@@ -37,15 +32,6 @@ The current feature change does not bump a runtime dependency. Add dependency up
    If your deployment relies on a Keycloak feature that UDS Core previously enabled through the generic `preview` group, add that feature to `keycloak.keycloak.features.additional` before upgrading. Prefer the specific feature name over `preview` so unrelated preview features do not activate.
 
 </Steps>
-
-### Keycloak stateless mode
-
-Keycloak 26.7 introduced `stateless:v1` as a preview feature. Stateless mode stores authentication sessions, action tokens, and brute-force counters in the database instead of Infinispan. Keycloak reports that this can roughly double database CPU and IOPS for a single cluster. UDS Core 1.10 does not enable this feature by default. Adding either `stateless:v1` or `preview` to `features.additional` enables it.
-
-> [!CAUTION]
-> Treat enabling `stateless:v1` as a capacity and compatibility change. Review the [Keycloak stateless mode documentation](https://www.keycloak.org/2026/07/multi-cluster-v2-and-stateless-mode), validate your database capacity, and test the feature before enabling it in production.
-
-For the supported configuration path and an example values file, see [Keycloak features](/reference/configuration/identity-and-authorization/#keycloak-features).
 
 ### Post-upgrade verification
 
