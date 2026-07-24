@@ -11,7 +11,7 @@ import { Steps } from "@astrojs/starlight/components";
 
 | Change | Impact | Action required |
 |---|---|---|
-| UDS Core no longer enables Keycloak's generic `preview` feature group by default. | Keycloak preview features that were previously activated indirectly, including `stateless:v1` in Keycloak 26.7, no longer start unless you configure them. | Review deployments that rely on preview features. Add the specific feature names to `keycloak.keycloak.features.additional`, or add `preview` only when you intentionally require every preview feature. |
+| UDS Core no longer enables Keycloak's generic `preview` feature group by default. | Keycloak preview features that were previously activated indirectly, including `stateless:v1` in Keycloak 26.7, no longer start unless you configure them. This changes the storage path for volatile authentication data. | Review deployments that rely on preview features. Back up the Keycloak database, review database capacity, and test SSO flows. Add the specific feature names to `keycloak.keycloak.features.additional`, or add `preview` only when you intentionally require every preview feature. |
 
 ### Notable features
 
@@ -19,9 +19,13 @@ import { Steps } from "@astrojs/starlight/components";
 
 ### Dependency updates
 
-The current feature change does not bump a runtime dependency. Add dependency updates from the full 1.10 commit range when the release changelog is generated.
+This feature change does not update a runtime dependency.
 
 ## Upgrade considerations
+
+### Keycloak database and session behavior
+
+The 1.10 upgrade does not downgrade the Keycloak database. Keycloak remains on version 26.7.0, and its schema migrations remain applied. Disabling stateless mode changes how volatile authentication data is stored; active login sessions and action tokens may not carry over and users may need to authenticate again. Durable data such as realms, clients, users, roles, and identity providers remains in the database.
 
 ### Pre-upgrade steps
 
