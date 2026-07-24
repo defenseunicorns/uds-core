@@ -14,7 +14,7 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].args
-          content: "--features=preview,fips"
+          content: "--features=fips"
 
   - it: should always include FIPS strict mode in container args
     template: statefulset.yaml
