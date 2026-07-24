@@ -225,6 +225,26 @@ UDS Core configures Keycloak brute-force detection with the following defaults.
 > [!CAUTION]
 > Modifying lockout behavior may have compliance implications. Review applicable NIST controls or STIG requirements for brute-force protection before changing these defaults.
 
+## Keycloak features
+
+UDS Core always enables the required Keycloak `fips` feature. It does not enable the generic `preview` feature group by default. Configure additional features by name when your deployment requires them.
+
+| Field | Default | Description |
+|---|---|---|
+| `features.additional` | `[]` | Keycloak feature names to enable in addition to `fips`. UDS Core passes these values to Keycloak's `--features` option. |
+
+For example, this values file explicitly enables the Keycloak `token-exchange:v1` feature:
+
+```yaml title="values.yaml"
+keycloak:
+  keycloak:
+    features:
+      additional:
+        - token-exchange:v1
+```
+
+The `keycloak.keycloak.features.additional` path is available through native Zarf values and bundle overrides. List values replace the configured list, so include every additional feature you want to enable. Do not use `preview` unless you intentionally want to enable every Keycloak preview feature, including features added in future Keycloak releases.
+
 ## Truststore configuration
 
 The Keycloak truststore contains the CA certificates used to validate X.509 client certificates. It is built at image-build time by the `uds-identity-config` component and is not persisted; it is refreshed automatically on every Keycloak upgrade.

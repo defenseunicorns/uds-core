@@ -1,0 +1,67 @@
+---
+title: UDS Core 1.10
+description: UDS Core 1.10 keeps Keycloak FIPS mode enabled by default while requiring explicit configuration for additional Keycloak features.
+sidebar:
+  order: 3.985
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.10 changes the default Keycloak feature configuration. FIPS mode remains enabled, but UDS Core no longer enables Keycloak's generic `preview` feature group. Configure additional features explicitly when your deployment requires them.
+
+### ⚠ Breaking changes
+
+| Change | Impact | Action required |
+|---|---|---|
+| UDS Core no longer enables Keycloak's generic `preview` feature group by default. | Keycloak preview features that were previously activated indirectly, including `stateless:v1` in Keycloak 26.7, no longer start unless you configure them. | Review deployments that rely on preview features. Add the specific feature names to `keycloak.keycloak.features.additional`, or add `preview` only when you intentionally require every preview feature. |
+
+### Notable features
+
+- **Explicit Keycloak feature selection:** UDS Core always enables the required `fips` feature and exposes the `keycloak.keycloak.features.additional` value for additional features. UDS Core no longer passes `preview` by default, which prevents newly added Keycloak preview features from activating during a UDS Core upgrade. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features).
+
+### Dependency updates
+
+The current feature change does not bump a runtime dependency. Add dependency updates from the full 1.10 commit range when the release changelog is generated.
+
+## Upgrade considerations
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Review Keycloak feature dependencies**
+
+   If your deployment relies on a Keycloak feature that UDS Core previously enabled through the generic `preview` group, add that feature to `keycloak.keycloak.features.additional` before upgrading. Prefer the specific feature name over `preview` so unrelated preview features do not activate.
+
+</Steps>
+
+### Keycloak stateless mode
+
+Keycloak 26.7 introduced `stateless:v1` as a preview feature. Stateless mode stores authentication sessions, action tokens, and brute-force counters in the database instead of Infinispan. Keycloak reports that this can roughly double database CPU and IOPS for a single cluster. UDS Core 1.10 does not enable this feature by default. Adding either `stateless:v1` or `preview` to `features.additional` enables it.
+
+> [!CAUTION]
+> Treat enabling `stateless:v1` as a capacity and compatibility change. Review the [Keycloak stateless mode documentation](https://www.keycloak.org/2026/07/multi-cluster-v2-and-stateless-mode), validate your database capacity, and test the feature before enabling it in production.
+
+For the supported configuration path and an example values file, see [Keycloak features](/reference/configuration/identity-and-authorization/#keycloak-features).
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Verify Keycloak startup and SSO flows**
+
+   Confirm that the Keycloak StatefulSet becomes ready and test the SSO flows used by your deployment. If you enabled an additional feature, verify its expected behavior separately.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak features and FIPS mode
+- [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
+- [UDS Core 1.10.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#110-2026-07-24) - full changelog
+- [Full diff (1.9.0...1.10.0)](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) - all changes between versions
+- [Keycloak server features](https://www.keycloak.org/server/features) - upstream feature status and configuration
