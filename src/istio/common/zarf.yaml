@@ -20,7 +20,7 @@ components:
     charts:
       - name: base
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.3
+        version: 1.30.3
         namespace: istio-system
         # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
         # This should be fixed in a future Istio version
@@ -34,7 +34,7 @@ components:
               - .istio-controlplane.base.global.tag
       - name: istiod
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.3
+        version: 1.30.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-istiod.yaml"
@@ -69,7 +69,7 @@ components:
             targetPath: .
       - name: cni
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.3
+        version: 1.30.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-cni.yaml"
@@ -82,7 +82,7 @@ components:
               - .istio-controlplane.cni.global.tag
       - name: ztunnel
         url: https://istio-release.storage.googleapis.com/charts
-        version: 1.29.3
+        version: 1.30.3
         namespace: istio-system
         valuesFiles:
           - "../values/base-ztunnel.yaml"
@@ -145,4 +145,4 @@ components:
     manifests:
       - name: gateway-api-crds
         files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.5.1/experimental-install.yaml
+          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
