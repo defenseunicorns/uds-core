@@ -233,14 +233,14 @@ UDS Core always enables the required Keycloak `fips` feature. It does not enable
 |---|---|---|
 | `features.additional` | `[]` | Keycloak feature names to enable in addition to `fips`. UDS Core passes these values to Keycloak's `--features` option. |
 
-For example, this values file explicitly enables the Keycloak `token-exchange:v1` feature:
+For example, this values file explicitly enables the Keycloak `spiffe:v1` feature:
 
 ```yaml title="values.yaml"
 keycloak:
   keycloak:
     features:
       additional:
-        - token-exchange:v1
+        - spiffe:v1
 ```
 
 The `keycloak.keycloak.features.additional` path is available through native Zarf values and bundle overrides. List values replace the configured list, so include every additional feature you want to enable. Do not use `preview` unless you intentionally want to enable every Keycloak preview feature, including features added in future Keycloak releases.
