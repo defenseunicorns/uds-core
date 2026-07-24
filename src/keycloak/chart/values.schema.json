@@ -238,6 +238,17 @@
         }
       }
     },
+    "features": {
+      "type": "object",
+      "properties": {
+        "additional": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "insecureAdminPasswordGeneration": {
       "type": "object",
       "properties": {

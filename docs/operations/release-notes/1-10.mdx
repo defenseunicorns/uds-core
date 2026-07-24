@@ -1,0 +1,57 @@
+---
+title: UDS Core 1.10
+description: UDS Core 1.10 keeps Keycloak FIPS mode enabled by default while requiring explicit configuration for additional Keycloak features.
+sidebar:
+  order: 3.985
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+### ⚠ Breaking changes
+
+| Change | Impact | Action required |
+|---|---|---|
+| UDS Core no longer enables Keycloak's generic `preview` feature group by default. | Keycloak preview features that were previously activated indirectly, including `stateless:v1` in Keycloak 26.7, no longer start unless you configure them. This changes the storage path for volatile authentication data. | Review deployments that rely on preview features. Back up the Keycloak database, review database capacity, and test SSO flows. Add the specific feature names to `keycloak.keycloak.features.additional`, or add `preview` only when you intentionally require every preview feature. |
+
+### Notable features
+
+- **Explicit Keycloak feature selection:** UDS Core always enables the required `fips` feature and exposes the `keycloak.keycloak.features.additional` value for additional features. UDS Core no longer passes `preview` by default, which prevents newly added Keycloak preview features from activating during a UDS Core upgrade. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features).
+
+### Dependency updates
+
+This feature change does not update a runtime dependency.
+
+## Upgrade considerations
+
+### Keycloak database and session behavior
+
+The 1.10 upgrade does not downgrade the Keycloak database. Keycloak remains on version 26.7.0, and its schema migrations remain applied. Disabling stateless mode changes how volatile authentication data is stored; active login sessions and action tokens may not carry over and users may need to authenticate again. Durable data such as realms, clients, users, roles, and identity providers remains in the database.
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Review Keycloak feature dependencies**
+
+   If your deployment relies on a Keycloak feature that UDS Core previously enabled through the generic `preview` group, add that feature to `keycloak.keycloak.features.additional` before upgrading. Prefer the specific feature name over `preview` so unrelated preview features do not activate.
+
+</Steps>
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Verify Keycloak startup and SSO flows**
+
+   Confirm that the Keycloak StatefulSet becomes ready and test the SSO flows used by your deployment. If you enabled an additional feature, verify its expected behavior separately.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak features and FIPS mode
+- [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
+- [UDS Core 1.10.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#110-2026-07-24) - full changelog
+- [Full diff (1.9.0...1.10.0)](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) - all changes between versions
+- [Keycloak server features](https://www.keycloak.org/server/features) - upstream feature status and configuration
