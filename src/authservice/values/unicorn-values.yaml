@@ -3,4 +3,4 @@
 
 image:
   repository: cgr.dev/defenseunicorns.com/authservice-fips
-  tag: "1.1.5"
+  tag: "v1.1.8"
