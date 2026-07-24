@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.10.0](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) (2026-07-24)
+
+
+### Miscellaneous
+
+* add full semver comments on all actions ([#2826](https://github.com/defenseunicorns/uds-core/issues/2826)) ([af764f8](https://github.com/defenseunicorns/uds-core/commit/af764f83ad28d099f7c08d7ffcf27ad6fc9f0cd5))
+* **deps-dev:** bump fast-uri from 3.1.3 to 3.1.4 ([#2829](https://github.com/defenseunicorns/uds-core/issues/2829)) ([c71daeb](https://github.com/defenseunicorns/uds-core/commit/c71daebe7cd46474c32df447feb4e62866a594da))
+* **deps-dev:** bump vite from 8.0.5 to 8.1.5 in /scripts/root-ca-retriever ([#2834](https://github.com/defenseunicorns/uds-core/issues/2834)) ([17713cd](https://github.com/defenseunicorns/uds-core/commit/17713cd3df1de3e07c3a0d0c86e1a6ed418fa8a8))
+* **deps:** bump body-parser from 2.2.2 to 2.3.0 ([#2823](https://github.com/defenseunicorns/uds-core/issues/2823)) ([0b1c099](https://github.com/defenseunicorns/uds-core/commit/0b1c099f335339a9261998cfc951b82d49e967c2))
+* **deps:** bump form-data from 4.0.5 to 4.0.6 ([#2833](https://github.com/defenseunicorns/uds-core/issues/2833)) ([c0c7258](https://github.com/defenseunicorns/uds-core/commit/c0c7258035d9c4aa30691166579764385fbd7778))
+* **deps:** bump js-yaml and kubernetes-fluent-client in /test/vitest ([#2822](https://github.com/defenseunicorns/uds-core/issues/2822)) ([f6970ab](https://github.com/defenseunicorns/uds-core/commit/f6970abe561d3d1f0699567dc67ed54c26d67dbd))
+* **deps:** update iac-support-deps ([#2768](https://github.com/defenseunicorns/uds-core/issues/2768)) ([fcac62e](https://github.com/defenseunicorns/uds-core/commit/fcac62eb2f55efb539bf120fc00b9b46d691c12e))
+* **deps:** update iac-support-deps ([#2830](https://github.com/defenseunicorns/uds-core/issues/2830)) ([f04eacd](https://github.com/defenseunicorns/uds-core/commit/f04eacd73123b4dec13aea8494d2449b55be4b39))
+
 ## [1.9.0](https://github.com/defenseunicorns/uds-core/compare/v1.8.0...v1.9.0) (2026-07-22)
 
 
