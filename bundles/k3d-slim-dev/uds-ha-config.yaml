@@ -10,8 +10,20 @@ variables:
     keycloak_pg_host: host.k3d.internal
     keycloak_devmode: false
     AUTHSERVICE_REPLICA_COUNT: 3
-    AUTHSERVICE_REDIS_URI: redis+sentinel://:authservice@valkey.valkey.svc.cluster.local:26379/mymaster
+    # The redis+sentinel:// scheme selects authservice's Sentinel-aware client; everything
+    # after the scheme follows go-redis's failover URL form
+    # (https://pkg.go.dev/github.com/redis/go-redis/v9#ParseFailoverURL):
+    #   - the host is a sentinel address (add more with repeated addr= params)
+    #   - master_name is required and must match the sentinel's monitored master
+    #   - credentials in userinfo (user:pass@) authenticate to the SENTINELS, which this
+    #     valkey deployment leaves unauthenticated (auth.sentinel: false)
+    #   - the data-node (master) credentials go in username=/password= query params, OR in
+    #     authservice's RedisConfig username/password/password_file fields, which override
+    #     the URI; password_file + a mounted secret keeps the password out of this URI
+    #   - a /<db> path segment selects the database (defaults to 0)
+    AUTHSERVICE_REDIS_URI: redis+sentinel://valkey.valkey.svc.cluster.local:26379?master_name=mymaster&password=authservice
 
   # Authservice config is managed by the operator in the base layer
   core-base:
-    AUTHSERVICE_REDIS_URI: redis+sentinel://:authservice@valkey.valkey.svc.cluster.local:26379/mymaster
+    # See the note on AUTHSERVICE_REDIS_URI above for the URI format and credential options
+    AUTHSERVICE_REDIS_URI: redis+sentinel://valkey.valkey.svc.cluster.local:26379?master_name=mymaster&password=authservice
