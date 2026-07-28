@@ -1263,6 +1263,28 @@
                   },
                   "type": "object"
                 },
+                "startupProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
                 "terminationGracePeriodSeconds": {
                   "type": "number"
                 },
@@ -1518,6 +1540,28 @@
                         }
                       },
                       "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "startupProbe": {
+                  "properties": {
+                    "httpGet": {
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "type": "number"
+                        },
+                        "scheme": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "initialDelaySeconds": {
+                      "type": "number"
                     }
                   },
                   "type": "object"
