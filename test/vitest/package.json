@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
-    "kubernetes-fluent-client": "^3.11.8",
+    "kubernetes-fluent-client": "^3.11.10",
     "typescript": "^6.0.0",
     "vitest": "^4.0.0"
   }
