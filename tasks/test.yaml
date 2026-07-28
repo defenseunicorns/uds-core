@@ -127,6 +127,8 @@ tasks:
             npx playwright test \
             "
       - description: "Run E2E Tests"
+        env:
+          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
         cmd: |
           npm ci
           # TODO: Remove this conditional exclude once Fleet admin realm updates are included in a released Core baseline.
