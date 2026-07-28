@@ -14,7 +14,7 @@
     "@types/adm-zip": "^0.5.7",
     "adm-zip": "^0.6.0",
     "csv-parse": "^7.0.0",
-    "js-yaml": "^5.0.0",
+    "js-yaml": "^5.2.2",
     "@types/js-yaml": "^4.0.9"
   },
   "dependencies": {
