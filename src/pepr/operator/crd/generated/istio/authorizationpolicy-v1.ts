@@ -127,6 +127,10 @@ export interface Source {
   /**
    * Optional.
    */
+  notTrustDomains?: string[];
+  /**
+   * Optional.
+   */
   principals?: string[];
   /**
    * Optional.
@@ -140,6 +144,10 @@ export interface Source {
    * Optional.
    */
   serviceAccounts?: string[];
+  /**
+   * Optional.
+   */
+  trustDomains?: string[];
 }
 
 export interface To {
