@@ -6,7 +6,7 @@ metadata:
   name: uds-core-rke2-nightly
   description: A UDS bundle for deploying RKE2 and UDS Core
   # x-release-please-start-version
-  version: "1.8.0"
+  version: "1.9.0"
   # x-release-please-end
 
 packages:
@@ -16,7 +16,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.79.0
+    ref: v0.82.0
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
@@ -41,13 +41,21 @@ packages:
   - name: core
     path: ../../../build
     # x-release-please-start-version
-    ref: 1.8.0
+    ref: 1.9.0
     # x-release-please-end
     optionalComponents:
       - metrics-server
       - istio-egress-gateway
       - envoy-gateway
+      - envoy-default-gateway
     overrides:
+      envoy-gateway:
+        uds-envoy-gateway-config:
+          values:
+            - path: envoyService.annotations
+              value:
+                service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+                service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
       istio-admin-gateway:
         gateway:
           values:

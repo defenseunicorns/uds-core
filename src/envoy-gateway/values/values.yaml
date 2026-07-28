@@ -1,2 +1,12 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Deploy managed Envoy proxies into the same namespace as their owning Gateway
+# (matching how Istio's tenant/admin gateways get their own dedicated namespace),
+# instead of the default of co-locating them with the envoy-gateway controller.
+config:
+  envoyGateway:
+    provider:
+      kubernetes:
+        deploy:
+          type: GatewayNamespace

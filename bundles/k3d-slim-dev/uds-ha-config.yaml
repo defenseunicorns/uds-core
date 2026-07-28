@@ -10,6 +10,7 @@ variables:
     keycloak_pg_host: host.k3d.internal
     keycloak_devmode: false
     AUTHSERVICE_REPLICA_COUNT: 2
+    AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
 
   # Authservice config is managed by the operator in the base layer
   core-base:

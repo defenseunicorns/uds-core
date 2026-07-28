@@ -14,7 +14,7 @@ components:
       - name: envoy-gateway
         namespace: envoy-gateway-system
         url: oci://docker.io/envoyproxy/gateway-helm
-        version: 1.8.1
+        version: 1.8.2
         # SSA disabled to avoid field manager conflict: the chart's crds/ dir contains the
         # safe-upgrades.gateway.networking.k8s.io VAP, which Istio already owns with field
         # manager "uds". SSA causes a conflict on the .spec.matchConstraints field.
@@ -23,3 +23,14 @@ components:
         serverSideApply: "false"
         valuesFiles:
           - "../values/values.yaml"
+        values:
+          - sourcePath: .envoy-gateway.envoy-gateway
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.envoy-gateway.global.imageRegistry
+              - .envoy-gateway.envoy-gateway.global.images.envoyGateway.image
+              - .envoy-gateway.envoy-gateway.global.images.ratelimit.image
+              - .envoy-gateway.envoy-gateway.global.images.envoyProxy.image
+              - .envoy-gateway.envoy-gateway.deployment.envoyGateway.image
+              - .envoy-gateway.envoy-gateway.deployment.envoyGateway.securityContext
+              - .envoy-gateway.envoy-gateway.certgen.job.securityContext

@@ -12,13 +12,13 @@ spec:
     - name: Grafana
       clientId: uds-core-admin-grafana
       redirectUris:
-        {{- if .Values.adminDomain }}
-        - "https://grafana.{{ .Values.adminDomain }}/login/generic_oauth"
-        - "https://grafana.{{ .Values.adminDomain }}/login"
-        {{- else }}
-        - "https://grafana.admin.{{ .Values.domain }}/login/generic_oauth"
-        - "https://grafana.admin.{{ .Values.domain }}/login"
+        {{- $domain := tpl .Values.domain . }}
+        {{- $admin := tpl .Values.adminDomain . }}
+        {{- if or (not $admin) (eq $admin "###ZARF_VAR_ADMIN_DOMAIN###") }}
+          {{- $admin = printf "admin.%s" $domain }}
         {{- end }}
+        - "https://grafana.{{ $admin }}/login/generic_oauth"
+        - "https://grafana.{{ $admin }}/login"
       {{- if .Values.sso.groups }}
       groups:
         anyOf:
@@ -136,4 +136,3 @@ spec:
       {{- with .Values.additionalNetworkAllow }}
       {{ toYaml . | nindent 6 }}
       {{- end }}
-

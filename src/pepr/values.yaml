@@ -132,7 +132,9 @@ rbac:
   - apiGroups:
       - gateway.networking.k8s.io
     resources:
+      - gatewayclasses
       - gateways
+      - udproutes
     verbs:
       - create
       - delete

@@ -1,0 +1,45 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak adminDomain fallback
+templates:
+  - statefulset.yaml
+  - path-parameter-envoyfilter.yaml
+
+tests:
+  - it: should derive adminDomain from domain when adminDomain is unset
+    set:
+      domain: "custom.example.com"
+      adminDomain: ""
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_ADMIN_DOMAIN
+            value: "admin.custom.example.com"
+
+  - it: should use explicit adminDomain when set
+    set:
+      domain: "custom.example.com"
+      adminDomain: "mgmt.example.com"
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_ADMIN_DOMAIN
+            value: "mgmt.example.com"
+
+  - it: should derive adminDomain in envoyfilter when adminDomain is unset
+    set:
+      domain: "custom.example.com"
+      adminDomain: ""
+      pathParameterProtection: true
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'keycloak\.admin\.custom\.example\.com'

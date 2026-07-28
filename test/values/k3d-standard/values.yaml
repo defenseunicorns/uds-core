@@ -1,0 +1,84 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Mirrors the k3d-standard demo bundle's static overrides (bundles/k3d-standard/uds-bundle.yaml,
+# the `core` package `overrides:` block) in the component.chart namespace, for the values-deploy
+# equivalency test (tasks/test.yaml: uds-core-values-e2e). Only the STATIC config is mirrored here;
+# the dynamic deploy-time settings (Postgres creds, S3 keys, TLS certs) stay as Zarf variables
+# injected by the dev stack.
+
+# The admin Istio gateway receives this shared domain as its tenant domain. With no global.adminDomain
+# or ADMIN_DOMAIN, it derives admin.uds.dev.
+global:
+  domain: "uds.dev"
+
+# --- base: pepr (bundle pepr var defaults) ---
+pepr-uds-core:
+  module:
+    watcher:
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "200m"
+    admission:
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "200m"
+
+# --- identity-authorization ---
+authservice:
+  authservice:
+    replicaCount: 1
+keycloak:
+  keycloak:
+    insecureAdminPasswordGeneration:
+      enabled: true
+    detailedObservability:
+      alerts:
+        enabled: true
+    realmInitEnv:
+      FLEET_CLIENT_ENABLED: "true"
+      GOOGLE_IDP_ENABLED: true
+      GOOGLE_IDP_ID: "C01881u7t"
+      GOOGLE_IDP_SIGNING_CERT: "MIIDdjCCAl6gAwIBAgIGAZUBt5zpMA0GCSqGSIb3DQEBCwUAMHwxFDASBgNVBAoTC0dvb2dsZSBJbmMuMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MQ8wDQYDVQQDEwZHb29nbGUxGTAXBgNVBAsTEEdvb2dsZSBXb3Jrc3BhY2UxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMB4XDTI1MDIxMzIzNDkyNVoXDTMwMDIxMjIzNDkyNVowfDEUMBIGA1UEChMLR29vZ2xlIEluYy4xFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxDzANBgNVBAMTBkdvb2dsZTEZMBcGA1UECxMQR29vZ2xlIFdvcmtzcGFjZTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCIhy74McJ/ykhQw2zTxfe4YiTkQbupa1fzQTZSglQm8FsGZbQoihdg98QmaxyQj20SIOt3svhGEeSdromX4LSxdwxUkPwMsKrQe7ywetsUYfe7KETYCiwDs9xSpq2x1BXqJoy/oi//R/YMMrAoT6HEpE6FiU1NMuNxDiTZx+eVQ5LNlodXdUkqdXa7xsO9BumWwBdCwJgk35dW0cSkxePEBkmpKgdMgUd9SgROo1mxJG77+dQ/C3PGA/i7Gx1n3S+jjvC9sR+b5GFNJpqPYFGnSinhN2o8jQj51U0Jve7EyTV3VFgGfDrbHjYeT1CVQX9vO51FzJPtUzRsDilwpKV3AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAFpeBvkGqtN43T615DxKpJxiz1y9EqDZzi6uyhSs3xbo2kdOduXpJlziXC3Q1l94/DmItZINRJYT3Y5yh9w4yGZQn5Tc+NajjoRND6SILkMeamvEHLagXy7Qh3HzS3sO5pg5GFjwswxHIsrKxhrIoSwyNiWjz3RSvXCUPEunWjNoF4pvyS3RRs7xvi5JHUuM4ThqMY6HvwoCJqcpRMOBJiDbTooz7SJS1fpK6tVMFnXoJ6Tq89+g+yjcmmZnjV0FkeiXcb7yBR/vkuUyAQhh0Mw14B72mDwqY8Ord1AdgCdVlvRSXCrKLF/ii3AxqJ9ET0rGn0HKk5wi/lYMa3AnEZo="
+      GOOGLE_IDP_NAME_ID_FORMAT: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+      GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
+      GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
+      GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"
+
+# --- logging: loki (bundle var defaults; scaled to 1 for demo/CI) ---
+loki:
+  loki:
+    write:
+      replicas: 1
+    read:
+      replicas: 1
+    backend:
+      replicas: 1
+
+# --- runtime-security: falco ---
+falco:
+  falco:
+    falcosidekick:
+      replicaCount: 1
+  uds-falco-config:
+    sandboxRulesEnabled: true
+    incubatingRulesEnabled: true
+
+# --- backup-restore: velero ---
+velero:
+  velero:
+    configuration:
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: "uds"
+          prefix: "backups"
+          config:
+            region: "uds-dev-stack"
+            s3ForcePathStyle: true
+            s3Url: "http://minio.uds-dev-stack.svc.cluster.local:9000"
+          credential:
+            name: "velero-bucket-credentials"
+            key: "cloud"

@@ -7,7 +7,7 @@ import { K8s } from "pepr";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { IstioServiceEntry, IstioVirtualService, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 import * as utils from "../utils";
 import { getPackageId, getSharedAnnotationKey, istioResources } from "./istio-resources";
 import * as seMod from "./service-entry";
@@ -141,6 +141,31 @@ describe("istio-resources (ingress)", () => {
       expect.anything(),
     );
     expect(utils.purgeOrphans).toHaveBeenCalledTimes(3);
+  });
+
+  it("skips UDP expose entries", async () => {
+    const pkg = {
+      ...pkgBase,
+      spec: {
+        network: {
+          expose: [
+            { host: "a" },
+            {
+              protocol: ExposeProtocol.UDP,
+              service: "game-server",
+              selector: { app: "game" },
+              port: 7777,
+            },
+          ],
+        },
+      },
+    } as unknown as UDSPackage;
+
+    const hosts = await istioResources(pkg, pkg.metadata!.namespace!);
+
+    expect(applyVS).toHaveBeenCalledTimes(1);
+    expect(applySE).toHaveBeenCalledTimes(1);
+    expect(hosts).toEqual(["a.uds.dev"]);
   });
 });
 

@@ -17,6 +17,10 @@ variables:
   - name: ADMIN_DOMAIN
     description: "Domain for admin services, defaults to `admin.DOMAIN`"
 
+values:
+  files:
+    - zarf-values.yaml
+
 components:
   - name: istio-controlplane
     required: true
@@ -103,12 +107,24 @@ components:
         namespace: istio-admin-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        values:
+          - sourcePath: .istio-admin-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-admin-gateway.gateway._internal_defaults_do_not_set
+              - .istio-admin-gateway.gateway.global.hub
+              - .istio-admin-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
         namespace: istio-admin-gateway
-        valuesFiles:
+        templatedValuesFiles:
           - "values/config-admin.yaml"
+        values:
+          - sourcePath: .istio-admin-gateway.uds-istio-config
+            targetPath: .
+            excludePaths:
+              - .istio-admin-gateway.uds-istio-config.name
 
   - name: istio-tenant-gateway
     required: true
@@ -120,12 +136,24 @@ components:
         namespace: istio-tenant-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        values:
+          - sourcePath: .istio-tenant-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-tenant-gateway.gateway._internal_defaults_do_not_set
+              - .istio-tenant-gateway.gateway.global.hub
+              - .istio-tenant-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
         namespace: istio-tenant-gateway
-        valuesFiles:
+        templatedValuesFiles:
           - "values/config-tenant.yaml"
+        values:
+          - sourcePath: .istio-tenant-gateway.uds-istio-config
+            targetPath: .
+            excludePaths:
+              - .istio-tenant-gateway.uds-istio-config.name
 
   - name: istio-passthrough-gateway
     required: false
@@ -137,12 +165,24 @@ components:
         namespace: istio-passthrough-gateway
         valuesFiles:
           - "values/base-gateway.yaml"
+        values:
+          - sourcePath: .istio-passthrough-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-passthrough-gateway.gateway._internal_defaults_do_not_set
+              - .istio-passthrough-gateway.gateway.global.hub
+              - .istio-passthrough-gateway.gateway.global.tag
       - name: uds-istio-config
         version: 0.2.0
         localPath: charts/uds-istio-config
         namespace: istio-passthrough-gateway
-        valuesFiles:
+        templatedValuesFiles:
           - "values/config-passthrough.yaml"
+        values:
+          - sourcePath: .istio-passthrough-gateway.uds-istio-config
+            targetPath: .
+            excludePaths:
+              - .istio-passthrough-gateway.uds-istio-config.name
 
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-ambient
@@ -153,6 +193,9 @@ components:
         version: 0.1.0
         localPath: charts/uds-istio-egress-config
         namespace: istio-egress-ambient
+        values:
+          - sourcePath: .istio-egress-ambient.uds-istio-egress-config
+            targetPath: .
 
   # @lulaStart 643060b2-0ddf-4728-9582-ef38dca7447a
   - name: istio-egress-gateway
@@ -166,3 +209,10 @@ components:
         namespace: istio-egress-gateway
         valuesFiles:
           - "values/base-egress.yaml"
+        values:
+          - sourcePath: .istio-egress-gateway.gateway
+            targetPath: .
+            excludePaths:
+              - .istio-egress-gateway.gateway._internal_defaults_do_not_set
+              - .istio-egress-gateway.gateway.global.hub
+              - .istio-egress-gateway.gateway.global.tag

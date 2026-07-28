@@ -1,0 +1,13 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Portal package.
+
+# Shared domains for the whole stack. Override via --values / --set-values to configure all charts.
+global:
+  domain: ""
+  # Empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
+  adminDomain: ""
+
+uds-portal:
+  uds-portal: {}

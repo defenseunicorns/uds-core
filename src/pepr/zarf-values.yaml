@@ -1,0 +1,16 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Pepr source package.
+global:
+  domain: ""
+  adminDomain: ""
+
+pepr-uds-core:
+  module: {}
+
+uds-operator-config:
+  uds-operator-config: {}
+
+uds-exemptions:
+  uds-exemptions: {}

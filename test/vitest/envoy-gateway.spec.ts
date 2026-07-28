@@ -7,7 +7,8 @@ import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { pollUntilSuccess } from "./helpers/polling";
 
-vi.setConfig({ hookTimeout: 180000, testTimeout: 180000 });
+// hookTimeout must exceed waitForNamespaceDeleted's own timeout below.
+vi.setConfig({ hookTimeout: 270000, testTimeout: 180000 });
 
 const TEST_NAMESPACE = "envoy-gateway-e2e";
 const GATEWAY_NAME = "uds-core-eg-e2e";
@@ -48,8 +49,31 @@ async function createNamespace(): Promise<void> {
           name: TEST_NAMESPACE,
           labels: {
             "app.kubernetes.io/name": "envoy-gateway-e2e",
+            // Required for the proxy to complete xDS mTLS with the controller.
+            "istio.io/dataplane-mode": "ambient",
           },
         },
+      },
+    });
+  } catch (error) {
+    if (!isConflict(error)) throw error;
+  }
+
+  await copyPrivateRegistrySecret();
+}
+
+// Mirrors the "private-registry" secret Zarf provisions automatically for
+// namespaces it creates, needed here since this namespace is created directly.
+async function copyPrivateRegistrySecret(): Promise<void> {
+  const source = await core.readNamespacedSecret({ name: "private-registry", namespace: "zarf" });
+
+  try {
+    await core.createNamespacedSecret({
+      namespace: TEST_NAMESPACE,
+      body: {
+        metadata: { name: "private-registry" },
+        type: source.type,
+        data: source.data,
       },
     });
   } catch (error) {
@@ -77,8 +101,10 @@ async function waitForNamespaceDeleted(): Promise<void> {
       }
     },
     deleted => deleted,
+    // Measured 117-159s on a busy cluster (cascading cleanup competing with everything
+    // else deploying concurrently), so 120s isn't enough; 240s gives real margin.
     `namespace ${TEST_NAMESPACE} deleted`,
-    120000,
+    240000,
     5000,
   );
 }

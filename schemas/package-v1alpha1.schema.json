@@ -202,7 +202,7 @@
           "items": {
             "$ref": "#/definitions/Expose"
           },
-          "description": "Expose a service on an Istio Gateway"
+          "description": "Expose a service through UDS Core managed ingress. HTTP entries use Istio; UDP entries\nuse Envoy Gateway."
         },
         "serviceMesh": {
           "$ref": "#/definitions/ServiceMesh",
@@ -322,7 +322,7 @@
         },
         "description": {
           "type": "string",
-          "description": "A description of this expose entry, this will become part of the VirtualService name"
+          "description": "A description of this expose entry, this will become part of the generated resource name"
         },
         "domain": {
           "type": "string",
@@ -330,7 +330,7 @@
         },
         "gateway": {
           "type": "string",
-          "description": "The name of the gateway to expose the service on (default: tenant)"
+          "description": "The name of the gateway to expose the service on. HTTP defaults to tenant when omitted.\nUDP uses the UDS Core managed default Gateway when omitted. For UDP user-managed\nGateways, this value is used as both the Gateway name and namespace, and that namespace\nmust be deployed via a Zarf package (for the private registry image pull secret) and\nenrolled in the cluster's service mesh (for the mTLS-protected connection to the Envoy\nGateway controller); otherwise the managed proxy will fail to start."
         },
         "host": {
           "type": "string",
@@ -354,6 +354,10 @@
           "type": "number",
           "description": "The port number to expose"
         },
+        "protocol": {
+          "$ref": "#/definitions/ExposeProtocol",
+          "description": "The routing protocol for this expose entry. When set to `UDP`, the entry routes through\nEnvoy Gateway instead of Istio. Hostname routing fields (`host`, `domain`,\n`advancedHTTP`, `match`) are invalid for UDP entries. UDP traffic is not protected by\nIstio AuthorizationPolicy or mTLS."
+        },
         "selector": {
           "type": "object",
           "additionalProperties": {
@@ -374,9 +378,7 @@
           "description": "Uptime monitoring configuration for this exposed service. Presence of checks.paths\nenables monitoring."
         }
       },
-      "required": [
-        "host"
-      ],
+      "required": [],
       "title": "Expose"
     },
     "AdvancedHTTP": {
@@ -984,7 +986,7 @@
           "description": "Specifies display name of the client"
         },
         "protocol": {
-          "$ref": "#/definitions/Protocol",
+          "$ref": "#/definitions/SsoProtocol",
           "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'"
         },
         "protocolMappers": {
@@ -1100,7 +1102,7 @@
           "description": "Name of the mapper"
         },
         "protocol": {
-          "$ref": "#/definitions/Protocol",
+          "$ref": "#/definitions/SsoProtocol",
           "description": "Protocol of the mapper"
         },
         "protocolMapper": {
@@ -1344,6 +1346,15 @@
       "title": "DerivePort",
       "description": "On a redirect, dynamically set the port: * FROM_PROTOCOL_DEFAULT: automatically set to 80 for HTTP and 443 for HTTPS.\n\nValid Options: FROM_PROTOCOL_DEFAULT, FROM_REQUEST_PORT"
     },
+    "ExposeProtocol": {
+      "type": "string",
+      "enum": [
+        "HTTP",
+        "UDP"
+      ],
+      "title": "ExposeProtocol",
+      "description": "The routing protocol for this expose entry. When set to `UDP`, the entry routes through Envoy Gateway instead of Istio. Hostname routing fields (`host`, `domain`, `advancedHTTP`, `match`) are invalid for UDP entries. UDP traffic is not protected by Istio AuthorizationPolicy or mTLS."
+    },
     "Mode": {
       "type": "string",
       "enum": [
@@ -1362,13 +1373,13 @@
       "title": "ClientAuthenticatorType",
       "description": "The client authenticator type"
     },
-    "Protocol": {
+    "SsoProtocol": {
       "type": "string",
       "enum": [
         "openid-connect",
         "saml"
       ],
-      "title": "Protocol",
+      "title": "SsoProtocol",
       "description": "Specifies the protocol of the client, either 'openid-connect' or 'saml'\nProtocol of the mapper"
     },
     "StatusEnum": {

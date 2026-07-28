@@ -1,0 +1,23 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: uds-istio-config tenant gateway domain
+templates:
+  - gateway.yaml
+tests:
+  - it: renders tenant hosts on the configured domain
+    set:
+      name: tenant
+      domain: "custom.example.com"
+      tls:
+        credentialName: gateway-tls
+        servers:
+          https:
+            hosts: ["*"]
+            mode: SIMPLE
+    asserts:
+      - matchRegex:
+          path: spec.servers[0].hosts[0]
+          pattern: '\*\.custom\.example\.com'

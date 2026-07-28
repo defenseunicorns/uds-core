@@ -2,5 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 package:
-  domain: "###ZARF_VAR_DOMAIN###"
-  adminDomain: "###ZARF_VAR_ADMIN_DOMAIN###"
+  # Explicit values take precedence, then package variables, then admin.<domain>.
+  domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
+  adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) .Values.global.adminDomain}}'

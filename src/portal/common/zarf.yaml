@@ -14,8 +14,15 @@ components:
       - name: uds-portal
         namespace: uds-portal
         # renovate: datasource=github-releases depName=defenseunicorns/uds-portal
-        version: "v0.4.0"
+        version: "v0.5.0"
         url: https://github.com/defenseunicorns/uds-portal.git
         gitPath: chart
-        valuesFiles:
+        templatedValuesFiles:
           - ../values/values.yaml
+        values:
+          - sourcePath: .uds-portal.uds-portal
+            targetPath: .
+            excludePaths:
+              - .uds-portal.uds-portal.image
+              - .uds-portal.uds-portal.podSecurityContext
+              - .uds-portal.uds-portal.containerSecurityContext

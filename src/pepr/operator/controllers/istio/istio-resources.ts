@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -7,6 +7,7 @@ import { K8s } from "pepr";
 
 import { Component, setupLogger } from "../../../logger";
 import { IstioServiceEntry, IstioSidecar, IstioVirtualService, UDSPackage } from "../../crd";
+import { ExposeProtocol } from "../../crd/generated/package-v1alpha1";
 import { getOwnerRef, purgeOrphans } from "../utils";
 import { generateIngressServiceEntry } from "./service-entry";
 import { generateIngressVirtualService } from "./virtual-service";
@@ -34,7 +35,9 @@ export async function istioResources(pkg: UDSPackage, namespace: string) {
   const ownerRefs = getOwnerRef(pkg);
 
   // Get the list of exposed services
-  const exposeList = pkg.spec?.network?.expose ?? [];
+  const exposeList = (pkg.spec?.network?.expose ?? []).filter(
+    expose => expose.protocol !== ExposeProtocol.UDP,
+  );
 
   // Create a Set of processed hosts (to maintain uniqueness)
   const hosts = new Set<string>();

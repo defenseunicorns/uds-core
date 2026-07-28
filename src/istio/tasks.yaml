@@ -65,8 +65,9 @@ tasks:
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
           npx kubernetes-fluent-client@3.11.7 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR" --overrideClassName K8SGateway
           npx kubernetes-fluent-client@3.11.7 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml "$OUT_DIR"
+          npx kubernetes-fluent-client@3.11.7 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.5.1/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml "$OUT_DIR" --overrideClassName K8SGatewayClass
 
-          KEEP="gateway-v1 udproute-v1alpha2"
+          KEEP="gateway-v1 gatewayclass-v1 udproute-v1alpha2"
           for f in "$OUT_DIR"/*.ts; do
             base="$(basename "$f" .ts)"
             if [[ " $KEEP " != *" $base "* ]]; then

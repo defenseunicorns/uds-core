@@ -12,25 +12,25 @@ https://velero.io/
 
 Bucket information and access credentials can be provided via configuration values / env vars:
 
-- Bucket ID: `ZARF_VAR_VELERO_BUCKET`
-- Bucket Region: `ZARF_VAR_VELERO_BUCKET_REGION`
-- Bucket Provider URL: `ZARF_VAR_VELERO_BUCKET_PROVIDER_URL`
-- Access Key: `ZARF_VAR_VELERO_BUCKET_KEY`
-- Access Key Secret: `ZARF_VAR_VELERO_BUCKET_KEY_SECRET`
+- Bucket ID: `VELERO_BUCKET`
+- Bucket Region: `VELERO_BUCKET_REGION`
+- Bucket Provider URL: `VELERO_BUCKET_PROVIDER_URL`
+- Access Key: `VELERO_BUCKET_KEY`
+- Access Key Secret: `VELERO_BUCKET_KEY_SECRET`
 
 As an alternative to providing the access key and secret via variable, you can reference a secret with the following format
 ```
 apiVersion: v1
 kind: Secret
 metadata:
-  name: ###ZARF_VAR_VELERO_BUCKET_CREDENTIALS_SECRET###
+  name: velero-bucket-credentials
   namespace: velero
 type: kubernetes.io/opaque
 stringData:
   cloud: |-
     [default]
-    aws_access_key_id=###ZARF_VAR_ACCESS_KEY###
-    aws_secret_access_key=###ZARF_VAR_SECRET_KEY###
+    aws_access_key_id=<access-key>
+    aws_secret_access_key=<access-key-secret>
 ```
 
 By overriding the velero values in the bundle as follows:
@@ -130,4 +130,3 @@ velero restore create uds-restore-$(date +%s) \
 
 > [!NOTE]
 > Additional configuration will be required to get CSI backed PVCs to be snapshotted. For more information on configuring CSI backed volumes, see the [vSphere](https://docs.defenseunicorns.com/core/how-to-guides/backup--restore/enable-volume-snapshots-vsphere/) and [AWS EBS](https://docs.defenseunicorns.com/core/how-to-guides/backup--restore/enable-volume-snapshots-aws-ebs/) guides.
-
