@@ -8,6 +8,8 @@ When writing or editing documentation, apply the style rules in `docs/dev/style-
 
 When reviewing documentation (your own or others'), audit against both style-rules.md and voice-profile.md. Classify issues by severity: CRITICAL (incorrect info, broken instructions), MAJOR (significant style/voice violations), MINOR (noticeable but non-blocking), NIT (cosmetic).
 
+When drafting or updating release notes, follow the workflow in `.agents/skills/draft-release-notes/SKILL.md` and use the documentation-authoring skill for the applicable style and template references.
+
 ## Agent configuration
 
 - `.agents/skills/` contains reusable procedural guidance and skill-specific references.
