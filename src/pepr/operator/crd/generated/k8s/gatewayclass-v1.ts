@@ -23,6 +23,10 @@ import { GenericKind, RegisterKind } from "kubernetes-fluent-client";
  * Gateway is not deleted while in use.
  *
  * GatewayClass is a Cluster level resource.
+ *
+ * A GatewayClass name SHOULD be compliant with RFC 1035, consisting of a maximum of 63
+ * lower case alphanumeric
+ * characters or hyphens ('-'), and MUST start and end with an alphanumeric character.
  */
 export class K8SGatewayClass extends GenericKind {
   /**
