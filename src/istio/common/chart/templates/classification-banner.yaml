@@ -71,7 +71,7 @@ spec:
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
               ["SAMPLE BANNER"] = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
-            local classification = "{{ .Values.classificationBanner.text }}"
+            local classification = {{ .Values.classificationBanner.text | quote }}
 
             local function trim(s)
               return (s:gsub("^%s*(.-)%s*$", "%1"))
@@ -118,52 +118,49 @@ spec:
             local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
             local backgroundColor = colors.backgroundColor
             local textColor = colors.textColor
-            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; position: fixed; left: 0; width: 100vw; text-align: center; margin: 0; z-index: 10000;"
-            local header = "<div id=\"classification-banner-top\" style=\"" .. style .. " top: 0;\">" .. classification .. "</div>"
-            local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. " bottom: 0;\">" .. classification .. "</div>"
+            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: 100vw; padding: 0 8px; position: relative; text-align: center; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin: 0; z-index: 2147483647;"
+            local header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>"
+            local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>"
 
-            -- Reserve space for the banner(s) so they don't overlap page content, including apps
-            -- whose nav/toolbar is position:fixed (e.g. SPAs).
-            local bodyPaddingScript = [[
-            <script>
-            (function () {
-              var H = '24px';
-              function place() {
-                var b = document.body;
-                if (!b) { return; }
-                var top = document.getElementById('classification-banner-top');
-                var bottom = document.getElementById('classification-banner-bottom');
-                if (!top && !bottom) { return; }
-                // Keep the banners on <html> (not <body>) so they stay anchored to the viewport
-                // after <body> is transformed below. The banner's font is pinned explicitly in its
-                // style, so it stays consistent regardless of which element it is parented to.
-                if (top && top.parentElement !== document.documentElement) {
-                  document.documentElement.appendChild(top);
-                }
-                if (bottom && bottom.parentElement !== document.documentElement) {
-                  document.documentElement.appendChild(bottom);
-                }
-                b.style.boxSizing = 'border-box';
-                b.style.minHeight = '100vh';
-                // A transform makes <body> the containing block for its position:fixed descendants
-                // (e.g. an app's fixed nav). Their containing block is body's PADDING box, so a
-                // transparent BORDER -- not padding -- is what pushes those fixed elements clear of
-                // the banner while also reserving the strip for normal-flow content.
-                if (top) { b.style.borderTop = H + ' solid transparent'; }
-                if (bottom) { b.style.borderBottom = H + ' solid transparent'; }
-                if (!b.style.transform || b.style.transform === 'none') {
-                  b.style.transform = 'translateZ(0)';
-                }
+            -- Enabled applications receive real rows for the banners and a constrained,
+            -- scrollable middle row for the original page. This is CSS-only, so application CSP
+            -- can continue to reject inline JavaScript without disabling the layout adjustment.
+            local viewportLayoutStyle = [[
+            <style id="classification-banner-viewport-layout">
+              html,
+              body {
+                height: 100%;
+                margin: 0;
+                overflow: hidden;
+                width: 100%;
               }
-              if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', place);
-              } else {
-                place();
+
+              body {
+                display: grid !important;
+                height: auto !important;
+                inset: 0 !important;
+                min-height: 0 !important;
+                position: fixed !important;
+                width: auto !important;
+                {{- if .Values.classificationBanner.addFooter }}
+                grid-template-rows: 24px minmax(0, 1fr) 24px;
+                {{- else }}
+                grid-template-rows: 24px minmax(0, 1fr);
+                {{- end }}
+                overflow: hidden !important;
+                padding: 0 !important;
               }
-              // SPAs mount their chrome after initial load; re-assert once more afterwards.
-              window.addEventListener('load', function () { setTimeout(place, 0); });
-            })();
-            </script>
+
+              #classification-page-content {
+                contain: layout paint;
+                height: 100%;
+                min-height: 0;
+                min-width: 0;
+                overflow-x: hidden;
+                overflow-y: auto;
+                position: relative;
+              }
+            </style>
             ]]
 
             -- List of enabled hosts as a table for quick lookup, injected via Helm
@@ -173,22 +170,65 @@ spec:
               {{- end }}
             }
 
-            -- Handle request: Extract `:authority` and store it as metadata
-            function envoy_on_request(request_handle)
-              local host = request_handle:headers():get(":authority")
-              request_handle:streamInfo():dynamicMetadata():set("envoy.lua", "host", tostring(host))
+            local function normalize_host(host)
+              if not host then
+                return ""
+              end
+
+              return (string.lower(host):gsub(":%d+$", ""))
             end
 
-            -- Insert the banner div(s) after <body> and the padding script after <head>. Both
-            -- :gsub calls are bounded to a single replacement so this is safe to apply to a whole
-            -- buffered body or to a single streamed chunk.
-            local function inject_banner(html)
-              {{- if .Values.classificationBanner.addFooter }}
-              html = html:gsub("<body([^>]*)>", "<body%1>" .. header .. footer, 1)
-              {{- else }}
-              html = html:gsub("<body([^>]*)>", "<body%1>" .. header, 1)
-              {{- end }}
-              return (html:gsub("<head>", "<head>" .. bodyPaddingScript, 1))
+            -- Handle request: Extract `:authority` and store it as metadata.
+            function envoy_on_request(request_handle)
+              local host = normalize_host(request_handle:headers():get(":authority"))
+              local metadata = request_handle:streamInfo():dynamicMetadata()
+              metadata:set("envoy.lua", "host", host)
+            end
+
+            -- Rewrite one complete body or one streamed fragment. State prevents duplicate
+            -- replacements when the response arrives in multiple chunks.
+            local function inject_banner(html, state)
+              local matches
+
+              if not state.head then
+                html, matches = html:gsub(
+                  "<head([^>]*)>",
+                  function(attributes)
+                    return "<head" .. attributes .. ">" .. viewportLayoutStyle
+                  end,
+                  1
+                )
+                state.head = matches > 0
+              end
+
+              if not state.body then
+                html, matches = html:gsub(
+                  "<body([^>]*)>",
+                  function(attributes)
+                    return "<body" .. attributes .. ">" .. header ..
+                      "<div id=\"classification-page-content\">"
+                  end,
+                  1
+                )
+                state.body = matches > 0
+              end
+
+              if not state.closing then
+                html, matches = html:gsub(
+                  "</body>",
+                  function()
+                    {{- if .Values.classificationBanner.addFooter }}
+                    return "</div>" .. footer .. "</body>"
+                    {{- else }}
+                    return "</div></body>"
+                    {{- end }}
+                  end,
+                  1
+                )
+                state.closing = matches > 0
+              end
+
+              return html
             end
 
             -- Inject the banner for any hosts where it is enabled
@@ -214,39 +254,52 @@ spec:
               if response_handle:headers():get("content-length") ~= nil then
                 -- Bounded response: buffer and rewrite in one shot.
                 local body = response_handle:body()
-                body:setBytes(inject_banner(tostring(body:getBytes(0, body:length()))))
+                local state = { head = false, body = false, closing = false }
+                local body_text = tostring(body:getBytes(0, body:length()))
+                body:setBytes(inject_banner(body_text, state))
+
+                -- body() yields while Envoy buffers the response. Reacquire the header map before
+                -- removing validators that describe the unmodified representation.
+                local updated_headers = response_handle:headers()
+                updated_headers:remove("content-length")
+                updated_headers:remove("etag")
+                updated_headers:remove("last-modified")
+                updated_headers:replace("cache-control", "no-store")
               else
                 -- Streamed response: rewrite chunks as they pass through (bodyChunks does not
                 -- buffer), so we never wait for end-of-stream. Chunk boundaries are arbitrary, so
                 -- a <head>/<body> tag can straddle two chunks. Carry any unterminated trailing tag
                 -- ("<" with no closing ">") into the next chunk so the match is never missed.
-                local injected = false
+                local state = { head = false, body = false, closing = false }
                 local pending = ""
                 for chunk in response_handle:bodyChunks() do
                   local len = chunk:length()
-                  if injected or len == 0 then
-                    -- already injected (or empty chunk) -> pass through untouched
-                  else
-                    local data = inject_banner(pending .. tostring(chunk:getBytes(0, len)))
-                    if string.find(data, "classification-banner-top", 1, true) ~= nil then
-                      chunk:setBytes(data)
-                      injected = true
+                  if len == 0 then
+                    if pending ~= "" then
+                      chunk:setBytes(pending)
                       pending = ""
+                    end
+                  else
+                    local data = pending .. tostring(chunk:getBytes(0, len))
+                    data = inject_banner(data, state)
+
+                    -- Hold only an unterminated trailing tag for the next chunk. This covers the
+                    -- <head>, <body>, and </body> tags without buffering the response.
+                    local lt = string.find(data, "<[^>]*$")
+                    if lt then
+                      chunk:setBytes(string.sub(data, 1, lt - 1))
+                      pending = string.sub(data, lt)
                     else
-                      -- Not matched yet. Emit everything except a trailing partial tag and carry
-                      -- that fragment forward. Valid HTML ends on a closed tag, so nothing is held
-                      -- back at end-of-stream (no truncation).
-                      local lt = string.find(data, "<[^>]*$")
-                      if lt then
-                        chunk:setBytes(string.sub(data, 1, lt - 1))
-                        pending = string.sub(data, lt)
-                      else
-                        chunk:setBytes(data)
-                        pending = ""
-                      end
+                      chunk:setBytes(data)
+                      pending = ""
                     end
                   end
                 end
+
+                local updated_headers = response_handle:headers()
+                updated_headers:remove("etag")
+                updated_headers:remove("last-modified")
+                updated_headers:replace("cache-control", "no-store")
               end
             end
   - applyTo: HTTP_FILTER

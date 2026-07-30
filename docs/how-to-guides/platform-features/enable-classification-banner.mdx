@@ -5,7 +5,7 @@ sidebar:
   order: 10.002
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps } from "@astrojs/starlight/components";
 
 ## What you'll accomplish
 
@@ -19,9 +19,9 @@ After completing this guide, web applications exposed through the Istio service 
 
 ## Before you begin
 
-The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. Because it modifies the HTML response body, it works best with standard server-rendered web applications. Single-page applications or apps with non-standard content delivery may not render the banner correctly; validate in a staging environment before adopting.
+The classification banner is injected into HTTP responses by an Istio EnvoyFilter on the gateway. A CSS-only viewport frame places the application in a scrollable row between dedicated banner rows, including applications with fixed navigation or roots sized to the full viewport.
 
-For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
+Because both modes modify the HTML response body, validate the banner in a staging environment before adopting it. For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
 
 ## Steps
 
@@ -46,16 +46,16 @@ For custom-built applications, implementing the banner natively within the appli
 
    Supported classification levels:
 
-   | Value | Banner color |
-   |---|---|
-   | `UNCLASSIFIED` | Green |
-   | `CUI` | Purple |
-   | `CONFIDENTIAL` | Blue |
-   | `SECRET` | Red |
-   | `TOP SECRET` | Orange |
-   | `TOP SECRET//SCI` | Yellow |
-   | `UNKNOWN` | Black (default) |
-   | `SAMPLE BANNER` | Black (demo placeholder) |
+   | Value             | Banner color             |
+   | ----------------- | ------------------------ |
+   | `UNCLASSIFIED`    | Green                    |
+   | `CUI`             | Purple                   |
+   | `CONFIDENTIAL`    | Blue                     |
+   | `SECRET`          | Red                      |
+   | `TOP SECRET`      | Orange                   |
+   | `TOP SECRET//SCI` | Yellow                   |
+   | `UNKNOWN`         | Black (default)          |
+   | `SAMPLE BANNER`   | Black (demo placeholder) |
 
    > [!TIP]
    > The `text` field also supports additional markings appended with `//` (e.g., `SECRET//NOFORN`). The banner color is determined by the base classification level.
@@ -98,7 +98,9 @@ For custom-built applications, implementing the banner natively within the appli
 
 ## Verification
 
-Open one of the configured hosts in a browser. You should see a colored banner at the top of the page displaying the classification text. If `addFooter` is enabled, the same banner appears at the bottom.
+Open each configured host in a browser. You should see a colored banner at the top of the page displaying the classification text. If `addFooter` is enabled, the same banner appears at the bottom.
+
+Confirm that the application is constrained between the banners and that its content scrolls within the middle row. Confirm that fixed navigation, dialogs, and other overlays do not cover either banner.
 
 ## Troubleshooting
 
@@ -116,7 +118,7 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 **Symptom:** The banner HTML is injected but the page layout is disrupted or the banner is invisible.
 
-**Solution:** This can happen with single-page applications or apps that manipulate the DOM after initial load. For these applications, consider implementing the classification banner natively within the application instead of relying on EnvoyFilter injection.
+**Solution:** The banner uses a CSS-only frame with dedicated banner rows and a scrollable content row. If an application still breaks because it depends on a specific body structure, implement the classification banner natively within the application instead of relying on EnvoyFilter injection.
 
 ## Related documentation
 

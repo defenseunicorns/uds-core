@@ -13,6 +13,13 @@
           "type": ["string", "null"],
           "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN|SAMPLE BANNER)?$",
           "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN, SAMPLE BANNER (a demo placeholder), or empty/null are also allowed."
+        },
+        "enabledHosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hosts where the classification banner is injected."
         }
       }
     }
