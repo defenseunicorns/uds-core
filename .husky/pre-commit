@@ -18,7 +18,7 @@ echo "\nRunning License Lint Check. Use \`uds run -f tasks/lint.yaml fix-license
 # Run license linting
 uds run -f tasks/lint.yaml license
 
-echo "\nRunning Pepr Format and Codespell Lint Checks\n"
+echo "\nRunning Format and Codespell Lint Checks\n"
 
 # Run lint-staged for other linting tasks
 OUTPUT=$(npx lint-staged > /dev/null && echo $? || echo $?)
@@ -27,6 +27,6 @@ if [ $OUTPUT -eq 0 ]; then
     echo "\nAll Lints Check Passed - ✅\n"
     exit 0
 else
-    echo "❌ Pepr Format and Codespell Lint Check failed... Run \`uds run lint-fix\` to resolve issues and re-commit. ❌\n"
+    echo "❌ Format and Codespell Lint Check failed... Run \`uds run lint-fix\` to resolve issues and re-commit. ❌\n"
     exit 1
 fi

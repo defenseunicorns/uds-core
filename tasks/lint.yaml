@@ -21,8 +21,8 @@ tasks:
     actions:
       - description: Ensure uv is installed
         task: ensure-uv
-      - description: "Pepr Format"
-        cmd: npx pepr format
+      - description: "Format"
+        cmd: npm run format
       - description: Fix codespell lint issues
         cmd: |
           uvx codespell || true
@@ -34,6 +34,9 @@ tasks:
       - description: Ensure uv is installed
         task: ensure-uv
       - description: install pepr deps
+        cmd: npm ci
+      - description: "Format check"
+        cmd: npm run format:check
         task: install-pepr-deps
       - description: Build the Pepr module for values lint
         task: build-pepr
