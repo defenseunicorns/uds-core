@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -58,7 +58,7 @@ export async function updateConfigMapWithCerts(
   const updatedYaml = yaml.dump(configMap, {
     lineWidth: -1, // Disable line wrapping
     noRefs: true, // Disable references
-    quotingType: '"', // Use double quotes
+    quoteStyle: "double", // Use double quotes
     forceQuotes: false,
   });
   await fs.promises.writeFile(configMapPath, updatedYaml);

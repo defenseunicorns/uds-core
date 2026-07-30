@@ -262,13 +262,13 @@
   items: [google.com]
 
 - rule: Unexpected inbound connection source
-  desc: > 
-    Detect any inbound connection from a source outside of an allowed set of ips, networks, or domain names. 
-    This rule absolutely requires profiling your environment beforehand. Network-based rules are extremely crucial 
-    in any security program, as they can often provide the only definitive evidence. However, effectively operationalizing 
+  desc: >
+    Detect any inbound connection from a source outside of an allowed set of ips, networks, or domain names.
+    This rule absolutely requires profiling your environment beforehand. Network-based rules are extremely crucial
+    in any security program, as they can often provide the only definitive evidence. However, effectively operationalizing
     them can be challenging due to the potential for noise.
   condition: >
-    inbound 
+    inbound
     and not ((fd.cip in (allowed_inbound_source_ipaddrs)) or
              (fd.cnet in (allowed_inbound_source_networks)) or
              (fd.cip.name in (allowed_inbound_source_domains)))
@@ -305,15 +305,15 @@
 # This rule is not enabled by default, as there are many legitimate
 # readers of shell config files.
 - rule: Read Shell Configuration File
-  desc: > 
-    This rule detects attempts made by non-shell programs to read shell configuration files. It offers additional generic auditing. 
-    It serves as a baseline detection alert for unusual shell configuration file accesses. The rule "Modify Shell Configuration File" 
+  desc: >
+    This rule detects attempts made by non-shell programs to read shell configuration files. It offers additional generic auditing.
+    It serves as a baseline detection alert for unusual shell configuration file accesses. The rule "Modify Shell Configuration File"
     might be more relevant and adequate for your specific cases.
   condition: >
     open_read
     and (fd.filename in (shell_config_filenames) or
          fd.name in (shell_config_files) or
-         fd.directory in (shell_config_directories)) 
+         fd.directory in (shell_config_directories))
     and not proc.name in (shell_binaries)
   enabled: false
   output: A shell configuration file was read by a non-shell program | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -588,8 +588,8 @@
 # rule, 'open_write' events don't have a `%evt.arg.newpath` argument for example so
 # we will always return `<NA>`.
 - rule: Update Package Repository
-  desc: > 
-    This rule generically detects updates to package repositories and can be seen as an auditing measure. 
+  desc: >
+    This rule generically detects updates to package repositories and can be seen as an auditing measure.
     Recommend evaluating its relevance for your specific environment.
   condition: >
     ((open_write and access_repositories) or (modify and modify_repositories))
@@ -609,13 +609,13 @@
   condition: (never_true)
 
 - rule: Write below binary dir
-  desc: > 
-    Trying to write to any file below specific binary directories can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Trying to write to any file below specific binary directories can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: >
-    open_write 
+    open_write
     and bin_dir
     and not package_mgmt_procs
     and not exe_running_docker_save
@@ -661,10 +661,10 @@
   condition: (never_true)
 
 - rule: Write below monitored dir
-  desc: > 
-    Trying to write to any file below a set of monitored directories can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Trying to write to any file below a set of monitored directories can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: >
     open_write
@@ -865,8 +865,8 @@
 
 - macro: write_etc_common
   condition: >
-    (open_write 
-    and etc_dir 
+    (open_write
+    and etc_dir
     and proc_name_exists
     and not proc.name in (passwd_binaries, shadowutils_binaries, sysdigcloud_binaries,
                           package_mgmt_binaries, ssl_mgmt_binaries, dhcp_binaries,
@@ -973,10 +973,10 @@
     and not calico_node)
 
 - rule: Write below etc
-  desc: > 
-    Trying to write to any file below /etc can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Trying to write to any file below /etc can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: write_etc_common
   output: File below /etc opened for writing | file=%fd.name pcmdline=%proc.pcmdline gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1052,11 +1052,11 @@
   condition: (proc.name=mysqlsh and fd.directory=/root/.mysqlsh)
 
 - rule: Write below root
-  desc: > 
-    Trying to write to any file directly below / or /root can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
-    changes, including compliance-related cases. Lastly, this rule stands out as potentially the noisiest one among rules related 
+  desc: >
+    Trying to write to any file directly below / or /root can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
+    changes, including compliance-related cases. Lastly, this rule stands out as potentially the noisiest one among rules related
     to "write below.
   condition: >
     open_write
@@ -1097,10 +1097,10 @@
 
 # Only let rpm-related programs write to the rpm database
 - rule: Write below rpm database
-  desc: > 
-    Trying to write to the rpm database by any non-rpm related program can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Trying to write to the rpm database by any non-rpm related program can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: >
     open_write
@@ -1119,16 +1119,16 @@
   condition: (never_true)
 
 - rule: Modify binary dirs
-  desc: > 
-    Trying to modify any file below a set of binary directories can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Trying to modify any file below a set of binary directories can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
-  condition: > 
-    modify 
+  condition: >
+    modify
     and bin_dir_rename
-    and not package_mgmt_procs 
-    and not exe_running_docker_save 
+    and not package_mgmt_procs
+    and not exe_running_docker_save
     and not user_known_modify_bin_dir_activities
   output: File below known binary directory renamed/removed | file=%fd.name pcmdline=%proc.pcmdline evt_args=%evt.args evt_type=%evt.type evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: ERROR
@@ -1139,9 +1139,9 @@
 
 - rule: Mkdir binary dirs
   desc: >
-    Trying to create a directory below a set of binary directories can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+    Trying to create a directory below a set of binary directories can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: >
     mkdir
@@ -1258,11 +1258,11 @@
 
 - rule: Launch Sensitive Mount Container
   desc: >
-    Detect the initial process launched within a container that has a mount from a sensitive host directory (e.g. /proc). 
-    Exceptions are made for known trusted images. This rule holds value for generic auditing; however, its noisiness 
+    Detect the initial process launched within a container that has a mount from a sensitive host directory (e.g. /proc).
+    Exceptions are made for known trusted images. This rule holds value for generic auditing; however, its noisiness
     varies based on your environment.
   condition: >
-    container_started 
+    container_started
     and sensitive_mount
     and not falco_sensitive_mount_containers
     and not user_sensitive_mount_containers
@@ -1283,12 +1283,12 @@
 
 - rule: Launch Disallowed Container
   desc: >
-    Detect the initial process launched within a container that is not in a list of allowed containers. 
-    This rule holds value for generic auditing; however, this rule requires a good understanding of your 
-    setup and consistent effort to keep the list of allowed containers current. In some situations, 
+    Detect the initial process launched within a container that is not in a list of allowed containers.
+    This rule holds value for generic auditing; however, this rule requires a good understanding of your
+    setup and consistent effort to keep the list of allowed containers current. In some situations,
     this can be challenging to manage.
-  condition: > 
-    container_started 
+  condition: >
+    container_started
     and not allowed_containers
   output: Container started and not in allowed list | evt_type=%evt.type user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
@@ -1299,12 +1299,12 @@
 # outgoing connections might be suspicious. These rules are not
 # enabled by default.
 - rule: Interpreted procs inbound network activity
-  desc: > 
-    Any inbound network activity performed by any interpreted program (perl, python, ruby, etc.). While it offers broad coverage and behavioral 
-    insights, operationalizing it effectively requires significant time and might result in a moderate level of noise. Suggesting customizing 
+  desc: >
+    Any inbound network activity performed by any interpreted program (perl, python, ruby, etc.). While it offers broad coverage and behavioral
+    insights, operationalizing it effectively requires significant time and might result in a moderate level of noise. Suggesting customizing
     this rule to be more specific. For example, you could set it up to alert only for important namespaces after studying their usual behavior.
   condition: >
-    inbound 
+    inbound
     and interpreted_procs
   enabled: false
   output: Interpreted program received/listened for network traffic | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1312,12 +1312,12 @@
   tags: [maturity_sandbox, host, container, network, mitre_exfiltration, TA0011]
 
 - rule: Interpreted procs outbound network activity
-  desc: > 
-    Any outbound network activity performed by any interpreted program (perl, python, ruby, etc.). While it offers broad coverage and behavioral 
-    insights, operationalizing it effectively requires significant time and might result in a moderate level of noise. Suggesting customizing 
+  desc: >
+    Any outbound network activity performed by any interpreted program (perl, python, ruby, etc.). While it offers broad coverage and behavioral
+    insights, operationalizing it effectively requires significant time and might result in a moderate level of noise. Suggesting customizing
     this rule to be more specific. For example, you could set it up to alert only for important namespaces after studying their usual behavior.
   condition: >
-    outbound 
+    outbound
     and interpreted_procs
   enabled: false
   output: Interpreted program performed outgoing network connection | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1334,16 +1334,16 @@
   condition: (never_true)
 
 - rule: Unexpected K8s NodePort Connection
-  desc: > 
-    Detect attempts to utilize K8s NodePorts from a container. K8s NodePorts are accessible on the eth0 interface of 
-    each node, and they facilitate external traffic into a Kubernetes cluster. Attackers could misuse them for 
-    unauthorized access. The rule uses default port ranges, but check for custom ranges and make necessary adjustments. 
+  desc: >
+    Detect attempts to utilize K8s NodePorts from a container. K8s NodePorts are accessible on the eth0 interface of
+    each node, and they facilitate external traffic into a Kubernetes cluster. Attackers could misuse them for
+    unauthorized access. The rule uses default port ranges, but check for custom ranges and make necessary adjustments.
     Also, consider tuning this rule as needed.
-  condition: > 
-    inbound_outbound 
-    and container 
-    and fd.sport >= 30000 
-    and fd.sport <= 32767 
+  condition: >
+    inbound_outbound
+    and container
+    and fd.sport >= 30000
+    and fd.sport <= 32767
     and not nodeport_containers
   enabled: false
   output: Unexpected K8s NodePort Connection | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1358,15 +1358,15 @@
   condition: (never_true)
 
 - rule: Create Hidden Files or Directories
-  desc: > 
-    Detecting hidden files or directories creation can serve as an auditing rule to track general system changes. 
-    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful 
-    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system 
+  desc: >
+    Detecting hidden files or directories creation can serve as an auditing rule to track general system changes.
+    Such rules can be noisy and challenging to interpret, particularly if your system frequently undergoes updates. However, careful
+    profiling of your environment can transform this rule into an effective rule for detecting unusual behavior associated with system
     changes, including compliance-related cases.
   condition: >
     ((modify and evt.arg.newpath contains "/.") or
      (mkdir and evt.arg.path contains "/.") or
-     (open_write and evt.arg.flags contains "O_CREAT" and fd.name contains "/." and not fd.name pmatch (exclude_hidden_directories))) 
+     (open_write and evt.arg.flags contains "O_CREAT" and fd.name contains "/." and not fd.name pmatch (exclude_hidden_directories)))
     and not user_known_create_hidden_file_activities
     and not exe_running_docker_save
   enabled: false
@@ -1473,12 +1473,12 @@
 # The rule is disabled by default.
 # Note: falco will send DNS request to resolve miner pool domain which may trigger alerts in your environment.
 - rule: Detect outbound connections to common miner pool ports
-  desc: > 
-    Miners usually connect to miner pools using standard ports, and this rule flags such activity. Important: Falco currently sends DNS 
-    requests to resolve miner pool domains, which could trigger other alerts. Prior to enabling this rule, it's advised to ensure whether 
+  desc: >
+    Miners usually connect to miner pools using standard ports, and this rule flags such activity. Important: Falco currently sends DNS
+    requests to resolve miner pool domains, which could trigger other alerts. Prior to enabling this rule, it's advised to ensure whether
     this is acceptable for your environment. This rule is specifically disabled for that reason.
-  condition: > 
-    net_miner_pool 
+  condition: >
+    net_miner_pool
     and not trusted_images_query_miner_domain_dns
   enabled: false
   output: Outbound connection to IP/Port flagged by https://cryptoioc.ch | ip=%fd.rip connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1486,14 +1486,14 @@
   tags: [maturity_sandbox, host, container, network, mitre_impact, T1496]
 
 - rule: Detect crypto miners using the Stratum protocol
-  desc: > 
-    Miners commonly specify the mining pool to connect to using a URI that starts with "stratum+tcp". However, this rule is highly specific to 
+  desc: >
+    Miners commonly specify the mining pool to connect to using a URI that starts with "stratum+tcp". However, this rule is highly specific to
     this technique, and matching command-line arguments can generally be bypassed quite easily.
-  condition: > 
-    spawned_process 
-    and (proc.cmdline contains "stratum+tcp" or 
-         proc.cmdline contains "stratum2+tcp" or 
-         proc.cmdline contains "stratum+ssl" or 
+  condition: >
+    spawned_process
+    and (proc.cmdline contains "stratum+tcp" or
+         proc.cmdline contains "stratum2+tcp" or
+         proc.cmdline contains "stratum+ssl" or
          proc.cmdline contains "stratum2+ssl")
   output: Possible miner running | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: CRITICAL
@@ -1523,14 +1523,14 @@
   condition: (user_known_k8s_client_container)
 
 - rule: Kubernetes Client Tool Launched in Container
-  desc: > 
-    Detect the execution of a Kubernetes client tool (like docker, kubectl, crictl) within a container, which is typically not expected behavior. 
-    Although this rule targets container workloads, monitoring the use of tools like crictl on the host over interactive access could also be 
+  desc: >
+    Detect the execution of a Kubernetes client tool (like docker, kubectl, crictl) within a container, which is typically not expected behavior.
+    Although this rule targets container workloads, monitoring the use of tools like crictl on the host over interactive access could also be
     valuable for broader auditing objectives.
-  condition: > 
-    spawned_process 
-    and container 
-    and not user_known_k8s_client_container_parens 
+  condition: >
+    spawned_process
+    and container
+    and not user_known_k8s_client_container_parens
     and proc.name in (k8s_client_binaries)
   output: Kubernetes Client Tool Launched in Container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
@@ -1549,21 +1549,21 @@
   condition: (never_true)
 
 - rule: Container Drift Detected (chmod)
-  desc: > 
-    Detect new executables created within a container as a result of chmod. While this detection can generate significant noise, chmod 
-    usage is frequently linked to dropping and executing malicious implants. The newer rule "Drop and execute new binary in container" 
-    provides more precise detection of this TTP using unambiguous kernel signals. It is recommended to use the new rule. However, this 
+  desc: >
+    Detect new executables created within a container as a result of chmod. While this detection can generate significant noise, chmod
+    usage is frequently linked to dropping and executing malicious implants. The newer rule "Drop and execute new binary in container"
+    provides more precise detection of this TTP using unambiguous kernel signals. It is recommended to use the new rule. However, this
     rule might be more relevant for auditing if applicable in your environment, such as when chmod is used on files within the /tmp folder.
   condition: >
-    chmod 
-    and container 
-    and evt.rawres>=0 
+    chmod
+    and container
+    and evt.rawres>=0
     and ((evt.arg.mode contains "S_IXUSR") or
          (evt.arg.mode contains "S_IXGRP") or
          (evt.arg.mode contains "S_IXOTH"))
-    and not runc_writing_exec_fifo 
-    and not runc_writing_var_lib_docker 
-    and not user_known_container_drift_activities 
+    and not runc_writing_exec_fifo
+    and not runc_writing_var_lib_docker
+    and not user_known_container_drift_activities
   enabled: false
   output: Drift detected (chmod), new executable created in a container | filename=%evt.arg.filename name=%evt.arg.name mode=%evt.arg.mode evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: ERROR
@@ -1574,16 +1574,16 @@
 # ****************************************************************************
 - rule: Container Drift Detected (open+create)
   desc: >
-    Detect new executables created within a container as a result of open+create. The newer rule "Drop and execute new binary in container" 
-    provides more precise detection of this TTP using unambiguous kernel signals. It is recommended to use the new rule. 
+    Detect new executables created within a container as a result of open+create. The newer rule "Drop and execute new binary in container"
+    provides more precise detection of this TTP using unambiguous kernel signals. It is recommended to use the new rule.
   condition: >
-    evt.type in (open,openat,openat2,creat) 
+    evt.type in (open,openat,openat2,creat)
     and evt.rawres>=0
-    and evt.is_open_exec=true 
-    and container 
-    and not runc_writing_exec_fifo 
-    and not runc_writing_var_lib_docker 
-    and not user_known_container_drift_activities 
+    and evt.is_open_exec=true
+    and container
+    and not runc_writing_exec_fifo
+    and not runc_writing_var_lib_docker
+    and not user_known_container_drift_activities
   enabled: false
   output: Drift detected (open+create), new executable created in a container | filename=%evt.arg.filename name=%evt.arg.name mode=%evt.arg.mode evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: ERROR
@@ -1598,15 +1598,15 @@
 # The rule is disabled by default and should be enabled when non-root container policy has been applied.
 # Note the rule will not work as expected when usernamespace is applied, e.g. userns-remap is enabled.
 - rule: Container Run as Root User
-  desc: > 
-    Container detected running as the root user. This should be taken into account especially when policies disallow containers from running with 
-    root user privileges. Note that a root user in containers doesn't inherently possess extensive power, as modern container environments define 
+  desc: >
+    Container detected running as the root user. This should be taken into account especially when policies disallow containers from running with
+    root user privileges. Note that a root user in containers doesn't inherently possess extensive power, as modern container environments define
     privileges through Linux capabilities. To learn more, check out the rule "Launch Privileged Container".
-  condition: > 
-    spawned_process 
-    and container 
-    and proc.vpid=1 
-    and user.uid=0 
+  condition: >
+    spawned_process
+    and container
+    and proc.vpid=1
+    and user.uid=0
     and not user_known_run_as_root_container
   enabled: false
   output: Container launched with root user privilege | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
@@ -1616,15 +1616,15 @@
 # This rule helps detect CVE-2021-3156:
 # A privilege escalation to root through heap-based buffer overflow
 - rule: Sudo Potential Privilege Escalation
-  desc: > 
-    Affecting sudo (<= 1.9.5p2), there's a privilege escalation vulnerability. By executing sudo using the sudoedit -s or sudoedit -i command with a 
-    command-line argument that ends with a single backslash character, an unprivileged user can potentially escalate privileges to root. This rule is 
+  desc: >
+    Affecting sudo (<= 1.9.5p2), there's a privilege escalation vulnerability. By executing sudo using the sudoedit -s or sudoedit -i command with a
+    command-line argument that ends with a single backslash character, an unprivileged user can potentially escalate privileges to root. This rule is
     highly specific and might be bypassed due to potential issues with string matching on command line arguments.
-  condition: > 
-    spawned_process 
-    and user.uid != 0 
-    and (proc.name=sudoedit or proc.name = sudo) 
-    and (proc.args contains -s or proc.args contains -i or proc.args contains --login) 
+  condition: >
+    spawned_process
+    and user.loginuid != 0
+    and (proc.name=sudoedit or proc.name = sudo)
+    and (proc.args contains -s or proc.args contains -i or proc.args contains --login)
     and (proc.args contains "\ " or proc.args endswith \)
   output: Detect Sudo Privilege Escalation Exploit (CVE-2021-3156) | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: CRITICAL
@@ -1634,13 +1634,13 @@
   items: []
 
 - rule: Unprivileged Delegation of Page Faults Handling to a Userspace Process
-  desc: > 
-    Detect a successful unprivileged userfaultfd syscall, which could serve as an attack primitive for exploiting other vulnerabilities. 
+  desc: >
+    Detect a successful unprivileged userfaultfd syscall, which could serve as an attack primitive for exploiting other vulnerabilities.
     To fine-tune this rule, consider using the template list "user_known_userfaultfd_processes".
   condition: >
-    evt.type = userfaultfd 
-    and user.uid != 0 
-    and (evt.rawres >= 0 or evt.res != -1) 
+    evt.type = userfaultfd
+    and user.uid != 0
+    and (evt.rawres >= 0 or evt.res != -1)
     and not proc.name in (user_known_userfaultfd_processes)
   output: An userfaultfd syscall was successfully executed by an unprivileged user | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: CRITICAL
@@ -1649,14 +1649,14 @@
 # This rule helps detect CVE-2021-4034:
 # A privilege escalation to root through memory corruption
 - rule: Polkit Local Privilege Escalation Vulnerability (CVE-2021-4034)
-  desc: > 
-    This rule detects attempts to exploit a privilege escalation vulnerability in Polkit's pkexec. Through the execution of specially 
-    crafted code, a local user can exploit this weakness to attain root privileges on a compromised system. This rule is highly 
+  desc: >
+    This rule detects attempts to exploit a privilege escalation vulnerability in Polkit's pkexec. Through the execution of specially
+    crafted code, a local user can exploit this weakness to attain root privileges on a compromised system. This rule is highly
     specific in its scope.
   condition:
-    spawned_process 
-    and user.uid != 0 
-    and proc.name=pkexec 
+    spawned_process
+    and user.loginuid != 0
+    and proc.name=pkexec
     and proc.args = ''
   output: Detect Polkit pkexec Local Privilege Escalation Exploit (CVE-2021-4034) | args=%proc.args evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: CRITICAL
@@ -1668,11 +1668,11 @@
   condition: (evt.type=recvfrom and fd.type in (ipv4, ipv6) and proc.exe endswith java)
 
 - rule: Java Process Class File Download
-  desc: > 
-    Detecting a Java process downloading a class file which could indicate a successful exploit of the log4shell Log4j vulnerability (CVE-2021-44228). 
+  desc: >
+    Detecting a Java process downloading a class file which could indicate a successful exploit of the log4shell Log4j vulnerability (CVE-2021-44228).
     This rule is highly specific in its scope.
   condition: >
-    java_network_read 
+    java_network_read
     and evt.buffer bcontains cafebabe
   output: Java process class file download | server_ip=%fd.sip server_port=%fd.sport connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: CRITICAL
@@ -1686,14 +1686,14 @@
   condition: proc.name in (docker_binaries)
 
 - rule: Modify Container Entrypoint
-  desc: > 
-    This rule detect an attempt to write on container entrypoint symlink (/proc/self/exe). Possible CVE-2019-5736 Container Breakout exploitation attempt. 
+  desc: >
+    This rule detect an attempt to write on container entrypoint symlink (/proc/self/exe). Possible CVE-2019-5736 Container Breakout exploitation attempt.
     This rule has a more narrow scope.
   condition: >
-    open_write 
-    and container 
-    and (fd.name=/proc/self/exe or fd.name startswith /proc/self/fd/) 
-    and not docker_procs 
+    open_write
+    and container
+    and (fd.name=/proc/self/exe or fd.name startswith /proc/self/fd/)
+    and not docker_procs
     and not proc.cmdline = "runc:[1:CHILD] init"
   enabled: false
   output: Detect Potential Container Breakout Exploit (CVE-2019-5736) | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1707,21 +1707,21 @@
   condition: (proc.cmdline contains "base64" and (proc.cmdline contains "--decode" or proc.cmdline contains "-d"))
 
 - rule: Decoding Payload in Container
-  desc: > 
-    Detect any use of {base64} decoding in a container. Legitimate applications may decode encoded payloads. The template list 
-    known_decode_payload_containers can be used for simple tuning and customization, or you can adopt custom, more refined tuning. Less 
-    sophisticated adversaries may {base64}-decode their payloads not only to obfuscate them, but also to ensure that the payload remains 
-    intact when the application processes it. Note that injecting commands into an application's input often results in the application 
-    processing passed strings like "sh -c". In these cases, you may be lucky and the encoded blob will also be logged. Otherwise, all you 
-    will see is the {base64} decoding command, as the encoded blob was already interpreted by the shell. 
+  desc: >
+    Detect any use of {base64} decoding in a container. Legitimate applications may decode encoded payloads. The template list
+    known_decode_payload_containers can be used for simple tuning and customization, or you can adopt custom, more refined tuning. Less
+    sophisticated adversaries may {base64}-decode their payloads not only to obfuscate them, but also to ensure that the payload remains
+    intact when the application processes it. Note that injecting commands into an application's input often results in the application
+    processing passed strings like "sh -c". In these cases, you may be lucky and the encoded blob will also be logged. Otherwise, all you
+    will see is the {base64} decoding command, as the encoded blob was already interpreted by the shell.
   condition: >
-    spawned_process 
-    and container 
-    and base64_decoding 
+    spawned_process
+    and container
+    and base64_decoding
     and not container.image.repository in (known_decode_payload_containers)
   output: Decoding Payload in Container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: INFO
-  tags: [maturity_sandbox, container, process, mitre_command_and_control, T1132] 
+  tags: [maturity_sandbox, container, process, mitre_command_and_control, T1132]
 - list: recon_binaries
   items: [w, whoami, id, who, uname]
 
@@ -1730,25 +1730,25 @@
 
 - rule: Basic Interactive Reconnaissance
   desc: >
-    This rule detects basic interactive reconnaissance commands that are typically run by unsophisticated attackers or used 
-    in internal Red Team exercises. Interactive is defined as a terminal being present (proc.tty != 0). This could be any 
-    form of reverse shell or usage of kubectl exec or ssh etc. In addition, filtering for the process being the process group  
-    leader indicates that the command was "directly" typed into the terminal and not run as a result of a script. This rule 
-    is a basic auditing or template rule. You can expand the list of reconnaissance commands, such as by adding "ls". Common 
-    anti-patterns are SRE activity or debugging, but it is still worth capturing this generically. Typically, you would expect 
+    This rule detects basic interactive reconnaissance commands that are typically run by unsophisticated attackers or used
+    in internal Red Team exercises. Interactive is defined as a terminal being present (proc.tty != 0). This could be any
+    form of reverse shell or usage of kubectl exec or ssh etc. In addition, filtering for the process being the process group
+    leader indicates that the command was "directly" typed into the terminal and not run as a result of a script. This rule
+    is a basic auditing or template rule. You can expand the list of reconnaissance commands, such as by adding "ls". Common
+    anti-patterns are SRE activity or debugging, but it is still worth capturing this generically. Typically, you would expect
     other rules to fire as well in relation to this activity.
   condition: >
-    spawned_process 
-    and recon_binaries_procs 
-    and proc.tty != 0 
+    spawned_process
+    and recon_binaries_procs
+    and proc.tty != 0
     and proc.is_vpgid_leader=true
   output: Basic Interactive Reconnaissance | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
   tags: [maturity_sandbox, host, container, process, mitre_reconnaissance, TA0043]
 
 - rule: Netcat/Socat Remote Code Execution on Host
-  desc: > 
-    Netcat/Socat Program runs on host that allows remote code execution and may be utilized 
+  desc: >
+    Netcat/Socat Program runs on host that allows remote code execution and may be utilized
     as a part of a variety of reverse shell payload https://github.com/swisskyrepo/PayloadsAllTheThings/.
     These programs are of higher relevance as they are commonly installed on UNIX-like operating systems.
   condition: >
@@ -1764,3 +1764,211 @@
   output: Netcat/Socat runs on host that allows remote code execution | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
   tags: [maturity_sandbox, host, network, process, mitre_execution, T1059]
+
+- list: network_tool_binaries
+  items: [nc, ncat, netcat, nmap, dig, tcpdump, tshark, ngrep, telnet, mitmproxy, socat, zmap]
+
+- macro: network_tool_procs
+  condition: (proc.name in (network_tool_binaries))
+
+- list: node_package_managers
+  items: [npm, yarn, pnpm, bun]
+
+- macro: npm_package_install_ancestor
+  condition: >
+    (proc.pname in (node_package_managers) or
+     proc.aname[2] in (node_package_managers) or
+     proc.aname[3] in (node_package_managers) or
+     proc.aname[4] in (node_package_managers) or
+     proc.aname[5] in (node_package_managers))
+
+- macro: user_known_network_tool_in_npm_install_activities
+  condition: (never_true)
+
+- rule: Network Tool Executed During NPM Package Install
+  desc: >
+    Detect network tools being launched when an NPM package is installed. Malicious NPM packages may invoke 
+    preinstall or postinstall commands, which can involve network tools to download malicious payloads or exfiltrate 
+    sensitive information. Network tools spawned by npm, node, yarn, pnpm, bun, or related processes during 
+    package installation should be investigated. This rule complements the more generic "Launch Suspicious Network 
+    Tool in Container" rule with a specific focus on the supply chain attack vector via NPM packages.
+  condition: >
+    spawned_process
+    and container
+    and network_tool_procs
+    and npm_package_install_ancestor
+    and not user_known_network_tool_in_npm_install_activities
+  output: Network tool executed during NPM package installation | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] exe_flags=%evt.arg.flags
+  priority: WARNING
+  tags: [maturity_sandbox, container, network, process, mitre_execution, T1195.002]
+
+
+#############################################################################
+# XPAV-derived Detection Rules
+# https://github.com/JNC4/xpav
+#
+# These rules detect cryptominer activity, web server abuse (webshells),
+# and container escape patterns not covered by existing Falco rules.
+#############################################################################
+
+# Known cryptominer binary names - complements existing stratum protocol detection
+- list: miner_binaries
+  items: [
+    xmrig, xmr-stak, minerd, minergate, cpuminer, ccminer,
+    ethminer, cgminer, bfgminer, sgminer, claymore, nbminer,
+    t-rex, gminer, lolminer, phoenixminer, teamredminer,
+    nanominer, bminer, wildrig, srbminer
+  ]
+
+- macro: is_miner_process
+  condition: (proc.name in (miner_binaries))
+
+- rule: Known Cryptominer Process Executed
+  desc: >
+    Detects execution of known cryptocurrency mining software by matching process names against
+    a list of common miners. Cryptominers are commonly deployed by attackers after gaining initial
+    access to monetize compromised systems. This rule complements the existing "Detect crypto miners
+    using the Stratum protocol" rule by catching miners that may use renamed binaries but still
+    match known miner process names. Consider tuning this rule if you have legitimate mining
+    operations in your environment.
+  condition: >
+    spawned_process
+    and is_miner_process
+  output: Cryptominer process executed | process=%proc.name exe=%proc.exepath evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
+  priority: CRITICAL
+  tags: [maturity_sandbox, host, container, process, mitre_impact, T1496]
+
+# Web server processes - used for webshell detection
+- list: web_server_binaries
+  items: [nginx, httpd, httpd-foregroun, apache, apache2, lighttpd, php-fpm, php, php-cgi, php7, php8, gunicorn, uwsgi]
+
+# Suspicious child processes that shouldn't be spawned by web servers
+- list: suspicious_web_children
+  items: [curl, wget, nc, ncat, netcat, socat, python, python3, perl, ruby, nmap, id, whoami, uname, base64]
+
+- macro: spawned_by_web_server
+  condition: >
+    (proc.pname in (web_server_binaries) or
+     proc.aname[2] in (web_server_binaries) or
+     proc.aname[3] in (web_server_binaries))
+
+- macro: user_known_web_server_shell_activities
+  condition: (never_true)
+
+- rule: Web Server Spawned Shell
+  desc: >
+    Detects a web server process (nginx, apache, php-fpm, etc.) spawning an interactive shell.
+    This is a strong indicator of webshell exploitation or remote code execution vulnerability
+    being actively exploited. Webshells are a common persistence mechanism used by attackers
+    after compromising web applications. The macro user_known_web_server_shell_activities can
+    be overridden to tune for legitimate use cases like CGI scripts. Note that simple shell
+    wrappers used in health checks are excluded.
+  condition: >
+    spawned_process
+    and spawned_by_web_server
+    and proc.name in (shell_binaries)
+    and not proc.cmdline startswith "sh -c /usr/bin"
+    and not proc.cmdline contains "healthcheck"
+    and not user_known_web_server_shell_activities
+  output: Web server spawned shell | shell=%proc.name web_server=%proc.pname gparent=%proc.aname[2] ggparent=%proc.aname[3] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid command=%proc.cmdline terminal=%proc.tty exe=%proc.exepath exe_flags=%evt.arg.flags
+  priority: CRITICAL
+  tags: [maturity_sandbox, host, container, process, mitre_persistence, mitre_execution, T1505.003]
+
+- macro: user_known_web_server_child_activities
+  condition: (never_true)
+
+- rule: Web Server Spawned Suspicious Child Process
+  desc: >
+    Detects web server processes spawning suspicious child processes like curl, wget, netcat,
+    or scripting interpreters. These often indicate exploitation of web application vulnerabilities,
+    where attackers download additional payloads or establish network connections. This rule is
+    more sensitive than the shell spawning rule and may require tuning in environments where
+    web applications legitimately execute system commands. Override the macro
+    user_known_web_server_child_activities for custom tuning.
+  condition: >
+    spawned_process
+    and spawned_by_web_server
+    and proc.name in (suspicious_web_children)
+    and not proc.name in (shell_binaries)
+    and not proc.cmdline contains "healthcheck"
+    and not proc.cmdline contains "status"
+    and not user_known_web_server_child_activities
+  output: Web server spawned suspicious child process | child=%proc.name web_server=%proc.pname gparent=%proc.aname[2] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
+  priority: WARNING
+  tags: [maturity_sandbox, host, container, process, mitre_execution, T1059]
+
+- rule: Reverse Shell from Web Server
+  desc: >
+    Detects common reverse shell patterns spawned from web server processes. Attackers frequently
+    establish reverse shells after exploiting web vulnerabilities to maintain interactive access
+    to the compromised system. This rule looks for specific command patterns known to create
+    reverse shells, including bash /dev/tcp redirects, netcat with -e flag, and common scripting
+    language reverse shell idioms.
+  condition: >
+    spawned_process
+    and spawned_by_web_server
+    and (proc.cmdline contains "/dev/tcp/" or
+         proc.cmdline contains "nc -e" or
+         proc.cmdline contains "ncat -e" or
+         proc.cmdline contains "bash -i" or
+         proc.cmdline contains "python -c 'import socket" or
+         proc.cmdline contains "python3 -c 'import socket" or
+         proc.cmdline contains "perl -e 'use Socket" or
+         proc.cmdline contains "ruby -rsocket" or
+         (proc.cmdline contains "mkfifo" and proc.cmdline contains "/tmp"))
+  output: Reverse shell spawned from web server | process=%proc.name web_server=%proc.pname evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
+  priority: CRITICAL
+  tags: [maturity_sandbox, host, container, process, network, mitre_execution, T1059]
+
+# Container escape via privileged device access
+- macro: user_known_privileged_device_access
+  condition: (never_true)
+
+- rule: Privileged Container Device Access
+  desc: >
+    Detects container processes accessing raw block devices, which could be used to escape
+    container isolation by directly reading or writing to host storage. This technique allows
+    attackers to access the host filesystem, modify system files, or extract sensitive data
+    even without traditional container escape. Requires the container to have privileged access
+    or specific device permissions. Override user_known_privileged_device_access for legitimate
+    storage operations.
+  condition: >
+    (open_read or open_write)
+    and container
+    and (fd.name startswith /dev/sd or
+         fd.name startswith /dev/nvme or
+         fd.name startswith /dev/vd or
+         fd.name startswith /dev/xvd or
+         fd.name = /dev/mem or
+         fd.name = /dev/kmem)
+    and not user_known_privileged_device_access
+  output: Container accessing block device | device=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
+  priority: CRITICAL
+  tags: [maturity_sandbox, container, filesystem, mitre_privilege_escalation, T1611]
+
+# Container access to host filesystem paths
+- macro: user_known_host_path_access
+  condition: (never_true)
+
+# Known container runtimes that legitimately access host paths
+- macro: known_container_runtime_host_access
+  condition: (proc.name in (containerd, containerd-shim, dockerd, docker, runc, crio, cri-o, conmon, podman))
+
+- rule: Container Access to Host Sensitive Paths
+  desc: >
+    Detects container processes accessing paths that typically only exist when the host filesystem
+    is mounted into the container (like /host, /rootfs, /hostfs). This may indicate a container
+    escape attempt or a misconfigured volume mount that exposes the host filesystem. Legitimate
+    monitoring or backup containers may access these paths, so tune accordingly using the
+    user_known_host_path_access macro.
+  condition: >
+    (open_read or open_write)
+    and container
+    and (fd.name startswith /host/ or
+         fd.name startswith /rootfs/ or
+         fd.name startswith /hostfs/)
+    and not known_container_runtime_host_access
+    and not user_known_host_path_access
+  output: Container accessing host filesystem paths | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
+  priority: WARNING
+  tags: [maturity_sandbox, container, filesystem, mitre_privilege_escalation, T1611]

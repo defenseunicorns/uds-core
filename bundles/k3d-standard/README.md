@@ -1,4 +1,4 @@
-# Unicorn Delivery Service - K3d Core Bundle (UDS Core)
+# Unified Defense Stack - K3d Core Bundle (UDS Core)
 
 This bundle is used for demonstration, development, and testing of UDS Core. In addition to the [UDS Core applications](../../README.md#core-applications), the included k3d uds-dev-stack provides:
 

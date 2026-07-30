@@ -269,20 +269,11 @@ export interface Rule {
    * respect weight; if an invalid backend is requested to have 80% of
    * the packets, then 80% of packets must be dropped instead.
    *
-   * Support: Core for Kubernetes Service
-   *
-   * Support: Extended for Kubernetes ServiceImport
-   *
-   * Support: Implementation-specific for any other resource
-   *
-   * Support for weight: Extended
+   * Support: Extended for Kubernetes Service
    */
   backendRefs: BackendRef[];
   /**
-   * Name is the name of the route rule. This name MUST be unique within a Route if it is
-   * set.
-   *
-   * Support: Extended
+   * Name is the name of the route rule. This name MUST be unique within a Route if it is set.
    */
   name?: string;
 }

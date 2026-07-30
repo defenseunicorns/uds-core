@@ -139,6 +139,12 @@
         "type": "string"
       }
     },
+    "adminApiAllowedPrincipals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "pathParameterProtection": {
       "type": "boolean"
     },

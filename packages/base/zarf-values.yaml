@@ -1,0 +1,49 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the UDS Core Base package.
+
+# Shared domains for the whole stack. Override via --values / --set-values to configure all charts.
+global:
+  domain: ""
+  # Empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
+  adminDomain: ""
+
+# --- pepr ---
+pepr-uds-core:
+  module: {}
+uds-operator-config:
+  uds-operator-config: {}
+
+uds-exemptions:
+  uds-exemptions: {}
+
+# --- istio ---
+istio-controlplane:
+  base: {}
+  istiod: {}
+  uds-global-istio-config: {}
+  cni: {}
+  ztunnel: {}
+istio-admin-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-tenant-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-passthrough-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-egress-ambient:
+  uds-istio-egress-config: {}
+istio-egress-gateway:
+  gateway: {}
+
+# --- prometheus operator CRDs ---
+prometheus-operator-crds:
+  prometheus-operator-crds: {}
+
+# --- envoy gateway ---
+envoy-gateway:
+  envoy-gateway: {}
+  uds-envoy-gateway-config: {}

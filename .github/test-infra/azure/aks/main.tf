@@ -131,7 +131,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
 
     node_public_ip_enabled  = false
     host_encryption_enabled = false
-    fips_enabled            = false
+    fips_enabled            = true
     ultra_ssd_enabled       = false
     kubelet_disk_type       = "OS"
     scale_down_mode         = "Delete"

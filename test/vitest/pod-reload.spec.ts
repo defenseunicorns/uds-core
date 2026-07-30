@@ -1,42 +1,10 @@
 /**
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
-import { V1ContainerStatus } from "@kubernetes/client-node";
 import { K8s, kind } from "pepr";
 import { v4 as uuidv4 } from "uuid";
 import { afterAll, describe, expect, test } from "vitest";
-
-// Helper function to wait on a pod to be ready matching the selector
-async function waitForPodReady(
-  namespace: string,
-  labelSelector: Record<string, string>,
-  timeoutSeconds = 30,
-): Promise<void> {
-  const selector = Object.entries(labelSelector)
-    .map(([k, v]) => `${k}=${v}`)
-    .join(",");
-
-  let attempts = 0;
-  const maxAttempts = timeoutSeconds;
-
-  while (attempts < maxAttempts) {
-    const pods = await K8s(kind.Pod).InNamespace(namespace).WithLabel(selector).Get();
-
-    for (const pod of pods.items ?? []) {
-      if (
-        pod.status?.phase === "Running" &&
-        (pod.status.containerStatuses ?? []).every((cs: V1ContainerStatus) => cs.ready)
-      ) {
-        return; // Pod is healthy!
-      }
-    }
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    attempts++;
-  }
-  throw new Error(
-    `Timed out waiting for pod with selector ${selector} in ${namespace} to become healthy`,
-  );
-}
+import { waitForPodReady } from "./helpers/k8s";
 
 // Helper function to wait for a deployment to complete a rollout
 async function waitForDeploymentRollout(
@@ -302,7 +270,11 @@ describe("Secret Auto-reload", () => {
         },
       });
 
-      await waitForPodReady(PODINFO_NAMESPACE, { app: testDeploymentName });
+      await waitForPodReady(PODINFO_NAMESPACE, {
+        labelSelector: { app: testDeploymentName },
+        timeoutMs: 30000,
+        intervalMs: 1000,
+      });
 
       // Get the current test deployment generation
       const testDeployment = await K8s(kind.Deployment)
@@ -544,7 +516,11 @@ describe("ConfigMap Auto-reload", () => {
         },
       });
 
-      await waitForPodReady(PODINFO_NAMESPACE, { app: testDeploymentName });
+      await waitForPodReady(PODINFO_NAMESPACE, {
+        labelSelector: { app: testDeploymentName },
+        timeoutMs: 30000,
+        intervalMs: 1000,
+      });
 
       // Get the current test deployment generation
       const testDeployment = await K8s(kind.Deployment)

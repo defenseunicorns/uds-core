@@ -9,13 +9,13 @@ import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-After completing this guide, your cluster will accept non-HTTP traffic (such as SSH) through an Istio gateway, routed to your application service.
+After completing this guide, your cluster will accept non-HTTP TCP traffic (such as SSH) through an Istio gateway, routed to your application service.
 
 > [!WARNING]
 > UDS Core only exposes HTTP/HTTPS by default to minimize vulnerability surface area. Opening raw TCP protocols (SSH, database ports, etc.) exposes additional attack surface and a broader CVE footprint compared to HTTP-only ingress. Only configure non-HTTP ingress when there is a clear requirement, and ensure you understand the security implications for your environment.
 
 > [!NOTE]
-> UDP ingress is [not currently supported by Istio](https://github.com/istio/istio/issues/1430).
+> This guide covers TCP ingress through Istio. Istio itself does not support UDP ingress. For UDP traffic, see [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/), which routes through Envoy Gateway instead.
 
 ## Prerequisites
 
@@ -197,4 +197,5 @@ For other protocols, test with the appropriate client on the external port you c
 - [`Package` CR Reference](/reference/operator-and-crds/packages-v1alpha1-cr/)
 - [Create a custom gateway](/how-to-guides/networking/create-custom-gateways/) - Deploy a gateway with independent domain, TLS, and security controls.
 - [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) - Make applications accessible through the tenant or admin gateway.
+- [Expose UDP applications](/how-to-guides/networking/expose-udp-apps/) - Route UDP traffic through Envoy Gateway instead of Istio.
 - [Define network access](/how-to-guides/networking/define-network-access/) - Configure intra-cluster and external network access for your application.

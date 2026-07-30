@@ -384,15 +384,23 @@ uds zarf tools kubectl logs -n pepr-system -l app=pepr-uds-core-watcher --tail=5
 
 If you specified `secretConfig.name`, the secret uses that name instead of the default `sso-client-<clientId>`.
 
-### Problem: SAML IdP certificate missing from secret
+### Problem: SAML client fails to reconcile with a certificate error
 
-**Symptom:** The `samlIdpCertificate` key is empty or missing in the generated secret.
+**Symptom:** A `Package` with a SAML client stays in the `Failed` phase, and the status or events reference a failure to get the SAML IdP certificate.
 
-**Solution:** The operator fetches the certificate from Keycloak's SAML descriptor endpoint at `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor`. If Keycloak is not ready or the endpoint is unreachable, the certificate will be empty. Verify Keycloak is healthy:
+**Solution:** The operator fetches the realm's signing certificate from Keycloak's SAML descriptor endpoint at `http://keycloak-http.keycloak.svc.cluster.local:8080/realms/uds/protocol/saml/descriptor` and stores it in the secret as `samlIdpCertificate`. If the descriptor is unreachable or contains no signing certificate, the operator fails the reconciliation with a descriptive error instead of writing a broken certificate. Check the `Package` status for the specific error:
+
+```bash
+uds zarf tools kubectl get package <name> -n <namespace> -o jsonpath='{.status}'
+```
+
+If the error is a fetch failure, verify Keycloak is healthy:
 
 ```bash
 uds zarf tools kubectl get pods -n keycloak -l app.kubernetes.io/name=keycloak
 ```
+
+When the realm has more than one active signing key (a normal state during key rotation), the descriptor advertises multiple signing certificates. Keycloak lists them active-key first, so the operator uses the first signing certificate. If your application still fails SAML signature validation after rotation, remove the stale signing key from the realm and trigger the `Package` to reconcile so the secret regenerates.
 
 ## Related documentation
 

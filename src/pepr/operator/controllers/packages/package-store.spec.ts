@@ -1,12 +1,12 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
 import { PeprValidateRequest } from "pepr";
 import { beforeEach, describe, expect, it } from "vitest";
 import { UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
 import { PackageStore } from "./package-store";
 PackageStore.init();
 
@@ -57,6 +57,28 @@ const createPackageWithSsoClient = (
     },
   };
 };
+
+const createPackageWithUDPExpose = (
+  namespace: string,
+  name: string,
+  port: number,
+  gateway?: string,
+): UDSPackage => ({
+  metadata: { namespace, name },
+  spec: {
+    network: {
+      expose: [
+        {
+          protocol: ExposeProtocol.UDP,
+          service: "udp-service",
+          selector: { app: "udp" },
+          port,
+          gateway,
+        },
+      ],
+    },
+  },
+});
 
 describe("Package Store", () => {
   it("Should add a package", async () => {
@@ -184,6 +206,68 @@ describe("Package Store", () => {
       // Verify the package in the namespace has the expected client ID
       const pkgName = PackageStore.getPkgName("test-ns");
       expect(pkgName).toEqual("test-app");
+    });
+
+    it("Should remove stale SSO client IDs when a package is updated", () => {
+      PackageStore.add(createPackageWithSsoClient("test-ns", "test-app", "old-client"));
+      PackageStore.add(createPackageWithSsoClient("test-ns", "test-app", "new-client"));
+
+      expect(PackageStore.findPackagesWithSsoClientId("old-client").size).toBe(0);
+      expect(PackageStore.findPackagesWithSsoClientId("new-client").has("test-ns")).toBe(true);
+    });
+  });
+
+  describe("findPackagesWithUdpGatewayPort", () => {
+    beforeEach(() => {
+      PackageStore.init();
+    });
+
+    it("Should find a package with a default UDP gateway port", () => {
+      PackageStore.add(createPackageWithUDPExpose("test-ns", "test-app", 8125));
+
+      const result = PackageStore.findPackagesWithUdpGatewayPort(undefined, 8125);
+
+      expect(result.size).toBe(1);
+      expect(result.has("test-ns")).toBe(true);
+    });
+
+    it("Should find a package with a custom UDP gateway port", () => {
+      PackageStore.add(createPackageWithUDPExpose("test-ns", "test-app", 8125, "team-gateway"));
+
+      const result = PackageStore.findPackagesWithUdpGatewayPort("team-gateway", 8125);
+
+      expect(result.size).toBe(1);
+      expect(result.has("test-ns")).toBe(true);
+    });
+
+    it("Should treat the same UDP port on different gateways as different keys", () => {
+      PackageStore.add(createPackageWithUDPExpose("ns-a", "app-a", 8125, "team-a"));
+      PackageStore.add(createPackageWithUDPExpose("ns-b", "app-b", 8125, "team-b"));
+
+      expect(PackageStore.findPackagesWithUdpGatewayPort("team-a", 8125)).toEqual(
+        new Set(["ns-a"]),
+      );
+      expect(PackageStore.findPackagesWithUdpGatewayPort("team-b", 8125)).toEqual(
+        new Set(["ns-b"]),
+      );
+    });
+
+    it("Should remove stale UDP gateway port indexes when a package is updated", () => {
+      PackageStore.add(createPackageWithUDPExpose("test-ns", "test-app", 8125));
+      PackageStore.add(createPackageWithUDPExpose("test-ns", "test-app", 9000));
+
+      expect(PackageStore.findPackagesWithUdpGatewayPort(undefined, 8125).size).toBe(0);
+      expect(PackageStore.findPackagesWithUdpGatewayPort(undefined, 9000).has("test-ns")).toBe(
+        true,
+      );
+    });
+
+    it("Should remove UDP gateway port indexes when a package is removed", () => {
+      const pkg = createPackageWithUDPExpose("test-ns", "test-app", 8125);
+      PackageStore.add(pkg);
+      PackageStore.remove(pkg);
+
+      expect(PackageStore.findPackagesWithUdpGatewayPort(undefined, 8125).size).toBe(0);
     });
   });
 

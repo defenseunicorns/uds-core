@@ -13,7 +13,7 @@ image:
 nameOverride: "authservice"
 
 redis:
-  uri: "###ZARF_VAR_AUTHSERVICE_REDIS_URI###"
+  uri: ""
   egressCidr: ""
   internal:
     enabled: false

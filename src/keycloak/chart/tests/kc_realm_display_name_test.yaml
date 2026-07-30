@@ -8,30 +8,67 @@ templates:
   - secret-kc-realm.yaml
 
 tests:
-  - it: should include OVERRIDE_REALM_DISPLAY_NAME when realmDisplayName is set
-    set:
-      themeCustomizations:
-        settings:
-          realmDisplayName: "My Custom Realm Name"
+  # OVERRIDE_REALM_DISPLAY_NAME is always emitted now; its value is resolved with the
+  # precedence: themeCustomizations.settings.realmDisplayName > realmInitEnv.DISPLAY_NAME
+  # > "Unified Defense Stack" default.
+
+  - it: should default to "Unified Defense Stack" when neither override is set
     asserts:
       - isKind:
           of: Secret
       - hasDocuments:
           count: 1
+      - exists:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
       - equal:
           path: data.OVERRIDE_REALM_DISPLAY_NAME
-          # Note: this value is the base64 encoding of "My Custom Realm Name"
+          # base64 of "Unified Defense Stack"
+          value: "VW5pZmllZCBEZWZlbnNlIFN0YWNr"
+
+  - it: should use realmInitEnv.DISPLAY_NAME when set and no theme override is set
+    set:
+      realmInitEnv.DISPLAY_NAME: "ACME Corp"
+    asserts:
+      - equal:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # base64 of "ACME Corp" — preserves names set on existing clusters
+          value: "QUNNRSBDb3Jw"
+
+  - it: should fall back to realmInitEnv.DISPLAY_NAME when realmDisplayName is empty
+    set:
+      realmInitEnv.DISPLAY_NAME: "ACME Corp"
+      themeCustomizations.settings.realmDisplayName: ""
+    asserts:
+      - equal:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # base64 of "ACME Corp" — empty theme override is treated as unset
+          value: "QUNNRSBDb3Jw"
+
+  - it: should use themeCustomizations.settings.realmDisplayName when set
+    set:
+      themeCustomizations.settings.realmDisplayName: "My Custom Realm Name"
+    asserts:
+      - equal:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # base64 of "My Custom Realm Name"
           value: "TXkgQ3VzdG9tIFJlYWxtIE5hbWU="
 
-  - it: should not include OVERRIDE_REALM_DISPLAY_NAME when realmDisplayName is unset or empty
+  - it: should prefer the theme override over realmInitEnv.DISPLAY_NAME when both are set
     set:
-      themeCustomizations:
-        settings:
-          realmDisplayName: ""
+      realmInitEnv.DISPLAY_NAME: "ACME Corp"
+      themeCustomizations.settings.realmDisplayName: "Theme Override Wins"
     asserts:
-      - isKind:
-          of: Secret
-      - hasDocuments:
-          count: 1
-      - notExists:
+      - equal:
           path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # base64 of "Theme Override Wins"
+          value: "VGhlbWUgT3ZlcnJpZGUgV2lucw=="
+
+  - it: should default when both the theme override and DISPLAY_NAME are empty
+    set:
+      realmInitEnv.DISPLAY_NAME: ""
+      themeCustomizations.settings.realmDisplayName: ""
+    asserts:
+      - equal:
+          path: data.OVERRIDE_REALM_DISPLAY_NAME
+          # base64 of "Unified Defense Stack"
+          value: "VW5pZmllZCBEZWZlbnNlIFN0YWNr"

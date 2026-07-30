@@ -256,13 +256,13 @@
   condition: (never_true)
 
 - rule: Modify Shell Configuration File
-  desc: > 
-    Detect attempts to modify shell configuration files, primarily aimed at establishing persistence by automatically inserting 
+  desc: >
+    Detect attempts to modify shell configuration files, primarily aimed at establishing persistence by automatically inserting
     commands into scripts executed by shells. The upstream rule excludes shell processes because they often create unnecessary noise.
-    However, this might lead to missed detections. To customize the rule for your situation, you can fine-tune it using enhanced profiling. 
+    However, this might lead to missed detections. To customize the rule for your situation, you can fine-tune it using enhanced profiling.
     For example, you might want to only consider interactive shell processes (where proc.tty != 0).
   condition: >
-    open_write 
+    open_write
     and (fd.filename in (shell_config_filenames) or
          fd.name in (shell_config_files) or
          fd.directory in (shell_config_directories))
@@ -279,11 +279,11 @@
 
 - rule: Schedule Cron Jobs
   desc: >
-    Detect scheduled cron jobs; this is a highly generic detection and certainly needs adjustments and profiling in your environment before 
+    Detect scheduled cron jobs; this is a highly generic detection and certainly needs adjustments and profiling in your environment before
     operationalization. Simultaneously, exploiting the functionality of cron jobs is among one of the oldest TTPs used by adversaries.
   condition: >
     ((open_write and fd.name startswith /etc/cron) or
-     (spawned_process and proc.name = "crontab")) 
+     (spawned_process and proc.name = "crontab"))
     and not user_known_cron_jobs
   output: Cron jobs were scheduled to run | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority:
@@ -360,17 +360,17 @@
   condition: (never_true)
 
 - rule: Read ssh information
-  desc: > 
-    This rule identifies attempts to read files within ssh directories using programs that are not related to ssh. It's a simple and 
-    versatile detection method that works well alongside more specific rules focused on sensitive file access. You have a couple of 
-    options for using this rule effectively: you can adjust the specialized rules to cover all the important scenarios and ensure 
-    precedence in rule smatching for those, or you can analyze the combined view of ssh-related file access across various rules on 
-    your downstream computing platform. Just like with other rules, you can narrow down monitoring to specific processes, or you can 
+  desc: >
+    This rule identifies attempts to read files within ssh directories using programs that are not related to ssh. It's a simple and
+    versatile detection method that works well alongside more specific rules focused on sensitive file access. You have a couple of
+    options for using this rule effectively: you can adjust the specialized rules to cover all the important scenarios and ensure
+    precedence in rule smatching for those, or you can analyze the combined view of ssh-related file access across various rules on
+    your downstream computing platform. Just like with other rules, you can narrow down monitoring to specific processes, or you can
     limit it to interactive access only.
   condition: >
-    (open_read or open_directory) 
+    (open_read or open_directory)
      and (user_ssh_directory or fd.name startswith /root/.ssh)
-     and not user_known_read_ssh_information_activities 
+     and not user_known_read_ssh_information_activities
      and not proc.name in (ssh_binaries)
   output: ssh-related file/directory read by non-ssh program | file=%fd.name pcmdline=%proc.pcmdline evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: ERROR
@@ -387,8 +387,8 @@
 
 - rule: DB program spawned process
   desc: >
-    A program related to the database server creates an unexpected child process (other than itself). 
-    This is not supposed to happen and often follows SQL injection attacks. This behavioral detection could 
+    A program related to the database server creates an unexpected child process (other than itself).
+    This is not supposed to happen and often follows SQL injection attacks. This behavioral detection could
     indicate potential unauthorized data extraction or tampering with the database.
   condition: >
     spawned_process
@@ -417,9 +417,9 @@
 
 - rule: Change thread namespace
   desc: >
-    An attempt to alter the namespace of a process (often performed while creating a container) through the setns syscall. 
-    Conversely, the same syscall setns is triggered when an unauthorized attempt is made to break out from the container 
-    to the host, for example, when using commands like `nsenter --target 1` and similar ones. Recommending to profile your 
+    An attempt to alter the namespace of a process (often performed while creating a container) through the setns syscall.
+    Conversely, the same syscall setns is triggered when an unauthorized attempt is made to break out from the container
+    to the host, for example, when using commands like `nsenter --target 1` and similar ones. Recommending to profile your
     environment and refine this rule for effective operationalization.
   condition: >
     evt.type=setns
@@ -442,14 +442,14 @@
   tags: [maturity_incubating, host, container, process, mitre_privilege_escalation, T1611]
 
 - rule: Change namespace privileges via unshare
-  desc: > 
-    Unprivileged users in containers may not have CAP_SYS_ADMIN or other elevated privileges. However, they can  
-    use the unshare system call with CLONE_NEWNS or CLONE_NEWUSER to create or clone a namespace or user with the 
-    necessary privileges to conduct further attacks. It is best practice to block the unshare system call via 
+  desc: >
+    Unprivileged users in containers may not have CAP_SYS_ADMIN or other elevated privileges. However, they can
+    use the unshare system call with CLONE_NEWNS or CLONE_NEWUSER to create or clone a namespace or user with the
+    necessary privileges to conduct further attacks. It is best practice to block the unshare system call via
     seccomp if it is not needed. Misuse of unshare can be related to misconfigured Kubernetes clusters, for example.
   condition: >
-    evt.type=unshare 
-    and container 
+    evt.type=unshare
+    and container
     and not thread.cap_permitted contains CAP_SYS_ADMIN
   output: Change namespace privileges via unshare | res=%evt.res evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -601,13 +601,13 @@
   condition: (never_true)
 
 - rule: Launch Privileged Container
-  desc: > 
-    Detect the initial process initiation within a privileged container, with exemptions for known and trusted images. 
-    This rule primarily serves as an excellent auditing mechanism since highly privileged containers, when compromised, 
-    can result in significant harm. For instance, if another rule triggers within such a privileged container, it could be 
+  desc: >
+    Detect the initial process initiation within a privileged container, with exemptions for known and trusted images.
+    This rule primarily serves as an excellent auditing mechanism since highly privileged containers, when compromised,
+    can result in significant harm. For instance, if another rule triggers within such a privileged container, it could be
     seen as more suspicious, prompting a closer inspection.
   condition: >
-    container_started 
+    container_started
     and container.privileged=true
     and not falco_privileged_containers
     and not user_privileged_containers
@@ -630,13 +630,13 @@
     or thread.cap_permitted contains CAP_BPF)
 
 - rule: Launch Excessively Capable Container
-  desc: > 
-    Identify containers that start with a powerful set of capabilities, with exceptions for recognized trusted images. 
-    Similar to the "Launch Privileged Container" rule, this functions as a robust auditing rule. Compromised highly privileged 
-    containers can lead to substantial harm. For instance, if another rule is triggered within such a container, it might 
+  desc: >
+    Identify containers that start with a powerful set of capabilities, with exceptions for recognized trusted images.
+    Similar to the "Launch Privileged Container" rule, this functions as a robust auditing rule. Compromised highly privileged
+    containers can lead to substantial harm. For instance, if another rule is triggered within such a container, it might
     raise suspicion, prompting closer scrutiny.
   condition: >
-    container_started 
+    container_started
     and excessively_capable_container
     and not falco_privileged_containers
     and not user_privileged_containers
@@ -651,12 +651,12 @@
 # systemd can listen on ports to launch things like sshd on demand
 - rule: System procs network activity
   desc: >
-    Detect any unexpected network activity performed by system binaries that typically shouldn't perform network activity, including 
-    coreutils binaries (like sleep, mkdir, who, date, and others) or user management binaries (such as login, systemd, usermod, deluser, 
+    Detect any unexpected network activity performed by system binaries that typically shouldn't perform network activity, including
+    coreutils binaries (like sleep, mkdir, who, date, and others) or user management binaries (such as login, systemd, usermod, deluser,
     adduser, chpasswd, and others). This serves as a valuable baseline detection for network-related activities.
   condition: >
     inbound_outbound
-    and fd.sockfamily = ip 
+    and fd.sockfamily = ip
     and (system_procs or proc.name in (shell_binaries))
     and not proc.name in (known_system_procs_network_activity_binaries)
     and not login_doing_dns_lookup
@@ -692,14 +692,14 @@
 
 - rule: Program run with disallowed http proxy env
   desc: >
-    Detect curl or wget usage with HTTP_PROXY environment variable. Attackers can manipulate the HTTP_PROXY variable's 
-    value to redirect application's internal HTTP requests. This could expose sensitive information like authentication 
+    Detect curl or wget usage with HTTP_PROXY environment variable. Attackers can manipulate the HTTP_PROXY variable's
+    value to redirect application's internal HTTP requests. This could expose sensitive information like authentication
     keys and private data.
   condition: >
-    spawned_process 
-    and http_proxy_procs 
+    spawned_process
+    and http_proxy_procs
     and proc.env icontains HTTP_PROXY
-    and not allowed_ssh_proxy_env 
+    and not allowed_ssh_proxy_env
   output: Curl or wget run with disallowed HTTP_PROXY environment variable | env=%proc.env evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
   tags: [maturity_incubating, host, container, users, mitre_execution, T1204]
@@ -733,12 +733,12 @@
   condition: fd.port in (expected_udp_ports)
 
 - rule: Unexpected UDP Traffic
-  desc: > 
-    Detecting UDP traffic on ports other than 53 (DNS) or other commonly used ports. Misusing UDP is a known TTP among attackers. 
+  desc: >
+    Detecting UDP traffic on ports other than 53 (DNS) or other commonly used ports. Misusing UDP is a known TTP among attackers.
     Monitoring unusual network activity is highly valuable but often generates significant noise, as is the case with this detection.
-  condition: > 
-    inbound_outbound 
-    and fd.l4proto=udp 
+  condition: >
+    inbound_outbound
+    and fd.l4proto=udp
     and not expected_udp_traffic
   output: Unexpected UDP Traffic Seen | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -776,10 +776,10 @@
 # sshd, mail programs attempt to setuid to root even when running as non-root. Excluding here to avoid meaningless FPs
 - rule: Non sudo setuid
   desc: >
-    Detect attempts to change users through the use of setuid, with exceptions for sudo/su. 
-    The users "root" and "nobody" using setuid on themselves are also excluded, as setuid calls in these cases 
-    typically involve reducing privileges. By setting the setuid bit, an attacker could execute code in a 
-    different user's context, potentially with higher privileges. One drawback is the potential for noise, 
+    Detect attempts to change users through the use of setuid, with exceptions for sudo/su.
+    The users "root" and "nobody" using setuid on themselves are also excluded, as setuid calls in these cases
+    typically involve reducing privileges. By setting the setuid bit, an attacker could execute code in a
+    different user's context, potentially with higher privileges. One drawback is the potential for noise,
     as many applications legitimately use this approach.
   condition: >
     evt.type=setuid
@@ -804,25 +804,25 @@
 
 - rule: User mgmt binaries
   desc: >
-    Detect activity by any programs that can manage users, passwords, or permissions (such as login, systemd, usermod, deluser, adduser, 
-    chpasswd, and others). sudo and su are excluded. Activity in containers is also excluded -- some containers create custom users on 
-    top of a base linux distribution at startup. Some innocuous command lines that don't actually change anything are excluded. You might 
+    Detect activity by any programs that can manage users, passwords, or permissions (such as login, systemd, usermod, deluser, adduser,
+    chpasswd, and others). sudo and su are excluded. Activity in containers is also excluded -- some containers create custom users on
+    top of a base linux distribution at startup. Some innocuous command lines that don't actually change anything are excluded. You might
     want to consider applying this rule to container actions as well.
   condition: >
-    spawned_process 
+    spawned_process
     and not container
-    and proc.name in (user_mgmt_binaries) 
-    and not proc.name in (su, sudo, lastlog, nologin, unix_chkpwd)  
+    and proc.name in (user_mgmt_binaries)
+    and not proc.name in (su, sudo, lastlog, nologin, unix_chkpwd)
     and not proc.pname in (cron_binaries, systemd, systemd.postins, udev.postinst, run-parts)
-    and not proc.cmdline startswith "passwd -S" 
-    and not proc.cmdline startswith "useradd -D" 
-    and not proc.cmdline startswith "systemd --version" 
-    and not run_by_qualys 
-    and not run_by_sumologic_securefiles 
-    and not run_by_yum 
-    and not run_by_ms_oms 
-    and not run_by_google_accounts_daemon 
-    and not chage_list 
+    and not proc.cmdline startswith "passwd -S"
+    and not proc.cmdline startswith "useradd -D"
+    and not proc.cmdline startswith "systemd --version"
+    and not run_by_qualys
+    and not run_by_sumologic_securefiles
+    and not run_by_yum
+    and not run_by_ms_oms
+    and not run_by_google_accounts_daemon
+    and not chage_list
     and not user_known_user_management_activities
   output: User management binary command run outside of container | gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
@@ -840,9 +840,9 @@
 # (we may need to add additional checks against false positives, see:
 # https://bugs.launchpad.net/ubuntu/+source/rkhunter/+bug/86153)
 - rule: Create files below dev
-  desc: > 
-    Detect the creation of files under /dev except for authorized device management programs. This can reveal rootkits hiding 
-    files in /dev. Additionally, consider the "Execution from /dev/shm" rule. The upstream rule already covers some tuning 
+  desc: >
+    Detect the creation of files under /dev except for authorized device management programs. This can reveal rootkits hiding
+    files in /dev. Additionally, consider the "Execution from /dev/shm" rule. The upstream rule already covers some tuning
     scenarios that you can further expand upon.
   condition: >
     (evt.type = creat or (evt.type in (open,openat,openat2)))
@@ -871,13 +871,13 @@
 # metadata about the instance. It may be desirable to prevent access
 # to this IP from containers.
 - rule: Contact EC2 Instance Metadata Service From Container
-  desc: > 
-    Detects attempts to communicate with the EC2 Instance Metadata Service from a container. This detection is narrowly focused 
+  desc: >
+    Detects attempts to communicate with the EC2 Instance Metadata Service from a container. This detection is narrowly focused
     and might not apply to your environment. In addition, it could generate noise and require fine-tuning.
-  condition: > 
-    outbound 
+  condition: >
+    outbound
     and container
-    and fd.sip="169.254.169.254" 
+    and fd.sip="169.254.169.254"
     and not ec2_metadata_containers
   output: Outbound connection to EC2 instance metadata service | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -891,13 +891,13 @@
 # On GCP, AWS and Azure, 169.254.169.254 is a special IP used to fetch
 # metadata about the instance. The metadata could be used to get credentials by attackers.
 - rule: Contact cloud metadata service from container
-  desc: > 
-    Detects attempts to communicate with the Cloud Instance Metadata Service from a container. This detection is narrowly focused 
+  desc: >
+    Detects attempts to communicate with the Cloud Instance Metadata Service from a container. This detection is narrowly focused
     and might not apply to your environment. In addition, it could generate noise and require fine-tuning.
-  condition: > 
-    outbound 
-    and container 
-    and fd.sip="169.254.169.254" 
+  condition: >
+    outbound
+    and container
+    and fd.sip="169.254.169.254"
     and not user_known_metadata_access
   enabled: true
   output: Outbound connection to cloud instance metadata service | connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -926,10 +926,10 @@
     and container.image.repository = "registry.k8s.io/kube-proxy")
 
 - rule: Launch Package Management Process in Container
-  desc: > 
-    Detect package management processes executed within containers. An excellent auditing rule to monitor general drifts 
-    in containers. Particularly useful for newer rules like "Drop and execute new binary in container" during incident 
-    response investigations. This helps identify common anti-patterns of ad-hoc debugging. Simultaneously, to maintain 
+  desc: >
+    Detect package management processes executed within containers. An excellent auditing rule to monitor general drifts
+    in containers. Particularly useful for newer rules like "Drop and execute new binary in container" during incident
+    response investigations. This helps identify common anti-patterns of ad-hoc debugging. Simultaneously, to maintain
     optimal hygiene, it's recommended to prevent container drifts and instead opt for redeploying new containers.
   condition: >
     spawned_process
@@ -948,13 +948,13 @@
 
 - rule: Launch Suspicious Network Tool in Container
   desc: >
-    Detect network tools (like netcat, nmap, tcpdump, socat, and more) launched within containers without any additional filters. 
-    This serves as a valuable general detection, but it's recommended to invest engineering effort to fine-tune it and prevent a 
+    Detect network tools (like netcat, nmap, tcpdump, socat, and more) launched within containers without any additional filters.
+    This serves as a valuable general detection, but it's recommended to invest engineering effort to fine-tune it and prevent a
     high volume of legitimate logs. This rule complements the more specific "Netcat Remote Code Execution in Container" rule.
   condition: >
-    spawned_process 
-    and container 
-    and network_tool_procs 
+    spawned_process
+    and container
+    and network_tool_procs
     and not user_known_network_tool_activities
   output: Network tool launched in container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
@@ -962,13 +962,13 @@
 
 - rule: Launch Suspicious Network Tool on Host
   desc: >
-    Detect network tools (like netcat, nmap, tcpdump, socat, and more) launched within containers without any additional filters. 
-    This serves as a valuable general detection, but it's recommended to invest engineering effort to fine-tune it and prevent a 
+    Detect network tools (like netcat, nmap, tcpdump, socat, and more) launched within containers without any additional filters.
+    This serves as a valuable general detection, but it's recommended to invest engineering effort to fine-tune it and prevent a
     high volume of legitimate logs. The host equivalent of "Launch Suspicious Network Tool in Container.".
   condition: >
-    spawned_process 
-    and not container 
-    and network_tool_procs 
+    spawned_process
+    and not container
+    and network_tool_procs
     and not user_known_network_tool_activities
   output: Network tool launched on host | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
@@ -1008,13 +1008,13 @@
 # the filtercheck and others will always return <NA>. It would be better to use
 # a more generic filter like `fs.path.*`
 - rule: Delete or rename shell history
-  desc: > 
-    Detect shell history deletion, frequently used by unsophisticated adversaries to eliminate evidence. 
-    Note that it can also trigger when exiting a Terminal shell, such as with `kubectl exec`, which 
+  desc: >
+    Detect shell history deletion, frequently used by unsophisticated adversaries to eliminate evidence.
+    Note that it can also trigger when exiting a Terminal shell, such as with `kubectl exec`, which
     may introduce some noise.
   condition: >
-    (modify_shell_history or truncate_shell_history) 
-    and not var_lib_docker_filepath 
+    (modify_shell_history or truncate_shell_history)
+    and not var_lib_docker_filepath
     and not proc.name in (docker_binaries)
   output: Shell history deleted or renamed | file=%fd.name name=%evt.arg.name path=%evt.arg.path oldpath=%evt.arg.oldpath evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority:
@@ -1037,12 +1037,12 @@
 # we will always return `<NA>`.
 - rule: Set Setuid or Setgid bit
   desc: >
-    This rule is focused on detecting the use of setuid or setgid bits set via chmod. These bits, when set for an application, 
-    result in the application running with the privileges of the owning user or group. By enabling the setuid or setgid bits, 
-    an attacker could run code in a different user's context, possibly with elevated privileges. However, there's a trade-off 
+    This rule is focused on detecting the use of setuid or setgid bits set via chmod. These bits, when set for an application,
+    result in the application running with the privileges of the owning user or group. By enabling the setuid or setgid bits,
+    an attacker could run code in a different user's context, possibly with elevated privileges. However, there's a trade-off
     with noise, given that numerous applications legitimately run chmod. This rule is related to the "Non sudo setuid" rule.
   condition: >
-    chmod 
+    chmod
     and (evt.arg.mode contains "S_ISUID" or evt.arg.mode contains "S_ISGID")
     and not proc.name in (user_known_chmod_applications)
     and not exe_running_docker_save
@@ -1064,8 +1064,8 @@
   condition: (never_true)
 
 - rule: Launch Remote File Copy Tools in Container
-  desc: > 
-    Detect remote file copy tools (like rsync, scp, sftp, dcp) launched within a container, potentially indicating data 
+  desc: >
+    Detect remote file copy tools (like rsync, scp, sftp, dcp) launched within a container, potentially indicating data
     exfiltration. Suggest refining this rule to accommodate legitimate use cases.
   condition: >
     spawned_process
@@ -1093,15 +1093,15 @@
 # kubectl run --generator=run-pod/v1 -n default -i --tty busybox --image=busybox --rm -- wget google.com -O /var/google.html
 # # Check logs running
 - rule: Network Connection outside Local Subnet
-  desc: > 
-    Detect network traffic (inbound or outbound) from a container to a destination outside the local subnet. 
-    To operationalize this rule, profile your environment and update the template macro namespace_scope_network_only_subnet. 
+  desc: >
+    Detect network traffic (inbound or outbound) from a container to a destination outside the local subnet.
+    To operationalize this rule, profile your environment and update the template macro namespace_scope_network_only_subnet.
     Customizing network-related rules usually demands substantial engineering effort to ensure their functionality.
   condition: >
-    inbound_outbound 
-    and container 
-    and k8s.ns.name in (namespace_scope_network_only_subnet) 
-    and not network_local_subnet 
+    inbound_outbound
+    and container
+    and k8s.ns.name in (namespace_scope_network_only_subnet)
+    and not network_local_subnet
   output: Network connection outside local subnet | fd_rip_name=%fd.rip.name fd_lip_name=%fd.lip.name fd_cip_name=%fd.cip.name fd_sip_name=%fd.sip.name connection=%fd.name lport=%fd.lport rport=%fd.rport fd_type=%fd.type fd_proto=%fd.l4proto evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_incubating, container, network, mitre_discovery, T1046, PCI_DSS_6.4.2]
@@ -1128,12 +1128,12 @@
   condition: (never_true)
 
 - rule: Mount Launched in Privileged Container
-  desc: > 
-    Detect filesystem mounts (using the mount binary) within a privileged container. Due to the elevated privileges, 
-    this action could be one of the TTPs used in an attempt to escape from a container to the host. This type of action 
+  desc: >
+    Detect filesystem mounts (using the mount binary) within a privileged container. Due to the elevated privileges,
+    this action could be one of the TTPs used in an attempt to escape from a container to the host. This type of action
     is often preceded by reconnaissance activities, for which you can also create custom rules.
   condition: >
-    spawned_process 
+    spawned_process
     and container
     and container.privileged=true
     and proc.name=mount
@@ -1165,14 +1165,14 @@
               proc.cmdline contains " --remote-name "))
 
 - rule: Launch Ingress Remote File Copy Tools in Container
-  desc: > 
-    Detect ingress remote file copy tools (such as curl or wget) launched inside containers. This rule can be 
-    considered a valuable auditing tool, but it has the potential to generate notable noise and requires careful 
+  desc: >
+    Detect ingress remote file copy tools (such as curl or wget) launched inside containers. This rule can be
+    considered a valuable auditing tool, but it has the potential to generate notable noise and requires careful
     profiling before full operationalization.
   condition: >
-    spawned_process 
-    and container 
-    and (ingress_remote_file_copy_procs or curl_download) 
+    spawned_process
+    and container
+    and (ingress_remote_file_copy_procs or curl_download)
     and not user_known_ingress_remote_file_copy_activities
   output: Ingress remote file copy tool launched in container | evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: NOTICE
@@ -1185,14 +1185,14 @@
   items: [scsi_id, argoexec]
 
 - rule: Read environment variable from /proc files
-  desc: > 
-    An attempt to read process environment variables from /proc files. The consequences are akin to accessing traditional 
-    sensitive files, as sensitive data, including secrets, might be stored in environment variables. Understanding your 
-    environment, such as identifying critical namespaces, and incorporating extra filtering statements to alert exclusively 
+  desc: >
+    An attempt to read process environment variables from /proc files. The consequences are akin to accessing traditional
+    sensitive files, as sensitive data, including secrets, might be stored in environment variables. Understanding your
+    environment, such as identifying critical namespaces, and incorporating extra filtering statements to alert exclusively
     for those, can enhance the rule's effectiveness.
   condition: >
-    open_read 
-    and container 
+    open_read
+    and container
     and (fd.name glob /proc/*/environ)
     and not proc.name in (known_binaries_to_read_environment_variables_from_proc_files)
   output: Environment variables were retrieved from /proc files | file=%fd.name gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
@@ -1213,26 +1213,26 @@
   condition: (not proc.pname exists or proc.pname in (runc:[0:PARENT], runc:[1:CHILD], runc, docker-runc, exe, docker-runc-cur, containerd-shim, systemd, crio, conmon))
 
 - macro: system_level_side_effect_artifacts_kubectl_cp
-  condition: (fd.name startswith /etc or 
-              fd.name startswith /proc or 
-              fd.name startswith /lib or 
-              fd.name startswith /run or 
-              fd.name startswith /usr or 
+  condition: (fd.name startswith /etc or
+              fd.name startswith /proc or
+              fd.name startswith /lib or
+              fd.name startswith /run or
+              fd.name startswith /usr or
               fd.name="/")
 
 - rule: Exfiltrating Artifacts via Kubernetes Control Plane
   desc: >
-    Detect the copying of artifacts from a container's file system using the Kubernetes control plane (kubectl cp). 
-    This rule can identify potential exfiltration of application secrets from containers' file systems, potentially 
-    revealing the outcomes of unauthorized access and control plane misuse via stolen identities (such as stolen 
-    credentials like Kubernetes serviceaccount tokens). Can be customized by the adopter to only monitor specific 
+    Detect the copying of artifacts from a container's file system using the Kubernetes control plane (kubectl cp).
+    This rule can identify potential exfiltration of application secrets from containers' file systems, potentially
+    revealing the outcomes of unauthorized access and control plane misuse via stolen identities (such as stolen
+    credentials like Kubernetes serviceaccount tokens). Can be customized by the adopter to only monitor specific
     artifact paths, containers, or namespaces as needed.
   condition: >
-    open_read 
-    and container 
-    and proc.name=tar 
-    and container_entrypoint 
-    and proc.tty=0 
+    open_read
+    and container
+    and proc.name=tar
+    and container_entrypoint
+    and proc.tty=0
     and not system_level_side_effect_artifacts_kubectl_cp
   output: Exfiltrating Artifacts via Kubernetes Control Plane | file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: NOTICE
@@ -1241,7 +1241,7 @@
 - rule: Adding ssh keys to authorized_keys
   desc: >
     After gaining access, attackers can modify the authorized_keys file to maintain persistence on a victim host.
-    Where authorized_keys files are modified via cloud APIs or command line interfaces, an adversary may achieve 
+    Where authorized_keys files are modified via cloud APIs or command line interfaces, an adversary may achieve
     privilege escalation on the target virtual machine if they add a key to a higher-privileged user.
     This rules aims at detecting any modification to the authorized_keys file, that is usually located under the .ssh
     directory in any user's home directory. This rule complements the more generic auditing rule "Read ssh information"
@@ -1261,13 +1261,13 @@
 
 - rule: Potential Local Privilege Escalation via Environment Variables Misuse
   desc: >
-    Process run with suspect environment variable that could be attempting privilege escalation. One use case is 
-    detecting the use of the GLIBC_TUNABLES environment variable, which could be used for privilege escalation 
-    on systems running vulnerable glibc versions. Only known and carefully profiled processes that legitimately 
-    exhibit this behavior should be excluded from this rule. This rule is expected to trigger on every attempt, 
+    Process run with suspect environment variable that could be attempting privilege escalation. One use case is
+    detecting the use of the GLIBC_TUNABLES environment variable, which could be used for privilege escalation
+    on systems running vulnerable glibc versions. Only known and carefully profiled processes that legitimately
+    exhibit this behavior should be excluded from this rule. This rule is expected to trigger on every attempt,
     even failed ones.
   condition: >
-    spawned_process 
+    spawned_process
     and glibc_tunables_env
   enabled: true
   output: Process run with suspect environment variable which could be attempting privilege escalation | env=%proc.env evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
@@ -1276,9 +1276,9 @@
 
 - rule: Backdoored library loaded into SSHD (CVE-2024-3094)
   desc: This rule detects possible CVE-2024-3094 exploitation when the SSH daemon process loads a vulnerable version of the liblzma library. An attacker could exploit this to interfere with authentication in sshd via systemd, potentially compromising sensitive data or escalating their privileges.
-  condition: > 
-    open_read and 
-    proc.name=sshd and 
+  condition: >
+    open_read and
+    proc.name=sshd and
     (fd.name contains "liblzma.so.5.6.0" or fd.name contains "liblzma.so.5.6.1")
   output: SSHD loaded a backdoored version of liblzma library %fd.name with parent %proc.pname and cmdline %proc.cmdline | process=%proc.name parent=%proc.pname file=%fd.name evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid proc_exepath=%proc.exepath command=%proc.cmdline terminal=%proc.tty exe_flags=%evt.arg.flags
   priority: WARNING
@@ -1291,11 +1291,11 @@
   condition: (proc.name in (bpf_profiled_binaries))
 
 - rule: BPF Program Not Profiled
-  desc: > 
-    BPF is a kernel technology that can be misused for malicious purposes, like "Linux Kernel Module Injection". This 
-    rule should be considered an auditing rule to notify you of any unprofiled BPF tools running in your environment. 
-    However, it requires customization after profiling your environment. BPF-powered agents make bpf syscalls all the 
-    time, so this rule only sends logs for BPF_PROG_LOAD calls (bpf cmd=5) in the enter event. If you also want to log 
+  desc: >
+    BPF is a kernel technology that can be misused for malicious purposes, like "Linux Kernel Module Injection". This
+    rule should be considered an auditing rule to notify you of any unprofiled BPF tools running in your environment.
+    However, it requires customization after profiling your environment. BPF-powered agents make bpf syscalls all the
+    time, so this rule only sends logs for BPF_PROG_LOAD calls (bpf cmd=5) in the enter event. If you also want to log
     whether the syscall failed or succeeded, remove the direction filter and add the evt.arg.res_or_fd output field.
   condition: >
     evt.type=bpf

@@ -1,0 +1,100 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-envoy-gateway
+  description: "UDS Core Envoy Gateway"
+  url: https://github.com/envoyproxy/gateway
+
+values:
+  files:
+    - zarf-values.yaml
+
+components:
+  - name: envoy-gateway
+    required: false
+    only:
+      flavor: upstream
+    import:
+      path: common
+    charts:
+      - name: envoy-gateway
+        valuesFiles:
+          - "values/upstream-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/upstream-values.yaml"
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
+    images:
+      - docker.io/envoyproxy/gateway:v1.8.2
+      - docker.io/envoyproxy/envoy:distroless-v1.38.3
+
+  - name: envoy-gateway
+    required: false
+    only:
+      flavor: registry1
+    import:
+      path: common
+    charts:
+      - name: envoy-gateway
+        valuesFiles:
+          - "values/registry1-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/registry1-values.yaml"
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
+    images:
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/community/gateway:v1.8.2
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.3
+
+  - name: envoy-gateway
+    required: false
+    only:
+      flavor: unicorn
+    import:
+      path: common
+    charts:
+      - name: envoy-gateway
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+      - name: uds-envoy-gateway-config
+        namespace: envoy-gateway-system
+        version: 0.1.0
+        localPath: chart
+        valuesFiles:
+          - "values/unicorn-values.yaml"
+        values:
+          - sourcePath: .envoy-gateway.uds-envoy-gateway-config
+            targetPath: .
+            excludePaths:
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyGateway.image
+              - .envoy-gateway.uds-envoy-gateway-config.global.images.envoyProxy.image
+    images:
+      - cgr.dev/defenseunicorns.com/envoy-gateway-fips:v1.8.2
+      - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.3
+
+  # Default Gateway's namespace, same pattern as the istio-*-gateway components.
+  - name: envoy-default-gateway
+    required: false
+    charts:
+      - name: uds-envoy-default-gateway-config
+        namespace: envoy-default-gateway
+        version: 0.1.0
+        localPath: default-gateway

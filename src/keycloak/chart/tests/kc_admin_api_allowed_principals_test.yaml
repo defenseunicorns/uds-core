@@ -1,0 +1,126 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+# Rules are selected by their operation paths rather than array index so the
+# assertions stay correct if the AuthorizationPolicy rules are reordered.
+suite: Keycloak - Admin API Allowed Principals
+templates:
+  - istio-authpol-admin.yaml
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+
+tests:
+  - it: should keep the broad admin deny exemptions for Fleet, Pepr, and the admin gateway
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system
+
+  - it: should keep configured principals exempt from the broad admin deny
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/argo/sa/workflow-service-account
+      - notContains:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].from[0].source.principals'
+          content: cluster.local/ns/argo/sa/workflow-service-account
+
+  - it: should render the Fleet admin principal followed by all configured principals in broad deny exemption order
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+        - cluster.local/ns/ci-tooling/sa/realm-sync
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - cluster.local/ns/argo/sa/workflow-service-account
+            - cluster.local/ns/ci-tooling/sa/realm-sync
+
+  - it: should scope Fleet to the configured realm clients endpoints only
+    set:
+      realm: myrealm
+    asserts:
+      # This DENY rule matches Fleet on /admin* unless the request path is the realm clients collection/subpaths.
+      - equal:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].to[0].operation.paths'
+          value:
+            - "/admin*"
+            - "/realms/master*"
+      - equal:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].to[0].operation.notPaths'
+          value:
+            - "/admin/realms/myrealm/clients"
+            - "/admin/realms/myrealm/clients/*"
+      - equal:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].from[0].source.principals'
+          value:
+            - "cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa"
+
+  - it: should quote principals so wildcard values render as valid YAML
+    set:
+      adminApiAllowedPrincipals:
+        # leading '*' would parse as a YAML alias if rendered unquoted
+        - "*/ns/argo/sa/workflow-service-account"
+        - cluster.local/ns/argo/sa/*
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notPrincipals'
+          value:
+            - cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa
+            - "*/ns/argo/sa/workflow-service-account"
+            - cluster.local/ns/argo/sa/*
+
+  - it: should not leak notPrincipals onto non-admin rules
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      # metrics endpoint (port 9000) must stay scoped to the monitoring namespace
+      - notExists:
+          path: 'spec.rules[?(@.to[0].operation.ports[0]=="9000")].from[0].source.notPrincipals'
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.ports[0]=="9000")].from[0].source.notNamespaces'
+          value:
+            - monitoring
+      # mTLS client-cert catch-all rule must not exempt configured principals
+      - notExists:
+          path: "spec.rules[?(@.when)].from[0].source.notPrincipals"
+
+  - it: should deny Fleet on non-clients admin paths and allow clients subpaths by notPath exemption
+    asserts:
+      - contains:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].to[0].operation.paths'
+          content: "/admin*"
+      - contains:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].to[0].operation.notPaths'
+          content: "/admin/realms/uds/clients/*"
+      - notContains:
+          path: 'spec.rules[?(@.from[0].source.principals[0]=="cluster.local/ns/uds-fleet-command/sa/uds-fleet-command-sa")].to[0].operation.notPaths'
+          content: "/admin/realms/uds/users"
+
+  - it: should preserve notNamespaces alongside broad rule notPrincipals
+    set:
+      adminApiAllowedPrincipals:
+        - cluster.local/ns/argo/sa/workflow-service-account
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system

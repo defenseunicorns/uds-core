@@ -1,4 +1,4 @@
-# Unicorn Delivery Service - K3d Slim Dev (UDS Core)
+# Unified Defense Stack - K3d Slim Dev (UDS Core)
 
 This bundle is a trimmed-down version of [UDS Core](../k3d-standard/README.md) bundle, with only the following UDS Core applications installed:
 

@@ -1,0 +1,87 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# Default Zarf values for the full UDS Core (standard) package.
+
+# Shared domains for the whole stack. Override via --values / --set-values to configure all charts.
+global:
+  domain: ""
+  # Empty falls back to the ADMIN_DOMAIN variable, then admin.<domain>.
+  adminDomain: ""
+
+# --- base (pepr / istio / envoy) ---
+pepr-uds-core:
+  module: {}
+uds-operator-config:
+  uds-operator-config: {}
+uds-exemptions:
+  uds-exemptions: {}
+istio-controlplane:
+  base: {}
+  istiod: {}
+  uds-global-istio-config: {}
+  cni: {}
+  ztunnel: {}
+istio-admin-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-tenant-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-passthrough-gateway:
+  gateway: {}
+  uds-istio-config: {}
+istio-egress-ambient:
+  uds-istio-egress-config: {}
+istio-egress-gateway:
+  gateway: {}
+envoy-gateway:
+  envoy-gateway: {}
+  uds-envoy-gateway-config: {}
+
+# --- prometheus operator CRDs ---
+prometheus-operator-crds:
+  prometheus-operator-crds: {}
+
+# --- identity-authorization (keycloak / authservice) ---
+keycloak:
+  keycloak: {}
+authservice:
+  authservice: {}
+
+# --- logging (loki / vector) ---
+loki:
+  loki: {}
+  uds-loki-config: {}
+vector:
+  vector: {}
+  uds-vector-config: {}
+
+# --- monitoring (prometheus / grafana) ---
+kube-prometheus-stack:
+  kube-prometheus-stack: {}
+  uds-prometheus-config: {}
+prometheus-blackbox-exporter:
+  prometheus-blackbox-exporter: {}
+grafana:
+  grafana: {}
+  uds-grafana-config: {}
+
+# --- runtime-security (falco) ---
+falco:
+  falco: {}
+  uds-falco-config: {}
+
+# --- metrics-server ---
+metrics-server:
+  metrics-server: {}
+  uds-metrics-server-config: {}
+
+# --- portal ---
+uds-portal:
+  uds-portal: {}
+
+# --- backup-restore (velero) ---
+velero:
+  velero: {}
+  uds-velero-config: {}

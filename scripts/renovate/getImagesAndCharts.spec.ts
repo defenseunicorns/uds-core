@@ -390,4 +390,51 @@ metadata:
       ],
     });
   });
+
+  test("should normalize prefixed distroless image tags", async () => {
+    (fs.readFileSync as Mock).mockImplementation(filePath => {
+      if (filePath === "test-dir/zarf.yaml") {
+        return `
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-envoy-gateway
+components:
+  - name: envoy-gateway
+    images:
+      - docker.io/envoyproxy/gateway:v1.8.0
+      - docker.io/envoyproxy/envoy:distroless-v1.38.0
+      - registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0
+      - cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0
+`;
+      }
+      if (filePath === "test-dir/common/zarf.yaml") {
+        return `
+kind: ZarfPackageConfig
+metadata:
+  name: uds-core-envoy-gateway-common
+components:
+  - name: envoy-gateway
+    required: false
+`;
+      }
+      return "";
+    });
+
+    await getImagesAndCharts("test-dir");
+
+    const imagesContent = (fs.writeFileSync as Mock).mock.calls.find(
+      call => call[0] === "test-dir/extract/images.yaml",
+    )![1];
+
+    const images = yaml.parse(imagesContent);
+
+    expect(images).toEqual({
+      "1.8.0": ["docker.io/envoyproxy/gateway:v1.8.0"],
+      "1.38.0": [
+        "docker.io/envoyproxy/envoy:distroless-v1.38.0",
+        "registry1.dso.mil/ironbank/opensource/envoy_proxy/envoy-distroless:v1.38.0",
+        "cgr.dev/defenseunicorns.com/envoy-fips:distroless-v1.38.0",
+      ],
+    });
+  });
 });

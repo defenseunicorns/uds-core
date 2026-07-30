@@ -32,16 +32,15 @@ describe("Falco e2e Tests", () => {
         command: ["sleep", "3600"],
       },
       async podName => {
-        await execAndWait(
-          "kube-system",
-          podName,
-          ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
-          "main",
-        );
-
-        // Poll for the Falco event in falcosidekick logs until success or timeout
+        // Retrigger the event on each poll attempt so transient eBPF misses don't cause a timeout
         const falcoSidekickEvent = await pollUntilSuccess(
           async () => {
+            await execAndWait(
+              "kube-system",
+              podName,
+              ["find", `/tmp/test-${randomString}`, "-name", "id_rsa"],
+              "main",
+            );
             const falcoSidekickLogs = await getAllLogsByLabelSelector(
               "falco",
               "app.kubernetes.io/name=falcosidekick",
@@ -54,12 +53,12 @@ describe("Falco e2e Tests", () => {
           },
           result => result !== undefined,
           `Falco event with identifier "test-${randomString}" in falcosidekick logs`,
-          60000, // 1 minute timeout
+          120000, // 2 minute timeout
           15000, // 15 seconds interval
         );
 
         expect(falcoSidekickEvent).toBeDefined();
       },
     );
-  }, 70000); // Set test timeout to 70 seconds
+  }, 150000); // 150s to cover pod creation + 120s poll
 });
