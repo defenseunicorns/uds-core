@@ -1,5 +1,6 @@
 .cache/
 .idea/
+.idea/**
 build/**
 .DS_Store
 *.tar.zst
