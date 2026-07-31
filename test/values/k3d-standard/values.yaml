@@ -26,6 +26,16 @@ pepr-uds-core:
           memory: "256Mi"
           cpu: "200m"
 
+# --- base: istio control plane (demo classification banner) ---
+istio-controlplane:
+  uds-global-istio-config:
+    classificationBanner:
+      text: "SAMPLE BANNER"
+      enabledHosts:
+        - "sso.uds.dev"
+        - "portal.uds.dev"
+        - "grafana.admin.uds.dev"
+
 # --- identity-authorization ---
 authservice:
   authservice:
