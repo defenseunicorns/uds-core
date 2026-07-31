@@ -30,6 +30,12 @@ tests:
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: 'function\(attributes\)'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '\[Hh\]\[Ee\]\[Aa\]\[Dd\]'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '\[Bb\]\[Oo\]\[Dd\]\[Yy\]'
       - notMatchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: '"<head%1>"'
@@ -39,6 +45,12 @@ tests:
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: 'bodyChunks'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'updated_headers:replace\("cache-control", "no-store"\)\n\n\s+local state = \{ head = false, body = false, closing = false \}'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '(?s)for chunk in response_handle:bodyChunks\(\) do.*local updated_headers = response_handle:headers\(\)'
       - notMatchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: '<script>'

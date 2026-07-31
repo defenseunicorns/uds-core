@@ -192,7 +192,7 @@ spec:
 
               if not state.head then
                 html, matches = html:gsub(
-                  "<head([^>]*)>",
+                  "<[Hh][Ee][Aa][Dd]([^>]*)>",
                   function(attributes)
                     return "<head" .. attributes .. ">" .. viewportLayoutStyle
                   end,
@@ -203,7 +203,7 @@ spec:
 
               if not state.body then
                 html, matches = html:gsub(
-                  "<body([^>]*)>",
+                  "<[Bb][Oo][Dd][Yy]([^>]*)>",
                   function(attributes)
                     return "<body" .. attributes .. ">" .. header ..
                       "<div id=\"classification-page-content\">"
@@ -215,7 +215,7 @@ spec:
 
               if not state.closing then
                 html, matches = html:gsub(
-                  "</body>",
+                  "</[Bb][Oo][Dd][Yy]%s*>",
                   function()
                     {{- if .Values.classificationBanner.addFooter }}
                     return "</div>" .. footer .. "</body>"
@@ -270,6 +270,12 @@ spec:
                 -- buffer), so we never wait for end-of-stream. Chunk boundaries are arbitrary, so
                 -- a <head>/<body> tag can straddle two chunks. Carry any unterminated trailing tag
                 -- ("<" with no closing ">") into the next chunk so the match is never missed.
+                -- Headers must be changed before bodyChunks() yields the first chunk downstream.
+                local updated_headers = response_handle:headers()
+                updated_headers:remove("etag")
+                updated_headers:remove("last-modified")
+                updated_headers:replace("cache-control", "no-store")
+
                 local state = { head = false, body = false, closing = false }
                 local pending = ""
                 for chunk in response_handle:bodyChunks() do
@@ -295,11 +301,6 @@ spec:
                     end
                   end
                 end
-
-                local updated_headers = response_handle:headers()
-                updated_headers:remove("etag")
-                updated_headers:remove("last-modified")
-                updated_headers:replace("cache-control", "no-store")
               end
             end
   - applyTo: HTTP_FILTER
