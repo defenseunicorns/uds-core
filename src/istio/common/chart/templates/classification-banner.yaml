@@ -1,7 +1,8 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.classificationBanner.enabledHosts }}
+{{- $classificationBanners := include "uds-global-istio-config.classificationBanners" . | fromYamlArray }}
+{{- if $classificationBanners }}
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
@@ -71,8 +72,6 @@ spec:
               UNKNOWN = { backgroundColor = "#000000", textColor = "#ffffff" },
               ["SAMPLE BANNER"] = { backgroundColor = "#000000", textColor = "#ffffff" },
             }
-            local classification = {{ .Values.classificationBanner.text | quote }}
-
             local function trim(s)
               return (s:gsub("^%s*(.-)%s*$", "%1"))
             end
@@ -115,17 +114,16 @@ spec:
               end
             end
 
-            local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
-            local backgroundColor = colors.backgroundColor
-            local textColor = colors.textColor
-            local style = "background-color: " .. backgroundColor .. "; color: " .. textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: 100vw; padding: 0 8px; position: relative; text-align: center; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin: 0; z-index: 2147483647;"
-            local header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>"
-            local footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>"
-
             -- Enabled applications receive real rows for the banners and a constrained,
             -- scrollable middle row for the original page. This is CSS-only, so application CSP
             -- can continue to reject inline JavaScript without disabling the layout adjustment.
-            local viewportLayoutStyle = [[
+            local function viewportLayoutStyle(addFooter)
+              local gridRows = "24px minmax(0, 1fr)"
+              if addFooter then
+                gridRows = gridRows .. " 24px"
+              end
+
+              return [[
             <style id="classification-banner-viewport-layout">
               html,
               body {
@@ -142,11 +140,7 @@ spec:
                 min-height: 0 !important;
                 position: fixed !important;
                 width: auto !important;
-                {{- if .Values.classificationBanner.addFooter }}
-                grid-template-rows: 24px minmax(0, 1fr) 24px;
-                {{- else }}
-                grid-template-rows: 24px minmax(0, 1fr);
-                {{- end }}
+                grid-template-rows: ]] .. gridRows .. [[;
                 overflow: hidden !important;
                 padding: 0 !important;
               }
@@ -162,11 +156,27 @@ spec:
               }
             </style>
             ]]
+            end
 
-            -- List of enabled hosts as a table for quick lookup, injected via Helm
-            local enabled_hosts = {
-              {{- range .Values.classificationBanner.enabledHosts }}
-              ["{{ tpl . $ }}"] = true,
+            -- Banner match rules, injected via Helm
+            local banner_rules = {
+              {{- range $banner := $classificationBanners }}
+              {
+                hosts = {
+                  {{- range $banner.enabledHosts }}
+                  [{{ tpl . $ | quote }}] = true,
+                  {{- end }}
+                },
+                pathPrefixes = {
+                  {{- range ($banner.pathPrefixes | default (list)) }}
+                  [{{ . | quote }}] = true,
+                  {{- end }}
+                },
+                banner = {
+                  classification = {{ $banner.text | default "UNKNOWN" | quote }},
+                  addFooter = {{ if hasKey $banner "addFooter" }}{{ $banner.addFooter }}{{ else }}true{{ end }},
+                },
+              },
               {{- end }}
             }
 
@@ -178,23 +188,63 @@ spec:
               return (string.lower(host):gsub(":%d+$", ""))
             end
 
-            -- Handle request: Extract `:authority` and store it as metadata.
+            local function findBanner(host, requestPath)
+              local fallback = nil
+              local bestMatch = nil
+              local bestPrefixLength = -1
+
+              for _, rule in ipairs(banner_rules) do
+                if rule.hosts[host] then
+                  if next(rule.pathPrefixes) == nil then
+                    fallback = fallback or rule.banner
+                  else
+                    for prefix, _ in pairs(rule.pathPrefixes) do
+                      local prefixLength = string.len(prefix)
+                      if string.sub(requestPath, 1, prefixLength) == prefix and prefixLength > bestPrefixLength then
+                        bestMatch = rule.banner
+                        bestPrefixLength = prefixLength
+                      end
+                    end
+                  end
+                end
+              end
+
+              return bestMatch or fallback
+            end
+
+            local function buildPresentation(banner)
+              local classification = banner.classification
+              local colors = classColorMap[classificationKey(classification)] or classColorMap["UNKNOWN"]
+              local style = "background-color: " .. colors.backgroundColor .. "; color: " .. colors.textColor .. "; font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: 400; height: 24px; line-height: 24px; border: 1px solid transparent; border-radius: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; max-width: 100vw; padding: 0 8px; position: relative; text-align: center; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; margin: 0; z-index: 2147483647;"
+
+              return {
+                addFooter = banner.addFooter,
+                footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>",
+                header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>",
+                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter),
+              }
+            end
+
+            -- Handle request: Extract matching inputs and store them as metadata
             function envoy_on_request(request_handle)
               local host = normalize_host(request_handle:headers():get(":authority"))
+              local requestPath = request_handle:headers():get(":path") or ""
+              local pathWithoutQuery = string.match(requestPath, "^[^?]*") or requestPath
               local metadata = request_handle:streamInfo():dynamicMetadata()
               metadata:set("envoy.lua", "host", host)
+              metadata:set("envoy.lua", "path", pathWithoutQuery)
             end
 
             -- Rewrite one complete body or one streamed fragment. State prevents duplicate
             -- replacements when the response arrives in multiple chunks.
-            local function inject_banner(html, state)
+            local function inject_banner(html, state, presentation)
               local matches
 
               if not state.head then
                 html, matches = html:gsub(
                   "<[Hh][Ee][Aa][Dd]([^>]*)>",
                   function(attributes)
-                    return "<head" .. attributes .. ">" .. viewportLayoutStyle
+                    return "<head" .. attributes .. ">" .. presentation.viewportLayoutStyle
                   end,
                   1
                 )
@@ -205,7 +255,7 @@ spec:
                 html, matches = html:gsub(
                   "<[Bb][Oo][Dd][Yy]([^>]*)>",
                   function(attributes)
-                    return "<body" .. attributes .. ">" .. header ..
+                    return "<body" .. attributes .. ">" .. presentation.header ..
                       "<div id=\"classification-page-content\">"
                   end,
                   1
@@ -217,11 +267,10 @@ spec:
                 html, matches = html:gsub(
                   "</[Bb][Oo][Dd][Yy]%s*>",
                   function()
-                    {{- if .Values.classificationBanner.addFooter }}
-                    return "</div>" .. footer .. "</body>"
-                    {{- else }}
+                    if presentation.addFooter then
+                      return "</div>" .. presentation.footer .. "</body>"
+                    end
                     return "</div></body>"
-                    {{- end }}
                   end,
                   1
                 )
@@ -231,21 +280,23 @@ spec:
               return html
             end
 
-            -- Inject the banner for any hosts where it is enabled
+            -- Inject the most specific banner configured for the request host and path
             function envoy_on_response(response_handle)
               local content_type = response_handle:headers():get("Content-Type") or ""
               -- dynamicMetadata():get("envoy.lua") is nil when envoy_on_request did not run for
               -- this response (e.g. a locally generated reply), so guard before indexing "host".
               local lua_meta = response_handle:streamInfo():dynamicMetadata():get("envoy.lua")
-              local host = lua_meta and lua_meta["host"]
+              local banner = lua_meta and findBanner(lua_meta["host"], lua_meta["path"] or "")
 
-              -- Skip anything that is not a successful HTML page on an enabled host (e.g. bodyless
+              -- Skip anything that is not a successful HTML page with a matching banner (e.g. bodyless
               -- 3xx redirects, which still carry Content-Type: text/html).
               if response_handle:headers():get(":status") ~= "200"
                 or not string.find(content_type, "text/html")
-                or not enabled_hosts[host] then
+                or not banner then
                 return
               end
+
+              local presentation = buildPresentation(banner)
 
               -- response_handle:body() buffers the whole body and blocks until end-of-stream.
               -- That is fine for a bounded response (Content-Length present), but it hangs the
@@ -256,7 +307,7 @@ spec:
                 local body = response_handle:body()
                 local state = { head = false, body = false, closing = false }
                 local body_text = tostring(body:getBytes(0, body:length()))
-                body:setBytes(inject_banner(body_text, state))
+                body:setBytes(inject_banner(body_text, state, presentation))
 
                 -- body() yields while Envoy buffers the response. Reacquire the header map before
                 -- removing validators that describe the unmodified representation.
@@ -287,7 +338,7 @@ spec:
                     end
                   else
                     local data = pending .. tostring(chunk:getBytes(0, len))
-                    data = inject_banner(data, state)
+                    data = inject_banner(data, state, presentation)
 
                     -- Hold only an unterminated trailing tag for the next chunk. This covers the
                     -- <head>, <body>, and </body> tags without buffering the response.

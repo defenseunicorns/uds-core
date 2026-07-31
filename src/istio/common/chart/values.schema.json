@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
-  "properties": {
+  "definitions": {
     "classificationBanner": {
       "type": "object",
       "properties": {
@@ -9,19 +9,40 @@
           "type": "boolean",
           "description": "Indicates whether to add a footer to the classification banner."
         },
-        "text": {
-          "type": ["string", "null"],
-          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN|SAMPLE BANNER)?$",
-          "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN, SAMPLE BANNER (a demo placeholder), or empty/null are also allowed."
-        },
         "enabledHosts": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Hosts where the classification banner is injected."
+          "description": "Hosts that display this classification banner. Entries support Helm templating."
+        },
+        "pathPrefixes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          },
+          "description": "Optional URL path prefixes that display this classification banner on its enabled hosts. An empty or omitted list matches all paths."
+        },
+        "text": {
+          "type": ["string", "null"],
+          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN|SAMPLE BANNER)?$",
+          "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN, SAMPLE BANNER (a demo placeholder), or empty/null are also allowed."
         }
       }
+    }
+  },
+  "properties": {
+    "classificationBanners": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/classificationBanner"
+      },
+      "description": "Classification banners to display, selected by host and optional URL path prefix."
+    },
+    "classificationBanner": {
+      "$ref": "#/definitions/classificationBanner",
+      "description": "Deprecated single classification banner configuration. Use classificationBanners instead."
     }
   }
 }

@@ -44,7 +44,7 @@ tests:
           pattern: 'id=\\"classification-page-content\\"'
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
-          pattern: 'bodyChunks'
+          pattern: "bodyChunks"
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
           pattern: 'updated_headers:replace\("cache-control", "no-store"\)\n\n\s+local state = \{ head = false, body = false, closing = false \}'
@@ -53,18 +53,31 @@ tests:
           pattern: '(?s)for chunk in response_handle:bodyChunks\(\) do.*local updated_headers = response_handle:headers\(\)'
       - notMatchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
-          pattern: '<script>'
+          pattern: "<script>"
 
-  - it: should render a two-row viewport frame when the footer is disabled
+  - it: should select viewport rows from each banner's footer setting
     set:
-      classificationBanner:
-        addFooter: false
-        enabledHosts:
-          - app.uds.test
+      classificationBanners:
+        - text: UNCLASSIFIED
+          addFooter: true
+          enabledHosts:
+            - app.uds.test
+        - text: SECRET
+          addFooter: false
+          enabledHosts:
+            - app.uds.test
+          pathPrefixes:
+            - /classified
     asserts:
       - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
-          pattern: 'grid-template-rows: 24px minmax\(0, 1fr\);'
-      - notMatchRegex:
+          pattern: 'local gridRows = "24px minmax\(0, 1fr\)"'
+      - matchRegex:
           path: spec.configPatches[1].patch.value.typed_config.inlineCode
-          pattern: 'grid-template-rows: 24px minmax\(0, 1fr\) 24px;'
+          pattern: 'gridRows = gridRows \.\. " 24px"'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: "addFooter = false"
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '\["/classified"\] = true'
