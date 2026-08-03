@@ -173,7 +173,7 @@ spec:
                   {{- end }}
                 },
                 banner = {
-                  classification = {{ $banner.text | default "UNKNOWN" | quote }},
+                  classification = {{ if hasKey $banner "text" }}{{ $banner.text | quote }}{{ else }}"UNKNOWN"{{ end }},
                   addFooter = {{ if hasKey $banner "addFooter" }}{{ $banner.addFooter }}{{ else }}true{{ end }},
                 },
               },

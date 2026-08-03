@@ -4,11 +4,16 @@ SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commer
 */}}
 
 {{/*
-Build the effective classification banner list, prepending the deprecated
-classificationBanner value when it has enabled hosts.
+Build the effective classification banner list from entries with enabled hosts,
+prepending the deprecated classificationBanner value when it also has enabled hosts.
 */}}
 {{- define "uds-global-istio-config.classificationBanners" -}}
-{{- $classificationBanners := .Values.classificationBanners | default (list) -}}
+{{- $classificationBanners := list -}}
+{{- range (.Values.classificationBanners | default (list)) -}}
+{{- if .enabledHosts -}}
+{{- $classificationBanners = append $classificationBanners . -}}
+{{- end -}}
+{{- end -}}
 {{- if .Values.classificationBanner.enabledHosts -}}
 {{- $classificationBanners = prepend $classificationBanners .Values.classificationBanner -}}
 {{- end -}}

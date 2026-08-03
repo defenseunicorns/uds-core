@@ -13,6 +13,28 @@ tests:
       - hasDocuments:
           count: 0
 
+  - it: should not render when configured banners have no enabled hosts
+    set:
+      classificationBanners:
+        - text: SECRET
+          enabledHosts: []
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should preserve explicitly empty legacy classification text
+    set:
+      classificationBanner:
+        text: ""
+        enabledHosts:
+          - app.uds.test
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'classification = "",'
+
   - it: should render a script-free viewport frame and streamed response handling
     set:
       classificationBanner:
