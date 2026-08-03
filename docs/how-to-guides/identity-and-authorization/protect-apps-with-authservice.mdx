@@ -25,7 +25,7 @@ You'll configure operator-managed Authservice protection for an application. Aut
 
 Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The UDS Operator creates the Authservice chain and the required Istio resources automatically. The first `redirectUris` entry you configure populates the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
-Authservice does not prevent the application from using identity information. Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. The application can inspect claims for tracing, debugging, or application behavior. Istio and Authservice also remain available for platform-level telemetry.
+Authservice does not prevent the application from using identity information. Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. Use `groups.anyOf` as a platform-level coarse-grained gate that determines whether a user can reach the workload at all. After access is granted, application code can use the forwarded identity and, when configured, `groups` claims to enforce fine-grained authorization based on application data, resource ownership, business roles, or features. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. Istio and Authservice also remain available for platform-level telemetry.
 
 ## Steps
 

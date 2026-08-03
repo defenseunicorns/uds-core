@@ -162,7 +162,7 @@ This policy confirms JWT and Authservice enforcement, but the `uds.core.groups` 
 - The user belongs to that group in Keycloak.
 - The user logs out and back in after a group membership change so Keycloak evaluates the updated membership.
 
-The `groups` token claim can help debug what an application receives, but it does not control `groups.anyOf` enforcement. To inspect token claims, use the Keycloak Account console at `sso.<domain>` or a tool like [jwt.io](https://jwt.io).
+The `groups` token claim does not control `groups.anyOf` enforcement, but application code can use it for fine-grained authorization after the platform grants access. To include the claim in tokens, see [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. To inspect token claims, use the Keycloak Account console at `sso.<domain>` or a tool like [jwt.io](https://jwt.io).
 
 ### Problem: Group name contains a slash
 
