@@ -109,23 +109,17 @@ packages:
               default: "1"
       istio-controlplane:
         uds-global-istio-config:
-          values:
-            # Demo classification banners use non-sensitive markings and provide E2E coverage for
-            # host, path, and footer selection across the standard dev bundle.
-            - path: classificationBanners
-              value:
+          variables:
+            - name: CLASSIFICATION_BANNERS
+              description: "Classification banners for the standard dev bundle"
+              path: classificationBanners
+              default:
                 - text: "SAMPLE BANNER"
+                  addFooter: true
                   enabledHosts:
                     - "sso.uds.dev"
-                  pathPrefixes:
-                    - "/realms/uds/account"
-                - text: "UNKNOWN"
-                  addFooter: false
-                  enabledHosts:
-                    - "grafana.admin.uds.dev"
-                - text: "UNCLASSIFIED"
-                  enabledHosts:
                     - "portal.uds.dev"
+                    - "grafana.admin.uds.dev"
       istio-admin-gateway:
         uds-istio-config:
           variables:
