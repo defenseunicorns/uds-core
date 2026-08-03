@@ -14,7 +14,7 @@ You'll restrict access to a UDS application so that only users in specific Keycl
 ## Prerequisites
 
 - UDS Core deployed
-- Application deployed as a UDS Package with SSO and Authservice configured (see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/))
+- Application deployed as a UDS Package with a Keycloak SSO client configured (see [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for native SSO or [Protect applications with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) for mesh-boundary protection)
 - Relevant Keycloak groups exist (either the built-in platform groups or custom groups you have created)
 
 ## Before you begin
@@ -83,7 +83,7 @@ Application teams can define their own group paths. Group paths follow Keycloak'
    uds zarf tools kubectl apply -f package.yaml
    ```
 
-   The UDS Operator reconciles the `Package` CR and updates the Authservice authorization policy to enforce group membership.
+   The UDS Operator reconciles the `Package` CR and passes the group requirement to the Keycloak SSO client. UDS Core uses that client configuration to enforce group membership during authentication.
 
 </Steps>
 
@@ -97,12 +97,14 @@ Confirm group-based access is enforced:
 
 **Test with an unauthorized user:**
 1. Log in with a user who is NOT a member of the required group
-2. Access should be denied with a `403 Forbidden` response
+2. Access should be denied. Depending on the integration, denial can occur during Keycloak authentication or as a `403 Forbidden` response from the application.
 
-**Check the Authservice chain configuration:**
+**For Authservice-protected applications, check the generated policy:**
 ```bash
 uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 ```
+
+For native SSO applications, verify the group requirement on the Keycloak client and test the application's login flow. Native SSO alone does not create an Authservice chain.
 
 ## Troubleshooting
 
@@ -120,11 +122,12 @@ uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 
 **Symptoms:** A user is in the group in Keycloak but is still denied access.
 
-**Solution:** Confirm the user's group membership is included in the token. This can fail if:
-- The user's group claim is not included in the SSO client's default scopes. In the Keycloak admin UI, go to **Clients** → your client → **Client Scopes** and confirm the `groups` scope is assigned.
-- The token was issued before the user was added to the group (the user needs to log out and log back in)
+**Solution:** UDS Core checks the user's server-side Keycloak group membership during authentication. Confirm that:
+- The group exists at the exact path listed in `groups.anyOf`.
+- The user belongs to that group in Keycloak.
+- The user logs out and back in after a group membership change so Keycloak evaluates the updated membership.
 
-To inspect the token claims, use the Keycloak Account console at `sso.<domain>` to view recent tokens, or use a tool like [jwt.io](https://jwt.io) to decode a token.
+The `groups` token claim can help debug what an application receives, but it does not control `groups.anyOf` enforcement. To inspect token claims, use the Keycloak Account console at `sso.<domain>` or a tool like [jwt.io](https://jwt.io).
 
 ### Problem: Group name contains a slash
 
@@ -136,4 +139,5 @@ To inspect the token claims, use the Keycloak Account console at `sso.<domain>` 
 
 - [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on platform groups and the SSO model
 - [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full `groups` field specification
-- [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) - required prerequisite for group-based access on apps without native OIDC
+- [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) - configure a native OIDC or SAML client before adding group restrictions
+- [Protect applications with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) - add mesh-boundary protection when UDS Core should own browser authentication

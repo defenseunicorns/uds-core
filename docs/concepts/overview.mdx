@@ -42,7 +42,7 @@ It watches for `Package`, `Exemption`, and `ClusterConfig` custom resources. Whe
 - Generates Istio `VirtualService` and `AuthorizationPolicy` resources to control traffic
 - Creates Kubernetes `NetworkPolicy` resources to enforce network boundaries
 - Configures Keycloak clients for SSO-protected services
-- Sets up an Authservice SSO flow to protect mission applications that don't natively implement OIDC
+- Sets up an operator-managed Authservice SSO flow to protect workloads at the Istio mesh boundary
 - Creates `ServiceMonitor`, `PodMonitor`, and blackbox probe resources for Prometheus to scrape application metrics
 
 This automation means platform teams don't need to write low-level Istio or Kubernetes networking configuration for each application, nor manually configure SSO for each app. The `Package` CR drives all of it from a single declaration.

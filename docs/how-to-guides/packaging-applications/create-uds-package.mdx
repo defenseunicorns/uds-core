@@ -235,7 +235,7 @@ The template repository provides the standard directory structure:
    > [!IMPORTANT]
    > Network `allow` rules must follow the principle of least privilege. Only permit traffic your application actually needs. See [Define Network Access](/how-to-guides/networking/define-network-access/) for detailed configuration options.
 
-   **SSO**: register a Keycloak client if your app has a user login. If your application has no native OIDC/SSO support, [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) is available as an alternative.
+   **SSO**: register a Keycloak client if your app has a user login. Choose native OIDC or SAML when the application should own the authentication flow. Choose [Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) when UDS Core should own browser authentication and enforce protection at the mesh boundary.
 
    ```yaml title="chart/templates/uds-package.yaml (continued)"
      {{- if .Values.sso.enabled }}
