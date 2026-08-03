@@ -5,7 +5,7 @@ sidebar:
   order: 3.004
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -47,26 +47,56 @@ Application teams can define their own group paths. Group paths follow Keycloak'
 
 2. **Add `groups.anyOf` to your `Package` CR**
 
-   In your application's `Package` CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access.
+   In your application's `Package` CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access. Choose the example that matches the SSO integration you use.
 
-   ```yaml title="package.yaml"
-   apiVersion: uds.dev/v1alpha1
-   kind: Package
-   metadata:
-     name: httpbin
-     namespace: httpbin
-   spec:
-     sso:
-       - name: Demo SSO
-         clientId: uds-core-httpbin
-         redirectUris:
-           - "https://protected.uds.dev/login"
-         enableAuthserviceSelector:
-           app: httpbin
-         groups:
-           anyOf:
-             - "/UDS Core/Admin"
-   ```
+   <Tabs>
+     <TabItem label="Native SSO">
+
+     The application owns the login flow, so omit `enableAuthserviceSelector`:
+
+     ```yaml title="package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: httpbin
+       namespace: httpbin
+     spec:
+       sso:
+         - name: Demo SSO
+           clientId: uds-core-httpbin
+           redirectUris:
+             - "https://protected.uds.dev/auth/callback"
+           groups:
+             anyOf:
+               - "/UDS Core/Admin"
+     ```
+
+     </TabItem>
+     <TabItem label="Authservice">
+
+     Authservice owns the browser login flow and protects the selected workload at the mesh boundary:
+
+     ```yaml title="package.yaml"
+     apiVersion: uds.dev/v1alpha1
+     kind: Package
+     metadata:
+       name: httpbin
+       namespace: httpbin
+     spec:
+       sso:
+         - name: Demo SSO
+           clientId: uds-core-httpbin
+           redirectUris:
+             - "https://protected.uds.dev/login"
+           enableAuthserviceSelector:
+             app: httpbin
+           groups:
+             anyOf:
+               - "/UDS Core/Admin"
+     ```
+
+     </TabItem>
+   </Tabs>
 
    To allow multiple groups (users in any one of the listed groups are granted access):
 
@@ -97,14 +127,19 @@ Confirm group-based access is enforced:
 
 **Test with an unauthorized user:**
 1. Log in with a user who is NOT a member of the required group
-2. Access should be denied. Depending on the integration, denial can occur during Keycloak authentication or as a `403 Forbidden` response from the application.
+2. For these browser-based SSO flows, access should be denied during Keycloak authentication before the user reaches the application.
 
-**For Authservice-protected applications, check the generated policy:**
+**Verify the Keycloak client configuration for both integrations:**
+1. In the Keycloak admin UI, open the client identified by `clientId`.
+2. Confirm that its `uds.core.groups` attribute contains the expected `anyOf` group paths.
+3. Test the login flow with an authorized and unauthorized user.
+
+For Authservice-protected applications, you can additionally check the generated policy:
 ```bash
 uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
 ```
 
-For native SSO applications, verify the group requirement on the Keycloak client and test the application's login flow. Native SSO alone does not create an Authservice chain.
+This policy confirms JWT and Authservice enforcement, but the `uds.core.groups` client attribute controls group membership. Native SSO does not create an Authservice chain.
 
 ## Troubleshooting
 

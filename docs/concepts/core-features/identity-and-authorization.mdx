@@ -76,7 +76,7 @@ UDS Core pre-configures two Keycloak groups that drive access to platform admin 
 | `/UDS Core/Admin` | Platform administrators | Grafana admin, Keycloak admin console, Alertmanager |
 | `/UDS Core/Auditor` | Read-only platform access | Grafana viewer, log browsing |
 
-Application teams can define their own group-based restrictions in their `Package` CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
+Application teams can define their own group-based restrictions in their `Package` CR using the `groups.anyOf` field. During the browser-based authentication flow, an SSO client configured with `groups.anyOf: ["/UDS Core/Admin"]` will reject users who are not members of that group, even if they are otherwise authenticated. Client-credentials callers are not subject to this restriction; authorize machine identities separately.
 
 ## Keycloak configuration layers
 
