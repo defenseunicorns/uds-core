@@ -32,7 +32,7 @@ jobs:
     outputs:
       run_full_tests: ${{ steps.test-routing.outputs.run_full_tests }}
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Compute test routing
         id: test-routing
@@ -58,7 +58,7 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
 
     steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
@@ -109,3 +109,21 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ matrix.architecture }}
+
+  tag-checkpoint-latest:
+    needs: checkpoint
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Tag Checkpoint Package as Latest
+        run: uds run -f tasks/publish.yaml checkpoint-latest --no-progress

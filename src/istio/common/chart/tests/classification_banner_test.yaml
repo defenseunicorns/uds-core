@@ -1,0 +1,70 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: common Istio - classification banner
+templates:
+  - classification-banner.yaml
+
+tests:
+  - it: should not render without enabled hosts
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render a script-free viewport frame and streamed response handling
+    set:
+      classificationBanner:
+        text: SAMPLE BANNER
+        enabledHosts:
+          - app.uds.test
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: EnvoyFilter
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '<style id="classification-banner-viewport-layout">'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'function\(attributes\)'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '\[Hh\]\[Ee\]\[Aa\]\[Dd\]'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '\[Bb\]\[Oo\]\[Dd\]\[Yy\]'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '"<head%1>"'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'id=\\"classification-page-content\\"'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'bodyChunks'
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'updated_headers:replace\("cache-control", "no-store"\)\n\n\s+local state = \{ head = false, body = false, closing = false \}'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '(?s)for chunk in response_handle:bodyChunks\(\) do.*local updated_headers = response_handle:headers\(\)'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: '<script>'
+
+  - it: should render a two-row viewport frame when the footer is disabled
+    set:
+      classificationBanner:
+        addFooter: false
+        enabledHosts:
+          - app.uds.test
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'grid-template-rows: 24px minmax\(0, 1fr\);'
+      - notMatchRegex:
+          path: spec.configPatches[1].patch.value.typed_config.inlineCode
+          pattern: 'grid-template-rows: 24px minmax\(0, 1fr\) 24px;'

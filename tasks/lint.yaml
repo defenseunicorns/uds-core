@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.26.3/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.27.1/tasks/lint.yaml
 
 tasks:
   - name: ensure-uv
@@ -21,8 +21,8 @@ tasks:
     actions:
       - description: Ensure uv is installed
         task: ensure-uv
-      - description: "Pepr Format"
-        cmd: npx pepr format
+      - description: "Format"
+        cmd: npm run format
       - description: Fix codespell lint issues
         cmd: |
           uvx codespell || true
@@ -34,6 +34,9 @@ tasks:
       - description: Ensure uv is installed
         task: ensure-uv
       - description: install pepr deps
+        cmd: npm ci
+      - description: "Format check"
+        cmd: npm run format:check
         task: install-pepr-deps
       - description: Build the Pepr module for values lint
         task: build-pepr

@@ -1,6 +1,6 @@
 # Reference Page Template
 
-> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+> This template extends the rules in [docs/dev/style-rules.md](../../../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
 
 ## About this template
 

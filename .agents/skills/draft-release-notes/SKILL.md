@@ -1,8 +1,6 @@
 ---
 name: draft-release-notes
 description: Draft or update UDS Core release notes page and Slack announcement from the release-please PR. Use this skill whenever the user mentions release notes, preparing a release, writing release announcements, updating release pages, or anything related to documenting a new UDS Core version. Also use it when the user says things like "prep the release", "write up the release", "draft release notes", or references a release-please PR.
-argument-hint: [version]
-disable-model-invocation: true
 ---
 
 # UDS Core Release Notes Skill
@@ -12,7 +10,7 @@ This skill guides the creation of release notes pages and Slack announcements fo
 ## Before you start
 
 Read these files for template, conventions, and style reference:
-- `.ai/docs/release-notes-template.md` — the authoritative template and all formatting conventions. Follow it exactly.
+- `../documentation-authoring/references/release-notes-template.md` - the authoritative template and all formatting conventions. Follow it exactly.
 - The most recent `.mdx` file in `docs/operations/release-notes/` — for real-world style reference
 
 ## Step 1: Determine release type
@@ -135,7 +133,7 @@ Ask the user directly: "Are there any manual upgrade steps operators need to per
 
 ### For minor/major releases — create new file
 
-Follow the template from `.ai/docs/release-notes-template.md`. Determine the `sidebar.order` by looking at the most recent release notes file and using the next lower 3-decimal value (for example: `3.999`, `3.998`, `3.997`, … — decrement by `0.001`).
+Follow the template from `../documentation-authoring/references/release-notes-template.md`. Determine the `sidebar.order` by looking at the most recent release notes file and using the next lower 3-decimal value (for example: `3.999`, `3.998`, `3.997`, … — decrement by `0.001`).
 
 ### For patch releases — update existing file
 

@@ -196,8 +196,7 @@ describe("test applyAmbientEgressResources", () => {
       );
       expect(c[3]).toBeDefined();
       const byPort = c[4] as
-        | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-        | undefined;
+        Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
       expect(byPort).toBeDefined();
       expect(byPort).toHaveProperty("443");
       expect(byPort!["443"].saPrincipals).toEqual(
@@ -262,8 +261,7 @@ describe("test applyAmbientEgressResources", () => {
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
-      | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-      | undefined;
+      Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
     expect(byPort).toBeDefined();
     expect(byPort).toHaveProperty("80");
     expect(byPort).toHaveProperty("443");
@@ -329,8 +327,7 @@ describe("test applyAmbientEgressResources", () => {
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
-      | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-      | undefined;
+      Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
     expect(byPort).toBeDefined();
     expect(byPort).toHaveProperty("443");
     expect(byPort!["443"].saPrincipals).not.toEqual(
@@ -408,8 +405,7 @@ describe("test applyAmbientEgressResources", () => {
 
     expect(apSpy).toHaveBeenCalledTimes(1);
     const byPort = apSpy.mock.calls[0][4] as
-      | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-      | undefined;
+      Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
     expect(byPort).toBeDefined();
     expect(byPort).toHaveProperty("443");
     expect(byPort!["443"].saPrincipals).not.toEqual(
@@ -472,8 +468,7 @@ describe("test applyAmbientEgressResources", () => {
     );
     expect(apSpy.mock.calls[0][3]).toBeDefined();
     const byPort = apSpy.mock.calls[0][4] as
-      | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-      | undefined;
+      Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
     expect(byPort).toBeDefined();
     expect(byPort).toHaveProperty("443");
     expect(byPort!["443"].saPrincipals).not.toEqual(
@@ -557,8 +552,7 @@ describe("test applyAmbientEgressResources", () => {
       const host = c[0];
       const port = host === "example.com" ? "80" : "443";
       const byPort = c[4] as
-        | Record<string, { saPrincipals: string[]; namespaces: string[] }>
-        | undefined;
+        Record<string, { saPrincipals: string[]; namespaces: string[] }> | undefined;
       expect(byPort).toBeDefined();
       expect(byPort).toHaveProperty(port);
       expect(byPort![port].saPrincipals).toEqual(

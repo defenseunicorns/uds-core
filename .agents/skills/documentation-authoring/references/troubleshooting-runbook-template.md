@@ -1,6 +1,6 @@
 # Troubleshooting Runbook Template
 
-> This template extends the rules in [docs/dev/style-rules.md](../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
+> This template extends the rules in [docs/dev/style-rules.md](../../../../docs/dev/style-rules.md) and [docs/dev/voice-profile.md](../../../../docs/dev/voice-profile.md). Only template-specific conventions appear below.
 
 ## About this template
 
@@ -182,7 +182,7 @@ If this runbook doesn't resolve your issue:
 - Link to Reference for exact settings, Concepts only when understanding is needed
 
 ### Sidebar ordering
-- Follow the three-decimal convention in [style-rules.md](../../docs/dev/style-rules.md#sidebar-ordering)
+- Follow the three-decimal convention in [style-rules.md](../../../../docs/dev/style-rules.md#sidebar-ordering)
 - Overview page: `order: 1.000`
 - Runbook pages: `order: 1.001`, `1.002`, `1.003`, etc.
 

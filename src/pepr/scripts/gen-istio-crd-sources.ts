@@ -96,8 +96,7 @@ async function main() {
 
   // We only need the HTTP route properties for advancedHTTP
   const httpProps = vsSchema.properties?.spec?.properties?.http?.items?.properties as
-    | Record<string, V1JSONSchemaProps>
-    | undefined;
+    Record<string, V1JSONSchemaProps> | undefined;
   if (!httpProps) throw new Error("VirtualService http.items.properties not found");
 
   // Filter to just the properties we embed in our CRD
