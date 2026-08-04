@@ -31,7 +31,7 @@ This feature change does not update a runtime dependency.
 
 ### Keycloak session behavior
 
-Keycloak remains on version 26.7.0, and the upgrade leaves its schema and durable data unchanged. Realms, clients, users, roles, and identity providers remain intact. Because stateless mode is no longer enabled by default, active login sessions and action tokens may not carry over during the transition, so some users may need to authenticate again.
+Because stateless mode is no longer enabled by default in this release, active Keycloak login sessions and action tokens may not carry over during the upgrade. Some users may need to sign in again.
 
 ### Pre-upgrade steps
 
