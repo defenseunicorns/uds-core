@@ -14,22 +14,27 @@ UDS Core 1.10 removes the implicit Keycloak `preview` feature group from the def
 
 ### Notable features
 
-- **Additional Keycloak feature configuration:** Use the new `keycloak.keycloak.features.additional` value to enable individual optional features alongside the required `fips` feature. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features) ([#2838](https://github.com/defenseunicorns/uds-core/pull/2838)).
+- **Explicit Keycloak feature selection:** UDS Core no longer passes the generic `preview` feature group to Keycloak by default. Use the new `keycloak.keycloak.features.additional` value to enable individual optional features alongside the required `fips` feature. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features) ([#2838](https://github.com/defenseunicorns/uds-core/pull/2838)).
 - **Classification banner application compatibility:** Classification banners now support single-page and full-viewport applications. The updated response handling supports buffered and streamed HTML while preserving space for the banner above application content. See [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) ([#2710](https://github.com/defenseunicorns/uds-core/pull/2710)).
 
 ### Dependency updates
 
-| Package          | Previous | Updated                                                                             |
-| ---------------- | -------- | ----------------------------------------------------------------------------------- |
-| Authservice      | 1.1.5    | [1.1.8](https://github.com/istio-ecosystem/authservice/releases/tag/v1.1.8)         |
-| Envoy Gateway    | v1.8.2   | [v1.8.3](https://github.com/envoyproxy/gateway/releases/tag/v1.8.3)                 |
-| Envoy Proxy      | v1.38.3  | [v1.39.0](https://github.com/envoyproxy/envoy/releases/tag/v1.39.0)                 |
-| Gateway API CRDs | v1.5.1   | [v1.6.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.1)        |
-| Istio            | 1.29.3   | [1.30.3](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)           |
-| Loki             | 3.7.3    | [3.7.4](https://github.com/grafana/loki/releases/tag/v3.7.4)                        |
-| Loki Helm chart  | 18.5.1   | [18.7.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.7.0) |
-| k8s-sidecar      | 2.8.1    | [2.10.0](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.10.0)               |
-| Pepr             | 1.2.2    | [1.3.0](https://github.com/defenseunicorns/pepr/releases/tag/v1.3.0)                |
+| Package                                 | Previous | Updated                                                                                                          |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Authservice                             | 1.1.5    | [1.1.8](https://github.com/istio-ecosystem/authservice/releases/tag/v1.1.8)                                      |
+| Envoy Gateway                           | v1.8.2   | [v1.8.3](https://github.com/envoyproxy/gateway/releases/tag/v1.8.3)                                              |
+| Envoy Proxy                             | v1.38.3  | [v1.39.0](https://github.com/envoyproxy/envoy/releases/tag/v1.39.0)                                              |
+| Gateway API CRDs                        | v1.5.1   | [v1.6.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.1)                                     |
+| Istio                                   | 1.29.3   | [1.30.3](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)                                        |
+| Loki                                    | 3.7.3    | [3.7.4](https://github.com/grafana/loki/releases/tag/v3.7.4)                                                     |
+| Loki Helm chart                         | 18.5.1   | [18.7.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.7.0)                              |
+| k8s-sidecar                             | 2.8.1    | [2.10.0](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.10.0)                                            |
+| Pepr                                    | 1.2.2    | [1.3.0](https://github.com/defenseunicorns/pepr/releases/tag/v1.3.0)                                             |
+| Prometheus                              | v3.13.1  | [v3.13.2](https://github.com/prometheus/prometheus/releases/tag/v3.13.2)                                         |
+| Prometheus Operator                     | v0.92.1  | [v0.93.0](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.93.0)                       |
+| kube-prometheus-stack Helm chart        | 87.16.1  | [88.1.4](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-88.1.4)          |
+| Prometheus Blackbox Exporter Helm chart | 11.15.1  | [11.16.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.16.0) |
+| prometheus-operator-crds Helm chart     | 30.0.1   | [31.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-31.0.0)       |
 
 ## Upgrade considerations
 
