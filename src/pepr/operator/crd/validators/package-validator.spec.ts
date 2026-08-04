@@ -422,7 +422,7 @@ describe("Test validation of Package CRs", () => {
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
   });
 
-  describe("cross-package FQDN collision", () => {
+  describe("cross-namespace expose collision", () => {
     beforeEach(() => {
       PackageStore.init();
     });
@@ -555,6 +555,49 @@ describe("Test validation of Package CRs", () => {
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
         [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats deprecated match as an advanced route during validation", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: {
+            expose: [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+            allow: [],
+          },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", match: [{ uri: { prefix: "/bar" } }] }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows catch-all and advanced routes within one package", async () => {
+      const mockReq = makeMockReq(
+        {},
+        [
+          { host: "app", description: "catch-all" },
+          {
+            host: "app",
+            description: "path-route",
+            advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] },
+          },
+        ],
         [],
         [],
         [],
