@@ -28,6 +28,16 @@ packages:
       - envoy-gateway
       - envoy-default-gateway
     overrides:
+      istio-controlplane:
+        uds-global-istio-config:
+          values:
+            - path: classificationBanner.text
+              value: "SAMPLE BANNER"
+            - path: classificationBanner.enabledHosts
+              value:
+                - "sso.uds.dev"
+                - "portal.uds.dev"
+                - "grafana.admin.uds.dev"
       envoy-gateway:
         uds-envoy-gateway-config:
           values:
