@@ -40,8 +40,10 @@ Every chart uses a `<component>.<chart>` namespace. For example, `keycloak.keycl
 The mapping is a pass-through except for protected paths. Each package validates values against its committed schema, which is the authoritative list of settable paths:
 
 - [Base schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/base/zarf-values.schema.json)
+- [Backup and restore schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/backup-restore/zarf-values.schema.json)
 - [Identity and authorization schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/identity-authorization/zarf-values.schema.json)
 - [Logging schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/logging/zarf-values.schema.json)
+- [Metrics Server schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/metrics-server/zarf-values.schema.json)
 - [Monitoring schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/monitoring/zarf-values.schema.json)
 - [Portal schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/portal/zarf-values.schema.json)
 - [Runtime security schema](https://github.com/defenseunicorns/uds-core/blob/main/packages/runtime-security/zarf-values.schema.json)
@@ -50,9 +52,11 @@ The mapping is a pass-through except for protected paths. Each package validates
 The component mapping files define the exact pass-through and protected paths:
 
 - [Base and Istio mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/istio/zarf.yaml)
+- [Backup and restore mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/velero/common/zarf.yaml)
 - [Identity and authorization mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/keycloak/common/zarf.yaml)
 - [Logging mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/loki/common/zarf.yaml)
 - [Monitoring mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/grafana/common/zarf.yaml)
+- [Metrics Server mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/metrics-server/common/zarf.yaml)
 - [Portal mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/portal/common/zarf.yaml)
 - [Runtime security mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/falco/common/zarf.yaml)
 - [Pepr mappings](https://github.com/defenseunicorns/uds-core/blob/main/src/pepr/zarf.yaml)
