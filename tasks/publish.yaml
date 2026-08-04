@@ -45,6 +45,14 @@ tasks:
         cmd: |
           ./uds zarf package publish build/zarf-package-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst oci://ghcr.io/defenseunicorns/dev/uds/checkpoints
 
+  - name: checkpoint-latest
+    description: "Tag the latest UDS checkpoint package"
+    actions:
+      - description: "Tag the multi-architecture checkpoint package as latest"
+        cmd: |
+          pkgPath="ghcr.io/defenseunicorns/dev/uds/checkpoints/k3d-core-slim-dev"
+          ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+
   - name: bundles
     description: "Publish UDS Bundles"
     actions:
