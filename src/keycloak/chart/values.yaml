@@ -9,6 +9,11 @@ image:
   # The Keycloak image pull policy
   pullPolicy: IfNotPresent
 
+# Additional Keycloak features to enable beyond the required FIPS feature.
+# Avoid enabling the generic "preview" group unless explicitly required.
+features:
+  additional: []
+
 # renovate: datasource=github-tags depName=defenseunicorns/uds-identity-config versioning=semver
 configImage: ghcr.io/defenseunicorns/uds/identity-config:0.29.0
 

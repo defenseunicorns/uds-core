@@ -3934,6 +3934,14 @@
               },
               "type": "array"
             },
+            "features": {
+              "properties": {
+                "additional": {
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
             "httpRetry": {
               "properties": {
                 "applyJitter": {

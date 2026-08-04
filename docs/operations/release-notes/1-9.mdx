@@ -13,6 +13,19 @@ UDS Core 1.9 delivers two major capabilities: native Zarf values for direct, val
 > [!IMPORTANT]
 > UDS Core 1.9 requires UDS CLI `v0.34.0` or later for package installation and upgrades. If you invoke Zarf directly, use Zarf `v0.79.0` or later. Earlier versions do not include the package pull behavior required to retrieve the values files and schemas shipped with UDS Core 1.9. Upgrade your deployment tooling before installing or upgrading UDS Core.
 
+> [!CAUTION]
+> Keycloak 26.7.0 adds `stateless:v1` to the generic preview feature group. UDS Core 1.9.0 retains the `--features=preview,fips` startup setting, so stateless mode is enabled implicitly. Stateless mode stores authentication sessions, action tokens, and brute-force counters in the Keycloak database. Keycloak reports approximately 8-10 ms of additional latency per authentication interaction and roughly double the database CPU and I/O for a single cluster. Review database capacity before upgrading. Some external PostgreSQL deployments may also encounter a Keycloak startup failure involving a null `NodeInfo.clusterName()` value.
+
+To disable stateless mode while remaining on UDS Core 1.9, set the Keycloak feature-specific environment variable through the `keycloak.keycloak.env` value:
+
+```yaml title="values.yaml"
+keycloak:
+  keycloak:
+    env:
+      - name: KC_FEATURE_STATELESS
+        value: disabled
+```
+
 ### Notable features
 
 - **Direct package customization with native Zarf values:** Customize a UDS Core package during deployment with `--values values.yaml`, or set individual paths with `--set-values <component>.<chart>.<path>=<value>`. You no longer need to create or rebuild a UDS bundle solely to override supported Helm settings. UDS Core publishes values files and generated schemas across all seven package layers. During deployment, each package validates supplied settings and protects configuration that UDS Core owns, including image references, registries, and security contexts. Shared `global.domain` and `global.adminDomain` values configure applicable charts across the stack. Existing Zarf variable workflows remain supported, and explicit values take precedence. Zarf values remain an alpha feature. See the [Zarf values reference](/reference/configuration/zarf-values/) ([#2762](https://github.com/defenseunicorns/uds-core/pull/2762)).
@@ -48,6 +61,10 @@ UDS Core 1.9 delivers two major capabilities: native Zarf values for direct, val
 ### Upgrade UDS CLI or Zarf before deploying
 
 Before you install or upgrade UDS Core 1.9, update to UDS CLI `v0.34.0` or later. If your workflow invokes Zarf directly, use Zarf `v0.79.0` or later. These versions include the package pull behavior required to retrieve and validate the values files and schemas shipped with UDS Core 1.9.
+
+### Keycloak stateless mode
+
+Before upgrading, review the CAUTION above for the database capacity impact and possible startup failure. If you must remain on UDS Core 1.9, use the `KC_FEATURE_STATELESS=disabled` override shown above to disable stateless mode.
 
 Existing Zarf variables remain compatible. You do not need to migrate `DOMAIN`, `ADMIN_DOMAIN`, or other configuration based on variables to Zarf values for this release.
 
