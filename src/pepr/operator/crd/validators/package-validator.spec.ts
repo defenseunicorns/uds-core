@@ -4,7 +4,7 @@
  */
 
 import { PeprValidateRequest } from "pepr";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   Allow,
   Direction,
@@ -23,6 +23,8 @@ import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
 PackageStore.init();
+UDSConfig.domain = "uds.dev";
+UDSConfig.adminDomain = "admin.uds.dev";
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -418,6 +420,148 @@ describe("Test validation of Package CRs", () => {
     const mockReq = makeMockReq({}, [{}, {}], [], [], []);
     await validator(mockReq);
     expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+  });
+
+  describe("cross-package FQDN collision", () => {
+    beforeEach(() => {
+      PackageStore.init();
+    });
+
+    it("denies a package that exposes an FQDN already owned by another namespace", async () => {
+      PackageStore.add({
+        metadata: { namespace: "dos-games", name: "dos-games" },
+        spec: { network: { expose: [{ host: "doom" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "dos-games-2", name: "dos-games-2" } },
+        [{ host: "doom" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledTimes(1);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("doom.uds.dev"));
+    });
+
+    it("allows a package to update and retain its own exposed FQDN", async () => {
+      PackageStore.add({
+        metadata: { namespace: "application-system", name: "application" },
+        spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows two packages that expose the same host on different gateways", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", gateway: Gateway.Admin }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("allows two packages that expose the same host on tenant and passthrough gateways", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", gateway: Gateway.Passthrough }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("denies an advanced route when the existing package owns a catch-all route", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("app.uds.dev"));
+    });
+
+    it("denies a catch-all route when the existing package owns an advanced route", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: {
+            expose: [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+            allow: [],
+          },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("app.uds.dev"));
+    });
+
+    it("allows two advanced routes with the same host in different namespaces", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: {
+            expose: [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+            allow: [],
+          },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("UDP expose validation", () => {
