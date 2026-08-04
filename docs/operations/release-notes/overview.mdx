@@ -5,7 +5,7 @@ sidebar:
   order: 3.000
 ---
 
-import { LinkCard } from '@astrojs/starlight/components';
+import { LinkCard } from "@astrojs/starlight/components";
 
 Release notes for UDS Core document what changed in each version, including breaking changes, notable features, identity-config updates, and version-specific upgrade considerations. For standard upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
@@ -18,6 +18,11 @@ If you support a deployment older than the release notes covered here, see [Lega
     and remove the oldest one. This matches the 3-version support policy. */}
 
 <LinkCard
+  title="UDS Core 1.10"
+  description="Explicit Keycloak feature selection and improved classification banner compatibility for single-page and full-viewport applications."
+  href="/operations/release-notes/1-10/"
+/>
+<LinkCard
   title="UDS Core 1.9"
   description="Two major capabilities: direct package customization with native Zarf values and declarative UDP exposure through Envoy Gateway, plus correct SAML signing certificate selection during Keycloak key rotation."
   href="/operations/release-notes/1-9/"
@@ -26,9 +31,4 @@ If you support a deployment older than the release notes covered here, see [Lega
   title="UDS Core 1.8"
   description="A new Fleet Command Keycloak client, Portal tile customization, and a faster Keycloak startup."
   href="/operations/release-notes/1-8/"
-/>
-<LinkCard
-  title="UDS Core 1.7"
-  description="Optional Envoy Gateway component, consumer-extensible annotations on Package CR expose entries, and a major Falco Helm chart upgrade to 9.x."
-  href="/operations/release-notes/1-7/"
 />
