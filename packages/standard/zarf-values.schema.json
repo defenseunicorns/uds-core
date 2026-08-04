@@ -6889,6 +6889,23 @@
                     "relabelings": {
                       "type": "array"
                     },
+                    "resource": {
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "interval": {
+                          "type": "string"
+                        },
+                        "metricRelabelings": {
+                          "type": "array"
+                        },
+                        "relabelings": {
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "sampleLimit": {
                       "type": "number"
                     },
