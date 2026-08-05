@@ -20,12 +20,9 @@ You'll configure operator-managed Authservice protection for an application. Aut
 
 ## Before you begin
 
-> [!IMPORTANT]
-> Authservice is a first-class SSO pattern, not only a compatibility mechanism for applications without native OIDC. Use it when the application requirements permit UDS Core to own the browser OIDC flow and enforce complete protection at the mesh boundary. Use native SSO when the application needs public and protected routes, application-owned session behavior, an application-specific machine-authentication flow, or domain-specific authorization. See [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) for the full comparison.
-
 Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The UDS Operator creates the Authservice chain and the required Istio resources automatically. The first `redirectUris` entry you configure populates the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
-Authservice does not prevent the application from using identity information. Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. Use `groups.anyOf` as a platform-level coarse-grained gate that determines whether a user can reach the workload at all. After access is granted, application code can use the forwarded identity and, when configured, `groups` claims to enforce fine-grained authorization based on application data, resource ownership, business roles, or features. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. Istio and Authservice also remain available for platform-level telemetry.
+Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. Use `groups.anyOf` to control which users can reach the workload. After access is granted, application code can use the forwarded identity and, when configured, `groups` claims for fine-grained authorization. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. Istio and Authservice also provide platform-level telemetry.
 
 ## Steps
 
@@ -58,13 +55,16 @@ Authservice does not prevent the application from using identity information. Au
        > [!CAUTION]
        > **Redirect URIs for Authservice clients cannot be root paths.** Using `https://myapp.example.com/` (a root path) is not allowed. Use a specific path like `https://myapp.example.com/login`.
 
+       > [!NOTE]
+       > **`enableAuthserviceSelector` must match both your pod labels and your Kubernetes Service's `spec.selector`.** If the selector matches pods but not the service, Authservice won't intercept traffic correctly. This is a common source of 503 errors and broken auth flows; double-check both before deploying.
+
     2. **Apply the `Package` CR**
 
        ```bash
        uds zarf tools kubectl apply -f package.yaml
        ```
 
-       The UDS Operator creates a Keycloak client, configures Authservice, and sets up the Istio `RequestAuthentication` and `AuthorizationPolicy` resources automatically. You do not need to configure a separate application proxy.
+       The UDS Operator creates a Keycloak client, configures Authservice, and sets up the Istio `RequestAuthentication` and `AuthorizationPolicy` resources automatically.
 
     </Steps>
   </TabItem>

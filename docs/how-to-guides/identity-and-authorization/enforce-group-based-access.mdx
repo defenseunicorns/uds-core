@@ -5,7 +5,7 @@ sidebar:
   order: 3.004
 ---
 
-import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
+import { Steps } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -47,56 +47,24 @@ Application teams can define their own group paths. Group paths follow Keycloak'
 
 2. **Add `groups.anyOf` to your `Package` CR**
 
-   In your application's `Package` CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access. Choose the example that matches the SSO integration you use.
+   In your application's `Package` CR, add a `groups.anyOf` list under the relevant SSO client. Users must be a member of at least one of the listed groups to be granted access. For Authservice protection, also add `enableAuthserviceSelector` as described in [Protect applications with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/).
 
-   <Tabs>
-     <TabItem label="Native SSO">
-
-     The application owns the login flow, so omit `enableAuthserviceSelector`:
-
-     ```yaml title="package.yaml"
-     apiVersion: uds.dev/v1alpha1
-     kind: Package
-     metadata:
-       name: httpbin
-       namespace: httpbin
-     spec:
-       sso:
-         - name: Demo SSO
-           clientId: uds-core-httpbin
-           redirectUris:
-             - "https://protected.uds.dev/auth/callback"
-           groups:
-             anyOf:
-               - "/UDS Core/Admin"
-     ```
-
-     </TabItem>
-     <TabItem label="Authservice">
-
-     Authservice owns the browser login flow and protects the selected workload at the mesh boundary:
-
-     ```yaml title="package.yaml"
-     apiVersion: uds.dev/v1alpha1
-     kind: Package
-     metadata:
-       name: httpbin
-       namespace: httpbin
-     spec:
-       sso:
-         - name: Demo SSO
-           clientId: uds-core-httpbin
-           redirectUris:
-             - "https://protected.uds.dev/login"
-           enableAuthserviceSelector:
-             app: httpbin
-           groups:
-             anyOf:
-               - "/UDS Core/Admin"
-     ```
-
-     </TabItem>
-   </Tabs>
+   ```yaml title="package.yaml"
+   apiVersion: uds.dev/v1alpha1
+   kind: Package
+   metadata:
+     name: httpbin
+     namespace: httpbin
+   spec:
+     sso:
+       - name: Demo SSO
+         clientId: uds-core-httpbin
+         redirectUris:
+           - "https://protected.uds.dev/auth/callback"
+         groups:
+           anyOf:
+             - "/UDS Core/Admin"
+   ```
 
    To allow multiple groups (users in any one of the listed groups are granted access):
 
