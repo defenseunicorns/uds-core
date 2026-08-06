@@ -23,7 +23,7 @@ components:
         namespace: monitoring
         # @lulaEnd 4yw40198-a55e-4769-a5de-44ffe7636093
         url: https://prometheus-community.github.io/helm-charts
-        version: 88.1.4
+        version: 88.1.5
         valuesFiles:
           - "../values/kube-prometheus-stack-values.yaml"
         values:
