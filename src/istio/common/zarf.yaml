@@ -140,6 +140,99 @@ components:
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
+          - description: "Verify Pepr ambient readiness before gateway deployment"
+            maxTotalSeconds: 120
+            cmd: |
+              set -eu
+
+              service_name="pepr-uds-core"
+              namespace="pepr-system"
+              pod_selector="app=pepr-uds-core,pepr.dev/controller=admission"
+              enrollment_ready=false
+              enrollment_failure=""
+              dry_run_output=""
+
+              for attempt in $(seq 1 90); do
+                endpoint_pods=$(./zarf tools kubectl get endpointslice \
+                  -n "${namespace}" \
+                  -l "kubernetes.io/service-name=${service_name}" \
+                  -o json 2>/dev/null \
+                  | ./zarf tools yq -r '
+                    .items[].endpoints[]
+                    | select(.conditions.ready == true)
+                    | select((.conditions.serving // true) == true)
+                    | select((.conditions.terminating // false) == false)
+                    | (.targetRef.name // "__missing_target_ref__")' 2>/dev/null || true)
+
+                enrollment_failure="no ready Pepr admission endpoints"
+                if [ -n "${endpoint_pods}" ]; then
+                  pod_count=0
+                  ready_pod_count=0
+                  pod_counts=$(./zarf tools kubectl get pod \
+                    -n "${namespace}" \
+                    ${endpoint_pods} \
+                    -o json 2>/dev/null \
+                    | ./zarf tools yq -r '
+                      [.items | length,
+                        ([.items[]
+                          | select(.metadata.annotations["ambient.istio.io/redirection"] == "enabled")
+                          | select(([(.status.conditions // [])[] | select(.type == "Ready" and .status == "True")] | length) > 0)] | length)] | @tsv' 2>/dev/null || true)
+                  if [ -n "${pod_counts}" ]; then
+                    pod_count=$(printf '%s' "${pod_counts}" | cut -f1)
+                    ready_pod_count=$(printf '%s' "${pod_counts}" | cut -f2)
+                  fi
+
+                  if [ "${pod_count}" -gt 0 ] && [ "${pod_count}" -eq "${ready_pod_count}" ]; then
+                    ./zarf tools kubectl create namespace istio-admin-gateway --dry-run=client -o yaml \
+                      | ./zarf tools kubectl apply -f - >/dev/null
+
+                    if dry_run_output=$(./zarf tools kubectl apply --server-side --dry-run=server -f - -o yaml 2>&1 <<'EOF'
+              apiVersion: v1
+              kind: Service
+              metadata:
+                name: admin-ingressgateway
+                namespace: istio-admin-gateway
+              spec:
+                type: LoadBalancer
+                ports:
+                  - name: status-port
+                    port: 15021
+                    targetPort: 15021
+                  - name: http2
+                    port: 80
+                    targetPort: 80
+                  - name: https
+                    port: 443
+                    targetPort: 443
+                selector:
+                  app: admin-ingressgateway
+                  istio: admin-ingressgateway
+              EOF
+                    ); then
+                      echo "Pepr admission path accepted the admin gateway Service dry-run."
+                      enrollment_ready=true
+                      break
+                    fi
+                    enrollment_failure="admin gateway Service dry-run failed"
+                  else
+                    enrollment_failure="Pepr admission Pods are not Ready and ambient-enrolled"
+                  fi
+                fi
+
+                echo "Pepr readiness is not complete; ${enrollment_failure} (attempt ${attempt}/90)."
+                sleep 1
+              done
+
+              if [ "${enrollment_ready}" != true ]; then
+                echo "Pepr admission path did not become ready in time." >&2
+                if [ -n "${dry_run_output}" ]; then
+                  printf '%s\n' "${dry_run_output}" >&2
+                fi
+                ./zarf tools kubectl get pods -n "${namespace}" -l "${pod_selector}" -o wide >&2 || true
+                ./zarf tools kubectl get svc,endpoints,endpointslices -n "${namespace}" -l "kubernetes.io/service-name=${service_name}" -o wide >&2 || true
+                exit 1
+              fi
+
   - name: gateway-api-crds
     required: true
     manifests:
