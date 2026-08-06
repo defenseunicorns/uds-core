@@ -152,7 +152,9 @@ components:
               enrollment_failure=""
               dry_run_output=""
 
-              for attempt in $(seq 1 90); do
+              retry_deadline=$(( $(date +%s) + 90 ))
+              attempt=1
+              while [ "$(date +%s)" -lt "${retry_deadline}" ]; do
                 endpoint_pods=$(./zarf tools kubectl get endpointslice \
                   -n "${namespace}" \
                   -l "kubernetes.io/service-name=${service_name}" \
@@ -219,7 +221,9 @@ components:
                   fi
                 fi
 
-                echo "Pepr readiness is not complete; ${enrollment_failure} (attempt ${attempt}/90)."
+                remaining_seconds=$(( retry_deadline - $(date +%s) ))
+                echo "Pepr readiness is not complete; ${enrollment_failure} (attempt ${attempt}, ${remaining_seconds}s remaining)."
+                attempt=$(( attempt + 1 ))
                 sleep 1
               done
 
