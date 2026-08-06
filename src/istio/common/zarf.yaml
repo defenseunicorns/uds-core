@@ -141,7 +141,7 @@ components:
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
           - description: "Verify Pepr ambient readiness before gateway deployment"
-            maxTotalSeconds: 120
+            maxTotalSeconds: 180
             cmd: |
               set -eu
 
