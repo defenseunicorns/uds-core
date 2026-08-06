@@ -140,56 +140,34 @@ components:
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
-          - description: "Verify Pepr ambient readiness before gateway deployment"
+          - description: "Wait for Pepr Ambient admission readiness"
+            maxTotalSeconds: 90
             cmd: |
               set -eu
 
-              namespace="pepr-system"
-              pod_selector="app=pepr-uds-core,pepr.dev/controller=admission"
               ./zarf tools kubectl wait \
-                -n "${namespace}" \
-                --for=condition=Ready \
-                --timeout=90s \
-                pod -l "${pod_selector}"
-
-              ./zarf tools kubectl wait \
-                -n "${namespace}" \
+                -n pepr-system \
                 --for='jsonpath={.metadata.annotations.ambient\.istio\.io/redirection}'=enabled \
-                --timeout=90s \
-                pod -l "${pod_selector}"
+                --timeout=60s \
+                pod -l 'app=pepr-uds-core,pepr.dev/controller=admission'
 
-              ./zarf tools kubectl create namespace istio-admin-gateway --dry-run=client -o yaml \
-                | ./zarf tools kubectl apply --request-timeout=30s -f - >/dev/null
-
-              if dry_run_output=$(./zarf tools kubectl apply --request-timeout=30s --server-side --dry-run=server -f - -o yaml 2>&1 <<'EOF
+              until ./zarf tools kubectl create \
+                --request-timeout=5s \
+                --dry-run=server \
+                -o name \
+                -f - <<'EOF'
               apiVersion: v1
               kind: Service
               metadata:
-                name: admin-ingressgateway
-                namespace: istio-admin-gateway
+                generateName: pepr-admission-probe-
+                namespace: default
               spec:
-                type: LoadBalancer
                 ports:
-                  - name: status-port
-                    port: 15021
-                    targetPort: 15021
-                  - name: http2
-                    port: 80
-                    targetPort: 80
-                  - name: https
-                    port: 443
-                    targetPort: 443
-                selector:
-                  app: admin-ingressgateway
-                  istio: admin-ingressgateway
+                  - port: 443
               EOF
-              ); then
-                echo "Pepr admission path accepted the admin gateway Service dry-run."
-              else
-                printf '%s\n' "${dry_run_output}" >&2
-                echo "Pepr admission path rejected the admin gateway Service dry-run." >&2
-                exit 1
-              fi
+              do
+                sleep 2
+              done
 
   - name: gateway-api-crds
     required: true
