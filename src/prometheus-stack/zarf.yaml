@@ -85,7 +85,7 @@ components:
       - "cgr.dev/defenseunicorns.com/prometheus-alertmanager-fips:v0.33.1"
       - "cgr.dev/defenseunicorns.com/prometheus-config-reloader-fips:v0.93.0"
       - "cgr.dev/defenseunicorns.com/prometheus-fips:v3.13.2"
-      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.9" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
+      - "cgr.dev/defenseunicorns.com/kube-webhook-certgen-fips:v1.15.10" # Chainguard provides kube-webhook-certgen from their ingress-nginx package, which follows a different versioning scheme than upstream's ingress-nginx/kube-webhook-certgen
 
   - name: prometheus-blackbox-exporter
     required: true
