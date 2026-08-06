@@ -168,9 +168,9 @@ components:
               fi
 
               ./zarf tools kubectl create namespace istio-admin-gateway --dry-run=client -o yaml \
-                | ./zarf tools kubectl apply -f - >/dev/null
+                | ./zarf tools kubectl apply --request-timeout=30s -f - >/dev/null
 
-              if dry_run_output=$(./zarf tools kubectl apply --server-side --dry-run=server -f - -o yaml 2>&1 <<'EOF'
+              if dry_run_output=$(./zarf tools kubectl apply --request-timeout=30s --server-side --dry-run=server -f - -o yaml 2>&1 <<'EOF
               apiVersion: v1
               kind: Service
               metadata:
