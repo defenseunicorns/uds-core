@@ -141,31 +141,22 @@ components:
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
           - description: "Verify Pepr ambient readiness before gateway deployment"
-            maxTotalSeconds: 240
             cmd: |
               set -eu
 
               namespace="pepr-system"
               pod_selector="app=pepr-uds-core,pepr.dev/controller=admission"
-              if ! ./zarf tools kubectl wait \
+              ./zarf tools kubectl wait \
                 -n "${namespace}" \
                 --for=condition=Ready \
                 --timeout=90s \
-                pod -l "${pod_selector}"; then
-                echo "Pepr admission Pods did not become Ready in time." >&2
-                ./zarf tools kubectl get pods -n "${namespace}" -l "${pod_selector}" -o wide >&2 || true
-                exit 1
-              fi
+                pod -l "${pod_selector}"
 
-              if ! ./zarf tools kubectl wait \
+              ./zarf tools kubectl wait \
                 -n "${namespace}" \
                 --for='jsonpath={.metadata.annotations.ambient\.istio\.io/redirection}'=enabled \
                 --timeout=90s \
-                pod -l "${pod_selector}"; then
-                echo "Pepr admission Pods did not become Ambient-enrolled in time." >&2
-                ./zarf tools kubectl get pods -n "${namespace}" -l "${pod_selector}" -o wide >&2 || true
-                exit 1
-              fi
+                pod -l "${pod_selector}"
 
               ./zarf tools kubectl create namespace istio-admin-gateway --dry-run=client -o yaml \
                 | ./zarf tools kubectl apply --request-timeout=30s -f - >/dev/null
