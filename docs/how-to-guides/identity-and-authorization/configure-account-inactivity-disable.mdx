@@ -19,7 +19,7 @@ You'll configure UDS Core's Keycloak to automatically disable non-admin user acc
 
 ## Before you begin
 
-UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) preview feature to track `user-authenticated` events per user and trigger a `disable-user` action after the configured inactivity window. The workflow is seeded into the uds realm on initial deployment and is disabled by default (`ACCOUNT_INACTIVITY_DAYS` unset).
+UDS Core uses the Keycloak [Workflows](https://www.keycloak.org/docs/latest/server_admin/index.html#managing-workflows) feature to track `user-authenticated` events per user and trigger a `disable-user` action after the configured inactivity window. The workflow is seeded into the uds realm on initial deployment and is disabled by default (`ACCOUNT_INACTIVITY_DAYS` unset).
 
 **What counts as activity:** The workflow tracks `user-authenticated` events. Any successful login through UDS Core SSO, including logins via federated identity providers (Azure AD, Google SAML), resets the inactivity timer.
 

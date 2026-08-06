@@ -1,0 +1,87 @@
+---
+title: UDS Core 1.10
+description: UDS Core 1.10 release notes covering explicit Keycloak feature selection, classification banner improvements, and dependency updates.
+sidebar:
+  order: 3.985
+---
+
+import { Steps } from "@astrojs/starlight/components";
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.10 removes the implicit Keycloak `preview` feature group from the default startup configuration. Deployments that depend on preview features must enable them explicitly through `keycloak.keycloak.features.additional`. This release also improves classification banner compatibility with single-page and full-viewport applications.
+
+### Notable features
+
+- **Explicit Keycloak feature selection:** UDS Core no longer passes the generic `preview` feature group to Keycloak by default. Use the new `keycloak.keycloak.features.additional` value to enable individual optional features alongside the required `fips` feature. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features) ([#2838](https://github.com/defenseunicorns/uds-core/pull/2838)).
+- **Classification banner application compatibility:** Classification banners now support single-page and full-viewport applications. The updated response handling supports buffered and streamed HTML while preserving space for the banner above application content. See [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) ([#2710](https://github.com/defenseunicorns/uds-core/pull/2710)).
+
+### Dependency updates
+
+| Package                                 | Previous | Updated                                                                                                          |
+| --------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| Authservice                             | 1.1.5    | [1.1.8](https://github.com/istio-ecosystem/authservice/releases/tag/v1.1.8)                                      |
+| Envoy Gateway                           | v1.8.2   | [v1.8.3](https://github.com/envoyproxy/gateway/releases/tag/v1.8.3)                                              |
+| Envoy Proxy                             | v1.38.3  | [v1.39.0](https://github.com/envoyproxy/envoy/releases/tag/v1.39.0)                                              |
+| Gateway API CRDs                        | v1.5.1   | [v1.6.1](https://github.com/kubernetes-sigs/gateway-api/releases/tag/v1.6.1)                                     |
+| Istio                                   | 1.29.3   | [1.30.3](https://istio.io/latest/news/releases/1.30.x/announcing-1.30.3/)                                        |
+| Loki                                    | 3.7.3    | [3.7.4](https://github.com/grafana/loki/releases/tag/v3.7.4)                                                     |
+| Loki Helm chart                         | 18.5.1   | [18.7.0](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.7.0)                              |
+| k8s-sidecar                             | 2.8.1    | [2.10.0](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.10.0)                                            |
+| Pepr                                    | 1.2.2    | [1.3.0](https://github.com/defenseunicorns/pepr/releases/tag/v1.3.0)                                             |
+| Prometheus                              | v3.13.1  | [v3.13.2](https://github.com/prometheus/prometheus/releases/tag/v3.13.2)                                         |
+| Prometheus Operator                     | v0.92.1  | [v0.93.0](https://github.com/prometheus-operator/prometheus-operator/releases/tag/v0.93.0)                       |
+| kube-prometheus-stack Helm chart        | 87.16.1  | [88.1.4](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-88.1.4)          |
+| Prometheus Blackbox Exporter Helm chart | 11.15.1  | [11.16.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-blackbox-exporter-11.16.0) |
+| prometheus-operator-crds Helm chart     | 30.0.1   | [31.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-31.0.0)       |
+
+## Upgrade considerations
+
+> [!IMPORTANT]
+> UDS Core no longer enables Keycloak's generic `preview` feature group by default. Keycloak preview features that UDS Core previously enabled indirectly, including `stateless:v1` in Keycloak 26.7, remain disabled unless you configure them explicitly. Before upgrading, review deployments that rely on preview features. Set the specific feature names in `keycloak.keycloak.features.additional`, or set `preview` only when you intentionally require every preview feature.
+
+### Keycloak session behavior
+
+Keycloak stores regular user sessions in the database independently of stateless mode, so established SSO sessions remain available during the upgrade. In-progress authentication sessions and action tokens created while stateless mode is enabled may not carry over after UDS Core disables it. Affected users may need to restart an in-progress sign-in or account action.
+
+### Istio 1.30 compatibility changes
+
+UDS Core 1.10 upgrades Istio from 1.29.3 to 1.30.3. Most deployments require no additional action, but review these changes if your deployment uses custom mesh tooling or configuration ([#2724](https://github.com/defenseunicorns/uds-core/pull/2724)):
+
+- **XDS debug endpoint authentication:** Istio now requires authentication for the `syncz` and `config_dump` endpoints on port `15010`. Review custom tooling and `istioctl` workflows that use plaintext XDS connections.
+- **CNI configuration permissions:** Istio changes the default permissions for CNI configuration files from `0644` to `0600`. Review tooling that reads these files as a non-root group member.
+- **Excluded ambient namespaces:** The Istio CNI agent now honors `excludeNamespaces`. Istio removes existing ambient workloads in excluded namespaces from the mesh and does not enroll new workloads in those namespaces.
+- **Sidecar service selection:** Istio changes how sidecar proxies select a service when the same hostname exists in multiple namespaces. Review deployments that use the same hostname for Kubernetes `Service` resources and non-Kubernetes services.
+
+UDS Core packages Gateway API CRDs `v1.6.1` as part of this upgrade, so you do not need to install them separately. Review the [Istio 1.30 upgrade notes](https://istio.io/latest/news/releases/1.30.x/announcing-1.30/upgrade-notes/) for complete compatibility details.
+
+### Pre-upgrade steps
+
+<Steps>
+
+1. **Review Keycloak feature dependencies**
+
+   If your deployment relies on a Keycloak feature that UDS Core previously enabled through the generic `preview` group, add that feature to the `keycloak.keycloak.features.additional` list before upgrading. Prefer the specific feature name over `preview` so unrelated preview features do not activate.
+
+</Steps>
+
+### Post-upgrade verification
+
+<Steps>
+
+1. **Verify Keycloak startup and SSO flows**
+
+   Confirm that the Keycloak `StatefulSet` becomes ready and test the SSO flows used by your deployment. If you enabled an additional feature, verify its expected behavior separately.
+
+</Steps>
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak features
+- [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) - configure and verify classification banners
+- [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
+- [UDS Core 1.10.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#110-2026-08-04) - full changelog
+- [Full diff (1.9.0...1.10.0)](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) - all changes between versions
+- [Keycloak server features](https://www.keycloak.org/server/features) - upstream feature status and configuration

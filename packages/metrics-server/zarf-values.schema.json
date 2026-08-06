@@ -1,0 +1,432 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "metrics-server": {
+      "properties": {
+        "metrics-server": {
+          "properties": {
+            "addonResizer": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "nanny": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "extraCpu": {
+                      "type": "string"
+                    },
+                    "extraMemory": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    },
+                    "minClusterSize": {
+                      "type": "number"
+                    },
+                    "pollPeriod": {
+                      "type": "number"
+                    },
+                    "threshold": {
+                      "type": "number"
+                    }
+                  },
+                  "type": "object"
+                },
+                "resources": {
+                  "properties": {
+                    "limits": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "requests": {
+                      "properties": {
+                        "cpu": {
+                          "type": "string"
+                        },
+                        "memory": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "affinity": {
+              "properties": {},
+              "type": "object"
+            },
+            "apiService": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "caBundle": {
+                  "type": "string"
+                },
+                "create": {
+                  "type": "boolean"
+                },
+                "insecureSkipTLSVerify": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "args": {
+              "type": "array"
+            },
+            "commonLabels": {
+              "properties": {},
+              "type": "object"
+            },
+            "containerPort": {
+              "type": "number"
+            },
+            "defaultArgs": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "deploymentAnnotations": {
+              "properties": {},
+              "type": "object"
+            },
+            "dnsConfig": {
+              "properties": {},
+              "type": "object"
+            },
+            "extraVolumeMounts": {
+              "type": "array"
+            },
+            "extraVolumes": {
+              "type": "array"
+            },
+            "fullnameOverride": {
+              "type": "string"
+            },
+            "hostNetwork": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "imagePullSecrets": {
+              "type": "array"
+            },
+            "livenessProbe": {
+              "properties": {
+                "failureThreshold": {
+                  "type": "number"
+                },
+                "httpGet": {
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "string"
+                    },
+                    "scheme": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "initialDelaySeconds": {
+                  "type": "number"
+                },
+                "periodSeconds": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "metrics": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "nameOverride": {
+              "type": "string"
+            },
+            "nodeSelector": {
+              "properties": {},
+              "type": "object"
+            },
+            "podAnnotations": {
+              "properties": {},
+              "type": "object"
+            },
+            "podDisruptionBudget": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxUnavailable": {
+                  "type": "string"
+                },
+                "minAvailable": {
+                  "type": "string"
+                },
+                "unhealthyPodEvictionPolicy": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "podLabels": {
+              "properties": {},
+              "type": "object"
+            },
+            "priorityClassName": {
+              "type": "string"
+            },
+            "rbac": {
+              "properties": {
+                "create": {
+                  "type": "boolean"
+                },
+                "pspEnabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "readinessProbe": {
+              "properties": {
+                "failureThreshold": {
+                  "type": "number"
+                },
+                "httpGet": {
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "string"
+                    },
+                    "scheme": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "initialDelaySeconds": {
+                  "type": "number"
+                },
+                "periodSeconds": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
+            "replicas": {
+              "type": "number"
+            },
+            "resources": {
+              "properties": {
+                "requests": {
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "revisionHistoryLimit": {
+              "type": "string"
+            },
+            "schedulerName": {
+              "type": "string"
+            },
+            "service": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "port": {
+                  "type": "number"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "serviceAccount": {
+              "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "create": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "secrets": {
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "serviceMonitor": {
+              "properties": {
+                "additionalLabels": {
+                  "properties": {},
+                  "type": "object"
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "interval": {
+                  "type": "string"
+                },
+                "metricRelabelings": {
+                  "type": "array"
+                },
+                "relabelings": {
+                  "type": "array"
+                },
+                "scrapeTimeout": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "tls": {
+              "properties": {
+                "certManager": {
+                  "properties": {
+                    "addInjectorAnnotations": {
+                      "type": "boolean"
+                    },
+                    "annotations": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "duration": {
+                      "type": "string"
+                    },
+                    "existingIssuer": {
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "kind": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "labels": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "renewBefore": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "clusterDomain": {
+                  "type": "string"
+                },
+                "existingSecret": {
+                  "properties": {
+                    "lookup": {
+                      "type": "boolean"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "helm": {
+                  "properties": {
+                    "certDurationDays": {
+                      "type": "number"
+                    },
+                    "lookup": {
+                      "type": "boolean"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "tmpVolume": {
+              "properties": {
+                "emptyDir": {
+                  "properties": {},
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            },
+            "tolerations": {
+              "type": "array"
+            },
+            "topologySpreadConstraints": {
+              "type": "array"
+            },
+            "updateStrategy": {
+              "properties": {},
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "uds-metrics-server-config": {
+          "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "type": "object"
+}
