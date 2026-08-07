@@ -50,8 +50,22 @@ describe("base package values", () => {
           },
           "uds-global-istio-config": {
             classificationBanner: {
-              enabledHosts: ["probe-visible-global.uds.dev"],
+              text: "CUI",
+              enabledHosts: ["legacy-probe.uds.dev"],
             },
+            classificationBanners: [
+              {
+                text: "UNCLASSIFIED",
+                addFooter: true,
+                enabledHosts: ["shared-probe.uds.dev", "unclassified-probe.uds.dev"],
+              },
+              {
+                text: "SECRET//NOFORN",
+                addFooter: false,
+                enabledHosts: ["shared-probe.uds.dev", "secret-probe.uds.dev"],
+                pathPrefixes: ["/classified", "/classified/admin"],
+              },
+            ],
           },
           cni: {
             podLabels: { probe: "PROBE_VISIBLE_CNI" },
@@ -157,10 +171,22 @@ describe("base package values", () => {
     );
   });
 
-  it("classification banner includes probe host", () => {
+  it("classification banner includes multiple host configurations", () => {
     const r = findResource(manifests, "EnvoyFilter", "classification-banner");
     const json = JSON.stringify(r);
-    expect(json).toContain("probe-visible-global");
+    expect(json).toContain("unclassified-probe.uds.dev");
+    expect(json).toContain('classification = \\"UNCLASSIFIED\\"');
+    expect(json).toContain("secret-probe.uds.dev");
+    expect(json).toContain('classification = \\"SECRET//NOFORN\\"');
+    expect(json).toContain("addFooter = false");
+    expect(json).toContain("shared-probe.uds.dev");
+    expect(json).toContain("/classified/admin");
+    expect(json).toContain("bestPrefixLength");
+    expect(json).toContain("legacy-probe.uds.dev");
+    expect(json).toContain('classification = \\"CUI\\"');
+    expect(json.indexOf('classification = \\"CUI\\"')).toBeLessThan(
+      json.indexOf('classification = \\"UNCLASSIFIED\\"'),
+    );
   });
 
   it("istio CNI daemonset has probe label", () => {

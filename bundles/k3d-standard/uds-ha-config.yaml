@@ -1,8 +1,23 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables:
   core:
+    # Classification banner E2E test matrix
+    CLASSIFICATION_BANNERS:
+      - text: "SAMPLE BANNER"
+        enabledHosts:
+          - "sso.uds.dev"
+        pathPrefixes:
+          - "/realms/uds/account"
+      - text: "UNKNOWN"
+        addFooter: false
+        enabledHosts:
+          - "grafana.admin.uds.dev"
+      - text: "UNCLASSIFIED"
+        enabledHosts:
+          - "portal.uds.dev"
+
     # Authservice variables
     AUTHSERVICE_REDIS_URI: redis://authservice:authservice@host.k3d.internal:6379
     AUTHSERVICE_REPLICA_COUNT: 2

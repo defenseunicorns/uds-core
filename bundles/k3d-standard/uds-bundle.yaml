@@ -109,17 +109,17 @@ packages:
               default: "1"
       istio-controlplane:
         uds-global-istio-config:
-          values:
-            # Demo classification banner for the standard dev bundle. SAMPLE BANNER renders as
-            # the black marking and is a deliberate placeholder, not a real classification level,
-            # so it cannot be mistaken for a live classification in another environment.
-            - path: classificationBanner.text
-              value: "SAMPLE BANNER"
-            - path: classificationBanner.enabledHosts
-              value:
-                - "sso.uds.dev"
-                - "portal.uds.dev"
-                - "grafana.admin.uds.dev"
+          variables:
+            - name: CLASSIFICATION_BANNERS
+              description: "Classification banners for the standard dev bundle"
+              path: classificationBanners
+              default:
+                - text: "SAMPLE BANNER"
+                  addFooter: true
+                  enabledHosts:
+                    - "sso.uds.dev"
+                    - "portal.uds.dev"
+                    - "grafana.admin.uds.dev"
       istio-admin-gateway:
         uds-istio-config:
           variables:
