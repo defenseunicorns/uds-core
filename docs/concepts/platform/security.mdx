@@ -47,14 +47,14 @@ UDS Core is built from the ground up for disconnected operation:
 
 ## Identity & single sign-on
 
-UDS Core provides centralized identity management through Keycloak and Authservice:
+UDS Core provides centralized identity management through Keycloak and Authservice. Authservice is a platform-owned authentication boundary for workloads that use platform-managed OIDC protection:
 
 - **Keycloak SSO** with opinionated defaults for realms, clients, and group-based access control.
-- **Authservice integration** protects applications that do not natively support OIDC, enforced at the mesh edge rather than relying on application-level controls.
-- **Consistent login, token handling, and group mapping** across all applications running on the platform.
+- **Authservice integration** handles the browser OIDC flow and enforces complete protection at the mesh edge, reducing the amount of authentication logic each application must implement. `groups.anyOf` can add a platform-level coarse-grained access gate.
+- **Consistent Keycloak identity and group mapping** across applications, with platform-managed login and token handling for Authservice-protected workloads.
 
 > [!NOTE]
-> **Why it matters:** Access control is centralized and auditable. Applications get authentication and authorization enforcement without having to implement it themselves.
+> **Why it matters:** Access control is centralized and auditable. Authservice-protected applications get platform-managed authentication and coarse-grained group access without implementing the browser OIDC flow themselves, while application code can use forwarded identity and configured group claims for fine-grained domain authorization. Native SSO applications retain ownership of application login, sessions, and domain-specific authorization.
 
 [Identity & Authorization concepts &rarr;](/concepts/core-features/identity-and-authorization/)
 

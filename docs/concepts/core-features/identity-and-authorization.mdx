@@ -1,26 +1,25 @@
 ---
 title: Identity & Authorization
-description: How UDS Core centralizes authentication using Keycloak and Authservice, and when to use native OIDC versus Authservice for apps without SSO support.
+description: How UDS Core centralizes authentication using Keycloak, native application SSO, and operator-managed Authservice protection.
 sidebar:
   order: 2.002
 ---
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-UDS Core centralizes authentication and authorization using [Keycloak](https://www.keycloak.org/) as the identity provider. When an application supports standard SSO flows ([OIDC](https://openid.net/developers/how-connect-works/), [OAuth2](https://oauth.net/2/), or [SAML](https://www.oasis-open.org/standard/saml/)), the UDS Operator automatically registers a Keycloak client for it and delivers credentials to the application namespace. The application handles its own token flow natively, which is the preferred approach.
+UDS Core uses [Keycloak](https://www.keycloak.org/) as its central identity provider. Applications can own their [OIDC](https://openid.net/developers/how-connect-works/) or [SAML](https://www.oasis-open.org/standard/saml/) authentication flow and use [OAuth2](https://oauth.net/2/) for delegated authorization, or UDS Core can provide operator-managed [Authservice](https://github.com/istio-ecosystem/authservice) protection at the Istio mesh boundary. Choose the pattern based on the application requirements and the desired ownership boundary.
 
-[Authservice](https://github.com/istio-ecosystem/authservice) is also available for applications that have no native SSO support. It intercepts requests and handles the OIDC flow on the application's behalf. This is a useful escape hatch, but not the recommended default. If an application can speak OIDC natively, it should.
-
-> [!TIP]
-> Prefer native SSO integration over Authservice where possible. Native integration is more observable, more maintainable, and keeps authentication logic inside the application where it belongs. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC.
+Authservice is a first-class security option, not only a compatibility mechanism for applications without native SSO. It keeps the browser OIDC implementation and enforcement in the platform, which can reduce application-specific mistakes and maintenance. This separation can provide a stronger security posture when a native integration is difficult to assess or maintain. Native SSO remains appropriate when the application must own public and protected routes, session behavior, or domain-specific authorization.
 
 ## Why centralized identity?
 
-Applications deployed on regulated platforms cannot each maintain their own user stores or authentication logic. Centralizing identity provides:
+Applications deployed on regulated platforms should not each maintain independent identity systems or repeat the same authentication implementation. Centralizing identity provides:
 
 - **A single audit trail**: all authentication events flow through one system
 - **Consistent access control**: group membership and role assignments apply uniformly across services
-- **Reduced developer burden**: application teams declare SSO requirements in a `Package` CR; the platform handles client registration and token validation
+- **Reduced implementation burden**: application teams declare SSO requirements in a `Package` CR; the operator handles client registration and, when Authservice is enabled, the browser OIDC flow and token enforcement
+
+These benefits apply to both native SSO and Authservice. Authservice adds platform-owned browser authentication and mesh-level enforcement without requiring each application to implement that flow.
 
 ## The SSO model
 
@@ -33,25 +32,40 @@ Applications deployed on regulated platforms cannot each maintain their own user
 
 {/* The operator authenticates to Keycloak using Federated Signed JWTs backed by projected Kubernetes Service Account tokens. This reduces reliance on a shared client secret between the operator and Keycloak. The authentication method is configurable via the `KEYCLOAK_CLIENT_MODE` setting in the `uds-operator-config` Secret. */}
 
-From there, how SSO works depends on whether the application supports OIDC natively.
+The UDS Operator supports two SSO integration patterns.
 
 <Tabs>
-  <TabItem label="Native SSO (preferred)">
-    Applications that implement OIDC natively use the credentials from the operator-managed secret to speak directly to Keycloak. The application handles login redirects, token validation, and session management itself.
+  <TabItem label="Native SSO">
+    Applications that implement OIDC natively use the credentials from the operator-managed secret to speak directly to Keycloak. The application handles login redirects, token validation, and session management itself. Native SSO can be the right choice for a mature application with a robust integration and application-specific identity requirements.
 
-    **Why this is preferred:**
-    - The application has full visibility into user identity, roles, and claims
-    - Authentication behavior is observable and testable within the application
-    - No additional proxy layer to configure or troubleshoot
+    **Use native SSO when:**
+    - The application needs to combine public and authenticated routes
+    - The application needs to control login, logout, or session behavior
+    - The application requires an application-specific machine-authentication flow that cannot use platform-issued tokens
+    - The application owns fine-grained authorization or user-management behavior
   </TabItem>
-  <TabItem label="Authservice (fallback)">
-    For applications with no native OIDC support, the operator can additionally configure Authservice to intercept requests before they reach the application and handle the OIDC flow transparently.
+  <TabItem label="Authservice">
+    Authservice handles the browser OIDC flow at the mesh boundary before requests reach the application. The UDS Operator creates the Authservice chain and the required Istio `RequestAuthentication` and `AuthorizationPolicy` resources from the `Package` CR. In ambient mode, the operator also creates and manages the waypoint proxy required for L7 enforcement.
 
-    **Limitations to be aware of:**
-    - Authservice handles authentication at the proxy layer; the token is passed through and applications *can* read claims from it (user identity, groups), but the application is not managing the OIDC flow itself, making the integration less observable and harder to troubleshoot
-    - An additional proxy layer to configure and troubleshoot
+    **Use Authservice when:**
+    - The platform should own the OIDC flow and authentication enforcement
+    - The application is legacy, off-the-shelf, or its native OIDC implementation is difficult to assess or maintain
+    - The application should receive complete protection without adding authentication code
+    - Consistent platform-level policy and group-based access should apply across applications
+
+    Authservice does not remove application visibility into identity. Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. For Authservice-protected workloads, `groups.anyOf` provides a platform-level coarse-grained gate that determines whether a user can reach the workload at all. After access is granted, application code can use the forwarded identity and, when configured, `groups` claims to enforce fine-grained authorization based on application data, resource ownership, business roles, or features. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. Istio and Authservice remain part of the platform observability path.
+
+    Authservice-protected workloads can also use Keycloak-issued service-account tokens for machine-to-machine access. `groups.anyOf` restrictions apply during the browser-based authentication flow and do not restrict client-credentials callers. If machine identities need separate authorization, enforce it with an application or mesh policy. See [Configure service account clients](/how-to-guides/identity-and-authorization/configure-service-accounts/) for the required audience mapping.
+
+    For COTS applications, evaluate native OIDC or SAML based on the application's actual session, group, and authorization behavior. Protocol support alone does not establish that native integration is the best fit.
   </TabItem>
 </Tabs>
+
+## Authentication and authorization boundaries
+
+Authservice provides authentication enforcement at the platform boundary. The `Package` CR can declare group-based access requirements for an SSO client, which UDS Core enforces as a coarse-grained gate during browser-based authentication. Authservice does not replace application user management or fine-grained, domain-specific authorization. After the platform grants access, application teams still own decisions that depend on application data, business roles, resource ownership, or workflow state.
+
+Authservice protection is intended for complete protection of the selected workload. In the current UDS Core implementation, application traffic to a protected workload requires a valid UDS JWT. The operator adds exceptions for configured Prometheus endpoints and the sidecar metrics endpoint. If an application requires unauthenticated routes or a machine-authentication flow that cannot use a Keycloak-issued service-account token, evaluate native SSO or another supported application design before enabling Authservice.
 
 ## Platform groups
 
@@ -62,7 +76,7 @@ UDS Core pre-configures two Keycloak groups that drive access to platform admin 
 | `/UDS Core/Admin` | Platform administrators | Grafana admin, Keycloak admin console, Alertmanager |
 | `/UDS Core/Auditor` | Read-only platform access | Grafana viewer, log browsing |
 
-Application teams can define their own group-based restrictions in their `Package` CR using the `groups.anyOf` field. A service protected with `anyOf: ["/UDS Core/Admin"]` will reject tokens that do not carry membership in that group, even if the user is otherwise authenticated.
+Application teams can define their own group-based restrictions in their `Package` CR using the `groups.anyOf` field. During the browser-based authentication flow, an SSO client configured with `groups.anyOf: ["/UDS Core/Admin"]` will reject users who are not members of that group, even if they are otherwise authenticated. Client-credentials callers are not subject to this restriction; authorize machine identities separately.
 
 ## Keycloak configuration layers
 
