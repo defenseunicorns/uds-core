@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.11.0](https://github.com/defenseunicorns/uds-core/compare/v1.10.0...v1.11.0) (2026-08-07)
+
+
+### Features
+
+* support multiple classification banners ([#2851](https://github.com/defenseunicorns/uds-core/issues/2851)) ([e4244b7](https://github.com/defenseunicorns/uds-core/commit/e4244b74fd9a62b09bf563acd104ac549fad0a5d))
+
+
+### Bug Fixes
+
+* add missing zarf values/schema for backup-restore/metrics-server functional layers ([#2867](https://github.com/defenseunicorns/uds-core/issues/2867)) ([b681c6b](https://github.com/defenseunicorns/uds-core/commit/b681c6b362f2c61f79d7755bb0ccd97f067790fd))
+
+
+### Miscellaneous
+
+* **deps:** update prometheus-stack ([#2868](https://github.com/defenseunicorns/uds-core/issues/2868)) ([99c7b2c](https://github.com/defenseunicorns/uds-core/commit/99c7b2c6373f1cf9a2e624367b25ceefb0fc9047))
+
 ## [1.10.0](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) (2026-08-04)
 
 
