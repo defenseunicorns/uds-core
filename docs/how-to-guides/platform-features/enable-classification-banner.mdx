@@ -9,9 +9,11 @@ import { Steps } from "@astrojs/starlight/components";
 
 ## What you'll accomplish
 
-After completing this guide, web applications exposed through the Istio service mesh will display a security classification banner at the top (and optionally the bottom) of the page. The banner color automatically corresponds to the [standard classification markings](https://www.astrouxds.com/components/classification-markings/).
+After completing this guide, web applications exposed through the Istio service mesh will display security classification banners at the top (and optionally the bottom) of each page. You can assign different classification levels to different hosts or URL path prefixes on the same host. Each banner color automatically corresponds to the [standard classification markings](https://www.astrouxds.com/components/classification-markings/).
 
 ## Prerequisites
+
+Before configuring classification banners, confirm that you meet these prerequisites:
 
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
@@ -23,13 +25,15 @@ The classification banner is injected into HTTP responses by an Istio EnvoyFilte
 
 Because both modes modify the HTML response body, validate the banner in a staging environment before adopting it. For custom-built applications, implementing the banner natively within the application is often a more reliable approach.
 
+The `classificationBanners` array configures one or more banners. UDS Core continues to support the previous `classificationBanner` object for backward compatibility, but new configurations should use `classificationBanners`.
+
 ## Steps
 
 <Steps>
 
-1. **Configure the banner text and footer**
+1. **Configure the banners, hosts, and paths**
 
-   Set the classification level via bundle overrides. The footer banner is enabled by default (`addFooter: true`); include it in your overrides only if you need to disable it.
+   Add each banner to the `classificationBanners` array and assign its hosts with `enabledHosts`. To limit a banner to part of a host, add one or more URL prefixes with `pathPrefixes`. When `pathPrefixes` is empty or omitted, the banner matches every path on its enabled hosts.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -40,8 +44,20 @@ Because both modes modify the HTML response body, validate the banner in a stagi
          istio-controlplane:
            uds-global-istio-config:
              values:
-               - path: classificationBanner.text
-                 value: "UNCLASSIFIED"
+               - path: classificationBanners
+                 value:
+                   - text: "UNCLASSIFIED"
+                     addFooter: true
+                     enabledHosts:
+                       - keycloak.{{ .Values.adminDomain }}
+                       - mission-app.{{ .Values.domain }}
+                   - text: "SECRET//NOFORN"
+                     addFooter: false
+                     enabledHosts:
+                       - mission-app.{{ .Values.domain }}
+                     pathPrefixes:
+                       - /classified
+                       - /need-to-know
    ```
 
    Supported classification levels:
@@ -58,36 +74,15 @@ Because both modes modify the HTML response body, validate the banner in a stagi
    | `SAMPLE BANNER`   | Black (demo placeholder) |
 
    > [!TIP]
-   > The `text` field also supports additional markings appended with `//` (e.g., `SECRET//NOFORN`). The banner color is determined by the base classification level.
-
-2. **Specify which hosts display the banner**
-
-   The banner is opt-in per host. Add each hostname to the `enabledHosts` array:
-
-   ```yaml title="uds-bundle.yaml"
-   packages:
-     - name: core
-       repository: registry.defenseunicorns.com/public/core
-       ref: x.x.x-upstream
-       overrides:
-         istio-controlplane:
-           uds-global-istio-config:
-             values:
-               - path: classificationBanner.text
-                 value: "UNCLASSIFIED"
-               - path: classificationBanner.addFooter
-                 value: true
-               - path: classificationBanner.enabledHosts
-                 value:
-                   - keycloak.{{ .Values.adminDomain }}
-                   - sso.{{ .Values.domain }}
-                   - grafana.{{ .Values.adminDomain }}
-   ```
+   > The `text` field also supports additional markings appended with `//` (for example, `SECRET//NOFORN`). The banner color is determined by the base classification level.
 
    > [!TIP]
    > Host values support Helm templating. Use `{{ .Values.adminDomain }}` for hosts on the admin gateway and `{{ .Values.domain }}` for tenant-facing applications.
 
-3. **Create and deploy your bundle**
+   > [!NOTE]
+   > When multiple entries match the same host, UDS Core selects the longest matching path prefix. A host-only entry acts as the fallback when no path prefix matches. Path matching excludes the query string.
+
+2. **Create and deploy your bundle**
 
    ```bash
    uds create <path-to-bundle-dir>
@@ -98,7 +93,7 @@ Because both modes modify the HTML response body, validate the banner in a stagi
 
 ## Verification
 
-Open each configured host in a browser. You should see a colored banner at the top of the page displaying the classification text. If `addFooter` is enabled, the same banner appears at the bottom.
+Open hosts and paths from each configured banner in a browser. Each page should show the assigned classification text and color at the top. Verify that a path-specific banner overrides the host-only fallback on the same host. If `addFooter` is enabled for that banner, the same banner appears at the bottom.
 
 Confirm that the application is constrained between the banners and that its content scrolls within the middle row. Confirm that fixed navigation, dialogs, and other overlays do not cover either banner.
 
@@ -108,7 +103,7 @@ Confirm that the application is constrained between the banners and that its con
 
 **Symptom:** A configured host loads normally but no classification banner is displayed.
 
-**Solution:** Verify the hostname is included in the `enabledHosts` array. The host must match exactly, including any subdomain prefixes. Check the deployed EnvoyFilter:
+**Solution:** Verify the hostname is included in an `enabledHosts` array under `classificationBanners`. The host must match exactly, including any subdomain prefixes. If the banner uses `pathPrefixes`, verify that the URL path begins with one of those values. Check the deployed `EnvoyFilter`:
 
 ```bash
 uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o yaml
@@ -122,6 +117,8 @@ uds zarf tools kubectl get envoyfilter classification-banner -n istio-system -o 
 
 ## Related documentation
 
+Use these resources to learn more about classification markings and Istio networking:
+
 - [Astro UXDS Classification Markings](https://www.astrouxds.com/components/classification-markings/) - standard color and formatting reference
 - [Istio EnvoyFilter](https://istio.io/latest/docs/reference/config/networking/envoy-filter/) - how Istio modifies HTTP responses at the gateway
-- [Networking concepts](/concepts/core-features/networking/) - Understand how UDS Core manages the Istio service mesh and gateways.
+- [Networking concepts](/concepts/core-features/networking/) - how UDS Core manages the Istio service mesh and gateways

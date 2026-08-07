@@ -1,0 +1,7 @@
+{{/*
+Copyright 2026 Defense Unicorns
+SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+*/}}
+{{- if .Values.classificationBanner.enabledHosts }}
+WARNING: classificationBanner is deprecated and will be removed in a future release. Migrate this configuration to classificationBanners.
+{{- end }}

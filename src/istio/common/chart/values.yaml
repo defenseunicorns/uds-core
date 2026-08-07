@@ -1,16 +1,29 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR Commercial
 
+classificationBanners: []
+# Example (enabledHosts supports Helm templating)
+# - text: "UNCLASSIFIED"
+#   addFooter: true
+#   enabledHosts:
+#     - keycloak.<adminDomain>
+#     - grafana.admin.uds.dev
+# - text: "SECRET"
+#   addFooter: false
+#   enabledHosts:
+#     - app.<domain>
+#   pathPrefixes:
+#     - /classified
+
+# Deprecated: use classificationBanners instead.
 classificationBanner:
   text: "UNKNOWN"
   addFooter: true
-  # Hosts to enable the banner on
   enabledHosts: []
-  # Examples (supports helm templating)
-  # - keycloak.<adminDomain>
-  # - sso.<domain>
-  # - grafana.admin.uds.dev
+  pathPrefixes: []
+
 domain: '{{default .Variables.DOMAIN .Values.global.domain}}'
+
 adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .Values.global.domain)) .Variables.ADMIN_DOMAIN) (get .Values.global "adminDomain")}}'
 
 # Optional annotations for grouping dashboards in Grafana folders.
