@@ -295,7 +295,7 @@ describe("Test Secret & Template Data Generation", () => {
 });
 
 describe("convertSsoToClient function", () => {
-  it("should correctly convert a basic SSO object to a Client object", () => {
+  it("defaults fullScopeAllowed to false", () => {
     const sso: Sso = {
       clientId: "test-client",
       name: "Test Client",
@@ -304,13 +304,14 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
+      fullScopeAllowed: false,
       attributes: { "uds.core.groups": "", "logout.confirmation.enabled": "true" },
     };
 
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
   });
 
-  it("should correctly convert a full SSO object to a Client object", () => {
+  it("preserves an explicit fullScopeAllowed value", () => {
     const sso: Sso = {
       alwaysDisplayInConsole: true,
       attributes: {
@@ -321,6 +322,7 @@ describe("convertSsoToClient function", () => {
       description: "Test Description",
       enableAuthserviceSelector: { key: "value" },
       enabled: true,
+      fullScopeAllowed: true,
       groups: { anyOf: ["group1"] },
       name: "Test Client",
       publicClient: true,
@@ -345,6 +347,7 @@ describe("convertSsoToClient function", () => {
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
+      fullScopeAllowed: true,
       name: "Test Client",
       publicClient: true,
       redirectUris: ["https://example.com/callback"],
@@ -368,6 +371,7 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
+      fullScopeAllowed: false,
       attributes: { "uds.core.groups": '{"anyOf":[]}', "logout.confirmation.enabled": "true" },
       registrationAccessToken: undefined,
       samlIdpCertificate: undefined,
@@ -386,6 +390,7 @@ describe("convertSsoToClient function", () => {
     const expectedClient: Partial<Client> = {
       clientId: "test-client",
       name: "Test Client",
+      fullScopeAllowed: false,
       attributes: { "uds.core.groups": "", "logout.confirmation.enabled": "true" },
     };
 
@@ -427,6 +432,7 @@ describe("convertSsoToClient function", () => {
       },
       defaultClientScopes: ["scope1", "scope2"],
       enabled: true,
+      fullScopeAllowed: false,
       name: "Test Client",
       publicClient: true,
       redirectUris: ["https://example.com/callback"],

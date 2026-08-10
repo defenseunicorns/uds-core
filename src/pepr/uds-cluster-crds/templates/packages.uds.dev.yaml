@@ -1233,6 +1233,12 @@ spec:
                           user does not have an active session.
                         type: boolean
                         default: false
+                      fullScopeAllowed:
+                        description: >-
+                          Whether Keycloak maps all roles available to the
+                          authenticated subject into tokens for this client.
+                        type: boolean
+                        default: false
                       standardFlowEnabled:
                         description: >-
                           Enables the standard OpenID Connect redirect based

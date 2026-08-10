@@ -535,6 +535,12 @@ const sso = {
         type: "boolean",
         default: false,
       },
+      fullScopeAllowed: {
+        description:
+          "Whether Keycloak maps all roles available to the authenticated subject into tokens for this client.",
+        type: "boolean",
+        default: false,
+      },
       standardFlowEnabled: {
         description:
           "Enables the standard OpenID Connect redirect based authentication with authorization code.",

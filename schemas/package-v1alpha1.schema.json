@@ -977,6 +977,10 @@
           "type": "boolean",
           "description": "Whether the SSO client is enabled"
         },
+        "fullScopeAllowed": {
+          "type": "boolean",
+          "description": "Whether Keycloak maps all roles available to the authenticated subject into tokens for\nthis client."
+        },
         "groups": {
           "$ref": "#/definitions/Groups",
           "description": "The client SSO group type"

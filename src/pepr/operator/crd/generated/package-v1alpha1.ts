@@ -830,6 +830,11 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
+   * Whether Keycloak maps all roles available to the authenticated subject into tokens for
+   * this client.
+   */
+  fullScopeAllowed?: boolean;
+  /**
    * The client SSO group type
    */
   groups?: Groups;
