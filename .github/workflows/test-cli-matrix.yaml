@@ -130,3 +130,10 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -install-old-cli-upstream
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
