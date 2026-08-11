@@ -20869,6 +20869,9 @@
             },
             "serviceMonitor": {
               "properties": {
+                "apiVersion": {
+                  "type": "string"
+                },
                 "bearerTokenFile": {
                   "type": "string"
                 },
