@@ -45,7 +45,7 @@ jobs:
             flavor: upstream
             install_cli: v0.34.0
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-            upgrade_cli: v0.34.3
+            upgrade_cli: v0.35.1
 
     steps:
       - name: Checkout repository
