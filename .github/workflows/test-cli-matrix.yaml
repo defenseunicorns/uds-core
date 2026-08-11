@@ -94,6 +94,13 @@ jobs:
         with:
           suffix: -upgrade-matrix-${{ matrix.scenario }}-${{ matrix.flavor }}
 
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
+
   cli-install:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
