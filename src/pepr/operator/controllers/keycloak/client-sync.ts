@@ -104,7 +104,7 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     }
   }
 
-  client.fullScopeAllowed = sso.fullScopeAllowed ?? false;
+  client.fullScopeAllowed = sso.fullScopeAllowed ?? true;
 
   // Group auth based on sso group membership
   client.attributes = client.attributes || {};

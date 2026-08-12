@@ -979,7 +979,7 @@
         },
         "fullScopeAllowed": {
           "type": "boolean",
-          "description": "Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak\nincludes all roles assigned to the authenticated subject. When disabled, Keycloak limits\nroles according to the client's role scope mappings and linked client scopes. UDS Core\ndefaults this setting to false, which provides stricter role scope enforcement than\nKeycloak's default."
+          "description": "Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak\nincludes all roles assigned to the authenticated subject. When disabled, Keycloak limits\nroles according to the client's role scope mappings and linked client scopes. UDS Core\ndefaults this setting to true for backwards compatibility. Set this to false whenever\npossible to limit role scope and harden security."
         },
         "groups": {
           "$ref": "#/definitions/Groups",
