@@ -1,6 +1,6 @@
 ---
-title: Protect non-OIDC apps with SSO
-description: Add SSO protection to applications without native OIDC support by configuring Authservice to intercept requests and handle the auth flow.
+title: Protect applications with Authservice
+description: Configure operator-managed Authservice protection so UDS Core handles the browser OIDC flow at the Istio mesh boundary.
 sidebar:
   order: 3.003
 ---
@@ -9,7 +9,7 @@ import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
-You'll add SSO protection to an application that has no native OIDC support. Authservice intercepts requests before they reach the application and handles the authentication flow on the application's behalf, requiring users to log in via Keycloak before they can access the app.
+You'll configure operator-managed Authservice protection for an application. Authservice handles the browser OIDC flow at the Istio mesh boundary, validates requests before they reach the application, and requires users to log in through Keycloak before accessing the protected workload. This pattern can be preferable even when an application supports native OIDC because it keeps authentication enforcement outside the application.
 
 ## Prerequisites
 
@@ -20,10 +20,9 @@ You'll add SSO protection to an application that has no native OIDC support. Aut
 
 ## Before you begin
 
-> [!TIP]
-> **Prefer native OIDC integration over Authservice where possible.** Applications that implement OIDC natively are more observable and easier to troubleshoot because authentication logic stays inside the application. Authservice is best reserved for legacy or off-the-shelf applications that cannot be modified to support OIDC. See [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) for details.
+Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The UDS Operator creates the Authservice chain and the required Istio resources automatically. The first `redirectUris` entry you configure populates the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
 
-Authservice works by matching a label selector on your application's pods. When a request comes in, Authservice intercepts it, validates the session, and redirects unauthenticated users to Keycloak. The first `redirectUris` entry you configure is used to populate the `match.prefix` hostname and the `callback_uri` in the Authservice chain.
+Authservice forwards the authenticated OIDC ID token to the application, while Istio preserves an inbound bearer token when one is already present. Use `groups.anyOf` to control which users can reach the workload. After access is granted, application code can use the forwarded identity and, when configured, `groups` claims for fine-grained authorization. See [Register and customize SSO clients](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for the group membership mapper. Istio and Authservice also provide platform-level telemetry.
 
 ## Steps
 
@@ -126,15 +125,26 @@ Authservice works by matching a label selector on your application's pods. When 
 
 ## Verification
 
-Confirm Authservice protection is active:
+Confirm the generated Istio policies and Authservice chain:
 
 ```bash
 # Check that Authservice pods are running
 uds zarf tools kubectl get pods -n authservice -l app.kubernetes.io/name=authservice
 
-# Check that the Authservice chain for your app was created
+# Check the generated Istio policies for your app
 uds zarf tools kubectl get authorizationpolicy -n <app-namespace>
+uds zarf tools kubectl get requestauthentication -n <app-namespace>
+
+# Linux: inspect the Authservice chain in its managed Secret
+uds zarf tools kubectl get secret authservice-uds -n authservice \
+  -o jsonpath='{.data.config\.json}' | base64 -d | jq '.chains[] | select(.name == "<client-id>")'
+
+# macOS: use base64 -D instead of base64 -d
+uds zarf tools kubectl get secret authservice-uds -n authservice \
+  -o jsonpath='{.data.config\.json}' | base64 -D | jq '.chains[] | select(.name == "<client-id>")'
 ```
+
+The Istio policies confirm JWT and Authservice enforcement. The Secret check confirms that the matching Authservice chain exists for the client.
 
 **End-to-end test:**
 1. Open the application URL in a browser
@@ -176,13 +186,13 @@ uds zarf tools kubectl get service -n <app-namespace> -o yaml | grep -A5 selecto
 
 **Symptoms:** Prometheus shows scrape errors for a workload that uses `enableAuthserviceSelector`.
 
-**Solution:** The `monitor[].podSelector` (or `monitor[].selector`) in the `Package` CR must exactly match the `sso[].enableAuthserviceSelector` for the protected workload. When these match, the operator creates an authorization exception that allows Prometheus to scrape metrics directly without going through the SSO flow.
+**Solution:** The `monitor[].podSelector` (or `monitor[].selector`) in the `Package` CR must include the labels from the protected workload's `sso[].enableAuthserviceSelector`. The monitor selector may include additional labels. When the selectors match, the operator creates an authorization exception that allows Prometheus to scrape metrics directly without going through the SSO flow.
 
 ```yaml
 spec:
   monitor:
     - selector:
-        app: httpbin  # Must match enableAuthserviceSelector exactly
+        app: httpbin  # Must include the enableAuthserviceSelector labels
       portName: metrics
       targetPort: 9090
   sso:
@@ -191,12 +201,12 @@ spec:
       redirectUris:
         - "https://httpbin.uds.dev/login"
       enableAuthserviceSelector:
-        app: httpbin  # Must match monitor selector exactly
+        app: httpbin  # Selects the protected application pods
 ```
 
 ## Related documentation
 
-- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - background on when to use Authservice vs native SSO
+- [Identity & Authorization concepts](/concepts/core-features/identity-and-authorization/) - compare operator-managed Authservice protection with native SSO
 - [Authservice repository](https://github.com/istio-ecosystem/authservice) - upstream configuration reference
 - [`Package` CR reference](/reference/operator-and-crds/packages-v1alpha1-cr/) - full SSO and `enableAuthserviceSelector` field specification
 - [Enforce group-based access controls](/how-to-guides/identity-and-authorization/enforce-group-based-access/) - Restrict which Keycloak groups can access your Authservice-protected application.
