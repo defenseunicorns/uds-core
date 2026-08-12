@@ -117,6 +117,10 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   sku_tier                = var.sku_tier
   node_os_upgrade_channel = "None"
 
+  node_provisioning_profile {
+    mode = "Manual"
+  }
+
   default_node_pool {
     name                        = var.default_node_pool_name
     vm_size                     = var.default_node_pool_vm_size

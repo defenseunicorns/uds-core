@@ -58,9 +58,9 @@ resource "azurerm_subnet" "postgres_subnet" {
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.cluster-vnet.name
   address_prefixes     = ["10.0.32.0/20"]
-  service_endpoints = [
-    "Microsoft.Storage",
-  ]
+  service_endpoint {
+    service = "Microsoft.Storage"
+  }
   delegation {
     name = "fs"
     service_delegation {
@@ -95,9 +95,8 @@ resource "azurerm_private_dns_zone" "cluster_dns_zone" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cluster_dns_zone_link" {
-  name                  = "${local.cluster_name}-dns"
-  private_dns_zone_name = azurerm_private_dns_zone.cluster_dns_zone.name
-  virtual_network_id    = azurerm_virtual_network.cluster-vnet.id
-  resource_group_name   = azurerm_resource_group.this.name
-  depends_on            = [azurerm_subnet.postgres_subnet]
+  name                = "${local.cluster_name}-dns"
+  private_dns_zone_id = azurerm_private_dns_zone.cluster_dns_zone.id
+  virtual_network_id  = azurerm_virtual_network.cluster-vnet.id
+  depends_on          = [azurerm_subnet.postgres_subnet]
 }
