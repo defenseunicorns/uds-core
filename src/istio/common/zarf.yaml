@@ -140,18 +140,20 @@ components:
               echo "Disabling istio-injection on pepr-system..."
               ./zarf tools kubectl label namespace pepr-system istio-injection=disabled --overwrite
 
-          - description: "Wait for Pepr Ambient admission readiness"
-            maxTotalSeconds: 90
+          - description: "Wait for Pepr Ambient enrollment"
+            maxTotalSeconds: 60
+            wait:
+              cluster:
+                kind: pod
+                name: app=pepr-uds-core,pepr.dev/controller=admission
+                namespace: pepr-system
+                condition: '{.metadata.annotations.ambient\.istio\.io/redirection}=enabled'
+
+          - description: "Verify Pepr admission readiness"
+            maxTotalSeconds: 30
+            maxRetries: 10
             cmd: |
-              set -eu
-
-              ./zarf tools kubectl wait \
-                -n pepr-system \
-                --for='jsonpath={.metadata.annotations.ambient\.istio\.io/redirection}'=enabled \
-                --timeout=60s \
-                pod -l 'app=pepr-uds-core,pepr.dev/controller=admission'
-
-              until ./zarf tools kubectl create \
+              ./zarf tools kubectl create \
                 --request-timeout=5s \
                 --dry-run=server \
                 -o name \
@@ -165,9 +167,6 @@ components:
                 ports:
                   - port: 443
               EOF
-              do
-                sleep 2
-              done
 
   - name: gateway-api-crds
     required: true
