@@ -51,6 +51,8 @@ keycloak:
   keycloak:
     insecureAdminPasswordGeneration:
       enabled: true
+    dedicatedRealmAdminConsole:
+      enabled: true
     detailedObservability:
       alerts:
         enabled: true

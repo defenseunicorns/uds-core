@@ -18,6 +18,27 @@ UDS Core manages four areas of Keycloak configuration through the `uds-identity-
 
 Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for manual steps.
 
+## Dedicated realm admin console
+
+UDS Core can expose the Keycloak dedicated console for the configured realm through the tenant gateway at `https://keycloak.<domain>/admin/<realm>/console/`. The default realm is `uds`, so the default URL is `https://keycloak.<domain>/admin/uds/console/`.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `dedicatedRealmAdminConsole.enabled` | boolean | `false` | Expose the configured realm's dedicated Admin Console and required Admin API routes at `keycloak.<domain>` through the tenant gateway |
+
+Set the native Zarf value `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` to enable the route persistently. When `false`, the chart does not expose `keycloak.<domain>` through the tenant gateway and the waypoint denies tenant gateway access to `/admin*`. This value takes effect when you deploy or upgrade the Keycloak chart and does not require a realm reimport.
+
+For an existing stock deployment, `scripts/configure-keycloak-dedicated-admin-console.sh` can activate the live `Package`, `AuthorizationPolicy`, and path parameter `EnvoyFilter` without a redeploy. The script also enables Keycloak 26.7 fine grained admin permissions version 2 and configures the named `uds-realm-user-admins` group. This live activation is idempotent, but a later Helm reconciliation with `dedicatedRealmAdminConsole.enabled: false` can remove it. Set the native Zarf value to `true` to persist the feature across deploys and upgrades.
+
+The group receives `realm-management/query-users` and a group policy that grants `view` and `manage` scopes on the `Users` resource type. Keycloak has no attribute only scope. The permission can update all user profile fields, delete users, and reset passwords when needed. It does not grant role mappings, group membership, clients, realm settings, or impersonation.
+
+> [!CAUTION]
+> Assign group membership to a named federated identity when possible. For a local fallback, the script creates a user with a temporary password. Do not store users or passwords in Helm values or a realm import. To revoke access, remove the user from `uds-realm-user-admins` and log out the user's sessions.
+
+When enabled, the Keycloak `Package` exposes the console through the tenant gateway. Its waypoint authorization policy continues to deny `/admin*` traffic from the tenant gateway except for the dedicated realm console and its required UDS realm Admin API routes. The admin gateway remains the access path for master realm administration and the general Admin API.
+
+Reference the [Keycloak dedicated realm admin console documentation](https://www.keycloak.org/docs/26.7.0/server_admin/#_dedicated_realm_admin_consoles) and [fine grained admin permissions documentation](https://www.keycloak.org/docs/26.7.0/server_admin/#_fine_grained_permissions) for upstream permission behavior.
+
 ## Realm initialization variables
 
 Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.

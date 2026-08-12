@@ -1,0 +1,139 @@
+---
+title: Use the dedicated realm admin console
+description: Enable the tenant gateway Keycloak console, provision a restricted UDS realm user administrator, and manage UDS realm users.
+sidebar:
+  order: 3.002
+---
+
+import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
+
+## What you'll accomplish
+
+You will enable the dedicated Keycloak Admin Console, provision a restricted administrator in the `uds` realm, and use the console at `https://keycloak.<domain>/admin/uds/console/`. The console uses the tenant gateway, so the administrator can manage UDS users without access to the master realm or admin gateway.
+
+## Prerequisites
+
+- UDS Core deployed
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to the Kubernetes cluster
+- The UDS Core package artifact for your deployed version
+- A browser that can reach `https://keycloak.<domain>`
+- The Keycloak administrator username and password for the `master` realm
+- `curl`, `jq`, and `kubectl` installed locally
+
+## Before you begin
+
+UDS Core disables the dedicated realm admin console by default. For persistent activation, set `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` and deploy the value before you provision an administrator. On an existing stock deployment, the provisioning script can activate the live resources and configure the administrator in one run, but a later Helm reconciliation can remove that activation while the value remains `false`.
+
+The script configures Keycloak 26.7 fine grained admin permissions version 2 for the named `uds-realm-user-admins` group. Members receive the `realm-management/query-users` role and `view` and `manage` scopes on the `Users` resource type. Keycloak has no attribute-only scope. This grants access to all user profiles, including profile updates, deletion, and the password reset fallback, but not role mappings, group membership, clients, realm settings, or impersonation.
+
+Use an existing named federated identity when possible. The script does not change that user's password. When you need a local Keycloak user, the script creates it with a temporary initial password and Keycloak requires the user to change it at first sign in. Do not store administrator users or passwords in Helm values or a realm import.
+
+The dedicated console does not grant master realm access. Keep the master realm administrator credential separate and use it only to provision or revoke realm administrators.
+
+## Enable the dedicated realm admin console
+
+Choose the persistent deployment value for new deployments and upgrades. Use the script only path when you must configure an existing stock deployment without redeploying it.
+
+<Tabs>
+  <TabItem label="Persistent deployment value">
+
+Add the opt in setting to the native Zarf values file used to deploy UDS Core.
+
+```yaml title="values.yaml"
+keycloak:
+  keycloak:
+    dedicatedRealmAdminConsole:
+      enabled: true
+```
+
+Deploy the UDS Core package with the values file before provisioning the realm administrator. Replace the package name placeholders with the architecture and version for your environment.
+
+```bash
+uds zarf package deploy zarf-package-core-<architecture>-<version>.tar.zst \
+  --values values.yaml \
+  --confirm
+```
+
+The chart value renders the `keycloak.<domain>` tenant route, the waypoint authorization rules, and the path parameter protection required by the console. It does not create a Keycloak user or grant permissions.
+
+  </TabItem>
+  <TabItem label="Existing stock deployment">
+
+Continue to the provisioning steps without redeploying UDS Core. The script activates the live `Package`, `AuthorizationPolicy`, and `EnvoyFilter` and configures the administrator in the same run.
+
+> [!IMPORTANT]
+> Script only activation does not change the deployed Helm value. Set `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` before the next Keycloak deploy or upgrade, or Helm reconciliation can remove the live activation.
+
+  </TabItem>
+</Tabs>
+
+## Steps
+
+<Steps>
+
+1. **Run the provisioning script**
+
+   Run the script from a trusted workstation. It authenticates to the `master` realm, enables fine grained administration for `uds`, creates `uds-realm-user-admins` when absent, and adds the named user to that group.
+
+   Set the master credentials and target username, then run the script. It prompts silently for missing passwords. Set `UDS_REALM_ADMIN_PASSWORD` only when the target local user does not already exist. For a new local user, Keycloak marks that password temporary.
+
+   ```bash
+   export KEYCLOAK_ADMIN_USERNAME=<master-admin-username>
+   export UDS_REALM_ADMIN_USERNAME=<existing-federated-or-new-local-username>
+   read -r -s KEYCLOAK_ADMIN_PASSWORD
+   export KEYCLOAK_ADMIN_PASSWORD
+   read -r -s UDS_REALM_ADMIN_PASSWORD
+   export UDS_REALM_ADMIN_PASSWORD
+
+   scripts/configure-keycloak-dedicated-admin-console.sh
+   unset KEYCLOAK_ADMIN_USERNAME KEYCLOAK_ADMIN_PASSWORD \
+     UDS_REALM_ADMIN_USERNAME UDS_REALM_ADMIN_PASSWORD
+   ```
+
+   By default, the script obtains the UDS domain from `ClusterConfig`, connects to the `keycloak` namespace, and provisions the `uds` realm. Set `KEYCLOAK_URL` only to a direct Keycloak endpoint or `keycloak.<admin-domain>`, because the script authenticates to the `master` realm. Otherwise, the script creates a local Keycloak service port forward. Set `CLUSTER_DOMAIN`, `UDS_REALM`, `KEYCLOAK_NAMESPACE`, `KEYCLOAK_LOCAL_PORT`, or `KUBECTL_BIN` only when the defaults do not match your environment.
+
+   The script does not print or persist passwords. It idempotently reconciles the tenant console route, waypoint authorization policy, and path parameter `EnvoyFilter`. It also verifies the group, `query-users` role, Keycloak group policy, and `Users` resource permission. Re running it does not reset an existing user's password.
+
+2. **Sign in to the dedicated console**
+
+   Open `https://keycloak.<domain>/admin/uds/console/` and sign in with the UDS realm administrator identity. Keycloak opens the **uds** realm directly. A new local user must change the temporary password before continuing.
+
+3. **Manage user profiles**
+
+   Open **Users**, select a user, then edit the **Details** and **Attributes** fields that your realm user profile configuration allows. Save the change, then reopen the user to verify it.
+
+   > [!WARNING]
+   > Keycloak has no attribute only scope. The `Users/manage` permission allows all profile updates and user deletion, and it supports password reset when Keycloak needs that fallback. It does not permit role mapping, group membership, clients, realm settings, or impersonation.
+
+4. **Revoke access when the task is complete**
+
+   Sign in to the master realm console through `https://keycloak.<admin-domain>/`, open the UDS realm user, remove the user from `uds-realm-user-admins`, then log out all sessions for that user. Delete a local account when it no longer has an operational purpose.
+
+</Steps>
+
+## Verification
+
+Confirm that the user can access `https://keycloak.<domain>/admin/uds/console/`, can open **Users**, and can save an allowed attribute change. Confirm that role mappings, group membership, clients, realm settings, impersonation, and master realm administration remain unavailable.
+
+## Troubleshooting
+
+### Problem: The dedicated console returns `403` or cannot load
+
+**Symptom:** The browser reaches `https://keycloak.<domain>/admin/uds/console/` but Keycloak returns `403`, or static console resources fail to load.
+
+**Solution:** Confirm that `keycloak.keycloak.dedicatedRealmAdminConsole.enabled` was set to `true` during the latest UDS Core deployment, or rerun the provisioning script to restore script only activation. Confirm that the tenant gateway resolves `keycloak.<domain>` and that the user belongs to `uds-realm-user-admins`. Use the admin gateway console only for master realm administration.
+
+### Problem: The user has broader access than expected
+
+**Symptom:** The realm administrator can update all user profile fields, delete users, or reset a password.
+
+**Solution:** This is the supported Keycloak `Users/manage` scope. Keycloak has no attribute only scope. Remove the user from `uds-realm-user-admins`, log out the user's sessions, and use a separate application workflow when you need per attribute authorization.
+
+## Related documentation
+
+- [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/) - bootstrap and protect a master realm administrator.
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - Keycloak configuration surfaces.
+- [Keycloak dedicated realm admin consoles](https://www.keycloak.org/docs/26.7.0/server_admin/#_dedicated_realm_admin_consoles) - upstream dedicated console reference.
+- [Keycloak fine grained admin permissions](https://www.keycloak.org/docs/26.7.0/server_admin/#_fine_grained_permissions) - upstream resource permissions reference.
+- [Keycloak managing user attributes](https://www.keycloak.org/docs/26.7.0/server_admin/#_managing_user_attributes) - upstream user profile behavior and permissions.

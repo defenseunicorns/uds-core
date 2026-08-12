@@ -165,6 +165,9 @@ packages:
             - name: KEYCLOAK_HA
               description: "Enable Keycloak HA"
               path: autoscaling.enabled
+            - name: KEYCLOAK_DEDICATED_REALM_ADMIN_CONSOLE
+              description: "Enable the dedicated realm Admin Console"
+              path: dedicatedRealmAdminConsole.enabled
             - name: KEYCLOAK_PG_USERNAME
               description: "Keycloak Postgres username"
               path: postgresql.username

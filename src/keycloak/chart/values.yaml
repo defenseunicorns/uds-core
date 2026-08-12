@@ -21,6 +21,10 @@ configImage: ghcr.io/defenseunicorns/uds/identity-config:0.29.0
 domain: "uds.dev"
 adminDomain: "admin.uds.dev"
 
+# Exposes the configured realm Admin Console and Admin REST API at keycloak.<domain>.
+dedicatedRealmAdminConsole:
+  enabled: false
+
 # Additional Istio Gateways that expose Keycloak, to allow for client cert usage
 # A prefix of `istio-` is required for namespaces to prevent accidental misconfiguration
 additionalGatewayNamespaces: []

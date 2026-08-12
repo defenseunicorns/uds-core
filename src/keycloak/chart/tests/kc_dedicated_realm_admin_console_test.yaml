@@ -1,0 +1,142 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak dedicated realm admin console
+templates:
+  - uds-package.yaml
+  - istio-authpol-admin.yaml
+  - path-parameter-envoyfilter.yaml
+capabilities:
+  apiVersions:
+    - security.istio.io/v1
+
+tests:
+  - it: should not expose the tenant Keycloak host by default
+    template: uds-package.yaml
+    asserts:
+      - notContains:
+          path: spec.network.expose
+          any: true
+          content:
+            description: dedicated realm admin console redirect
+      - notContains:
+          path: spec.network.expose
+          any: true
+          content:
+            description: dedicated realm admin console
+
+  - it: should preserve the default admin deny behavior when disabled
+    template: istio-authpol-admin.yaml
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system
+      - notExists:
+          path: 'spec.rules[?(@.to[0].operation.notPaths[0]=="/admin/uds/console")]'
+
+  - it: should not protect the disabled tenant Keycloak host
+    set:
+      domain: tenant.example.com
+      pathParameterProtection: true
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - notMatchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'host == "keycloak\.tenant\.example\.com"'
+
+  - it: should expose the tenant Keycloak host with a root redirect and backend route when enabled
+    set:
+      dedicatedRealmAdminConsole:
+        enabled: true
+    template: uds-package.yaml
+    asserts:
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            description: dedicated realm admin console redirect
+            host: keycloak
+            service: keycloak-http
+            port: 8080
+            advancedHTTP:
+              match:
+                - name: redirect-realm-admin-console
+                  uri:
+                    exact: /
+              redirect:
+                uri: /admin/uds/console/
+      - contains:
+          path: spec.network.expose
+          any: true
+          content:
+            description: dedicated realm admin console
+            host: keycloak
+            service: keycloak-http
+            port: 8080
+
+  - it: should limit tenant admin paths to the configured realm console, realm API, and server info
+    set:
+      dedicatedRealmAdminConsole:
+        enabled: true
+    template: istio-authpol-admin.yaml
+    asserts:
+      - contains:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/admin*")].from[0].source.notNamespaces'
+          content: istio-tenant-gateway
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.notPaths[0]=="/admin/uds/console")].to[0].operation.notPaths'
+          value:
+            - /admin/uds/console
+            - /admin/uds/console/*
+            - /admin/realms/uds
+            - /admin/realms/uds/*
+            - /admin/serverinfo
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.notPaths[0]=="/admin/uds/console")].from[0].source.namespaces'
+          value:
+            - istio-tenant-gateway
+
+  - it: should require the tenant Keycloak host for tenant admin paths
+    set:
+      domain: tenant.example.com
+      dedicatedRealmAdminConsole:
+        enabled: true
+    template: istio-authpol-admin.yaml
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.notHosts[0]=="keycloak.tenant.example.com")].to[0].operation.notHosts'
+          value:
+            - keycloak.tenant.example.com
+            - keycloak.tenant.example.com:*
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.notHosts[0]=="keycloak.tenant.example.com")].from[0].source.namespaces'
+          value:
+            - istio-tenant-gateway
+
+  - it: should keep master realm access blocked from the tenant gateway
+    template: istio-authpol-admin.yaml
+    asserts:
+      - equal:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/realms/master*")].from[0].source.notNamespaces'
+          value:
+            - istio-admin-gateway
+            - pepr-system
+      - notContains:
+          path: 'spec.rules[?(@.to[0].operation.paths[0]=="/realms/master*")].from[0].source.notNamespaces'
+          content: istio-tenant-gateway
+
+  - it: should protect the tenant Keycloak host from path parameter bypasses
+    set:
+      domain: tenant.example.com
+      pathParameterProtection: true
+      dedicatedRealmAdminConsole:
+        enabled: true
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'keycloak\.tenant\.example\.com'

@@ -43,3 +43,15 @@ tests:
       - matchRegex:
           path: spec.configPatches[0].patch.value.typed_config.inlineCode
           pattern: 'keycloak\.admin\.custom\.example\.com'
+
+  - it: should use the tenant Keycloak host in envoyfilter
+    set:
+      domain: "custom.example.com"
+      pathParameterProtection: true
+      dedicatedRealmAdminConsole:
+        enabled: true
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'keycloak\.custom\.example\.com'

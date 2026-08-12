@@ -21,6 +21,24 @@ spec:
               - "8080"
             paths:
               - "/admin*"
+      from:
+        - source:
+            notNamespaces:
+              - istio-admin-gateway
+              - "pepr-system"
+              {{- if .Values.dedicatedRealmAdminConsole.enabled }}
+              - istio-tenant-gateway
+              {{- end }}
+            notPrincipals:
+              {{- range $adminApiAllowedPrincipals }}
+              - {{ . | quote }}
+              {{- end }}
+    # Keep master realm access limited to the admin gateway and allowlisted principals.
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
               - "/realms/master*"
       from:
         - source:
@@ -31,6 +49,39 @@ spec:
               {{- range $adminApiAllowedPrincipals }}
               - {{ . | quote }}
               {{- end }}
+    {{- if .Values.dedicatedRealmAdminConsole.enabled }}
+    # The tenant gateway can only serve the configured realm admin console, its Admin REST API, and server info.
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/admin*"
+            notPaths:
+              - "/admin/{{ .Values.realm }}/console"
+              - "/admin/{{ .Values.realm }}/console/*"
+              - "/admin/realms/{{ .Values.realm }}"
+              - "/admin/realms/{{ .Values.realm }}/*"
+              - "/admin/serverinfo"
+      from:
+        - source:
+            namespaces:
+              - istio-tenant-gateway
+    # The tenant gateway must use its dedicated Keycloak host for every admin path.
+    - to:
+        - operation:
+            ports:
+              - "8080"
+            paths:
+              - "/admin*"
+            notHosts:
+              - "keycloak.{{ .Values.domain }}"
+              - "keycloak.{{ .Values.domain }}:*"
+      from:
+        - source:
+            namespaces:
+              - istio-tenant-gateway
+    {{- end }}
     - to:
         - operation:
             ports:

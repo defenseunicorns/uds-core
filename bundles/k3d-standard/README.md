@@ -53,6 +53,7 @@ This bundle is used for demonstration, development, and testing of UDS Core. In 
 |----------|-------------|------|
 | `INSECURE_ADMIN_PASSWORD_GENERATION` | Generate an insecure admin password for dev/test | `insecureAdminPasswordGeneration.enabled` |
 | `KEYCLOAK_HA`              | Enable Keycloak HA                         | `autoscaling.enabled`           |
+| `KEYCLOAK_DEDICATED_REALM_ADMIN_CONSOLE` | Enable the dedicated realm Admin Console | `dedicatedRealmAdminConsole.enabled` |
 | `KEYCLOAK_PG_USERNAME`     | Keycloak Postgres username                 | `postgresql.username`           |
 | `KEYCLOAK_PG_PASSWORD`     | Keycloak Postgres password                 | `postgresql.password`           |
 | `KEYCLOAK_PG_DATABASE`     | Keycloak Postgres database                 | `postgresql.database`           |
