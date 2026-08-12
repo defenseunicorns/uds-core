@@ -1,7 +1,7 @@
 # Copyright 2024 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- if .Values.podDisruptionBudget -}}
+{{- if .Values.podDisruptionBudget }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -14,4 +14,4 @@ spec:
     matchLabels:
       {{- include "keycloak.selectorLabels" . | nindent 6 }}
   {{- toYaml .Values.podDisruptionBudget | nindent 2 }}
-{{- end -}}
+{{- end }}
