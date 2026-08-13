@@ -4,6 +4,8 @@
  */
 
 import { randomBytes } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
 import * as net from "node:net";
 import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -19,6 +21,11 @@ const adminGroupName = `realm-user-admins-${suffix}`;
 const adminPolicyName = `realm-user-admin-policy-${suffix}`;
 const adminPermissionName = `realm-user-admin-permission-${suffix}`;
 const targetUsername = `realm-user-target-${suffix}`;
+const repoRoot = resolve(process.cwd(), "../..");
+const provisioningScript = resolve(
+  repoRoot,
+  "scripts/configure-keycloak-dedicated-admin-console.sh",
+);
 
 interface KeycloakClient {
   id: string;
@@ -42,6 +49,7 @@ interface KeycloakPackage {
 
 const kc = new k8s.KubeConfig();
 kc.loadFromDefault();
+const core = kc.makeApiClient(k8s.CoreV1Api);
 const customObjects = kc.makeApiClient(k8s.CustomObjectsApi);
 
 describe("integration - Keycloak realm user administrator", () => {
@@ -51,7 +59,9 @@ describe("integration - Keycloak realm user administrator", () => {
   let targetUserId: string;
   let adminGroupId: string;
   let realmManagementClientId: string;
+  let securityAdminConsoleClientId: string;
   let queryUsersRole: KeycloakRole;
+  let realmAdminToken: string;
   let adminPermissionsClientId: string;
   let adminPolicyId: string;
   let adminPermissionId: string;
@@ -104,6 +114,30 @@ describe("integration - Keycloak realm user administrator", () => {
     );
     expect(passwordResponse.status).toBe(204);
 
+    const adminSecret = await core.readNamespacedSecret({
+      name: "keycloak-admin-password",
+      namespace: "keycloak",
+    });
+    const decodeSecret = (key: string) =>
+      Buffer.from(adminSecret.data?.[key] ?? "", "base64").toString("utf8");
+    const keycloakAdminUsername = decodeSecret("username");
+    const keycloakAdminPassword = decodeSecret("password");
+    expect(keycloakAdminUsername).toBeTruthy();
+    expect(keycloakAdminPassword).toBeTruthy();
+    execFileSync(provisioningScript, {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        CLUSTER_DOMAIN: "uds.dev",
+        KEYCLOAK_ADMIN_PASSWORD: keycloakAdminPassword,
+        KEYCLOAK_ADMIN_USERNAME: keycloakAdminUsername,
+        KEYCLOAK_URL: keycloakProxy.url,
+        KUBECTL_BIN: process.env.KUBECTL_BIN ?? "uds zarf tools kubectl",
+        UDS_REALM_ADMIN_USERNAME: adminUsername,
+      },
+      stdio: "pipe",
+    });
+
     const realmResponse = await adminRequest(`/admin/realms/${realm}`);
     expect(realmResponse.status).toBe(200);
     realmRepresentation = (await realmResponse.json()) as Record<string, unknown>;
@@ -139,6 +173,72 @@ describe("integration - Keycloak realm user administrator", () => {
     );
     expect(roleResponse.status).toBe(200);
     queryUsersRole = (await roleResponse.json()) as KeycloakRole;
+
+    const consoleClientResponse = await adminRequest(
+      `/admin/realms/${realm}/clients?clientId=security-admin-console`,
+    );
+    expect(consoleClientResponse.status).toBe(200);
+    securityAdminConsoleClientId = ((await consoleClientResponse.json()) as KeycloakClient[])[0].id;
+
+    const consoleScopePath = `/admin/realms/${realm}/clients/${securityAdminConsoleClientId}/scope-mappings/clients/${managementClient.id}`;
+    const consoleScopeResponse = await adminRequest(consoleScopePath);
+    expect(consoleScopeResponse.status).toBe(200);
+    const consoleScopeRoles = (await consoleScopeResponse.json()) as KeycloakRole[];
+    expect(consoleScopeRoles.some(role => role.name === queryUsersRole.name)).toBe(true);
+
+    const consoleClientDetailResponse = await adminRequest(
+      `/admin/realms/${realm}/clients/${securityAdminConsoleClientId}`,
+    );
+    expect(consoleClientDetailResponse.status).toBe(200);
+    const consoleClient = (await consoleClientDetailResponse.json()) as Record<string, unknown>;
+    const directGrantsEnabled = consoleClient.directAccessGrantsEnabled === true;
+    try {
+      if (!directGrantsEnabled) {
+        const enableDirectGrantsResponse = await adminRequest(
+          `/admin/realms/${realm}/clients/${securityAdminConsoleClientId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...consoleClient, directAccessGrantsEnabled: true }),
+          },
+        );
+        expect(enableDirectGrantsResponse.status).toBe(204);
+      }
+
+      const consoleTokenResponse = await execInPod("test-admin-app", tenantCurlPod, "curl", [
+        "curl",
+        "-sS",
+        "--fail-with-body",
+        "-m",
+        "10",
+        "--request",
+        "POST",
+        "--data-urlencode",
+        "grant_type=password",
+        "--data-urlencode",
+        "client_id=security-admin-console",
+        "--data-urlencode",
+        `username=${adminUsername}`,
+        "--data-urlencode",
+        `password=${adminPassword}`,
+        `https://keycloak.uds.dev/realms/${realm}/protocol/openid-connect/token`,
+      ]);
+      expect(consoleTokenResponse.exitCode, consoleTokenResponse.stderr).toBe(0);
+      realmAdminToken = (JSON.parse(consoleTokenResponse.stdout) as { access_token: string })
+        .access_token;
+    } finally {
+      if (!directGrantsEnabled) {
+        const restoreDirectGrantsResponse = await adminRequest(
+          `/admin/realms/${realm}/clients/${securityAdminConsoleClientId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(consoleClient),
+          },
+        );
+        expect(restoreDirectGrantsResponse.status).toBe(204);
+      }
+    }
 
     const mappingResponse = await adminRequest(
       `/admin/realms/${realm}/groups/${adminGroupId}/role-mappings/clients/${managementClient.id}`,
@@ -264,28 +364,11 @@ describe("integration - Keycloak realm user administrator", () => {
       return;
     }
 
-    const tokenResponse = await execInPod("test-admin-app", tenantCurlPod, "curl", [
-      "curl",
-      "-sS",
-      "--fail-with-body",
-      "-m",
-      "10",
-      "--request",
-      "POST",
-      "--data-urlencode",
-      "grant_type=password",
-      "--data-urlencode",
-      "client_id=admin-cli",
-      "--data-urlencode",
-      `username=${adminUsername}`,
-      "--data-urlencode",
-      `password=${adminPassword}`,
-      `https://keycloak.uds.dev/realms/${realm}/protocol/openid-connect/token`,
-    ]);
-    expect(tokenResponse.exitCode, tokenResponse.stderr).toBe(0);
-    const { access_token: realmAdminToken } = JSON.parse(tokenResponse.stdout) as {
-      access_token: string;
-    };
+    const serverInfoResponse = await tenantRequest("/admin/serverinfo", realmAdminToken);
+    expect(status(serverInfoResponse.stdout)).toBe(200);
+
+    const realmResponse = await tenantRequest(`/admin/realms/${realm}`, realmAdminToken);
+    expect(status(realmResponse.stdout)).toBe(200);
 
     const userResponse = await tenantRequest(
       `/admin/realms/${realm}/users/${targetUserId}`,

@@ -27,7 +27,7 @@ The request path is:
 3. The Keycloak service sends inbound traffic through `keycloak-waypoint`.
 4. The waypoint `AuthorizationPolicy` evaluates the source gateway namespace and request path before Keycloak receives the request.
 5. Keycloak serves the realm specific Admin Console and authenticates the user against the `uds` realm.
-6. Keycloak evaluates `query-users` and fine grained `Users` resource permissions for each console and Admin REST API operation.
+6. Keycloak includes `query-users` in the console token through the `security-admin-console` client role scope mapping, then evaluates the role and fine grained `Users` resource permissions for each Admin REST API operation.
 
 The existing admin gateway remains the path for `https://keycloak.<admin-domain>/` and master realm administration. The tenant gateway exposes only the configured realm's console and required Admin API routes, not master realm administration.
 
@@ -35,18 +35,20 @@ The existing admin gateway remains the path for `https://keycloak.<admin-domain>
 
 The feature enforces authorization in separate layers. Each layer protects a different boundary.
 
-| Layer             | Enforcement                                                                           | Effect                                                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Tenant ingress    | Keycloak `Package` exposure rule                                                      | Routes the dedicated `keycloak.<domain>` host to Keycloak.                                                                                       |
-| Keycloak waypoint | `keycloak-block-admin-access-from-public-gateway` `AuthorizationPolicy`               | Denies public gateway `/admin*` and master realm traffic except for the dedicated UDS realm console and its required UDS realm Admin API routes. |
-| Workload boundary | `keycloak-enforce-waypoint` `AuthorizationPolicy`                                     | Denies cross namespace direct access to Keycloak pods, forcing inbound traffic through the waypoint.                                             |
-| Application       | Keycloak `uds-realm-user-admins` group, `query-users`, and FGAP v2 `Users` permission | Limits the dedicated console to UDS user administration.                                                                                         |
+| Layer             | Enforcement                                                                                                                        | Effect                                                                                                                                           |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tenant ingress    | Keycloak `Package` exposure rule                                                                                                   | Routes the dedicated `keycloak.<domain>` host to Keycloak.                                                                                       |
+| Keycloak waypoint | `keycloak-block-admin-access-from-public-gateway` `AuthorizationPolicy`                                                            | Denies public gateway `/admin*` and master realm traffic except for the dedicated UDS realm console and its required UDS realm Admin API routes. |
+| Workload boundary | `keycloak-enforce-waypoint` `AuthorizationPolicy`                                                                                  | Denies cross namespace direct access to Keycloak pods, forcing inbound traffic through the waypoint.                                             |
+| Application       | Keycloak `uds-realm-user-admins` group, `query-users`, `security-admin-console` role scope mapping, and FGAP v2 `Users` permission | Starts the dedicated console and limits it to UDS user administration.                                                                           |
 
 This combination prevents a tenant gateway route from bypassing the waypoint policy. It also prevents a valid dedicated console user from administering the master realm, because the user has no master realm role and the tenant gateway does not expose master realm administration.
 
 ## Keycloak permission design
 
-The script enables Keycloak 26.7 fine grained admin permissions version 2 for the `uds` realm. It creates `uds-realm-user-admins`, assigns the group the `realm-management/query-users` client role, creates the `uds-realm-user-admins-policy` group policy, and creates `uds-realm-user-admins-users` with `view` and `manage` scopes for resource type `Users`.
+The script enables Keycloak 26.7 fine grained admin permissions version 2 for the `uds` realm. It creates `uds-realm-user-admins`, assigns the group the `realm-management/query-users` client role, adds that role to the `security-admin-console` client role scope mappings, creates the `uds-realm-user-admins-policy` group policy, and creates `uds-realm-user-admins-users` with `view` and `manage` scopes for resource type `Users`.
+
+The UDS realm sets `security-admin-console.fullScopeAllowed` to `false`. Keycloak therefore requires the explicit role scope mapping before it includes `query-users` in a console token. The mapping does not grant `query-users`; it allows Keycloak to include the role for every UDS realm identity that already holds it. The provisioning flow assigns the role through `uds-realm-user-admins`, while fine grained permissions continue to control each identity's operations. Without the mapping, `/admin/serverinfo` returns `403` after sign in and the console displays a permission error.
 
 Keycloak has no attribute only administration scope. The unrestricted `Users` resource permission can view and update every user profile field that the realm user profile allows. It can also delete users and reset passwords when Keycloak needs that fallback. It does not grant role mappings, group membership, client administration, realm administration, or impersonation. The designated administrator also has no direct `realm-management` client roles.
 
@@ -66,11 +68,11 @@ The script follows this flow:
 2. Look up the `uds` realm, `realm-management`, and `admin-permissions` clients.
 3. Find the target identity. Create an enabled local user with a temporary password only when it does not exist.
 4. Enable realm administration permissions and create or update `uds-realm-user-admins`.
-5. Remove direct target user `realm-management` roles, assign `query-users` to the group, and add the target user to the group.
+5. Remove direct target user `realm-management` roles, assign `query-users` to the group, expose that role to `security-admin-console` tokens, and add the target user to the group.
 6. Create or update the group policy and the `Users` resource permission with `view` and `manage` scopes.
 7. Reconcile the Keycloak `Package` tenant console route and the two tenant restrictions in `keycloak-block-admin-access-from-public-gateway`.
 8. Add `keycloak.<domain>` to the path parameter protection `EnvoyFilter`.
-9. Verify the route, authorization policy restrictions, `EnvoyFilter`, group membership, role mapping, group policy, and resource permission, then print the dedicated console URL.
+9. Verify the route, authorization policy restrictions, `EnvoyFilter`, group membership, group role, console role scope mapping, group policy, and resource permission, then print the dedicated console URL.
 
 The script is idempotent for the route, policy, `EnvoyFilter`, group, group policy, permission, named user, and group assignment. It does not create a master realm administrator, modify user profile configuration, or grant `realm-admin`. Run `scripts/configure-keycloak-dedicated-admin-console.sh --self-test` to validate its transformation idempotency without connecting to a cluster.
 
@@ -101,16 +103,16 @@ The configured Keycloak group, group policy, permission, and membership persist 
 
 The main threats and controls are:
 
-| Threat                                                                              | Mitigation                                                                                                                 |
-| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Tenant gateway exposes the full Keycloak admin surface                              | The route and waypoint policy expose only the dedicated UDS realm console and the Admin API routes required to operate it. |
-| Direct traffic bypasses gateway authorization                                       | The waypoint policy denies cross namespace direct traffic to Keycloak workloads.                                           |
-| Dedicated administrator controls the master realm                                   | The account exists in `uds`, has no master realm role, and the tenant gateway does not expose master realm administration. |
-| Administrator changes roles, groups, clients, realm settings, or impersonates users | FGAP v2 grants only `Users` `view` and `manage` scopes, with `query-users` for user lookup.                                |
-| Administrator changes or deletes a user beyond a single attribute                   | Keycloak has no attribute only scope. Assign access only to trusted named operators and remove group membership after use. |
-| Master administrator credentials leak during provisioning                           | Run the script on a trusted workstation, avoid command history exposure, and do not persist credentials.                   |
-| Generated test administrator credentials leak                                       | Keep the task limited to disposable environments, restrict Secret access, and delete the local user and Secret after use.  |
-| Route matching bypasses authorization with path parameters                          | Keep Keycloak path parameter protection enabled and retain the waypoint policy coverage tests.                             |
+| Threat                                                                              | Mitigation                                                                                                                                                                                                                      |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tenant gateway exposes the full Keycloak admin surface                              | The route and waypoint policy expose only the dedicated UDS realm console and the Admin API routes required to operate it.                                                                                                      |
+| Direct traffic bypasses gateway authorization                                       | The waypoint policy denies cross namespace direct traffic to Keycloak workloads.                                                                                                                                                |
+| Dedicated administrator controls the master realm                                   | The account exists in `uds`, has no master realm role, and the tenant gateway does not expose master realm administration.                                                                                                      |
+| Administrator changes roles, groups, clients, realm settings, or impersonates users | FGAP v2 grants only `Users` `view` and `manage` scopes, with `query-users` for user lookup. The console scope mapping grants no role, but it includes `query-users` in console tokens for every identity that already holds it. |
+| Administrator changes or deletes a user beyond a single attribute                   | Keycloak has no attribute only scope. Assign access only to trusted named operators and remove group membership after use.                                                                                                      |
+| Master administrator credentials leak during provisioning                           | Run the script on a trusted workstation, avoid command history exposure, and do not persist credentials.                                                                                                                        |
+| Generated test administrator credentials leak                                       | Keep the task limited to disposable environments, restrict Secret access, and delete the local user and Secret after use.                                                                                                       |
+| Route matching bypasses authorization with path parameters                          | Keep Keycloak path parameter protection enabled and retain the waypoint policy coverage tests.                                                                                                                                  |
 
 ## Test evidence
 
@@ -121,6 +123,7 @@ The following checks ran against the feature branch through August 13, 2026.
 | Keycloak chart tests                   | `helm unittest src/keycloak/chart --color`                                                                                                                   | Passed, 25 suites and 105 tests                                                                                        |
 | Keycloak chart lint                    | `helm lint src/keycloak/chart`                                                                                                                               | Passed                                                                                                                 |
 | Script syntax and transform validation | `bash -n scripts/configure-keycloak-dedicated-admin-console.sh && scripts/configure-keycloak-dedicated-admin-console.sh --self-test`                         | Passed                                                                                                                 |
+| Signed in console bootstrap            | Completed a browser login through `https://keycloak.uds.dev/admin/uds/console/` after reconciling the console role scope mapping                             | The console loaded the **Users** navigation with no failed HTTP responses                                              |
 | Insecure realm user administrator task | Ran `uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin` twice against the disposable demo cluster                                          | Created the Secret and user, preserved the credential, returned `200` for users and `403` for clients and master realm |
 | Fine grained permission setup          | Ran the script twice against disposable Keycloak 26.7 and stock UDS Core 1.8.0 with Keycloak 26.6.2, then inspected the group, role, policy, and permission  | Passed both runs in each environment, including the idempotency verification                                           |
 | Permission boundary                    | Used a restricted UDS realm token to update an attribute, then attempted client, group membership, role mapping, impersonation, realm, and master operations | User read returned `200`, user update returned `204`, and each restricted request returned `403`                       |
@@ -137,7 +140,7 @@ Use a new, disposable UDS Core environment. Do not use production credentials or
 2. Configure DNS and TLS so `keycloak.<domain>` resolves to the tenant gateway and `keycloak.<admin-domain>` resolves to the admin gateway.
 3. Bootstrap a temporary master realm administrator using [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/).
 4. Run `uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin`, then read the demonstration credential from `keycloak-realm-user-admin-password`. To demonstrate the production path instead, select a named federated identity and run `scripts/configure-keycloak-dedicated-admin-console.sh`.
-5. Show the `uds-realm-user-admins` group, its `query-users` role, the `uds-realm-user-admins-policy` group policy, and `uds-realm-user-admins-users` `Users` permission with `view` and `manage` scopes.
+5. Show the `uds-realm-user-admins` group, its `query-users` role, the `security-admin-console` role scope mapping, the `uds-realm-user-admins-policy` group policy, and `uds-realm-user-admins-users` `Users` permission with `view` and `manage` scopes.
 6. Open `https://keycloak.<domain>/admin/uds/console/` in a clean browser profile and sign in as the demonstration user.
 7. Show **Users**, change an allowed test user attribute, save it, and reopen the user to verify persistence.
 8. Show that role mappings, group membership, clients, realm settings, impersonation, and master realm administration are unavailable.

@@ -241,7 +241,7 @@ verify_resources() {
 }
 
 configure_user() {
-  local realm_path user_path group_path users user user_id group group_id client realm_management_client_id admin_permissions_client_id role current remove password_request create_request role_request policy policy_id permission permission_id request verify created=false
+  local realm_path user_path group_path users user user_id group group_id client realm_management_client_id security_admin_console_client_id admin_permissions_client_id role current remove password_request create_request role_request policy policy_id permission permission_id request verify created=false
   realm_path="$(urlencode "$UDS_REALM")"
   user_path="$(urlencode "$UDS_REALM_ADMIN_USERNAME")"
   group_path="$(urlencode "$REALM_ADMIN_GROUP")"
@@ -300,6 +300,18 @@ configure_user() {
 
   role="$TEMP_DIR/query-users-role.json"
   api GET "/admin/realms/${realm_path}/clients/${realm_management_client_id}/roles/query-users" "" "$role"
+  role_request="$TEMP_DIR/assign-query-users-role.json"
+  jq '[.]' "$role" > "$role_request"
+
+  client="$TEMP_DIR/security-admin-console-client.json"
+  api GET "/admin/realms/${realm_path}/clients?clientId=security-admin-console" "" "$client"
+  security_admin_console_client_id="$(jq -er 'if length == 1 then .[0].id else empty end' "$client")" || fail "security-admin-console client not found"
+  current="$TEMP_DIR/current-console-realm-management-scopes.json"
+  api GET "/admin/realms/${realm_path}/clients/${security_admin_console_client_id}/scope-mappings/clients/${realm_management_client_id}" "" "$current"
+  if ! jq -e 'any(.[]; .name == "query-users")' "$current" >/dev/null; then
+    api POST "/admin/realms/${realm_path}/clients/${security_admin_console_client_id}/scope-mappings/clients/${realm_management_client_id}" "$role_request" "$TEMP_DIR/assign-console-scope-response.json"
+  fi
+
   current="$TEMP_DIR/current-group-realm-management-roles.json"
   api GET "/admin/realms/${realm_path}/groups/${group_id}/role-mappings/clients/${realm_management_client_id}" "" "$current"
   remove="$TEMP_DIR/remove-group-realm-management-roles.json"
@@ -307,8 +319,6 @@ configure_user() {
   if [[ "$(jq 'length' "$remove")" -gt 0 ]]; then
     api DELETE "/admin/realms/${realm_path}/groups/${group_id}/role-mappings/clients/${realm_management_client_id}" "$remove" "$TEMP_DIR/remove-group-roles-response.json"
   fi
-  role_request="$TEMP_DIR/assign-query-users-role.json"
-  jq '[.]' "$role" > "$role_request"
   api POST "/admin/realms/${realm_path}/groups/${group_id}/role-mappings/clients/${realm_management_client_id}" "$role_request" "$TEMP_DIR/assign-group-role-response.json"
 
   api PUT "/admin/realms/${realm_path}/users/${user_id}/groups/${group_id}" "" "$TEMP_DIR/add-user-to-group-response.json"
@@ -351,6 +361,8 @@ configure_user() {
 
   api GET "/admin/realms/${realm_path}/groups/${group_id}/role-mappings/clients/${realm_management_client_id}" "" "$verify"
   jq -e 'length == 1 and .[0].name == "query-users"' "$verify" >/dev/null || fail "Group realm-management role verification failed"
+  api GET "/admin/realms/${realm_path}/clients/${security_admin_console_client_id}/scope-mappings/clients/${realm_management_client_id}" "" "$verify"
+  jq -e 'any(.[]; .name == "query-users")' "$verify" >/dev/null || fail "Admin console role scope verification failed"
   api GET "/admin/realms/${realm_path}/users/${user_id}/groups" "" "$verify"
   jq -e --arg groupId "$group_id" 'any(.[]; .id == $groupId)' "$verify" >/dev/null || fail "User group membership verification failed"
   api GET "/admin/realms/${realm_path}" "" "$verify"
