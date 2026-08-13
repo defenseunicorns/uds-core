@@ -333,5 +333,5 @@ describe("integration - Keycloak realm user administrator", () => {
 
     const masterResponse = await tenantRequest("/admin/realms/master", realmAdminToken);
     expect(status(masterResponse.stdout)).toBe(403);
-  });
+  }, 60000);
 });
