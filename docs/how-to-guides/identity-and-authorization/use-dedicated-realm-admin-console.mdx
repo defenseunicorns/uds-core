@@ -36,6 +36,34 @@ The dedicated console does not grant master realm access. Keep the master realm 
 Choose the persistent deployment value for new deployments and upgrades. Use the script only path when you must configure an existing stock deployment without redeploying it.
 
 <Tabs>
+  <TabItem label="Local demo bundle">
+
+Enable the console when you deploy the published `k3d-core-demo` bundle. The insecure administrator generation setting creates the local bootstrap credential that the provisioning script requires.
+
+```bash
+uds deploy k3d-core-demo:latest \
+  --set INSECURE_ADMIN_PASSWORD_GENERATION=true \
+  --set KEYCLOAK_DEDICATED_REALM_ADMIN_CONSOLE=true
+```
+
+After deployment, read the generated master realm credentials from the `keycloak-admin-password` Secret, then continue with the provisioning steps.
+
+```bash
+export KEYCLOAK_ADMIN_USERNAME="$(
+  uds zarf tools kubectl get secret keycloak-admin-password \
+    --namespace keycloak \
+    --output go-template='{{ .data.username | base64decode }}'
+)"
+export KEYCLOAK_ADMIN_PASSWORD="$(
+  uds zarf tools kubectl get secret keycloak-admin-password \
+    --namespace keycloak \
+    --output go-template='{{ .data.password | base64decode }}'
+)"
+```
+
+Use this bootstrap credential only for local development. Follow [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/) to rotate the password and delete the Secret.
+
+  </TabItem>
   <TabItem label="Persistent deployment value">
 
 Add the opt in setting to the native Zarf values file used to deploy UDS Core.
@@ -79,12 +107,15 @@ Continue to the provisioning steps without redeploying UDS Core. The script acti
    Set the master credentials and target username, then run the script. It prompts silently for missing passwords. Set `UDS_REALM_ADMIN_PASSWORD` only when the target local user does not already exist. For a new local user, Keycloak marks that password temporary.
 
    ```bash
-   export KEYCLOAK_ADMIN_USERNAME=<master-admin-username>
-   export UDS_REALM_ADMIN_USERNAME=<existing-federated-or-new-local-username>
-   read -r -s KEYCLOAK_ADMIN_PASSWORD
-   export KEYCLOAK_ADMIN_PASSWORD
-   read -r -s UDS_REALM_ADMIN_PASSWORD
-   export UDS_REALM_ADMIN_PASSWORD
+   export UDS_REALM_ADMIN_USERNAME="<existing-federated-or-new-local-username>"
+
+   if [[ -z "${KEYCLOAK_ADMIN_USERNAME:-}" ]]; then
+     export KEYCLOAK_ADMIN_USERNAME="<master-admin-username>"
+   fi
+   if [[ -z "${KEYCLOAK_ADMIN_PASSWORD:-}" ]]; then
+     read -r -s KEYCLOAK_ADMIN_PASSWORD
+     export KEYCLOAK_ADMIN_PASSWORD
+   fi
 
    scripts/configure-keycloak-dedicated-admin-console.sh
    unset KEYCLOAK_ADMIN_USERNAME KEYCLOAK_ADMIN_PASSWORD \
