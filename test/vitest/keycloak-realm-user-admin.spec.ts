@@ -14,7 +14,7 @@ import { execInPod, waitForPodReady } from "./helpers/k8s";
 const realm = "uds";
 const suffix = randomBytes(6).toString("base64url");
 const adminUsername = `realm-user-admin-${suffix}`;
-const adminPassword = `RealmUserAdmin!A1${suffix}`;
+const adminPassword = `RealmUserAdmin!#A1${suffix}`;
 const adminGroupName = `realm-user-admins-${suffix}`;
 const adminPolicyName = `realm-user-admin-policy-${suffix}`;
 const adminPermissionName = `realm-user-admin-permission-${suffix}`;
