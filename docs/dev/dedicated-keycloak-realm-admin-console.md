@@ -6,11 +6,13 @@ This opt in feature exposes the dedicated Keycloak Admin Console for the UDS rea
 
 The feature also provides `scripts/configure-keycloak-dedicated-admin-console.sh`. The script authenticates with a master realm Keycloak administrator, configures Keycloak 26.7 fine grained admin permissions version 2, and grants access by group membership.
 
+For development and testing, `uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin` generates a reusable local `realm-user-admin` credential, provisions the same restricted access, and stores the credential in the `keycloak-realm-user-admin-password` Kubernetes Secret.
+
 ## Architecture
 
 The implementation extends the existing Keycloak `Package` rather than adding another deployment or gateway. Keycloak continues to run behind the `keycloak-waypoint` Gateway API waypoint in the `keycloak` namespace.
 
-The chart defaults `dedicatedRealmAdminConsole.enabled` to `false`. Set the native Zarf value `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` to activate the feature during a UDS Core deploy or upgrade. Enabling the value renders the tenant route, waypoint authorization exceptions, and path parameter protection required by the console. It does not change the Keycloak realm database or create an administrator.
+The chart defaults `dedicatedRealmAdminConsole.enabled` to `false`. Set the native Zarf value `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` to activate the feature during a UDS Core deploy or upgrade. Enabling the value renders the tenant route, waypoint authorization exceptions, and path parameter protection required by the console. The chart does not change the Keycloak realm database or create an administrator. Administrator provisioning remains an explicit script or task operation.
 
 The name follows Keycloak's “dedicated realm admin console” terminology and distinguishes this realm limited tenant route from the existing full administration gateway.
 
@@ -48,7 +50,7 @@ The script enables Keycloak 26.7 fine grained admin permissions version 2 for th
 
 Keycloak has no attribute only administration scope. The unrestricted `Users` resource permission can view and update every user profile field that the realm user profile allows. It can also delete users and reset passwords when Keycloak needs that fallback. It does not grant role mappings, group membership, client administration, realm administration, or impersonation. The designated administrator also has no direct `realm-management` client roles.
 
-The group provides auditable, repeatable access control. Use an existing named federated identity where possible. Do not create users through Helm values or realm imports, because credentials would become deployment data. When a local account is necessary, the script creates it with a temporary initial password. It does not reset the password of an existing account.
+The group provides auditable, repeatable access control. Use an existing named federated identity where possible. Do not create users through Helm values or realm imports, because credentials would become deployment data. When a local account is necessary, the script creates it with a temporary initial password. It does not reset the password of an existing account unless the caller explicitly enables reset mode.
 
 To revoke access, remove the user from `uds-realm-user-admins` and log out all user sessions. Delete a local fallback account when it no longer has an operational purpose.
 
@@ -74,13 +76,26 @@ The script is idempotent for the route, policy, `EnvoyFilter`, group, group poli
 
 Treat supplied passwords as secrets. The script does not echo, write, or store them in Kubernetes. Use the silent prompts or environment variables from an approved secret handling process, then unset the variables.
 
+## Insecure test administrator task
+
+The `create-insecure-realm-user-admin` task is the explicit development and test provisioning path. It requires the master bootstrap credential in `keycloak-admin-password`, so a new demo deployment must enable `INSECURE_ADMIN_PASSWORD_GENERATION=true`.
+
+The task follows this flow:
+
+1. Read the master username and password from `keycloak-admin-password` without printing them.
+2. Reuse `realm-user-admin` and its password from `keycloak-realm-user-admin-password`, or generate a password that satisfies the default UDS realm policy.
+3. Run `scripts/configure-keycloak-dedicated-admin-console.sh` with a non temporary password. Enable explicit reset mode only when the task generated a new credential.
+4. Store the username and password in `keycloak-realm-user-admin-password` only after Keycloak provisioning succeeds.
+
+The task preserves the fixed test user's Secret and password on later runs, which satisfies the realm password history policy. Delete the Secret and run the task again when you need to rotate the credential. The Secret is not part of the Helm release and Kubernetes only base64 encodes its values by default. Do not use this account in production.
+
 ## Upgrade behavior
 
 The feature uses the existing Keycloak `Package`, tenant gateway, and waypoint. Upgrading UDS Core reconciles the exposure, `AuthorizationPolicy`, and `EnvoyFilter` resources through the package deployment. Set `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` to preserve activation across upgrades.
 
 A script only activation can remain live until Helm reconciles the managed resources. A later Keycloak deploy or upgrade with the value set to `false` can remove the script's route and policy changes. Re run the script to restore live activation, or enable the chart value for persistent configuration.
 
-The configured Keycloak group, group policy, permission, and membership persist in the Keycloak database across normal upgrades. An upgrade does not reset a local user's password or remove permissions. Re run the provisioning script to repair the configuration. Disabling the feature removes the tenant route, policy exceptions, and tenant host from path parameter protection. It does not remove group membership or revoke access through another Keycloak administration path.
+The configured Keycloak group, group policy, permission, and membership persist in the Keycloak database across normal upgrades. An upgrade does not reset a local user's password or remove permissions. The test credential Secret also persists because Helm does not own it. Re run the provisioning script or task to repair the configuration. Disabling the feature removes the tenant route, policy exceptions, and tenant host from path parameter protection. It does not remove group membership or revoke access through another Keycloak administration path.
 
 ## Threat model and mitigations
 
@@ -94,23 +109,25 @@ The main threats and controls are:
 | Administrator changes roles, groups, clients, realm settings, or impersonates users | FGAP v2 grants only `Users` `view` and `manage` scopes, with `query-users` for user lookup.                                |
 | Administrator changes or deletes a user beyond a single attribute                   | Keycloak has no attribute only scope. Assign access only to trusted named operators and remove group membership after use. |
 | Master administrator credentials leak during provisioning                           | Run the script on a trusted workstation, avoid command history exposure, and do not persist credentials.                   |
+| Generated test administrator credentials leak                                       | Keep the task limited to disposable environments, restrict Secret access, and delete the local user and Secret after use.  |
 | Route matching bypasses authorization with path parameters                          | Keep Keycloak path parameter protection enabled and retain the waypoint policy coverage tests.                             |
 
 ## Test evidence
 
-The following checks ran against the feature branch on August 12, 2026.
+The following checks ran against the feature branch through August 13, 2026.
 
-| Check                                  | Command or method                                                                                                                                            | Result                                                                                                               |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Keycloak chart tests                   | `helm unittest src/keycloak/chart --color`                                                                                                                   | Passed, 25 suites and 105 tests                                                                                      |
-| Keycloak chart lint                    | `helm lint src/keycloak/chart`                                                                                                                               | Passed                                                                                                               |
-| Script syntax and transform validation | `bash -n scripts/configure-keycloak-dedicated-admin-console.sh && scripts/configure-keycloak-dedicated-admin-console.sh --self-test`                         | Passed                                                                                                               |
-| Fine grained permission setup          | Ran the script twice against disposable Keycloak 26.7 and stock UDS Core 1.8.0 with Keycloak 26.6.2, then inspected the group, role, policy, and permission  | Passed both runs in each environment, including the idempotency verification                                         |
-| Permission boundary                    | Used a restricted UDS realm token to update an attribute, then attempted client, group membership, role mapping, impersonation, realm, and master operations | User read returned `200`, user update returned `204`, and each restricted request returned `403`                     |
-| UDS Core unit tests                    | `npm run test:unit`                                                                                                                                          | Passed, 57 files and 1,056 tests                                                                                     |
-| Values validation                      | `uds run -f tasks/lint.yaml values-lint` and `npx vitest run test/values/identity-authorization.spec.ts`                                                     | Full values lint passed, and the identity package passed 24 tests                                                    |
-| Standard bundle values rendering       | `npx vitest run test/values/standard.spec.ts`                                                                                                                | Blocked before assertions because all three upstream GitHub chart download attempts returned `EOF`; 36 tests skipped |
-| Formatting                             | `npm run format:check`                                                                                                                                       | Passed                                                                                                               |
+| Check                                  | Command or method                                                                                                                                            | Result                                                                                                                 |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Keycloak chart tests                   | `helm unittest src/keycloak/chart --color`                                                                                                                   | Passed, 25 suites and 105 tests                                                                                        |
+| Keycloak chart lint                    | `helm lint src/keycloak/chart`                                                                                                                               | Passed                                                                                                                 |
+| Script syntax and transform validation | `bash -n scripts/configure-keycloak-dedicated-admin-console.sh && scripts/configure-keycloak-dedicated-admin-console.sh --self-test`                         | Passed                                                                                                                 |
+| Insecure realm user administrator task | Ran `uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin` twice against the disposable demo cluster                                          | Created the Secret and user, preserved the credential, returned `200` for users and `403` for clients and master realm |
+| Fine grained permission setup          | Ran the script twice against disposable Keycloak 26.7 and stock UDS Core 1.8.0 with Keycloak 26.6.2, then inspected the group, role, policy, and permission  | Passed both runs in each environment, including the idempotency verification                                           |
+| Permission boundary                    | Used a restricted UDS realm token to update an attribute, then attempted client, group membership, role mapping, impersonation, realm, and master operations | User read returned `200`, user update returned `204`, and each restricted request returned `403`                       |
+| UDS Core unit tests                    | `npm run test:unit`                                                                                                                                          | Passed, 57 files and 1,056 tests                                                                                       |
+| Values validation                      | `uds run -f tasks/lint.yaml values-lint` and `npx vitest run test/values/identity-authorization.spec.ts`                                                     | Full values lint passed, and the identity package passed 24 tests                                                      |
+| Standard bundle values rendering       | `npx vitest run test/values/standard.spec.ts`                                                                                                                | Blocked before assertions because all three upstream GitHub chart download attempts returned `EOF`; 36 tests skipped   |
+| Formatting                             | `npm run format:check`                                                                                                                                       | Passed                                                                                                                 |
 
 ## Fresh environment presentation runbook
 
@@ -119,13 +136,13 @@ Use a new, disposable UDS Core environment. Do not use production credentials or
 1. Deploy the UDS Core version that includes this feature to a clean cluster with `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true`. To demonstrate stock deployment activation instead, deploy stock UDS Core with the value absent and let the script in step 4 activate the live resources.
 2. Configure DNS and TLS so `keycloak.<domain>` resolves to the tenant gateway and `keycloak.<admin-domain>` resolves to the admin gateway.
 3. Bootstrap a temporary master realm administrator using [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/).
-4. Select a named federated demonstration identity, or create a local demonstration user with a temporary password. Run `scripts/configure-keycloak-dedicated-admin-console.sh` with the temporary master administrator and that username.
+4. Run `uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin`, then read the demonstration credential from `keycloak-realm-user-admin-password`. To demonstrate the production path instead, select a named federated identity and run `scripts/configure-keycloak-dedicated-admin-console.sh`.
 5. Show the `uds-realm-user-admins` group, its `query-users` role, the `uds-realm-user-admins-policy` group policy, and `uds-realm-user-admins-users` `Users` permission with `view` and `manage` scopes.
 6. Open `https://keycloak.<domain>/admin/uds/console/` in a clean browser profile and sign in as the demonstration user.
 7. Show **Users**, change an allowed test user attribute, save it, and reopen the user to verify persistence.
 8. Show that role mappings, group membership, clients, realm settings, impersonation, and master realm administration are unavailable.
 9. Show the waypoint `AuthorizationPolicy` and the tenant route to demonstrate the ingress restriction.
-10. Remove the demonstration identity from `uds-realm-user-admins`, log out the user's sessions, and confirm that the console no longer authorizes the account.
+10. Remove the demonstration identity from `uds-realm-user-admins`, log out the user's sessions, and confirm that the console no longer authorizes the account. Delete the local test user and `keycloak-realm-user-admin-password`.
 11. Destroy the disposable environment and revoke the temporary master realm administrator.
 
 The prepared presentation environment produced this evidence on August 12, 2026:

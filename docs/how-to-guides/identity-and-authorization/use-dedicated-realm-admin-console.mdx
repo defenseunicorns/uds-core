@@ -17,9 +17,10 @@ You will enable the dedicated Keycloak Admin Console, provision a restricted adm
 - [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
 - Access to the Kubernetes cluster
 - The UDS Core package artifact for your deployed version
+- A UDS Core source checkout that matches the deployed version
 - A browser that can reach `https://keycloak.<domain>`
 - The Keycloak administrator username and password for the `master` realm
-- `curl`, `jq`, and `kubectl` installed locally
+- `curl`, `jq`, `kubectl`, and `openssl` installed locally
 
 ## Before you begin
 
@@ -28,6 +29,8 @@ UDS Core disables the dedicated realm admin console by default. For persistent a
 The script configures Keycloak 26.7 fine grained admin permissions version 2 for the named `uds-realm-user-admins` group. Members receive the `realm-management/query-users` role and `view` and `manage` scopes on the `Users` resource type. Keycloak has no attribute-only scope. This grants access to all user profiles, including profile updates, deletion, and the password reset fallback, but not role mappings, group membership, clients, realm settings, or impersonation.
 
 Use an existing named federated identity when possible. The script does not change that user's password. When you need a local Keycloak user, the script creates it with a temporary initial password and Keycloak requires the user to change it at first sign in. Do not store administrator users or passwords in Helm values or a realm import.
+
+For local testing, the `create-insecure-realm-user-admin` task creates `realm-user-admin` with a non temporary generated password. The task stores the credentials in `keycloak-realm-user-admin-password` and preserves them when you run it again. It requires the `keycloak-admin-password` bootstrap Secret.
 
 The dedicated console does not grant master realm access. Keep the master realm administrator credential separate and use it only to provision or revoke realm administrators.
 
@@ -46,22 +49,24 @@ uds deploy k3d-core-demo:latest \
   --set KEYCLOAK_DEDICATED_REALM_ADMIN_CONSOLE=true
 ```
 
-After deployment, read the generated master realm credentials from the `keycloak-admin-password` Secret, then continue with the provisioning steps.
+After deployment, create the insecure test administrator from the matching UDS Core source checkout.
 
 ```bash
-export KEYCLOAK_ADMIN_USERNAME="$(
-  uds zarf tools kubectl get secret keycloak-admin-password \
-    --namespace keycloak \
-    --output go-template='{{ .data.username | base64decode }}'
-)"
-export KEYCLOAK_ADMIN_PASSWORD="$(
-  uds zarf tools kubectl get secret keycloak-admin-password \
-    --namespace keycloak \
-    --output go-template='{{ .data.password | base64decode }}'
-)"
+uds run -f src/keycloak/tasks.yaml create-insecure-realm-user-admin
 ```
 
-Use this bootstrap credential only for local development. Follow [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/) to rotate the password and delete the Secret.
+Read the generated credentials when you are ready to sign in.
+
+```bash
+uds zarf tools kubectl get secret keycloak-realm-user-admin-password \
+  --namespace keycloak \
+  --output go-template='Username: {{ .data.username | base64decode }}{{ "\n" }}Password: {{ .data.password | base64decode }}{{ "\n" }}'
+```
+
+> [!WARNING]
+> Use this account only for local development and testing. Kubernetes Secrets are not encrypted by default. Running the task again preserves the generated credential. To rotate it, delete `keycloak-realm-user-admin-password`, then run the task again.
+
+Continue at step 2. Follow [Manage Keycloak admin access](/how-to-guides/identity-and-authorization/manage-admin-access/) to rotate the master password and delete its Secret.
 
   </TabItem>
   <TabItem label="Persistent deployment value">
@@ -128,7 +133,7 @@ Continue to the provisioning steps without redeploying UDS Core. The script acti
 
 2. **Sign in to the dedicated console**
 
-   Open `https://keycloak.<domain>/admin/uds/console/` and sign in with the UDS realm administrator identity. Keycloak opens the **uds** realm directly. A new local user must change the temporary password before continuing.
+   Open `https://keycloak.<domain>/admin/uds/console/` and sign in with the UDS realm administrator identity. Keycloak opens the **uds** realm directly. A local user created by the script must change the temporary password before continuing. The insecure test administrator uses the password from `keycloak-realm-user-admin-password` without a first sign in password change.
 
 3. **Manage user profiles**
 
@@ -139,7 +144,12 @@ Continue to the provisioning steps without redeploying UDS Core. The script acti
 
 4. **Revoke access when the task is complete**
 
-   Sign in to the master realm console through `https://keycloak.<admin-domain>/`, open the UDS realm user, remove the user from `uds-realm-user-admins`, then log out all sessions for that user. Delete a local account when it no longer has an operational purpose.
+   Sign in to the master realm console through `https://keycloak.<admin-domain>/`, open the UDS realm user, remove the user from `uds-realm-user-admins`, then log out all sessions for that user. Delete a local account when it no longer has an operational purpose. After you delete `realm-user-admin`, delete its generated credentials.
+
+   ```bash
+   uds zarf tools kubectl delete secret keycloak-realm-user-admin-password \
+     --namespace keycloak
+   ```
 
 </Steps>
 

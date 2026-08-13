@@ -33,7 +33,7 @@ For an existing stock deployment, `scripts/configure-keycloak-dedicated-admin-co
 The group receives `realm-management/query-users` and a group policy that grants `view` and `manage` scopes on the `Users` resource type. Keycloak has no attribute only scope. The permission can update all user profile fields, delete users, and reset passwords when needed. It does not grant role mappings, group membership, clients, realm settings, or impersonation.
 
 > [!CAUTION]
-> Assign group membership to a named federated identity when possible. For a local fallback, the script creates a user with a temporary password. Do not store users or passwords in Helm values or a realm import. To revoke access, remove the user from `uds-realm-user-admins` and log out the user's sessions.
+> Assign group membership to a named federated identity when possible. For a local fallback, the script creates a user with a temporary password. The `create-insecure-realm-user-admin` task provides a non temporary local test credential in `keycloak-realm-user-admin-password` for disposable environments. Do not store users or passwords in Helm values or a realm import. To revoke access, remove the user from `uds-realm-user-admins` and log out the user's sessions.
 
 When enabled, the Keycloak `Package` exposes the console through the tenant gateway. Its waypoint authorization policy continues to deny `/admin*` traffic from the tenant gateway except for the dedicated realm console and its required UDS realm Admin API routes. The admin gateway remains the access path for master realm administration and the general Admin API.
 

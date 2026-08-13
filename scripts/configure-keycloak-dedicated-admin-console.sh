@@ -13,6 +13,8 @@
 # Missing values are prompted without echo. Optional variables: UDS_REALM (uds),
 # KEYCLOAK_NAMESPACE (keycloak), CLUSTER_DOMAIN, KEYCLOAK_URL,
 # KEYCLOAK_LOCAL_PORT (18080), and KUBECTL_BIN (kubectl).
+# Set UDS_REALM_ADMIN_RESET_PASSWORD=true to reset an existing local user and
+# UDS_REALM_ADMIN_PASSWORD_TEMPORARY=false to make that password permanent.
 
 set -euo pipefail
 umask 077
@@ -35,6 +37,7 @@ KEYCLOAK_URL="${KEYCLOAK_URL:-}"
 CLUSTER_DOMAIN="${CLUSTER_DOMAIN:-}"
 TEMP_DIR=""
 PORT_FORWARD_PID=""
+KUBECTL_COMMAND=()
 
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
@@ -66,7 +69,7 @@ prompt_secret() {
 }
 
 kubectl() {
-  command "$KUBECTL_BIN" "$@"
+  command "${KUBECTL_COMMAND[@]}" "$@"
 }
 
 urlencode() {
@@ -261,9 +264,10 @@ configure_user() {
   jq '.enabled = true' "$user" > "$TEMP_DIR/enabled-user.json"
   api PUT "/admin/realms/${realm_path}/users/${user_id}" "$TEMP_DIR/enabled-user.json" "$TEMP_DIR/enable-user-response.json"
 
-  if [[ "$created" == true ]]; then
+  if [[ "$created" == true || "$UDS_REALM_ADMIN_RESET_PASSWORD" == true ]]; then
+    prompt_secret UDS_REALM_ADMIN_PASSWORD "UDS realm admin password"
     password_request="$TEMP_DIR/password.json"
-    json_request "$password_request" --arg password "$UDS_REALM_ADMIN_PASSWORD" '{type: "password", value: $password, temporary: true}'
+    json_request "$password_request" --arg password "$UDS_REALM_ADMIN_PASSWORD" --argjson temporary "$UDS_REALM_ADMIN_PASSWORD_TEMPORARY" '{type: "password", value: $password, temporary: $temporary}'
     api PUT "/admin/realms/${realm_path}/users/${user_id}/reset-password" "$password_request" "$TEMP_DIR/reset-password-response.json"
   fi
 
@@ -394,6 +398,8 @@ JSON
   jq -e --arg name "$REALM_ADMIN_POLICY" '.name == $name and .logic == "POSITIVE" and (.groups | length == 1)' "$once" >/dev/null || fail "Group policy request is invalid"
   json_request "$twice" --arg name "$REALM_ADMIN_USERS_PERMISSION" --arg policy "$REALM_ADMIN_POLICY" '{name: $name, resourceType: "Users", scopes: ["view", "manage"], policies: [$policy]}'
   jq -e --arg name "$REALM_ADMIN_USERS_PERMISSION" --arg policy "$REALM_ADMIN_POLICY" '.name == $name and .resourceType == "Users" and .scopes == ["view", "manage"] and .policies == [$policy] and has("resources") | not' "$twice" >/dev/null || fail "Users permission request is invalid"
+  json_request "$once" --arg password password --argjson temporary false '{type: "password", value: $password, temporary: $temporary}'
+  jq -e '.type == "password" and .temporary == false' "$once" >/dev/null || fail "Permanent password request is invalid"
   printf 'Self-test passed.\n'
 }
 
@@ -404,9 +410,15 @@ main() {
     return
   fi
   [[ $# -eq 0 ]] || fail "Usage: $0"
-  require_command "$KUBECTL_BIN"
+  read -r -a KUBECTL_COMMAND <<< "$KUBECTL_BIN"
+  [[ ${#KUBECTL_COMMAND[@]} -gt 0 ]] || fail "KUBECTL_BIN cannot be empty"
+  require_command "${KUBECTL_COMMAND[0]}"
   require_command curl
   require_command jq
+  UDS_REALM_ADMIN_RESET_PASSWORD="${UDS_REALM_ADMIN_RESET_PASSWORD:-false}"
+  UDS_REALM_ADMIN_PASSWORD_TEMPORARY="${UDS_REALM_ADMIN_PASSWORD_TEMPORARY:-true}"
+  [[ "$UDS_REALM_ADMIN_RESET_PASSWORD" == true || "$UDS_REALM_ADMIN_RESET_PASSWORD" == false ]] || fail "UDS_REALM_ADMIN_RESET_PASSWORD must be true or false"
+  [[ "$UDS_REALM_ADMIN_PASSWORD_TEMPORARY" == true || "$UDS_REALM_ADMIN_PASSWORD_TEMPORARY" == false ]] || fail "UDS_REALM_ADMIN_PASSWORD_TEMPORARY must be true or false"
   prompt_secret KEYCLOAK_ADMIN_USERNAME "Keycloak master admin username"
   prompt_secret KEYCLOAK_ADMIN_PASSWORD "Keycloak master admin password"
   prompt_secret UDS_REALM_ADMIN_USERNAME "UDS realm admin username"
