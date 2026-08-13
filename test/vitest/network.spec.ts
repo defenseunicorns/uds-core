@@ -951,6 +951,18 @@ test.concurrent("Keycloak dedicated realm admin console routing", async () => {
   const consoleResponse = await request("https://keycloak.uds.dev/admin/uds/console/");
   expect(consoleResponse.stdout).toContain("HTTP_CODE:200");
 
+  const consoleDocument = await execInPod("test-admin-app", testAdminApp, "curl", [
+    "curl",
+    "-fsS",
+    "https://keycloak.uds.dev/admin/uds/console/",
+  ]);
+  for (const property of ["serverBaseUrl", "adminBaseUrl", "authUrl", "authServerUrl"]) {
+    expect(consoleDocument.stdout).toContain(`"${property}": "https://keycloak.uds.dev"`);
+  }
+
+  const localizationResponse = await request("https://keycloak.uds.dev/resources/uds/admin/en");
+  expect(localizationResponse.stdout).toContain("HTTP_CODE:200");
+
   const masterConsoleResponse = await request("https://keycloak.uds.dev/admin/master/console/");
   expect(masterConsoleResponse.stdout).toContain("HTTP_CODE:403");
 

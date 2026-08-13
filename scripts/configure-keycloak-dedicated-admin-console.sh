@@ -161,7 +161,7 @@ transform_policy() {
         to: [{operation: {
           ports: ["8080"],
           paths: ["/admin*"],
-          notHosts: ["keycloak." + $domain, "keycloak." + $domain + ":*"]
+          notHosts: ["keycloak." + $domain]
         }}]
       }]
     )' "$1"
@@ -232,7 +232,7 @@ verify_resources() {
       [$rules[] | select(.from == [{source: {namespaces: [$tenant]}}] and .to[0].operation.ports == ["8080"] and .to[0].operation.paths == ["/admin*"])] as $tenantRules |
       ($tenantRules | length == 2 and
         any(.[]; .to[0].operation.notPaths == ["/admin/" + $realm + "/console", "/admin/" + $realm + "/console/*", "/admin/realms/" + $realm, "/admin/realms/" + $realm + "/*", "/admin/serverinfo"]) and
-        any(.[]; .to[0].operation.notHosts == ["keycloak." + $domain, "keycloak." + $domain + ":*"])) and
+        any(.[]; .to[0].operation.notHosts == ["keycloak." + $domain])) and
       ($rules | any(.[]; (.from[0].source.notNamespaces | index($tenant)) != null and .to[0].operation.paths == ["/admin*"])) and
       ($rules | any(.[]; (.from[0].source.notNamespaces | index($tenant)) == null and .to[0].operation.paths == ["/realms/master*"]))' "$policy" >/dev/null || fail "AuthorizationPolicy verification failed"
 
@@ -385,7 +385,8 @@ JSON
   cmp -s "$once" "$twice" || fail "AuthorizationPolicy transform is not idempotent"
   jq -e '
     ([.spec.rules[] | select(.to[0].operation.paths == ["/admin*"] and (.from[0].source.notNamespaces | index("istio-tenant-gateway")) != null)] | length == 1) and
-    ([.spec.rules[] | select(.to[0].operation.paths == ["/realms/master*"] and (.from[0].source.notNamespaces | index("istio-tenant-gateway")) == null)] | length == 1)
+    ([.spec.rules[] | select(.to[0].operation.paths == ["/realms/master*"] and (.from[0].source.notNamespaces | index("istio-tenant-gateway")) == null)] | length == 1) and
+    ([.spec.rules[] | select(.to[0].operation.notHosts == ["keycloak.uds.dev"])] | length == 1)
   ' "$twice" >/dev/null || fail "AuthorizationPolicy transform did not preserve gateway access controls"
   cat > "$path_parameter_filter" <<'JSON'
 {"spec":{"configPatches":[{"patch":{"value":{"typed_config":{"inlineCode":"if host and (\n  host == \"sso.uds.dev\" or\n  host == \"keycloak.admin.uds.dev\"\n) then\nend"}}}}]}}

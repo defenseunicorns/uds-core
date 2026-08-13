@@ -10,7 +10,7 @@ For development and testing, `uds run -f src/keycloak/tasks.yaml create-insecure
 
 ## Architecture
 
-The implementation extends the existing Keycloak `Package` rather than adding another deployment or gateway. Keycloak continues to run behind the `keycloak-waypoint` Gateway API waypoint in the `keycloak` namespace.
+The implementation extends the existing Keycloak `Package` rather than adding another deployment or gateway. Keycloak continues to run behind the `keycloak-waypoint` Gateway API waypoint in the `keycloak` namespace. The console uses the default HTTPS endpoint on the tenant gateway. Use the `keycloak.<domain>` host without an explicit port.
 
 The chart defaults `dedicatedRealmAdminConsole.enabled` to `false`. Set the native Zarf value `keycloak.keycloak.dedicatedRealmAdminConsole.enabled: true` to activate the feature during a UDS Core deploy or upgrade. Enabling the value renders the tenant route, waypoint authorization exceptions, and path parameter protection required by the console. The chart does not change the Keycloak realm database or create an administrator. Administrator provisioning remains an explicit script or task operation.
 

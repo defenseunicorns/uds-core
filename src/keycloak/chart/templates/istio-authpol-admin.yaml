@@ -76,7 +76,6 @@ spec:
               - "/admin*"
             notHosts:
               - "keycloak.{{ .Values.domain }}"
-              - "keycloak.{{ .Values.domain }}:*"
       from:
         - source:
             namespaces:

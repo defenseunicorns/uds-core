@@ -9,7 +9,7 @@ import { Steps, Tabs, TabItem } from "@astrojs/starlight/components";
 
 ## What you'll accomplish
 
-You will enable the dedicated Keycloak Admin Console, provision a restricted administrator in the `uds` realm, and use the console at `https://keycloak.<domain>/admin/uds/console/`. The console uses the tenant gateway, so the administrator can manage UDS users without access to the master realm or admin gateway.
+You will enable the dedicated Keycloak Admin Console, provision a restricted administrator in the `uds` realm, and use the console at `https://keycloak.<domain>/admin/uds/console/`. The console uses the default HTTPS endpoint on the tenant gateway, so the administrator can manage UDS users without access to the master realm or admin gateway. Do not add an explicit port to the URL.
 
 ## Prerequisites
 

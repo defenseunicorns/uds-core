@@ -77,6 +77,10 @@ tests:
             host: keycloak
             service: keycloak-http
             port: 8080
+      - notExists:
+          path: 'spec.network.expose[?(@.description=="dedicated realm admin console redirect")].gateway'
+      - notExists:
+          path: 'spec.network.expose[?(@.description=="dedicated realm admin console")].gateway'
 
   - it: should limit tenant admin paths to the configured realm console, realm API, and server info
     set:
@@ -111,7 +115,6 @@ tests:
           path: 'spec.rules[?(@.to[0].operation.notHosts[0]=="keycloak.tenant.example.com")].to[0].operation.notHosts'
           value:
             - keycloak.tenant.example.com
-            - keycloak.tenant.example.com:*
       - equal:
           path: 'spec.rules[?(@.to[0].operation.notHosts[0]=="keycloak.tenant.example.com")].from[0].source.namespaces'
           value:
