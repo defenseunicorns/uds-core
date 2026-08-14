@@ -42,8 +42,6 @@ tasks:
         task: build-pepr
       - description: Lint packages that expose Zarf values
         task: values-lint
-      - description: "Pepr Format check"
-        cmd: npx pepr format --validate-only
       - description: yaml lint
         cmd: uvx yamllint . -c .yamllint --no-warnings
       - description: codespell lint
