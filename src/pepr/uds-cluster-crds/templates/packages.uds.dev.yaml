@@ -1244,7 +1244,6 @@ spec:
                           compatibility. Set this to false whenever possible to
                           limit role scope and harden security.
                         type: boolean
-                        default: true
                       standardFlowEnabled:
                         description: >-
                           Enables the standard OpenID Connect redirect based
