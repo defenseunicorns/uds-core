@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 include:
@@ -724,3 +724,23 @@ exclude:
     certificateIssuerOrganization: "Microsec Ltd."
     geographicFocus: "Hungary, Europe"
     companyWebsite: "https://e-szigno.hu/en/"
+  - commonName: "SECOM TLS RSA Root CA 2024"
+    owner: "SECOM Trust Systems Co., Ltd."
+    certificateIssuerOrganization: "SECOM Trust Systems Co., Ltd."
+    geographicFocus: "Japan"
+    companyWebsite: "http://www.secomtrust.net/"
+  - commonName: "SECOM TLS ECC Root CA 2024"
+    owner: "SECOM Trust Systems Co., Ltd."
+    certificateIssuerOrganization: "SECOM Trust Systems Co., Ltd."
+    geographicFocus: "Japan"
+    companyWebsite: "http://www.secomtrust.net/"
+  - commonName: "Telia EC TLS Root CA v3"
+    owner: "Telia Company"
+    certificateIssuerOrganization: "Telia Company AB"
+    geographicFocus: "Finland, Sweden, Norway, Denmark, Lithuania, Estonia"
+    companyWebsite: "https://www.teliacompany.com/"
+  - commonName: "Telia RSA TLS Root CA v3"
+    owner: "Telia Company"
+    certificateIssuerOrganization: "Telia Company AB"
+    geographicFocus: "Finland, Sweden, Norway, Denmark, Lithuania, Estonia"
+    companyWebsite: "https://www.teliacompany.com/"
