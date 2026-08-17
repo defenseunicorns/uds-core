@@ -2,5 +2,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 image:
-  repository: ttl.sh/authservice-sentinel-ed882ced
+  repository: ttl.sh/authservice-sentinel-6e3254b0
   tag: "24h"

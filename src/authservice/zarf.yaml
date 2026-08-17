@@ -30,7 +30,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - ttl.sh/authservice-sentinel-ed882ced:24h
+      - ttl.sh/authservice-sentinel-6e3254b0:24h
 
   - name: authservice
     required: true
