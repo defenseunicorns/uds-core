@@ -493,6 +493,8 @@ describe("syncClient secretConfig preservation", () => {
     // Call the actual syncClient function
     await syncClient(mockSso, mockPkg);
 
+    expect(mockCredentialsCreateOrUpdate.mock.calls[0][0]).not.toHaveProperty("fullScopeAllowed");
+
     // Verify the K8s Apply was called with the correct secret name
     expect(mockApply).toHaveBeenCalled();
     // Use type assertion to fix TypeScript error

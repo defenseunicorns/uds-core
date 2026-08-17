@@ -157,6 +157,9 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
   let client = convertSsoToClient(clientReq);
+  if (clientReq.fullScopeAllowed === undefined) {
+    delete client.fullScopeAllowed;
+  }
   const pkgRef = `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
 
   client = await retryOnce(
