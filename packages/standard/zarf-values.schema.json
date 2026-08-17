@@ -19070,6 +19070,12 @@
                     },
                     "volumeClaimsEnabled": {
                       "type": "boolean"
+                    },
+                    "whenDeleted": {
+                      "type": "string"
+                    },
+                    "whenScaled": {
+                      "type": "string"
                     }
                   },
                   "type": "object"
