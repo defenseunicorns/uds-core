@@ -22,14 +22,3 @@ uds zarf package deploy <path-to-zarf-tarball> --confirm
 
 > [!NOTE]
 > The pre-reqs for this package are the same as `uds-k3d` and you do not need to have a cluster running prior to deploying it.
-
-> [!NOTE]
-> **OrbStack users**: If you experience intermittent networking issues, configure a fixed Docker subnet. Navigate to **Settings → Docker → Docker Engine** and add the following to the engine config:
-
-```json
-{
-  "default-address-pools": [
-    {"base": "172.18.0.0/16", "size": 24}
-  ]
-}
-```
