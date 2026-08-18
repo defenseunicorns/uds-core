@@ -45,6 +45,7 @@ UDS Core packages Pepr 2.0 in this release. No manual platform upgrade step is e
 Identity Config [0.30.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.30.0) includes the following changes. No manual realm steps are required for existing clusters.
 
 - **Non-CAC registration password validation:** Non-CAC registration now enforces Keycloak password validation when email verification is enabled. CAC registration remains password-optional ([#905](https://github.com/defenseunicorns/uds-identity-config/pull/905)).
+- **Client policy full-scope handling:** The UDS client policy no longer blocks setting `fullScopeAllowed` on clients ([#901](https://github.com/defenseunicorns/uds-identity-config/pull/901)).
 
 ## Related documentation
 
