@@ -20,7 +20,7 @@ You'll register an SSO client in Keycloak for an application that handles its ow
 ## Before you begin
 
 > [!TIP]
-> **This guide is for applications with native SSO support.** If your application has no built-in OIDC or SAML support, see [Protect non-OIDC apps with SSO](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/) to use Authservice as a proxy instead.
+> **This guide is for applications where the application should own the OIDC or SAML flow.** If UDS Core should own browser authentication and enforce protection at the mesh boundary, see [Protect applications with Authservice](/how-to-guides/identity-and-authorization/protect-apps-with-authservice/).
 
 When a `Package` CR declares an `sso` block, the UDS Operator:
 
@@ -28,7 +28,7 @@ When a `Package` CR declares an `sso` block, the UDS Operator:
 2. Stores the client credentials in a Kubernetes secret named `sso-client-<clientId>` in the application namespace
 3. For SAML clients, fetches the IdP signing certificate from Keycloak and includes it in the secret as `samlIdpCertificate`
 
-The application reads its credentials from this secret and speaks directly to Keycloak. There is no proxy layer involved.
+The application reads its credentials from this secret and speaks directly to Keycloak. The application handles the SSO flow instead of delegating browser authentication to Authservice.
 
 If your application expects credentials in a specific format (JSON config file, properties file, etc.), you can use `secretConfig.template` to control the secret layout.
 

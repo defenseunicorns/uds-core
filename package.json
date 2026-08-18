@@ -48,7 +48,7 @@
     "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
   },
   "dependencies": {
-    "pepr": "1.3.0"
+    "pepr": "2.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "21.2.1",
