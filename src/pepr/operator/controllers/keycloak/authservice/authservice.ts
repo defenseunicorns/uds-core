@@ -31,6 +31,41 @@ import {
 export const log = setupLogger(Component.OPERATOR_AUTHSERVICE);
 let lock = false;
 
+function getPathMatchPrefix(pathname: string): string {
+  if (!pathname || pathname === "/") {
+    return "/";
+  }
+
+  const hasTrailingSlash = pathname.endsWith("/");
+  const trimmedPath = pathname.replace(/\/+$/g, "");
+  if (!trimmedPath) {
+    return "/";
+  }
+
+  // Keep explicit app base paths (e.g. /cge/turbineone/) intact.
+  if (hasTrailingSlash) {
+    return trimmedPath;
+  }
+
+  // For callback-style redirects, match the parent path so login start requests route correctly.
+  const parts = trimmedPath.split("/").filter(Boolean);
+  const last = parts[parts.length - 1];
+  const callbackSuffixes = new Set([
+    "callback",
+    "login",
+    "oauth-authorized",
+    "authorized",
+    "oidc-callback",
+    "signin-oidc",
+  ]);
+
+  if (parts.length > 1 && callbackSuffixes.has(last)) {
+    return `/${parts.slice(0, -1).join("/")}`;
+  }
+
+  return trimmedPath;
+}
+
 export async function authservice(
   pkg: UDSPackage,
   clients: Map<string, Client>,
@@ -257,16 +292,24 @@ export function buildConfig(config: AuthserviceConfig, event: AuthServiceEvent) 
 export function buildChain(update: AuthServiceEvent) {
   // TODO: get this from the package
   // TODO: update to loop and build multiple chains on redirectUris
-  // Parse the hostname from the first client redirect URI
-  const hostname = new URL(update.client!.redirectUris[0]).hostname;
+  const redirectUri = new URL(update.client!.redirectUris[0]);
+  const hostname = redirectUri.hostname;
+  const pathPrefix = getPathMatchPrefix(redirectUri.pathname);
   const ssoUrl = getSsoUrl(UDSConfig);
+
+  const match = UDSConfig.pathRouting
+    ? {
+        header: ":path",
+        prefix: pathPrefix,
+      }
+    : {
+        header: ":authority",
+        prefix: hostname,
+      };
 
   const chain: Chain = {
     name: update.name,
-    match: {
-      header: ":authority",
-      prefix: hostname,
-    },
+    match,
     filters: [
       {
         oidc_override: {

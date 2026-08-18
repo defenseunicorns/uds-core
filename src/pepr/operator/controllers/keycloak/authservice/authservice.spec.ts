@@ -534,6 +534,29 @@ describe("authservice", () => {
     expect(chain.filters[0].oidc_override?.logout?.redirect_uri).toEqual(
       "https://uds.dev/bar/sso/realms/uds/protocol/openid-connect/logout",
     );
+    expect(chain.match.header).toEqual(":path");
+    expect(chain.match.prefix).toEqual("/login");
+  });
+
+  test("should derive parent path prefix for callback redirect URIs when path routing", async () => {
+    UDSConfig.pathRouting = true;
+    UDSConfig.contextPath = "/cge";
+    authorizationPolicy.UDSConfig.pathRouting = true;
+    authorizationPolicy.UDSConfig.contextPath = "/cge";
+
+    const callbackClient = {
+      ...mockClient,
+      redirectUris: ["https://cge.net/cge/kong/callback"],
+    };
+
+    const chain = buildChain({
+      client: callbackClient,
+      name: "kong-client",
+      action: Action.AddClient,
+    } as unknown as AuthServiceEvent);
+
+    expect(chain.match.header).toEqual(":path");
+    expect(chain.match.prefix).toEqual("/cge/kong");
   });
 
   test("should test authservice chain removal", async () => {
