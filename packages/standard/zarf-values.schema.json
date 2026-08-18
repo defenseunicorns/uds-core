@@ -19957,6 +19957,14 @@
                 "tolerations": {
                   "type": "array"
                 },
+                "webhookAnnotations": {
+                  "properties": {
+                    "admissions.enforcer/disabled": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
                 "webhookLabels": {
                   "properties": {},
                   "type": "object"
