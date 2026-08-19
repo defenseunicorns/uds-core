@@ -830,6 +830,14 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
+   * Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak
+   * includes all roles assigned to the authenticated subject. When disabled, Keycloak limits
+   * roles according to the client's role scope mappings and linked client scopes. UDS Core
+   * defaults this setting to true for backwards compatibility. Set this to false whenever
+   * possible to limit role scope and harden security.
+   */
+  fullScopeAllowed?: boolean;
+  /**
    * The client SSO group type
    */
   groups?: Groups;

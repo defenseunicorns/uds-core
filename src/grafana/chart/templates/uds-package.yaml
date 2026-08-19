@@ -11,6 +11,7 @@ spec:
   sso:
     - name: Grafana
       clientId: uds-core-admin-grafana
+      fullScopeAllowed: false
       redirectUris:
         {{- $domain := tpl .Values.domain . }}
         {{- $admin := tpl .Values.adminDomain . }}
