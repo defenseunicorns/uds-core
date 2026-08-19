@@ -48,3 +48,8 @@ spec:
           app: certgen
         remoteGenerated: KubeAPI
         description: "KubeAPI access for certgen pre-install job"
+
+      # Custom rules for additional networking access
+      {{- with .Values.additionalNetworkAllow }}
+      {{ toYaml . | nindent 6 }}
+      {{- end }}
