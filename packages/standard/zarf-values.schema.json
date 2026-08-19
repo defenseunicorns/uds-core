@@ -439,6 +439,9 @@
         },
         "uds-envoy-gateway-config": {
           "properties": {
+            "additionalNetworkAllow": {
+              "type": "array"
+            },
             "envoyService": {
               "properties": {
                 "annotations": {
