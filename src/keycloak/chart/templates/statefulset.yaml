@@ -161,7 +161,14 @@ spec:
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            - "--hostname-strict=false"
+            {{- $domain := tpl .Values.domain . }}
+            {{- $adminDomainValue := tpl (default "" .Values.adminDomain) . }}
+            {{- $adminDomain := default (printf "admin.%s" $domain) $adminDomainValue }}
+            # Keep browser-facing URLs on the public hostname while serving the
+            # administration console and API from the dedicated admin hostname.
+            - "--hostname=https://sso.{{ $domain }}"
+            - "--hostname-admin=https://keycloak.{{ $adminDomain }}"
+            - "--hostname-backchannel-dynamic=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -206,8 +213,9 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := .Values.domain }}
-            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+            {{- $domain := tpl .Values.domain . }}
+            {{- $adminDomainValue := tpl (default "" .Values.adminDomain) . }}
+            {{- $adminDomain := default (printf "admin.%s" $domain) $adminDomainValue }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
