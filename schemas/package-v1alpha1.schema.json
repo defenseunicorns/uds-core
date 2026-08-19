@@ -1005,7 +1005,7 @@
           "items": {
             "type": "string"
           },
-          "description": "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards\nare allowed such as 'https://unicorns.uds.dev/*'"
+          "description": "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards\nare allowed. For example, a wildcard may follow the path prefix\n'https://unicorns.uds.dev/'"
         },
         "rootUrl": {
           "type": "string",

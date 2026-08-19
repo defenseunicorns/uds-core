@@ -851,7 +851,8 @@ export interface Sso {
   publicClient?: boolean;
   /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
-   * are allowed such as 'https://unicorns.uds.dev/ *'
+   * are allowed. For example, a wildcard may follow the path prefix
+   * 'https://unicorns.uds.dev/'
    */
   redirectUris?: string[];
   /**
