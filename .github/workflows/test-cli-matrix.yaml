@@ -59,7 +59,7 @@ jobs:
 
       # Override the CLI installed by setup with the install-phase version.
       - name: Install CLI for install phase
-        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
           version: ${{ matrix.install_cli }}
 
@@ -74,7 +74,7 @@ jobs:
 
       # Switch to the values-capable CLI before building and deploying the current branch.
       - name: Install CLI for upgrade phase
-        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
           version: ${{ matrix.upgrade_cli }}
 
@@ -118,7 +118,7 @@ jobs:
 
       # Use the minimum CLI version that supports the current package's native values.
       - name: Install minimum supported CLI
-        uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+        uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
           version: v0.34.0
 
