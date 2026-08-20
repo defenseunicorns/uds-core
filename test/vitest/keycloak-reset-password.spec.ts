@@ -20,8 +20,18 @@ function externalUrl(host: string, path: string): string {
   return `https://${host}${path}`;
 }
 
-function expectDeniedOrRedirect(status: number): void {
-  expect([301, 302, 303, 307, 308, 401, 403]).toContain(status);
+function expectDeniedOrRedirect(response: Response, requestUrl: string): void {
+  if ([301, 302, 303, 307, 308].includes(response.status)) {
+    const location = response.headers.get("location");
+    expect(location).toBeDefined();
+
+    const redirectUrl = new URL(location!, requestUrl);
+    expect(redirectUrl.host).toBe(PUBLIC_HOST);
+    expect(redirectUrl.pathname).toBe(`/realms/${REALM}/account`);
+    return;
+  }
+
+  expect([401, 403]).toContain(response.status);
 }
 
 describe.skipIf(!productionHostnameTestsEnabled)("Keycloak production hostname routing", () => {
@@ -89,8 +99,9 @@ describe.skipIf(!productionHostnameTestsEnabled)("Keycloak production hostname r
   test.each(["/admin/realms/uds", "/realms/master/.well-known/openid-configuration"])(
     "does not expose %s through the public hostname",
     async path => {
-      const response = await fetch(externalUrl(PUBLIC_HOST, path), { redirect: "manual" });
-      expectDeniedOrRedirect(response.status);
+      const requestUrl = externalUrl(PUBLIC_HOST, path);
+      const response = await fetch(requestUrl, { redirect: "manual" });
+      expectDeniedOrRedirect(response, requestUrl);
     },
   );
 });

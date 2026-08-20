@@ -113,3 +113,18 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-admin=https://keycloak.admin.custom.example.com"
+
+  - it: should resolve templated domains in the EnvoyFilter
+    set:
+      realm: "custom.example.com"
+      domain: "{{ .Values.realm }}"
+      adminDomain: '{{ "" }}'
+      pathParameterProtection: true
+    template: path-parameter-envoyfilter.yaml
+    asserts:
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'host == "sso\.custom\.example\.com"'
+      - matchRegex:
+          path: spec.configPatches[0].patch.value.typed_config.inlineCode
+          pattern: 'host == "keycloak\.admin\.custom\.example\.com"'
