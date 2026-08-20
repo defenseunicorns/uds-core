@@ -4,13 +4,13 @@
 image:
   registry: cgr.dev
   repository: defenseunicorns.com/grafana-fips
-  tag: v13.1.0
+  tag: v13.1.4
 
 initChownData:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/busybox-fips
-    tag: 1.37.0
+    tag: v1.38.0
 
 downloadDashboardsImage:
   registry: cgr.dev
@@ -21,4 +21,4 @@ sidecar:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/k8s-sidecar-fips
-    tag: v2.8.1
+    tag: v2.10.1
