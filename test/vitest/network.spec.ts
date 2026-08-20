@@ -910,3 +910,62 @@ test.concurrent("Keycloak AuthorizationPolicies", async () => {
   const keycloakDeniedDebug = `Keycloak internal denied response: stdout=${denied_keycloak_response.stdout}, stderr=${denied_keycloak_response.stderr}`;
   expect(isResponseError(denied_keycloak_response), keycloakDeniedDebug).toBe(true);
 });
+
+test.concurrent("Keycloak dedicated realm admin console routing", async () => {
+  const request = (url: string) =>
+    execInPod("test-admin-app", testAdminApp, "curl", [
+      "curl",
+      "-s",
+      "-m",
+      "5",
+      "-o",
+      "/dev/null",
+      "-w",
+      "%{redirect_url} HTTP_CODE:%{http_code}",
+      url,
+    ]);
+
+  const keycloakPackage = (await customObjects.getNamespacedCustomObject({
+    group: "uds.dev",
+    version: "v1alpha1",
+    namespace: "keycloak",
+    plural: "packages",
+    name: "keycloak",
+  })) as {
+    spec?: { network?: { expose?: Array<{ description?: string }> } };
+  };
+  const enabled = keycloakPackage.spec?.network?.expose?.some(
+    expose => expose.description === "dedicated realm admin console",
+  );
+
+  if (!enabled) {
+    const response = await request("https://keycloak.uds.dev/admin/uds/console/");
+    expect(response.stdout).not.toContain("HTTP_CODE:200");
+    return;
+  }
+
+  const redirect = await request("https://keycloak.uds.dev/");
+  expect(redirect.stdout).toContain("https://keycloak.uds.dev/admin/uds/console/");
+  expect(redirect.stdout).toContain("HTTP_CODE:301");
+
+  const consoleResponse = await request("https://keycloak.uds.dev/admin/uds/console/");
+  expect(consoleResponse.stdout).toContain("HTTP_CODE:200");
+
+  const consoleDocument = await execInPod("test-admin-app", testAdminApp, "curl", [
+    "curl",
+    "-fsS",
+    "https://keycloak.uds.dev/admin/uds/console/",
+  ]);
+  for (const property of ["serverBaseUrl", "adminBaseUrl", "authUrl", "authServerUrl"]) {
+    expect(consoleDocument.stdout).toContain(`"${property}": "https://keycloak.uds.dev"`);
+  }
+
+  const localizationResponse = await request("https://keycloak.uds.dev/resources/uds/admin/en");
+  expect(localizationResponse.stdout).toContain("HTTP_CODE:200");
+
+  const masterConsoleResponse = await request("https://keycloak.uds.dev/admin/master/console/");
+  expect(masterConsoleResponse.stdout).toContain("HTTP_CODE:403");
+
+  const otherRealmResponse = await request("https://keycloak.uds.dev/admin/realms/master");
+  expect(otherRealmResponse.stdout).toContain("HTTP_CODE:403");
+});

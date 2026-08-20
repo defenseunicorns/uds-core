@@ -35,6 +35,9 @@ spec:
                 -- Only apply to keycloak endpoints
                 if host and (
                   host == "sso.{{ $domain }}" or
+                  {{ if .Values.dedicatedRealmAdminConsole.enabled }}
+                  host == "keycloak.{{ $domain }}" or
+                  {{ end }}
                   host == "keycloak.{{ $adminDomain }}"
                 ) then
                   if path then

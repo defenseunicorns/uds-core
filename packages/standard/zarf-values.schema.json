@@ -3860,6 +3860,14 @@
             "debugMode": {
               "type": "boolean"
             },
+            "dedicatedRealmAdminConsole": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
             "detailedObservability": {
               "properties": {
                 "alerts": {

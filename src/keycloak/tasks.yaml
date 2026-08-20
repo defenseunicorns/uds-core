@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
@@ -23,6 +23,87 @@ tasks:
   - name: dev-theme
     actions:
       - task: config:dev-theme
+
+  - name: create-insecure-realm-user-admin
+    description: Create a local UDS realm user administrator for dedicated console testing
+    actions:
+      - description: Create or reconcile insecure realm user administrator credentials
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+
+          command -v uds >/dev/null 2>&1 || {
+            echo "UDS CLI not found" >&2
+            exit 1
+          }
+
+          kubectl() {
+            uds zarf tools kubectl "$@"
+          }
+
+          secret_value() {
+            kubectl -n keycloak get secret "$1" -o "go-template={{index .data \"$2\" | base64decode}}"
+          }
+
+          if ! error="$(kubectl -n keycloak get secret keycloak-admin-password 2>&1 >/dev/null)"; then
+            echo "keycloak-admin-password is required, enable insecure admin password generation first: $error" >&2
+            exit 1
+          fi
+
+          existing_admin=false
+          if kubectl -n keycloak get secret keycloak-realm-user-admin-password >/dev/null 2>&1; then
+            existing_admin=true
+            reset_password=false
+          else
+            password="RealmUserAdmin!#Aa1$(openssl rand -hex 20)"
+            reset_password=true
+          fi
+
+          KEYCLOAK_ADMIN_USERNAME="$(secret_value keycloak-admin-password username)"
+          KEYCLOAK_ADMIN_PASSWORD="$(secret_value keycloak-admin-password password)"
+          if [[ "$existing_admin" == true ]]; then
+            UDS_REALM_ADMIN_USERNAME="$(secret_value keycloak-realm-user-admin-password username)"
+            UDS_REALM_ADMIN_PASSWORD="$(secret_value keycloak-realm-user-admin-password password)"
+          else
+            UDS_REALM_ADMIN_USERNAME=realm-user-admin
+            UDS_REALM_ADMIN_PASSWORD="$password"
+          fi
+
+          [[ -n "$KEYCLOAK_ADMIN_USERNAME" && -n "$KEYCLOAK_ADMIN_PASSWORD" ]] || {
+            echo "keycloak-admin-password must contain username and password" >&2
+            exit 1
+          }
+          [[ -n "$UDS_REALM_ADMIN_USERNAME" && -n "$UDS_REALM_ADMIN_PASSWORD" ]] || {
+            echo "keycloak-realm-user-admin-password must contain username and password" >&2
+            exit 1
+          }
+
+          KEYCLOAK_ADMIN_USERNAME="$KEYCLOAK_ADMIN_USERNAME" \
+            KEYCLOAK_ADMIN_PASSWORD="$KEYCLOAK_ADMIN_PASSWORD" \
+            UDS_REALM_ADMIN_USERNAME="$UDS_REALM_ADMIN_USERNAME" \
+            UDS_REALM_ADMIN_PASSWORD="$UDS_REALM_ADMIN_PASSWORD" \
+            UDS_REALM_ADMIN_RESET_PASSWORD="$reset_password" \
+            UDS_REALM_ADMIN_PASSWORD_TEMPORARY=false \
+            KUBECTL_BIN="uds zarf tools kubectl" \
+            scripts/configure-keycloak-dedicated-admin-console.sh
+
+          if [[ "$existing_admin" == false ]]; then
+            kubectl apply -f - <<EOF >/dev/null
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: keycloak-realm-user-admin-password
+            namespace: keycloak
+            labels:
+              uds.dev/insecure: "true"
+          type: Opaque
+          stringData:
+            username: realm-user-admin
+            password: $password
+          EOF
+          fi
 
   - name: cacert
     description: "Get the CA cert value for the Istio Gateway"

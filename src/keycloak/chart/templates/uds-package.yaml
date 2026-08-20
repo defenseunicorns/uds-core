@@ -202,4 +202,36 @@ spec:
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
         {{- end }}
+
+      {{- if .Values.dedicatedRealmAdminConsole.enabled }}
+      - description: "dedicated realm admin console redirect"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: keycloak
+        port: 8080
+        advancedHTTP:
+          match:
+            - name: redirect-realm-admin-console
+              uri:
+                exact: /
+          redirect:
+            uri: "/admin/{{ .Values.realm }}/console/"
+
+      - description: "dedicated realm admin console"
+        service: keycloak-http
+        selector:
+          app.kubernetes.io/name: keycloak
+        host: keycloak
+        port: 8080
+        {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
+        advancedHTTP:
+          headers:
+            request:
+              remove:
+                - istio-mtls-client-certificate
+              add:
+                istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
+        {{- end }}
+      {{- end }}
     # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626

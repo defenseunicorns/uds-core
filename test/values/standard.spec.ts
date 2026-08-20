@@ -287,4 +287,15 @@ describe("standard domain values", () => {
     const json = JSON.stringify(r);
     expect(json).toContain(`keycloak.${expectedAdminDomain}`);
   });
+
+  it("envoyfilter Lua checks keycloak host with expected tenant domain", () => {
+    const r = findResource(
+      manifests,
+      "EnvoyFilter",
+      "block-path-parameters-in-non-final-segments",
+      "istio-system",
+    );
+    const json = JSON.stringify(r);
+    expect(json).toContain(`keycloak.${expectedDomain}`);
+  });
 });
