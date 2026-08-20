@@ -29,8 +29,8 @@ spec:
                 local path = request_handle:headers():get(":path")
                 local host = request_handle:headers():get(":authority")
 
-                {{- $domain := .Values.domain }}
-                {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+                {{- $domain := include "keycloak.domain" . }}
+                {{- $adminDomain := include "keycloak.adminDomain" . }}
 
                 -- Only apply to keycloak endpoints
                 if host and (

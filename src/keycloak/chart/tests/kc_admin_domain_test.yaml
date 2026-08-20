@@ -14,7 +14,6 @@ tests:
   - it: should derive adminDomain from domain when adminDomain is unset
     set:
       domain: "custom.example.com"
-      adminDomain: ""
     template: statefulset.yaml
     asserts:
       - contains:
@@ -96,3 +95,21 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-admin=https://keycloak.mgmt.example.com"
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-backchannel-dynamic=false"
+
+  - it: should resolve templated domains and derive a templated empty adminDomain
+    set:
+      realm: "custom.example.com"
+      domain: "{{ .Values.realm }}"
+      adminDomain: '{{ "" }}'
+      devMode: false
+    template: statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname=https://sso.custom.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-admin=https://keycloak.admin.custom.example.com"

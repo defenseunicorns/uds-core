@@ -49,6 +49,18 @@ app.kubernetes.io/name: {{ include "keycloak.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/* Resolve the public domain, including Helm-templated values. */}}
+{{- define "keycloak.domain" -}}
+{{- tpl (.Values.domain | default "") . -}}
+{{- end }}
+
+{{/* Resolve the admin domain, falling back to admin.<public domain>. */}}
+{{- define "keycloak.adminDomain" -}}
+{{- $domain := include "keycloak.domain" . -}}
+{{- $adminDomain := tpl (.Values.adminDomain | default "") . -}}
+{{- default (printf "admin.%s" $domain) $adminDomain -}}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}
@@ -217,4 +229,3 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- "host" -}}
 {{- end -}}
 {{- end -}}
-

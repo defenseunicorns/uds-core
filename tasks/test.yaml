@@ -105,6 +105,9 @@ tasks:
       skip_fleet_admin:
         description: "Skip the Fleet Keycloak admin integration test."
         default: "false"
+      production_hostname_tests:
+        description: "Run tests that require Keycloak production hostname configuration."
+        default: "false"
     # Run each e2e test type from the e2e folder
     actions:
       - description: "Setup the Doug User for testing"
@@ -137,7 +140,7 @@ tasks:
           if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
             set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
+          KEYCLOAK_PRODUCTION_HOSTNAME_TESTS=${{ .inputs.production_hostname_tests }} EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
@@ -214,6 +217,7 @@ tasks:
         with:
           architecture: "amd64"
           validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
+          production_hostname_tests: "true"
 
   - name: uds-core-ha
     description: "Build and test UDS Core"

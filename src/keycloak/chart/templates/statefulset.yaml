@@ -165,10 +165,10 @@ spec:
             # Keep forwarded hostnames dynamic for the local zarf connect workflow.
             - "--hostname-strict=false"
             {{- else }}
-            {{- $domain := .Values.domain }}
-            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+            {{- $domain := include "keycloak.domain" . }}
+            {{- $adminDomain := include "keycloak.adminDomain" . }}
             # Keep browser-facing URLs on the public hostname while serving the
-            # administration console and API from the dedicated admin hostname.
+            # administration console from the dedicated admin hostname.
             - "--hostname=https://sso.{{ $domain }}"
             - "--hostname-admin=https://keycloak.{{ $adminDomain }}"
             - "--hostname-backchannel-dynamic=false"
@@ -217,8 +217,8 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := .Values.domain }}
-            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+            {{- $domain := include "keycloak.domain" . }}
+            {{- $adminDomain := include "keycloak.adminDomain" . }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
