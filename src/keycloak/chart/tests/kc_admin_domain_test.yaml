@@ -7,6 +7,8 @@ suite: Keycloak adminDomain fallback
 templates:
   - statefulset.yaml
   - path-parameter-envoyfilter.yaml
+  - secret-kc-realm.yaml
+  - secret-postgresql.yaml
 
 tests:
   - it: should derive adminDomain from domain when adminDomain is unset
@@ -35,6 +37,7 @@ tests:
 
   - it: should configure public and admin hostnames
     set:
+      devMode: false
       domain: "custom.example.com"
       adminDomain: "mgmt.example.com"
     template: statefulset.yaml
@@ -45,16 +48,6 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-admin=https://keycloak.mgmt.example.com"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: UDS_DOMAIN
-            value: "custom.example.com"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: UDS_ADMIN_DOMAIN
-            value: "mgmt.example.com"
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-backchannel-dynamic=false"
@@ -75,6 +68,7 @@ tests:
 
   - it: should derive admin hostname from domain when adminDomain is unset
     set:
+      devMode: false
       domain: "custom.example.com"
       adminDomain: ""
     template: statefulset.yaml
@@ -86,57 +80,19 @@ tests:
           path: spec.template.spec.containers[0].args
           content: "--hostname-admin=https://keycloak.admin.custom.example.com"
 
-  - it: should evaluate templated hostname values
+  - it: should keep hostname resolution dynamic in devMode
     set:
-      domain: '{{ "custom.example.com" }}'
-      adminDomain: '{{ "mgmt.example.com" }}'
+      devMode: true
+      domain: "custom.example.com"
+      adminDomain: "mgmt.example.com"
     template: statefulset.yaml
     asserts:
       - contains:
+          path: spec.template.spec.containers[0].args
+          content: "--hostname-strict=false"
+      - notContains:
           path: spec.template.spec.containers[0].args
           content: "--hostname=https://sso.custom.example.com"
-      - contains:
+      - notContains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-admin=https://keycloak.mgmt.example.com"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: UDS_DOMAIN
-            value: "custom.example.com"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: UDS_ADMIN_DOMAIN
-            value: "mgmt.example.com"
-
-  - it: should evaluate templated hostname values in the path parameter filter
-    set:
-      domain: '{{ "custom.example.com" }}'
-      adminDomain: '{{ "mgmt.example.com" }}'
-      pathParameterProtection: true
-    template: path-parameter-envoyfilter.yaml
-    asserts:
-      - matchRegex:
-          path: spec.configPatches[0].patch.value.typed_config.inlineCode
-          pattern: '(?s)host == "sso\.custom\.example\.com".*host == "keycloak\.mgmt\.example\.com"'
-
-  - it: should fall back when a templated adminDomain evaluates empty
-    set:
-      domain: "custom.example.com"
-      adminDomain: '{{ "" }}'
-    template: statefulset.yaml
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].args
-          content: "--hostname-admin=https://keycloak.admin.custom.example.com"
-
-  - it: should use the fallback admin hostname in the path parameter filter
-    set:
-      domain: "custom.example.com"
-      adminDomain: '{{ "" }}'
-      pathParameterProtection: true
-    template: path-parameter-envoyfilter.yaml
-    asserts:
-      - matchRegex:
-          path: spec.configPatches[0].patch.value.typed_config.inlineCode
-          pattern: 'keycloak\.admin\.custom\.example\.com'

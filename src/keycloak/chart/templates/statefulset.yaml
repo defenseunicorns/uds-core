@@ -161,14 +161,18 @@ spec:
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            {{- $domain := tpl .Values.domain . }}
-            {{- $adminDomainValue := tpl (default "" .Values.adminDomain) . }}
-            {{- $adminDomain := default (printf "admin.%s" $domain) $adminDomainValue }}
+            {{- if .Values.devMode }}
+            # Keep forwarded hostnames dynamic for the local zarf connect workflow.
+            - "--hostname-strict=false"
+            {{- else }}
+            {{- $domain := .Values.domain }}
+            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             # Keep browser-facing URLs on the public hostname while serving the
             # administration console and API from the dedicated admin hostname.
             - "--hostname=https://sso.{{ $domain }}"
             - "--hostname-admin=https://keycloak.{{ $adminDomain }}"
             - "--hostname-backchannel-dynamic=false"
+            {{- end }}
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -213,9 +217,8 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := tpl .Values.domain . }}
-            {{- $adminDomainValue := tpl (default "" .Values.adminDomain) . }}
-            {{- $adminDomain := default (printf "admin.%s" $domain) $adminDomainValue }}
+            {{- $domain := .Values.domain }}
+            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
