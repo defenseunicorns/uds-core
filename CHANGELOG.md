@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.12.0](https://github.com/defenseunicorns/uds-core/compare/v1.11.0...v1.12.0) (2026-08-20)
+
+
+### Features
+
+* add additionalNetworkAllow for envoy gateway ([#2891](https://github.com/defenseunicorns/uds-core/issues/2891)) ([f8508de](https://github.com/defenseunicorns/uds-core/commit/f8508de48a1de9df104402e2f05387a6e56d1586))
+
+
+### Miscellaneous
+
+* **deps:** bump js-yaml from 4.3.0 to 4.3.1 ([#2883](https://github.com/defenseunicorns/uds-core/issues/2883)) ([4c535bf](https://github.com/defenseunicorns/uds-core/commit/4c535bfea1605059fe9e13b604728c8867f89888))
+* **deps:** update iac-support-deps ([#2882](https://github.com/defenseunicorns/uds-core/issues/2882)) ([9fe4200](https://github.com/defenseunicorns/uds-core/commit/9fe4200d25cf1e78964e250f193f014450d4cf6c))
+* **deps:** update prometheus-stack ([#2877](https://github.com/defenseunicorns/uds-core/issues/2877)) ([c1e3c75](https://github.com/defenseunicorns/uds-core/commit/c1e3c7523ae8eb3719e11932b605a9bf7c297ee9))
+* **deps:** update support-deps ([#2874](https://github.com/defenseunicorns/uds-core/issues/2874)) ([8e2cc5b](https://github.com/defenseunicorns/uds-core/commit/8e2cc5bba0c0ccf7f80fa9fa57de3c2a04b3341f))
+
 ## [1.11.0](https://github.com/defenseunicorns/uds-core/compare/v1.10.0...v1.11.0) (2026-08-18)
 
 
