@@ -105,9 +105,9 @@ In the Keycloak admin UI, navigate to `keycloak.<admin_domain>` → **uds** real
 
 ## Troubleshooting
 
-### Problem: Login page still shows disabled authentication options after deploy
+### Problem: Username/password login still appears after it is disabled
 
-**Symptoms:** The login page displays username/password or CAC fields even though they were disabled.
+**Symptoms:** The login page still displays username/password login even though `USERNAME_PASSWORD_AUTH_ENABLED: false` was set in the bundle override.
 
 **Solution:** `realmAuthFlows` values are applied during initial realm import only. If Keycloak was already running before the override was applied, Keycloak must be fully torn down and redeployed so the realm is re-imported:
 
@@ -116,13 +116,18 @@ uds create <path-to-bundle-dir>
 uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
 ```
 
-If redeploying is not possible, configure the flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:
+If redeploying is not possible, configure the username/password-related flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:
 
 | Flow setting | Admin UI path |
 |---|---|
-| Disable username/password | **Authentication** → **Flows** → **UDS Authentication** → disable the **Deny Access** step below **Username Password Form** |
+| Disable username/password | **Authentication** → **Flows** → **UDS Authentication** → expand **Username Password Form** and set **Deny Access** to **Required** |
 | Disable credential reset | **Authentication** → **Flows** → **UDS Reset Credentials** → disable the **Reset Password** step |
 | Disable user registration | **Authentication** → **Flows** → **UDS Registration** → disable the **UDS Registration form** step |
+
+If you also need OTP or WebAuthn, configure it separately:
+
+| Optional flow setting | Admin UI path |
+|---|---|
 | Enable/disable OTP | **Authentication** → **Required Actions** tab → toggle **Configure OTP** |
 | Enable WebAuthn | 1. **Authentication** → **Required Actions** → toggle on **Webauthn Register Passwordless** under the **Enabled** column<br/>2. **Authentication** → **Flows** → **UDS Authentication** → set the **MFA** sub-flow to **Required**<br/>3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required** |
 
