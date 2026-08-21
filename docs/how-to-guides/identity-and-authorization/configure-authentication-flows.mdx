@@ -5,7 +5,7 @@ sidebar:
   order: 3.007
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 
 ## What you'll accomplish
 
@@ -34,7 +34,7 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 > Disabling `USERNAME_PASSWORD_AUTH_ENABLED`, `X509_AUTH_ENABLED`, and `SOCIAL_AUTH_ENABLED` all at once will result in no authentication options on the login page. Users will not be able to log in or register. Also, disabling both `USERNAME_PASSWORD_AUTH_ENABLED` and `X509_AUTH_ENABLED` disables user self-registration.
 
 > [!NOTE]
-> `realmAuthFlows` values are applied only during initial realm import. Changes to a running Keycloak instance require a full teardown and redeploy to re-import the realm, or you can apply them manually in the admin UI (see the troubleshooting section below). Theme files, truststore certificates, and custom plugin JARs **do** apply automatically on pod restart without a realm redeploy.
+> `realmAuthFlows` controls the login experience and Keycloak realm flows. Keycloak applies theme-related changes after a pod restart, but imports realm-flow changes only during the initial realm import. To change realm flows on an existing deployment, follow Step 4. Keycloak also applies truststore certificates and custom plugin JARs after a pod restart without a realm redeploy.
 
 ## Steps
 
@@ -89,6 +89,66 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
+4. **(Optional) Update realm flows on an existing deployment**
+
+   If the Keycloak realm was already imported, a new `realmAuthFlows` value does not update its realm flows. Manually update the **uds** realm in the Keycloak Admin Console at `keycloak.<admin_domain>`. Apply the tab for each primary method or optional MFA method you need to update. For example, to keep only Social/SSO after deploying X.509/CAC and Social/SSO, apply the X.509/CAC tab.
+
+   <Tabs>
+   <TabItem label="Username/password">
+
+   For `USERNAME_PASSWORD_AUTH_ENABLED: false`:
+
+   1. Open **Authentication** → **Flows** → **UDS Authentication**.
+   2. Expand **Username Password Form**.
+   3. Set **Deny Access** to **Required**.
+   4. Open **Authentication** → **Flows** → **UDS Reset Credentials** and disable **Reset Password**.
+   5. Open **Authentication** → **Flows** → **UDS Registration**. Leave **UDS Registration form** enabled if X.509/CAC remains enabled. If X.509/CAC is also disabled, disable **UDS Registration form**.
+
+   > [!WARNING]
+   > Do not disable **UDS Registration form** while X.509/CAC remains enabled. CAC users need this flow to register.
+
+   </TabItem>
+   <TabItem label="X.509/CAC">
+
+   For `X509_AUTH_ENABLED: false`:
+
+   1. Open **Authentication** → **Flows** → **UDS Authentication**.
+   2. Set **X509 Authentication** to **Disabled**.
+   3. Open **Authentication** → **Flows** → **UDS Registration**. Leave **UDS Registration form** enabled if username/password remains enabled. If username/password is also disabled, disable **UDS Registration form**.
+   4. Stop the gateway from requesting client certificates as described in [Configure the CA truststore](/how-to-guides/identity-and-authorization/configure-truststore/).
+
+   > [!WARNING]
+   > Do not disable **UDS Registration form** while username/password remains enabled. Username/password users need this flow to register.
+
+   </TabItem>
+   <TabItem label="Social/SSO">
+
+   For `SOCIAL_AUTH_ENABLED: false`:
+
+   1. Open **Authentication** → **Flows** → **UDS Authentication**.
+   2. Set **IDP Redirector** to **Disabled**.
+
+   </TabItem>
+   <TabItem label="OTP">
+
+   For `OTP_ENABLED: true`:
+
+   1. Open **Authentication** → **Flows** → **UDS Authentication** and set the **MFA** sub-flow to **Required**.
+   2. Inside the **MFA** sub-flow, set **OTP** to **Required**.
+   3. Open **Authentication** → **Required Actions** and enable **Configure OTP**.
+
+   </TabItem>
+   <TabItem label="WebAuthn">
+
+   For `WEBAUTHN_ENABLED: true`:
+
+   1. Open **Authentication** → **Required Actions** and enable **Webauthn Register Passwordless**.
+   2. Open **Authentication** → **Flows** → **UDS Authentication** and set the **MFA** sub-flow to **Required**.
+   3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required**.
+
+   </TabItem>
+   </Tabs>
+
 </Steps>
 
 ## Verification
@@ -104,32 +164,6 @@ Confirm authentication flow changes are applied:
 In the Keycloak admin UI, navigate to `keycloak.<admin_domain>` → **uds** realm → **Authentication** → **Flows** and confirm the expected flow steps are enabled or disabled.
 
 ## Troubleshooting
-
-### Problem: Username/password login still appears after it is disabled
-
-**Symptoms:** The login page still displays username/password login even though `USERNAME_PASSWORD_AUTH_ENABLED: false` was set in the bundle override.
-
-**Solution:** `realmAuthFlows` values are applied during initial realm import only. If Keycloak was already running before the override was applied, Keycloak must be fully torn down and redeployed so the realm is re-imported:
-
-```bash
-uds create <path-to-bundle-dir>
-uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
-```
-
-If redeploying is not possible, configure the username/password-related flows manually in the Keycloak Admin Console at `keycloak.<admin_domain>` → **uds** realm:
-
-| Flow setting | Admin UI path |
-|---|---|
-| Disable username/password | **Authentication** → **Flows** → **UDS Authentication** → expand **Username Password Form** and set **Deny Access** to **Required** |
-| Disable credential reset | **Authentication** → **Flows** → **UDS Reset Credentials** → disable the **Reset Password** step |
-| Disable user registration | **Authentication** → **Flows** → **UDS Registration** → disable the **UDS Registration form** step |
-
-If you also need OTP or WebAuthn, configure it separately:
-
-| Optional flow setting | Admin UI path |
-|---|---|
-| Enable/disable OTP | **Authentication** → **Required Actions** tab → toggle **Configure OTP** |
-| Enable WebAuthn | 1. **Authentication** → **Required Actions** → toggle on **Webauthn Register Passwordless** under the **Enabled** column<br/>2. **Authentication** → **Flows** → **UDS Authentication** → set the **MFA** sub-flow to **Required**<br/>3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required** |
 
 ### Problem: X.509/CAC login fails with OCSP error in airgapped environment
 
@@ -174,6 +208,8 @@ If your environment uses CRL-based revocation instead of OCSP, configure the CRL
 **Symptoms:** Users can log in without completing an MFA step.
 
 **Solution:** Confirm that both the flow toggle and at least one MFA method are enabled. For WebAuthn to work as a required step, `WEBAUTHN_ENABLED: true` must be set; for OTP, `OTP_ENABLED: true`. Verify the realm was redeployed after the override was applied.
+
+If redeploying is not possible, use the corresponding OTP or WebAuthn tab in Step 4.
 
 ## Reference: X.509/CAC with additional MFA
 
