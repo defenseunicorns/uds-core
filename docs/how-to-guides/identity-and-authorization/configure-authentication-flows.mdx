@@ -152,6 +152,13 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    2. Open **Authentication** → **Flows** → **UDS Authentication** and set the **MFA** sub-flow to **Required**.
    3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required**.
 
+   For `WEBAUTHN_ENABLED: false`:
+
+   1. Open **Authentication** → **Required Actions** and disable **Webauthn Register Passwordless**.
+   2. Open **Authentication** → **Flows** → **UDS Authentication**.
+   3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Disabled**.
+   4. If OTP is also disabled, set the **MFA** sub-flow to **Disabled**.
+
    </TabItem>
    </Tabs>
 
