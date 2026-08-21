@@ -137,6 +137,12 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
    2. Inside the **MFA** sub-flow, set **OTP** to **Required**.
    3. Open **Authentication** → **Required Actions** and enable **Configure OTP**.
 
+   For `OTP_ENABLED: false`:
+
+   1. Open **Authentication** → **Flows** → **UDS Authentication**.
+   2. Inside the **MFA** sub-flow, set **OTP** to **Disabled**.
+   3. If WebAuthn is also disabled, set the **MFA** sub-flow to **Disabled**.
+
    </TabItem>
    <TabItem label="WebAuthn">
 
