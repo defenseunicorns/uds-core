@@ -133,31 +133,31 @@ UDS Core ships with all major authentication flows enabled by default. Use `real
 
    For `OTP_ENABLED: true`:
 
-   1. Open **Authentication** → **Flows** → **UDS Authentication** and set the **MFA** sub-flow to **Required**.
-   2. Inside the **MFA** sub-flow, set **OTP** to **Required**.
+   1. Open **Authentication** → **Flows** → **UDS Authentication**. In **Username/Password Authentication**, set the **Conditional OTP** sub-flow to **Required**.
+   2. Inside the **Conditional OTP** sub-flow, set **OTP** to **Required**.
    3. Open **Authentication** → **Required Actions** and enable **Configure OTP**.
 
    For `OTP_ENABLED: false`:
 
    1. Open **Authentication** → **Flows** → **UDS Authentication**.
-   2. Inside the **MFA** sub-flow, set **OTP** to **Disabled**.
-   3. If WebAuthn is also disabled, set the **MFA** sub-flow to **Disabled**.
+   2. Inside the **Conditional OTP** sub-flow, set **OTP** to **Disabled**.
+   3. If WebAuthn is also disabled, set the **Conditional OTP** sub-flow to **Disabled**.
 
    </TabItem>
    <TabItem label="WebAuthn">
 
    For `WEBAUTHN_ENABLED: true`:
 
-   1. Open **Authentication** → **Required Actions** and enable **Webauthn Register Passwordless**.
-   2. Open **Authentication** → **Flows** → **UDS Authentication** and set the **MFA** sub-flow to **Required**.
-   3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Required**.
+   1. Open **Authentication** → **Required Actions** and enable **Webauthn Register**.
+   2. Open **Authentication** → **Flows** → **UDS Authentication**. In **Username/Password Authentication**, set the **Conditional OTP** sub-flow to **Required**.
+   3. Inside the **Conditional OTP** sub-flow, set **WebAuthn Authenticator** to **Required**.
 
    For `WEBAUTHN_ENABLED: false`:
 
-   1. Open **Authentication** → **Required Actions** and disable **Webauthn Register Passwordless**.
+   1. Open **Authentication** → **Required Actions** and disable **Webauthn Register**.
    2. Open **Authentication** → **Flows** → **UDS Authentication**.
-   3. Inside the **MFA** sub-flow, set **WebAuthn Passwordless Authenticator** to **Disabled**.
-   4. If OTP is also disabled, set the **MFA** sub-flow to **Disabled**.
+   3. Inside the **Conditional OTP** sub-flow, set **WebAuthn Authenticator** to **Disabled**.
+   4. If OTP is also disabled, set the **Conditional OTP** sub-flow to **Disabled**.
 
    </TabItem>
    </Tabs>
