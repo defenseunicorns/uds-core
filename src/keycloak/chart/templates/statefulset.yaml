@@ -1,6 +1,9 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+{{- $domain := .Values.domain }}
+{{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
+
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -162,6 +165,11 @@ spec:
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
             - "--hostname-strict=false"
+            # Keep public and admin frontend URLs separate while the UDS hostname provider
+            # selects the admin origin for requests entering through the admin gateway.
+            - "--hostname=https://sso.{{ .Values.domain }}"
+            - "--hostname-admin=https://keycloak.{{ $adminDomain }}"
+            - "--hostname-backchannel-dynamic=false"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -206,8 +214,6 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
-            {{- $domain := .Values.domain }}
-            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
