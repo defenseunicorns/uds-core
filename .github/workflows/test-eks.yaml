@@ -72,7 +72,7 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
-          tofu_version: 1.12.5
+          tofu_version: 1.12.6
           tofu_wrapper: false
 
       - name: Create UDS Core Package
