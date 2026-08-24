@@ -35,7 +35,7 @@ tests:
           content: "--hostname-admin=https://keycloak.mgmt.example.com"
       - contains:
           path: spec.template.spec.containers[0].args
-          content: "--hostname-backchannel-dynamic=false"
+          content: "--hostname-backchannel-dynamic=true"
 
   - it: should derive the admin hostname from domain when adminDomain is unset
     set:
