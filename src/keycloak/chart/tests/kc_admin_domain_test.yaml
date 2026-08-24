@@ -25,6 +25,7 @@ tests:
     set:
       domain: "custom.example.com"
       adminDomain: "mgmt.example.com"
+      clusterDomain: "cluster.internal"
     template: statefulset.yaml
     asserts:
       - contains:
@@ -36,6 +37,11 @@ tests:
       - contains:
           path: spec.template.spec.containers[0].args
           content: "--hostname-backchannel-dynamic=true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: UDS_CLUSTER_DOMAIN
+            value: "cluster.internal"
 
   - it: should derive the admin hostname from domain when adminDomain is unset
     set:

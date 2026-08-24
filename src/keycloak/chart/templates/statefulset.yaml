@@ -218,6 +218,8 @@ spec:
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
               value: "{{ $adminDomain }}"
+            - name: UDS_CLUSTER_DOMAIN
+              value: "{{ .Values.clusterDomain }}"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED
