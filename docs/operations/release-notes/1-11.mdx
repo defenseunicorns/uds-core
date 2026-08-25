@@ -51,6 +51,18 @@ If you cannot upgrade immediately, temporarily disable **Forgot Password** in ev
 6. Repeat the change for every realm, including `master`.
 7. Sign out of the admin console.
 
+### Re-enable Forgot Password after upgrading
+
+After Keycloak `26.7.2` is running, restore **Forgot Password** in each realm where you applied the temporary mitigation, including the `master` realm:
+
+1. Open the Keycloak admin console at `https://keycloak.<admin_domain>/`.
+2. Sign in with an administrator account.
+3. Use **Manage realms** to select the realm you want to configure.
+4. Open **Realm Settings**, then select the **Login** tab.
+5. Turn on **Forgot Password**.
+6. Repeat the change for every affected realm, including `master`.
+7. Confirm that password recovery is available on the realm login page, then sign out of the admin console.
+
 ### Pepr 2.0 compatibility
 
 UDS Core packages Pepr 2.0 in this release. No manual platform upgrade step is expected for standard UDS Core deployments, but operators who maintain custom Pepr modules or repo automation should review the [Pepr 2.0.0 release](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.0), especially the removal of `pepr format`.
