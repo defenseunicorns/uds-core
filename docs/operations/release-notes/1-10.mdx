@@ -12,6 +12,9 @@ import { Steps } from "@astrojs/starlight/components";
 
 UDS Core 1.10 removes the implicit Keycloak `preview` feature group from the default startup configuration. Deployments that depend on preview features must enable them explicitly through `keycloak.keycloak.features.additional`. This release also improves classification banner compatibility with single-page and full-viewport applications.
 
+> [!CAUTION]
+> Do not install or upgrade to UDS Core `v1.10.0`. Upgrade directly to `v1.10.1`, which updates Keycloak to `26.7.2` and addresses [CVE-2026-18963](https://nvd.nist.gov/vuln/detail/CVE-2026-18963), a critical vulnerability in the reset-credentials flow. An unauthenticated attacker may reset another user's password without completing email verification, and MFA alone does not mitigate this risk. If you already run `v1.10.0`, upgrade to `v1.10.1`. If you cannot upgrade immediately, use the temporary Forgot Password mitigation under [Upgrade considerations](#upgrade-considerations).
+
 ### Notable features
 
 - **Explicit Keycloak feature selection:** UDS Core no longer passes the generic `preview` feature group to Keycloak by default. Use the new `keycloak.keycloak.features.additional` value to enable individual optional features alongside the required `fips` feature. See the [identity and authorization configuration reference](/reference/configuration/identity-and-authorization/#keycloak-features) ([#2838](https://github.com/defenseunicorns/uds-core/pull/2838)).
@@ -37,6 +40,18 @@ UDS Core 1.10 removes the implicit Keycloak `preview` feature group from the def
 | prometheus-operator-crds Helm chart     | 30.0.1   | [31.0.0](https://github.com/prometheus-community/helm-charts/releases/tag/prometheus-operator-crds-31.0.0)       |
 
 ## Upgrade considerations
+
+### Forgot Password mitigation
+
+If you cannot upgrade immediately, temporarily disable **Forgot Password** in every Keycloak realm, including the `master` realm:
+
+1. Open the Keycloak admin console at `https://keycloak.<admin_domain>/`.
+2. Sign in with an administrator account.
+3. Use **Manage realms** to select the realm you want to configure.
+4. Open **Realm Settings**, then select the **Login** tab.
+5. Turn off **Forgot Password**.
+6. Repeat the change for every realm, including `master`.
+7. Sign out of the admin console.
 
 > [!IMPORTANT]
 > UDS Core no longer enables Keycloak's generic `preview` feature group by default. Keycloak preview features that UDS Core previously enabled indirectly, including `stateless:v1` in Keycloak 26.7, remain disabled unless you configure them explicitly. Before upgrading, review deployments that rely on preview features. Set the specific feature names in `keycloak.keycloak.features.additional`, or set `preview` only when you intentionally require every preview feature.
@@ -83,5 +98,5 @@ UDS Core packages Gateway API CRDs `v1.6.1` as part of this upgrade, so you do n
 - [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) - configure and verify classification banners
 - [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
 - [UDS Core 1.10.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#110-2026-08-04) - full changelog
-- [Full diff (1.9.0...1.10.0)](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.0) - all changes between versions
+- [Full diff (1.9.0...1.10.1)](https://github.com/defenseunicorns/uds-core/compare/v1.9.0...v1.10.1) - all changes between versions
 - [Keycloak server features](https://www.keycloak.org/server/features) - upstream feature status and configuration
