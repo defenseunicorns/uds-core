@@ -10,6 +10,9 @@ sidebar:
 
 UDS Core 1.11 expands classification banner configuration so operators can apply different banner text and footer behavior by host and path. This release also exposes Pepr admission webhook annotations through Zarf values, fixes several upgrade and templating issues, and bumps UDS Identity Config to 0.30.0 for registration and client policy fixes.
 
+> [!CAUTION]
+> Do not install or upgrade to UDS Core `v1.11.0`. Upgrade directly to `v1.11.1`, which updates Keycloak to `26.7.2` and addresses [CVE-2026-18963](https://nvd.nist.gov/vuln/detail/CVE-2026-18963), a critical vulnerability in the reset-credentials flow. An unauthenticated attacker may reset another user's password without completing email verification, and MFA alone does not mitigate this risk. If you already run `v1.11.0`, upgrade to `v1.11.1`. If you cannot upgrade immediately, use the temporary Forgot Password mitigation under [Upgrade considerations](#upgrade-considerations).
+
 ### Notable features
 
 - **Multiple classification banners:** UDS Core now supports a `classificationBanners` list with per-entry `text`, `addFooter`, `enabledHosts`, and optional `pathPrefixes` values. The legacy `classificationBanner` value remains supported, but emits a deprecation note when enabled. See [Enable the classification banner](/how-to-guides/platform-features/enable-classification-banner/) ([#2851](https://github.com/defenseunicorns/uds-core/pull/2851)).
@@ -36,6 +39,18 @@ UDS Core 1.11 expands classification banner configuration so operators can apply
 
 ## Upgrade considerations
 
+### Forgot Password mitigation
+
+If you cannot upgrade immediately, temporarily disable **Forgot Password** in every Keycloak realm, including the `master` realm:
+
+1. Open the Keycloak admin console at `https://keycloak.<admin_domain>/`.
+2. Sign in with an administrator account.
+3. Use **Manage realms** to select the realm you want to configure.
+4. Open **Realm Settings**, then select the **Login** tab.
+5. Turn off **Forgot Password**.
+6. Repeat the change for every realm, including `master`.
+7. Sign out of the admin console.
+
 ### Pepr 2.0 compatibility
 
 UDS Core packages Pepr 2.0 in this release. No manual platform upgrade step is expected for standard UDS Core deployments, but operators who maintain custom Pepr modules or repo automation should review the [Pepr 2.0.0 release](https://github.com/defenseunicorns/pepr/releases/tag/v2.0.0), especially the removal of `pepr format`.
@@ -55,4 +70,4 @@ Identity Config [0.30.0](https://github.com/defenseunicorns/uds-identity-config/
 - [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak and UDS Identity Config settings
 - [UDS Core 1.11.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1110-2026-08-18) - full changelog
 - [UDS Identity Config 0.30.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0300-2026-08-18) - identity-config changelog
-- [Full diff (1.10.0...1.11.0)](https://github.com/defenseunicorns/uds-core/compare/v1.10.0...v1.11.0) - all changes between versions
+- [Full diff (1.10.0...1.11.1)](https://github.com/defenseunicorns/uds-core/compare/v1.10.0...v1.11.1) - all changes between versions
