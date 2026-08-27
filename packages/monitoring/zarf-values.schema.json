@@ -7751,6 +7751,15 @@
         }
       },
       "type": "object"
+    },
+    "prometheus-operator-crds": {
+      "properties": {
+        "prometheus-operator-crds": {
+          "properties": {},
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   },
   "type": "object"
