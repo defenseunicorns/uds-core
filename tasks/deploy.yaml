@@ -20,10 +20,48 @@ tasks:
         default: ""
         description: "Extra args for k3d"
     actions:
-      - description: "Deploy the UDS Core Standard Bundle"
+      - description: "Deploy the UDS Core Standard Bundle with UDS CLI Legacy"
         cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-test-config.yaml
+
+  - name: k3d-standard-bundle-next
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
+        description: "Deprecated for UDS CLI Next. Use configFile for runtime variables."
+      configFile:
+        default: ""
+        description: "UDS CLI Next config file to use for deployment"
+      packages:
+        default: ""
+        description: "Comma-separated packages to deploy"
+    actions:
+      - description: "Prepare UDS CLI Next config"
+        cmd: |
+          if [ -n "${{ .inputs.K3D_EXTRA_ARGS }}" ]; then
+            echo "K3D_EXTRA_ARGS is not supported directly by UDS CLI Next deploy. Use configFile for runtime variables."
+            exit 1
+          fi
+
+          CONFIG_ARGS=""
+          if [ -n "${{ .inputs.configFile }}" ]; then
+            CONFIG_ARGS="--config ${{ .inputs.configFile }}"
+          fi
+          echo "CONFIG_ARGS=${CONFIG_ARGS}" > build/k3d-standard-next-deploy.env
+      - description: "Deploy the UDS Core Standard Bundle with UDS CLI Next"
+        cmd: |
+          PACKAGES="${{ .inputs.packages }}"
+          if [ "${FLAVOR}" = "registry1" ]; then
+            PACKAGES=$(echo "${PACKAGES}" | sed -E 's/(^|,)core_portal(,|$)/\1/' | sed -E 's/,+/,/g; s/^,//; s/,$//')
+          fi
+          PACKAGES_ARGS=""
+          if [ -n "${PACKAGES}" ]; then
+            PACKAGES_ARGS="--packages ${PACKAGES} --force"
+          fi
+          # shellcheck disable=SC1091
+          . build/k3d-standard-next-deploy.env
+          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst ${CONFIG_ARGS} --skip-signature-verification ${PACKAGES_ARGS}
 
   - name: k3d-standard-bundle-ha
     actions:
@@ -31,6 +69,12 @@ tasks:
         cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-ha-config.yaml
+
+  - name: k3d-standard-bundle-ha-next
+    actions:
+      - task: k3d-standard-bundle-next
+        with:
+          configFile: bundles/k3d-standard/config-ha.uds.hcl
 
   - name: k3d-standard-bundle-upgrade
     inputs:
@@ -52,6 +96,16 @@ tasks:
         cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
         env:
           - UDS_CONFIG=build/private-pki/uds-private-pki-config.yaml
+
+  - name: k3d-standard-bundle-private-pki-next
+    actions:
+      - task: k3d-standard-bundle-next
+        with:
+          packages: uds_k3d_dev,init
+      - task: k3d-standard-bundle-next
+        with:
+          configFile: build/private-pki/config-private-pki.uds.hcl
+          packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
 
   - name: k3d-slim-dev-bundle
     actions:

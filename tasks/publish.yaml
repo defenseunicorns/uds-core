@@ -57,20 +57,33 @@ tasks:
     description: "Publish UDS Bundles"
     actions:
       - task: utils:determine-repo
-      - description: "Publish amd64 and arm64 bundles"
+      - description: "Publish amd64 and arm64 legacy bundles"
         cmd: |
-          echo "Publishing bundles to ${TARGET_REPO}"
-          ./uds publish bundles/k3d-standard/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          ./uds publish bundles/k3d-standard/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          echo "Publishing legacy bundles to ${TARGET_REPO}"
+          ./uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-standard/uds-bundle-k3d-core-demo-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
-          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
-          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-*-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+          ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
+
+      - description: "Publish amd64 and arm64 UDS CLI Next bundles"
+        cmd: |
+          echo "Publishing UDS CLI Next bundles to ${TARGET_REPO}"
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard/uds-bundle-k3d-core-demo-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard/uds-bundle-k3d-core-demo-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
 
       - description: "Tag the latest bundles"
         cmd: |
           pkgPath="${TARGET_REPO}/bundles/k3d-core-demo"
           ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          pkgPath="${TARGET_REPO}/bundles/k3d-core-demo-next"
+          ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
           pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev"
+          ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
+          pkgPath="${TARGET_REPO}/bundles/k3d-core-slim-dev-next"
           ./uds zarf tools registry copy ${pkgPath}:${VERSION} ${pkgPath}:latest
 
   - name: single-layer

@@ -119,11 +119,15 @@ tasks:
       - task: test:uds-core
 
   - name: test-uds-core-multi-node
-    description: "Deploys UDS Core on a multi-node cluster (based on K3D_EXTRA_ARGS variable)"
+    description: "Deploys UDS Core on a multi-node cluster"
     actions:
-      - task: test:uds-core
+      - task: create:k3d-standard-bundle-next
         with:
-          K3D_EXTRA_ARGS: "--servers 3 --agents 2"
+          create_options: "--skip-sbom"
+      - task: deploy:k3d-standard-bundle-next
+        with:
+          configFile: bundles/k3d-standard/config-test-multi-node.uds.hcl
+      - task: test:validate-packages
 
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
@@ -132,6 +136,13 @@ tasks:
       - task: setup:ha-redis
       - task: test:uds-core-ha
 
+  - name: test-uds-core-ha-legacy
+    description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
+    actions:
+      - task: setup:ha-postgres
+      - task: setup:ha-redis
+      - task: test:uds-core-ha-legacy
+
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
@@ -139,10 +150,22 @@ tasks:
       - task: setup:ha-redis
       - task: test:uds-core-ha-upgrade
 
+  - name: test-uds-core-ha-upgrade-legacy
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
+    actions:
+      - task: setup:ha-postgres
+      - task: setup:ha-redis
+      - task: test:uds-core-ha-upgrade-legacy
+
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: test:uds-core-upgrade
+
+  - name: test-uds-core-upgrade-legacy
+    description: "Test an upgrade from the latest released UDS Core package to current branch with UDS CLI Legacy bundle workflow"
+    actions:
+      - task: test:uds-core-upgrade-legacy
 
   - name: lint-check
     description: "Run linting checks"

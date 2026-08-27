@@ -56,6 +56,9 @@ jobs:
         if: ${{ inputs.snapshot }}
         run: |
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
+          for bundle_hcl in bundles/k3d-standard/bundle.uds.hcl bundles/k3d-standard/bundle-no-portal.uds.hcl bundles/k3d-slim-dev/bundle.uds.hcl; do
+            perl -0pi -e 's/version = "[^"]+"/version = "$ENV{SNAPSHOT_VERSION}"/' "${bundle_hcl}"
+          done
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-base")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-identity-authorization")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
@@ -72,11 +75,18 @@ jobs:
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-      # Standard Package by default tests full core
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --with create_options=--skip-sbom
+
+          if [ "${{ matrix.flavor }}" = "upstream" ]; then
+            ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --with create_options=--skip-sbom
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+          fi
+
       - name: Test amd64 Bundle
         if: ${{ !inputs.snapshot }}
         run: |
-          uds run deploy-standard-bundle --no-progress
+          uds run -f tasks/deploy.yaml k3d-standard-bundle-next --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard/config-test.uds.hcl --no-progress
           uds run -f tasks/test.yaml validate-packages --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output

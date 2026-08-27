@@ -1,4 +1,4 @@
-# Copyright 2025 Defense Unicorns
+# Copyright 2025-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 tasks:
@@ -66,13 +66,28 @@ tasks:
             sudo update-ca-certificates
           fi
 
-          # Configure UDS with certificates
+          # Configure UDS CLI Legacy with certificates
           cp bundles/k3d-standard/uds-private-pki-config.yaml build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.CA_BUNDLE_CERTS = "'"$(cat build/private-pki/ca.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.ADMIN_TLS_CERT = "'"$(cat build/private-pki/admin-gateway.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.ADMIN_TLS_KEY = "'"$(cat build/private-pki/admin-gateway.key.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.TENANT_TLS_CERT = "'"$(cat build/private-pki/tenant-gateway.crt.b64)"'"' build/private-pki/uds-private-pki-config.yaml
           yq -i '.variables.core.TENANT_TLS_KEY = "'"$(cat build/private-pki/tenant-gateway.key.b64)"'"' build/private-pki/uds-private-pki-config.yaml
+
+          # Configure UDS CLI Next with certificates
+          cat > build/private-pki/config-private-pki.uds.hcl <<EOF
+          variables = {
+            CA_BUNDLE_CERTS                = "$(cat build/private-pki/ca.crt.b64)"
+            CA_BUNDLE_INCLUDE_DOD_CERTS    = "true"
+            CA_BUNDLE_INCLUDE_PUBLIC_CERTS = "true"
+
+            ADMIN_TLS_CERT = "$(cat build/private-pki/admin-gateway.crt.b64)"
+            ADMIN_TLS_KEY  = "$(cat build/private-pki/admin-gateway.key.b64)"
+
+            TENANT_TLS_CERT = "$(cat build/private-pki/tenant-gateway.crt.b64)"
+            TENANT_TLS_KEY  = "$(cat build/private-pki/tenant-gateway.key.b64)"
+          }
+          EOF
 
   - name: private-pki-tests
     description: "Run Private PKI Tests"

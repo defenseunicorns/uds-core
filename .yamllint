@@ -19,6 +19,8 @@ ignore:
   - "/tmp/**"
   - "src/falco/chart/rules/**"
   - "src/velero/chart/templates/crds/**"
+  - "bundles/k3d-standard/values/**"
+  - "bundles/k3d-slim-dev/values/**"
 
 rules:
   anchors: enable

@@ -1,0 +1,31 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pepr-uds-core:
+  module:
+    watcher:
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+    admission:
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+
+istio-controlplane:
+  istiod:
+    resources:
+      requests:
+        memory: "1024Mi"
+        cpu: "100m"
+    global:
+      proxy:
+        resources:
+          requests:
+            memory: "40Mi"
+            cpu: "10m"
+          limits:
+            memory: "1024Mi"
+            cpu: "2000m"
