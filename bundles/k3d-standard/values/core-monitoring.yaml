@@ -11,7 +11,7 @@ grafana:
       host: "{{ . }}"
 {{- end }}
 {{- with index .vars "GRAFANA_PG_PORT" }}
-      port: "{{ . }}"
+      port: {{ . }}
 {{- end }}
 {{- with index .vars "GRAFANA_PG_DATABASE" }}
       database: "{{ . }}"
