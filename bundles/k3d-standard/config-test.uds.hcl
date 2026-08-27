@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
+  INSECURE_ADMIN_PASSWORD_GENERATION = "true"
+
   CLASSIFICATION_BANNERS = [
     {
       text = "SAMPLE BANNER"
