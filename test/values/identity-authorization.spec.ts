@@ -33,7 +33,6 @@ describe("identity-authorization package values", () => {
         keycloak: {
           keycloak: {
             podLabels: { probe: "PROBE_VISIBLE" },
-            image: { repository: "SHOULD_NOT_APPEAR" },
             configImage: "ghcr.io/example/uds-identity-config:custom",
           },
         },
@@ -66,8 +65,22 @@ describe("identity-authorization package values", () => {
     expect(resourceNumber(r, "spec", "replicas")).toBe(7);
   });
 
-  it("excludePaths block SHOULD_NOT_APPEAR values", () => {
+  it("authservice excludePaths block SHOULD_NOT_APPEAR values", () => {
     expectNoExcludedValues(manifests);
+  });
+
+  it("keycloak image override is rejected by Zarf schema validation", async () => {
+    await expect(
+      renderManifests(PKG, {
+        values: {
+          keycloak: {
+            keycloak: {
+              image: { repository: "SHOULD_NOT_APPEAR" },
+            },
+          },
+        },
+      }),
+    ).rejects.toThrow("Additional property image is not allowed");
   });
 });
 
