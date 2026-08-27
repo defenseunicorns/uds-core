@@ -120,8 +120,14 @@ tasks:
           fi
       - description: "Create the UDS Core Standard Bundle with UDS CLI Next"
         cmd: |
-          CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next --architecture=${ZARF_ARCHITECTURE}
-          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-${ZARF_ARCHITECTURE}-${VERSION}.tar.zst bundles/k3d-standard/
+          # Avoid passing --architecture= until CLI Next handles empty values clearly.
+          # See: https://linear.app/defense-unicorns/issue/CLI-316/handle-empty-architecture-values-in-bundle-create
+          set --
+          if [ -n "${ZARF_ARCHITECTURE}" ]; then
+            set -- --architecture="${ZARF_ARCHITECTURE}"
+          fi
+          CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next "$@"
+          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*-${VERSION}.tar.zst bundles/k3d-standard/
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity) with UDS CLI Legacy"
@@ -161,7 +167,14 @@ tasks:
           create_options: ${{ .inputs.create_options }}
 
       - description: "Create the slim dev bundle (Base and Identity) with UDS CLI Next"
-        cmd: CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev --architecture=${ZARF_ARCHITECTURE}
+        cmd: |
+          # Avoid passing --architecture= until CLI Next handles empty values clearly.
+          # See: https://linear.app/defense-unicorns/issue/CLI-316/handle-empty-architecture-values-in-bundle-create
+          set --
+          if [ -n "${ZARF_ARCHITECTURE}" ]; then
+            set -- --architecture="${ZARF_ARCHITECTURE}"
+          fi
+          CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev "$@"
 
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"

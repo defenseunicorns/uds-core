@@ -6874,11 +6874,16 @@
           "type": "object"
         },
         "uds-prometheus-config": {
+          "additionalProperties": false,
           "properties": {
             "additionalNetworkAllow": {
+              "items": {
+                "type": "object"
+              },
               "type": "array"
             },
             "rke2CorednsNetpol": {
+              "additionalProperties": false,
               "properties": {
                 "enabled": {
                   "type": "boolean"
@@ -6887,6 +6892,7 @@
               "type": "object"
             },
             "udsCoreDefaultAlerts": {
+              "additionalProperties": false,
               "properties": {
                 "enabled": {
                   "type": "boolean"
