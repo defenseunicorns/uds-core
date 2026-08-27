@@ -36,7 +36,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.7.2
-      - ttl.sh/uds-identity-config-core-672-20260824-e0dc391:24h
+      - ghcr.io/defenseunicorns/uds/identity-config:core-672-50c8774
   - name: keycloak
     required: true
     only:
@@ -49,7 +49,7 @@ components:
           - "values/registry1-values.yaml"
     images:
       - registry1.dso.mil/ironbank/opensource/keycloak/keycloak-fips:26.7.2-fips
-      - ttl.sh/uds-identity-config-core-672-20260824-e0dc391:24h
+      - ghcr.io/defenseunicorns/uds/identity-config:core-672-50c8774
   - name: keycloak
     required: true
     only:
@@ -62,4 +62,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - cgr.dev/defenseunicorns.com/keycloak-fips:v26.7.2
-      - ttl.sh/uds-identity-config-core-672-20260824-e0dc391:24h
+      - ghcr.io/defenseunicorns/uds/identity-config:core-672-50c8774

@@ -164,12 +164,6 @@ spec:
             - "--spi-authentication-sessions--map--auth-sessions-limit={{ .Values.realmConfig.maxInFlightLoginsPerUser | default 300 }}"
             - "--proxy-headers=xforwarded"
             - "--http-enabled=true"
-            - "--hostname-strict=false"
-            # Keep public and admin frontend URLs separate while the UDS hostname provider
-            # selects the admin origin for requests entering through the admin gateway.
-            - "--hostname=https://sso.{{ .Values.domain }}"
-            - "--hostname-admin=https://keycloak.{{ $adminDomain }}"
-            - "--hostname-backchannel-dynamic=true"
             {{- if .Values.jsonLogFormat }}
             - "--log-console-output=json"
             {{- end }}
@@ -220,6 +214,16 @@ spec:
               value: "{{ $adminDomain }}"
             - name: UDS_CLUSTER_DOMAIN
               value: "{{ .Values.clusterDomain }}"
+
+            # Keep native Keycloak hostname settings together in the pod environment.
+            - name: KC_HOSTNAME
+              value: "https://sso.{{ $domain }}"
+            - name: KC_HOSTNAME_ADMIN
+              value: "https://keycloak.{{ $adminDomain }}"
+            - name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC
+              value: "true"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
 
             # Enable health and metrics endpoints
             - name: KC_HEALTH_ENABLED

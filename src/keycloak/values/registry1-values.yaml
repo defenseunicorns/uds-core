@@ -13,7 +13,7 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: ttl.sh/uds-identity-config-core-672-20260824-e0dc391:24h
+configImage: ghcr.io/defenseunicorns/uds/identity-config:core-672-50c8774
 
 migrations:
   deleteGeneratedTrustStore: true
