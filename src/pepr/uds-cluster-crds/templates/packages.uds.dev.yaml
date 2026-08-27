@@ -1208,8 +1208,9 @@ spec:
                       redirectUris:
                         description: >-
                           Valid URI pattern a browser can redirect to after a
-                          successful login. Simple wildcards are allowed such as
-                          'https://unicorns.uds.dev/*'
+                          successful login. Simple wildcards are allowed. For
+                          example, a wildcard may follow the path prefix
+                          'https://unicorns.uds.dev/'
                         type: array
                         items:
                           type: string
