@@ -3,24 +3,54 @@
 
 authservice:
   authservice:
-    replicaCount: 1
+    replicaCount: {{ .vars.AUTHSERVICE_REPLICA_COUNT }}
 
 keycloak:
   keycloak:
     resources:
       requests:
-        memory: "700Mi"
-        cpu: "100m"
+        memory: "{{ .vars.KEYCLOAK_MEMORY_REQUEST }}"
+        cpu: "{{ .vars.KEYCLOAK_CPU_REQUEST }}"
       limits:
-        memory: "2Gi"
-        cpu: "2"
+        memory: "{{ .vars.KEYCLOAK_MEMORY_LIMIT }}"
+        cpu: "{{ .vars.KEYCLOAK_CPU_LIMIT }}"
     waypoint:
       horizontalPodAutoscaler:
-        enabled: false
+        enabled: {{ .vars.KEYCLOAK_WAYPOINT_HPA_ENABLED }}
       deployment:
         requests:
-          cpu: "100m"
-          memory: "64Mi"
+          cpu: "{{ .vars.KEYCLOAK_WAYPOINT_CPU_REQUEST }}"
+          memory: "{{ .vars.KEYCLOAK_WAYPOINT_MEMORY_REQUEST }}"
+{{- with index .vars "INSECURE_ADMIN_PASSWORD_GENERATION" }}
+    insecureAdminPasswordGeneration:
+      enabled: {{ . }}
+{{- end }}
+{{- with index .vars "KEYCLOAK_HA" }}
+    autoscaling:
+      enabled: {{ . }}
+{{- end }}
+{{- $pgUsername := index .vars "KEYCLOAK_PG_USERNAME" }}
+{{- $pgPassword := index .vars "KEYCLOAK_PG_PASSWORD" }}
+{{- $pgDatabase := index .vars "KEYCLOAK_PG_DATABASE" }}
+{{- $pgHost := index .vars "KEYCLOAK_PG_HOST" }}
+{{- if or $pgUsername $pgPassword $pgDatabase $pgHost }}
+    postgresql:
+{{- with $pgUsername }}
+      username: "{{ . }}"
+{{- end }}
+{{- with $pgPassword }}
+      password: "{{ . }}"
+{{- end }}
+{{- with $pgDatabase }}
+      database: "{{ . }}"
+{{- end }}
+{{- with $pgHost }}
+      host: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- with index .vars "KEYCLOAK_DEVMODE" }}
+    devMode: {{ . }}
+{{- end }}
     realmInitEnv:
       FLEET_CLIENT_ENABLED: "true"
       GOOGLE_IDP_ENABLED: true
