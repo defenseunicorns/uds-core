@@ -1270,15 +1270,23 @@
               "type": "array"
             },
             "disabledRules": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
               "type": "array"
             },
             "extraRules": {
+              "items": {
+                "type": "object"
+              },
               "type": "array"
             },
             "incubatingRulesEnabled": {
               "type": "boolean"
             },
             "overrides": {
+              "additionalProperties": false,
               "properties": {
                 "lists": {
                   "properties": {},
@@ -1300,15 +1308,21 @@
             },
             "udsDefaultDisabledRulesIncubating": {
               "items": {
+                "minLength": 1,
                 "type": "string"
               },
               "type": "array"
             },
             "udsDefaultDisabledRulesSandbox": {
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              },
               "type": "array"
             },
             "udsDefaultDisabledRulesStable": {
               "items": {
+                "minLength": 1,
                 "type": "string"
               },
               "type": "array"
