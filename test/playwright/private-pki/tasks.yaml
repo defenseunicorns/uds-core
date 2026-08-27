@@ -11,6 +11,9 @@ tasks:
           sudo echo "got sudo! success!"
 
       - description: "Generate and Setup CA certs"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           # Create directories and clean up old certificates
           mkdir -p build/private-pki

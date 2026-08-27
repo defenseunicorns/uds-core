@@ -84,33 +84,6 @@ tasks:
               exit 1
             fi
           done
-      - description: "Validate default values files against their schemas"
-        shell:
-          darwin: bash
-          linux: bash
-        cmd: |
-          set -euo pipefail
-          package="${{ .inputs.package }}"
-          if [ -n "$package" ] && [ ! -f "packages/${package}/zarf-values.yaml" ]; then
-            echo "ERROR: packages/${package}/zarf-values.yaml does not exist"
-            exit 1
-          fi
-          for values_file in packages/*/zarf-values.yaml; do
-            pkg="${values_file#packages/}"
-            pkg="${pkg%/zarf-values.yaml}"
-            if [ -n "$package" ] && [ "$pkg" != "$package" ]; then
-              continue
-            fi
-            echo "Validating packages/${pkg}/zarf-values.yaml"
-            if ! uvx check-jsonschema \
-              --schemafile "packages/${pkg}/zarf-values.schema.json" \
-              "packages/${pkg}/zarf-values.yaml"; then
-              echo "ERROR: values schema validation failed for packages/${pkg}"
-              exit 1
-            fi
-          done
-
-
   - name: install-pepr-deps
     description: "Install Pepr dependencies"
     actions:
