@@ -359,6 +359,20 @@ describe("convertSsoToClient function", () => {
     expect(convertSsoToClient(sso)).toEqual(expectedClient);
   });
 
+  it("preserves an explicit false fullScopeAllowed value", () => {
+    const sso: Sso = {
+      clientId: "test-client",
+      name: "Test Client",
+      fullScopeAllowed: false,
+    };
+
+    expect(convertSsoToClient(sso)).toMatchObject({
+      clientId: "test-client",
+      name: "Test Client",
+      fullScopeAllowed: false,
+    });
+  });
+
   it("should handle optional fields correctly", () => {
     const sso: Sso = {
       clientId: "test-client",
