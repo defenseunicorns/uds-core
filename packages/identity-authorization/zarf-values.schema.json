@@ -95,14 +95,24 @@
       "additionalProperties": true,
       "properties": {
         "keycloak": {
+          "additionalProperties": false,
           "properties": {
             "additionalGatewayNamespaces": {
+              "items": {
+                "type": "string"
+              },
               "type": "array"
             },
             "additionalNetworkAllow": {
+              "items": {
+                "type": "object"
+              },
               "type": "array"
             },
             "adminApiAllowedPrincipals": {
+              "items": {
+                "type": "string"
+              },
               "type": "array"
             },
             "adminDomain": {
@@ -219,8 +229,10 @@
               "type": "boolean"
             },
             "detailedObservability": {
+              "additionalProperties": false,
               "properties": {
                 "alerts": {
+                  "additionalProperties": false,
                   "properties": {
                     "enabled": {
                       "type": "boolean"
@@ -229,6 +241,7 @@
                   "type": "object"
                 },
                 "dashboards": {
+                  "additionalProperties": false,
                   "properties": {
                     "enabled": {
                       "type": "boolean"
@@ -237,6 +250,7 @@
                   "type": "object"
                 },
                 "logging": {
+                  "additionalProperties": false,
                   "properties": {
                     "enabled": {
                       "type": "boolean"
@@ -260,6 +274,17 @@
               "type": "boolean"
             },
             "env": {
+              "items": {
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
               "type": "array"
             },
             "extraVolumeMounts": {
@@ -304,12 +329,16 @@
             "features": {
               "properties": {
                 "additional": {
+                  "items": {
+                    "type": "string"
+                  },
                   "type": "array"
                 }
               },
               "type": "object"
             },
             "httpRetry": {
+              "additionalProperties": false,
               "properties": {
                 "applyJitter": {
                   "type": "boolean"
@@ -421,6 +450,9 @@
               "type": "object"
             },
             "podAnnotations": {
+              "additionalProperties": {
+                "type": "string"
+              },
               "properties": {},
               "type": "object"
             },
@@ -539,8 +571,13 @@
             },
             "realmConfig": {
               "properties": {
+                "accountInactivityDays": {
+                  "maximum": 3650,
+                  "minimum": 0,
+                  "type": "integer"
+                },
                 "maxInFlightLoginsPerUser": {
-                  "type": "number"
+                  "type": "integer"
                 }
               },
               "type": "object"
@@ -612,6 +649,35 @@
             },
             "themeCustomizations": {
               "properties": {
+                "resources": {
+                  "properties": {
+                    "images": {
+                      "items": {
+                        "properties": {
+                          "configmap": {
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "name": {
+                            "enum": [
+                              "background.png",
+                              "footer.png",
+                              "logo.png",
+                              "favicon.png"
+                            ]
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "type": "object"
+                },
                 "settings": {
                   "properties": {
                     "enableAccessRequestNotes": {
@@ -619,6 +685,33 @@
                     },
                     "enableRegistrationFields": {
                       "type": "boolean"
+                    },
+                    "realmDisplayName": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "termsAndConditions": {
+                  "properties": {
+                    "text": {
+                      "properties": {
+                        "configmap": {
+                          "properties": {
+                            "key": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "inline": {
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
                     }
                   },
                   "type": "object"
@@ -631,6 +724,10 @@
                 "tls": {
                   "properties": {
                     "tlsCertificateFormat": {
+                      "enum": [
+                        "PEM",
+                        "AWS"
+                      ],
                       "type": "string"
                     },
                     "tlsCertificateHeader": {
@@ -646,7 +743,7 @@
               "type": "array"
             },
             "topologySpreadConstraints": {
-              "type": "string"
+              "type": "null"
             },
             "truststorePaths": {
               "items": {
@@ -658,6 +755,7 @@
               "type": "string"
             },
             "uptime": {
+              "additionalProperties": false,
               "properties": {
                 "enabled": {
                   "type": "boolean"
