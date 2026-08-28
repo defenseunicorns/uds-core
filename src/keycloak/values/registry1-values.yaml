@@ -13,7 +13,7 @@ securityContext:
   capabilities:
     drop:
       - ALL
-configImage: ghcr.io/defenseunicorns/uds/identity-config:core-672-50c8774
+configImage: registry1.dso.mil/ironbank/opensource/defenseunicorns/uds/uds-identity-config:0.31.0
 
 migrations:
   deleteGeneratedTrustStore: true
