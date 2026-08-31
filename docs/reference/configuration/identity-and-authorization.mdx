@@ -142,6 +142,8 @@ The plugin enforces a `UDS Client Profile` Keycloak client policy for all client
 
 To extend the allow-list, set `SECURITY_HARDENING_ADDITIONAL_PROTOCOL_MAPPERS` or `SECURITY_HARDENING_ADDITIONAL_CLIENT_SCOPES` in `realmInitEnv` (see [Realm initialization variables](#realm-initialization-variables)).
 
+When `sso[].fullScopeAllowed` is omitted, UDS Core preserves Keycloak's normal behavior. Set it to `false` whenever your application works with explicit role scope mappings and client scopes, which limits token roles to only those the client requires. Reference the [`Package` CR SSO fields](/reference/operator-and-crds/packages-v1alpha1-cr/#sso) for the field definition.
+
 > [!CAUTION]
 > Do not use the `bare-groups` claim to protect applications. Because it strips path information, two groups with the same name but in different parent groups are indistinguishable, which creates authorization vulnerabilities.
 
