@@ -69,11 +69,11 @@ tasks:
       - description: "Publish amd64 and arm64 UDS CLI Next bundles"
         cmd: |
           echo "Publishing UDS CLI Next bundles to ${TARGET_REPO}"
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard/uds-bundle-k3d-core-demo-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard/uds-bundle-k3d-core-demo-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
 
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
 
       - description: "Tag the latest bundles"
         cmd: |

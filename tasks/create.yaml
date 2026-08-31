@@ -90,7 +90,7 @@ tasks:
           if [ "${FLAVOR}" = "registry1" ] || [ "${{ .inputs.include_portal }}" != "true" ]; then
             echo "Skipping Portal functional layer package for no-Portal bundle creation."
           else
-            ./uds run -f tasks/create.yaml single-layer --with layer=portal --with create_options="${{ .inputs.create_options }}" --no-progress
+            ./uds run -f tasks/create.yaml single-layer --set FLAVOR="${FLAVOR}" --with layer=portal --with create_options="${{ .inputs.create_options }}" --no-progress
           fi
 
   - name: k3d-standard-bundle-next
@@ -110,13 +110,13 @@ tasks:
       - description: "Prepare the UDS Core Standard Bundle definition for UDS CLI Next"
         cmd: |
           rm -rf build/k3d-standard-next
-          cp -R bundles/k3d-standard build/k3d-standard-next
+          cp -R bundles/k3d-standard-next build/k3d-standard-next
 
           # UDS CLI Next discovers a canonical bundle.uds.hcl file from the bundle directory.
           # Registry1 does not include Portal, so no-Portal flows stage the checked-in
           # bundle-no-portal.uds.hcl variant as bundle.uds.hcl before creating the artifact.
           if [ "${FLAVOR}" = "registry1" ] || [ "${{ .inputs.include_portal }}" != "true" ]; then
-            cp bundles/k3d-standard/bundle-no-portal.uds.hcl build/k3d-standard-next/bundle.uds.hcl
+            cp bundles/k3d-standard-next/bundle-no-portal.uds.hcl build/k3d-standard-next/bundle.uds.hcl
           fi
       - description: "Create the UDS Core Standard Bundle with UDS CLI Next"
         cmd: |
@@ -127,7 +127,7 @@ tasks:
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next "$@"
-          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*-${VERSION}.tar.zst bundles/k3d-standard/
+          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*-${VERSION}.tar.zst bundles/k3d-standard-next/
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity) with UDS CLI Legacy"
@@ -174,7 +174,7 @@ tasks:
           if [ -n "${ZARF_ARCHITECTURE}" ]; then
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
-          CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev "$@"
+          CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev-next "$@"
 
   - name: checkpoint-dev-package
     description: "Create the K3d + UDS Core Checkpoint Zarf Package"

@@ -126,7 +126,7 @@ tasks:
           create_options: "--skip-sbom"
       - task: deploy:k3d-standard-bundle-next
         with:
-          configFile: bundles/k3d-standard/config-test-multi-node.uds.hcl
+          configFile: bundles/k3d-standard-next/config-test-multi-node.uds.hcl
       - task: test:validate-packages
 
   - name: test-uds-core-ha

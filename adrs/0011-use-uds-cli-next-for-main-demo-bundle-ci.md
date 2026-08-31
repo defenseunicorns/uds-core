@@ -23,11 +23,10 @@ UDS Core will continue publishing Legacy demo bundles during the transition, but
 This decision uses the following implementation details:
 
 1. Main CI bundle build and deploy jobs use `CLI_FEATURES=NextMode=true` and UDS CLI Next bundle commands.
-2. Next bundle definitions live beside the existing Legacy bundle files in the same bundle directories.
+2. Next bundle definitions live in sibling `*-next` bundle directories, separate from the existing Legacy bundle directories.
 3. Standard bundle runtime variants, including HA and private PKI, use CLI Next config files.
 4. Next demo bundle artifacts publish alongside Legacy demo bundle artifacts with distinct `-next` names, such as `k3d-core-demo-next` and `k3d-core-slim-dev-next`.
 5. Legacy demo bundle validation is covered through the CLI compatibility matrix while Legacy artifacts are still published.
-6. CLI Next follow-up issues are created only for build, deploy, or publish blockers in existing UDS Core workflows. UDS Core will not add unrelated command-conformance checks just for dogfooding.
 
 ## Consequences
 
@@ -43,7 +42,6 @@ This decision uses the following implementation details:
 
 - Legacy and Next bundle definitions must stay in sync while both artifact families are published.
 - Release workflows publish and report two demo bundle families during the transition.
-- Registry1 standard-bundle paths need a staged `bundle.uds.hcl` because UDS CLI Next currently discovers the canonical bundle file from the bundle directory. UDS Core keeps the reviewed source at `bundles/k3d-standard/bundle-no-portal.uds.hcl` and copies it into the staging directory for no-Portal bundle creation.
 - Older CLI compatibility workflows stay on Legacy because they intentionally install CLIs that do not support Next mode.
 
 ## Alternatives Considered

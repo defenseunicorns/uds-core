@@ -158,7 +158,7 @@ tasks:
           create_options: "--skip-sbom"
       - task: deploy:k3d-standard-bundle-next
         with:
-          configFile: bundles/k3d-standard/config-test.uds.hcl
+          configFile: bundles/k3d-standard-next/config-test.uds.hcl
       - task: validate-packages
 
   - name: uds-core-legacy
@@ -239,7 +239,7 @@ tasks:
       - task: deploy:latest-release-test-resources
       - task: upgrade-existing
         with:
-          configFile: "bundles/k3d-standard/config-ha.uds.hcl"
+          configFile: "bundles/k3d-standard-next/config-ha.uds.hcl"
 
   - name: uds-core-ha-upgrade-legacy
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
@@ -280,7 +280,7 @@ tasks:
     inputs:
       configFile:
         description: "UDS CLI Next config file to use for the upgrade deployment"
-        default: "bundles/k3d-standard/config-upgrade.uds.hcl"
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:k3d-standard-bundle-next
