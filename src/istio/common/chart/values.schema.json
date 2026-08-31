@@ -26,7 +26,7 @@
         },
         "text": {
           "type": ["string", "null"],
-          "pattern": "^(?i)((UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET)(//.*)?|UNKNOWN|SAMPLE BANNER)?$",
+          "pattern": "^(([Uu][Nn][Cc][Ll][Aa][Ss][Ss][Ii][Ff][Ii][Ee][Dd]|[Cc][Uu][Ii]|[Cc][Oo][Nn][Ff][Ii][Dd][Ee][Nn][Tt][Ii][Aa][Ll]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Pp] [Ss][Ee][Cc][Rr][Ee][Tt])(//.*)?|[Uu][Nn][Kk][Nn][Oo][Ww][Nn]|[Ss][Aa][Mm][Pp][Ll][Ee] [Bb][Aa][Nn][Nn][Ee][Rr])?$",
           "description": "Classification text must start with a known level (UNCLASSIFIED, CUI, CONFIDENTIAL, SECRET, TOP SECRET) and may include additional access or distribution requirements delimited by // (e.g., SECRET//NOFORN). UNKNOWN, SAMPLE BANNER (a demo placeholder), or empty/null are also allowed."
         }
       }

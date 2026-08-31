@@ -44,7 +44,7 @@ jobs:
             flavor: upstream
             install_cli: v0.34.0 # Minimum supported Legacy CLI
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-            upgrade_cli: v0.35.1
+            upgrade_cli: v0.36.0
           - mode: next
             scenario: legacy-to-next
             flavor: upstream

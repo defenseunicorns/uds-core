@@ -36,7 +36,7 @@
                   "type": "boolean"
                 },
                 "text": {
-                  "pattern": "^(?i)(UNCLASSIFIED|CUI|CONFIDENTIAL|SECRET|TOP SECRET|TOP SECRET//SCI|UNKNOWN|)$",
+                  "pattern": "^([Uu][Nn][Cc][Ll][Aa][Ss][Ss][Ii][Ff][Ii][Ee][Dd]|[Cc][Uu][Ii]|[Cc][Oo][Nn][Ff][Ii][Dd][Ee][Nn][Tt][Ii][Aa][Ll]|[Ss][Ee][Cc][Rr][Ee][Tt]|[Tt][Oo][Pp] [Ss][Ee][Cc][Rr][Ee][Tt](//[Ss][Cc][Ii])?|[Uu][Nn][Kk][Nn][Oo][Ww][Nn]|)$",
                   "type": [
                     "string",
                     "null"
