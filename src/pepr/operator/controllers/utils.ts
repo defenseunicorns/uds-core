@@ -5,8 +5,10 @@
 
 import { V1OwnerReference } from "@kubernetes/client-node";
 import { GenericClass, GenericKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
+import { k8sCfg, pathBuilder } from "kubernetes-fluent-client/dist/fluent/utils";
+import { FetchMethods } from "kubernetes-fluent-client/dist/fluent/shared-types";
 import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
-import { K8s, kind } from "pepr";
+import { K8s, fetch, kind } from "pepr";
 import { WatchEventArgs } from "pepr/dist/lib/processors/watch-processor";
 import { Logger } from "pino";
 import { UDSPackage } from "../crd";
@@ -103,6 +105,30 @@ export function getOwnerRef(cr: GenericKind): V1OwnerReference[] {
   ];
 }
 
+async function deleteWithPreconditions<T extends GenericClass>(
+  resourceKind: T,
+  namespace: string,
+  resource: GenericKind,
+) {
+  const { opts, serverUrl } = await k8sCfg(FetchMethods.DELETE);
+  const url = pathBuilder(serverUrl.toString(), resourceKind, {
+    namespace,
+    name: resource.metadata!.name!,
+  });
+  opts.body = JSON.stringify({
+    apiVersion: "v1",
+    kind: "DeleteOptions",
+    preconditions: {
+      uid: resource.metadata?.uid,
+      resourceVersion: resource.metadata?.resourceVersion,
+    },
+  });
+  const response = await fetch(url, opts);
+  if (!response.ok) {
+    throw response;
+  }
+}
+
 /**
  * Purges orphaned Kubernetes resources of a specified kind within a namespace that do not match the provided generation.
  *
@@ -153,9 +179,9 @@ export async function purgeOrphans<T extends GenericClass>(
           continue;
         }
         log.debug({ resource: current }, `Deleting orphaned ${current.kind!} ${name}`);
-        await K8s(kind).Delete(current);
+        await deleteWithPreconditions(kind, namespace, current);
       } catch (e) {
-        if ((e as { status?: number }).status === 404) {
+        if ([404, 409].includes((e as { status?: number }).status ?? 0)) {
           continue;
         }
         throw e;
