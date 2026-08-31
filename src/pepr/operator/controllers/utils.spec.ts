@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -11,6 +11,7 @@ import {
   createEvent,
   getAuthserviceClients,
   Mutex,
+  purgeOrphans,
   retryWithDelay,
   validateNamespace,
 } from "./utils";
@@ -323,6 +324,52 @@ describe("test validateNamespace", () => {
     );
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
+  });
+});
+
+describe("purgeOrphans", () => {
+  const logger = createMockLogger();
+  const stale = {
+    kind: "Deployment",
+    metadata: { name: "shared-egress", labels: { "uds/generation": "30" } },
+  };
+
+  function mockPurgeClients(currentGet: ReturnType<typeof vi.fn>) {
+    const listClient = createMockK8sClient({ Get: vi.fn().mockResolvedValue({ items: [stale] }) });
+    const currentClient = createMockK8sClient({ Get: currentGet });
+    vi.mocked(K8s)
+      .mockReturnValueOnce(listClient)
+      .mockReturnValueOnce(currentClient)
+      .mockReturnValueOnce(currentClient);
+    return currentClient;
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("does not delete a resource updated after the list", async () => {
+    const currentClient = mockPurgeClients(
+      vi.fn().mockResolvedValue({
+        ...stale,
+        metadata: { ...stale.metadata, labels: { "uds/generation": "31" } },
+      }),
+    );
+
+    await purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger);
+
+    expect(currentClient.Get).toHaveBeenCalledWith("shared-egress");
+    expect(currentClient.Delete).not.toHaveBeenCalled();
+  });
+
+  it("does not delete a resource already removed after the list", async () => {
+    const currentClient = mockPurgeClients(vi.fn().mockRejectedValue({ status: 404 }));
+
+    await expect(
+      purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger),
+    ).resolves.toBeUndefined();
+
+    expect(currentClient.Delete).not.toHaveBeenCalled();
   });
 });
 

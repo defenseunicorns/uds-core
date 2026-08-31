@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -143,8 +143,23 @@ export async function purgeOrphans<T extends GenericClass>(
       resourceGenLabel !== generation;
 
     if (shouldDelete) {
-      log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
-      await K8s(kind).Delete(resource);
+      const name = resource.metadata!.name!;
+      // Generation purge removes managed objects not applied in the current reconciliation.
+      // Because list and delete are separate calls, refresh the candidate so a newly updated
+      // object is not deleted.
+      try {
+        const current = await K8s(kind).InNamespace(namespace).Get(name);
+        if (current.metadata?.labels?.["uds/generation"] === generation) {
+          continue;
+        }
+        log.debug({ resource: current }, `Deleting orphaned ${current.kind!} ${name}`);
+        await K8s(kind).Delete(current);
+      } catch (e) {
+        if ((e as { status?: number }).status === 404) {
+          continue;
+        }
+        throw e;
+      }
     }
   }
 }

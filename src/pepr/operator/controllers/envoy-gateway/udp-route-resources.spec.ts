@@ -218,9 +218,9 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => {
+        Get: vi.fn(async (name?: string) => {
           if (resourceKind === K8sUDPRoute) {
-            return {
+            const result = {
               items: [
                 {
                   apiVersion: "gateway.networking.k8s.io/v1alpha2",
@@ -233,6 +233,7 @@ describe("envoyGatewayResources", () => {
                 },
               ],
             };
+            return name ? result.items[0] : result;
           }
 
           return { items: [] };
@@ -275,9 +276,9 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => {
+        Get: vi.fn(async (name?: string) => {
           if (resourceKind === K8sUDPRoute) {
-            return {
+            const result = {
               items: [
                 {
                   apiVersion: "gateway.networking.k8s.io/v1alpha2",
@@ -290,6 +291,7 @@ describe("envoyGatewayResources", () => {
                 },
               ],
             };
+            return name ? result.items[0] : result;
           }
 
           return { items: [] };
