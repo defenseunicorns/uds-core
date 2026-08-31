@@ -175,6 +175,12 @@ export async function purgeOrphans<T extends GenericClass>(
       // object is not deleted.
       try {
         const current = await K8s(kind).InNamespace(namespace).Get(name);
+        if (
+          current.metadata?.uid !== resource.metadata?.uid ||
+          current.metadata?.resourceVersion !== resource.metadata?.resourceVersion
+        ) {
+          continue;
+        }
         if (current.metadata?.labels?.["uds/generation"] === generation) {
           continue;
         }
