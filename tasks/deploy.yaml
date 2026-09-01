@@ -21,19 +21,7 @@ tasks:
         description: "Extra args for k3d"
     actions:
       - description: "Deploy the UDS Core Standard Bundle"
-        cmd: |
-          for attempt in 1 2 3; do
-            FORCE=""
-            [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
-            if ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress $FORCE; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
-              sleep 30
-            fi
-          done
-          exit 1
+        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --set INSECURE_ADMIN_PASSWORD_GENERATION=true --set FALCO_SANDBOX_RULES_ENABLED=true --set FALCO_INCUBATING_RULES_ENABLED=true --set K3D_EXTRA_ARGS="${{ .inputs.K3D_EXTRA_ARGS }}" --confirm --no-progress
         env:
           - UDS_CONFIG=bundles/k3d-standard/uds-test-config.yaml
 
@@ -61,19 +49,7 @@ tasks:
         cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages uds-k3d-dev,init --confirm --no-progress
 
       - description: "Deploy UDS Core with Private PKI configuration"
-        cmd: |
-          for attempt in 1 2 3; do
-            FORCE=""
-            [ "$attempt" -gt 1 ] && FORCE="--force-conflicts"
-            if ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress $FORCE; then
-              exit 0
-            fi
-            if [ "$attempt" -lt 3 ]; then
-              echo "Deploy failed on attempt $attempt; sleeping 30s before retry..."
-              sleep 30
-            fi
-          done
-          exit 1
+        cmd: ./uds deploy bundles/k3d-standard/uds-bundle-k3d-core-demo-${UDS_ARCH}-${VERSION}.tar.zst --packages core --confirm --no-progress
         env:
           - UDS_CONFIG=build/private-pki/uds-private-pki-config.yaml
 
