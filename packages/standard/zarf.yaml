@@ -159,3 +159,14 @@ components:
     required: false
     import:
       path: ../metrics-server
+    actions:
+      onDeploy:
+        after:
+          - description: Wait for cluster OpenAPI schema to stabilize
+            maxTotalSeconds: 180
+            maxRetries: 3
+            cmd: |
+              for _ in $(seq 1 30); do
+                ./zarf tools kubectl get --raw /openapi/v2 --request-timeout=5s > /dev/null || exit 1
+                sleep 2
+              done
