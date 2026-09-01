@@ -170,18 +170,13 @@ export async function purgeOrphans<T extends GenericClass>(
 
     if (shouldDelete) {
       const name = resource.metadata!.name!;
-      // Generation purge removes managed objects not applied in the current reconciliation.
-      // Because list and delete are separate calls, refresh the candidate so a newly updated
-      // object is not deleted.
       try {
         const current = await K8s(kind).InNamespace(namespace).Get(name);
         if (
           current.metadata?.uid !== resource.metadata?.uid ||
-          current.metadata?.resourceVersion !== resource.metadata?.resourceVersion
+          current.metadata?.resourceVersion !== resource.metadata?.resourceVersion ||
+          current.metadata?.labels?.["uds/generation"] === generation
         ) {
-          continue;
-        }
-        if (current.metadata?.labels?.["uds/generation"] === generation) {
           continue;
         }
         log.debug({ resource: current }, `Deleting orphaned ${current.kind!} ${name}`);
