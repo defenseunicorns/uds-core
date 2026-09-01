@@ -163,16 +163,25 @@ components:
       onDeploy:
         after:
           - description: Wait for cluster OpenAPI validation to stabilize
-            maxTotalSeconds: 180
-            maxRetries: 3
+            maxTotalSeconds: 300
             cmd: |
-              for _ in $(seq 1 30); do
-                printf '%s\n' \
+              stable_checks=0
+              for attempt in $(seq 1 120); do
+                if printf '%s\n' \
                   'apiVersion: v1' \
                   'kind: ConfigMap' \
                   'metadata:' \
                   '  name: openapi-stability-probe' \
                   '  namespace: default' |
-                  ./zarf tools kubectl apply --dry-run=server --request-timeout=5s -f - > /dev/null || exit 1
+                  ./zarf tools kubectl apply --dry-run=server --request-timeout=5s -f - > /dev/null; then
+                  stable_checks=$((stable_checks + 1))
+                  if [ "$stable_checks" -eq 30 ]; then
+                    exit 0
+                  fi
+                else
+                  stable_checks=0
+                fi
                 sleep 2
               done
+              echo "Cluster OpenAPI validation did not remain available for 60 seconds."
+              exit 1
