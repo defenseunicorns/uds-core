@@ -15,7 +15,6 @@ on:
       - ".github/workflows/private-pki-test.yaml"
       - "bundles/k3d-standard/**"
       - "packages/standard/**"
-      - "src/metrics-server/**"
       - "test/playwright/private-pki/**"
 
 concurrency:
