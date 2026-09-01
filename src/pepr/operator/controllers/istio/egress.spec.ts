@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi }
 import { Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { defaultEgressMocks, pkgMock, updateEgressMocks } from "./defaultTestMocks";
 import {
+  buildEgressMaps,
   createAmbientPackageEntry,
   createHostResourceMap,
   egressRequestedFromNetwork,
@@ -60,7 +61,7 @@ vi.mock("./egress-sidecar", async () => {
 });
 
 // Mock apply functions for ambient
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode, Phase } from "../../crd/generated/package-v1alpha1";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 const mockApplyAmbientEgressResources: MockedFunction<() => Promise<void>> = vi.fn();
 vi.mock("./egress-ambient", async () => {
@@ -1795,11 +1796,14 @@ describe("initial shared egress hydration", () => {
     },
   });
 
-  const ambientPackage = (name: string): UDSPackage => ({
-    ...sidecarPackage(name),
+  const ambientPackage = (name: string, overrides: Partial<UDSPackage> = {}): UDSPackage => ({
+    ...sidecarPackage(name, overrides),
     spec: {
-      ...sidecarPackage(name).spec,
-      network: { ...sidecarPackage(name).spec?.network, serviceMesh: { mode: Mode.Ambient } },
+      ...sidecarPackage(name, overrides).spec,
+      network: {
+        ...sidecarPackage(name, overrides).spec?.network,
+        serviceMesh: { mode: Mode.Ambient },
+      },
     },
   });
 
@@ -1883,29 +1887,326 @@ describe("initial shared egress hydration", () => {
     expect(purgeOrphans).toHaveBeenCalled();
   });
 
-  it("leaves maps unchanged and retries after hydration failure", async () => {
-    const existing = { existing: { "existing.example.com": { portProtocol: [] } } };
-    Object.assign(inMemoryPackageMap, existing);
-    const conflictingPackages = [
-      sidecarPackage("package-a"),
-      sidecarPackage("package-b", {
-        spec: {
-          network: {
-            allow: [
-              {
-                direction: Direction.Egress,
-                remoteHost: "example.com",
-                remoteProtocol: RemoteProtocol.HTTP,
-                port: 443,
-              },
-            ],
-          },
+  it("isolates a conflicting sidecar package and applies all accepted packages", async () => {
+    const acceptedPackage = sidecarPackage("package-a", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    const rejectedPackage = sidecarPackage("package-b", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
         },
-      }),
-    ];
+      },
+    });
+    const unrelatedPackage = sidecarPackage("package-c", {
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "unrelated.example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
     const loader = vi
       .fn()
-      .mockResolvedValueOnce({ items: conflictingPackages })
+      .mockResolvedValue({ items: [rejectedPackage, unrelatedPackage, acceptedPackage] });
+
+    await reconcileSharedEgressResources(
+      unrelatedPackage,
+      createHostResourceMap(unrelatedPackage),
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    expect(inMemoryPackageMap).toHaveProperty("package-a-test-namespace");
+    expect(inMemoryPackageMap).toHaveProperty("package-c-test-namespace");
+    expect(inMemoryPackageMap).not.toHaveProperty("package-b-test-namespace");
+    expect(applySidecarEgressResources).toHaveBeenCalledWith(
+      inMemoryPackageMap,
+      expect.any(Number),
+    );
+    expect(purgeOrphans).toHaveBeenCalled();
+  });
+
+  it("isolates a conflicting ambient package and applies all accepted packages", async () => {
+    const acceptedPackage = ambientPackage("package-a", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    const rejectedPackage = ambientPackage("package-b", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+    const unrelatedPackage = ambientPackage("package-c", {
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "unrelated.example.com",
+              remoteProtocol: RemoteProtocol.TLS,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+    const loader = vi
+      .fn()
+      .mockResolvedValue({ items: [rejectedPackage, unrelatedPackage, acceptedPackage] });
+
+    await reconcileSharedEgressResources(
+      unrelatedPackage,
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Ambient,
+      loader,
+    );
+
+    expect(inMemoryAmbientPackageMap).toHaveProperty("package-a-test-namespace");
+    expect(inMemoryAmbientPackageMap).toHaveProperty("package-c-test-namespace");
+    expect(inMemoryAmbientPackageMap).not.toHaveProperty("package-b-test-namespace");
+    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(Number),
+    );
+    expect(purgeAmbientEgressResources).toHaveBeenCalled();
+  });
+
+  it("uses deterministic fallback ordering independent of list order", () => {
+    const olderPackage = sidecarPackage("older-package", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    const newerPackage = sidecarPackage("newer-package", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+
+    const forward = buildEgressMaps([olderPackage, newerPackage]);
+    const reverse = buildEgressMaps([newerPackage, olderPackage]);
+
+    expect(forward.sidecarMap).toEqual(reverse.sidecarMap);
+    expect(forward.sidecarMap).toHaveProperty("older-package-test-namespace");
+    expect(forward.sidecarMap).not.toHaveProperty("newer-package-test-namespace");
+    expect([...forward.conflicts.keys()]).toEqual(["newer-package-test-namespace"]);
+    expect([...reverse.conflicts.keys()]).toEqual(["newer-package-test-namespace"]);
+  });
+
+  it("preserves a current successfully reconciled owner independent of list order", () => {
+    const olderFailedPackage = sidecarPackage("older-failed-package", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+        generation: 2,
+      },
+      status: {
+        phase: Phase.Failed,
+        observedGeneration: 1,
+      },
+    });
+    const newerReadyPackage = sidecarPackage("newer-ready-package", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+        generation: 1,
+      },
+      status: {
+        phase: Phase.Ready,
+        observedGeneration: 1,
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+
+    const forward = buildEgressMaps([olderFailedPackage, newerReadyPackage]);
+    const reverse = buildEgressMaps([newerReadyPackage, olderFailedPackage]);
+
+    expect(forward.sidecarMap).toEqual(reverse.sidecarMap);
+    expect(forward.sidecarMap).toHaveProperty("newer-ready-package-test-namespace");
+    expect(forward.sidecarMap).not.toHaveProperty("older-failed-package-test-namespace");
+    expect([...forward.conflicts.keys()]).toEqual(["older-failed-package-test-namespace"]);
+    expect([...reverse.conflicts.keys()]).toEqual(["older-failed-package-test-namespace"]);
+  });
+
+  it("applies and purges accepted state before rejecting the triggering package", async () => {
+    const acceptedPackage = sidecarPackage("package-a", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    const rejectedPackage = sidecarPackage("package-b", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+    const loader = vi.fn().mockResolvedValue({ items: [rejectedPackage, acceptedPackage] });
+
+    await expect(
+      reconcileSharedEgressResources(
+        rejectedPackage,
+        createHostResourceMap(rejectedPackage),
+        PackageAction.AddOrUpdate,
+        Mode.Sidecar,
+        loader,
+      ),
+    ).rejects.toThrow("Protocol conflict detected");
+
+    expect(inMemoryPackageMap).toHaveProperty("package-a-test-namespace");
+    expect(inMemoryPackageMap).not.toHaveProperty("package-b-test-namespace");
+    expect(applySidecarEgressResources).toHaveBeenCalled();
+    expect(purgeOrphans).toHaveBeenCalled();
+  });
+
+  it("does not promote a rejected package when its incumbent is updated or deleted", async () => {
+    const acceptedPackage = sidecarPackage("package-a", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-01T00:00:00Z"),
+      },
+    });
+    const rejectedPackage = sidecarPackage("package-b", {
+      metadata: {
+        ...pkgMock.metadata,
+        creationTimestamp: new Date("2026-01-02T00:00:00Z"),
+      },
+      spec: {
+        network: {
+          allow: [
+            {
+              direction: Direction.Egress,
+              remoteHost: "example.com",
+              remoteProtocol: RemoteProtocol.HTTP,
+              port: 443,
+            },
+          ],
+        },
+      },
+    });
+    const triggerPackage = sidecarPackage("package-c", { spec: { network: { allow: [] } } });
+    const loader = vi.fn().mockResolvedValue({ items: [rejectedPackage, acceptedPackage] });
+    await reconcileSharedEgressResources(
+      triggerPackage,
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    const updatedHostResourceMap = {
+      "updated.example.com": {
+        portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+      },
+    };
+    await reconcileSharedEgressResources(
+      acceptedPackage,
+      updatedHostResourceMap,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+    expect(inMemoryPackageMap).toEqual({
+      "package-a-test-namespace": updatedHostResourceMap,
+    });
+
+    await reconcileSharedEgressResources(
+      acceptedPackage,
+      updatedHostResourceMap,
+      PackageAction.Remove,
+      Mode.Sidecar,
+      loader,
+    );
+    expect(inMemoryPackageMap).toEqual({});
+  });
+
+  it("keeps non-conflict hydration failures atomic and retryable", async () => {
+    const existingSidecar = { existing: { "existing.example.com": { portProtocol: [] } } };
+    const existingAmbient = {
+      ambient: { name: "ambient", namespace: "existing", rules: [] },
+    };
+    Object.assign(inMemoryPackageMap, existingSidecar);
+    Object.assign(inMemoryAmbientPackageMap, existingAmbient);
+    const invalidPackage = sidecarPackage("invalid");
+    invalidPackage.metadata!.name = undefined;
+    const loader = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [invalidPackage] })
       .mockResolvedValueOnce({ items: [sidecarPackage("package-a")] });
 
     await expect(
@@ -1916,11 +2217,14 @@ describe("initial shared egress hydration", () => {
         Mode.Sidecar,
         loader,
       ),
-    ).rejects.toThrow("Protocol conflict detected");
+    ).rejects.toThrow("Package metadata.name and metadata.namespace are required");
 
-    expect(inMemoryPackageMap).toEqual(existing);
+    expect(inMemoryPackageMap).toEqual(existingSidecar);
+    expect(inMemoryAmbientPackageMap).toEqual(existingAmbient);
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(applyAmbientEgressResources).not.toHaveBeenCalled();
     expect(purgeOrphans).not.toHaveBeenCalled();
+    expect(purgeAmbientEgressResources).not.toHaveBeenCalled();
 
     await reconcileSharedEgressResources(
       sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
@@ -1931,12 +2235,16 @@ describe("initial shared egress hydration", () => {
     );
 
     expect(loader).toHaveBeenCalledTimes(2);
-    expect(applySidecarEgressResources).toHaveBeenCalled();
+    expect(inMemoryPackageMap).toHaveProperty("package-a-test-namespace");
   });
 
   it("leaves maps unchanged and retries when the package list fails", async () => {
     const existing = { existing: { "existing.example.com": { portProtocol: [] } } };
+    const existingAmbient = {
+      ambient: { name: "ambient", namespace: "existing", rules: [] },
+    };
     Object.assign(inMemoryPackageMap, existing);
+    Object.assign(inMemoryAmbientPackageMap, existingAmbient);
     const loader = vi
       .fn()
       .mockRejectedValueOnce(new Error("package list unavailable"))
@@ -1953,8 +2261,11 @@ describe("initial shared egress hydration", () => {
     ).rejects.toThrow("package list unavailable");
 
     expect(inMemoryPackageMap).toEqual(existing);
+    expect(inMemoryAmbientPackageMap).toEqual(existingAmbient);
     expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(applyAmbientEgressResources).not.toHaveBeenCalled();
     expect(purgeOrphans).not.toHaveBeenCalled();
+    expect(purgeAmbientEgressResources).not.toHaveBeenCalled();
 
     await reconcileSharedEgressResources(
       sidecarPackage("event-package", { spec: { network: { allow: [] } } }),

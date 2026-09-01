@@ -4,7 +4,7 @@
  */
 import { K8s } from "pepr";
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
+import { Mode, Phase } from "../../crd/generated/package-v1alpha1";
 import { Mutex, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
@@ -35,41 +35,131 @@ let egressMapsHydrated = false;
 type PackageList = { items: UDSPackage[] };
 type PackageListLoader = () => Promise<PackageList>;
 
+export class ProtocolConflictError extends Error {
+  readonly retryable = false;
+
+  constructor(
+    readonly ownerPackageId: string,
+    readonly rejectedPackageId: string,
+    readonly mode: Mode,
+    readonly host: string,
+    readonly port: number,
+    readonly ownerProtocol: RemoteProtocol,
+    readonly rejectedProtocol: RemoteProtocol,
+  ) {
+    super(
+      `Protocol conflict detected for ${host}:${port}. ` +
+        `Package "${rejectedPackageId}" wants to use ${rejectedProtocol} but package "${ownerPackageId}" ` +
+        `is already using ${ownerProtocol} for the same host and port combination.`,
+    );
+    this.name = "ProtocolConflictError";
+  }
+}
+
+type EgressMapBuildResult = {
+  sidecarMap: PackageHostMap;
+  ambientMap: AmbientPackageMap;
+  conflicts: Map<string, ProtocolConflictError>;
+};
+
 const defaultPackageListLoader: PackageListLoader = () =>
   K8s(UDSPackage).Get() as Promise<PackageList>;
 let hydratedPackageListLoader: PackageListLoader | undefined;
 
-async function hydrateEgressMaps(packageListLoader: PackageListLoader): Promise<void> {
-  const packageList = await packageListLoader();
+function packageId(pkg: UDSPackage): string {
+  const name = pkg.metadata?.name;
+  const namespace = pkg.metadata?.namespace;
+  if (!name || !namespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+  return `${name}-${namespace}`;
+}
+
+function packageCreationTime(pkg: UDSPackage): number {
+  const creationTimestamp = pkg.metadata?.creationTimestamp;
+  if (!creationTimestamp) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  const timestamp = new Date(creationTimestamp).getTime();
+  if (Number.isNaN(timestamp)) {
+    throw new Error(`Package "${packageId(pkg)}" has an invalid creation timestamp`);
+  }
+  return timestamp;
+}
+
+function isCurrentSuccessfullyReconciled(pkg: UDSPackage): boolean {
+  const generation = pkg.metadata?.generation;
+  return (
+    pkg.status?.phase === Phase.Ready &&
+    typeof generation === "number" &&
+    pkg.status.observedGeneration === generation
+  );
+}
+
+function logProtocolConflict(error: ProtocolConflictError): void {
+  log.error(
+    {
+      ownerPackageId: error.ownerPackageId,
+      rejectedPackageId: error.rejectedPackageId,
+      mode: error.mode,
+      host: error.host,
+      port: error.port,
+      ownerProtocol: error.ownerProtocol,
+      rejectedProtocol: error.rejectedProtocol,
+    },
+    error.message,
+  );
+}
+
+export function buildEgressMaps(packages: UDSPackage[]): EgressMapBuildResult {
   const sidecarMap: PackageHostMap = {};
   const ambientMap: AmbientPackageMap = {};
+  const conflicts = new Map<string, ProtocolConflictError>();
+  const livePackages = packages
+    .filter(pkg => !pkg.metadata?.deletionTimestamp)
+    .map(pkg => ({
+      pkg,
+      pkgId: packageId(pkg),
+      sortKey: `${pkg.metadata!.namespace}/${pkg.metadata!.name}`,
+    }))
+    .sort((a, b) => {
+      const successfulOwnerDifference =
+        Number(isCurrentSuccessfullyReconciled(b.pkg)) -
+        Number(isCurrentSuccessfullyReconciled(a.pkg));
+      if (successfulOwnerDifference) {
+        return successfulOwnerDifference;
+      }
+      const timestampDifference = packageCreationTime(a.pkg) - packageCreationTime(b.pkg);
+      return timestampDifference || a.sortKey.localeCompare(b.sortKey);
+    });
 
-  for (const pkg of packageList.items as UDSPackage[]) {
-    if (pkg.metadata?.deletionTimestamp) {
-      continue;
-    }
-
-    const pkgName = pkg.metadata?.name;
-    const pkgNamespace = pkg.metadata?.namespace;
-    if (!pkgName || !pkgNamespace) {
-      throw new Error("Package metadata.name and metadata.namespace are required");
-    }
-    const pkgId = `${pkgName}-${pkgNamespace}`;
+  for (const { pkg, pkgId } of livePackages) {
     const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
 
-    if (istioMode === Mode.Ambient) {
-      const entry = createAmbientPackageEntry(pkg);
-      validateAmbientProtocolConflicts(ambientMap, entry, pkgId);
-      ambientMap[pkgId] = entry;
-    } else {
-      const hostResourceMap = createHostResourceMap(pkg);
-      if (hostResourceMap) {
-        validateProtocolConflicts(sidecarMap, hostResourceMap, pkgId);
-        sidecarMap[pkgId] = hostResourceMap;
+    try {
+      if (istioMode === Mode.Ambient) {
+        const entry = createAmbientPackageEntry(pkg);
+        validateAmbientProtocolConflicts(ambientMap, entry, pkgId);
+        ambientMap[pkgId] = entry;
+      } else {
+        const hostResourceMap = createHostResourceMap(pkg);
+        if (hostResourceMap) {
+          validateProtocolConflicts(sidecarMap, hostResourceMap, pkgId);
+          sidecarMap[pkgId] = hostResourceMap;
+        }
       }
+    } catch (error) {
+      if (!(error instanceof ProtocolConflictError)) {
+        throw error;
+      }
+      conflicts.set(pkgId, error);
     }
   }
 
+  return { sidecarMap, ambientMap, conflicts };
+}
+
+function replaceEgressMaps(sidecarMap: PackageHostMap, ambientMap: AmbientPackageMap): void {
   for (const key of Object.keys(inMemoryPackageMap)) {
     delete inMemoryPackageMap[key];
   }
@@ -78,8 +168,6 @@ async function hydrateEgressMaps(packageListLoader: PackageListLoader): Promise<
   }
   Object.assign(inMemoryPackageMap, sidecarMap);
   Object.assign(inMemoryAmbientPackageMap, ambientMap);
-  egressMapsHydrated = true;
-  hydratedPackageListLoader = packageListLoader;
 }
 
 function validateAmbientProtocolConflicts(
@@ -115,12 +203,16 @@ function validateAmbientProtocolConflicts(
       const existing = existingHostPortProtocols[key];
       const desiredProtocol = rule.protocol ?? RemoteProtocol.TLS;
       if (existing && existing.protocol !== desiredProtocol) {
-        const errorMsg =
-          `Protocol conflict detected for ${rule.host}:${port}. ` +
-          `Package "${newPkgId}" wants to use ${desiredProtocol} but package "${existing.packageId}" ` +
-          `is already using ${existing.protocol} for the same host and port combination.`;
-        log.error(errorMsg);
-        throw new Error(errorMsg);
+        const error = new ProtocolConflictError(
+          existing.packageId,
+          newPkgId,
+          Mode.Ambient,
+          rule.host,
+          port,
+          existing.protocol,
+          desiredProtocol,
+        );
+        throw error;
       }
     }
   }
@@ -149,8 +241,17 @@ export async function reconcileSharedEgressResources(
   const release = await sharedEgressMutex.acquire();
   try {
     const wasHydrated = egressMapsHydrated && hydratedPackageListLoader === packageListLoader;
+    let triggeringPackageConflict: ProtocolConflictError | undefined;
     if (!wasHydrated) {
-      await hydrateEgressMaps(packageListLoader);
+      const packageList = await packageListLoader();
+      const buildResult = buildEgressMaps(packageList.items);
+      for (const conflict of buildResult.conflicts.values()) {
+        logProtocolConflict(conflict);
+      }
+      replaceEgressMaps(buildResult.sidecarMap, buildResult.ambientMap);
+      egressMapsHydrated = true;
+      hydratedPackageListLoader = packageListLoader;
+      triggeringPackageConflict = buildResult.conflicts.get(pkgId);
     }
 
     // Update the target map before removing the previous mode. Validation can fail
@@ -169,6 +270,10 @@ export async function reconcileSharedEgressResources(
     // Keep map mutation, apply, and purge in one transaction so a later event
     // cannot change the state used by this reconciliation.
     await performEgressReconciliation();
+
+    if (triggeringPackageConflict) {
+      throw triggeringPackageConflict;
+    }
   } finally {
     release();
   }
@@ -278,7 +383,14 @@ export async function updateInMemoryPackageMap(
 ) {
   if (action === PackageAction.AddOrUpdate) {
     if (hostResourceMap) {
-      validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+      try {
+        validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+      } catch (error) {
+        if (error instanceof ProtocolConflictError) {
+          logProtocolConflict(error);
+        }
+        throw error;
+      }
       inMemoryPackageMap[pkgId] = hostResourceMap;
     } else {
       removeMapResources(inMemoryPackageMap, pkgId);
@@ -296,7 +408,14 @@ export async function updateInMemoryAmbientPackageMap(
 ) {
   if (action === PackageAction.AddOrUpdate) {
     const entry = createAmbientPackageEntry(pkg);
-    validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
+    try {
+      validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
+    } catch (error) {
+      if (error instanceof ProtocolConflictError) {
+        logProtocolConflict(error);
+      }
+      throw error;
+    }
     inMemoryAmbientPackageMap[pkgId] = entry;
   } else if (action === PackageAction.Remove && inMemoryAmbientPackageMap[pkgId]) {
     delete inMemoryAmbientPackageMap[pkgId];
@@ -337,12 +456,16 @@ export function validateProtocolConflicts(
       const existing = existingHostPortProtocols[key];
 
       if (existing && existing.protocol !== portProtocol.protocol) {
-        const errorMsg =
-          `Protocol conflict detected for ${host}:${portProtocol.port}. ` +
-          `Package "${newPkgId}" wants to use ${portProtocol.protocol} but package "${existing.packageId}" ` +
-          `is already using ${existing.protocol} for the same host and port combination.`;
-        log.error(errorMsg);
-        throw new Error(errorMsg);
+        const error = new ProtocolConflictError(
+          existing.packageId,
+          newPkgId,
+          Mode.Sidecar,
+          host,
+          portProtocol.port,
+          existing.protocol,
+          portProtocol.protocol,
+        );
+        throw error;
       }
     }
   }

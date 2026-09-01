@@ -141,6 +141,9 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
    > [!NOTE]
    > Wildcards in host names are **not** supported. You must specify the exact hostname (e.g., `www.google.com`, not `*.google.com`).
 
+   > [!WARNING]
+   > Within sidecar mode and within ambient mode, `Package` CRs share egress resources. If two packages specify different protocols for the same host and port, the operator accepts the existing package and rejects the conflicting package without blocking unrelated packages. After an operator restart, a `Package` CR whose current generation reconciled successfully takes precedence. If the operator cannot establish ownership from status, it uses creation timestamp, namespace, and name as deterministic fallbacks. After you resolve the conflict, update the rejected `Package` CR to retry its reconciliation.
+
    <Tabs>
      <TabItem label="Specific host (ambient)">
 
@@ -172,7 +175,7 @@ Every `allow` entry must also specify at least one remote field: `remoteGenerate
      The `serviceAccount` field is optional but strongly recommended for ambient egress rules with `remoteHost` or `remoteGenerated: Anywhere`. It scopes egress access to specific workload identities, enforcing least privilege.
 
      > [!WARNING]
-     > In ambient mode, adding any `remoteHost` routes traffic through the shared egress waypoint in `istio-egress-ambient`. The operator creates a per-host `ServiceEntry` and `AuthorizationPolicy` there. If two packages specify the same host and port but with different protocols, the second package will fail to reconcile. Coordinate between package authors or consolidate egress rules when sharing host:port combinations.
+     > In ambient mode, adding any `remoteHost` routes traffic through the shared egress waypoint in `istio-egress-ambient`. The operator creates a per-host `ServiceEntry` and `AuthorizationPolicy` there. Coordinate between package authors or consolidate egress rules when sharing host and port combinations.
 
      When applied, the UDS Operator creates:
      - A shared `ServiceEntry` in the `istio-egress-ambient` namespace, registering the external host
