@@ -162,11 +162,17 @@ components:
     actions:
       onDeploy:
         after:
-          - description: Wait for cluster OpenAPI schema to stabilize
+          - description: Wait for cluster OpenAPI validation to stabilize
             maxTotalSeconds: 180
             maxRetries: 3
             cmd: |
               for _ in $(seq 1 30); do
-                ./zarf tools kubectl get --raw /openapi/v2 --request-timeout=5s > /dev/null || exit 1
+                printf '%s\n' \
+                  'apiVersion: v1' \
+                  'kind: ConfigMap' \
+                  'metadata:' \
+                  '  name: openapi-stability-probe' \
+                  '  namespace: default' |
+                  ./zarf tools kubectl apply --dry-run=server --request-timeout=5s -f - > /dev/null || exit 1
                 sleep 2
               done
