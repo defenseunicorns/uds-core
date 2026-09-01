@@ -33,6 +33,14 @@ components:
                 kind: APIService
                 name: v1beta1.metrics.k8s.io
                 condition: available
+          - description: Verify cluster OpenAPI schema is stable
+            maxTotalSeconds: 120
+            maxRetries: 12
+            cmd: |
+              for _ in 1 2 3 4 5; do
+                ./zarf tools kubectl get --raw /openapi/v2 --request-timeout=5s > /dev/null || exit 1
+                sleep 2
+              done
 
   - name: metrics-server
     required: false
@@ -55,6 +63,14 @@ components:
                 kind: APIService
                 name: v1beta1.metrics.k8s.io
                 condition: available
+          - description: Verify cluster OpenAPI schema is stable
+            maxTotalSeconds: 120
+            maxRetries: 12
+            cmd: |
+              for _ in 1 2 3 4 5; do
+                ./zarf tools kubectl get --raw /openapi/v2 --request-timeout=5s > /dev/null || exit 1
+                sleep 2
+              done
 
   - name: metrics-server
     required: false
@@ -77,3 +93,11 @@ components:
                 kind: APIService
                 name: v1beta1.metrics.k8s.io
                 condition: available
+          - description: Verify cluster OpenAPI schema is stable
+            maxTotalSeconds: 120
+            maxRetries: 12
+            cmd: |
+              for _ in 1 2 3 4 5; do
+                ./zarf tools kubectl get --raw /openapi/v2 --request-timeout=5s > /dev/null || exit 1
+                sleep 2
+              done
