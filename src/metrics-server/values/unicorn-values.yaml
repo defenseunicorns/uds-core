@@ -3,4 +3,4 @@
 
 image:
   repository: cgr.dev/defenseunicorns.com/metrics-server-fips
-  tag: "0.8.1"
+  tag: "v0.9.0"

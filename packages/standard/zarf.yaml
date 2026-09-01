@@ -84,6 +84,11 @@ components:
     import:
       path: ../base
 
+  - name: metrics-server
+    required: false
+    import:
+      path: ../metrics-server
+
   - name: envoy-gateway
     required: false
     import:
@@ -152,10 +157,3 @@ components:
       flavor: unicorn
     import:
       path: ../portal
-
-  # Metrics Server registers the aggregated metrics.k8s.io API. Deploy it last so
-  # later Helm charts do not perform OpenAPI validation during its registration.
-  - name: metrics-server
-    required: false
-    import:
-      path: ../metrics-server
