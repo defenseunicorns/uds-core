@@ -84,11 +84,6 @@ components:
     import:
       path: ../base
 
-  - name: metrics-server
-    required: false
-    import:
-      path: ../metrics-server
-
   - name: envoy-gateway
     required: false
     import:
@@ -98,6 +93,11 @@ components:
     required: false
     import:
       path: ../base
+
+  - name: metrics-server
+    required: false
+    import:
+      path: ../metrics-server
 
   - name: keycloak
     required: true
