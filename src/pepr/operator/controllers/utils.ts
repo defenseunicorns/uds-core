@@ -174,7 +174,6 @@ export async function purgeOrphans<T extends GenericClass>(
         const current = await K8s(kind).InNamespace(namespace).Get(name);
         if (
           current.metadata?.uid !== resource.metadata?.uid ||
-          current.metadata?.resourceVersion !== resource.metadata?.resourceVersion ||
           current.metadata?.labels?.["uds/generation"] === generation
         ) {
           continue;

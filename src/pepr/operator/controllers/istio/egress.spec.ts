@@ -147,7 +147,20 @@ describe("test reconcileSharedEgressResources", () => {
   });
 
   it("should populate in-memory vars on action AddOrUpdate, sidecar", async () => {
-    updateEgressMocks(defaultEgressMocks);
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getPkgListMock: vi.fn().mockResolvedValue({
+        items: [
+          {
+            ...pkgWithAllow,
+            spec: {
+              ...pkgWithAllow.spec,
+              network: { ...pkgWithAllow.spec?.network, serviceMesh: { mode: Mode.Sidecar } },
+            },
+          },
+        ],
+      }),
+    });
 
     await reconcileSharedEgressResources(
       pkgWithAllow,
@@ -1750,5 +1763,208 @@ describe("test egressRequestedFromNetwork", () => {
     const egressAllowList = egressRequestedFromNetwork(allowList);
 
     expect(egressAllowList).toHaveLength(0);
+  });
+});
+
+describe("initial shared egress hydration", () => {
+  const sidecarPackage = (name: string, overrides: Partial<UDSPackage> = {}): UDSPackage => ({
+    ...pkgMock,
+    ...overrides,
+    metadata: {
+      ...pkgMock.metadata,
+      ...overrides.metadata,
+      name,
+      namespace: "test-namespace",
+    },
+    spec: {
+      ...pkgMock.spec,
+      ...overrides.spec,
+      network: {
+        ...pkgMock.spec?.network,
+        ...overrides.spec?.network,
+        serviceMesh: { mode: Mode.Sidecar },
+        allow: overrides.spec?.network?.allow ?? [
+          {
+            direction: Direction.Egress,
+            remoteHost: "example.com",
+            remoteProtocol: RemoteProtocol.TLS,
+            port: 443,
+          },
+        ],
+      },
+    },
+  });
+
+  const ambientPackage = (name: string): UDSPackage => ({
+    ...sidecarPackage(name),
+    spec: {
+      ...sidecarPackage(name).spec,
+      network: { ...sidecarPackage(name).spec?.network, serviceMesh: { mode: Mode.Ambient } },
+    },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    updateEgressMocks(defaultEgressMocks);
+    for (const key of Object.keys(inMemoryPackageMap)) delete inMemoryPackageMap[key];
+    for (const key of Object.keys(inMemoryAmbientPackageMap)) {
+      delete inMemoryAmbientPackageMap[key];
+    }
+    vi.mocked(applySidecarEgressResources).mockResolvedValue();
+    vi.mocked(applyAmbientEgressResources).mockResolvedValue();
+    vi.mocked(purgeAmbientEgressResources).mockImplementation(async () => {});
+    (purgeOrphans as Mock).mockImplementation(async () => {});
+  });
+
+  it("applies a live sidecar package before purging on a no-egress event", async () => {
+    const livePackage = sidecarPackage("live-sidecar");
+    const loader = vi.fn().mockResolvedValue({ items: [livePackage] });
+
+    await reconcileSharedEgressResources(
+      sidecarPackage("event-package", {
+        spec: { network: { allow: [] } },
+      }),
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    expect(applySidecarEgressResources).toHaveBeenCalledWith(
+      expect.objectContaining({ "live-sidecar-test-namespace": expect.anything() }),
+      expect.any(Number),
+    );
+    expect((applySidecarEgressResources as Mock).mock.calls[0][0]).not.toHaveProperty(
+      "event-package-test-namespace",
+    );
+    expect(purgeOrphans).toHaveBeenCalled();
+  });
+
+  it("applies a live ambient package before purging on a no-egress event", async () => {
+    const livePackage = ambientPackage("live-ambient");
+    const loader = vi.fn().mockResolvedValue({ items: [livePackage] });
+
+    await reconcileSharedEgressResources(
+      ambientPackage("event-package"),
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Ambient,
+      loader,
+    );
+
+    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
+      expect.objectContaining({ "live-ambient-test-namespace": expect.anything() }),
+      expect.any(Number),
+    );
+    expect((applyAmbientEgressResources as Mock).mock.calls[0][0]).not.toHaveProperty(
+      "event-package-test-namespace",
+    );
+    expect(purgeAmbientEgressResources).toHaveBeenCalled();
+  });
+
+  it("excludes packages being deleted from the hydrated maps", async () => {
+    const deletingPackage = sidecarPackage("deleting-sidecar", {
+      metadata: { ...pkgMock.metadata, name: "deleting-sidecar", deletionTimestamp: new Date() },
+    });
+    const loader = vi
+      .fn()
+      .mockResolvedValue({ items: [sidecarPackage("live-sidecar"), deletingPackage] });
+
+    await reconcileSharedEgressResources(
+      sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    expect(inMemoryPackageMap).toHaveProperty("live-sidecar-test-namespace");
+    expect(inMemoryPackageMap).not.toHaveProperty("deleting-sidecar-test-namespace");
+    expect(purgeOrphans).toHaveBeenCalled();
+  });
+
+  it("leaves maps unchanged and retries after hydration failure", async () => {
+    const existing = { existing: { "existing.example.com": { portProtocol: [] } } };
+    Object.assign(inMemoryPackageMap, existing);
+    const conflictingPackages = [
+      sidecarPackage("package-a"),
+      sidecarPackage("package-b", {
+        spec: {
+          network: {
+            allow: [
+              {
+                direction: Direction.Egress,
+                remoteHost: "example.com",
+                remoteProtocol: RemoteProtocol.HTTP,
+                port: 443,
+              },
+            ],
+          },
+        },
+      }),
+    ];
+    const loader = vi
+      .fn()
+      .mockResolvedValueOnce({ items: conflictingPackages })
+      .mockResolvedValueOnce({ items: [sidecarPackage("package-a")] });
+
+    await expect(
+      reconcileSharedEgressResources(
+        sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
+        undefined,
+        PackageAction.AddOrUpdate,
+        Mode.Sidecar,
+        loader,
+      ),
+    ).rejects.toThrow("Protocol conflict detected");
+
+    expect(inMemoryPackageMap).toEqual(existing);
+    expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(purgeOrphans).not.toHaveBeenCalled();
+
+    await reconcileSharedEgressResources(
+      sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    expect(loader).toHaveBeenCalledTimes(2);
+    expect(applySidecarEgressResources).toHaveBeenCalled();
+  });
+
+  it("leaves maps unchanged and retries when the package list fails", async () => {
+    const existing = { existing: { "existing.example.com": { portProtocol: [] } } };
+    Object.assign(inMemoryPackageMap, existing);
+    const loader = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("package list unavailable"))
+      .mockResolvedValueOnce({ items: [sidecarPackage("live-sidecar")] });
+
+    await expect(
+      reconcileSharedEgressResources(
+        sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
+        undefined,
+        PackageAction.AddOrUpdate,
+        Mode.Sidecar,
+        loader,
+      ),
+    ).rejects.toThrow("package list unavailable");
+
+    expect(inMemoryPackageMap).toEqual(existing);
+    expect(applySidecarEgressResources).not.toHaveBeenCalled();
+    expect(purgeOrphans).not.toHaveBeenCalled();
+
+    await reconcileSharedEgressResources(
+      sidecarPackage("event-package", { spec: { network: { allow: [] } } }),
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+      loader,
+    );
+
+    expect(loader).toHaveBeenCalledTimes(2);
+    expect(applySidecarEgressResources).toHaveBeenCalled();
   });
 });

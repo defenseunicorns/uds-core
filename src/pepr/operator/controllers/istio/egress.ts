@@ -2,6 +2,7 @@
  * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
+import { K8s } from "pepr";
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { Mutex, validateNamespace } from "../utils";
@@ -29,6 +30,57 @@ export const inMemoryPackageMap: PackageHostMap = {};
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
 
 const sharedEgressMutex = new Mutex();
+
+let egressMapsHydrated = false;
+type PackageList = { items: UDSPackage[] };
+type PackageListLoader = () => Promise<PackageList>;
+
+const defaultPackageListLoader: PackageListLoader = () =>
+  K8s(UDSPackage).Get() as Promise<PackageList>;
+let hydratedPackageListLoader: PackageListLoader | undefined;
+
+async function hydrateEgressMaps(packageListLoader: PackageListLoader): Promise<void> {
+  const packageList = await packageListLoader();
+  const sidecarMap: PackageHostMap = {};
+  const ambientMap: AmbientPackageMap = {};
+
+  for (const pkg of packageList.items as UDSPackage[]) {
+    if (pkg.metadata?.deletionTimestamp) {
+      continue;
+    }
+
+    const pkgName = pkg.metadata?.name;
+    const pkgNamespace = pkg.metadata?.namespace;
+    if (!pkgName || !pkgNamespace) {
+      throw new Error("Package metadata.name and metadata.namespace are required");
+    }
+    const pkgId = `${pkgName}-${pkgNamespace}`;
+    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+
+    if (istioMode === Mode.Ambient) {
+      const entry = createAmbientPackageEntry(pkg);
+      validateAmbientProtocolConflicts(ambientMap, entry, pkgId);
+      ambientMap[pkgId] = entry;
+    } else {
+      const hostResourceMap = createHostResourceMap(pkg);
+      if (hostResourceMap) {
+        validateProtocolConflicts(sidecarMap, hostResourceMap, pkgId);
+        sidecarMap[pkgId] = hostResourceMap;
+      }
+    }
+  }
+
+  for (const key of Object.keys(inMemoryPackageMap)) {
+    delete inMemoryPackageMap[key];
+  }
+  for (const key of Object.keys(inMemoryAmbientPackageMap)) {
+    delete inMemoryAmbientPackageMap[key];
+  }
+  Object.assign(inMemoryPackageMap, sidecarMap);
+  Object.assign(inMemoryAmbientPackageMap, ambientMap);
+  egressMapsHydrated = true;
+  hydratedPackageListLoader = packageListLoader;
+}
 
 function validateAmbientProtocolConflicts(
   currentAmbientMap: AmbientPackageMap,
@@ -85,6 +137,7 @@ export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   action: PackageAction,
   istioMode: Mode,
+  packageListLoader: PackageListLoader = defaultPackageListLoader,
 ) {
   const pkgName = pkg.metadata?.name;
   const pkgNamespace = pkg.metadata?.namespace;
@@ -95,14 +148,22 @@ export async function reconcileSharedEgressResources(
 
   const release = await sharedEgressMutex.acquire();
   try {
+    const wasHydrated = egressMapsHydrated && hydratedPackageListLoader === packageListLoader;
+    if (!wasHydrated) {
+      await hydrateEgressMaps(packageListLoader);
+    }
+
     // Update the target map before removing the previous mode. Validation can fail
     // while creating the target entry, so this keeps the existing mode intact.
-    if (istioMode === Mode.Ambient) {
-      await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
-      await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
-    } else {
-      await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
-      await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
+    // The initial list is authoritative; the triggering event may be stale relative to it.
+    if (wasHydrated) {
+      if (istioMode === Mode.Ambient) {
+        await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
+        await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+      } else {
+        await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+        await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
+      }
     }
 
     // Keep map mutation, apply, and purge in one transaction so a later event
