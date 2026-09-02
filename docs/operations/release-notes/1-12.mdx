@@ -1,0 +1,46 @@
+---
+title: UDS Core 1.12
+description: UDS Core 1.12 adds configurable Envoy Gateway network access, separate Keycloak public and admin hostnames, and SSO client scope controls.
+sidebar:
+  order: 3.983
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.12 gives you more control over network access and Keycloak client configuration. This release also separates public and administrative Keycloak hostnames, improves local identity setup reliability, and updates UDS Identity Config and monitoring dependencies.
+
+### Notable features
+
+- **Envoy Gateway network access:** Set `additionalNetworkAllow` to add `network.allow` entries to the Envoy Gateway `Package`, enabling integrations such as Envoy AI Gateway. See [Configure Core network access](/how-to-guides/networking/configure-core-network-access/) ([#2891](https://github.com/defenseunicorns/uds-core/pull/2891)).
+- **Separate Keycloak public and admin hostnames:** Keycloak now serves public frontend URLs from `sso.<domain>` and administrative frontend URLs from `keycloak.<admin_domain>`. UDS Core defaults the admin domain to `admin.<domain>`, and you can configure it explicitly ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)).
+- **SSO client scope controls:** Set `spec.sso[].fullScopeAllowed: false` when an application uses explicit role scope mappings and client scopes. Omitted values continue to default to `true`, preserving existing Keycloak behavior. See [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) ([#2873](https://github.com/defenseunicorns/uds-core/pull/2873)).
+- **Local identity setup reliability:** `uds run dev-identity` now deploys Pepr before Istio and includes the Prometheus Operator CRD mapping required by current Zarf releases ([#2916](https://github.com/defenseunicorns/uds-core/pull/2916)).
+- **Checkpoint loading fix:** Checkpoint packages now load correctly on a Docker daemon with no previously loaded images ([#2900](https://github.com/defenseunicorns/uds-core/pull/2900)).
+
+### Dependency updates
+
+| Package                          | Previous | Updated                                                                                                 |
+| -------------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
+| UDS Identity Config              | 0.30.0   | [0.31.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.31.0)                   |
+| Prometheus                       | 3.13.2   | [3.14.0](https://github.com/prometheus/prometheus/releases/tag/v3.14.0)                                 |
+| Alertmanager                     | 0.33.1   | [0.34.0](https://github.com/prometheus/alertmanager/releases/tag/v0.34.0)                               |
+| Kube State Metrics               | 2.19.1   | [2.20.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.20.0)                         |
+| kube-prometheus-stack Helm chart | 88.2.0   | [88.5.2](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-88.5.2) |
+
+## Upgrade considerations
+
+### Identity Config updates (0.31.0)
+
+Identity Config [0.31.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.31.0) includes the following changes. No manual realm changes are required for existing clusters.
+
+- **Request-aware hostname provider:** Enables separate public and administrative Keycloak hostnames.
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Configure Core network access](/how-to-guides/networking/configure-core-network-access/) - configure Envoy Gateway network access
+- [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) - configure Keycloak and UDS Identity Config settings
+- [UDS Core 1.12.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1120-2026-09-01) - full changelog
+- [UDS Identity Config 0.31.0 Changelog](https://github.com/defenseunicorns/uds-identity-config/blob/main/CHANGELOG.md#0310-2026-08-28) - identity-config changelog
+- [Full diff (1.11.1...1.12.0)](https://github.com/defenseunicorns/uds-core/compare/v1.11.1...v1.12.0) - all changes between versions
