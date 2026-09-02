@@ -115,9 +115,19 @@ export async function updateIstioCAConfigMap(): Promise<void> {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     try {
       // Ensure the namespace exists
-      await K8s(kind.Namespace).Apply({
-        metadata: { name: namespace },
-      });
+      try {
+        const existingNamespace = await K8s(kind.Namespace).Get(namespace);
+        log.debug(`Namespace ${existingNamespace.metadata?.name} exists, skipping creation`);
+      } catch (error) {
+        if (error?.status !== 404) {
+          throw error;
+        }
+
+        log.info(`Namespace ${namespace} does not exist, creating it`);
+        await K8s(kind.Namespace).Apply({
+          metadata: { name: namespace },
+        });
+      }
 
       // Build the combined CA bundle content
       const caBundleContent = buildCABundleContent();

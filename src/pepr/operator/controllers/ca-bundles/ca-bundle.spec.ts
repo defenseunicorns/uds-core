@@ -17,6 +17,7 @@ import {
 // Mock dependencies
 const mockK8sApply = vi.fn();
 const mockK8sGet = vi.fn();
+const mockNamespaceGet = vi.fn();
 const mockWithLabelGet = vi.fn();
 const mockK8sDelete = vi.fn();
 const mockUDSPackageGet = vi.fn();
@@ -64,6 +65,7 @@ vi.mock("pepr", async importOriginal => {
       } else if (resourceKind === actual.kind.Namespace) {
         return {
           Apply: mockK8sApply,
+          Get: mockNamespaceGet,
         };
       } else if (resourceKind === actual.kind.Secret) {
         // Handle Secret operations
@@ -159,6 +161,7 @@ describe("CA Bundle ConfigMap", () => {
     vi.mocked(getOwnerRef).mockReturnValue(mockOwnerRefs);
     vi.mocked(purgeOrphans).mockResolvedValue();
     mockK8sApply.mockResolvedValue({});
+    mockNamespaceGet.mockRejectedValue({ status: 404, message: "namespace not found" });
     mockUDSPackageGet.mockResolvedValue({ items: [] });
     mockLog.warn.mockClear();
 
@@ -476,6 +479,27 @@ describe("CA Bundle ConfigMap", () => {
     beforeEach(() => {
       mockUDSPackageGet.mockResolvedValue({
         items: mockPackages,
+      });
+    });
+
+    it("does not apply the Istio namespace when it already exists", async () => {
+      mockNamespaceGet.mockResolvedValue({ metadata: { name: "istio-system" } });
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockK8sApply).not.toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
+      });
+    });
+
+    it("does not create the Istio namespace when the namespace lookup fails", async () => {
+      const error = { status: 500, message: "server error" };
+      mockNamespaceGet.mockRejectedValue(error);
+
+      await updateAllCaBundleConfigMaps();
+
+      expect(mockK8sApply).not.toHaveBeenCalledWith({
+        metadata: { name: "istio-system" },
       });
     });
 
