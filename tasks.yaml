@@ -27,6 +27,9 @@ tasks:
       istio_components:
         description: "Comma separated list of istio components to deploy"
         default: ""
+      deploy_pepr:
+        description: "Deploy Pepr before Istio"
+        default: "false"
     actions:
       - description: "Create the dev cluster"
         task: setup:create-k3d-cluster
@@ -36,11 +39,16 @@ tasks:
           ./uds zarf tools kubectl create ns uds-policy-exemptions
           ./uds zarf tools kubectl create ns istio-system
           ./uds zarf tools kubectl create ns pepr-system
+          ./uds zarf tools kubectl label ns pepr-system zarf.dev/agent=ignore --overwrite
 
       - description: "Deploy the UDS CRDs and apply all hack dev manifests"
         cmd: |
           ./uds zarf tools kubectl apply -f src/pepr/uds-cluster-crds/templates/
           ./uds zarf tools kubectl apply -f hack/dev-manifests/
+
+      - description: "Deploy Pepr"
+        if: ${{ eq .inputs.deploy_pepr "true" }}
+        cmd: "npx pepr deploy --yes"
 
       # Note: the `registry-url` flag used here requires uds 0.19.2+
       - description: "Deploy the Istio source package with Zarf Dev"
@@ -81,9 +89,8 @@ tasks:
     description: "Create k3d cluster with istio, Pepr, Keycloak, and Authservice for development"
     actions:
       - task: dev-setup
-
-      - description: "Deploy Pepr"
-        cmd: "npx pepr deploy --yes"
+        with:
+          deploy_pepr: "true"
 
       - description: "Deploy Keycloak + Authservice"
         cmd: "./uds run dev-deploy --set LAYER=identity-authorization --no-progress"

@@ -8,7 +8,7 @@ metadata:
   description: "Rehydratable UDS K3d + UDS Core Slim (Istio, UDS Operator and Keycloak) Checkpoint"
   authors: "Defense Unicorns - Product"
   # x-release-please-start-version
-  version: "1.10.0"
+  version: "1.12.0"
   # x-release-please-end
 
 variables:
@@ -57,10 +57,10 @@ components:
               VOL_K3S="k3d-${ZARF_VAR_CLUSTER_NAME}-k3s"
               VOL_KUBELET="k3d-${ZARF_VAR_CLUSTER_NAME}-kubelet"
 
-              # Load the checkpoint image and capture its local ref so k3d uses
-              # the bundled image — not a remote pull of the same tag.
-              CHECKPOINT_IMAGE=$(tar -xOf uds-checkpoint.tar uds-k3d-checkpoint-latest.tar \
-                | docker load | awk '{print $NF}')
+              # Load the checkpoint image under its known tag (same as in checkpoint.sh) so
+              # k3d uses the bundled image instead of pulling it from a registry.
+              CHECKPOINT_IMAGE="ghcr.io/defenseunicorns/uds-core/checkpoint:latest"
+              tar -xOf uds-checkpoint.tar uds-k3d-checkpoint-latest.tar | docker load >/dev/null
               docker load < busybox.tar >/dev/null
 
               # Create named Docker volumes and inject the checkpoint data by

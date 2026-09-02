@@ -57,7 +57,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Azure login
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -75,7 +75,7 @@ jobs:
         uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           # renovate: datasource=github-tags depName=opentofu/opentofu extractVersion=^v?(?<version>.*)$
-          tofu_version: 1.12.5
+          tofu_version: 1.12.6
           tofu_wrapper: false
 
       - name: Create UDS Core Package
@@ -163,7 +163,7 @@ jobs:
 
       - name: Azure login (refresh token for log collection)
         if: always()
-        uses: azure/login@f5d393ae46f8fde4be8b75f32e3fc50e654ad0ca # v3.0.1
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}

@@ -23,10 +23,10 @@ runs:
   steps:
     # We always need UDS CLI for running tasks
     - name: Install UDS CLI
-      uses: defenseunicorns/setup-uds@ab842abcad1f7a3305c2538e3dd1950d0daacfa5 # v1.0.1
+      uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
       with:
         # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.35.1
+        version: v0.36.0
 
     # Node is required for all workflows (either building Pepr or running specific scripts)
     - name: Use Node.js latest
@@ -36,10 +36,10 @@ runs:
 
     - name: Install uv
       if: ${{ inputs.installUv == 'true' }}
-      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
       with:
         # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.12.2
+        version: 0.12.7
 
     - name: Install k3d
       if: ${{ inputs.installK3d == 'true' }}

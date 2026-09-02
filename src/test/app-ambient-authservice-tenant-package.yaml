@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 apiVersion: v1
@@ -15,6 +15,7 @@ spec:
   sso:
     - name: "Ambient SSO"
       clientId: uds-core-ambient-httpbin
+      fullScopeAllowed: false
       redirectUris:
         - "https://ambient-protected.uds.dev/login"
       enableAuthserviceSelector:
@@ -24,6 +25,7 @@ spec:
           - "/UDS Core/Admin"
     - name: "Ambient 2 SSO"
       clientId: uds-core-ambient2-httpbin
+      fullScopeAllowed: false
       redirectUris:
         - "https://ambient2-protected.uds.dev/login"
       enableAuthserviceSelector:

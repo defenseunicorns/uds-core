@@ -830,6 +830,14 @@ export interface Sso {
    */
   enabled?: boolean;
   /**
+   * Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak
+   * includes all roles assigned to the authenticated subject. When disabled, Keycloak limits
+   * roles according to the client's role scope mappings and linked client scopes. When
+   * omitted, UDS Core preserves Keycloak's normal behavior. Set this to false whenever
+   * possible to limit role scope and harden security.
+   */
+  fullScopeAllowed?: boolean;
+  /**
    * The client SSO group type
    */
   groups?: Groups;
@@ -851,7 +859,8 @@ export interface Sso {
   publicClient?: boolean;
   /**
    * Valid URI pattern a browser can redirect to after a successful login. Simple wildcards
-   * are allowed such as 'https://unicorns.uds.dev/*'
+   * are allowed. For example, a wildcard may follow the path prefix
+   * 'https://unicorns.uds.dev/'
    */
   redirectUris?: string[];
   /**

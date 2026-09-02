@@ -509,7 +509,7 @@ const sso = {
       },
       redirectUris: {
         description:
-          "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards are allowed such as 'https://unicorns.uds.dev/*'",
+          "Valid URI pattern a browser can redirect to after a successful login. Simple wildcards are allowed. For example, a wildcard may follow the path prefix 'https://unicorns.uds.dev/'",
         type: "array",
         items: {
           type: "string",
@@ -534,6 +534,11 @@ const sso = {
           "Always list this client in the Account UI, even if the user does not have an active session.",
         type: "boolean",
         default: false,
+      },
+      fullScopeAllowed: {
+        description:
+          "Controls which roles Keycloak includes in tokens for this client. When enabled, Keycloak includes all roles assigned to the authenticated subject. When disabled, Keycloak limits roles according to the client's role scope mappings and linked client scopes. When omitted, UDS Core preserves Keycloak's normal behavior. Set this to false whenever possible to limit role scope and harden security.",
+        type: "boolean",
       },
       standardFlowEnabled: {
         description:

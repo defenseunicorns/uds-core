@@ -104,6 +104,8 @@ export function convertSsoToClient(sso: Partial<Sso>): Client {
     }
   }
 
+  client.fullScopeAllowed = sso.fullScopeAllowed ?? true;
+
   // Group auth based on sso group membership
   client.attributes = client.attributes || {};
 
@@ -154,26 +156,30 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
 
   // Not including the CR data in the ref because Keycloak client IDs must be unique already
   const name = `sso-client-${clientReq.clientId}`;
-  let client = convertSsoToClient(clientReq);
+  const client = convertSsoToClient(clientReq);
+  const keycloakClient: Partial<Client> = { ...client };
+  if (clientReq.fullScopeAllowed === undefined) {
+    delete keycloakClient.fullScopeAllowed;
+  }
   const pkgRef = `${pkg.metadata?.namespace}/${pkg.metadata?.name}`;
 
-  client = await retryOnce(
-    () => credentialsCreateOrUpdate(client),
+  const syncedClient = await retryOnce(
+    () => credentialsCreateOrUpdate(keycloakClient),
     `Failed to process Keycloak request for client '${client.clientId}', package ${pkgRef}`,
   );
 
   // Remove the registrationAccessToken from the client object to avoid problems (one-time use token)
-  delete client.registrationAccessToken;
+  delete syncedClient.registrationAccessToken;
 
-  if (client.protocol === "saml") {
-    client.samlIdpCertificate = await retryOnce(
+  if (syncedClient.protocol === "saml") {
+    syncedClient.samlIdpCertificate = await retryOnce(
       () => getSamlCertificate(),
-      `Failed to get SAML IdP certificate for client '${client.clientId}', package ${pkgRef}`,
+      `Failed to get SAML IdP certificate for client '${syncedClient.clientId}', package ${pkgRef}`,
     );
   }
 
   // Create or update the client secret
-  if (!client.publicClient) {
+  if (!syncedClient.publicClient) {
     const generation = (pkg.metadata?.generation ?? 0).toString();
     const sanitizedSecretName = sanitizeResourceName(secretConfig?.name || name);
 
@@ -207,11 +213,11 @@ export async function syncClient({ secretConfig, ...clientReq }: Sso, pkg: UDSPa
         // Use the CR as the owner ref for each VirtualService
         ownerReferences: getOwnerRef(pkg),
       },
-      data: generateSecretData(client, secretConfig?.template),
+      data: generateSecretData(syncedClient, secretConfig?.template),
     });
   }
 
-  return client;
+  return syncedClient;
 }
 
 export function generateSecretData(client: Client, secretTemplate?: { [key: string]: string }) {

@@ -4,3 +4,6 @@
 # Annotations for the managed Gateway's LoadBalancer Service (e.g. AWS needs these for UDP)
 envoyService:
   annotations: {}
+
+# Support for custom `network.allow` entries on the Package CR.
+additionalNetworkAllow: []

@@ -113,7 +113,6 @@ components:
             excludePaths:
               - .pepr-uds-core.module.watcher.serviceMonitor
               - .pepr-uds-core.module.admission.serviceMonitor
-              - .pepr-uds-core.module.admission.webhookAnnotations
               - .pepr-uds-core.module.admission.image
               - .pepr-uds-core.module.watcher.image
               - .pepr-uds-core.module.admission.securityContext

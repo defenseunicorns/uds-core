@@ -361,6 +361,9 @@
         },
         "uds-envoy-gateway-config": {
           "properties": {
+            "additionalNetworkAllow": {
+              "type": "array"
+            },
             "envoyService": {
               "properties": {
                 "annotations": {
@@ -1333,6 +1336,14 @@
                 "tolerations": {
                   "type": "array"
                 },
+                "webhookAnnotations": {
+                  "properties": {
+                    "admissions.enforcer/disabled": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
                 "webhookLabels": {
                   "properties": {},
                   "type": "object"
@@ -1770,19 +1781,73 @@
     "uds-exemptions": {
       "properties": {
         "uds-exemptions": {
+          "additionalProperties": false,
           "properties": {
             "exemptions": {
+              "additionalProperties": false,
               "properties": {
                 "custom": {
+                  "items": {
+                    "properties": {
+                      "exemptions": {
+                        "items": {
+                          "properties": {
+                            "description": {
+                              "type": "string"
+                            },
+                            "matcher": {
+                              "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "pod",
+                                    "service"
+                                  ],
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "namespace": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            },
+                            "policies": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            "title": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
                   "type": "array"
                 },
                 "istioGatewayNodeport": {
+                  "additionalProperties": false,
                   "properties": {
                     "enabled": {
                       "type": "boolean"
                     },
                     "gateways": {
                       "items": {
+                        "enum": [
+                          "admin",
+                          "tenant",
+                          "passthrough"
+                        ],
                         "type": "string"
                       },
                       "type": "array"
@@ -1802,8 +1867,10 @@
     "uds-operator-config": {
       "properties": {
         "uds-operator-config": {
+          "additionalProperties": false,
           "properties": {
             "cluster": {
+              "additionalProperties": false,
               "properties": {
                 "attributes": {
                   "properties": {
@@ -1811,6 +1878,9 @@
                       "type": "string"
                     },
                     "clusterTags": {
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -1822,10 +1892,16 @@
                       "type": "string"
                     },
                     "includeDoDCerts": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     },
                     "includePublicCerts": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     }
                   },
                   "type": "object"
@@ -1847,6 +1923,9 @@
                       "type": "string"
                     },
                     "kubeNodeCIDRs": {
+                      "items": {
+                        "type": "string"
+                      },
                       "type": "array"
                     }
                   },
@@ -1855,7 +1934,10 @@
                 "policy": {
                   "properties": {
                     "allowAllNsExemptions": {
-                      "type": "string"
+                      "type": [
+                        "boolean",
+                        "string"
+                      ]
                     }
                   },
                   "type": "object"
@@ -1864,14 +1946,29 @@
               "type": "object"
             },
             "operator": {
+              "additionalProperties": false,
               "properties": {
                 "ALLOW_PUBLIC_CLIENTS": {
-                  "type": "boolean"
+                  "enum": [
+                    "true",
+                    "false",
+                    true,
+                    false
+                  ],
+                  "type": [
+                    "boolean",
+                    "string"
+                  ]
                 },
                 "AUTHSERVICE_REDIS_URI": {
                   "type": "string"
                 },
                 "KEYCLOAK_CLIENT_MODE": {
+                  "enum": [
+                    "AUTO",
+                    "CLIENT_SECRET",
+                    "SIGNED_JWT"
+                  ],
                   "type": "string"
                 }
               },
