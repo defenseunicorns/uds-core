@@ -47,7 +47,25 @@ components:
     actions:
       onCreate:
         before:
-          - cmd: ./checkpoint.sh
+          - description: "Quiesce checkpoint dependencies: Keycloak, Pepr watcher, Pepr admission, then ztunnel"
+            cmd: |
+              set -e
+              ./zarf tools kubectl --context k3d-uds -n keycloak scale statefulset keycloak --replicas=0
+              ./zarf tools kubectl --context k3d-uds -n keycloak wait --for=delete pod -l app.kubernetes.io/name=keycloak,app.kubernetes.io/instance=keycloak --timeout=60s
+
+              ./zarf tools kubectl --context k3d-uds -n pepr-system scale deploy pepr-uds-core-watcher --replicas=0
+              ./zarf tools kubectl --context k3d-uds -n pepr-system wait --for=delete pod -l app=pepr-uds-core-watcher --timeout=60s
+
+              ./zarf tools kubectl --context k3d-uds -n pepr-system scale deploy pepr-uds-core --replicas=0
+              ./zarf tools kubectl --context k3d-uds -n pepr-system wait --for=delete pod -l app=pepr-uds-core --timeout=60s
+
+              ./zarf tools kubectl --context k3d-uds -n istio-system patch daemonset ztunnel --type='strategic' -p '{"spec":{"template":{"spec":{"nodeSelector":{"no-such-label":"true"}}}}}'
+              ./zarf tools kubectl --context k3d-uds -n istio-system wait --for=delete pod -l app=ztunnel --timeout=60s
+
+              ./checkpoint.sh
+            shell:
+              linux: bash
+              darwin: bash
         onSuccess:
           - cmd: rm -f uds-checkpoint.tar busybox.tar
       onDeploy:
@@ -105,6 +123,22 @@ components:
               linux: bash
               darwin: bash
             description: "Create the cluster"
+
+          - description: "Restore checkpoint dependencies: ztunnel, Pepr admission, Pepr watcher, then Keycloak"
+            cmd: |
+              set -e
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]'
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n istio-system rollout status daemonset ztunnel --timeout=60s
+
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system scale deploy pepr-uds-core --replicas=2
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system rollout status deploy pepr-uds-core --timeout=60s
+
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
+
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n keycloak scale statefulset keycloak --replicas=1
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n keycloak rollout status statefulset keycloak --timeout=180s
+
           # Wait on Keycloak since it is the slowest pod to start after cluster
           # creation.
           - description: Keycloak to be Healthy
