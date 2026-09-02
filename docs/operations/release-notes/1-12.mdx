@@ -15,6 +15,7 @@ UDS Core 1.12 gives you more control over network access and Keycloak client con
 - **Envoy Gateway network access:** Set `additionalNetworkAllow` to add `network.allow` entries to the Envoy Gateway `Package`, enabling integrations such as Envoy AI Gateway. See [Configure Core network access](/how-to-guides/networking/configure-core-network-access/) ([#2891](https://github.com/defenseunicorns/uds-core/pull/2891)).
 - **Separate Keycloak public and admin hostnames:** Keycloak now serves public frontend URLs from `sso.<domain>` and administrative frontend URLs from `keycloak.<admin_domain>`. UDS Core defaults the admin domain to `admin.<domain>`, and you can configure it explicitly ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)).
 - **SSO client scope controls:** Set `spec.sso[].fullScopeAllowed: false` when an application uses explicit role scope mappings and client scopes. Omitted values continue to default to `true`, preserving existing Keycloak behavior. See [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) ([#2873](https://github.com/defenseunicorns/uds-core/pull/2873)).
+- **Portal domain resolution:** Portal now correctly resolves the root domain and custom gateway domains ([#2933](https://github.com/defenseunicorns/uds-core/pull/2933)).
 - **Checkpoint loading fix:** Checkpoint packages now load correctly on a Docker daemon with no previously loaded images ([#2900](https://github.com/defenseunicorns/uds-core/pull/2900)).
 
 ### Dependency updates
@@ -22,6 +23,7 @@ UDS Core 1.12 gives you more control over network access and Keycloak client con
 | Package                          | Previous | Updated                                                                                                 |
 | -------------------------------- | -------- | ------------------------------------------------------------------------------------------------------- |
 | UDS Identity Config              | 0.30.0   | [0.31.0](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.31.0)                   |
+| Portal                           | 0.5.0    | [0.5.1](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.1)                              |
 | Prometheus                       | 3.13.2   | [3.14.0](https://github.com/prometheus/prometheus/releases/tag/v3.14.0)                                 |
 | Alertmanager                     | 0.33.1   | [0.34.0](https://github.com/prometheus/alertmanager/releases/tag/v0.34.0)                               |
 | Kube State Metrics               | 2.19.1   | [2.20.0](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.20.0)                         |
