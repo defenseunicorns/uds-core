@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -235,9 +235,14 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     const results = await Promise.allSettled([...packageUpdates, updateIstioCAConfigMap()]);
 
     // Check for any failures
-    const failures = results.filter(r => r.status === "rejected");
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
     if (failures.length > 0) {
       log.warn(`Completed CA bundle updates with ${failures.length} failures`);
+      throw new Error(`CA bundle updates failed with ${failures.length} failures`, {
+        cause: failures.map(({ reason }) => reason),
+      });
     } else {
       log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
     }

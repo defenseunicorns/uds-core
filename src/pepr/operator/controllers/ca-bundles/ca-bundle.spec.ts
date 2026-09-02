@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -492,11 +492,13 @@ describe("CA Bundle ConfigMap", () => {
       });
     });
 
-    it("does not create the Istio namespace when the namespace lookup fails", async () => {
+    it("propagates Istio namespace lookup failures", async () => {
       const error = { status: 500, message: "server error" };
       mockNamespaceGet.mockRejectedValue(error);
 
-      await updateAllCaBundleConfigMaps();
+      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
+        /Failed to update CA bundle ConfigMaps for all packages/,
+      );
 
       expect(mockK8sApply).not.toHaveBeenCalledWith({
         metadata: { name: "istio-system" },
@@ -679,7 +681,9 @@ describe("CA Bundle ConfigMap", () => {
         return Promise.resolve({});
       });
 
-      await updateAllCaBundleConfigMaps();
+      await expect(updateAllCaBundleConfigMaps()).rejects.toThrow(
+        /Failed to update CA bundle ConfigMaps for all packages/,
+      );
 
       expect(mockUDSPackageGet).toHaveBeenCalled();
       expect(mockK8sApply).toHaveBeenCalledTimes(4); // Namespace + 2 packages + Istio CM
