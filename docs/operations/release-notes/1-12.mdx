@@ -8,14 +8,13 @@ sidebar:
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.12 gives you more control over network access and Keycloak client configuration. This release also separates public and administrative Keycloak hostnames, improves local identity setup reliability, and updates UDS Identity Config and monitoring dependencies.
+UDS Core 1.12 gives you more control over network access and Keycloak client configuration. This release also separates public and administrative Keycloak hostnames and updates UDS Identity Config and monitoring dependencies.
 
 ### Notable features
 
 - **Envoy Gateway network access:** Set `additionalNetworkAllow` to add `network.allow` entries to the Envoy Gateway `Package`, enabling integrations such as Envoy AI Gateway. See [Configure Core network access](/how-to-guides/networking/configure-core-network-access/) ([#2891](https://github.com/defenseunicorns/uds-core/pull/2891)).
 - **Separate Keycloak public and admin hostnames:** Keycloak now serves public frontend URLs from `sso.<domain>` and administrative frontend URLs from `keycloak.<admin_domain>`. UDS Core defaults the admin domain to `admin.<domain>`, and you can configure it explicitly ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)).
 - **SSO client scope controls:** Set `spec.sso[].fullScopeAllowed: false` when an application uses explicit role scope mappings and client scopes. Omitted values continue to default to `true`, preserving existing Keycloak behavior. See [Identity and authorization configuration](/reference/configuration/identity-and-authorization/) ([#2873](https://github.com/defenseunicorns/uds-core/pull/2873)).
-- **Local identity setup reliability:** `uds run dev-identity` now deploys Pepr before Istio and includes the Prometheus Operator CRD mapping required by current Zarf releases ([#2916](https://github.com/defenseunicorns/uds-core/pull/2916)).
 - **Checkpoint loading fix:** Checkpoint packages now load correctly on a Docker daemon with no previously loaded images ([#2900](https://github.com/defenseunicorns/uds-core/pull/2900)).
 
 ### Dependency updates
