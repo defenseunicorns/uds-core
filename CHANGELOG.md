@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.13.0](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) (2026-09-03)
+
+
+### Bug Fixes
+
+* preserve namespace metadata during startup ([#2935](https://github.com/defenseunicorns/uds-core/issues/2935)) ([ff51199](https://github.com/defenseunicorns/uds-core/commit/ff51199ad2f3b892db24e047c1f1dee7b86e4e0c))
+
+
+### Miscellaneous
+
+* **deps-dev:** bump fast-uri from 3.1.5 to 3.1.7 ([#2936](https://github.com/defenseunicorns/uds-core/issues/2936)) ([49401aa](https://github.com/defenseunicorns/uds-core/commit/49401aac6b6ddd741ee731746ad9292d01cd7cc5))
+* **deps:** bump qs from 6.15.2 to 6.16.0 ([#2937](https://github.com/defenseunicorns/uds-core/issues/2937)) ([cc5d6e7](https://github.com/defenseunicorns/uds-core/commit/cc5d6e77ffe02d0f6a16d16887c9004e16952d75))
+* **deps:** update falco to v2.35.0 ([#2926](https://github.com/defenseunicorns/uds-core/issues/2926)) ([5cb3ab4](https://github.com/defenseunicorns/uds-core/commit/5cb3ab4a3e2febfe7f1809f0922055dcc50ff363))
+* **deps:** update keycloak to v26.7.3 ([#2925](https://github.com/defenseunicorns/uds-core/issues/2925)) ([097de09](https://github.com/defenseunicorns/uds-core/commit/097de090dd649ca6d376f72a62ea26ace10da438))
+* **deps:** update loki to v18.9.0 ([#2880](https://github.com/defenseunicorns/uds-core/issues/2880)) ([d58d81a](https://github.com/defenseunicorns/uds-core/commit/d58d81a39609f2f5c12303ef3a83475d6b9e72fc))
+
 ## [1.12.0](https://github.com/defenseunicorns/uds-core/compare/v1.11.0...v1.12.0) (2026-09-02)
 
 
