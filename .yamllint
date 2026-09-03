@@ -10,6 +10,7 @@ ignore:
   - "**/charts/**/templates/**"
   - "**/node_modules/**"
   - "dist/**"
+  - "build/**"
   - "src/pepr/uds-operator-config/templates/**"
   - "src/pepr/uds-exemptions/templates/**"
   - ".codespellrc"
@@ -19,6 +20,8 @@ ignore:
   - "/tmp/**"
   - "src/falco/chart/rules/**"
   - "src/velero/chart/templates/crds/**"
+  - "bundles/k3d-standard-next/values/**"
+  - "bundles/k3d-slim-dev-next/values/**"
 
 rules:
   anchors: enable
