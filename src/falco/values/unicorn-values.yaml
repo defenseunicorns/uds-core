@@ -11,5 +11,5 @@ falcosidekick:
   image:
     registry: cgr.dev
     repository: defenseunicorns.com/falcosidekick-fips
-    tag: v2.34.1
+    tag: v2.35.0
     pullPolicy: IfNotPresent
