@@ -3,8 +3,8 @@
 
 grafana:
   uds-grafana-config:
-    domain: "uds.dev"
-    adminDomain: "admin.uds.dev"
+    domain: "{{ .vars.DOMAIN }}"
+    adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
 {{- if or (index .vars "GRAFANA_PG_HOST") (index .vars "GRAFANA_PG_PORT") (index .vars "GRAFANA_PG_DATABASE") (index .vars "GRAFANA_PG_PASSWORD") (index .vars "GRAFANA_PG_USER") (index .vars "GRAFANA_PG_SSL_MODE") }}
     postgresql:
 {{- with index .vars "GRAFANA_PG_HOST" }}
@@ -30,8 +30,8 @@ grafana:
 {{- end }}
   grafana:
     global:
-      domain: "uds.dev"
-      adminDomain: "admin.uds.dev"
+      domain: "{{ .vars.DOMAIN }}"
+      adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
 {{- with index .vars "GRAFANA_HA" }}
     autoscaling:
       enabled: {{ . }}

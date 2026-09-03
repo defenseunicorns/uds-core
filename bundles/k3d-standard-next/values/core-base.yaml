@@ -49,8 +49,8 @@ uds-operator-config:
         includeDoDCerts: "{{ .vars.CA_BUNDLE_INCLUDE_DOD_CERTS }}"
         includePublicCerts: "{{ .vars.CA_BUNDLE_INCLUDE_PUBLIC_CERTS }}"
       expose:
-        domain: "uds.dev"
-        adminDomain: "admin.uds.dev"
+        domain: "{{ .vars.DOMAIN }}"
+        adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
 
 {{- $adminTLS12 := index .vars "ADMIN_TLS1_2_SUPPORT" }}
 {{- $adminTLSCert := index .vars "ADMIN_TLS_CERT" }}

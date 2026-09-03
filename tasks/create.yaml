@@ -126,7 +126,7 @@ tasks:
           if [ -n "${ZARF_ARCHITECTURE}" ]; then
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
-          rm -f bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-*.tar.zst
+          rm -f bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${ZARF_ARCHITECTURE}-*.tar.zst
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next "$@"
           cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*.tar.zst bundles/k3d-standard-next/
 
@@ -175,7 +175,7 @@ tasks:
           if [ -n "${ZARF_ARCHITECTURE}" ]; then
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
-          rm -f bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-*.tar.zst
+          rm -f bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-${ZARF_ARCHITECTURE}-*.tar.zst
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev-next "$@"
 
   - name: checkpoint-dev-package
