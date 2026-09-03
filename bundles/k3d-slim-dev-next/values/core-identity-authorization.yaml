@@ -39,7 +39,7 @@ keycloak:
       username: "{{ . }}"
 {{- end }}
 {{- with $pgPassword }}
-      password: "{{ . }}"
+      password: {{ printf "%q" . }}
 {{- end }}
 {{- with $pgDatabase }}
       database: "{{ . }}"

@@ -19,7 +19,7 @@ istio-controlplane:
   uds-global-istio-config:
     classificationBanners:
 {{- range . }}
-      - text: "{{ index . "text" }}"
+      - text: {{ printf "%q" (index . "text") }}
 {{- $addFooter := index . "addFooter" }}
 {{- if and (ne (printf "%v" $addFooter) "<no value>") (ne (printf "%v" $addFooter) "<nil>") }}
         addFooter: {{ $addFooter }}

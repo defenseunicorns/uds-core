@@ -14,6 +14,7 @@ on:
     paths:
       - ".github/workflows/test-cli-matrix.yaml"
       - "bundles/k3d-standard/**"
+      - "bundles/k3d-standard-next/**"
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
@@ -126,7 +127,6 @@ jobs:
             cli_version: v0.34.0 # Minimum supported Legacy CLI
             task: test:uds-core-legacy-e2e
           - mode: next
-            # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             cli_version: v0.36.0 # Minimum supported CLI Next version
             task: test:uds-core-e2e
 

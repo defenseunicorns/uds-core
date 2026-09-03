@@ -21,6 +21,18 @@ variables = {
   LOKI_READ_REPLICAS    = "1"
   LOKI_BACKEND_REPLICAS = "1"
 
+  CLASSIFICATION_BANNERS = [
+    {
+      text      = "SAMPLE BANNER"
+      addFooter = true
+      enabledHosts = [
+        "sso.uds.dev",
+        "portal.uds.dev",
+        "grafana.admin.uds.dev",
+      ]
+    }
+  ]
+
   VELERO_BUCKET_PROVIDER_URL    = "http://minio.uds-dev-stack.svc.cluster.local:9000"
   VELERO_BUCKET                 = "uds"
   VELERO_BUCKET_REGION          = "uds-dev-stack"

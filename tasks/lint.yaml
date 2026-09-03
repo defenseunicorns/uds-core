@@ -37,7 +37,6 @@ tasks:
         cmd: npm ci
       - description: "Format check"
         cmd: npm run format:check
-        task: install-pepr-deps
       - description: Build the Pepr module for values lint
         task: build-pepr
       - description: Lint packages that expose Zarf values

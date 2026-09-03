@@ -24,7 +24,7 @@ keycloak:
       username: "{{ . }}"
 {{- end }}
 {{- with index .vars "KEYCLOAK_PG_PASSWORD" }}
-      password: "{{ . }}"
+      password: {{ printf "%q" . }}
 {{- end }}
 {{- with index .vars "KEYCLOAK_PG_DATABASE" }}
       database: "{{ . }}"

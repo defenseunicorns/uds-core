@@ -35,7 +35,7 @@ loki:
         accessKeyId: "{{ . }}"
 {{- end }}
 {{- with index .vars "LOKI_S3_SECRET_ACCESS_KEY" }}
-        secretAccessKey: "{{ . }}"
+        secretAccessKey: {{ printf "%q" . }}
 {{- end }}
 {{- end }}
 {{- end }}
