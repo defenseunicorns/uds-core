@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -115,9 +115,19 @@ export async function updateIstioCAConfigMap(): Promise<void> {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     try {
       // Ensure the namespace exists
-      await K8s(kind.Namespace).Apply({
-        metadata: { name: namespace },
-      });
+      try {
+        const existingNamespace = await K8s(kind.Namespace).Get(namespace);
+        log.debug(`Namespace ${existingNamespace.metadata?.name} exists, skipping creation`);
+      } catch (error) {
+        if (error?.status !== 404) {
+          throw error;
+        }
+
+        log.info(`Namespace ${namespace} does not exist, creating it`);
+        await K8s(kind.Namespace).Apply({
+          metadata: { name: namespace },
+        });
+      }
 
       // Build the combined CA bundle content
       const caBundleContent = buildCABundleContent();
@@ -225,9 +235,14 @@ export async function updateAllCaBundleConfigMaps(): Promise<void> {
     const results = await Promise.allSettled([...packageUpdates, updateIstioCAConfigMap()]);
 
     // Check for any failures
-    const failures = results.filter(r => r.status === "rejected");
+    const failures = results.filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
     if (failures.length > 0) {
       log.warn(`Completed CA bundle updates with ${failures.length} failures`);
+      throw new Error(`CA bundle updates failed with ${failures.length} failures`, {
+        cause: failures.map(({ reason }) => reason),
+      });
     } else {
       log.debug("Completed CA bundle ConfigMap updates for all UDS packages");
     }
