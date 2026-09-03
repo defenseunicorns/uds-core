@@ -51,12 +51,13 @@ jobs:
             flavor: upstream
             install_cli: v0.34.0 # Minimum supported Legacy CLI
             upgrade_cli: v0.36.0 # Minimum supported CLI Next version
-          - mode: next
-            scenario: next-min-to-next-latest
-            flavor: upstream
-            install_cli: v0.36.0 # Minimum supported CLI Next version
-            # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-            upgrade_cli: v0.36.0
+          # TODO: Uncomment this scenario after the first Next bundle is published.
+          # - mode: next
+          #   scenario: next-min-to-next-latest
+          #   flavor: upstream
+          #   install_cli: v0.36.0 # Minimum supported CLI Next version
+          #   # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+          #   upgrade_cli: v0.36.0
 
     steps:
       - name: Checkout repository

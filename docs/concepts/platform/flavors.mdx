@@ -33,7 +33,7 @@ The `unicorn` flavor is only available in a private organization on the [UDS Reg
 You select a flavor when building a UDS Bundle. All Core packages within a bundle should use the **same flavor** to ensure image consistency.
 
 - **Production users** create their own bundles, selecting `registry1` or `unicorn` packages.
-- **Demo bundles** (`k3d-core-demo`, `k3d-core-slim-dev`) are published from `upstream` only.
+- **Demo bundles** (`k3d-core-demo`, `k3d-core-demo-next`, `k3d-core-slim-dev`, `k3d-core-slim-dev-next`) are published from `upstream` only. The `-next` bundles use the UDS CLI Next bundle format.
 
 Switching flavors requires no application-side changes. The CRDs and configuration surface apply regardless of flavor, and only the bundle references change.
 

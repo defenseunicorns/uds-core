@@ -108,6 +108,11 @@ tasks:
       - description: "Deploy the UDS Core Slim Dev Only Bundle"
         cmd: ./uds deploy bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-${UDS_ARCH}-${VERSION}.tar.zst --confirm --no-progress
 
+  - name: k3d-slim-dev-bundle-next
+    actions:
+      - description: "Deploy the UDS Core Slim Dev Only Bundle with UDS CLI Next"
+        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-${UDS_ARCH}-${VERSION}.tar.zst --skip-signature-verification
+
   - name: k3d-slim-dev-bundle-ha
     actions:
       - description: "Deploy the UDS Core Slim Dev Bundle with HA configuration"
@@ -194,6 +199,15 @@ tasks:
           ./uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
+
+  - name: latest-next-bundle-release
+    inputs:
+      configFile:
+        description: "UDS CLI Next config file to use for the deployment"
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
+    actions:
+      - description: "Deploy the latest UDS Core Standard Bundle with UDS CLI Next"
+        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo-next:latest --config ${{ .inputs.configFile }} --skip-signature-verification
 
   - name: latest-release-test-resources
     actions:
