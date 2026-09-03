@@ -1,0 +1,55 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+grafana:
+  uds-grafana-config:
+    domain: "uds.dev"
+    adminDomain: "admin.uds.dev"
+{{- if or (index .vars "GRAFANA_PG_HOST") (index .vars "GRAFANA_PG_PORT") (index .vars "GRAFANA_PG_DATABASE") (index .vars "GRAFANA_PG_PASSWORD") (index .vars "GRAFANA_PG_USER") (index .vars "GRAFANA_PG_SSL_MODE") }}
+    postgresql:
+{{- with index .vars "GRAFANA_PG_HOST" }}
+      host: "{{ . }}"
+{{- end }}
+{{- with index .vars "GRAFANA_PG_PORT" }}
+      port: {{ . }}
+{{- end }}
+{{- with index .vars "GRAFANA_PG_DATABASE" }}
+      database: "{{ . }}"
+{{- end }}
+{{- with index .vars "GRAFANA_PG_PASSWORD" }}
+      password: "{{ . }}"
+{{- end }}
+{{- with index .vars "GRAFANA_PG_USER" }}
+      user: "{{ . }}"
+{{- end }}
+{{- with index .vars "GRAFANA_PG_SSL_MODE" }}
+      ssl_mode: "{{ . }}"
+{{- end }}
+{{- else }}
+    postgresql: {}
+{{- end }}
+  grafana:
+    global:
+      domain: "uds.dev"
+      adminDomain: "admin.uds.dev"
+{{- with index .vars "GRAFANA_HA" }}
+    autoscaling:
+      enabled: {{ . }}
+{{- else }}
+    autoscaling:
+      enabled: false
+{{- end }}
+{{- with index .vars "GRAFANA_EXTRA_CONFIGMAP_MOUNTS" }}
+    extraConfigmapMounts:
+{{- range . }}
+      - name: "{{ .name }}"
+        mountPath: "{{ .mountPath }}"
+        configMap: "{{ .configMap }}"
+{{- if .subPath }}
+        subPath: "{{ .subPath }}"
+{{- end }}
+{{- if .readOnly }}
+        readOnly: {{ .readOnly }}
+{{- end }}
+{{- end }}
+{{- end }}

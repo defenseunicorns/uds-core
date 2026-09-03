@@ -170,7 +170,38 @@ components:
 
   - name: gateway-api-crds
     required: true
-    manifests:
+    charts:
       - name: gateway-api-crds
-        files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
+        releaseName: gateway-api-crds
+        namespace: default
+        version: 0.1.0
+        localPath: ../gateway-api-crds/chart
+    actions:
+      onDeploy:
+        before:
+          - description: "Migrate Gateway API CRD Helm ownership to stable release"
+            mute: true
+            cmd: |
+              # Gateway API CRDs used to deploy through Zarf manifests, which Zarf wrapped in a generated Helm release.
+              # They now deploy through this stable local chart, so existing CRDs need Helm ownership metadata moved once.
+              # The label/annotate commands use --overwrite and are safe to keep running after ownership is migrated.
+              for resource in \
+                customresourcedefinition.apiextensions.k8s.io/backendtlspolicies.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/grpcroutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/listenersets.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/tcproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/tlsroutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/udproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xbackends.gateway.networking.x-k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xbackendtrafficpolicies.gateway.networking.x-k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xmeshes.gateway.networking.x-k8s.io \
+                validatingadmissionpolicy.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io \
+                validatingadmissionpolicybinding.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io; do
+                ./zarf tools kubectl label "$resource" app.kubernetes.io/managed-by=Helm --overwrite || true
+                ./zarf tools kubectl annotate "$resource" meta.helm.sh/release-name=gateway-api-crds --overwrite || true
+                ./zarf tools kubectl annotate "$resource" meta.helm.sh/release-namespace=default --overwrite || true
+              done
