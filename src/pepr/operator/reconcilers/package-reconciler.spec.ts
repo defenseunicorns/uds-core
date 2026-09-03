@@ -41,7 +41,9 @@ vi.mock("../controllers/uptime/probe", () => ({ probe: vi.fn() }));
 vi.mock("../controllers/uptime/config", () => ({ updateBlackboxConfig: vi.fn() }));
 vi.mock("../controllers/utils", () => ({
   retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  Mutex: vi.fn().mockImplementation(() => ({ acquire: vi.fn().mockResolvedValue(vi.fn()) })),
+  Mutex: class {
+    acquire = vi.fn().mockResolvedValue(vi.fn());
+  },
 }));
 vi.mock(".", async () => {
   const originalModule = (await vi.importActual(".")) as object;
@@ -126,7 +128,9 @@ vi.mock("../controllers/keycloak/authservice/authservice", () => ({
 vi.mock("../controllers/uptime/config", () => ({ updateBlackboxConfig: vi.fn() }));
 vi.mock("../controllers/utils", () => ({
   retryWithDelay: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
-  Mutex: vi.fn().mockImplementation(() => ({ acquire: vi.fn().mockResolvedValue(vi.fn()) })),
+  Mutex: class {
+    acquire = vi.fn().mockResolvedValue(vi.fn());
+  },
 }));
 vi.mock(".", async () => {
   const originalModule = (await vi.importActual(".")) as object;

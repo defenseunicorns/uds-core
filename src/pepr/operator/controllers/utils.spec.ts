@@ -1,9 +1,10 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { K8s, kind } from "pepr";
+import { K8s, fetch, kind } from "pepr";
+import { k8sCfg, pathBuilder } from "kubernetes-fluent-client/dist/fluent/utils";
 import { Logger } from "pino";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
 import { UDSPackage } from "../crd";
@@ -11,6 +12,7 @@ import {
   createEvent,
   getAuthserviceClients,
   Mutex,
+  purgeOrphans,
   retryWithDelay,
   validateNamespace,
 } from "./utils";
@@ -33,10 +35,16 @@ vi.mock("pepr", () => {
 
   return {
     K8s: vi.fn(),
+    fetch: vi.fn(),
     kind: actualKind,
     Log: mockLog,
   };
 });
+
+vi.mock("kubernetes-fluent-client/dist/fluent/utils", () => ({
+  k8sCfg: vi.fn(),
+  pathBuilder: vi.fn(),
+}));
 
 // Helper function to create a mock Pino logger
 function createMockLogger(overrides = {}) {
@@ -323,6 +331,137 @@ describe("test validateNamespace", () => {
     );
 
     await expect(validateNamespace("test-ns", true)).rejects.toEqual(error);
+  });
+});
+
+describe("purgeOrphans", () => {
+  const logger = createMockLogger();
+  const stale = {
+    kind: "Deployment",
+    metadata: {
+      name: "shared-egress",
+      uid: "uid-1",
+      resourceVersion: "42",
+      labels: { "uds/generation": "30" },
+    },
+  };
+
+  function mockPurgeClients(currentGet: ReturnType<typeof vi.fn>) {
+    const listClient = createMockK8sClient({ Get: vi.fn().mockResolvedValue({ items: [stale] }) });
+    const currentClient = createMockK8sClient({ Get: currentGet });
+    vi.mocked(K8s)
+      .mockReturnValueOnce(listClient)
+      .mockReturnValueOnce(currentClient)
+      .mockReturnValueOnce(currentClient);
+    return currentClient;
+  }
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("does not delete a resource changed after the list", async () => {
+    const currentClient = mockPurgeClients(
+      vi.fn().mockResolvedValue({
+        ...stale,
+        metadata: { ...stale.metadata, resourceVersion: "43", labels: { "uds/generation": "31" } },
+      }),
+    );
+
+    await purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger);
+
+    expect(currentClient.Get).toHaveBeenCalledWith("shared-egress");
+    expect(currentClient.Delete).not.toHaveBeenCalled();
+  });
+
+  it("deletes an unchanged stale resource with UID and resourceVersion preconditions", async () => {
+    const currentClient = mockPurgeClients(vi.fn().mockResolvedValue(stale));
+    const opts = { method: "DELETE", headers: {} };
+    vi.mocked(k8sCfg).mockResolvedValue({ opts, serverUrl: "https://kubernetes" });
+    vi.mocked(pathBuilder).mockReturnValue(
+      new URL(
+        "https://kubernetes/apis/apps/v1/namespaces/istio-egress-gateway/deployments/shared-egress",
+      ),
+    );
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200 } as never);
+
+    await purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger);
+
+    expect(currentClient.Get).toHaveBeenCalledWith("shared-egress");
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({
+        method: "DELETE",
+        body: JSON.stringify({
+          apiVersion: "v1",
+          kind: "DeleteOptions",
+          preconditions: { uid: "uid-1", resourceVersion: "42" },
+        }),
+      }),
+    );
+  });
+
+  it("uses the current resourceVersion after a status update", async () => {
+    const currentClient = mockPurgeClients(
+      vi.fn().mockResolvedValue({
+        ...stale,
+        metadata: { ...stale.metadata, resourceVersion: "43" },
+      }),
+    );
+    const opts = { method: "DELETE", headers: {} };
+    vi.mocked(k8sCfg).mockResolvedValue({ opts, serverUrl: "https://kubernetes" });
+    vi.mocked(pathBuilder).mockReturnValue(
+      new URL(
+        "https://kubernetes/apis/apps/v1/namespaces/istio-egress-gateway/deployments/shared-egress",
+      ),
+    );
+    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200 } as never);
+
+    await purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger);
+
+    expect(currentClient.Get).toHaveBeenCalledWith("shared-egress");
+    expect(fetch).toHaveBeenCalledWith(
+      expect.any(URL),
+      expect.objectContaining({
+        body: JSON.stringify({
+          apiVersion: "v1",
+          kind: "DeleteOptions",
+          preconditions: { uid: "uid-1", resourceVersion: "43" },
+        }),
+      }),
+    );
+  });
+
+  it("does not delete a resource replaced with a different UID", async () => {
+    const currentClient = mockPurgeClients(
+      vi.fn().mockResolvedValue({
+        ...stale,
+        metadata: { ...stale.metadata, uid: "uid-2" },
+      }),
+    );
+
+    await purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger);
+
+    expect(currentClient.Get).toHaveBeenCalledWith("shared-egress");
+    expect(currentClient.Delete).not.toHaveBeenCalled();
+  });
+
+  it("ignores a delete conflict caused by a concurrent update", async () => {
+    mockPurgeClients(vi.fn().mockResolvedValue(stale));
+    vi.mocked(k8sCfg).mockResolvedValue({
+      opts: { method: "DELETE", headers: {} },
+      serverUrl: "https://kubernetes",
+    });
+    vi.mocked(pathBuilder).mockReturnValue(
+      new URL(
+        "https://kubernetes/apis/apps/v1/namespaces/istio-egress-gateway/deployments/shared-egress",
+      ),
+    );
+    vi.mocked(fetch).mockResolvedValue({ ok: false, status: 409 } as never);
+
+    await expect(
+      purgeOrphans("31", "istio-egress-gateway", "shared-egress", kind.Deployment, logger),
+    ).resolves.toBeUndefined();
   });
 });
 

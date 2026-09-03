@@ -1,10 +1,11 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
+import { K8s } from "pepr";
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
-import { Mode } from "../../crd/generated/package-v1alpha1";
-import { validateNamespace } from "../utils";
+import { Mode, Phase } from "../../crd/generated/package-v1alpha1";
+import { Mutex, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import {
@@ -25,12 +26,149 @@ import {
 // Cache for in-memory sidecar-only shared egress resources from package CRs
 export const inMemoryPackageMap: PackageHostMap = {};
 
-let sidecarMapUpdateQueue: Promise<void> = Promise.resolve();
-
 // Cache for in-memory ambient egress resources from package CRs
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
 
-let ambientMapUpdateQueue: Promise<void> = Promise.resolve();
+const sharedEgressMutex = new Mutex();
+
+let egressMapsHydrated = false;
+type PackageList = { items: UDSPackage[] };
+type PackageListLoader = () => Promise<PackageList>;
+
+export class ProtocolConflictError extends Error {
+  readonly retryable = false;
+
+  constructor(
+    readonly ownerPackageId: string,
+    readonly rejectedPackageId: string,
+    readonly mode: Mode,
+    readonly host: string,
+    readonly port: number,
+    readonly ownerProtocol: RemoteProtocol,
+    readonly rejectedProtocol: RemoteProtocol,
+  ) {
+    super(
+      `Protocol conflict detected for ${host}:${port}. ` +
+        `Package "${rejectedPackageId}" wants to use ${rejectedProtocol} but package "${ownerPackageId}" ` +
+        `is already using ${ownerProtocol} for the same host and port combination.`,
+    );
+    this.name = "ProtocolConflictError";
+  }
+}
+
+type EgressMapBuildResult = {
+  sidecarMap: PackageHostMap;
+  ambientMap: AmbientPackageMap;
+  conflicts: Map<string, ProtocolConflictError>;
+};
+
+const defaultPackageListLoader: PackageListLoader = () =>
+  K8s(UDSPackage).Get() as Promise<PackageList>;
+let hydratedPackageListLoader: PackageListLoader | undefined;
+
+function packageId(pkg: UDSPackage): string {
+  const name = pkg.metadata?.name;
+  const namespace = pkg.metadata?.namespace;
+  if (!name || !namespace) {
+    throw new Error("Package metadata.name and metadata.namespace are required");
+  }
+  return `${name}-${namespace}`;
+}
+
+function packageCreationTime(pkg: UDSPackage): number {
+  const creationTimestamp = pkg.metadata?.creationTimestamp;
+  if (!creationTimestamp) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  const timestamp = new Date(creationTimestamp).getTime();
+  if (Number.isNaN(timestamp)) {
+    throw new Error(`Package "${packageId(pkg)}" has an invalid creation timestamp`);
+  }
+  return timestamp;
+}
+
+function isCurrentSuccessfullyReconciled(pkg: UDSPackage): boolean {
+  const generation = pkg.metadata?.generation;
+  return (
+    pkg.status?.phase === Phase.Ready &&
+    typeof generation === "number" &&
+    pkg.status.observedGeneration === generation
+  );
+}
+
+function logProtocolConflict(error: ProtocolConflictError): void {
+  log.error(
+    {
+      ownerPackageId: error.ownerPackageId,
+      rejectedPackageId: error.rejectedPackageId,
+      mode: error.mode,
+      host: error.host,
+      port: error.port,
+      ownerProtocol: error.ownerProtocol,
+      rejectedProtocol: error.rejectedProtocol,
+    },
+    error.message,
+  );
+}
+
+export function buildEgressMaps(packages: UDSPackage[]): EgressMapBuildResult {
+  const sidecarMap: PackageHostMap = {};
+  const ambientMap: AmbientPackageMap = {};
+  const conflicts = new Map<string, ProtocolConflictError>();
+  const livePackages = packages
+    .filter(pkg => !pkg.metadata?.deletionTimestamp)
+    .map(pkg => ({
+      pkg,
+      pkgId: packageId(pkg),
+      sortKey: `${pkg.metadata!.namespace}/${pkg.metadata!.name}`,
+    }))
+    .sort((a, b) => {
+      const successfulOwnerDifference =
+        Number(isCurrentSuccessfullyReconciled(b.pkg)) -
+        Number(isCurrentSuccessfullyReconciled(a.pkg));
+      if (successfulOwnerDifference) {
+        return successfulOwnerDifference;
+      }
+      const timestampDifference = packageCreationTime(a.pkg) - packageCreationTime(b.pkg);
+      return timestampDifference || a.sortKey.localeCompare(b.sortKey);
+    });
+
+  for (const { pkg, pkgId } of livePackages) {
+    const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+
+    try {
+      if (istioMode === Mode.Ambient) {
+        const entry = createAmbientPackageEntry(pkg);
+        validateAmbientProtocolConflicts(ambientMap, entry, pkgId);
+        ambientMap[pkgId] = entry;
+      } else {
+        const hostResourceMap = createHostResourceMap(pkg);
+        if (hostResourceMap) {
+          validateProtocolConflicts(sidecarMap, hostResourceMap, pkgId);
+          sidecarMap[pkgId] = hostResourceMap;
+        }
+      }
+    } catch (error) {
+      if (!(error instanceof ProtocolConflictError)) {
+        throw error;
+      }
+      conflicts.set(pkgId, error);
+    }
+  }
+
+  return { sidecarMap, ambientMap, conflicts };
+}
+
+function replaceEgressMaps(sidecarMap: PackageHostMap, ambientMap: AmbientPackageMap): void {
+  for (const key of Object.keys(inMemoryPackageMap)) {
+    delete inMemoryPackageMap[key];
+  }
+  for (const key of Object.keys(inMemoryAmbientPackageMap)) {
+    delete inMemoryAmbientPackageMap[key];
+  }
+  Object.assign(inMemoryPackageMap, sidecarMap);
+  Object.assign(inMemoryAmbientPackageMap, ambientMap);
+}
 
 function validateAmbientProtocolConflicts(
   currentAmbientMap: AmbientPackageMap,
@@ -65,23 +203,20 @@ function validateAmbientProtocolConflicts(
       const existing = existingHostPortProtocols[key];
       const desiredProtocol = rule.protocol ?? RemoteProtocol.TLS;
       if (existing && existing.protocol !== desiredProtocol) {
-        const errorMsg =
-          `Protocol conflict detected for ${rule.host}:${port}. ` +
-          `Package "${newPkgId}" wants to use ${desiredProtocol} but package "${existing.packageId}" ` +
-          `is already using ${existing.protocol} for the same host and port combination.`;
-        log.error(errorMsg);
-        throw new Error(errorMsg);
+        const error = new ProtocolConflictError(
+          existing.packageId,
+          newPkgId,
+          Mode.Ambient,
+          rule.host,
+          port,
+          existing.protocol,
+          desiredProtocol,
+        );
+        throw error;
       }
     }
   }
 }
-
-// Mutexes to prevent concurrent reconciliation operations for each mode
-let reconcileInFlight: Promise<void> | null = null;
-
-// Flag to ensure we never skip a reconciliation request that arrives
-// while a reconciliation is in progress.
-let reconcileDirty = false;
 
 // Generation counters for shared egress resources (separate for each mode)
 let sidecarGeneration = 0;
@@ -94,6 +229,7 @@ export async function reconcileSharedEgressResources(
   hostResourceMap: HostResourceMap | undefined,
   action: PackageAction,
   istioMode: Mode,
+  packageListLoader: PackageListLoader = defaultPackageListLoader,
 ) {
   const pkgName = pkg.metadata?.name;
   const pkgNamespace = pkg.metadata?.namespace;
@@ -102,24 +238,45 @@ export async function reconcileSharedEgressResources(
   }
   const pkgId = `${pkgName}-${pkgNamespace}`;
 
-  // Update in-memory maps based on the target mode
-  if (istioMode === Mode.Ambient) {
-    // Remove from sidecar map (handles sidecar -> ambient transition)
-    await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+  const release = await sharedEgressMutex.acquire();
+  try {
+    const wasHydrated = egressMapsHydrated && hydratedPackageListLoader === packageListLoader;
+    let triggeringPackageConflict: ProtocolConflictError | undefined;
+    if (!wasHydrated) {
+      const packageList = await packageListLoader();
+      const buildResult = buildEgressMaps(packageList.items);
+      for (const conflict of buildResult.conflicts.values()) {
+        logProtocolConflict(conflict);
+      }
+      replaceEgressMaps(buildResult.sidecarMap, buildResult.ambientMap);
+      egressMapsHydrated = true;
+      hydratedPackageListLoader = packageListLoader;
+      triggeringPackageConflict = buildResult.conflicts.get(pkgId);
+    }
 
-    // Update ambient package list
-    await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
-  } else {
-    // Update sidecar map
-    await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+    // Update the target map before removing the previous mode. Validation can fail
+    // while creating the target entry, so this keeps the existing mode intact.
+    // The initial list is authoritative; the triggering event may be stale relative to it.
+    if (wasHydrated) {
+      if (istioMode === Mode.Ambient) {
+        await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
+        await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
+      } else {
+        await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+        await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
+      }
+    }
 
-    // Remove from ambient list (handles ambient -> sidecar transition)
-    await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
+    // Keep map mutation, apply, and purge in one transaction so a later event
+    // cannot change the state used by this reconciliation.
+    await performEgressReconciliation();
+
+    if (triggeringPackageConflict) {
+      throw triggeringPackageConflict;
+    }
+  } finally {
+    release();
   }
-
-  // Reconcile both modes to ensure proper cleanup and application
-  // This handles mode transitions and prevents resource conflicts
-  await performEgressReconciliationWithMutex();
 }
 
 export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
@@ -168,50 +325,6 @@ export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry 
   }
 
   return { name, namespace, rules };
-}
-
-// Mutex-based reconciliation to prevent overwhelming the operator
-export async function performEgressReconciliationWithMutex(): Promise<void> {
-  // If a reconciliation is already running, mark that another run is needed and wait.
-  // The running reconciliation will do an additional pass before releasing the mutex.
-  if (reconcileInFlight) {
-    reconcileDirty = true;
-    await reconcileInFlight;
-    return;
-  }
-
-  // Start a new reconciliation loop.
-  reconcileDirty = true;
-  reconcileInFlight = (async () => {
-    const startMs = Date.now();
-    let passCount = 0;
-
-    while (reconcileDirty) {
-      reconcileDirty = false;
-      passCount++;
-      await performEgressReconciliation();
-    }
-
-    log.debug(
-      {
-        passCount,
-        durationMs: Date.now() - startMs,
-        additionalPasses: passCount > 1,
-      },
-      "Egress reconciliation completed",
-    );
-  })();
-
-  try {
-    await reconcileInFlight;
-  } catch (e) {
-    // Log the error and re-throw to maintain error propagation
-    log.error("Egress reconciliation failed", e);
-    throw e;
-  } finally {
-    // Clear the mutex when done
-    reconcileInFlight = null;
-  }
 }
 
 // Perform sidecar egress resources reconciliation
@@ -268,26 +381,23 @@ export async function updateInMemoryPackageMap(
   pkgId: string,
   action: PackageAction,
 ) {
-  const task = sidecarMapUpdateQueue
-    .catch(() => undefined)
-    .then(() => {
-      if (action === PackageAction.AddOrUpdate) {
-        if (hostResourceMap) {
-          // Validate for protocol conflicts before updating
-          validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
-          // update inMemoryPackageMap
-          inMemoryPackageMap[pkgId] = hostResourceMap;
-        } else {
-          removeMapResources(inMemoryPackageMap, pkgId);
+  if (action === PackageAction.AddOrUpdate) {
+    if (hostResourceMap) {
+      try {
+        validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+      } catch (error) {
+        if (error instanceof ProtocolConflictError) {
+          logProtocolConflict(error);
         }
-      } else if (action === PackageAction.Remove) {
-        removeMapResources(inMemoryPackageMap, pkgId);
+        throw error;
       }
-    });
-
-  // Keep the queue healthy even if this update fails.
-  sidecarMapUpdateQueue = task.catch(() => undefined);
-  return task;
+      inMemoryPackageMap[pkgId] = hostResourceMap;
+    } else {
+      removeMapResources(inMemoryPackageMap, pkgId);
+    }
+  } else if (action === PackageAction.Remove) {
+    removeMapResources(inMemoryPackageMap, pkgId);
+  }
 }
 
 // Update the inMemoryAmbientPackages list with the latest package
@@ -296,23 +406,20 @@ export async function updateInMemoryAmbientPackageMap(
   pkgId: string,
   action: PackageAction,
 ) {
-  const task = ambientMapUpdateQueue
-    .catch(() => undefined)
-    .then(() => {
-      if (action === PackageAction.AddOrUpdate) {
-        const entry = createAmbientPackageEntry(pkg);
-        validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
-        inMemoryAmbientPackageMap[pkgId] = entry;
-      } else if (action === PackageAction.Remove) {
-        if (inMemoryAmbientPackageMap[pkgId]) {
-          delete inMemoryAmbientPackageMap[pkgId];
-        }
+  if (action === PackageAction.AddOrUpdate) {
+    const entry = createAmbientPackageEntry(pkg);
+    try {
+      validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
+    } catch (error) {
+      if (error instanceof ProtocolConflictError) {
+        logProtocolConflict(error);
       }
-    });
-
-  // Keep the queue healthy even if this update fails.
-  ambientMapUpdateQueue = task.catch(() => undefined);
-  return task;
+      throw error;
+    }
+    inMemoryAmbientPackageMap[pkgId] = entry;
+  } else if (action === PackageAction.Remove && inMemoryAmbientPackageMap[pkgId]) {
+    delete inMemoryAmbientPackageMap[pkgId];
+  }
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
@@ -349,12 +456,16 @@ export function validateProtocolConflicts(
       const existing = existingHostPortProtocols[key];
 
       if (existing && existing.protocol !== portProtocol.protocol) {
-        const errorMsg =
-          `Protocol conflict detected for ${host}:${portProtocol.port}. ` +
-          `Package "${newPkgId}" wants to use ${portProtocol.protocol} but package "${existing.packageId}" ` +
-          `is already using ${existing.protocol} for the same host and port combination.`;
-        log.error(errorMsg);
-        throw new Error(errorMsg);
+        const error = new ProtocolConflictError(
+          existing.packageId,
+          newPkgId,
+          Mode.Sidecar,
+          host,
+          portProtocol.port,
+          existing.protocol,
+          portProtocol.protocol,
+        );
+        throw error;
       }
     }
   }

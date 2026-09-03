@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -306,6 +306,53 @@ describe("handleFailure", () => {
       metadata: { namespace: "default", name: "test" },
       status: {
         observedGeneration: 1,
+        phase: Phase.Failed,
+        conditions: [
+          {
+            type: "Ready",
+            status: StatusEnum.False,
+            lastTransitionTime: expect.any(Date),
+            message: "The package is not ready for use.",
+            reason: "ReconciliationComplete",
+          },
+        ],
+        retryAttempt: 0,
+      },
+    });
+  });
+
+  it("should fail a non-retryable error immediately", async () => {
+    const err = {
+      status: 500,
+      message: "Protocol conflict",
+      data: { message: "Detailed protocol conflict" },
+      retryable: false,
+    };
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 3, uid: "1" },
+      status: { phase: Phase.Pending, retryAttempt: 0 },
+    };
+
+    await handleFailure(err, cr as UDSPackage);
+
+    expect(Log.error).toHaveBeenCalledWith(
+      { err },
+      "Error configuring default/test, failure is non-retryable",
+    );
+    expect(Log.error).not.toHaveBeenCalledWith({ err }, expect.stringContaining("retrying"));
+    expect(Create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "Warning",
+        reason: "ReconciliationFailed",
+        message: "Detailed protocol conflict",
+      }),
+    );
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { namespace: "default", name: "test" },
+      status: {
+        observedGeneration: 3,
         phase: Phase.Failed,
         conditions: [
           {
