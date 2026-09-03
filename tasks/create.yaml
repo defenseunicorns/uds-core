@@ -126,8 +126,9 @@ tasks:
           if [ -n "${ZARF_ARCHITECTURE}" ]; then
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
+          rm -f bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-*.tar.zst
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next "$@"
-          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*-${VERSION}.tar.zst bundles/k3d-standard-next/
+          cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*.tar.zst bundles/k3d-standard-next/
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity) with UDS CLI Legacy"
@@ -174,6 +175,7 @@ tasks:
           if [ -n "${ZARF_ARCHITECTURE}" ]; then
             set -- --architecture="${ZARF_ARCHITECTURE}"
           fi
+          rm -f bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-*.tar.zst
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned bundles/k3d-slim-dev-next "$@"
 
   - name: checkpoint-dev-package

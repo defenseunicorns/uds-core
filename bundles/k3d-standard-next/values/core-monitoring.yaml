@@ -17,7 +17,7 @@ grafana:
       database: "{{ . }}"
 {{- end }}
 {{- with index .vars "GRAFANA_PG_PASSWORD" }}
-      password: "{{ . }}"
+      password: {{ printf "%q" . }}
 {{- end }}
 {{- with index .vars "GRAFANA_PG_USER" }}
       user: "{{ . }}"
