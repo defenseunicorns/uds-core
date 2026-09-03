@@ -14,6 +14,9 @@ variables = {
   CA_BUNDLE_INCLUDE_DOD_CERTS     = "false"
   CA_BUNDLE_INCLUDE_PUBLIC_CERTS  = "false"
 
+  DOMAIN       = "uds.dev"
+  ADMIN_DOMAIN = "admin.uds.dev"
+
   FALCO_SANDBOX_RULES_ENABLED        = "true"
   FALCO_INCUBATING_RULES_ENABLED     = "true"
 
