@@ -1,0 +1,23 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+falco:
+  falco:
+    falcosidekick:
+      replicaCount: 1
+
+{{- if or (index .vars "FALCO_SANDBOX_RULES_ENABLED") (index .vars "FALCO_INCUBATING_RULES_ENABLED") (index .vars "FALCO_DISABLED_RULES") }}
+  uds-falco-config:
+{{- with index .vars "FALCO_SANDBOX_RULES_ENABLED" }}
+    sandboxRulesEnabled: {{ . }}
+{{- end }}
+{{- with index .vars "FALCO_INCUBATING_RULES_ENABLED" }}
+    incubatingRulesEnabled: {{ . }}
+{{- end }}
+{{- with index .vars "FALCO_DISABLED_RULES" }}
+    disabledRules:
+{{- range . }}
+      - "{{ . }}"
+{{- end }}
+{{- end }}
+{{- end }}

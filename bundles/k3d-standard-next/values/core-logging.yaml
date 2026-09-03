@@ -1,0 +1,41 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+loki:
+  loki:
+    write:
+      replicas: {{ .vars.LOKI_WRITE_REPLICAS }}
+    read:
+      replicas: {{ .vars.LOKI_READ_REPLICAS }}
+    backend:
+      replicas: {{ .vars.LOKI_BACKEND_REPLICAS }}
+{{- if or (index .vars "LOKI_CHUNKS_BUCKET") (index .vars "LOKI_RULER_BUCKET") (index .vars "LOKI_ADMIN_BUCKET") (index .vars "LOKI_S3_ENDPOINT") (index .vars "LOKI_S3_REGION") (index .vars "LOKI_S3_ACCESS_KEY_ID") (index .vars "LOKI_S3_SECRET_ACCESS_KEY") }}
+    storage:
+{{- if or (index .vars "LOKI_CHUNKS_BUCKET") (index .vars "LOKI_RULER_BUCKET") (index .vars "LOKI_ADMIN_BUCKET") }}
+      bucketNames:
+{{- with index .vars "LOKI_CHUNKS_BUCKET" }}
+        chunks: "{{ . }}"
+{{- end }}
+{{- with index .vars "LOKI_RULER_BUCKET" }}
+        ruler: "{{ . }}"
+{{- end }}
+{{- with index .vars "LOKI_ADMIN_BUCKET" }}
+        admin: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- if or (index .vars "LOKI_S3_ENDPOINT") (index .vars "LOKI_S3_REGION") (index .vars "LOKI_S3_ACCESS_KEY_ID") (index .vars "LOKI_S3_SECRET_ACCESS_KEY") }}
+      s3:
+{{- with index .vars "LOKI_S3_ENDPOINT" }}
+        endpoint: "{{ . }}"
+{{- end }}
+{{- with index .vars "LOKI_S3_REGION" }}
+        region: "{{ . }}"
+{{- end }}
+{{- with index .vars "LOKI_S3_ACCESS_KEY_ID" }}
+        accessKeyId: "{{ . }}"
+{{- end }}
+{{- with index .vars "LOKI_S3_SECRET_ACCESS_KEY" }}
+        secretAccessKey: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- end }}

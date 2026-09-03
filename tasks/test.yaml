@@ -151,7 +151,18 @@ tasks:
           npx vitest run
 
   - name: uds-core
-    description: "Build and test UDS Core"
+    description: "Build and test UDS Core with UDS CLI Next bundle workflow"
+    actions:
+      - task: create:k3d-standard-bundle-next
+        with:
+          create_options: "--skip-sbom"
+      - task: deploy:k3d-standard-bundle-next
+        with:
+          configFile: bundles/k3d-standard-next/config-test.uds.hcl
+      - task: validate-packages
+
+  - name: uds-core-legacy
+    description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
     inputs:
       K3D_EXTRA_ARGS:
         default: ""
@@ -168,35 +179,20 @@ tasks:
 
   - name: uds-core-e2e
     description: "Build and test UDS Core e2e"
+    actions:
+      - task: uds-core
+      - task: e2e-tests
+
+  - name: uds-core-legacy-e2e
+    description: "Build and test UDS Core e2e with UDS CLI Legacy bundle workflow"
     inputs:
       K3D_EXTRA_ARGS:
         default: ""
         description: "Extra args for k3d"
     actions:
-      - task: uds-core
+      - task: uds-core-legacy
         with:
           K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
-      - task: e2e-tests
-
-  - name: uds-core-values-e2e
-    description: "Build and test UDS Core deployed via Zarf values (equivalency to bundle deploy)"
-    actions:
-      - task: create:standard-package
-        with:
-          create_options: "--skip-sbom"
-      - task: setup:k3d-test-cluster
-      - description: "Deploy UDS Core standard package via Zarf values"
-        shell:
-          darwin: bash
-          linux: bash
-        cmd: |
-          set -euo pipefail
-          PKG=$(ls build/zarf-package-core-${UDS_ARCH}-*.tar.zst 2>/dev/null | head -1)
-          ./uds zarf package deploy "$PKG" \
-            --values test/values/k3d-standard/values.yaml \
-            --components "*" \
-            --confirm --no-progress
-      - task: validate-packages
       - task: e2e-tests
 
   - name: uds-core-non-k3d
@@ -216,7 +212,16 @@ tasks:
           validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
 
   - name: uds-core-ha
-    description: "Build and test UDS Core"
+    description: "Build and test UDS Core with HA configuration and UDS CLI Next bundle workflow"
+    actions:
+      - task: create:k3d-standard-bundle-next
+        with:
+          create_options: "--skip-sbom"
+      - task: deploy:k3d-standard-bundle-ha-next
+      - task: validate-packages
+
+  - name: uds-core-ha-legacy
+    description: "Build and test UDS Core with HA configuration and UDS CLI Legacy bundle workflow"
     actions:
       - task: create:standard-package
         with:
@@ -226,16 +231,27 @@ tasks:
       - task: validate-packages
 
   - name: uds-core-ha-upgrade
-    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Next"
     actions:
-      - task: uds-core-upgrade
+      - task: deploy:latest-bundle-release
+        with:
+          configFile: "bundles/k3d-standard/uds-ha-config.yaml"
+      - task: deploy:latest-release-test-resources
+      - task: upgrade-existing
+        with:
+          configFile: "bundles/k3d-standard-next/config-ha.uds.hcl"
+
+  - name: uds-core-ha-upgrade-legacy
+    description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
+    actions:
+      - task: uds-core-upgrade-legacy
         with:
           configFile: "bundles/k3d-standard/uds-ha-config.yaml"
 
   - name: uds-core-upgrade
     inputs:
       configFile:
-        description: "UDS_CONFIG file to use for the deployments"
+        description: "UDS_CONFIG file to use for the latest release deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
@@ -244,15 +260,49 @@ tasks:
           configFile: ${{ .inputs.configFile }}
       - task: deploy:latest-release-test-resources
       - task: upgrade-existing
+
+  - name: uds-core-upgrade-legacy
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployments"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+    description: "Test an upgrade from the latest released UDS Core package to current branch with UDS CLI Legacy bundle workflow"
+    actions:
+      - task: deploy:latest-bundle-release
+        with:
+          configFile: ${{ .inputs.configFile }}
+      - task: deploy:latest-release-test-resources
+      - task: upgrade-existing-legacy
         with:
           configFile: ${{ .inputs.configFile }}
 
   - name: upgrade-existing
     inputs:
       configFile:
-        description: "UDS_CONFIG file to use for the upgrade deployment"
+        description: "UDS CLI Next config file to use for the upgrade deployment"
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
+    description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
+    actions:
+      - task: create:k3d-standard-bundle-next
+        with:
+          create_options: "--skip-sbom"
+      # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
+      - task: deploy:k3d-standard-bundle-next
+        with:
+          configFile: ${{ .inputs.configFile }}
+          packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
+      - task: validate-packages
+      - task: e2e-tests
+        # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
+        with:
+          skip_fleet_admin: "true"
+
+  - name: upgrade-existing-legacy
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the legacy upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-    description: "Upgrade phase only: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
+    description: "Upgrade phase only with UDS CLI Legacy: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:standard-package
         with:
@@ -280,15 +330,9 @@ tasks:
           validate_egress: "false"
           validate_udp_expose: "false"
 
-  - name: uds-core-private-pki
-    description: "Create and Deploy Private PKI Bundle"
+  - name: private-pki-test-suite
+    description: "Run shared Private PKI validation and tests"
     actions:
-      - task: private-pki:private-pki-certs
-      - task: create:standard-package
-        with:
-          create_options: "--skip-sbom"
-      - task: create:k3d-standard-bundle
-      - task: deploy:k3d-standard-bundle-private-pki
       - task: validate-packages
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
@@ -311,3 +355,24 @@ tasks:
           ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
       - task: private-pki:private-pki-tests
       - task: trust-bundle:trust-bundle-tests
+
+  - name: uds-core-private-pki
+    description: "Create and deploy Private PKI bundle with UDS CLI Next"
+    actions:
+      - task: private-pki:private-pki-certs
+      - task: create:k3d-standard-bundle-next
+        with:
+          create_options: "--skip-sbom"
+      - task: deploy:k3d-standard-bundle-private-pki-next
+      - task: private-pki-test-suite
+
+  - name: uds-core-private-pki-legacy
+    description: "Create and deploy Private PKI bundle with UDS CLI Legacy"
+    actions:
+      - task: private-pki:private-pki-certs
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
+      - task: deploy:k3d-standard-bundle-private-pki
+      - task: private-pki-test-suite
