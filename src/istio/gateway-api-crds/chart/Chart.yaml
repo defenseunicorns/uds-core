@@ -4,4 +4,4 @@
 apiVersion: v2
 name: gateway-api-crds
 version: 0.1.0
-description: Gateway API experimental CRDs
+description: Gateway API experimental CRDs and admission policy resources
