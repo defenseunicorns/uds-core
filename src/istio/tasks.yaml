@@ -1,6 +1,11 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: GATEWAY_API_VERSION
+    # renovate: datasource=github-tags depName=kubernetes-sigs/gateway-api versioning=semver extractVersion=^v(?<version>.*)$
+    default: "1.6.1"
+
 tasks:
   - name: validate
     inputs:
@@ -34,6 +39,17 @@ tasks:
     actions:
       - description: "Run Istio E2E tests"
 
+  - name: update-gateway-api-crds
+    description: "Update vendored Gateway API CRDs"
+    actions:
+      - description: "Download Gateway API CRDs"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          curl -fsSL "https://github.com/kubernetes-sigs/gateway-api/releases/download/v${GATEWAY_API_VERSION}/experimental-install.yaml" \
+            -o src/istio/gateway-api-crds/chart/templates/gateway-api-crds.yaml
+
   - name: gen-crds
     description: "Generate Istio CRD types"
     actions:
@@ -63,9 +79,11 @@ tasks:
           OUT_DIR="src/pepr/operator/crd/generated/k8s"
 
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.12.0 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml "$OUT_DIR" --overrideClassName K8SGateway
-          npx kubernetes-fluent-client@3.11.7 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml "$OUT_DIR"
-          npx kubernetes-fluent-client@3.11.7 crd https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.6.1/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml "$OUT_DIR" --overrideClassName K8SGatewayClass
+          npx kubernetes-fluent-client@3.12.0 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml" "$OUT_DIR" --overrideClassName K8SGateway
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.7 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml" "$OUT_DIR"
+          # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
+          npx kubernetes-fluent-client@3.11.7 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml" "$OUT_DIR" --overrideClassName K8SGatewayClass
 
           KEEP="gateway-v1 gatewayclass-v1 udproute-v1alpha2"
           for f in "$OUT_DIR"/*.ts; do
