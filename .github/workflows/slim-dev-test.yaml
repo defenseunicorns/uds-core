@@ -18,6 +18,7 @@ on:
       - packages/base/**
       - packages/identity-authorization/**
       - bundles/k3d-slim-dev/**
+      - bundles/k3d-slim-dev-next/**
       - .github/workflows/slim-dev**
       - tasks/test.yaml
       - "!**/*.md"
