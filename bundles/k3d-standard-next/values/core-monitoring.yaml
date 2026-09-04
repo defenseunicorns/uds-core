@@ -3,26 +3,26 @@
 
 grafana:
   uds-grafana-config:
-    domain: "{{ .vars.DOMAIN }}"
-    adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
-{{- if or (index .vars "GRAFANA_PG_HOST") (index .vars "GRAFANA_PG_PORT") (index .vars "GRAFANA_PG_DATABASE") (index .vars "GRAFANA_PG_PASSWORD") (index .vars "GRAFANA_PG_USER") (index .vars "GRAFANA_PG_SSL_MODE") }}
+    domain: "{{ .vars.domain }}"
+    adminDomain: "{{ .vars.admin_domain }}"
+{{- if or (index .vars "grafana_pg_host") (index .vars "grafana_pg_port") (index .vars "grafana_pg_database") (index .vars "grafana_pg_password") (index .vars "grafana_pg_user") (index .vars "grafana_pg_ssl_mode") }}
     postgresql:
-{{- with index .vars "GRAFANA_PG_HOST" }}
+{{- with index .vars "grafana_pg_host" }}
       host: "{{ . }}"
 {{- end }}
-{{- with index .vars "GRAFANA_PG_PORT" }}
+{{- with index .vars "grafana_pg_port" }}
       port: {{ . }}
 {{- end }}
-{{- with index .vars "GRAFANA_PG_DATABASE" }}
+{{- with index .vars "grafana_pg_database" }}
       database: "{{ . }}"
 {{- end }}
-{{- with index .vars "GRAFANA_PG_PASSWORD" }}
+{{- with index .vars "grafana_pg_password" }}
       password: {{ printf "%q" . }}
 {{- end }}
-{{- with index .vars "GRAFANA_PG_USER" }}
+{{- with index .vars "grafana_pg_user" }}
       user: "{{ . }}"
 {{- end }}
-{{- with index .vars "GRAFANA_PG_SSL_MODE" }}
+{{- with index .vars "grafana_pg_ssl_mode" }}
       ssl_mode: "{{ . }}"
 {{- end }}
 {{- else }}
@@ -30,16 +30,16 @@ grafana:
 {{- end }}
   grafana:
     global:
-      domain: "{{ .vars.DOMAIN }}"
-      adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
-{{- with index .vars "GRAFANA_HA" }}
+      domain: "{{ .vars.domain }}"
+      adminDomain: "{{ .vars.admin_domain }}"
+{{- with index .vars "grafana_ha" }}
     autoscaling:
       enabled: {{ . }}
 {{- else }}
     autoscaling:
       enabled: false
 {{- end }}
-{{- with index .vars "GRAFANA_EXTRA_CONFIGMAP_MOUNTS" }}
+{{- with index .vars "grafana_extra_configmap_mounts" }}
     extraConfigmapMounts:
 {{- range . }}
       - name: "{{ .name }}"

@@ -1,20 +1,24 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+global:
+  domain: "{{ .vars.domain }}"
+  adminDomain: "{{ .vars.admin_domain }}"
+
 pepr-uds-core:
   module:
     watcher:
       resources:
         requests:
-          memory: "{{ .vars.PEPR_WATCHER_MEMORY_REQUEST }}"
-          cpu: "{{ .vars.PEPR_WATCHER_CPU_REQUEST }}"
+          memory: "{{ .vars.pepr_watcher_memory_request }}"
+          cpu: "{{ .vars.pepr_watcher_cpu_request }}"
     admission:
       resources:
         requests:
-          memory: "{{ .vars.PEPR_ADMISSION_MEMORY_REQUEST }}"
-          cpu: "{{ .vars.PEPR_ADMISSION_CPU_REQUEST }}"
+          memory: "{{ .vars.pepr_admission_memory_request }}"
+          cpu: "{{ .vars.pepr_admission_cpu_request }}"
 
-{{- with index .vars "CLASSIFICATION_BANNERS" }}
+{{- with index .vars "classification_banners" }}
 istio-controlplane:
   uds-global-istio-config:
     classificationBanners:
@@ -42,19 +46,19 @@ istio-controlplane:
 uds-operator-config:
   uds-operator-config:
     operator:
-      AUTHSERVICE_REDIS_URI: "{{ .vars.AUTHSERVICE_REDIS_URI }}"
+      AUTHSERVICE_REDIS_URI: "{{ .vars.authservice_redis_uri }}"
     cluster:
       caBundle:
-        certs: "{{ .vars.CA_BUNDLE_CERTS }}"
-        includeDoDCerts: "{{ .vars.CA_BUNDLE_INCLUDE_DOD_CERTS }}"
-        includePublicCerts: "{{ .vars.CA_BUNDLE_INCLUDE_PUBLIC_CERTS }}"
+        certs: "{{ .vars.ca_bundle_certs }}"
+        includeDoDCerts: "{{ .vars.ca_bundle_include_dod_certs }}"
+        includePublicCerts: "{{ .vars.ca_bundle_include_public_certs }}"
       expose:
-        domain: "{{ .vars.DOMAIN }}"
-        adminDomain: "{{ .vars.ADMIN_DOMAIN }}"
+        domain: "{{ .vars.domain }}"
+        adminDomain: "{{ .vars.admin_domain }}"
 
-{{- $adminTLS12 := index .vars "ADMIN_TLS1_2_SUPPORT" }}
-{{- $adminTLSCert := index .vars "ADMIN_TLS_CERT" }}
-{{- $adminTLSKey := index .vars "ADMIN_TLS_KEY" }}
+{{- $adminTLS12 := index .vars "admin_tls1_2_support" }}
+{{- $adminTLSCert := index .vars "admin_tls_cert" }}
+{{- $adminTLSKey := index .vars "admin_tls_key" }}
 {{- if or $adminTLS12 $adminTLSCert $adminTLSKey }}
 istio-admin-gateway:
   uds-istio-config:
@@ -70,10 +74,10 @@ istio-admin-gateway:
 {{- end }}
 {{- end }}
 
-{{- $tenantTLS12 := index .vars "TENANT_TLS1_2_SUPPORT" }}
-{{- $tenantTLSCert := index .vars "TENANT_TLS_CERT" }}
-{{- $tenantTLSKey := index .vars "TENANT_TLS_KEY" }}
-{{- $tenantPorts := index .vars "TENANT_SERVICE_PORTS" }}
+{{- $tenantTLS12 := index .vars "tenant_tls1_2_support" }}
+{{- $tenantTLSCert := index .vars "tenant_tls_cert" }}
+{{- $tenantTLSKey := index .vars "tenant_tls_key" }}
+{{- $tenantPorts := index .vars "tenant_service_ports" }}
 {{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey $tenantPorts }}
 istio-tenant-gateway:
 {{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey }}

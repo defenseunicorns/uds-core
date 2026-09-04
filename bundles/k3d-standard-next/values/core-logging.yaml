@@ -4,37 +4,37 @@
 loki:
   loki:
     write:
-      replicas: {{ .vars.LOKI_WRITE_REPLICAS }}
+      replicas: {{ .vars.loki_write_replicas }}
     read:
-      replicas: {{ .vars.LOKI_READ_REPLICAS }}
+      replicas: {{ .vars.loki_read_replicas }}
     backend:
-      replicas: {{ .vars.LOKI_BACKEND_REPLICAS }}
-{{- if or (index .vars "LOKI_CHUNKS_BUCKET") (index .vars "LOKI_RULER_BUCKET") (index .vars "LOKI_ADMIN_BUCKET") (index .vars "LOKI_S3_ENDPOINT") (index .vars "LOKI_S3_REGION") (index .vars "LOKI_S3_ACCESS_KEY_ID") (index .vars "LOKI_S3_SECRET_ACCESS_KEY") }}
+      replicas: {{ .vars.loki_backend_replicas }}
+{{- if or (index .vars "loki_chunks_bucket") (index .vars "loki_ruler_bucket") (index .vars "loki_admin_bucket") (index .vars "loki_s3_endpoint") (index .vars "loki_s3_region") (index .vars "loki_s3_access_key_id") (index .vars "loki_s3_secret_access_key") }}
     storage:
-{{- if or (index .vars "LOKI_CHUNKS_BUCKET") (index .vars "LOKI_RULER_BUCKET") (index .vars "LOKI_ADMIN_BUCKET") }}
+{{- if or (index .vars "loki_chunks_bucket") (index .vars "loki_ruler_bucket") (index .vars "loki_admin_bucket") }}
       bucketNames:
-{{- with index .vars "LOKI_CHUNKS_BUCKET" }}
+{{- with index .vars "loki_chunks_bucket" }}
         chunks: "{{ . }}"
 {{- end }}
-{{- with index .vars "LOKI_RULER_BUCKET" }}
+{{- with index .vars "loki_ruler_bucket" }}
         ruler: "{{ . }}"
 {{- end }}
-{{- with index .vars "LOKI_ADMIN_BUCKET" }}
+{{- with index .vars "loki_admin_bucket" }}
         admin: "{{ . }}"
 {{- end }}
 {{- end }}
-{{- if or (index .vars "LOKI_S3_ENDPOINT") (index .vars "LOKI_S3_REGION") (index .vars "LOKI_S3_ACCESS_KEY_ID") (index .vars "LOKI_S3_SECRET_ACCESS_KEY") }}
+{{- if or (index .vars "loki_s3_endpoint") (index .vars "loki_s3_region") (index .vars "loki_s3_access_key_id") (index .vars "loki_s3_secret_access_key") }}
       s3:
-{{- with index .vars "LOKI_S3_ENDPOINT" }}
+{{- with index .vars "loki_s3_endpoint" }}
         endpoint: "{{ . }}"
 {{- end }}
-{{- with index .vars "LOKI_S3_REGION" }}
+{{- with index .vars "loki_s3_region" }}
         region: "{{ . }}"
 {{- end }}
-{{- with index .vars "LOKI_S3_ACCESS_KEY_ID" }}
+{{- with index .vars "loki_s3_access_key_id" }}
         accessKeyId: "{{ . }}"
 {{- end }}
-{{- with index .vars "LOKI_S3_SECRET_ACCESS_KEY" }}
+{{- with index .vars "loki_s3_secret_access_key" }}
         secretAccessKey: {{ printf "%q" . }}
 {{- end }}
 {{- end }}

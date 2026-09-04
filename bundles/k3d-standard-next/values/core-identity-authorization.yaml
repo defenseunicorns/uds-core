@@ -1,39 +1,49 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+global:
+  domain: "{{ .vars.domain }}"
+  adminDomain: "{{ .vars.admin_domain }}"
+
 authservice:
   authservice:
-    replicaCount: {{ .vars.AUTHSERVICE_REPLICA_COUNT }}
+    replicaCount: {{ .vars.authservice_replica_count }}
+{{- with index .vars "authservice_redis_uri" }}
+{{- if ne . "" }}
+    redis:
+      uri: {{ printf "%q" . }}
+{{- end }}
+{{- end }}
 
 keycloak:
   keycloak:
-{{- with index .vars "INSECURE_ADMIN_PASSWORD_GENERATION" }}
+{{- with index .vars "insecure_admin_password_generation" }}
     insecureAdminPasswordGeneration:
       enabled: {{ . }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_HA" }}
+{{- with index .vars "keycloak_ha" }}
     autoscaling:
       enabled: {{ . }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_DEVMODE" }}
+{{- with index .vars "keycloak_devmode" }}
     devMode: {{ . }}
 {{- end }}
-{{- if or (index .vars "KEYCLOAK_PG_USERNAME") (index .vars "KEYCLOAK_PG_PASSWORD") (index .vars "KEYCLOAK_PG_DATABASE") (index .vars "KEYCLOAK_PG_HOST") }}
+{{- if or (index .vars "keycloak_pg_username") (index .vars "keycloak_pg_password") (index .vars "keycloak_pg_database") (index .vars "keycloak_pg_host") }}
     postgresql:
-{{- with index .vars "KEYCLOAK_PG_USERNAME" }}
+{{- with index .vars "keycloak_pg_username" }}
       username: "{{ . }}"
 {{- end }}
-{{- with index .vars "KEYCLOAK_PG_PASSWORD" }}
+{{- with index .vars "keycloak_pg_password" }}
       password: {{ printf "%q" . }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_PG_DATABASE" }}
+{{- with index .vars "keycloak_pg_database" }}
       database: "{{ . }}"
 {{- end }}
-{{- with index .vars "KEYCLOAK_PG_HOST" }}
+{{- with index .vars "keycloak_pg_host" }}
       host: "{{ . }}"
 {{- end }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_EXTRA_VOLUME_MOUNTS" }}
+{{- with index .vars "keycloak_extra_volume_mounts" }}
     extraVolumeMounts:
 {{- range . }}
       - name: "{{ .name }}"
@@ -46,7 +56,7 @@ keycloak:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_EXTRA_VOLUMES" }}
+{{- with index .vars "keycloak_extra_volumes" }}
     extraVolumes:
 {{- range . }}
       - name: "{{ .name }}"
@@ -63,13 +73,13 @@ keycloak:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_TRUSTSTORE_PATHS" }}
+{{- with index .vars "keycloak_truststore_paths" }}
     truststorePaths:
 {{- range . }}
       - "{{ . }}"
 {{- end }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_CUSTOM_TERMS_AND_CONDITIONS" }}
+{{- with index .vars "keycloak_custom_terms_and_conditions" }}
 {{- if ne . "" }}
     themeCustomizations:
       termsAndConditions:

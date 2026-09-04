@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
-  CLASSIFICATION_BANNERS = [
+  classification_banners = [
     {
       text = "SAMPLE BANNER"
       enabledHosts = [
@@ -28,5 +28,5 @@ variables = {
   ]
 
   # Mirrors bundles/k3d-standard/uds-upgrade-test-config.yaml for upgrade runs.
-  LOKI_BACKEND_REPLICAS = "3"
+  loki_backend_replicas = "3"
 }
