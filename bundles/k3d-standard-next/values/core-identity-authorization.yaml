@@ -71,6 +71,13 @@ keycloak:
         secret:
           secretName: "{{ .secret.secretName }}"
 {{- end }}
+{{- if .image }}
+        image:
+          reference: "{{ .image.reference }}"
+{{- if .image.pullPolicy }}
+          pullPolicy: "{{ .image.pullPolicy }}"
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- with index .vars "keycloak_truststore_paths" }}

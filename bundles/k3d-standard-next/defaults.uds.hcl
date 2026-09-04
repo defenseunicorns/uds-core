@@ -24,6 +24,14 @@ variables = {
   loki_read_replicas    = "1"
   loki_backend_replicas = "1"
 
+  loki_chunks_bucket         = ""
+  loki_ruler_bucket          = ""
+  loki_admin_bucket          = ""
+  loki_s3_endpoint           = ""
+  loki_s3_region             = ""
+  loki_s3_access_key_id      = ""
+  loki_s3_secret_access_key  = ""
+
   classification_banners = [
     {
       text      = "SAMPLE BANNER"

@@ -1,20 +1,8 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- $lokiChunksBucket := index .vars "loki_chunks_bucket" }}
-{{- $lokiRulerBucket := index .vars "loki_ruler_bucket" }}
-{{- $lokiAdminBucket := index .vars "loki_admin_bucket" }}
-{{- $lokiS3Endpoint := index .vars "loki_s3_endpoint" }}
-{{- $lokiS3Region := index .vars "loki_s3_region" }}
-{{- $lokiS3AccessKeyID := index .vars "loki_s3_access_key_id" }}
-{{- $lokiS3SecretAccessKey := index .vars "loki_s3_secret_access_key" }}
-{{- $lokiChunksBucketSet := ne (printf "%v" $lokiChunksBucket) "<no value>" }}
-{{- $lokiRulerBucketSet := ne (printf "%v" $lokiRulerBucket) "<no value>" }}
-{{- $lokiAdminBucketSet := ne (printf "%v" $lokiAdminBucket) "<no value>" }}
-{{- $lokiS3EndpointSet := ne (printf "%v" $lokiS3Endpoint) "<no value>" }}
-{{- $lokiS3RegionSet := ne (printf "%v" $lokiS3Region) "<no value>" }}
-{{- $lokiS3AccessKeyIDSet := ne (printf "%v" $lokiS3AccessKeyID) "<no value>" }}
-{{- $lokiS3SecretAccessKeySet := ne (printf "%v" $lokiS3SecretAccessKey) "<no value>" }}
+{{- $lokiBucketConfigured := or .vars.loki_chunks_bucket .vars.loki_ruler_bucket .vars.loki_admin_bucket }}
+{{- $lokiS3Configured := or .vars.loki_s3_endpoint .vars.loki_s3_region }}
 
 loki:
   loki:
@@ -24,33 +12,29 @@ loki:
       replicas: {{ .vars.loki_read_replicas }}
     backend:
       replicas: {{ .vars.loki_backend_replicas }}
-{{- if or $lokiChunksBucketSet $lokiRulerBucketSet $lokiAdminBucketSet $lokiS3EndpointSet $lokiS3RegionSet $lokiS3AccessKeyIDSet $lokiS3SecretAccessKeySet }}
+{{- if or $lokiBucketConfigured $lokiS3Configured }}
     storage:
-{{- if or $lokiChunksBucketSet $lokiRulerBucketSet $lokiAdminBucketSet }}
+{{- if $lokiBucketConfigured }}
       bucketNames:
-{{- if $lokiChunksBucketSet }}
-        chunks: {{ printf "%q" $lokiChunksBucket }}
+{{- with .vars.loki_chunks_bucket }}
+        chunks: {{ printf "%q" . }}
 {{- end }}
-{{- if $lokiRulerBucketSet }}
-        ruler: {{ printf "%q" $lokiRulerBucket }}
+{{- with .vars.loki_ruler_bucket }}
+        ruler: {{ printf "%q" . }}
 {{- end }}
-{{- if $lokiAdminBucketSet }}
-        admin: {{ printf "%q" $lokiAdminBucket }}
+{{- with .vars.loki_admin_bucket }}
+        admin: {{ printf "%q" . }}
 {{- end }}
 {{- end }}
-{{- if or $lokiS3EndpointSet $lokiS3RegionSet $lokiS3AccessKeyIDSet $lokiS3SecretAccessKeySet }}
+{{- if $lokiS3Configured }}
       s3:
-{{- if $lokiS3EndpointSet }}
-        endpoint: {{ printf "%q" $lokiS3Endpoint }}
+{{- with .vars.loki_s3_endpoint }}
+        endpoint: {{ printf "%q" . }}
 {{- end }}
-{{- if $lokiS3RegionSet }}
-        region: {{ printf "%q" $lokiS3Region }}
+{{- with .vars.loki_s3_region }}
+        region: {{ printf "%q" . }}
 {{- end }}
-{{- if $lokiS3AccessKeyIDSet }}
-        accessKeyId: {{ printf "%q" $lokiS3AccessKeyID }}
-{{- end }}
-{{- if $lokiS3SecretAccessKeySet }}
-        secretAccessKey: {{ printf "%q" $lokiS3SecretAccessKey }}
-{{- end }}
+        accessKeyId: {{ printf "%q" .vars.loki_s3_access_key_id }}
+        secretAccessKey: {{ printf "%q" .vars.loki_s3_secret_access_key }}
 {{- end }}
 {{- end }}
