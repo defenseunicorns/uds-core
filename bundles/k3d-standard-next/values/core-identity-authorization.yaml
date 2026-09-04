@@ -1,0 +1,108 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+global:
+  domain: "{{ .vars.domain }}"
+  adminDomain: "{{ .vars.admin_domain }}"
+
+authservice:
+  authservice:
+    replicaCount: {{ .vars.authservice_replica_count }}
+{{- with index .vars "authservice_redis_uri" }}
+{{- if ne . "" }}
+    redis:
+      uri: {{ printf "%q" . }}
+{{- end }}
+{{- end }}
+
+keycloak:
+  keycloak:
+{{- with index .vars "insecure_admin_password_generation" }}
+    insecureAdminPasswordGeneration:
+      enabled: {{ . }}
+{{- end }}
+{{- with index .vars "keycloak_ha" }}
+    autoscaling:
+      enabled: {{ . }}
+{{- end }}
+{{- with index .vars "keycloak_devmode" }}
+    devMode: {{ . }}
+{{- end }}
+{{- if or (index .vars "keycloak_pg_username") (index .vars "keycloak_pg_password") (index .vars "keycloak_pg_database") (index .vars "keycloak_pg_host") }}
+    postgresql:
+{{- with index .vars "keycloak_pg_username" }}
+      username: "{{ . }}"
+{{- end }}
+{{- with index .vars "keycloak_pg_password" }}
+      password: {{ printf "%q" . }}
+{{- end }}
+{{- with index .vars "keycloak_pg_database" }}
+      database: "{{ . }}"
+{{- end }}
+{{- with index .vars "keycloak_pg_host" }}
+      host: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- with index .vars "keycloak_extra_volume_mounts" }}
+    extraVolumeMounts:
+{{- range . }}
+      - name: "{{ .name }}"
+        mountPath: "{{ .mountPath }}"
+{{- if .subPath }}
+        subPath: "{{ .subPath }}"
+{{- end }}
+{{- if .readOnly }}
+        readOnly: {{ .readOnly }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with index .vars "keycloak_extra_volumes" }}
+    extraVolumes:
+{{- range . }}
+      - name: "{{ .name }}"
+{{- if .configMap }}
+        configMap:
+          name: "{{ .configMap.name }}"
+{{- if .configMap.optional }}
+          optional: {{ .configMap.optional }}
+{{- end }}
+{{- end }}
+{{- if .secret }}
+        secret:
+          secretName: "{{ .secret.secretName }}"
+{{- end }}
+{{- if .image }}
+        image:
+          reference: "{{ .image.reference }}"
+{{- if .image.pullPolicy }}
+          pullPolicy: "{{ .image.pullPolicy }}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with index .vars "keycloak_truststore_paths" }}
+    truststorePaths:
+{{- range . }}
+      - "{{ . }}"
+{{- end }}
+{{- end }}
+{{- with index .vars "keycloak_custom_terms_and_conditions" }}
+{{- if ne . "" }}
+    themeCustomizations:
+      termsAndConditions:
+        text:
+          inline: {{ printf "%q" . }}
+{{- end }}
+{{- end }}
+    detailedObservability:
+      alerts:
+        enabled: true
+    realmInitEnv:
+      FLEET_CLIENT_ENABLED: "true"
+      GOOGLE_IDP_ENABLED: true
+      GOOGLE_IDP_ID: "C01881u7t"
+      GOOGLE_IDP_SIGNING_CERT: "MIIDdjCCAl6gAwIBAgIGAZUBt5zpMA0GCSqGSIb3DQEBCwUAMHwxFDASBgNVBAoTC0dvb2dsZSBJbmMuMRYwFAYDVQQHEw1Nb3VudGFpbiBWaWV3MQ8wDQYDVQQDEwZHb29nbGUxGTAXBgNVBAsTEEdvb2dsZSBXb3Jrc3BhY2UxCzAJBgNVBAYTAlVTMRMwEQYDVQQIEwpDYWxpZm9ybmlhMB4XDTI1MDIxMzIzNDkyNVoXDTMwMDIxMjIzNDkyNVowfDEUMBIGA1UEChMLR29vZ2xlIEluYy4xFjAUBgNVBAcTDU1vdW50YWluIFZpZXcxDzANBgNVBAMTBkdvb2dsZTEZMBcGA1UECxMQR29vZ2xlIFdvcmtzcGFjZTELMAkGA1UEBhMCVVMxEzARBgNVBAgTCkNhbGlmb3JuaWEwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCIhy74McJ/ykhQw2zTxfe4YiTkQbupa1fzQTZSglQm8FsGZbQoihdg98QmaxyQj20SIOt3svhGEeSdromX4LSxdwxUkPwMsKrQe7ywetsUYfe7KETYCiwDs9xSpq2x1BXqJoy/oi//R/YMMrAoT6HEpE6FiU1NMuNxDiTZx+eVQ5LNlodXdUkqdXa7xsO9BumWwBdCwJgk35dW0cSkxePEBkmpKgdMgUd9SgROo1mxJG77+dQ/C3PGA/i7Gx1n3S+jjvC9sR+b5GFNJpqPYFGnSinhN2o8jQj51U0Jve7EyTV3VFgGfDrbHjYeT1CVQX9vO51FzJPtUzRsDilwpKV3AgMBAAEwDQYJKoZIhvcNAQELBQADggEBAFpeBvkGqtN43T615DxKpJxiz1y9EqDZzi6uyhSs3xbo2kdOduXpJlziXC3Q1l94/DmItZINRJYT3Y5yh9w4yGZQn5Tc+NajjoRND6SILkMeamvEHLagXy7Qh3HzS3sO5pg5GFjwswxHIsrKxhrIoSwyNiWjz3RSvXCUPEunWjNoF4pvyS3RRs7xvi5JHUuM4ThqMY6HvwoCJqcpRMOBJiDbTooz7SJS1fpK6tVMFnXoJ6Tq89+g+yjcmmZnjV0FkeiXcb7yBR/vkuUyAQhh0Mw14B72mDwqY8Ord1AdgCdVlvRSXCrKLF/ii3AxqJ9ET0rGn0HKk5wi/lYMa3AnEZo="
+      GOOGLE_IDP_NAME_ID_FORMAT: "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified"
+      GOOGLE_IDP_CORE_ENTITY_ID: "https://sso.uds.dev/realms/uds"
+      GOOGLE_IDP_ADMIN_GROUP: "uds-core-dev-admin"
+      GOOGLE_IDP_AUDITOR_GROUP: "uds-core-dev-auditor"

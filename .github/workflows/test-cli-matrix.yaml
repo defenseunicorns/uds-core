@@ -14,6 +14,7 @@ on:
     paths:
       - ".github/workflows/test-cli-matrix.yaml"
       - "bundles/k3d-standard/**"
+      - "bundles/k3d-standard-next/**"
 
 # Abort prior jobs in the same workflow / PR
 concurrency:
@@ -29,23 +30,34 @@ jobs:
   cli-upgrade:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
-    name: "Test Upgrade (${{ matrix.scenario }}, ${{ matrix.flavor }})"
+    name: "Test Upgrade (${{ matrix.mode }}, ${{ matrix.scenario }}, ${{ matrix.flavor }})"
 
     strategy:
       matrix:
         include:
-          # The install phase uses the last compatible CLI for the released package.
-          # The upgrade phase must support native values in the current branch.
-          - scenario: old-old
+          - mode: legacy
+            scenario: legacy-old-old
             flavor: upstream
-            install_cli: v0.34.0
+            install_cli: v0.34.0 # Minimum supported Legacy CLI
             upgrade_cli: v0.34.0
-          # Install with the minimum values-capable CLI; upgrade_cli tracks new releases via Renovate.
-          - scenario: old-new
+          - mode: legacy
+            scenario: legacy-old-new
             flavor: upstream
-            install_cli: v0.34.0
+            install_cli: v0.34.0 # Minimum supported Legacy CLI
             # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
             upgrade_cli: v0.36.0
+          - mode: next
+            scenario: legacy-to-next
+            flavor: upstream
+            install_cli: v0.34.0 # Minimum supported Legacy CLI
+            upgrade_cli: v0.36.0 # Minimum supported CLI Next version
+          # TODO: Uncomment this scenario after the first Next bundle is published.
+          # - mode: next
+          #   scenario: next-min-to-next-latest
+          #   flavor: upstream
+          #   install_cli: v0.36.0 # Minimum supported CLI Next version
+          #   # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+          #   upgrade_cli: v0.36.0
 
     steps:
       - name: Checkout repository
@@ -57,7 +69,6 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           installK3d: 'true'
 
-      # Override the CLI installed by setup with the install-phase version.
       - name: Install CLI for install phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
@@ -72,7 +83,6 @@ jobs:
       - name: Deploy latest release test resources
         run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
 
-      # Switch to the values-capable CLI before building and deploying the current branch.
       - name: Install CLI for upgrade phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
@@ -81,7 +91,12 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
-      - name: Run upgrade phase
+      - name: Run Legacy upgrade phase
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml upgrade-existing-legacy --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run Next upgrade phase
+        if: ${{ matrix.mode == 'next' }}
         run: uds run -f tasks/test.yaml upgrade-existing --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Debug Output
@@ -92,7 +107,7 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -upgrade-matrix-${{ matrix.scenario }}-${{ matrix.flavor }}
+          suffix: -upgrade-matrix-${{ matrix.mode }}-${{ matrix.scenario }}-${{ matrix.flavor }}
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
@@ -104,7 +119,17 @@ jobs:
   cli-install:
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
-    name: "Test Install (minimum supported, upstream)"
+    name: "Test Install (${{ matrix.mode }}, minimum supported, upstream)"
+
+    strategy:
+      matrix:
+        include:
+          - mode: legacy
+            cli_version: v0.34.0 # Minimum supported Legacy CLI
+            task: test:uds-core-legacy-e2e
+          - mode: next
+            cli_version: v0.36.0 # Minimum supported CLI Next version
+            task: test:uds-core-e2e
 
     steps:
       - name: Checkout repository
@@ -116,17 +141,16 @@ jobs:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
           installK3d: 'true'
 
-      # Use the minimum CLI version that supports the current package's native values.
       - name: Install minimum supported CLI
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
         with:
-          version: v0.34.0
+          version: ${{ matrix.cli_version }}
 
       - name: Print CLI version for debug
         run: uds version
 
       - name: Test UDS Core Install (minimum supported CLI)
-        run: uds run test:uds-core-e2e --set FLAVOR=upstream --no-progress
+        run: uds run ${{ matrix.task }} --set FLAVOR=upstream --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
@@ -136,7 +160,7 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -install-old-cli-upstream
+          suffix: -install-${{ matrix.mode }}-min-cli-upstream
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

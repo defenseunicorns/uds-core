@@ -58,9 +58,21 @@ jobs:
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-standard/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-base")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-identity-authorization")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
+
+          for bundle_hcl in bundles/k3d-standard-next/bundle.uds.hcl bundles/k3d-standard-next/bundle-no-portal.uds.hcl bundles/k3d-slim-dev-next/bundle.uds.hcl; do
+            perl -0pi -e 's/(# x-release-please-start-version\n\s*version = ")[^"]+("\n\s*# x-release-please-end)/$1$ENV{SNAPSHOT_VERSION}$2/' "${bundle_hcl}"
+          done
+
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/crds/zarf.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/base/zarf.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/identity-authorization/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/logging/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/monitoring/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/runtime-security/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/backup-restore/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/metrics-server/zarf.yaml
+          yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/portal/zarf.yaml
 
       - name: Create Packages and Bundles
         run: |
@@ -72,11 +84,18 @@ jobs:
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-      # Standard Package by default tests full core
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }} --with create_options=--skip-sbom
+
+          if [ "${{ matrix.flavor }}" = "upstream" ]; then
+            ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }} --with create_options=--skip-sbom
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+          fi
+
       - name: Test amd64 Bundle
         if: ${{ !inputs.snapshot }}
         run: |
-          uds run deploy-standard-bundle --no-progress
+          uds run -f tasks/deploy.yaml k3d-standard-bundle-next --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard-next/config-test.uds.hcl --no-progress
           uds run -f tasks/test.yaml validate-packages --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
