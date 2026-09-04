@@ -80,15 +80,15 @@ tasks:
           # Configure UDS CLI Next with certificates
           cat > build/private-pki/config-private-pki.uds.hcl <<EOF
           variables = {
-            CA_BUNDLE_CERTS                = "$(cat build/private-pki/ca.crt.b64)"
-            CA_BUNDLE_INCLUDE_DOD_CERTS    = "true"
-            CA_BUNDLE_INCLUDE_PUBLIC_CERTS = "true"
+            ca_bundle_certs                = "$(cat build/private-pki/ca.crt.b64)"
+            ca_bundle_include_dod_certs    = "true"
+            ca_bundle_include_public_certs = "true"
 
-            ADMIN_TLS_CERT = "$(cat build/private-pki/admin-gateway.crt.b64)"
-            ADMIN_TLS_KEY  = "$(cat build/private-pki/admin-gateway.key.b64)"
+            admin_tls_cert = "$(cat build/private-pki/admin-gateway.crt.b64)"
+            admin_tls_key  = "$(cat build/private-pki/admin-gateway.key.b64)"
 
-            TENANT_TLS_CERT = "$(cat build/private-pki/tenant-gateway.crt.b64)"
-            TENANT_TLS_KEY  = "$(cat build/private-pki/tenant-gateway.key.b64)"
+            tenant_tls_cert = "$(cat build/private-pki/tenant-gateway.crt.b64)"
+            tenant_tls_key  = "$(cat build/private-pki/tenant-gateway.key.b64)"
           }
           EOF
 

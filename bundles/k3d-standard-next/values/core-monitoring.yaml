@@ -51,5 +51,8 @@ grafana:
 {{- if .readOnly }}
         readOnly: {{ .readOnly }}
 {{- end }}
+{{- if .optional }}
+        optional: {{ .optional }}
+{{- end }}
 {{- end }}
 {{- end }}
