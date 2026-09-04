@@ -44,7 +44,7 @@ This decision uses the following implementation details:
 - Release workflows publish and report two demo bundle families during the transition.
 - Older CLI compatibility workflows stay on Legacy because they intentionally install CLIs that do not support Next mode.
 
-## Alternatives Considered
+## Alternatives considered
 
 1. **Keep main CI on Legacy and add a separate CLI Next workflow.** Rejected. This would not make UDS CLI Next the real UDS Core bundle path.
 2. **Remove Legacy demo bundle validation immediately.** Rejected. Legacy demo bundle artifacts are still published, so release workflows need coverage.
