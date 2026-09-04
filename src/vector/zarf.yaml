@@ -28,7 +28,7 @@ components:
         valuesFiles:
           - values/upstream-values.yaml
     images:
-      - timberio/vector:0.57.0-distroless-static
+      - timberio/vector:0.58.0-distroless-static
 
   - name: vector
     required: true
@@ -42,7 +42,7 @@ components:
         valuesFiles:
           - values/registry1-values.yaml
     images:
-      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.57.0
+      - registry1.dso.mil/ironbank/opensource/timberio/vector:0.58.0
 
   - name: vector
     required: true
