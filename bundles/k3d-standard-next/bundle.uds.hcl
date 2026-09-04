@@ -90,7 +90,8 @@ package "core_backup_restore" {
 package "core_portal" {
   source = "../../build/zarf-package-core-portal-${sys.arch}-${local.version}.tar.zst"
   signature_verification { verify = false }
-  depends_on = [package.core_identity_authorization]
+  depends_on   = [package.core_identity_authorization]
+  values_files = ["values/core-portal.yaml"]
 }
 
 package "core_metrics_server" {

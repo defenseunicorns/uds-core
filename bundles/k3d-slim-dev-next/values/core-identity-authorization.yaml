@@ -3,36 +3,36 @@
 
 authservice:
   authservice:
-    replicaCount: {{ .vars.AUTHSERVICE_REPLICA_COUNT }}
+    replicaCount: {{ .vars.authservice_replica_count }}
 
 keycloak:
   keycloak:
     resources:
       requests:
-        memory: "{{ .vars.KEYCLOAK_MEMORY_REQUEST }}"
-        cpu: "{{ .vars.KEYCLOAK_CPU_REQUEST }}"
+        memory: "{{ .vars.keycloak_memory_request }}"
+        cpu: "{{ .vars.keycloak_cpu_request }}"
       limits:
-        memory: "{{ .vars.KEYCLOAK_MEMORY_LIMIT }}"
-        cpu: "{{ .vars.KEYCLOAK_CPU_LIMIT }}"
+        memory: "{{ .vars.keycloak_memory_limit }}"
+        cpu: "{{ .vars.keycloak_cpu_limit }}"
     waypoint:
       horizontalPodAutoscaler:
-        enabled: {{ .vars.KEYCLOAK_WAYPOINT_HPA_ENABLED }}
+        enabled: {{ .vars.keycloak_waypoint_hpa_enabled }}
       deployment:
         requests:
-          cpu: "{{ .vars.KEYCLOAK_WAYPOINT_CPU_REQUEST }}"
-          memory: "{{ .vars.KEYCLOAK_WAYPOINT_MEMORY_REQUEST }}"
-{{- with index .vars "INSECURE_ADMIN_PASSWORD_GENERATION" }}
+          cpu: "{{ .vars.keycloak_waypoint_cpu_request }}"
+          memory: "{{ .vars.keycloak_waypoint_memory_request }}"
+{{- with index .vars "insecure_admin_password_generation" }}
     insecureAdminPasswordGeneration:
       enabled: {{ . }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_HA" }}
+{{- with index .vars "keycloak_ha" }}
     autoscaling:
       enabled: {{ . }}
 {{- end }}
-{{- $pgUsername := index .vars "KEYCLOAK_PG_USERNAME" }}
-{{- $pgPassword := index .vars "KEYCLOAK_PG_PASSWORD" }}
-{{- $pgDatabase := index .vars "KEYCLOAK_PG_DATABASE" }}
-{{- $pgHost := index .vars "KEYCLOAK_PG_HOST" }}
+{{- $pgUsername := index .vars "keycloak_pg_username" }}
+{{- $pgPassword := index .vars "keycloak_pg_password" }}
+{{- $pgDatabase := index .vars "keycloak_pg_database" }}
+{{- $pgHost := index .vars "keycloak_pg_host" }}
 {{- if or $pgUsername $pgPassword $pgDatabase $pgHost }}
     postgresql:
 {{- with $pgUsername }}
@@ -48,7 +48,7 @@ keycloak:
       host: "{{ . }}"
 {{- end }}
 {{- end }}
-{{- with index .vars "KEYCLOAK_DEVMODE" }}
+{{- with index .vars "keycloak_devmode" }}
     devMode: {{ . }}
 {{- end }}
     realmInitEnv:

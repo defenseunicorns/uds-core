@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variables = {
-  CLASSIFICATION_BANNERS = [
+  classification_banners = [
     {
       text = "SAMPLE BANNER"
       enabledHosts = [
@@ -27,28 +27,28 @@ variables = {
     },
   ]
 
-  AUTHSERVICE_REDIS_URI     = "redis://authservice:authservice@host.k3d.internal:6379"
-  AUTHSERVICE_REPLICA_COUNT = "2"
+  authservice_redis_uri     = "redis://authservice:authservice@host.k3d.internal:6379"
+  authservice_replica_count = "2"
 
-  FALCO_SANDBOX_RULES_ENABLED    = "true"
-  FALCO_INCUBATING_RULES_ENABLED = "true"
+  falco_sandbox_rules_enabled    = "true"
+  falco_incubating_rules_enabled = "true"
 
-  GRAFANA_HA          = "true"
-  GRAFANA_PG_HOST     = "host.k3d.internal"
-  GRAFANA_PG_PORT     = "5432"
-  GRAFANA_PG_DATABASE = "grafana"
-  GRAFANA_PG_PASSWORD = "unicorn123!@#UN"
-  GRAFANA_PG_USER     = "postgres"
-  GRAFANA_PG_SSL_MODE = "disable"
+  grafana_ha          = "true"
+  grafana_pg_host     = "host.k3d.internal"
+  grafana_pg_port     = "5432"
+  grafana_pg_database = "grafana"
+  grafana_pg_password = "unicorn123!@#UN"
+  grafana_pg_user     = "postgres"
+  grafana_pg_ssl_mode = "disable"
 
-  LOKI_BACKEND_REPLICAS = "3"
-  LOKI_READ_REPLICAS    = "3"
-  LOKI_WRITE_REPLICAS   = "3"
+  loki_backend_replicas = "3"
+  loki_read_replicas    = "3"
+  loki_write_replicas   = "3"
 
-  KEYCLOAK_HA          = "true"
-  KEYCLOAK_PG_USERNAME = "postgres"
-  KEYCLOAK_PG_PASSWORD = "unicorn123!@#UN"
-  KEYCLOAK_PG_DATABASE = "keycloak"
-  KEYCLOAK_PG_HOST     = "host.k3d.internal"
-  KEYCLOAK_DEVMODE     = "false"
+  keycloak_ha          = "true"
+  keycloak_pg_username = "postgres"
+  keycloak_pg_password = "unicorn123!@#UN"
+  keycloak_pg_database = "keycloak"
+  keycloak_pg_host     = "host.k3d.internal"
+  keycloak_devmode     = "false"
 }

@@ -5,25 +5,25 @@ velero:
   velero:
     credentials:
       useSecret: true
-      name: "{{ .vars.VELERO_BUCKET_CREDENTIAL_NAME }}"
+      name: "{{ .vars.velero_bucket_credential_name }}"
       secretContents:
         cloud: |
           [default]
-          aws_access_key_id={{ .vars.VELERO_BUCKET_KEY }}
-          aws_secret_access_key={{ .vars.VELERO_BUCKET_KEY_SECRET }}
+          aws_access_key_id={{ .vars.velero_bucket_key }}
+          aws_secret_access_key={{ .vars.velero_bucket_key_secret }}
     configuration:
       backupStorageLocation:
         - name: default
           provider: aws
-          bucket: "{{ .vars.VELERO_BUCKET }}"
+          bucket: "{{ .vars.velero_bucket }}"
           prefix: backups
           config:
-            region: "{{ .vars.VELERO_BUCKET_REGION }}"
+            region: "{{ .vars.velero_bucket_region }}"
             s3ForcePathStyle: true
-            s3Url: "{{ .vars.VELERO_BUCKET_PROVIDER_URL }}"
+            s3Url: "{{ .vars.velero_bucket_provider_url }}"
           credential:
-            name: "{{ .vars.VELERO_BUCKET_CREDENTIAL_NAME }}"
-            key: "{{ .vars.VELERO_BUCKET_CREDENTIAL_KEY }}"
+            name: "{{ .vars.velero_bucket_credential_name }}"
+            key: "{{ .vars.velero_bucket_credential_key }}"
       volumeSnapshotLocation: []
     snapshotsEnabled: false
     metrics:
