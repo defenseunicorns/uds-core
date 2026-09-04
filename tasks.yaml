@@ -73,6 +73,14 @@ tasks:
       - description: "Deploy slim dev bundle with UDS CLI Next"
         task: deploy:k3d-slim-dev-bundle-next
 
+  - name: slim-dev-legacy
+    actions:
+      - description: "Build slim dev Legacy bundle"
+        task: create:k3d-slim-dev-bundle
+
+      - description: "Deploy slim dev Legacy bundle"
+        task: deploy:k3d-slim-dev-bundle
+
   - name: slim-dev-ha
     description: "Build and deploy slim dev bundle with HA configuration"
     actions:
