@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -16,11 +16,21 @@ export const log = setupLogger(Component.OPERATOR_KEYCLOAK);
 export async function setupKeycloakClientSecret() {
   if (process.env.PEPR_WATCH_MODE === "true" || process.env.PEPR_MODE === "dev") {
     // Ensure the namespace exists in the Kubernetes cluster
-    await K8s(kind.Namespace).Apply({
-      metadata: {
-        name: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
-      },
-    });
+    try {
+      const namespace = await K8s(kind.Namespace).Get(KEYCLOAK_CLIENTS_SECRET_NAMESPACE);
+      log.debug(`Namespace ${namespace.metadata?.name} exists, skipping creation`);
+    } catch (error) {
+      if (error?.status !== 404) {
+        throw error;
+      }
+
+      log.info(`Namespace ${KEYCLOAK_CLIENTS_SECRET_NAMESPACE} does not exist, creating it`);
+      await K8s(kind.Namespace).Apply({
+        metadata: {
+          name: KEYCLOAK_CLIENTS_SECRET_NAMESPACE,
+        },
+      });
+    }
 
     // Create the secret if it doesn't exist
     try {
