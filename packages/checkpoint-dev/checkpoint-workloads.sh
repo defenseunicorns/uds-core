@@ -86,7 +86,7 @@ discover() {
     row=$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s' "$kind" "$namespace" "$name" "$replicas" "$generation" "$phase" "$marker")
     workloads="${workloads}${workloads:+$'\n'}${row}"
   done <<EOF
-$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind != "ReplicaSet" or ((.metadata.ownerReferences[]? | select(.controller == true and .kind == "Deployment")) != null)) | [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), (.metadata.generation // 0), (.spec.template.metadata.labels."pepr.dev/controller" // "__none__"), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "__none__")] | @tsv')
+$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind != "ReplicaSet" or ((.metadata.ownerReferences[]? | select(.kind == "Deployment")) != null)) | [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), (.metadata.generation // 0), (.spec.template.metadata.labels."pepr.dev/controller" // "__none__"), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "__none__")] | @tsv')
 EOF
 }
 
