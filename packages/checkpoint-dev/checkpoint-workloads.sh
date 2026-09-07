@@ -10,78 +10,87 @@ readonly TIMEOUT='180s'
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 readonly ZARF="${SCRIPT_DIR}/zarf"
 
-kubectl() { "$ZARF" tools kubectl "$@"; }
-yq() { "$ZARF" tools yq "$@"; }
+kubectl() {
+  "$ZARF" tools kubectl "$@"
+}
+
+yq() {
+  "$ZARF" tools yq "$@"
+}
 
 context() {
   local current
   current=$(kubectl config current-context)
-  case "$current" in k3d-*) echo "$current" ;; *) echo "error: current context is not K3d: ${current}" >&2; return 1 ;; esac
+  case "$current" in
+    k3d-*) echo "$current" ;;
+    *)
+      echo "error: current context is not K3d: ${current}" >&2
+      return 1
+      ;;
+  esac
+}
+
+phase_for() {
+  case "$1:$2" in
+    kube-system:*|zarf:*|istio-system:*) echo infrastructure ;;
+    pepr-system:admission|pepr-system:watcher) echo "$2" ;;
+    *) echo application ;;
+  esac
 }
 
 wait_for_api() {
   local ctx=$1 attempt
   for attempt in $(seq 1 30); do
-    kubectl --context "$ctx" version --request-timeout=5s >/dev/null 2>&1 && return
+    if kubectl --context "$ctx" version --request-timeout=5s >/dev/null 2>&1; then
+      return
+    fi
     sleep 2
   done
   echo "error: API did not become available for ${ctx}" >&2
   return 1
 }
 
-# Controller rows: kind, namespace, name, replicas, generation, phase, marker.
-controllers=''
-replica_sets=''
+# Workload rows: kind, namespace, name, replicas, generation, phase, marker.
+workloads=''
 
 discover() {
-  local ctx=$1 inventory namespace name replicas generation role marker kind phase owner row
+  local ctx=$1 inventory namespace name replicas generation role marker kind phase row
   inventory=$(kubectl --context "$ctx" get deployments,statefulsets,daemonsets,replicasets -A -o json)
-  controllers=''
+  workloads=''
   while IFS=$'\t' read -r kind namespace name replicas generation role marker; do
-    [ -n "$namespace" ] || continue
-    [ "$role" = __none__ ] && role=''
-    [ "$marker" = __none__ ] && marker=''
-    case "$namespace:$role" in
-      kube-system:*|zarf:*|istio-system:*) phase=infrastructure ;;
-      pepr-system:admission|pepr-system:watcher) phase=$role ;;
-      *) phase=application ;;
-    esac
+    if [ -z "$namespace" ]; then
+      continue
+    fi
+    if [ "$role" = __none__ ]; then
+      role=''
+    fi
+    if [ "$marker" = __none__ ]; then
+      marker=''
+    fi
+    phase=$(phase_for "$namespace" "$role")
     row=$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s' "$kind" "$namespace" "$name" "$replicas" "$generation" "$phase" "$marker")
-    controllers="${controllers}${controllers:+$'\n'}${row}"
+    workloads="${workloads}${workloads:+$'\n'}${row}"
   done <<EOF
-$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind != "ReplicaSet") | [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), .metadata.generation, (.spec.template.metadata.labels."pepr.dev/controller" // "__none__"), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "__none__")] | @tsv')
-EOF
-  replica_sets=''
-  while IFS=$'\t' read -r namespace name owner marker; do
-    [ "$owner" = __none__ ] && continue
-    [ "$marker" = __none__ ] && marker=''
-    phase=$(printf '%s\n' "$controllers" | awk -F '\t' -v namespace="$namespace" -v owner="$owner" '$1 == "deployment" && $2 == namespace && $3 == owner { print $6; exit }')
-    [ -n "$phase" ] || continue
-    row=$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s' replicaset "$namespace" "$name" 1 0 "$phase" "$marker")
-    replica_sets="${replica_sets}${replica_sets:+$'\n'}${row}"
-  done <<EOF
-$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind == "ReplicaSet") | [.metadata.namespace, .metadata.name, ((.metadata.ownerReferences[]? | select(.controller == true and .kind == "Deployment") | .name) // "__none__"), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "__none__")] | @tsv')
+$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind != "ReplicaSet" or ((.metadata.ownerReferences[]? | select(.controller == true and .kind == "Deployment")) != null)) | [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), (.metadata.generation // 0), (.spec.template.metadata.labels."pepr.dev/controller" // "__none__"), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "__none__")] | @tsv')
 EOF
 }
 
-all_workloads() { printf '%s\n%s\n' "$controllers" "$replica_sets"; }
-
 is_managed() {
   local kind=$1 namespace=$2 name=$3
-  all_workloads | awk -F '\t' -v kind="$kind" -v namespace="$namespace" -v name="$name" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'
+  printf '%s\n' "$workloads" | awk -F '\t' -v kind="$kind" -v namespace="$namespace" -v name="$name" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'
 }
 
 require_bootstrap() {
   local required role
   for required in 'deployment istio-system istiod' 'daemonset istio-system istio-cni-node' 'daemonset istio-system ztunnel'; do
-    printf '%s\n' "$controllers" | awk -F '\t' -v kind="${required%% *}" -v namespace="$(printf '%s' "$required" | cut -d' ' -f2)" -v name="${required##* }" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }' || {
+    if ! printf '%s\n' "$workloads" | awk -F '\t' -v kind="${required%% *}" -v namespace="$(printf '%s' "$required" | cut -d' ' -f2)" -v name="${required##* }" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'; then
       echo "error: required infrastructure workload missing: ${required}" >&2; return 1;
-    }
+    fi
   done
   for role in admission watcher; do
-    printf '%s\n' "$controllers" | awk -F '\t' -v role="$role" '$2 == "pepr-system" && $6 == role { found = 1 } END { exit !found }' || {
+    if ! printf '%s\n' "$workloads" | awk -F '\t' -v role="$role" '$2 == "pepr-system" && $6 == role { found = 1 } END { exit !found }'; then
       echo "error: required Pepr ${role} workload missing" >&2; return 1;
-    }
+    fi
   done
 }
 
@@ -105,12 +114,20 @@ active_pods() {
 validate_active_workloads() {
   local ctx=$1 jobs pods namespace name owner_kind owner_name mirror node_name kind
   jobs=$(kubectl --context "$ctx" get jobs -A -o json | yq -r '.items[] | [.metadata.namespace, .metadata.name, (.status.active // 0)] | @tsv' | awk -F '\t' 'NF == 3 && $1 != "" && $2 != "" && $3 > 0 { print $1 "/" $2 }')
-  [ -z "$jobs" ] || { echo "error: active unsupported Jobs: ${jobs}" >&2; return 1; }
+  if [ -n "$jobs" ]; then
+    echo "error: active unsupported Jobs: ${jobs}" >&2
+    return 1
+  fi
   pods=$(active_pods "$ctx")
   while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
-    [ -z "$namespace" ] || [ "$mirror" != __none__ ] && continue
+    if [ -z "$namespace" ] || [ "$mirror" != __none__ ]; then
+      continue
+    fi
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-    is_managed "$kind" "$namespace" "$owner_name" || { echo "error: active unsupported pod: ${namespace}/${name}" >&2; return 1; }
+    if ! is_managed "$kind" "$namespace" "$owner_name"; then
+      echo "error: active unsupported pod: ${namespace}/${name}" >&2
+      return 1
+    fi
   done <<EOF
 $pods
 EOF
@@ -119,12 +136,16 @@ EOF
 mark_workloads() {
   local ctx=$1 kind namespace name _ _ _ marker
   while IFS=$'\t' read -r kind namespace name _ _ _ marker; do
-    [ -z "$kind" ] && continue
-    [ "$marker" = "$VALUE" ] && continue
-    [ -z "$marker" ] || { echo "error: unexpected ${MARKER} on ${kind}/${namespace}/${name}" >&2; return 1; }
+    if [ -z "$kind" ] || [ "$marker" = "$VALUE" ]; then
+      continue
+    fi
+    if [ -n "$marker" ]; then
+      echo "error: unexpected ${MARKER} on ${kind}/${namespace}/${name}" >&2
+      return 1
+    fi
     patch "$ctx" add "$kind" "$namespace" "$name"
   done <<EOF
-$(all_workloads)
+$workloads
 EOF
 }
 
@@ -132,7 +153,9 @@ delete_managed_pods() {
   local ctx=$1 pods namespace name owner_kind owner_name mirror node_name kind
   pods=$(active_pods "$ctx")
   while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
-    [ -z "$namespace" ] || [ "$mirror" != __none__ ] && continue
+    if [ -z "$namespace" ] || [ "$mirror" != __none__ ]; then
+      continue
+    fi
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
     if [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name"; then
       kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
@@ -153,13 +176,19 @@ suspend() {
     found=0
     pods=$(active_pods "$ctx")
     while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
-      [ -z "$namespace" ] || [ "$mirror" != __none__ ] && continue
+    if [ -z "$namespace" ] || [ "$mirror" != __none__ ]; then
+      continue
+    fi
       kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-      [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name" && found=1
+      if [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name"; then
+        found=1
+      fi
     done <<EOF
 $pods
 EOF
-    [ "$found" = 0 ] && return
+    if [ "$found" = 0 ]; then
+      return
+    fi
     sleep 2
   done
   echo 'error: suspended Pods did not disappear' >&2
@@ -168,6 +197,7 @@ EOF
 
 wait_for_rollout() {
   local ctx=$1 kind=$2 namespace=$3 name=$4 replicas=$5 generation=$6 desired
+  [ "$kind" = replicaset ] && return
   kubectl --context "$ctx" -n "$namespace" wait "$kind/$name" --for="jsonpath={.status.observedGeneration}=${generation}" --timeout="$TIMEOUT"
   if [ "$kind" = daemonset ]; then
     desired=$(kubectl --context "$ctx" -n "$namespace" get daemonset "$name" -o json | yq -r '.status.desiredNumberScheduled // 0')
@@ -198,21 +228,30 @@ release() {
   local ctx=$1 phase=$2 kind namespace name replicas generation current marker
   discover "$ctx"
   while IFS=$'\t' read -r kind namespace name replicas generation current marker; do
-    [ "$current" = "$phase" ] || continue
-    [ -z "$marker" ] && continue
-    [ "$marker" = "$VALUE" ] || { echo "error: unexpected ${MARKER} on ${kind}/${namespace}/${name}" >&2; return 1; }
+    if [ "$current" != "$phase" ] || [ -z "$marker" ]; then
+      continue
+    fi
+    if [ "$marker" != "$VALUE" ]; then
+      echo "error: unexpected ${MARKER} on ${kind}/${namespace}/${name}" >&2
+      return 1
+    fi
     patch "$ctx" remove "$kind" "$namespace" "$name"
   done <<EOF
-$(all_workloads)
+$workloads
 EOF
   delete_marked_pods "$ctx"
   discover "$ctx"
   while IFS=$'\t' read -r kind namespace name replicas generation current marker; do
-    [ "$current" = "$phase" ] || continue
-    [ -z "$marker" ] || { echo "error: ${kind}/${namespace}/${name} remained suspended" >&2; return 1; }
+    if [ "$current" != "$phase" ]; then
+      continue
+    fi
+    if [ -n "$marker" ]; then
+      echo "error: ${kind}/${namespace}/${name} remained suspended" >&2
+      return 1
+    fi
     wait_for_rollout "$ctx" "$kind" "$namespace" "$name" "$replicas" "$generation"
   done <<EOF
-$controllers
+$workloads
 EOF
 }
 
@@ -235,35 +274,67 @@ EOF
   for namespace_selector in 'keycloak app.kubernetes.io/name=keycloak' 'pepr-system app=pepr-uds-core' 'pepr-system app=pepr-uds-core-watcher'; do
     namespace=${namespace_selector%% *}; selector=${namespace_selector#* }
     pods=$(kubectl --context "$ctx" -n "$namespace" get pods -l "$selector" -o name)
-    [ -z "$pods" ] || kubectl --context "$ctx" -n "$namespace" wait --for=condition=Ready pod -l "$selector" --timeout="$TIMEOUT"
+    if [ -n "$pods" ]; then
+      kubectl --context "$ctx" -n "$namespace" wait --for=condition=Ready pod -l "$selector" --timeout="$TIMEOUT"
+    fi
   done
 }
 
 cleanup() {
-  local ctx=$1 status=$2 kind namespace name _ _ _ marker failed=''
+  local ctx=$1 status=$2 kind namespace name _ _ _ marker
   trap - EXIT
   set +e
   discover "$ctx"
   while IFS=$'\t' read -r kind namespace name _ _ _ marker; do
-    [ "$marker" = "$VALUE" ] && patch "$ctx" remove "$kind" "$namespace" "$name" || true
+    if [ "$marker" = "$VALUE" ]; then
+      patch "$ctx" remove "$kind" "$namespace" "$name" || true
+    fi
   done <<EOF
-$(all_workloads)
+$workloads
 EOF
   delete_marked_pods "$ctx"
   exit "$status"
 }
 
-case "${1-}" in
-  suspend)
-    [ -x "$ZARF" ] || { echo 'error: zarf not found beside helper' >&2; exit 1; }
-    ctx=$(context)
-    [ "$ctx" = k3d-uds ] || { echo "error: suspend requires k3d-uds, got ${ctx}" >&2; exit 1; }
-    discover "$ctx"; require_bootstrap; validate_active_workloads "$ctx"; trap 'cleanup "$ctx" "$?"' EXIT
-    suspend "$ctx"; "$SCRIPT_DIR/checkpoint.sh"; restore "$ctx"; trap - EXIT
-    ;;
-  restore)
-    [ -x "$ZARF" ] || { echo 'error: zarf not found beside helper' >&2; exit 1; }
-    ctx=$(context); wait_for_api "$ctx"; discover "$ctx"; require_bootstrap; restore "$ctx"
-    ;;
-  *) echo "error: expected 'suspend' or 'restore'" >&2; exit 2 ;;
-esac
+main() {
+  local command=${1-} ctx
+
+  case "$command" in
+    suspend)
+      if [ ! -x "$ZARF" ]; then
+        echo 'error: zarf not found beside helper' >&2
+        return 1
+      fi
+      ctx=$(context)
+      if [ "$ctx" != k3d-uds ]; then
+        echo "error: suspend requires k3d-uds, got ${ctx}" >&2
+        return 1
+      fi
+      discover "$ctx"
+      require_bootstrap
+      validate_active_workloads "$ctx"
+      trap 'cleanup "$ctx" "$?"' EXIT
+      suspend "$ctx"
+      "$SCRIPT_DIR/checkpoint.sh"
+      restore "$ctx"
+      trap - EXIT
+      ;;
+    restore)
+      if [ ! -x "$ZARF" ]; then
+        echo 'error: zarf not found beside helper' >&2
+        return 1
+      fi
+      ctx=$(context)
+      wait_for_api "$ctx"
+      discover "$ctx"
+      require_bootstrap
+      restore "$ctx"
+      ;;
+    *)
+      echo "error: expected 'suspend' or 'restore'" >&2
+      return 2
+      ;;
+  esac
+}
+
+main "$@"
