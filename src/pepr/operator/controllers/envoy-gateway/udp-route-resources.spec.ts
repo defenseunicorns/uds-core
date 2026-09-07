@@ -4,8 +4,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fetch, K8s } from "pepr";
-import { k8sCfg, pathBuilder } from "kubernetes-fluent-client/dist/fluent/utils";
+import { K8s } from "pepr";
 import { K8sGateway, K8sUDPRoute, UDSPackage } from "../../crd";
 import { ExposeProtocol } from "../../crd/generated/package-v1alpha1";
 import { envoyDefaultGatewayName, envoyDefaultGatewayNamespace } from "./constants";
@@ -17,7 +16,6 @@ import {
 
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
-  fetch: vi.fn(),
   kind: {
     Namespace: "Namespace",
     NetworkPolicy: "NetworkPolicy",
@@ -30,11 +28,6 @@ vi.mock("pepr", () => ({
       error: vi.fn(),
     })),
   },
-}));
-
-vi.mock("kubernetes-fluent-client/dist/fluent/utils", () => ({
-  k8sCfg: vi.fn(),
-  pathBuilder: vi.fn(),
 }));
 
 type K8sClient = {
@@ -81,14 +74,6 @@ describe("envoyGatewayResources", () => {
     vi.clearAllMocks();
     clients.clear();
     defaultListenerMap.clear();
-    vi.mocked(k8sCfg).mockResolvedValue({
-      opts: { method: "DELETE", headers: {} },
-      serverUrl: "https://kubernetes",
-    });
-    vi.mocked(pathBuilder).mockReturnValue(
-      new URL("https://kubernetes/apis/gateway.networking.k8s.io"),
-    );
-    vi.mocked(fetch).mockResolvedValue({ ok: true, status: 200 } as never);
 
     vi.mocked(K8s).mockImplementation(((resourceKind: unknown) => {
       const existingClient = clients.get(resourceKind);
@@ -233,9 +218,9 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async (name?: string) => {
+        Get: vi.fn(async () => {
           if (resourceKind === K8sUDPRoute) {
-            const result = {
+            return {
               items: [
                 {
                   apiVersion: "gateway.networking.k8s.io/v1alpha2",
@@ -243,14 +228,11 @@ describe("envoyGatewayResources", () => {
                   metadata: {
                     name: "web-udp-old",
                     namespace: "web-ns",
-                    uid: "old-route-uid",
-                    resourceVersion: "1",
                     labels: { "uds/package": "web", "uds/generation": "1" },
                   },
                 },
               ],
             };
-            return name ? result.items[0] : result;
           }
 
           return { items: [] };
@@ -265,9 +247,8 @@ describe("envoyGatewayResources", () => {
 
     await envoyGatewayResources(pkg, "web-ns");
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({ method: "DELETE" }),
+    expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
     );
   });
 
@@ -294,9 +275,9 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async (name?: string) => {
+        Get: vi.fn(async () => {
           if (resourceKind === K8sUDPRoute) {
-            const result = {
+            return {
               items: [
                 {
                   apiVersion: "gateway.networking.k8s.io/v1alpha2",
@@ -304,14 +285,11 @@ describe("envoyGatewayResources", () => {
                   metadata: {
                     name: "web-udp-old",
                     namespace: "web-ns",
-                    uid: "old-route-uid",
-                    resourceVersion: "1",
                     labels: { "uds/package": "web", "uds/generation": "1" },
                   },
                 },
               ],
             };
-            return name ? result.items[0] : result;
           }
 
           return { items: [] };
@@ -326,9 +304,8 @@ describe("envoyGatewayResources", () => {
 
     await envoyGatewayResources(pkg, "web-ns");
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({ method: "DELETE" }),
+    expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
     );
     expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
   });

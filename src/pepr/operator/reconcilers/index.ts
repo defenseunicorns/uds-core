@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2026 Defense Unicorns
+ * Copyright 2024 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -135,12 +135,7 @@ export async function writeEvent(cr: GenericKind, event: Partial<kind.CoreEvent>
  * @param cr The custom resource that failed
  */
 export async function handleFailure(
-  err: {
-    status: number;
-    message: string;
-    data?: { message?: string; reason?: string };
-    retryable?: boolean;
-  },
+  err: { status: number; message: string; data?: { message?: string; reason?: string } },
   cr: UDSPackage,
 ) {
   const metadata = cr.metadata!;
@@ -156,18 +151,10 @@ export async function handleFailure(
   // Extract the most detailed error message available
   const detailedMessage = err.data?.message || err.message;
 
-  if (err.retryable === false) {
-    log.error({ err }, `Error configuring ${identifier}, failure is non-retryable`);
+  const retryAttempt = cr.status?.retryAttempt || 0;
 
-    status = {
-      phase: Phase.Failed,
-      conditions: getReadinessConditions(false),
-      observedGeneration: metadata.generation,
-      retryAttempt: 0, // todo: make this nullable when kfc generates the type
-    };
-  } else if ((cr.status?.retryAttempt || 0) < 4) {
-    // retryAttempt starts at 0, we perform 4 retries, 5 total attempts
-    const retryAttempt = cr.status?.retryAttempt || 0;
+  // retryAttempt starts at 0, we perform 4 retries, 5 total attempts
+  if (retryAttempt < 4) {
     const currRetry = retryAttempt + 1;
     log.error({ err }, `Reconciliation attempt ${currRetry} failed for ${identifier}, retrying...`);
 
