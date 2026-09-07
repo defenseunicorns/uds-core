@@ -98,8 +98,8 @@ is_managed() {
 workload_exists() {
   local kind=$1 namespace=$2 name=$3
   printf '%s\n' "$workloads" | awk -F '\t' \
-    -v kind="$kind" -v namespace="$namespace" -v name="$name" \
-    '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'
+    -v kind="$kind" -v ns="$namespace" -v name="$name" \
+    '$1 == kind && $2 == ns && $3 == name { found = 1 } END { exit !found }'
 }
 
 require_bootstrap() {
