@@ -50,6 +50,31 @@ components:
           - description: "Quiesce checkpoint dependencies: Keycloak, Pepr watcher, Pepr admission, then ztunnel"
             cmd: |
               set -e
+
+              cleanup() {
+                local original_status=$?
+                local cleanup_status=0
+                set +e
+
+                ./zarf tools kubectl --context k3d-uds -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]' || true
+                ./zarf tools kubectl --context k3d-uds -n istio-system rollout status daemonset ztunnel --timeout=60s || cleanup_status=$?
+
+                ./zarf tools kubectl --context k3d-uds -n pepr-system scale deploy pepr-uds-core --replicas=2 || cleanup_status=$?
+                ./zarf tools kubectl --context k3d-uds -n pepr-system rollout status deploy pepr-uds-core --timeout=60s || cleanup_status=$?
+
+                ./zarf tools kubectl --context k3d-uds -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1 || cleanup_status=$?
+                ./zarf tools kubectl --context k3d-uds -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s || cleanup_status=$?
+
+                ./zarf tools kubectl --context k3d-uds -n keycloak scale statefulset keycloak --replicas=1 || cleanup_status=$?
+                ./zarf tools kubectl --context k3d-uds -n keycloak rollout status statefulset keycloak --timeout=180s || cleanup_status=$?
+
+                if [ "$original_status" -ne 0 ]; then
+                  exit "$original_status"
+                fi
+                exit "$cleanup_status"
+              }
+              trap cleanup EXIT
+
               ./zarf tools kubectl --context k3d-uds -n keycloak scale statefulset keycloak --replicas=0
               ./zarf tools kubectl --context k3d-uds -n keycloak wait --for=delete pod -l app.kubernetes.io/name=keycloak,app.kubernetes.io/instance=keycloak --timeout=60s
 
