@@ -8,7 +8,11 @@ readonly MARKER='checkpoint.uds.dev/suspended'
 readonly VALUE='true'
 readonly TIMEOUT='180s'
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
-readonly ZARF="${SCRIPT_DIR}/zarf"
+if [ -x "$(pwd)/zarf" ]; then
+  readonly ZARF="$(pwd)/zarf"
+else
+  readonly ZARF="${SCRIPT_DIR}/zarf"
+fi
 
 kubectl() {
   "$ZARF" tools kubectl "$@"
