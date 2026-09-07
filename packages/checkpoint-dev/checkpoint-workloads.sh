@@ -10,8 +10,10 @@ readonly TIMEOUT='180s'
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
 if [ -x "$(pwd)/zarf" ]; then
   readonly ZARF="$(pwd)/zarf"
-else
+elif [ -x "${SCRIPT_DIR}/zarf" ]; then
   readonly ZARF="${SCRIPT_DIR}/zarf"
+else
+  readonly ZARF="$(command -v zarf || true)"
 fi
 
 kubectl() {
@@ -306,7 +308,7 @@ main() {
   case "$command" in
     suspend)
       if [ ! -x "$ZARF" ]; then
-        echo 'error: zarf not found beside helper' >&2
+        echo 'error: zarf executable not found' >&2
         return 1
       fi
       ctx=$(context)
@@ -325,7 +327,7 @@ main() {
       ;;
     restore)
       if [ ! -x "$ZARF" ]; then
-        echo 'error: zarf not found beside helper' >&2
+        echo 'error: zarf executable not found' >&2
         return 1
       fi
       ctx=$(context)
