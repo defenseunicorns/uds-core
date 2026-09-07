@@ -67,6 +67,7 @@ wait_for_api() {
 
 # Workload rows: kind, namespace, name, replicas, generation, phase, marker.
 workloads=''
+checkpoint_context=''
 
 discover() {
   local ctx=$1 inventory namespace name replicas generation role marker kind phase row
@@ -189,7 +190,7 @@ delete_managed_pods() {
     fi
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
     if [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name"; then
-      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --ignore-not-found --wait=false >/dev/null
     fi
   done <<EOF
 $pods
@@ -248,7 +249,7 @@ delete_marked_pods() {
     [ -z "$namespace" ] && continue
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
     if is_managed "$kind" "$namespace" "$owner_name"; then
-      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --ignore-not-found --wait=false >/dev/null
     fi
   done <<EOF
 $pods
@@ -348,7 +349,8 @@ main() {
       discover "$ctx"
       require_bootstrap "$ctx"
       validate_active_workloads "$ctx"
-      trap 'cleanup "$ctx" "$?"' EXIT
+      checkpoint_context=$ctx
+      trap 'cleanup "$checkpoint_context" "$?"' EXIT
       suspend "$ctx"
       "$SCRIPT_DIR/checkpoint.sh"
       restore "$ctx"
