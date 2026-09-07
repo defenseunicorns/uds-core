@@ -153,6 +153,9 @@ validate_active_workloads() {
     fi
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
     if ! is_managed "$kind" "$namespace" "$owner_name"; then
+      discover "$ctx"
+    fi
+    if ! is_managed "$kind" "$namespace" "$owner_name"; then
       echo "error: active unsupported pod: ${namespace}/${name}" >&2
       return 1
     fi
