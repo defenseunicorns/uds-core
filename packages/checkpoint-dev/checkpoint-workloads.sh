@@ -134,7 +134,9 @@ delete_managed_pods() {
   while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
     [ -z "$namespace" ] || [ "$mirror" != __none__ ] && continue
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-    [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name" && kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+    if [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name"; then
+      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+    fi
   done <<EOF
 $pods
 EOF
@@ -184,7 +186,9 @@ delete_marked_pods() {
   while IFS=$'\t' read -r namespace name owner_kind owner_name; do
     [ -z "$namespace" ] && continue
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-    is_managed "$kind" "$namespace" "$owner_name" && kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+    if is_managed "$kind" "$namespace" "$owner_name"; then
+      kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+    fi
   done <<EOF
 $pods
 EOF
