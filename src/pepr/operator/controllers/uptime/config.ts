@@ -121,9 +121,14 @@ export async function setupUptimeConfig() {
 
     // Ensure the namespace exists in the Kubernetes cluster
     try {
-      await K8s(kind.Namespace).Get(BLACKBOX_CONFIG_NAMESPACE);
-      log.debug(`Namespace ${BLACKBOX_CONFIG_NAMESPACE} exists, skipping creation`);
-    } catch {
+      const namespace = await K8s(kind.Namespace).Get(BLACKBOX_CONFIG_NAMESPACE);
+      log.debug(`Namespace ${namespace.metadata?.name} exists, skipping creation`);
+    } catch (error) {
+      if (error?.status !== 404) {
+        throw error;
+      }
+
+      log.info(`Namespace ${BLACKBOX_CONFIG_NAMESPACE} does not exist, creating it`);
       await K8s(kind.Namespace).Apply({
         metadata: {
           name: BLACKBOX_CONFIG_NAMESPACE,
