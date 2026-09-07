@@ -103,20 +103,21 @@ workload_exists() {
 }
 
 require_bootstrap() {
-  local role workload kind namespace name
-  for workload in \
-    'deployment istio-system istiod' \
-    'daemonset istio-system istio-cni-node' \
-    'daemonset istio-system ztunnel'; do
-    read -r kind namespace name <<<"$workload"
-    if ! workload_exists "$kind" "$namespace" "$name"; then
-      echo "error: required infrastructure workload missing: ${workload}" >&2
+  local ctx=$1 resource namespace selector
+  for resource in \
+    'deployment/istiod istio-system' \
+    'daemonset/istio-cni-node istio-system' \
+    'daemonset/ztunnel istio-system'; do
+    read -r resource namespace <<<"$resource"
+    if ! kubectl --context "$ctx" -n "$namespace" get "$resource" >/dev/null 2>&1; then
+      echo "error: required infrastructure workload missing: ${resource} (${namespace})" >&2
       return 1
     fi
   done
-  for role in admission watcher; do
-    if ! printf '%s\n' "$workloads" | awk -F '\t' -v role="$role" '$2 == "pepr-system" && $6 == role { found = 1 } END { exit !found }'; then
-      echo "error: required Pepr ${role} workload missing" >&2; return 1;
+  for selector in app=pepr-uds-core app=pepr-uds-core-watcher; do
+    if ! kubectl --context "$ctx" -n pepr-system get deployment -l "$selector" -o name 2>/dev/null | grep -q .; then
+      echo "error: required Pepr workload missing: ${selector}" >&2
+      return 1
     fi
   done
 }
@@ -342,7 +343,7 @@ main() {
         return 1
       fi
       discover "$ctx"
-      require_bootstrap
+      require_bootstrap "$ctx"
       validate_active_workloads "$ctx"
       trap 'cleanup "$ctx" "$?"' EXIT
       suspend "$ctx"
@@ -355,7 +356,7 @@ main() {
       ctx=$(context)
       wait_for_api "$ctx"
       discover "$ctx"
-      require_bootstrap
+      require_bootstrap "$ctx"
       restore "$ctx"
       ;;
     *)
