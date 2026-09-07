@@ -15,13 +15,22 @@ elif [ -x "${SCRIPT_DIR}/zarf" ]; then
 else
   readonly ZARF="$(command -v zarf || true)"
 fi
+readonly UDS="$(command -v uds || true)"
 
 kubectl() {
-  "$ZARF" tools kubectl "$@"
+  if [ -n "$ZARF" ]; then
+    "$ZARF" tools kubectl "$@"
+  else
+    "$UDS" zarf tools kubectl "$@"
+  fi
 }
 
 yq() {
-  "$ZARF" tools yq "$@"
+  if [ -n "$ZARF" ]; then
+    "$ZARF" tools yq "$@"
+  else
+    "$UDS" zarf tools yq "$@"
+  fi
 }
 
 context() {
@@ -315,7 +324,7 @@ EOF
 }
 
 require_zarf() {
-  if [ -z "$ZARF" ] || [ ! -x "$ZARF" ]; then
+  if { [ -z "$ZARF" ] || [ ! -x "$ZARF" ]; } && [ -z "$UDS" ]; then
     echo 'error: zarf executable not found' >&2
     return 1
   fi
