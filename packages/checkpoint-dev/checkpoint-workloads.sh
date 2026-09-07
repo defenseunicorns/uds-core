@@ -34,29 +34,28 @@ controllers=''
 replica_sets=''
 
 discover() {
-  local ctx=$1 inventory
+  local ctx=$1 inventory namespace name replicas generation role marker kind phase owner
   inventory=$(kubectl --context "$ctx" get deployments,statefulsets,daemonsets,replicasets -A -o json)
-  controllers=$(printf '%s' "$inventory" | yq -r '
-    def phase:
-      .metadata.namespace as $namespace |
-      (.spec.template.metadata.labels."pepr.dev/controller" // "") as $role |
-      if $namespace == "kube-system" or $namespace == "zarf" or $namespace == "istio-system" then "infrastructure"
-      elif $namespace == "pepr-system" and ($role == "admission" or $role == "watcher") then $role
-      else "application" end;
-    .items[] | select(.kind != "ReplicaSet") |
-    [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), .metadata.generation, phase, (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "")] | @tsv')
-  replica_sets=$(printf '%s' "$inventory" | yq -r '
-    def phase:
-      .metadata.namespace as $namespace |
-      (.spec.template.metadata.labels."pepr.dev/controller" // "") as $role |
-      if $namespace == "kube-system" or $namespace == "zarf" or $namespace == "istio-system" then "infrastructure"
-      elif $namespace == "pepr-system" and ($role == "admission" or $role == "watcher") then $role
-      else "application" end;
-    .items as $items |
-    $items[] | select(.kind == "ReplicaSet") | . as $replica_set |
-    (.metadata.ownerReferences[]? | select(.controller == true and .kind == "Deployment") | .name) as $owner |
-    $items[] | select(.kind == "Deployment" and .metadata.namespace == $replica_set.metadata.namespace and .metadata.name == $owner) |
-    ["replicaset", $replica_set.metadata.namespace, $replica_set.metadata.name, 1, 0, phase, ($replica_set.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "")] | @tsv')
+  controllers=''
+  while IFS=$'\t' read -r kind namespace name replicas generation role marker; do
+    [ -n "$namespace" ] || continue
+    case "$namespace:$role" in
+      kube-system:*|zarf:*|istio-system:*) phase=infrastructure ;;
+      pepr-system:admission|pepr-system:watcher) phase=$role ;;
+      *) phase=application ;;
+    esac
+    controllers="${controllers}${controllers:+$'\n'}${kind}\t${namespace}\t${name}\t${replicas}\t${generation}\t${phase}\t${marker}"
+  done <<EOF
+$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind != "ReplicaSet") | [(.kind | downcase), .metadata.namespace, .metadata.name, (.spec.replicas // 1), .metadata.generation, (.spec.template.metadata.labels."pepr.dev/controller" // ""), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "")] | @tsv')
+EOF
+  replica_sets=''
+  while IFS=$'\t' read -r namespace name owner marker; do
+    phase=$(printf '%s\n' "$controllers" | awk -F '\t' -v namespace="$namespace" -v owner="$owner" '$1 == "deployment" && $2 == namespace && $3 == owner { print $6; exit }')
+    [ -n "$phase" ] || continue
+    replica_sets="${replica_sets}${replica_sets:+$'\n'}replicaset\t${namespace}\t${name}\t1\t0\t${phase}\t${marker}"
+  done <<EOF
+$(printf '%s' "$inventory" | yq -r '.items[] | select(.kind == "ReplicaSet") | [.metadata.namespace, .metadata.name, ((.metadata.ownerReferences[]? | select(.controller == true and .kind == "Deployment") | .name) // ""), (.spec.template.spec.nodeSelector."checkpoint.uds.dev/suspended" // "")] | @tsv')
+EOF
 }
 
 all_workloads() { printf '%s\n%s\n' "$controllers" "$replica_sets"; }
@@ -94,15 +93,15 @@ patch() {
 active_pods() {
   kubectl --context "$1" get pods -A -o json | yq -r '
     .items[] | select(.status.phase == "Pending" or .status.phase == "Running") |
-    [.metadata.namespace, .metadata.name, ((.metadata.ownerReferences[]? | select(.controller == true) | .kind) // ""), ((.metadata.ownerReferences[]? | select(.controller == true) | .name) // ""), (.metadata.annotations."kubernetes.io/config.mirror" // "")] | @tsv'
+    [.metadata.namespace, .metadata.name, ((.metadata.ownerReferences[]? | select(.controller == true) | .kind) // ""), ((.metadata.ownerReferences[]? | select(.controller == true) | .name) // ""), (.metadata.annotations."kubernetes.io/config.mirror" // ""), (.spec.nodeName // "")] | @tsv'
 }
 
 validate_active_workloads() {
-  local ctx=$1 jobs pods namespace name owner_kind owner_name mirror kind
+  local ctx=$1 jobs pods namespace name owner_kind owner_name mirror node_name kind
   jobs=$(kubectl --context "$ctx" get jobs -A -o json | yq -r '.items[] | [.metadata.namespace, .metadata.name, (.status.active // 0)] | @tsv' | awk -F '\t' 'NF == 3 && $1 != "" && $2 != "" && $3 > 0 { print $1 "/" $2 }')
   [ -z "$jobs" ] || { echo "error: active unsupported Jobs: ${jobs}" >&2; return 1; }
   pods=$(active_pods "$ctx")
-  while IFS=$'\t' read -r namespace name owner_kind owner_name mirror; do
+  while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
     [ -z "$namespace" ] || [ -n "$mirror" ] && continue
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
     is_managed "$kind" "$namespace" "$owner_name" || { echo "error: active unsupported pod: ${namespace}/${name}" >&2; return 1; }
@@ -124,19 +123,19 @@ EOF
 }
 
 delete_managed_pods() {
-  local ctx=$1 pods namespace name owner_kind owner_name mirror kind
+  local ctx=$1 pods namespace name owner_kind owner_name mirror node_name kind
   pods=$(active_pods "$ctx")
-  while IFS=$'\t' read -r namespace name owner_kind owner_name mirror; do
+  while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
     [ -z "$namespace" ] || [ -n "$mirror" ] && continue
     kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-    is_managed "$kind" "$namespace" "$owner_name" && kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+    [ -n "$node_name" ] && is_managed "$kind" "$namespace" "$owner_name" && kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
   done <<EOF
 $pods
 EOF
 }
 
 suspend() {
-  local ctx=$1 attempt pods namespace name owner_kind owner_name mirror kind found
+  local ctx=$1 attempt pods namespace name owner_kind owner_name mirror node_name kind found
   for attempt in $(seq 1 30); do
     discover "$ctx"
     mark_workloads "$ctx"
@@ -145,10 +144,10 @@ suspend() {
     delete_managed_pods "$ctx"
     found=0
     pods=$(active_pods "$ctx")
-    while IFS=$'\t' read -r namespace name owner_kind owner_name mirror; do
+    while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
       [ -z "$namespace" ] || [ -n "$mirror" ] && continue
       kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
-      is_managed "$kind" "$namespace" "$owner_name" && found=1
+      [ -n "$node_name" ] && is_managed "$kind" "$namespace" "$owner_name" && found=1
     done <<EOF
 $pods
 EOF
@@ -161,14 +160,28 @@ EOF
 
 wait_for_rollout() {
   local ctx=$1 kind=$2 namespace=$3 name=$4 replicas=$5 generation=$6 desired
+  kubectl --context "$ctx" -n "$namespace" wait "$kind/$name" --for="jsonpath={.status.observedGeneration}=${generation}" --timeout="$TIMEOUT"
   if [ "$kind" = daemonset ]; then
     desired=$(kubectl --context "$ctx" -n "$namespace" get daemonset "$name" -o json | yq -r '.status.desiredNumberScheduled // 0')
   else
     desired=$replicas
   fi
   [ "$desired" = 0 ] && return
-  kubectl --context "$ctx" -n "$namespace" wait "$kind/$name" --for="jsonpath={.status.observedGeneration}=${generation}" --timeout="$TIMEOUT"
   kubectl --context "$ctx" -n "$namespace" rollout status "$kind/$name" --timeout="$TIMEOUT"
+}
+
+delete_marked_pods() {
+  local ctx=$1 pods namespace name owner_kind owner_name kind
+  pods=$(kubectl --context "$ctx" get pods -A -o json | yq -r '
+    .items[] | select(.spec.nodeSelector."checkpoint.uds.dev/suspended" == "true") |
+    [.metadata.namespace, .metadata.name, ((.metadata.ownerReferences[]? | select(.controller == true) | .kind) // ""), ((.metadata.ownerReferences[]? | select(.controller == true) | .name) // "")] | @tsv')
+  while IFS=$'\t' read -r namespace name owner_kind owner_name; do
+    [ -z "$namespace" ] && continue
+    kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
+    is_managed "$kind" "$namespace" "$owner_name" && kubectl --context "$ctx" -n "$namespace" delete pod "$name" --wait=false >/dev/null
+  done <<EOF
+$pods
+EOF
 }
 
 release() {
@@ -182,6 +195,7 @@ release() {
   done <<EOF
 $(all_workloads)
 EOF
+  delete_marked_pods "$ctx"
   discover "$ctx"
   while IFS=$'\t' read -r kind namespace name replicas generation current marker; do
     [ "$current" = "$phase" ] || continue
@@ -225,6 +239,7 @@ cleanup() {
   done <<EOF
 $(all_workloads)
 EOF
+  delete_marked_pods "$ctx"
   exit "$status"
 }
 
