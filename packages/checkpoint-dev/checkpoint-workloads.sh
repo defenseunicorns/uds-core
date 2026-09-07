@@ -83,14 +83,26 @@ EOF
 
 is_managed() {
   local kind=$1 namespace=$2 name=$3
-  printf '%s\n' "$workloads" | awk -F '\t' -v kind="$kind" -v namespace="$namespace" -v name="$name" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'
+  workload_exists "$kind" "$namespace" "$name"
+}
+
+workload_exists() {
+  local kind=$1 namespace=$2 name=$3
+  printf '%s\n' "$workloads" | awk -F '\t' \
+    -v kind="$kind" -v namespace="$namespace" -v name="$name" \
+    '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'
 }
 
 require_bootstrap() {
-  local required role
-  for required in 'deployment istio-system istiod' 'daemonset istio-system istio-cni-node' 'daemonset istio-system ztunnel'; do
-    if ! printf '%s\n' "$workloads" | awk -F '\t' -v kind="${required%% *}" -v namespace="$(printf '%s' "$required" | cut -d' ' -f2)" -v name="${required##* }" '$1 == kind && $2 == namespace && $3 == name { found = 1 } END { exit !found }'; then
-      echo "error: required infrastructure workload missing: ${required}" >&2; return 1;
+  local role workload kind namespace name
+  for workload in \
+    'deployment istio-system istiod' \
+    'daemonset istio-system istio-cni-node' \
+    'daemonset istio-system ztunnel'; do
+    read -r kind namespace name <<<"$workload"
+    if ! workload_exists "$kind" "$namespace" "$name"; then
+      echo "error: required infrastructure workload missing: ${workload}" >&2
+      return 1
     fi
   done
   for role in admission watcher; do
@@ -182,9 +194,9 @@ suspend() {
     found=0
     pods=$(active_pods "$ctx")
     while IFS=$'\t' read -r namespace name owner_kind owner_name mirror node_name; do
-    if [ -z "$namespace" ] || [ "$mirror" != __none__ ]; then
-      continue
-    fi
+      if [ -z "$namespace" ] || [ "$mirror" != __none__ ]; then
+        continue
+      fi
       kind=$(printf '%s' "$owner_kind" | tr '[:upper:]' '[:lower:]')
       if [ "$node_name" != __none__ ] && is_managed "$kind" "$namespace" "$owner_name"; then
         found=1
@@ -262,7 +274,7 @@ EOF
 }
 
 restore() {
-  local ctx=$1 namespace selector pods
+  local ctx=$1 namespace selector pods namespace_selector
   release "$ctx" infrastructure
   release "$ctx" admission
   kubectl --context "$ctx" create --request-timeout=5s --dry-run=server -o name -f - <<'EOF'
@@ -302,15 +314,19 @@ EOF
   exit "$status"
 }
 
+require_zarf() {
+  if [ -z "$ZARF" ] || [ ! -x "$ZARF" ]; then
+    echo 'error: zarf executable not found' >&2
+    return 1
+  fi
+}
+
 main() {
   local command=${1-} ctx
 
   case "$command" in
     suspend)
-      if [ ! -x "$ZARF" ]; then
-        echo 'error: zarf executable not found' >&2
-        return 1
-      fi
+      require_zarf
       ctx=$(context)
       if [ "$ctx" != k3d-uds ]; then
         echo "error: suspend requires k3d-uds, got ${ctx}" >&2
@@ -326,10 +342,7 @@ main() {
       trap - EXIT
       ;;
     restore)
-      if [ ! -x "$ZARF" ]; then
-        echo 'error: zarf executable not found' >&2
-        return 1
-      fi
+      require_zarf
       ctx=$(context)
       wait_for_api "$ctx"
       discover "$ctx"
