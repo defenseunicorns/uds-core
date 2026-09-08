@@ -150,6 +150,9 @@ IRSA works by annotating the Velero service account (`velero/velero-server`) wit
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          velero:
            velero:

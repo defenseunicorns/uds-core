@@ -63,41 +63,65 @@ Layers are published to organization-specific registries and require a Defense U
      - name: core-crds
        repository: registry.defenseunicorns.com/<MY-ORG>/core-crds
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Required - foundation for all other layers
      - name: core-base
        repository: registry.defenseunicorns.com/<MY-ORG>/core-base
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - remove if your deployment doesn't require user authentication
      - name: core-identity-authorization
        repository: registry.defenseunicorns.com/<MY-ORG>/core-identity-authorization
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - skip if your cluster already provides a metrics server
      - name: core-metrics-server
        repository: registry.defenseunicorns.com/<MY-ORG>/core-metrics-server
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - remove if runtime threat detection is not needed
      - name: core-runtime-security
        repository: registry.defenseunicorns.com/<MY-ORG>/core-runtime-security
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - remove if log aggregation is not needed
      - name: core-logging
        repository: registry.defenseunicorns.com/<MY-ORG>/core-logging
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - requires core-identity-authorization for Grafana login
      - name: core-monitoring
        repository: registry.defenseunicorns.com/<MY-ORG>/core-monitoring
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
 
      # Optional - remove if backup/restore is not needed
      - name: core-backup-restore
        repository: registry.defenseunicorns.com/<MY-ORG>/core-backup-restore
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
    ```
 
    > [!IMPORTANT]
@@ -112,6 +136,9 @@ Layers are published to organization-specific registries and require a Defense U
      - name: core-logging
        repository: registry.defenseunicorns.com/<MY-ORG>/core-logging
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          loki:
            loki:

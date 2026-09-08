@@ -52,6 +52,9 @@ packages:
   - name: core
     repository: registry.defenseunicorns.com/public/core
     ref: 0.62.0-upstream
+    keylessVerification:
+      certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
 ```
 
 > [!NOTE]
@@ -286,6 +289,9 @@ packages:
   - name: core
     repository: registry.defenseunicorns.com/public/core
     ref: 0.62.0-upstream
+    keylessVerification:
+      certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
     overrides:
       loki:
         loki:

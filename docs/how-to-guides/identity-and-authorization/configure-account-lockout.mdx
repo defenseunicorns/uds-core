@@ -42,6 +42,9 @@ UDS Core exposes one configurable option for brute-force lockout behavior: `MAX_
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
            keycloak:

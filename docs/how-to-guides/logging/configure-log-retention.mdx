@@ -37,6 +37,9 @@ Retention settings apply only to data stored in Loki. Logs already forwarded to 
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          loki:
            loki:
@@ -82,6 +85,9 @@ Retention settings apply only to data stored in Loki. Logs already forwarded to 
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          loki:
            loki:

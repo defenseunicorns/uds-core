@@ -50,6 +50,9 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            uds-exemptions:
              uds-exemptions:
@@ -65,6 +68,9 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            uds-exemptions:
              uds-exemptions:
@@ -88,6 +94,9 @@ UDS Core provides a built-in exemption for Istio gateway NodePorts (a common con
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            uds-exemptions:
              uds-exemptions:

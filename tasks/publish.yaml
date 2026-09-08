@@ -25,9 +25,11 @@ tasks:
     description: "Publish the UDS package"
     actions:
       - task: utils:determine-repo
-      - description: "Publish amd64/arm64 packages per flavor"
+      - description: "Sign and publish amd64/arm64 packages per flavor"
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
+          ./uds zarf package sign build/zarf-package-core-amd64-${VERSION}.tar.zst --keyless --confirm
+          ./uds zarf package sign build/zarf-package-core-arm64-${VERSION}.tar.zst --keyless --confirm
           ./uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
           ./uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
 
@@ -87,5 +89,7 @@ tasks:
         with:
           layer: ${LAYER}
       - task: utils:determine-repo
-      - description: "Publish build of layer"
-        cmd: ./uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
+      - description: "Sign and publish build of layer"
+        cmd: |
+          ./uds zarf package sign build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst --keyless --confirm
+          ./uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
