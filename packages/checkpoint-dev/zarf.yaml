@@ -56,6 +56,8 @@ components:
                 local cleanup_status=0
                 set +e
 
+                ./zarf tools kubectl --context k3d-uds taint node k3d-uds-server-0 node.cloudprovider.kubernetes.io/uninitialized- || cleanup_status=$?
+
                 ./zarf tools kubectl --context k3d-uds -n istio-system patch daemonset ztunnel --type=json -p='[{"op":"remove","path":"/spec/template/spec/nodeSelector/no-such-label"}]' || true
                 ./zarf tools kubectl --context k3d-uds -n istio-system rollout status daemonset ztunnel --timeout=60s || cleanup_status=$?
 
