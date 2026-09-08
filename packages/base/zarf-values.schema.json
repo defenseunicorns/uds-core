@@ -34,6 +34,31 @@
                         "labels": {
                           "properties": {},
                           "type": "object"
+                        },
+                        "securityContext": {
+                          "properties": {
+                            "fsGroup": {
+                              "type": "number"
+                            },
+                            "runAsGroup": {
+                              "type": "number"
+                            },
+                            "runAsNonRoot": {
+                              "type": "boolean"
+                            },
+                            "runAsUser": {
+                              "type": "number"
+                            },
+                            "seccompProfile": {
+                              "properties": {
+                                "type": {
+                                  "type": "string"
+                                }
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -155,6 +180,56 @@
                     "imagePullSecrets": {
                       "type": "array"
                     },
+                    "livenessProbe": {
+                      "properties": {
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "readinessProbe": {
+                      "properties": {
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
                     "resources": {
                       "properties": {
                         "limits": {
@@ -177,6 +252,42 @@
                           "type": "object"
                         }
                       },
+                      "type": "object"
+                    },
+                    "startupProbe": {
+                      "properties": {
+                        "failureThreshold": {
+                          "type": "number"
+                        },
+                        "httpGet": {
+                          "properties": {
+                            "path": {
+                              "type": "string"
+                            },
+                            "port": {
+                              "type": "number"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "periodSeconds": {
+                          "type": "number"
+                        },
+                        "successThreshold": {
+                          "type": "number"
+                        },
+                        "timeoutSeconds": {
+                          "type": "number"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "strategy": {
+                      "properties": {},
+                      "type": "object"
+                    },
+                    "wasmCacheVolume": {
+                      "properties": {},
                       "type": "object"
                     }
                   },
@@ -211,6 +322,31 @@
                     },
                     "nodeSelector": {
                       "properties": {},
+                      "type": "object"
+                    },
+                    "securityContext": {
+                      "properties": {
+                        "fsGroup": {
+                          "type": "number"
+                        },
+                        "runAsGroup": {
+                          "type": "number"
+                        },
+                        "runAsNonRoot": {
+                          "type": "boolean"
+                        },
+                        "runAsUser": {
+                          "type": "number"
+                        },
+                        "seccompProfile": {
+                          "properties": {
+                            "type": {
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
                       "type": "object"
                     },
                     "tolerations": {
