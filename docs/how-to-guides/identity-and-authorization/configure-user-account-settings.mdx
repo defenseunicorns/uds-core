@@ -46,7 +46,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        keylessVerification:
-         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
@@ -92,7 +92,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        keylessVerification:
-         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
@@ -118,7 +118,7 @@ All settings in this guide are applied via `realmInitEnv` in a bundle override. 
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        keylessVerification:
-         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:

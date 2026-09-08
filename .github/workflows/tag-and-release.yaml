@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: Release UDS Core
@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.tag.outputs.release_created }}
+      tag_name: ${{ steps.tag.outputs.tag_name }}
       major: ${{ steps.tag.outputs.major }}
       minor: ${{ steps.tag.outputs.minor }}
     steps:
@@ -32,31 +33,22 @@ jobs:
           target-branch: ${{ github.ref_name }}
           config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
 
-  publish-uds-core-release:
+  dispatch-release-publish:
     needs: tag-new-version
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
     permissions:
-      contents: write
-      packages: write
-      id-token: write
-    uses: ./.github/workflows/publish.yaml
-    with:
-      snapshot: false
-    secrets: inherit
+      actions: write
+      contents: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Dispatch release publish workflow
+        run: gh workflow run publish-release.yaml --ref "${{ needs.tag-new-version.outputs.tag_name }}"
   # @lulaEnd d364a8e6-95ab-448c-bb97-9f456c85b54f
 
-  checkpoint-uds-core-release:
-    needs: publish-uds-core-release
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      pull-requests: write
-    uses: ./.github/workflows/checkpoint.yaml
-    secrets: inherit
-
   cut-release-branch:
-    needs: [publish-uds-core-release, tag-new-version]
+    needs: [dispatch-release-publish, tag-new-version]
     if: ${{ needs.tag-new-version.outputs.release_created == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:

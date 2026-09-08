@@ -23,7 +23,7 @@ How-to guides live under `docs/how-to-guides/<section>/` and are grouped by doma
 
 ## Template
 
-```mdx
+````mdx
 ---
 title: Topic Name
 description: One or two sentences describing what this page covers or what the reader will accomplish. Used in llms.txt, search, and SEO; required on every page.
@@ -64,6 +64,9 @@ Brief context about default behavior, architecture, or how the component works t
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          component-name:
            chart-name:
@@ -75,15 +78,16 @@ Brief context about default behavior, architecture, or how the component works t
                  path: config.secret.path
                  sensitive: true
    ```
+````
 
-   ```yaml title="uds-config.yaml"
-   variables:
-     core:
-       VARIABLE_NAME: "your-value"
-   ```
+```yaml title="uds-config.yaml"
+variables:
+  core:
+    VARIABLE_NAME: "your-value"
+```
 
-   > [!TIP]
-   > Guidance about this step.
+> [!TIP]
+> Guidance about this step.
 
 2. **Second major step**
 
@@ -91,21 +95,23 @@ Brief context about default behavior, architecture, or how the component works t
 
    Use tables for component defaults when helpful:
 
-   | Setting | Default | Override Path |
-   |---|---|---|
-   | Setting name | Default value | `helm.path` |
+   | Setting      | Default       | Override Path |
+   | ------------ | ------------- | ------------- |
+   | Setting name | Default value | `helm.path`   |
 
 3. **Deploy your application**
 
    <!-- Use ONE of the patterns below depending on the guide type -->
 
    <!-- Pattern A: Guide only modifies Core via bundle overrides -->
+
    ```bash
    uds create <path-to-bundle-dir>
    uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
    <!-- Pattern B: Guide creates application resources (Package CRs, ConfigMaps, PrometheusRules, etc.) -->
+
    **(Recommended)** Include the [resource] in your Zarf package and create/deploy. See [Packaging applications](/how-to-guides/packaging-applications/overview/) for general packaging guidance.
 
    ```bash
@@ -144,7 +150,8 @@ uds zarf tools kubectl get pods -n namespace
 - [Internal Doc: Topic](/path/to/page/) - brief description
 - [Related Guide](/how-to-guides/section/page/) - Why this is a related guide.
 - [Related Concepts](/concepts/core-features/topic/) - Background on how this works in UDS Core.
-```
+
+````
 
 ## Conventions
 
@@ -168,6 +175,7 @@ uds zarf tools kubectl get pods -n namespace
 - Callouts: `> [!TIP]` for guidance, `> [!NOTE]` for caveats, `> [!IMPORTANT]` for things users should know, `> [!WARNING]` for potential issues, `> [!CAUTION]` for data loss or breaking changes only
 - Code blocks use titles: `` ```yaml title="uds-bundle.yaml" ``
 - No `oci://` prefix on `repository` field values in `uds-bundle.yaml` (Zarf CLI commands like `zarf package publish` do require the `oci://` prefix)
+- When a bundle references published UDS Core packages from `registry.defenseunicorns.com`, include the UDS Core `keylessVerification` block so bundle creation validates package signatures.
 - Use `values` for static config, `variables` for secrets/environment-specific
 - Add `sensitive: true` to password and secret variables
 - For guides that only modify Core via bundle overrides: the final step should be "Create and deploy your bundle" with explicit `uds create` and `uds deploy` commands (omit for usage-only guides that don't modify configuration, e.g., querying logs)
@@ -188,7 +196,8 @@ uds zarf tools kubectl get pods -n namespace
      ```bash
      uds zarf tools kubectl apply -f manifest.yaml
      ```
-  ```
+````
+
 - How-to guides use a single `## Related documentation` section with a flat bullet list. No `## Next steps` section. All links (reference docs, external resources, follow-up guides, related concepts) go in this one section as bullets.
 - Overview/landing pages (e.g., `overview.mdx` files that introduce a section) may use `<CardGrid>` and `<LinkCard>` for visual navigation. The bullets-only convention applies to how-to guide body content only.
 - For optional steps, put `(Optional)` at the beginning of the step heading: `**(Optional) Step name**`

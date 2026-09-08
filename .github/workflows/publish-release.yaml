@@ -1,0 +1,48 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Publish UDS Core Release
+
+# This workflow is dispatched by tag-and-release.yaml after release-please creates a release tag.
+# It must run on the release tag so keyless package signatures have tag-based provenance.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: publish-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-release-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Require semver release tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" != "tag" || ! "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "publish-release.yaml must be dispatched against a semver release tag, got ${GITHUB_REF}" >&2
+            exit 1
+          fi
+
+  publish-uds-core-release:
+    needs: validate-release-tag
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/publish.yaml
+    with:
+      snapshot: false
+    secrets: inherit
+
+  checkpoint-uds-core-release:
+    needs: publish-uds-core-release
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: write
+    uses: ./.github/workflows/checkpoint.yaml
+    secrets: inherit

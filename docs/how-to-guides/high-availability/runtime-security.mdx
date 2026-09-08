@@ -39,7 +39,7 @@ Falcosidekick (the component that fans out alerts to your configured destination
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        keylessVerification:
-         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          falco:
@@ -74,7 +74,7 @@ Falcosidekick (the component that fans out alerts to your configured destination
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
        keylessVerification:
-         certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/(main|release/\d+\.\d+)
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          falco:
