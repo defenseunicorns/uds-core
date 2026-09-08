@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 {{- $lokiBucketConfigured := or .vars.loki_chunks_bucket .vars.loki_ruler_bucket .vars.loki_admin_bucket }}
-{{- $lokiS3Configured := or .vars.loki_s3_endpoint .vars.loki_s3_region }}
+{{- $lokiS3Configured := or .vars.loki_s3_endpoint .vars.loki_s3_region .vars.loki_s3_access_key_id .vars.loki_s3_secret_access_key }}
 
 loki:
   loki:

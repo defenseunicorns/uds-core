@@ -20,6 +20,7 @@ metadata {
 package "uds_k3d_dev" {
   source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.20.2-airgap"
   signature_verification { verify = false }
+  values_files = ["values/uds-k3d-dev.yaml"]
 }
 
 package "init" {

@@ -84,11 +84,11 @@ jobs:
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
           ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }} --with create_options=--skip-sbom
+          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }}
 
           if [ "${{ matrix.flavor }}" = "upstream" ]; then
             ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }} --with create_options=--skip-sbom
+            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }}
             ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
           fi
 
