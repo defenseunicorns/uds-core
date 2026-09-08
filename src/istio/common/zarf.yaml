@@ -149,6 +149,17 @@ components:
                 namespace: pepr-system
                 condition: '{.metadata.annotations.ambient\.istio\.io/redirection}=enabled'
 
+          # Ambient enrollment rewrites networking for the existing Pepr Pods. Roll them
+          # after enrollment so kube-apiserver connects to Pods born into the final data path.
+          - description: "Restart Pepr admission after Ambient enrollment"
+            maxTotalSeconds: 180
+            cmd: |
+              previous_pods="$(./zarf tools kubectl get pods -n pepr-system -l 'app=pepr-uds-core,pepr.dev/controller=admission' --field-selector='status.phase!=Succeeded,status.phase!=Failed' -o name)"
+              ./zarf tools kubectl rollout restart deployment/pepr-uds-core -n pepr-system
+              ./zarf tools kubectl rollout status deployment/pepr-uds-core -n pepr-system --timeout=90s
+              # Wait for the pre-rollout Pods to disappear so their connections are closed before the admission probe.
+              ./zarf tools kubectl wait --for=delete --timeout=60s -n pepr-system $previous_pods
+
           - description: "Verify Pepr admission readiness"
             maxTotalSeconds: 30
             maxRetries: 10
