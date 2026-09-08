@@ -23,4 +23,9 @@ variables = {
   keycloak_waypoint_hpa_enabled    = "false"
   keycloak_waypoint_cpu_request    = "100m"
   keycloak_waypoint_memory_request = "64Mi"
+
+  minio_buckets  = []
+  minio_svcaccts = []
+  minio_users    = []
+  minio_policies = []
 }
