@@ -24,7 +24,6 @@ on:
       - "release/**"
     paths:
       - ".release-please-manifest.json"
-      - ".github/kubernetes-test-matrix.yaml"
       - ".github/workflows/test-kubernetes-matrix.yaml"
       - ".github/workflows/test.yaml"
       - "tasks/setup.yaml"
@@ -58,14 +57,19 @@ jobs:
       - name: Parse and verify matrix
         id: matrix
         env:
+          # Supported Kubernetes minors: https://kubernetes.io/releases/
+          # Initial set only: these are the only versions backed by required uds-k3d custom images.
+          # renovate: datasource=github-releases depName=k3s-io/k3s versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\+k3s(?<build>\d+)$
+          K3S_VERSION_1: "v1.34.4+k3s1"
+          # renovate: datasource=github-releases depName=k3s-io/k3s versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\+k3s(?<build>\d+)$
+          K3S_VERSION_2: "v1.35.8+k3s1"
           K3S_VERSIONS_INPUT: ${{ inputs.k3s_versions }}
           FLAVORS_INPUT: ${{ inputs.flavors }}
         shell: bash
         run: |
           set -euo pipefail
-          matrix_file=.github/kubernetes-test-matrix.yaml
-          k3s_versions=$(uds zarf tools yq -o=json '[.kubernetesVersions[].version]' "$matrix_file")
-          flavors=$(uds zarf tools yq -o=json '.flavors' "$matrix_file")
+          k3s_versions=$(printf '["%s","%s"]' "$K3S_VERSION_1" "$K3S_VERSION_2")
+          flavors='["upstream","registry1","unicorn"]'
 
           parse_input() {
             local input=$1

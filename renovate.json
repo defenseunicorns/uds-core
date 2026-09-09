@@ -184,7 +184,7 @@
     },
     {
       "matchFileNames": [
-        ".github/kubernetes-test-matrix.yaml"
+        ".github/workflows/test-kubernetes-matrix.yaml"
       ],
       "matchDepNames": [
         "k3s-io/k3s"
