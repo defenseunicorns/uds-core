@@ -20,10 +20,10 @@ jobs:
   # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
   release-please:
     runs-on: ubuntu-latest
-    environment: release-automation
+    environment: uds-release
     steps:
       # The GitHub App token is used only for release/tag creation. Store the
-      # App credentials as secrets in the release-automation environment, with
+      # App credentials as secrets in the uds-release environment, with
       # that environment restricted to protected release branches. Tags created
       # with GITHUB_TOKEN do not trigger follow-on tag workflows, so the App
       # token is required for the release.yaml workflow to run from refs/tags/*.
@@ -31,8 +31,8 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ secrets.UDS_RELEASE_APP_ID }}
-          private-key: ${{ secrets.UDS_RELEASE_APP_PRIVATE_KEY }}
+          app-id: ${{ vars.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       # Phase 1: create the GitHub Release and semver tag with the GitHub App.
       # skip-github-pull-request keeps this step from creating or updating the
