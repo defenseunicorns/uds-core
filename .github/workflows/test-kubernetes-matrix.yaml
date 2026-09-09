@@ -108,8 +108,14 @@ jobs:
           for flavor in $(printf '%s' "$flavors" | uds zarf tools yq -r '.[]'); do
             [[ "$flavor" == upstream || "$flavor" == registry1 || "$flavor" == unicorn ]] || { echo "ERROR: Invalid flavor $flavor"; exit 1; }
           done
-          echo "k3s_versions=$k3s_versions" >> "$GITHUB_OUTPUT"
-          echo "flavors=$flavors" >> "$GITHUB_OUTPUT"
+          {
+            echo "k3s_versions<<EOF"
+            echo "$k3s_versions"
+            echo "EOF"
+            echo "flavors<<EOF"
+            echo "$flavors"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
   test:
     name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
