@@ -183,6 +183,17 @@
       "allowedVersions": "<10"
     },
     {
+      "matchFileNames": [
+        ".github/kubernetes-test-matrix.yaml"
+      ],
+      "matchDepNames": [
+        "k3s-io/k3s"
+      ],
+      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+\\+k3s\\d+$/",
+      "groupName": "k3s test matrix",
+      "commitMessageTopic": "k3s test matrix"
+    },
+    {
       "matchPackageNames": [
         "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],

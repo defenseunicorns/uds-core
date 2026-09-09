@@ -3,18 +3,53 @@
 
 tasks:
   - name: create-k3d-cluster
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for connected uds-k3d deployments"
     actions:
       - description: "Create the K3d cluster"
         # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
-        cmd: "./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2-airgap --confirm"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          K3S_VERSION="${{ .inputs.k3s_version }}"
+          if [ -z "$K3S_VERSION" ]; then
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2-airgap --confirm
+            exit 0
+          fi
+          K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
+          ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2 --set K3D_IMAGE="$K3D_IMAGE" --confirm
 
   - name: k3d-test-cluster
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for connected uds-k3d deployments"
     actions:
       - task: create-k3d-cluster
+        with:
+          k3s_version: "${{ .inputs.k3s_version }}"
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
         cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.84.0 --confirm"
+
+      - description: "Verify requested K3s server version"
+        if: ${{ ne .inputs.k3s_version "" }}
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          EXPECTED="${{ .inputs.k3s_version }}"
+          ACTUAL=$(./uds zarf tools kubectl version -o json | ./uds zarf tools yq -r '.serverVersion.gitVersion')
+          test "$ACTUAL" = "$EXPECTED" || {
+            echo "ERROR: Expected K3s $EXPECTED, got $ACTUAL"
+            exit 1
+          }
 
   - name: ha-postgres
     actions:

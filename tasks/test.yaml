@@ -180,11 +180,17 @@ tasks:
 
   - name: uds-core-values-e2e
     description: "Build and test UDS Core deployed via Zarf values (equivalency to bundle deploy)"
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for the test cluster"
     actions:
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: setup:k3d-test-cluster
+        with:
+          k3s_version: "${{ .inputs.k3s_version }}"
       - description: "Deploy UDS Core standard package via Zarf values"
         shell:
           darwin: bash

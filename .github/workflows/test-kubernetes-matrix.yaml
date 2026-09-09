@@ -1,0 +1,153 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Kubernetes Compatibility
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      k3s_versions:
+        description: "Comma-separated exact stable K3s versions; blank uses the matrix file"
+        required: false
+        type: string
+      flavors:
+        description: "Comma-separated flavors; blank uses the matrix file"
+        required: false
+        type: string
+  pull_request:
+    # milestoned supports release-please pull requests, which do not trigger normal PR workflows.
+    types: [milestoned, opened, reopened, synchronize]
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - ".release-please-manifest.json"
+      - ".github/kubernetes-test-matrix.yaml"
+      - ".github/workflows/test-kubernetes-matrix.yaml"
+      - ".github/workflows/test.yaml"
+      - "tasks/setup.yaml"
+      - "tasks/test.yaml"
+
+concurrency:
+  group: test-kubernetes-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+jobs:
+  prepare:
+    name: Prepare matrix
+    runs-on: ubuntu-latest
+    outputs:
+      k3s_versions: ${{ steps.matrix.outputs.k3s_versions }}
+      flavors: ${{ steps.matrix.outputs.flavors }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse and verify matrix
+        id: matrix
+        env:
+          K3S_VERSIONS_INPUT: ${{ inputs.k3s_versions }}
+          FLAVORS_INPUT: ${{ inputs.flavors }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          matrix_file=.github/kubernetes-test-matrix.yaml
+          k3s_versions=$(./uds zarf tools yq -o=json '[.kubernetesVersions[].version]' "$matrix_file")
+          flavors=$(./uds zarf tools yq -o=json '.flavors' "$matrix_file")
+
+          parse_input() {
+            local input=$1
+            local type=$2
+            local value trimmed result="[" separator=""
+            local -a values
+            local -A seen
+            IFS=',' read -r -a values <<< "$input"
+            for value in "${values[@]}"; do
+              trimmed=$(printf '%s' "$value" | xargs)
+              [ -n "$trimmed" ] || { echo "ERROR: $type input contains an empty value"; exit 1; }
+              [ -z "${seen[$trimmed]+x}" ] || { echo "ERROR: $type input contains duplicate value $trimmed"; exit 1; }
+              seen[$trimmed]=1
+              case "$type" in
+                K3s) [[ "$trimmed" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$ ]] || { echo "ERROR: Invalid K3s version $trimmed"; exit 1; } ;;
+                flavor) [[ "$trimmed" == upstream || "$trimmed" == registry1 || "$trimmed" == unicorn ]] || { echo "ERROR: Invalid flavor $trimmed"; exit 1; } ;;
+              esac
+              result+="$separator\"$trimmed\""
+              separator=,
+            done
+            printf '%s]\n' "$result"
+          }
+
+          if [ -n "$K3S_VERSIONS_INPUT" ]; then
+            k3s_versions=$(parse_input "$K3S_VERSIONS_INPUT" K3s)
+          fi
+          if [ -n "$FLAVORS_INPUT" ]; then
+            flavors=$(parse_input "$FLAVORS_INPUT" flavor)
+          fi
+
+          for version in $(printf '%s' "$k3s_versions" | ./uds zarf tools yq -r '.[]'); do
+            [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$ ]] || { echo "ERROR: Invalid K3s version $version"; exit 1; }
+            image="ghcr.io/defenseunicorns/uds-k3d/k3s:${version/+k3s/-k3s}"
+            manifest=$(docker buildx imagetools inspect "$image" --raw)
+            printf '%s' "$manifest" | jq -e '[.manifests[]?.platform | select(.os == "linux" and (.architecture == "amd64" or .architecture == "arm64")) | .architecture] | unique == ["amd64", "arm64"]' > /dev/null || {
+              echo "ERROR: $image must provide linux/amd64 and linux/arm64 manifests"
+              exit 1
+            }
+          done
+          for flavor in $(printf '%s' "$flavors" | ./uds zarf tools yq -r '.[]'); do
+            [[ "$flavor" == upstream || "$flavor" == registry1 || "$flavor" == unicorn ]] || { echo "ERROR: Invalid flavor $flavor"; exit 1; }
+          done
+          echo "k3s_versions=$k3s_versions" >> "$GITHUB_OUTPUT"
+          echo "flavors=$flavors" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        k3s_version: ${{ fromJSON(needs.prepare.outputs.k3s_versions) }}
+        flavor: ${{ fromJSON(needs.prepare.outputs.flavors) }}
+    uses: ./.github/workflows/test.yaml
+    with:
+      package: all
+      flavor: ${{ matrix.flavor }}
+      test_type: values
+      k3s_version: ${{ matrix.k3s_version }}
+    secrets: inherit
+
+  aggregate:
+    name: Kubernetes compatibility complete
+    if: ${{ always() }}
+    needs: [prepare, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify matrix results
+        env:
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        shell: bash
+        run: |
+          test "$PREPARE_RESULT" = success && test "$TEST_RESULT" = success
+
+      - name: Checkout repository
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Send Slack notification
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
