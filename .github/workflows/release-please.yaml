@@ -5,9 +5,10 @@ name: Release Please
 
 # Permissions for the GITHUB_TOKEN used by the workflow.
 permissions:
-  contents: read # Allows reading the content of the repository.
+  contents: write # Allows release-please to update release PR branches.
+  issues: write # Allows release-please to update release PR labels and metadata.
   packages: read # Allows reading the content of the repository's packages.
-  id-token: write
+  pull-requests: write # Allows release-please to create and update release PRs.
 
 on:
   push:
@@ -18,9 +19,11 @@ on:
 jobs:
   # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
   release-please:
-    permissions: write-all
     runs-on: ubuntu-latest
     steps:
+      # The GitHub App token is used only for release/tag creation. Tags created
+      # with GITHUB_TOKEN do not trigger follow-on tag workflows, so the App
+      # token is required for the release.yaml workflow to run from refs/tags/*.
       - name: Create GitHub App token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -28,11 +31,25 @@ jobs:
           app-id: ${{ secrets.UDS_RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.UDS_RELEASE_PLEASE_APP_PRIVATE_KEY }}
 
-      - name: Run release-please
-        id: tag
+      # Phase 1: create the GitHub Release and semver tag with the GitHub App.
+      # skip-github-pull-request keeps this step from creating or updating the
+      # release PR with the App identity, which would automatically trigger PR CI.
+      - name: Create GitHub release and tag
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ steps.app-token.outputs.token }}
           target-branch: ${{ github.ref_name }}
           config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
+          skip-github-pull-request: true
+
+      # Phase 2: create or update the release PR with GITHUB_TOKEN. Keeping PR
+      # creation on GITHUB_TOKEN preserves the existing behavior where release
+      # PR checks are manually triggered through the milestone workflow pattern.
+      - name: Create or update release PR
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: ${{ github.ref_name }}
+          config-file: ${{ startsWith(github.ref, 'refs/heads/release/') && 'release-please-config.patch.json' || 'release-please-config.json' }}
+          skip-github-release: true
   # @lulaEnd d364a8e6-95ab-448c-bb97-9f456c85b54f

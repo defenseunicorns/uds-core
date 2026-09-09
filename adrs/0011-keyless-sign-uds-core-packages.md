@@ -14,7 +14,7 @@ Zarf supports native keyless package signing and verification commands backed by
 
 UDS Core currently creates release tags with `release-please` from a branch-triggered workflow. If UDS Core signs packages in that same branch-triggered workflow, the signing certificate identity is tied to a mutable branch ref such as `refs/heads/main` or `refs/heads/release/1.12`. Formal release packages should instead carry tag-based provenance such as `refs/tags/v1.12.0`.
 
-GitHub Actions does not start most follow-on workflows from events created with `GITHUB_TOKEN`. A tag-push workflow triggered by a `release-please` tag created with `GITHUB_TOKEN` would not run. Zarf avoids this by using a GitHub App token for its `release-please` workflow, which lets the release tag push trigger the tag-based publishing workflow. GitHub repository rulesets can restrict release tag creation, but the built-in `GITHUB_TOKEN` is not an appropriate bypass identity for protected semver release tags. A GitHub App gives release automation an explicit identity that can be granted tag ruleset bypass permissions.
+GitHub Actions does not start most follow-on workflows from events created with `GITHUB_TOKEN`. A tag-push workflow triggered by a `release-please` tag created with `GITHUB_TOKEN` would not run. Zarf avoids this by using a GitHub App token for the release/tag phase of its `release-please` workflow, which lets the release tag push trigger the tag-based publishing workflow. UDS Core will use the same pattern, while keeping release PR creation on `GITHUB_TOKEN` so release PR validation continues to use the existing milestone/manual trigger process. GitHub repository rulesets can restrict release tag creation, but the built-in `GITHUB_TOKEN` is not an appropriate bypass identity for protected semver release tags. A GitHub App gives release automation an explicit identity that can be granted tag ruleset bypass permissions.
 
 ## Decision
 
@@ -22,9 +22,9 @@ UDS Core will use Zarf's native keyless signing and verification capabilities fo
 
 Formal release publishing will use tag-based provenance and align with the Zarf release model:
 
-1. `release-please.yaml` runs `release-please` on `main` and `release/**` branches with a token from the `uds-release-please` GitHub App.
-2. The `uds-release-please` GitHub App must be installed on this repository with enough permissions to create release pull requests, release tags, and GitHub releases. Repository rulesets must protect semver release tags matching `v<major>.<minor>.<patch>` and allow this GitHub App to create those tags.
-3. A semver release tag push triggers `release.yaml`, which calls the reusable `publish.yaml` workflow with `snapshot: false`. The workflow uses per-tag concurrency so only one publish run can proceed for a release tag.
+1. `release-please.yaml` runs `release-please` on `main` and `release/**` branches in two phases: a release/tag phase that uses a token from the `uds-release-please` GitHub App, and a release PR phase that uses `GITHUB_TOKEN`.
+2. The `uds-release-please` GitHub App must be installed on this repository with enough permissions to create release tags and GitHub releases. Repository rulesets must protect semver release tags matching `v<major>.<minor>.<patch>` and allow this GitHub App to create those tags.
+3. A semver release tag push from the GitHub App triggers `release.yaml`, which calls the reusable `publish.yaml` workflow with `snapshot: false`. The workflow uses per-tag concurrency so only one publish run can proceed for a release tag.
 4. `tasks/publish.yaml` signs and verifies each standard and functional-layer Zarf package immediately before publishing it. Signing does not use `--overwrite`; a package that already contains a signature fails rather than silently replacing provenance.
 
 Release package verification will use this certificate identity regex:
