@@ -25,11 +25,30 @@ tasks:
     description: "Publish the UDS package"
     actions:
       - task: utils:determine-repo
-      - description: "Publish amd64/arm64 packages per flavor"
+      - description: "Sign, verify, and publish amd64/arm64 packages per flavor"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
-          ./uds zarf package publish build/zarf-package-core-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}
-          ./uds zarf package publish build/zarf-package-core-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}
+          if [ "${SNAPSHOT}" = "true" ]; then
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
+          else
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+          fi
+
+          packages=(
+            build/zarf-package-core-amd64-${VERSION}.tar.zst
+            build/zarf-package-core-arm64-${VERSION}.tar.zst
+          )
+
+          for package in "${packages[@]}"; do
+            ./uds zarf package sign "${package}" --keyless --confirm
+            ./uds zarf package verify "${package}" \
+              --certificate-identity-regexp "${signing_identity_regex}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+            ./uds zarf package publish "${package}" oci://${TARGET_REPO}
+          done
 
       - description: "Tag the latest package (if a snapshot release)"
         cmd: |
@@ -87,5 +106,20 @@ tasks:
         with:
           layer: ${LAYER}
       - task: utils:determine-repo
-      - description: "Publish build of layer"
-        cmd: ./uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}
+      - description: "Sign, verify, and publish build of layer"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          if [ "${SNAPSHOT}" = "true" ]; then
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
+          else
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+          fi
+
+          package="build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst"
+          ./uds zarf package sign "${package}" --keyless --confirm
+          ./uds zarf package verify "${package}" \
+            --certificate-identity-regexp "${signing_identity_regex}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+          ./uds zarf package publish "${package}" oci://${TARGET_REPO}

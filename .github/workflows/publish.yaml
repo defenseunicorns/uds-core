@@ -10,11 +10,11 @@ permissions:
   id-token: write
 
 on:
-  # triggered by tag-and-release.yaml and snapshot-release.yaml
+  # triggered by release.yaml and snapshot-release.yaml
   workflow_call:
     inputs:
       snapshot:
-        description: 'true - for snapshot release'
+        description: "true - for snapshot release"
         required: true
         type: boolean
 
@@ -30,7 +30,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write  # This is needed for OIDC federation.
+      id-token: write # This is needed for OIDC federation.
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -42,7 +42,7 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: 'true'
+          installK3d: "true"
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -103,7 +103,18 @@ jobs:
       fail-fast: false
       matrix:
         flavor: [upstream, registry1, unicorn]
-        layer: [crds, base, identity-authorization, runtime-security, backup-restore, logging, metrics-server, monitoring, portal]
+        layer:
+          [
+            crds,
+            base,
+            identity-authorization,
+            runtime-security,
+            backup-restore,
+            logging,
+            metrics-server,
+            monitoring,
+            portal,
+          ]
         arch: [amd64, arm64]
         exclude:
           - flavor: registry1
@@ -114,7 +125,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write  # This is needed for OIDC federation.
+      id-token: write # This is needed for OIDC federation.
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -126,7 +137,7 @@ jobs:
           registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: 'true'
+          installK3d: "true"
 
       - name: Test and Publish Core Package Layer
         run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress

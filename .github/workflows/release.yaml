@@ -1,0 +1,58 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Release UDS Core
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish-uds-core-release:
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    uses: ./.github/workflows/publish.yaml
+    with:
+      snapshot: false
+    secrets: inherit
+
+  checkpoint-uds-core-release:
+    needs: publish-uds-core-release
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: write
+    uses: ./.github/workflows/checkpoint.yaml
+    secrets: inherit
+
+  cut-release-branch:
+    needs: checkpoint-uds-core-release
+    if: ${{ endsWith(github.ref_name, '.0') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Create release/X.Y from vX.Y.0
+        shell: bash
+        run: |
+          if [[ ! "${GITHUB_REF_NAME}" =~ ^v([0-9]+)\.([0-9]+)\.0$ ]]; then
+            echo "${GITHUB_REF_NAME} is not a minor release tag; skipping release branch creation."
+            exit 0
+          fi
+
+          BRANCH="release/${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+          TAG="${GITHUB_REF_NAME}"
+          git fetch origin --tags
+          git switch -C "${BRANCH}" "${TAG}"
+          git push origin "${BRANCH}"
