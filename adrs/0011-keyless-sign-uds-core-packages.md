@@ -8,27 +8,24 @@ Accepted
 
 ## Context
 
-UDS Core publishes Zarf packages for the full platform and for functional layers. Consumers need a way to verify that a package came from the UDS Core release process before deploying it, including in the airgap.
+UDS Core publishes Zarf packages for standard package and for functional layers. Consumers need a way to verify that a package came from the UDS Core release process before deploying it, including in the airgap.
 
-Zarf supports Sigstore keyless signing with GitHub Actions OpenID Connect (OIDC). This avoids long-lived signing keys and lets consumers verify packages by checking the signing certificate identity and OIDC issuer. Zarf init packages already use this pattern, with verification tied to the Zarf release workflow at a tag ref.
+Zarf supports native keyless package signing and verification commands backed by GitHub Actions OpenID Connect (OIDC). This avoids long-lived signing keys and lets consumers verify packages by checking the signing certificate identity and OIDC issuer. Zarf init packages already use this pattern. Zarf publishes from a tag-triggered release workflow and signs init packages from that tag ref, so consumers can verify immutable release provenance.
 
 UDS Core currently creates release tags with `release-please` from a branch-triggered workflow. If UDS Core signs packages in that same branch-triggered workflow, the signing certificate identity is tied to a mutable branch ref such as `refs/heads/main` or `refs/heads/release/1.12`. Formal release packages should instead carry tag-based provenance such as `refs/tags/v1.12.0`.
 
-GitHub Actions does not start most follow-on workflows from events created with `GITHUB_TOKEN`. A tag-push workflow triggered by a `release-please` tag created with `GITHUB_TOKEN` would not run. GitHub explicitly allows `workflow_dispatch` and `repository_dispatch` events created with `GITHUB_TOKEN`, and `workflow_dispatch` supports running a workflow at a branch or tag ref.
+GitHub Actions does not start most follow-on workflows from events created with `GITHUB_TOKEN`. A tag-push workflow triggered by a `release-please` tag created with `GITHUB_TOKEN` would not run. Zarf avoids this by using a GitHub App token for its `release-please` workflow, which lets the release tag push trigger the tag-based publishing workflow. GitHub repository rulesets can restrict release tag creation, but the built-in `GITHUB_TOKEN` is not an appropriate bypass identity for protected semver release tags. A GitHub App gives release automation an explicit identity that can be granted tag ruleset bypass permissions.
 
 ## Decision
 
-UDS Core will keyless-sign release and snapshot Zarf packages with Sigstore through GitHub Actions OIDC.
+UDS Core will use Zarf's native keyless signing and verification capabilities for release and snapshot Zarf packages.
 
-Formal release publishing will use tag-based provenance:
+Formal release publishing will use tag-based provenance and align with the Zarf release model:
 
-1. `tag-and-release.yaml` remains responsible for running `release-please` on `main` and `release/**` branches.
-2. When `release-please` creates a release, `tag-and-release.yaml` dispatches `publish-release.yaml` at the created release tag with `gh workflow run publish-release.yaml --ref <tag>`.
-3. `publish-release.yaml` rejects any ref that is not a semver release tag matching `v<major>.<minor>.<patch>`.
-4. `publish-release.yaml` allows only one publish workflow for a given release tag to run at a time.
-5. `publish-release.yaml` calls the existing reusable `publish.yaml` workflow with `snapshot: false`.
-6. `publish-release.yaml` calls the existing reusable `checkpoint.yaml` workflow after package publishing completes to preserve the existing release checkpoint behavior.
-7. `tasks/publish.yaml` signs and verifies each standard and functional-layer Zarf package immediately before publishing it. Signing does not use `--overwrite`; a package that already contains a signature fails rather than silently replacing provenance.
+1. `release-please.yaml` runs `release-please` on `main` and `release/**` branches with a token from the `uds-release-please` GitHub App.
+2. The `uds-release-please` GitHub App must be installed on this repository with enough permissions to create release pull requests, release tags, and GitHub releases. Repository rulesets must protect semver release tags matching `v<major>.<minor>.<patch>` and allow this GitHub App to create those tags.
+3. A semver release tag push triggers `release.yaml`, which calls the reusable `publish.yaml` workflow with `snapshot: false`. The workflow uses per-tag concurrency so only one publish run can proceed for a release tag.
+4. `tasks/publish.yaml` signs and verifies each standard and functional-layer Zarf package immediately before publishing it. Signing does not use `--overwrite`; a package that already contains a signature fails rather than silently replacing provenance.
 
 Release package verification will use this certificate identity regex:
 
@@ -56,19 +53,22 @@ UDS Core will not introduce a long-lived package signing key or publish a UDS Co
 
 - Formal release packages have tag-based provenance that matches the Zarf init package signing model.
 - UDS Core avoids long-lived signing keys, public key distribution, key rotation, and key custody processes.
-- Release automation can preserve tag-based provenance without introducing a GitHub App token or personal access token for `release-please`.
+- Release automation uses a dedicated GitHub App identity instead of a personal access token.
+- Protected semver release tags make the documented verification regex meaningful: only authorized release automation can create tags that match the trusted signing identity.
 - Package publishing fails before release artifacts are published if the signature does not match the expected UDS Core workflow identity.
-- Consumers can verify signed packages in the airgap using embedded Sigstore bundle metadata, certificate identity, and OIDC issuer.
+- Consumers can verify signed packages in the airgap using the package's embedded keyless signature metadata, certificate identity, and OIDC issuer.
 
 ### Negative
 
-- `tag-and-release.yaml` now orchestrates a second workflow run through `workflow_dispatch`, which makes release execution less linear than the previous direct reusable workflow call.
-- Users with permission to dispatch workflows can re-run release publishing for any existing semver release tag. This supports release recovery, but repository permissions must continue to restrict who can run release workflows. Concurrent release publishes for the same tag are blocked by workflow concurrency.
+- UDS Core must install and maintain the `uds-release-please` GitHub App and its private key secret.
+- Repository rulesets must be configured outside this repository to protect semver release tags and grant the GitHub App bypass permissions.
 - Snapshot signatures use mutable `main` branch provenance because snapshots do not have immutable release tags.
 
 ## Alternatives considered
 
 1. **Sign formal releases from branch-triggered workflows.** Rejected because branch refs are mutable and weaker than release tag provenance.
-2. **Trigger publishing from `push` tag events with a GitHub App token or personal access token.** Rejected for now because it adds credential management across the release process. This remains a viable future option if `workflow_dispatch` proves insufficient.
-3. **Add `workflow_dispatch` directly to `publish.yaml`.** Rejected because `publish.yaml` has package write and OIDC permissions. A small guarded wrapper gives a narrower manual dispatch surface and hard-codes `snapshot: false` for formal releases.
-4. **Create immutable snapshot tags.** Rejected for now because it adds tag naming, cleanup, retention, and release-management overhead for mutable snapshot artifacts.
+2. **Dispatch a tag-ref publish workflow with `GITHUB_TOKEN`.** Rejected because it avoids an extra credential but does not establish that the semver tag was created by trusted release automation.
+3. **Use a personal access token for release automation.** Rejected because a GitHub App provides a clearer automation identity, scoped permissions, and better ownership than a user-owned token.
+4. **Add `workflow_dispatch` directly to `publish.yaml`.** Rejected because `publish.yaml` has package write and OIDC permissions. A tag-triggered wrapper gives a narrower release surface and hard-codes `snapshot: false` for formal releases.
+5. **Create immutable snapshot tags.** Rejected for now because it adds tag naming, cleanup, retention, and release-management overhead for mutable snapshot artifacts.
+6. **Sign UDS bundle artifacts.** Deferred because CORE-41 covers Zarf package signing. Bundle signing requires separate UDS CLI workflow and verification decisions.
