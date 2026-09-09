@@ -20,8 +20,11 @@ jobs:
   # @lulaStart d364a8e6-95ab-448c-bb97-9f456c85b54f
   release-please:
     runs-on: ubuntu-latest
+    environment: release-automation
     steps:
-      # The GitHub App token is used only for release/tag creation. Tags created
+      # The GitHub App token is used only for release/tag creation. Store the
+      # App credentials as secrets in the release-automation environment, with
+      # that environment restricted to protected release branches. Tags created
       # with GITHUB_TOKEN do not trigger follow-on tag workflows, so the App
       # token is required for the release.yaml workflow to run from refs/tags/*.
       - name: Create GitHub App token
