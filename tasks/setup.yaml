@@ -8,21 +8,20 @@ tasks:
         default: ""
         description: "Exact K3s version for connected uds-k3d deployments"
     actions:
-      - description: "Create the default K3d cluster"
+      - description: "Create the K3d cluster"
         # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
-        if: ${{ eq .inputs.k3s_version "" }}
-        cmd: "./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2-airgap --confirm"
-
-      - description: "Create the requested K3d cluster"
-        if: ${{ ne .inputs.k3s_version "" }}
         shell:
           darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
-          K3S_VERSION="${{ .inputs.k3s_version }}"
-          K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
-          ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2 --set K3D_IMAGE="$K3D_IMAGE" --confirm
+          if [ -z "${{ .inputs.k3s_version }}" ]; then
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2-airgap --confirm
+          else
+            K3S_VERSION="${{ .inputs.k3s_version }}"
+            K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2 --set K3D_IMAGE="$K3D_IMAGE" --confirm
+          fi
 
   - name: k3d-test-cluster
     inputs:

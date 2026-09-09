@@ -3,6 +3,16 @@
 
 name: Kubernetes Compatibility
 
+env:
+  K3S_MATRIX: |-
+    {
+      "versions": [
+        "v1.34.4+k3s1",
+        "v1.35.8+k3s1"
+      ],
+      "flavors": ["upstream", "registry1", "unicorn"]
+    }
+
 on:
   schedule:
     - cron: "0 4 * * *"
@@ -49,69 +59,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Environment setup
-        uses: ./.github/actions/setup
-        with:
-          ghToken: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Parse and verify matrix
+      - name: Convert matrix inputs
         id: matrix
         env:
-          # Supported Kubernetes minors: https://kubernetes.io/releases/
-          # Initial set only: these are the only versions backed by required uds-k3d custom images.
-          # renovate: datasource=github-releases depName=k3s-io/k3s versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\+k3s(?<build>\d+)$
-          K3S_VERSION_1: "v1.34.4+k3s1"
-          # renovate: datasource=github-releases depName=k3s-io/k3s versioning=regex:^v(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)\+k3s(?<build>\d+)$
-          K3S_VERSION_2: "v1.35.8+k3s1"
+          K3S_MATRIX: ${{ env.K3S_MATRIX }}
           K3S_VERSIONS_INPUT: ${{ inputs.k3s_versions }}
           FLAVORS_INPUT: ${{ inputs.flavors }}
         shell: bash
         run: |
           set -euo pipefail
-          k3s_versions=$(printf '["%s","%s"]' "$K3S_VERSION_1" "$K3S_VERSION_2")
-          flavors='["upstream","registry1","unicorn"]'
+          k3s_versions=$(printf '%s' "$K3S_MATRIX" | jq -c '.versions')
+          flavors=$(printf '%s' "$K3S_MATRIX" | jq -c '.flavors')
 
-          parse_input() {
-            local input=$1
-            local type=$2
-            local value trimmed result="[" separator=""
-            local -a values
-            local -A seen
-            IFS=',' read -r -a values <<< "$input"
-            for value in "${values[@]}"; do
-              trimmed=$(printf '%s' "$value" | xargs)
-              [ -n "$trimmed" ] || { echo "ERROR: $type input contains an empty value"; exit 1; }
-              [ -z "${seen[$trimmed]+x}" ] || { echo "ERROR: $type input contains duplicate value $trimmed"; exit 1; }
-              seen[$trimmed]=1
-              case "$type" in
-                K3s) [[ "$trimmed" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$ ]] || { echo "ERROR: Invalid K3s version $trimmed"; exit 1; } ;;
-                flavor) [[ "$trimmed" == upstream || "$trimmed" == registry1 || "$trimmed" == unicorn ]] || { echo "ERROR: Invalid flavor $trimmed"; exit 1; } ;;
-              esac
-              result+="$separator\"$trimmed\""
-              separator=,
-            done
-            printf '%s]\n' "$result"
+          input_to_json() {
+            printf '%s' "$1" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; ""))'
           }
 
           if [ -n "$K3S_VERSIONS_INPUT" ]; then
-            k3s_versions=$(parse_input "$K3S_VERSIONS_INPUT" K3s)
+            k3s_versions=$(input_to_json "$K3S_VERSIONS_INPUT")
           fi
           if [ -n "$FLAVORS_INPUT" ]; then
-            flavors=$(parse_input "$FLAVORS_INPUT" flavor)
+            flavors=$(input_to_json "$FLAVORS_INPUT")
           fi
-
-          for version in $(printf '%s' "$k3s_versions" | uds zarf tools yq -r '.[]'); do
-            [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$ ]] || { echo "ERROR: Invalid K3s version $version"; exit 1; }
-            image="ghcr.io/defenseunicorns/uds-k3d/k3s:${version/+k3s/-k3s}"
-            manifest=$(docker buildx imagetools inspect "$image" --raw)
-            printf '%s' "$manifest" | jq -e '[.manifests[]?.platform | select(.os == "linux" and (.architecture == "amd64" or .architecture == "arm64")) | .architecture] | unique == ["amd64", "arm64"]' > /dev/null || {
-              echo "ERROR: $image must provide linux/amd64 and linux/arm64 manifests"
-              exit 1
-            }
-          done
-          for flavor in $(printf '%s' "$flavors" | uds zarf tools yq -r '.[]'); do
-            [[ "$flavor" == upstream || "$flavor" == registry1 || "$flavor" == unicorn ]] || { echo "ERROR: Invalid flavor $flavor"; exit 1; }
-          done
           {
             echo "k3s_versions<<EOF"
             echo "$k3s_versions"
@@ -135,7 +104,10 @@ jobs:
       flavor: ${{ matrix.flavor }}
       test_type: values
       k3s_version: ${{ matrix.k3s_version }}
-    secrets: inherit
+    secrets:
+      IRON_BANK_ROBOT_USERNAME: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+      IRON_BANK_ROBOT_PASSWORD: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+      CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
 
   aggregate:
     name: Kubernetes compatibility complete

@@ -185,7 +185,10 @@ jobs:
       package: ${{ matrix.package }}
       flavor: ${{ matrix.flavor }}
       test_type: ${{ matrix.test_type }}
-    secrets: inherit # Inherits all secrets from the parent workflow.
+    secrets:
+      IRON_BANK_ROBOT_USERNAME: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+      IRON_BANK_ROBOT_PASSWORD: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+      CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
   # @lulaEnd 11948466-9230-4498-be44-dbac784d86d1
 
   # Shim required checks for backport PRs to release branches (i.e., non-release-please PRs)
