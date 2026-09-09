@@ -22,8 +22,8 @@ UDS Core will use Zarf's native keyless signing and verification capabilities fo
 
 Formal release publishing will use tag-based provenance and align with the Zarf release model:
 
-1. `release-please.yaml` runs `release-please` on `main` and `release/**` branches in two phases: a release/tag phase that uses a token from the `uds-release-please` GitHub App, and a release PR phase that uses `GITHUB_TOKEN`.
-2. The `uds-release-please` GitHub App must be installed on this repository with enough permissions to create release tags and GitHub releases. Repository rulesets must protect semver release tags matching `v<major>.<minor>.<patch>` and allow this GitHub App to create those tags.
+1. `release-please.yaml` runs `release-please` on `main` and `release/**` branches in two phases: a release/tag phase that uses a token from the `uds-release` GitHub App, and a release PR phase that uses `GITHUB_TOKEN`.
+2. The `uds-release` GitHub App must be installed on this repository with enough permissions to create release tags and GitHub releases. Repository rulesets must protect semver release tags matching `v<major>.<minor>.<patch>` and allow this GitHub App to create those tags.
 3. A semver release tag push from the GitHub App triggers `release.yaml`, which calls the reusable `publish.yaml` workflow with `snapshot: false`. The workflow uses per-tag concurrency so only one publish run can proceed for a release tag.
 4. `tasks/publish.yaml` signs and verifies each standard and functional-layer Zarf package immediately before publishing it. Signing does not use `--overwrite`; a package that already contains a signature fails rather than silently replacing provenance.
 
@@ -68,7 +68,7 @@ UDS Core will not introduce a long-lived package signing key or publish a UDS Co
 
 ### Negative
 
-- UDS Core must install and maintain the `uds-release-please` GitHub App and its private key secret.
+- UDS Core must install and maintain the `uds-release` GitHub App and its private key secret.
 - Repository rulesets must be configured outside this repository to protect semver release tags and grant the GitHub App bypass permissions.
 - Snapshot signatures use mutable `main` branch provenance because snapshots do not have immutable release tags.
 
