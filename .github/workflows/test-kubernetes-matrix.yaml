@@ -64,8 +64,8 @@ jobs:
         run: |
           set -euo pipefail
           matrix_file=.github/kubernetes-test-matrix.yaml
-          k3s_versions=$(./uds zarf tools yq -o=json '[.kubernetesVersions[].version]' "$matrix_file")
-          flavors=$(./uds zarf tools yq -o=json '.flavors' "$matrix_file")
+          k3s_versions=$(uds zarf tools yq -o=json '[.kubernetesVersions[].version]' "$matrix_file")
+          flavors=$(uds zarf tools yq -o=json '.flavors' "$matrix_file")
 
           parse_input() {
             local input=$1
@@ -96,7 +96,7 @@ jobs:
             flavors=$(parse_input "$FLAVORS_INPUT" flavor)
           fi
 
-          for version in $(printf '%s' "$k3s_versions" | ./uds zarf tools yq -r '.[]'); do
+          for version in $(printf '%s' "$k3s_versions" | uds zarf tools yq -r '.[]'); do
             [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$ ]] || { echo "ERROR: Invalid K3s version $version"; exit 1; }
             image="ghcr.io/defenseunicorns/uds-k3d/k3s:${version/+k3s/-k3s}"
             manifest=$(docker buildx imagetools inspect "$image" --raw)
@@ -105,7 +105,7 @@ jobs:
               exit 1
             }
           done
-          for flavor in $(printf '%s' "$flavors" | ./uds zarf tools yq -r '.[]'); do
+          for flavor in $(printf '%s' "$flavors" | uds zarf tools yq -r '.[]'); do
             [[ "$flavor" == upstream || "$flavor" == registry1 || "$flavor" == unicorn ]] || { echo "ERROR: Invalid flavor $flavor"; exit 1; }
           done
           echo "k3s_versions=$k3s_versions" >> "$GITHUB_OUTPUT"
