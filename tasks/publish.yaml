@@ -26,6 +26,9 @@ tasks:
     actions:
       - task: utils:determine-repo
       - description: "Sign, verify, and publish amd64/arm64 packages per flavor"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
           if [ "${SNAPSHOT}" = "true" ]; then
@@ -104,6 +107,9 @@ tasks:
           layer: ${LAYER}
       - task: utils:determine-repo
       - description: "Sign, verify, and publish build of layer"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           if [ "${SNAPSHOT}" = "true" ]; then
             signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
