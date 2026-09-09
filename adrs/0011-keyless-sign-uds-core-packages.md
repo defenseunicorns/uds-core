@@ -27,22 +27,30 @@ Formal release publishing will use tag-based provenance and align with the Zarf 
 3. A semver release tag push from the GitHub App triggers `release.yaml`, which calls the reusable `publish.yaml` workflow with `snapshot: false`. The workflow uses per-tag concurrency so only one publish run can proceed for a release tag.
 4. `tasks/publish.yaml` signs and verifies each standard and functional-layer Zarf package immediately before publishing it. Signing does not use `--overwrite`; a package that already contains a signature fails rather than silently replacing provenance.
 
-Release package verification will use this certificate identity regex:
+Release package verification will use `certificateIdentityRegexp` to accept UDS Core semver release tags:
 
-```text
-^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+```yaml
+keylessVerification:
+  certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+  certificateOIDCIssuer: https://token.actions.githubusercontent.com
 ```
 
-Snapshot publishing will continue to run from the scheduled snapshot workflow on `main`. Snapshot packages will be signed and verified with this certificate identity regex:
+Consumers that want stricter verification can pin the certificate identity to an exact release tag instead of accepting any semver release tag. Exact matches should use `certificateIdentity` instead of `certificateIdentityRegexp`. For example:
 
-```text
-^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$
+```yaml
+keylessVerification:
+  certificateIdentity: https://github.com/defenseunicorns/uds-core/.github/workflows/publish.yaml@refs/tags/v1.13.0
+  certificateOIDCIssuer: https://token.actions.githubusercontent.com
 ```
 
-Both release and snapshot verification will require the GitHub Actions OIDC issuer:
+Those exact-match strings can be managed by Renovate or similar dependency automation so the package `ref` and verification identity stay in sync when updating UDS Core.
 
-```text
-https://token.actions.githubusercontent.com
+Snapshot publishing will continue to run from the scheduled snapshot workflow on `main`. Snapshot packages will be signed and verified with this identity:
+
+```yaml
+keylessVerification:
+  certificateIdentity: https://github.com/defenseunicorns/uds-core/.github/workflows/publish.yaml@refs/heads/main
+  certificateOIDCIssuer: https://token.actions.githubusercontent.com
 ```
 
 UDS Core will not introduce a long-lived package signing key or publish a UDS Core public key. UDS Core will not sign UDS bundle artifacts as part of this decision. Bundle manifests that reference published UDS Core packages should include Zarf `keylessVerification` metadata for those package entries.
