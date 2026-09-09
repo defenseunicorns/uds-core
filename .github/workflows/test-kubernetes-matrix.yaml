@@ -72,7 +72,7 @@ jobs:
           flavors=$(printf '%s' "$K3S_MATRIX" | jq -c '.flavors')
 
           input_to_json() {
-            printf '%s' "$1" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; ""))'
+            printf '%s' "$1" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))'
           }
 
           if [ -n "$K3S_VERSIONS_INPUT" ]; then
