@@ -81,9 +81,9 @@ tasks:
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
           npx kubernetes-fluent-client@3.12.3 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_gateways.yaml" "$OUT_DIR" --overrideClassName K8SGateway
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.7 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml" "$OUT_DIR"
+          npx kubernetes-fluent-client@3.12.3 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_udproutes.yaml" "$OUT_DIR"
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.11.7 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml" "$OUT_DIR" --overrideClassName K8SGatewayClass
+          npx kubernetes-fluent-client@3.12.3 crd "https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v${GATEWAY_API_VERSION}/config/crd/experimental/gateway.networking.k8s.io_gatewayclasses.yaml" "$OUT_DIR" --overrideClassName K8SGatewayClass
 
           KEEP="gateway-v1 gatewayclass-v1 udproute-v1alpha2"
           for f in "$OUT_DIR"/*.ts; do
