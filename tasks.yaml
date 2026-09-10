@@ -16,23 +16,6 @@ includes:
   - diagrams: ./tasks/diagrams.yaml
 
 tasks:
-  - name: set-test-excluded-packages
-    description: "Set flavor-specific full-core test exclusions"
-    actions:
-      - description: "Exclude Portal from registry1 full-core tests"
-        cmd: |
-          excluded="${EXCLUDED_PACKAGES}"
-          if [ "${FLAVOR}" = "registry1" ]; then
-            case ",$excluded," in
-              *,portal,*) ;;
-              *) excluded="${excluded:+$excluded,}portal" ;;
-            esac
-          fi
-          printf '%s' "$excluded"
-        mute: true
-        setVariables:
-          - name: EXCLUDED_PACKAGES
-
   - name: default
     actions:
       - description: "Build, deploy and test UDS Core"
@@ -140,51 +123,18 @@ tasks:
   - name: test-uds-core
     description: "Build and test UDS Core"
     actions:
-      - task: set-test-excluded-packages
       - task: test:uds-core
-
-  - name: test-uds-core-e2e
-    description: "Build and test UDS Core e2e"
-    actions:
-      - task: set-test-excluded-packages
-      - task: test:uds-core-e2e
-
-  - name: test-uds-core-values-e2e
-    description: "Build and test UDS Core deployed via Zarf values (equivalency to bundle deploy)"
-    inputs:
-      k3s_version:
-        default: ""
-        description: "Exact K3s version for the test cluster"
-    actions:
-      - task: set-test-excluded-packages
-      - task: test:uds-core-values-e2e
-        with:
-          k3s_version: "${{ .inputs.k3s_version }}"
 
   - name: test-uds-core-multi-node
     description: "Deploys UDS Core on a multi-node cluster (based on K3D_EXTRA_ARGS variable)"
     actions:
-      - task: set-test-excluded-packages
       - task: test:uds-core
         with:
           K3D_EXTRA_ARGS: "--servers 3 --agents 2"
 
-  - name: test-uds-core-non-k3d
-    description: "Validate and test UDS Core deployment on a non-k3d cluster"
-    inputs:
-      validate_udp_expose:
-        description: Whether to validate UDP expose routes through the default Envoy Gateway
-        default: "true"
-    actions:
-      - task: set-test-excluded-packages
-      - task: test:uds-core-non-k3d
-        with:
-          validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
-
   - name: test-uds-core-ha
     description: "Build and test UDS Core"
     actions:
-      - task: set-test-excluded-packages
       - task: setup:ha-postgres
       - task: setup:ha-redis
       - task: test:uds-core-ha
@@ -192,7 +142,6 @@ tasks:
   - name: test-uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA"
     actions:
-      - task: set-test-excluded-packages
       - task: setup:ha-postgres
       - task: setup:ha-redis
       - task: test:uds-core-ha-upgrade
@@ -200,20 +149,7 @@ tasks:
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
-      - task: set-test-excluded-packages
       - task: test:uds-core-upgrade
-
-  - name: test-uds-core-private-pki
-    description: "Create and deploy the private PKI bundle"
-    actions:
-      - task: set-test-excluded-packages
-      - task: test:uds-core-private-pki
-
-  - name: validate-packages
-    description: "Validate all UDS Core packages"
-    actions:
-      - task: set-test-excluded-packages
-      - task: test:validate-packages
 
   - name: lint-check
     description: "Run linting checks"

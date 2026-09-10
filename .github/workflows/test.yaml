@@ -82,15 +82,15 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test-uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --no-progress
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
-        run: uds run test-uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
+        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

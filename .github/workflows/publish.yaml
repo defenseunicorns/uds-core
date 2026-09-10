@@ -77,7 +77,7 @@ jobs:
         if: ${{ !inputs.snapshot }}
         run: |
           uds run deploy-standard-bundle --no-progress
-          uds run validate-packages --set FLAVOR=${{ matrix.flavor }} --no-progress
+          uds run -f tasks/test.yaml validate-packages --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
