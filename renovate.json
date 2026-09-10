@@ -14,11 +14,22 @@
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/"],
+      "managerFilePatterns": [
+        "/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/",
+        "/^tasks\\/setup\\.yaml$/"
+      ],
       "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
       "depNameTemplate": "k3s-io/k3s",
       "datasourceTemplate": "github-releases",
       "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
+      "matchStrings": ["oci:\\/\\/defenseunicorns\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"],
+      "depNameTemplate": "ghcr.io/defenseunicorns/packages/uds-k3d",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ],
   "packageRules": [
