@@ -185,10 +185,6 @@ tasks:
         default: ""
         description: "Exact K3s version for the test cluster"
     actions:
-      - description: "Exclude Portal from registry1 values tests"
-        cmd: echo "${FLAVOR}" | grep -q '^registry1$' && echo portal || true
-        setVariables:
-          - name: EXCLUDED_PACKAGES
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"

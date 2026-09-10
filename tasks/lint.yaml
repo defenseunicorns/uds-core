@@ -212,9 +212,8 @@ tasks:
           MATRIX_WORKFLOW=".github/workflows/test-kubernetes-matrix.yaml"
           FAILED=0
 
-          MATRIX_JSON=$(./uds zarf tools yq -r '.env.K3S_MATRIX' "$MATRIX_WORKFLOW")
-          MATRIX_VERSIONS=$(printf '%s' "$MATRIX_JSON" | jq -r '.versions[]')
-          MATRIX_FLAVORS=$(printf '%s' "$MATRIX_JSON" | jq -r '.flavors[]')
+          MATRIX_VERSIONS=$(./uds zarf tools yq -r '.jobs.test.strategy.matrix.k3s_version[]' "$MATRIX_WORKFLOW")
+          MATRIX_FLAVORS=$(./uds zarf tools yq -r '.jobs.test.strategy.matrix.flavor[]' "$MATRIX_WORKFLOW")
           MATRIX_MINORS=$(printf '%s\n' "$MATRIX_VERSIONS" | sed -E 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k3s[0-9]+$/\1/' | sort)
 
           if [ -z "$MATRIX_VERSIONS" ] || [ -z "$MATRIX_FLAVORS" ]; then

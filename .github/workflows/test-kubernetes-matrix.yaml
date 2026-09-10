@@ -3,41 +3,16 @@
 
 name: Kubernetes Compatibility
 
-env:
-  K3S_MATRIX: |-
-    {
-      "versions": [
-        "v1.34.4+k3s1",
-        "v1.35.8+k3s1"
-      ],
-      "flavors": ["upstream", "registry1", "unicorn"]
-    }
-
 on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
-    inputs:
-      k3s_versions:
-        description: "Comma-separated exact stable K3s versions; blank uses the matrix file"
-        required: false
-        type: string
-      flavors:
-        description: "Comma-separated flavors; blank uses the matrix file"
-        required: false
-        type: string
   pull_request:
-    # milestoned supports release-please pull requests, which do not trigger normal PR workflows.
-    types: [milestoned, opened, reopened, synchronize]
     branches:
       - main
       - "release/**"
     paths:
-      - ".release-please-manifest.json"
       - ".github/workflows/test-kubernetes-matrix.yaml"
-      - ".github/workflows/test.yaml"
-      - "tasks/setup.yaml"
-      - "tasks/test.yaml"
 
 concurrency:
   group: test-kubernetes-matrix-${{ github.ref }}
@@ -48,56 +23,21 @@ permissions:
   id-token: write
   packages: read
 
+# Keep the complete compatibility matrix at the top of the workflow.
 jobs:
-  prepare:
-    name: Prepare matrix
-    runs-on: ubuntu-latest
-    outputs:
-      k3s_versions: ${{ steps.matrix.outputs.k3s_versions }}
-      flavors: ${{ steps.matrix.outputs.flavors }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Convert matrix inputs
-        id: matrix
-        env:
-          K3S_MATRIX: ${{ env.K3S_MATRIX }}
-          K3S_VERSIONS_INPUT: ${{ inputs.k3s_versions }}
-          FLAVORS_INPUT: ${{ inputs.flavors }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          k3s_versions=$(printf '%s' "$K3S_MATRIX" | jq -c '.versions')
-          flavors=$(printf '%s' "$K3S_MATRIX" | jq -c '.flavors')
-
-          input_to_json() {
-            printf '%s' "$1" | jq -Rc 'split(",") | map(gsub("^\\s+|\\s+$"; "")) | map(select(length > 0))'
-          }
-
-          if [ -n "$K3S_VERSIONS_INPUT" ]; then
-            k3s_versions=$(input_to_json "$K3S_VERSIONS_INPUT")
-          fi
-          if [ -n "$FLAVORS_INPUT" ]; then
-            flavors=$(input_to_json "$FLAVORS_INPUT")
-          fi
-          {
-            echo "k3s_versions<<EOF"
-            echo "$k3s_versions"
-            echo "EOF"
-            echo "flavors<<EOF"
-            echo "$flavors"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
   test:
     name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
-    needs: prepare
     strategy:
       fail-fast: false
       matrix:
-        k3s_version: ${{ fromJSON(needs.prepare.outputs.k3s_versions) }}
-        flavor: ${{ fromJSON(needs.prepare.outputs.flavors) }}
+        k3s_version:
+          - v1.34.4+k3s1
+          - v1.35.8+k3s1
+          - v1.36.4+k3s1
+        flavor:
+          - upstream
+          - registry1
+          - unicorn
     uses: ./.github/workflows/test.yaml
     with:
       package: all
@@ -112,16 +52,14 @@ jobs:
   aggregate:
     name: Kubernetes compatibility complete
     if: ${{ always() }}
-    needs: [prepare, test]
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: Verify matrix results
         env:
-          PREPARE_RESULT: ${{ needs.prepare.result }}
           TEST_RESULT: ${{ needs.test.result }}
         shell: bash
-        run: |
-          test "$PREPARE_RESULT" = success && test "$TEST_RESULT" = success
+        run: test "$TEST_RESULT" = success
 
       - name: Checkout repository
         if: ${{ failure() && github.event_name == 'schedule' }}
