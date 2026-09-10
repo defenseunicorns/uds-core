@@ -24878,6 +24878,10 @@
             },
             "secrets": {
               "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "generic": {
                   "properties": {},
                   "type": "object"
