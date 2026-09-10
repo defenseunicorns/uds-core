@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 variable "region" {
@@ -82,7 +82,7 @@ variable "databases" {
 variable "kubernetes_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.35"
+  default     = "1.36"
 }
 
 variable "vpc_name" {
