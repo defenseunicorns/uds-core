@@ -4,7 +4,7 @@
 variables:
   - name: GATEWAY_API_VERSION
     # renovate: datasource=github-tags depName=kubernetes-sigs/gateway-api versioning=semver extractVersion=^v(?<version>.*)$
-    default: "1.6.1"
+    default: "1.6.2"
 
 tasks:
   - name: validate
@@ -61,7 +61,7 @@ tasks:
           OUT_DIR="src/pepr/operator/crd/generated/istio"
 
           # renovate: datasource=github-tags depName=defenseunicorns/kubernetes-fluent-client versioning=semver
-          npx kubernetes-fluent-client@3.12.3 crd https://raw.githubusercontent.com/istio/istio/1.30.3/manifests/charts/base/files/crd-all.gen.yaml "$OUT_DIR"
+          npx kubernetes-fluent-client@3.12.3 crd https://raw.githubusercontent.com/istio/istio/1.31.0/manifests/charts/base/files/crd-all.gen.yaml "$OUT_DIR"
 
           # Istio includes all CRDs in a single YAML file so we need to prune down to just the subset we want to keep
           KEEP="authorizationpolicy-v1 gateway-v1 requestauthentication-v1 serviceentry-v1 sidecar-v1 virtualservice-v1"
