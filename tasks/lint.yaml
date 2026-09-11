@@ -237,9 +237,17 @@ tasks:
             exit 1
           fi
 
+          DEFAULT_K3S_VERSION=$(./uds zarf tools yq -r '.variables[] | select(.name == "DEFAULT_K3S_VERSION") | .default' tasks/setup.yaml)
+          DEFAULT_K3S_MINOR=$(printf '%s\n' "$DEFAULT_K3S_VERSION" | sed -nE 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k3s[0-9]+$/\1/p')
+          if [ -z "$DEFAULT_K3S_MINOR" ]; then
+            echo "ERROR: tasks/setup.yaml must define a valid DEFAULT_K3S_VERSION"
+            exit 1
+          fi
+
           DOCUMENTED_K3S_MINORS=$(grep -F '| [K3s]' "$DOC_FILE" | grep -oE '\*\*[0-9]+\.[0-9]+\*\*' | tr -d '*' | sort | uniq)
-          if [ "$DOCUMENTED_K3S_MINORS" != "$(printf '%s\n' "$MATRIX_MINORS" | uniq)" ]; then
-            echo "ERROR: Documented K3s minors do not match the Kubernetes test matrix"
+          EXPECTED_K3S_MINORS=$(printf '%s\n%s\n' "$MATRIX_MINORS" "$DEFAULT_K3S_MINOR" | sed '/^$/d' | sort -u)
+          if [ "$DOCUMENTED_K3S_MINORS" != "$EXPECTED_K3S_MINORS" ]; then
+            echo "ERROR: Documented K3s minors do not match the Kubernetes test matrix and default K3s version"
             exit 1
           fi
 

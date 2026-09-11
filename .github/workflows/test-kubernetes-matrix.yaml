@@ -33,7 +33,6 @@ jobs:
         k3s_version:
           - v1.34.4+k3s1
           - v1.35.8+k3s1
-          - v1.36.4+k3s1
         flavor:
           - upstream
           - registry1
@@ -49,17 +48,29 @@ jobs:
       IRON_BANK_ROBOT_PASSWORD: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
       CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
 
+  k8s-version-check:
+    name: Kubernetes version validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Environment setup
+        uses: ./.github/actions/setup-tools
+      - name: Verify documented k8s version matches CI config
+        run: uds run lint:k8s-version-check
+
   aggregate:
     name: Kubernetes compatibility complete
     if: ${{ always() }}
-    needs: [test]
+    needs: [test, k8s-version-check]
     runs-on: ubuntu-latest
     steps:
       - name: Verify matrix results
         env:
           TEST_RESULT: ${{ needs.test.result }}
+          VERSION_CHECK_RESULT: ${{ needs.k8s-version-check.result }}
         shell: bash
-        run: test "$TEST_RESULT" = success
+        run: test "$TEST_RESULT" = success && test "$VERSION_CHECK_RESULT" = success
 
       - name: Checkout repository
         if: ${{ failure() && github.event_name == 'schedule' }}
