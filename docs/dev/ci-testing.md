@@ -1,41 +1,42 @@
-# CI Testing
+# CI testing
 
-UDS Core has several types of CI testing that run on PRs, releases, and schedules. This document provides an introduction to the types of pipelines and tests that run for UDS Core.
+UDS Core has several types of CI testing that run on PRs, releases, and schedules. This document introduces the primary pipelines and the coverage they provide.
 
-## Pipeline Types
+## Pipeline types
 
-Within UDS Core there are a number of pipelines we run for different types of testing. These primarily vary in two aspects:
-- When: Tests are run either on all PRs, conditionally on PRs, or on a schedule
-- Where: Tests are run on a variety of cluster types and sometimes cloud providers
-- What: Tests may have different configurations of Core to validate
+UDS Core runs pipelines for different validation goals. These pipelines vary by trigger, target cluster, and Core configuration.
 
-All tests are run before release (on the release-please PR) to ensure we validate Core in all situations before a release. Since release PRs are opened by github-actions, pipelines are not automatically run and must be kicked off by adding a milestone to the PR.
+- When: Tests run on all PRs, conditionally on PRs, or on a schedule.
+- Where: Tests run on k3d, Kubernetes distributions, and sometimes cloud providers.
+- What: Tests validate different UDS Core configurations.
 
-On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines are only run once the renovate-readiness action/scripts determine the PR is ready (all images are up to date with aligned versions). CI can also be manually kicked off by adding the `renovate-ready` label to the PR.
+All tests run before release on the release-please PR to validate Core before publishing. Since GitHub Actions opens release PRs, pipelines do not run automatically. Add a milestone to the release PR to start them.
 
-### "Full Core" Install
+On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines run after the renovate-readiness action/scripts determine the PR is ready and all images have aligned versions. You can also start CI manually by adding the `renovate-ready` label to the PR.
 
-This tests validates an install of the `k3d-core-demo` bundle. The demo bundles includes all functional layers and components in Core, so this test provides full coverage of all applications.
+### Full Core install
 
-When: On all PRs
-
-Where: k3d
-
-What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled
-
-### "Full Core" Upgrade
-
-In order to ensure we catch any breaking changes across upgrades we also run an upgrade test of Core. This test deploys the latest release of the `k3d-core-demo` bundle, then upgrades to the version of core built from the PR branch. This test includes all functional layers and components in Core.
+This test validates an install of the `k3d-core-demo-next` bundle with UDS CLI Next. The demo bundle includes all functional layers and components in Core, so this test provides full application coverage.
 
 When: On all PRs
 
 Where: k3d
 
-What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), all `optionalComponents` enabled, upgrade tested from latest release
+What: [Standard k3d Next bundle](../../bundles/k3d-standard-next/bundle.uds.hcl), all standard components enabled
 
-### "Single Layer"
+### Full Core upgrade
 
-Single layer tests deploy an individual [functional layer](https://docs.defenseunicorns.com/core/concepts/platform/functional-layers/) of core as well as any dependency layers required (i.e. base, identity-authorization). The primary goal of these tests is to provide fast feedback on issues in the layers without needing to wait on the full core tests. They also help to validate that layers work "in isolation" with only the documented dependencies.
+This test deploys the latest release of the Legacy `k3d-core-demo` bundle, then upgrades to the `k3d-core-demo-next` bundle built from the PR branch with UDS CLI Next. This catches breaking changes across both UDS Core and the CLI Next functional-layer deployment path.
+
+When: On all PRs
+
+Where: k3d
+
+What: Latest published [standard k3d Legacy bundle](../../bundles/k3d-standard/uds-bundle.yaml) upgraded to the PR branch [standard k3d Next bundle](../../bundles/k3d-standard-next/bundle.uds.hcl)
+
+### Single layer
+
+Single layer tests deploy an individual [functional layer](https://docs.defenseunicorns.com/core/concepts/platform/functional-layers/) of Core and any required dependency layers, such as `base` and `identity-authorization`. These tests provide fast feedback on layer-specific issues without waiting for the full Core tests. They also validate that layers work in isolation with only the documented dependencies.
 
 When: Conditionally on PRs
 
@@ -45,23 +46,30 @@ What: Individual [layer packages](https://github.com/defenseunicorns/uds-core/tr
 
 ### CLI matrix
 
-To validate compatibility across CLI versions, CI runs a matrix of tests covering different CLI versions at install and upgrade time. This catches issues that would only surface when using an older CLI or upgrading the CLI version.
+The CLI matrix validates compatibility across UDS CLI versions and deployment modes. It covers Legacy bundle behavior while Legacy artifacts remain published, and it covers CLI Next install and upgrade behavior for the standard demo bundle.
 
-The matrix currently covers:
+The upgrade matrix currently covers these scenarios:
 
-- **old-old**: Install latest release with the last compatible CLI version, then upgrade to the current branch with the same CLI
-- **old-new**: Install latest release with the last compatible CLI version, then upgrade to the current branch with the current CLI
-- **old-cli install**: Fresh install of the current branch using the last compatible CLI version
+- **Legacy old-old**: Install the latest release with the minimum supported Legacy CLI, then upgrade to the current branch with the same Legacy CLI.
+- **Legacy old-new**: Install the latest release with the minimum supported Legacy CLI, then upgrade to the current branch with the current CLI.
+- **Legacy-to-Next**: Install the latest Legacy release with the minimum supported Legacy CLI, then upgrade to the current branch with the minimum supported CLI Next version.
 
-When: Nightly and on PRs that change `bundles/k3d-standard/**`
+Next-to-Next upgrade coverage is planned after the first Next demo bundle is published.
+
+The install matrix currently covers these scenarios:
+
+- **Legacy install**: Fresh install of the current branch Legacy bundle with the minimum supported Legacy CLI.
+- **Next install**: Fresh install of the current branch Next bundle with the minimum supported CLI Next version.
+
+When: Nightly and on PRs that change `bundles/k3d-standard/**` or `bundles/k3d-standard-next/**`
 
 Where: k3d
 
-What: [Standard k3d bundle](https://github.com/defenseunicorns/uds-core/blob/main/bundles/k3d-standard/uds-bundle.yaml), `upstream` flavor
+What: [Standard k3d Legacy bundle](../../bundles/k3d-standard/uds-bundle.yaml) and [standard k3d Next bundle](../../bundles/k3d-standard-next/bundle.uds.hcl), `upstream` flavor
 
-### "Production"
+### Production
 
-Our "production" testing aims to mimic a more production-like setup by running a full deployment of core on a variety of Kubernetes distributions. These tests provide more production-like configurations with external cloud dependencies, HA setups, and multi-node clusters.
+Production testing mimics production-like setups by deploying Core on several Kubernetes distributions. These tests validate configurations with external cloud dependencies, HA setups, and multi-node clusters.
 
 When: Scheduled (weekly)
 
@@ -69,16 +77,16 @@ Where: AKS, EKS, RKE2 (on AWS)
 
 What: [Infrastructure specific bundles](https://github.com/defenseunicorns/uds-core/tree/main/.github/bundles), configured with external dependencies
 
-## Test Types
+## Test types
 
-Core Pipelines include two types of testing, separated to provide faster feedback on some failures and options for local developer testing.
+Core pipelines include two types of testing. They provide faster feedback on some failures and options for local developer testing.
 
-### Smoke Tests
+### Smoke tests
 
-UDS Core maintains a suite of extremely lightweight smoke tests for each application in the platform. These tests are all found under the `validate` task name in `src/<pkg>/tasks.yaml`. Typically these will check pod readiness/health as well as basic endpoint validation.
+UDS Core maintains lightweight smoke tests for each application in the platform. These tests live under the `validate` task name in `src/<pkg>/tasks.yaml`. They typically check pod readiness, pod health, and basic endpoint behavior.
 
-As part of the `validate` tasks we also run testing against our UDS Operator and Policies (`src/pepr`). Tests here are run with Jest and can be found in the individual `*.spec.ts` files in the code. Most of this testing is unit testing with mocks as necessary, but the full suite of testing does require a live cluster with Pepr's webhooks deployed (specifically for the policy tests).
+The `validate` tasks also test the UDS Operator and Policies in `src/pepr`. These tests use Jest and live in the individual `*.spec.ts` files. Most tests use mocks, but the full suite requires a live cluster with Pepr webhooks deployed, specifically for the policy tests.
 
-### Functionality Tests
+### Functionality tests
 
-UDS Core also maintains a suite of functionality tests (often end-to-end type tests). These tests are found under the `test/` directory, and individual package tests can be found by file name under the sub-folders. Playwright is used as the framework for UI based testing and Jest is used for API or other generic testing.
+UDS Core also maintains functionality tests, including end-to-end tests. These tests live under the `test/` directory, and individual package tests use file names under the subdirectories. UI tests use Playwright, and API or generic tests use Jest.

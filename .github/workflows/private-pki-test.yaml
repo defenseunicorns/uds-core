@@ -14,6 +14,7 @@ on:
     paths:
       - ".github/workflows/private-pki-test.yaml"
       - "bundles/k3d-standard/**"
+      - "bundles/k3d-standard-next/**"
       - "test/playwright/private-pki/**"
 
 concurrency:

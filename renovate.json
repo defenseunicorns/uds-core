@@ -196,5 +196,18 @@
       "versioning": "regex:^distroless-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
       "description": "Envoy distroless images use a 'distroless-v<semver>' tag prefix that the default docker versioning rejects as invalid-value, blocking updates"
     }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^(?!.*(^|/)bundle\\.uds\\.hcl$).*\\.uds\\.hcl$"
+      ],
+      "matchStrings": [
+        "(?m)^\\s*source\\s*=\\s*\\\"(?:oci:\\/\\/)?(?<depName>[A-Za-z0-9._-]+(?:\\/[A-Za-z0-9._-]+)+):(?<currentValue>[A-Za-z0-9_][A-Za-z0-9._-]*)\\\"\\s*$"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
   ]
 }

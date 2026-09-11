@@ -1,0 +1,83 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+pepr-uds-core:
+  module:
+    watcher:
+      resources:
+        requests:
+          memory: "{{ .vars.pepr_watcher_memory_request }}"
+          cpu: "{{ .vars.pepr_watcher_cpu_request }}"
+    admission:
+      resources:
+        requests:
+          memory: "{{ .vars.pepr_admission_memory_request }}"
+          cpu: "{{ .vars.pepr_admission_cpu_request }}"
+
+istio-controlplane:
+  istiod:
+    resources:
+      requests:
+        memory: "{{ .vars.istiod_memory_request }}"
+        cpu: "{{ .vars.istiod_cpu_request }}"
+    global:
+      proxy:
+        resources:
+          requests:
+            memory: "{{ .vars.proxy_memory_request }}"
+            cpu: "{{ .vars.proxy_cpu_request }}"
+          limits:
+            memory: "{{ .vars.proxy_memory_limit }}"
+            cpu: "{{ .vars.proxy_cpu_limit }}"
+
+{{- $adminTLS12 := index .vars "admin_tls1_2_support" }}
+{{- $adminTLSCert := index .vars "admin_tls_cert" }}
+{{- $adminTLSKey := index .vars "admin_tls_key" }}
+{{- if or $adminTLS12 $adminTLSCert $adminTLSKey }}
+istio-admin-gateway:
+  uds-istio-config:
+    tls:
+{{- with $adminTLS12 }}
+      supportTLSV1_2: {{ . }}
+{{- end }}
+{{- with $adminTLSCert }}
+      cert: "{{ . }}"
+{{- end }}
+{{- with $adminTLSKey }}
+      key: "{{ . }}"
+{{- end }}
+{{- end }}
+
+{{- $tenantTLS12 := index .vars "tenant_tls1_2_support" }}
+{{- $tenantTLSCert := index .vars "tenant_tls_cert" }}
+{{- $tenantTLSKey := index .vars "tenant_tls_key" }}
+{{- $tenantPorts := index .vars "tenant_service_ports" }}
+{{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey $tenantPorts }}
+istio-tenant-gateway:
+{{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey }}
+  uds-istio-config:
+    tls:
+{{- with $tenantTLS12 }}
+      supportTLSV1_2: {{ . }}
+{{- end }}
+{{- with $tenantTLSCert }}
+      cert: "{{ . }}"
+{{- end }}
+{{- with $tenantTLSKey }}
+      key: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- with $tenantPorts }}
+  gateway:
+    service:
+      ports:
+{{- range . }}
+        - name: "{{ .name }}"
+          port: {{ .port }}
+          targetPort: {{ .targetPort }}
+{{- if .protocol }}
+          protocol: "{{ .protocol }}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
