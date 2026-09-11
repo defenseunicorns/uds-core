@@ -246,25 +246,74 @@ tasks:
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
-      - task: deploy:latest-bundle-release
+      - description: "Prepare current Core artifacts while the baseline is deployed"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          mkdir -p tmp
+          build_log=tmp/current-upgrade-artifacts.log
+          build_pid=""
+          cleanup_build() {
+            if [ -n "${build_pid}" ]; then
+              kill "${build_pid}" 2>/dev/null || true
+              wait "${build_pid}" 2>/dev/null || true
+            fi
+          }
+          trap cleanup_build EXIT
+
+          echo "Current artifact preparation started at $(date -u +%FT%TZ)"
+          ./uds run -f tasks/test.yaml prepare-current-upgrade-artifacts \
+            --set FLAVOR="${FLAVOR}" --no-progress >"${build_log}" 2>&1 &
+          build_pid=$!
+
+          echo "Latest release deployment started at $(date -u +%FT%TZ)"
+          ./uds run -f tasks/deploy.yaml latest-bundle-release \
+            --set FLAVOR="${FLAVOR}" \
+            --with configFile="${{ .inputs.configFile }}" --no-progress
+          echo "Latest release deployment completed at $(date -u +%FT%TZ)"
+          ./uds run -f tasks/deploy.yaml latest-release-test-resources \
+            --set FLAVOR="${FLAVOR}" --no-progress
+          echo "Latest release test resources completed at $(date -u +%FT%TZ)"
+
+          if ! wait "${build_pid}"; then
+            cat "${build_log}"
+            exit 1
+          fi
+          build_pid=""
+          echo "Current artifact preparation completed at $(date -u +%FT%TZ)"
+
+          ./uds run -f tasks/test.yaml upgrade-existing \
+            --set FLAVOR="${FLAVOR}" \
+            --set EXCLUDED_PACKAGES="${EXCLUDED_PACKAGES:-}" \
+            --with configFile="${{ .inputs.configFile }}" \
+            --with skip_build=true --no-progress
+
+  - name: prepare-current-upgrade-artifacts
+    description: "Build the current Core package and upgrade bundle"
+    actions:
+      - task: create:standard-package
         with:
-          configFile: ${{ .inputs.configFile }}
-      - task: deploy:latest-release-test-resources
-      - task: upgrade-existing
-        with:
-          configFile: ${{ .inputs.configFile }}
+          create_options: "--skip-sbom"
+      - task: create:k3d-standard-bundle
 
   - name: upgrade-existing
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      skip_build:
+        description: "Skip building current Core artifacts when they were prepared concurrently"
+        default: "false"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:standard-package
+        if: ${{ eq .inputs.skip_build "false" }}
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
+        if: ${{ eq .inputs.skip_build "false" }}
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-upgrade
         with:
