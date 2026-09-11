@@ -13126,6 +13126,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "publishNotReadyAddresses": {
+                      "type": "boolean"
+                    },
                     "trafficDistribution": {
                       "type": "string"
                     }
