@@ -148,14 +148,8 @@ tasks:
 
   - name: test-uds-core-upgrade
     description: "Test an upgrade from the latest released UDS Core package to current branch"
-    inputs:
-      use_prebuilt:
-        description: "Whether to reuse a prebuilt Core package and bundle"
-        default: "false"
     actions:
       - task: test:uds-core-upgrade
-        with:
-          use_prebuilt: "${{ .inputs.use_prebuilt }}"
 
   - name: lint-check
     description: "Run linting checks"

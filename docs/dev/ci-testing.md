@@ -82,3 +82,5 @@ As part of the `validate` tasks we also run testing against our UDS Operator and
 ### Functionality Tests
 
 UDS Core also maintains a suite of functionality tests (often end-to-end type tests). These tests are found under the `test/` directory, and individual package tests can be found by file name under the sub-folders. Playwright is used as the framework for UI based testing and Jest is used for API or other generic testing.
+
+For pull request CI timing measurements and optimization decisions, see [CI performance experiments](ci-performance-experiments.md).

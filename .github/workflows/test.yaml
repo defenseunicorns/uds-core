@@ -19,11 +19,6 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
-      core_artifact:
-        type: string
-        description: "Optional prebuilt Core package and bundle artifact"
-        required: false
-        default: ''
     # Triggered by pull-request-conditionals.yaml
   workflow_call:
     inputs:
@@ -39,11 +34,6 @@ on:
         type: string
         description: "The type of test to perform"
         required: true
-      core_artifact:
-        type: string
-        description: "Optional prebuilt Core package and bundle artifact"
-        required: false
-        default: ''
 
 permissions:
   contents: read
@@ -64,17 +54,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Download prebuilt Core artifacts
-        if: ${{ inputs.package == 'all' && inputs.core_artifact != '' }}
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: ${{ inputs.core_artifact }}
-          path: .
-
-      - name: Restore prebuilt Core artifacts
-        if: ${{ inputs.package == 'all' && inputs.core_artifact != '' }}
-        run: tar -xf core-artifacts.tar
-
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
@@ -91,15 +70,15 @@ jobs:
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with use_prebuilt=${{ inputs.core_artifact != '' && 'true' || 'false' }} --no-progress
+        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with use_prebuilt=${{ inputs.core_artifact != '' && 'true' || 'false' }} --no-progress
+        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
-        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --with use_prebuilt=${{ inputs.core_artifact != '' && 'true' || 'false' }} --no-progress
+        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

@@ -163,16 +163,11 @@ tasks:
       K3D_EXTRA_ARGS:
         default: ""
         description: "Extra args for k3d"
-      use_prebuilt:
-        default: "false"
-        description: "Whether to reuse a prebuilt Core package and bundle"
     actions:
       - task: create:standard-package
-        if: ${{ eq .inputs.use_prebuilt "false" }}
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
-        if: ${{ eq .inputs.use_prebuilt "false" }}
       - task: deploy:k3d-standard-bundle
         with:
           K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
@@ -184,25 +179,16 @@ tasks:
       K3D_EXTRA_ARGS:
         default: ""
         description: "Extra args for k3d"
-      use_prebuilt:
-        default: "false"
-        description: "Whether to reuse a prebuilt Core package and bundle"
     actions:
       - task: uds-core
         with:
           K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
-          use_prebuilt: "${{ .inputs.use_prebuilt }}"
       - task: e2e-tests
 
   - name: uds-core-values-e2e
     description: "Build and test UDS Core deployed via Zarf values (equivalency to bundle deploy)"
-    inputs:
-      use_prebuilt:
-        default: "false"
-        description: "Whether to reuse a prebuilt Core package"
     actions:
       - task: create:standard-package
-        if: ${{ eq .inputs.use_prebuilt "false" }}
         with:
           create_options: "--skip-sbom"
       - task: setup:k3d-test-cluster
@@ -258,9 +244,6 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the deployments"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-      use_prebuilt:
-        default: "false"
-        description: "Whether to reuse a prebuilt Core package and bundle"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
@@ -270,24 +253,18 @@ tasks:
       - task: upgrade-existing
         with:
           configFile: ${{ .inputs.configFile }}
-          use_prebuilt: "${{ .inputs.use_prebuilt }}"
 
   - name: upgrade-existing
     inputs:
       configFile:
         description: "UDS_CONFIG file to use for the upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-      use_prebuilt:
-        default: "false"
-        description: "Whether to reuse a prebuilt Core package and bundle"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:standard-package
-        if: ${{ eq .inputs.use_prebuilt "false" }}
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
-        if: ${{ eq .inputs.use_prebuilt "false" }}
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-upgrade
         with:
