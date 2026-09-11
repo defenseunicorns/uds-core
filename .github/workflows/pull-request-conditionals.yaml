@@ -3,6 +3,8 @@
 
 name: Filter
 
+# Temporary baseline marker for CI timing comparison.
+
 # This workflow is triggered on pull requests
 on:
   pull_request:
