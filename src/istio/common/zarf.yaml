@@ -170,7 +170,71 @@ components:
 
   - name: gateway-api-crds
     required: true
-    manifests:
+    charts:
       - name: gateway-api-crds
-        files:
-          - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml
+        releaseName: gateway-api-crds
+        namespace: default
+        version: 0.1.0
+        localPath: ../gateway-api-crds/chart
+    actions:
+      onDeploy:
+        before:
+          - description: "Migrate Gateway API CRD Helm ownership to stable release"
+            mute: true
+            cmd: |
+              # Gateway API resources used to deploy through Zarf manifests. Zarf wrapped those manifests
+              # in a generated Helm release with a raw-<package>-gateway-api-crds-gateway-api-crds chart name.
+              # If that legacy release is present, move only resources owned by that release to this stable
+              # Helm release. Leave anything else untouched so Helm handles fresh installs or ownership conflicts normally.
+              # After ownership migration, remove only the legacy Helm storage records. Do not run helm uninstall:
+              # Helm uninstall would replay the legacy release manifest and may delete these resources.
+              legacy_release="$(
+                ./zarf tools helm list --namespace default --output json \
+                  | ./zarf tools yq -r '.[] | select(.chart | test("^raw-.*-gateway-api-crds-gateway-api-crds-")) | .name' \
+                  | head -n 1
+              )"
+
+              if [ -z "$legacy_release" ]; then
+                exit 0
+              fi
+
+              echo "Migrating Gateway API resources owned by legacy Zarf Helm release $legacy_release to gateway-api-crds."
+              migrated_resources=0
+              for resource in \
+                customresourcedefinition.apiextensions.k8s.io/backendtlspolicies.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/gatewayclasses.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/gateways.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/grpcroutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/httproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/listenersets.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/referencegrants.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/tcproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/tlsroutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/udproutes.gateway.networking.k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xbackends.gateway.networking.x-k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xbackendtrafficpolicies.gateway.networking.x-k8s.io \
+                customresourcedefinition.apiextensions.k8s.io/xmeshes.gateway.networking.x-k8s.io \
+                validatingadmissionpolicy.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io \
+                validatingadmissionpolicybinding.admissionregistration.k8s.io/safe-upgrades.gateway.networking.k8s.io; do
+                if ! ./zarf tools kubectl get "$resource" >/dev/null 2>&1; then
+                  continue
+                fi
+
+                release_name="$(./zarf tools kubectl get "$resource" -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-name}')"
+                release_namespace="$(./zarf tools kubectl get "$resource" -o jsonpath='{.metadata.annotations.meta\.helm\.sh/release-namespace}')"
+
+                if [ "$release_name:$release_namespace" = "$legacy_release:default" ]; then
+                  ./zarf tools kubectl label "$resource" app.kubernetes.io/managed-by=Helm --overwrite
+                  ./zarf tools kubectl annotate "$resource" meta.helm.sh/release-name=gateway-api-crds --overwrite
+                  ./zarf tools kubectl annotate "$resource" meta.helm.sh/release-namespace=default --overwrite
+                  migrated_resources=$((migrated_resources + 1))
+                fi
+              done
+
+              if [ "$migrated_resources" -gt 0 ]; then
+                echo "Removing Helm storage records for legacy Zarf Helm release $legacy_release."
+                ./zarf tools kubectl delete secret,configmap \
+                  --namespace default \
+                  --selector "owner=helm,name=$legacy_release" \
+                  --ignore-not-found
+              fi
