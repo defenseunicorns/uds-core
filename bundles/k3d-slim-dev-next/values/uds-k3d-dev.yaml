@@ -1,0 +1,69 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+{{- $buckets := index .vars "minio_buckets" }}
+{{- $svcaccts := index .vars "minio_svcaccts" }}
+{{- $users := index .vars "minio_users" }}
+{{- $policies := index .vars "minio_policies" }}
+{{- if or $buckets $svcaccts $users $policies }}
+minio:
+{{- with $buckets }}
+  buckets:
+{{- range . }}
+    - name: "{{ .name }}"
+{{- with .policy }}
+      policy: "{{ . }}"
+{{- end }}
+{{- with .purge }}
+      purge: {{ . }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with $svcaccts }}
+  svcaccts:
+{{- range . }}
+    - accessKey: "{{ .accessKey }}"
+      secretKey: {{ printf "%q" .secretKey }}
+{{- with .user }}
+      user: "{{ . }}"
+{{- end }}
+{{- with .policy }}
+      policy: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with $users }}
+  users:
+{{- range . }}
+    - accessKey: "{{ .accessKey }}"
+      secretKey: {{ printf "%q" .secretKey }}
+{{- with .policy }}
+      policy: "{{ . }}"
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with $policies }}
+  policies:
+{{- range . }}
+    - name: "{{ .name }}"
+{{- with .statements }}
+      statements:
+{{- range . }}
+        - effect: "{{ .effect }}"
+{{- with .resources }}
+          resources:
+{{- range . }}
+            - {{ printf "%q" . }}
+{{- end }}
+{{- end }}
+{{- with .actions }}
+          actions:
+{{- range . }}
+            - {{ printf "%q" . }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
