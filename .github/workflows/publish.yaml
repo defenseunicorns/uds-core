@@ -43,6 +43,7 @@ jobs:
           registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
+          installHcledit: 'true'
 
       - name: (Snapshot) Get snapshot version using git commit short sha and date
         if: ${{ inputs.snapshot }}
@@ -60,7 +61,7 @@ jobs:
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION), (.packages[]|select(has("ref"))|select(.name=="core-identity-authorization")).ref=env(SNAPSHOT_VERSION)' bundles/k3d-slim-dev/uds-bundle.yaml
 
           for bundle_hcl in bundles/k3d-standard-next/bundle.uds.hcl bundles/k3d-standard-next/bundle-no-portal.uds.hcl bundles/k3d-slim-dev-next/bundle.uds.hcl; do
-            perl -0pi -e 's/(# x-release-please-start-version\n\s*version = ")[^"]+("\n\s*# x-release-please-end)/$1$ENV{SNAPSHOT_VERSION}$2/' "${bundle_hcl}"
+            hcledit attribute set locals.version "\"${SNAPSHOT_VERSION}\"" --file "${bundle_hcl}" --update
           done
 
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/standard/zarf.yaml

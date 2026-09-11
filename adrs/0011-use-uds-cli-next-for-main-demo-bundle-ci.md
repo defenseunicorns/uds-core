@@ -10,7 +10,7 @@ Accepted
 
 UDS Core is the primary consumer for UDS CLI bundle workflows. The main CI paths have historically built, deployed, tested, and published demo bundles with the Legacy UDS CLI bundle commands and `uds-bundle.yaml` files.
 
-UDS CLI Next is available in alpha behind `NextMode` in the updated `uds` binary. It is expected to become the default UDS CLI bundle mode when it reaches beta. Its bundle workflow uses Zarf values for package customization, which overlaps with UDS Core's separate values deploy equivalency workflow.
+UDS CLI Next is available in alpha behind `NextMode` in the updated `uds` binary. UDS Core requires UDS CLI v0.36.0 or newer for the CLI Next bundle path. It is expected to become the default UDS CLI bundle mode when it reaches beta. Its bundle workflow uses Zarf values for package customization, which overlaps with UDS Core's separate values deploy equivalency workflow.
 
 ## Decision
 
