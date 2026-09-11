@@ -11,6 +11,27 @@
   "prConcurrentLimit": 0,
   "prHourlyLimit": 0,
   "separateMajorMinor": false,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github\\/workflows\\/test-kubernetes-matrix\\.yaml$/",
+        "/^tasks\\/setup\\.yaml$/"
+      ],
+      "matchStrings": ["(?<currentValue>v\\d+\\.\\d+\\.\\d+\\+k3s\\d+)"],
+      "depNameTemplate": "k3s-io/k3s",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)\\+k3s(?<build>\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^tasks\\/setup\\.yaml$/"],
+      "matchStrings": ["oci:\\/\\/defenseunicorns\\/uds-k3d:(?<currentValue>\\d+\\.\\d+\\.\\d+(?:-airgap)?)"],
+      "depNameTemplate": "ghcr.io/defenseunicorns/packages/uds-k3d",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
   "packageRules": [
     {
       "matchFileNames": [
@@ -181,6 +202,17 @@
         "@eslint/js"
       ],
       "allowedVersions": "<10"
+    },
+    {
+      "matchFileNames": [
+        ".github/workflows/test-kubernetes-matrix.yaml"
+      ],
+      "matchDepNames": [
+        "k3s-io/k3s"
+      ],
+      "allowedVersions": "/^v{{major}}\\.{{minor}}\\.\\d+\\+k3s\\d+$/",
+      "groupName": "k3s test matrix",
+      "commitMessageTopic": "k3s test matrix"
     },
     {
       "matchPackageNames": [

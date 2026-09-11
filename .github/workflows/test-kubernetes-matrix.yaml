@@ -1,0 +1,84 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: Kubernetes Compatibility
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - "release/**"
+    paths:
+      - ".github/workflows/test-kubernetes-matrix.yaml"
+
+concurrency:
+  group: test-kubernetes-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+# Keep the complete compatibility matrix at the top of the workflow.
+jobs:
+  test:
+    name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
+    strategy:
+      fail-fast: false
+      matrix:
+        k3s_version:
+          - v1.34.4+k3s1
+          - v1.35.8+k3s1
+        flavor:
+          - upstream
+          - registry1
+          - unicorn
+    uses: ./.github/workflows/test.yaml
+    with:
+      package: all
+      flavor: ${{ matrix.flavor }}
+      test_type: values
+      k3s_version: ${{ matrix.k3s_version }}
+    secrets:
+      IRON_BANK_ROBOT_USERNAME: ${{ secrets.IRON_BANK_ROBOT_USERNAME }}
+      IRON_BANK_ROBOT_PASSWORD: ${{ secrets.IRON_BANK_ROBOT_PASSWORD }}
+      CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
+
+  k8s-version-check:
+    name: Kubernetes version validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Environment setup
+        uses: ./.github/actions/setup-tools
+      - name: Verify documented k8s version matches CI config
+        run: uds run lint:k8s-version-check
+
+  aggregate:
+    name: Kubernetes compatibility complete
+    if: ${{ always() }}
+    needs: [test, k8s-version-check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify matrix results
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
+          VERSION_CHECK_RESULT: ${{ needs.k8s-version-check.result }}
+        shell: bash
+        run: test "$TEST_RESULT" = success && test "$VERSION_CHECK_RESULT" = success
+
+      - name: Checkout repository
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Send Slack notification
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}

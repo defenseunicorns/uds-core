@@ -200,7 +200,7 @@ tasks:
         task: remote:fix-license
 
   - name: k8s-version-check
-    description: "Verify documented Kubernetes version matches CI test config"
+    description: "Verify documented Kubernetes versions match CI test config"
     actions:
       - description: Check k8s version consistency between docs and terraform
         shell:
@@ -209,7 +209,47 @@ tasks:
         cmd: |
           set -euo pipefail
           DOC_FILE="docs/concepts/platform/supported-distributions.mdx"
+          MATRIX_WORKFLOW=".github/workflows/test-kubernetes-matrix.yaml"
           FAILED=0
+
+          MATRIX_VERSIONS=$(./uds zarf tools yq -r '.jobs.test.strategy.matrix.k3s_version[]' "$MATRIX_WORKFLOW")
+          MATRIX_FLAVORS=$(./uds zarf tools yq -r '.jobs.test.strategy.matrix.flavor[]' "$MATRIX_WORKFLOW")
+          MATRIX_MINORS=$(printf '%s\n' "$MATRIX_VERSIONS" | sed -E 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k3s[0-9]+$/\1/' | sort)
+
+          if [ -z "$MATRIX_VERSIONS" ] || [ -z "$MATRIX_FLAVORS" ]; then
+            echo "ERROR: Kubernetes compatibility workflow must define versions and flavors"
+            exit 1
+          fi
+          if printf '%s\n' "$MATRIX_VERSIONS" | grep -Ev '^v[0-9]+\.[0-9]+\.[0-9]+\+k3s[0-9]+$' > /dev/null; then
+            echo "ERROR: Kubernetes test matrix contains an invalid K3s version"
+            exit 1
+          fi
+          if [ "$(printf '%s\n' "$MATRIX_VERSIONS" | sort | uniq | wc -l | tr -d ' ')" -ne "$(printf '%s\n' "$MATRIX_VERSIONS" | wc -l | tr -d ' ')" ]; then
+            echo "ERROR: Kubernetes test matrix contains duplicate exact versions"
+            exit 1
+          fi
+          if [ "$(printf '%s\n' "$MATRIX_MINORS" | uniq | wc -l | tr -d ' ')" -ne "$(printf '%s\n' "$MATRIX_MINORS" | wc -l | tr -d ' ')" ]; then
+            echo "ERROR: Kubernetes test matrix contains duplicate minors"
+            exit 1
+          fi
+          if printf '%s\n' "$MATRIX_FLAVORS" | grep -Ev '^(upstream|registry1|unicorn)$' > /dev/null || [ "$(printf '%s\n' "$MATRIX_FLAVORS" | sort | uniq | wc -l | tr -d ' ')" -ne 3 ]; then
+            echo "ERROR: Kubernetes test matrix must contain each supported flavor exactly once"
+            exit 1
+          fi
+
+          DEFAULT_K3S_VERSION=$(./uds zarf tools yq -r '.variables[] | select(.name == "DEFAULT_K3S_VERSION") | .default' tasks/setup.yaml)
+          DEFAULT_K3S_MINOR=$(printf '%s\n' "$DEFAULT_K3S_VERSION" | sed -nE 's/^v([0-9]+\.[0-9]+)\.[0-9]+\+k3s[0-9]+$/\1/p')
+          if [ -z "$DEFAULT_K3S_MINOR" ]; then
+            echo "ERROR: tasks/setup.yaml must define a valid DEFAULT_K3S_VERSION"
+            exit 1
+          fi
+
+          DOCUMENTED_K3S_MINORS=$(grep -F '| [K3s]' "$DOC_FILE" | grep -oE '\*\*[0-9]+\.[0-9]+\*\*' | tr -d '*' | sort | uniq)
+          EXPECTED_K3S_MINORS=$(printf '%s\n%s\n' "$MATRIX_MINORS" "$DEFAULT_K3S_MINOR" | sed '/^$/d' | sort -u)
+          if [ "$DOCUMENTED_K3S_MINORS" != "$EXPECTED_K3S_MINORS" ]; then
+            echo "ERROR: Documented K3s minors do not match the Kubernetes test matrix and default K3s version"
+            exit 1
+          fi
 
           # Extract k8s versions from terraform config
           EKS_VERSION=$(grep -A3 'variable "kubernetes_version"' .github/test-infra/aws/eks/variables.tf | sed -n 's/.*default *= *"\([0-9]*\.[0-9]*\)".*/\1/p')
@@ -233,22 +273,22 @@ tasks:
           EXPECTED="$EKS_VERSION"
           echo "Expected version: $EXPECTED"
 
-          # Check the [!NOTE] callout contains the version
-          if ! grep -q "tests against \*\*Kubernetes ${EXPECTED}\*\*" "$DOC_FILE"; then
+          # Check the [!NOTE] callout contains the non-K3s tested version.
+          if ! grep -q "EKS, AKS, and RKE2 against \*\*Kubernetes ${EXPECTED}\*\*" "$DOC_FILE"; then
             echo "ERROR: [!NOTE] callout missing version (expected '**Kubernetes ${EXPECTED}**')"
             FAILED=1
           fi
 
-          # Check that all versioned table rows use the expected version
-          ALL_VERSION_ROWS=$(grep -E '^\| .* \*\*[0-9]+\.[0-9]+\*\* \|' "$DOC_FILE" || true)
+          # Check that EKS, AKS, and RKE2 rows use the expected version.
+          ALL_VERSION_ROWS=$(grep -E '^\| \[(Amazon EKS|Azure AKS|RKE2)' "$DOC_FILE" || true)
           TOTAL_ROWS=$(printf '%s\n' "$ALL_VERSION_ROWS" | sed -n '/./p' | wc -l | tr -d ' ')
           EXPECTED_ROWS=$(printf '%s\n' "$ALL_VERSION_ROWS" | grep -F "| **${EXPECTED}** |" | wc -l | tr -d ' ')
           if [ "$TOTAL_ROWS" -ne "$EXPECTED_ROWS" ]; then
-            echo "ERROR: One or more distribution rows use a Kubernetes version different from ${EXPECTED}"
+            echo "ERROR: One or more EKS, AKS, or RKE2 rows use a Kubernetes version different from ${EXPECTED}"
             FAILED=1
           fi
 
           if [ "$FAILED" -eq 0 ]; then
-            echo "OK: All versions match $EXPECTED"
+            echo "OK: K3s matrix and documented Kubernetes versions match CI configuration"
           fi
           exit $FAILED
