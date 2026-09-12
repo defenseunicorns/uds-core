@@ -143,12 +143,19 @@ tasks:
         task: test-resources:remove
 
   - name: unit-tests
-    description: "Run all unit tests for uds-core"
+    description: "Run uds-core source unit tests"
+    actions:
+      - cmd: |
+          npm ci
+          npm run test:unit
+
+  - name: values-tests
+    description: "Run UDS Core package values tests"
     actions:
       - cmd: |
           npm ci
           npx pepr build -z chart
-          npx vitest run
+          npx vitest run test/values/
 
   - name: uds-core
     description: "Build and test UDS Core with UDS CLI Next bundle workflow"
@@ -253,28 +260,18 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the latest release deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      upgradeConfigFile:
+        description: "UDS CLI Next config file to use for the current branch upgrade"
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
       - task: deploy:latest-bundle-release
         with:
-          configFile: ${{ .inputs.configFile }}
+          configFile: "${{ .inputs.configFile }}"
       - task: deploy:latest-release-test-resources
       - task: upgrade-existing
-
-  - name: uds-core-upgrade-legacy
-    inputs:
-      configFile:
-        description: "UDS_CONFIG file to use for the deployments"
-        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-    description: "Test an upgrade from the latest released UDS Core package to current branch with UDS CLI Legacy bundle workflow"
-    actions:
-      - task: deploy:latest-bundle-release
         with:
-          configFile: ${{ .inputs.configFile }}
-      - task: deploy:latest-release-test-resources
-      - task: upgrade-existing-legacy
-        with:
-          configFile: ${{ .inputs.configFile }}
+          configFile: "${{ .inputs.upgradeConfigFile }}"
 
   - name: upgrade-existing
     inputs:
@@ -302,7 +299,7 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the legacy upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-    description: "Upgrade phase only with UDS CLI Legacy: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
+    description: "Upgrade phase only: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
       - task: create:standard-package
         with:

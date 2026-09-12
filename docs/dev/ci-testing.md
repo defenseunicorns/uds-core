@@ -89,4 +89,6 @@ The `validate` tasks also test the UDS Operator and Policies in `src/pepr`. Thes
 
 ### Functionality tests
 
-UDS Core also maintains functionality tests, including end-to-end tests. These tests live under the `test/` directory, and individual package tests use file names under the subdirectories. UI tests use Playwright, and API or generic tests use Jest.
+UDS Core also maintains a suite of functionality tests (often end-to-end type tests). These tests are found under the `test/` directory, and individual package tests can be found by file name under the sub-folders. Playwright is used as the framework for UI based testing and Jest is used for API or other generic testing.
+
+For pull request CI timing measurements and optimization decisions, see [CI performance experiments](ci-performance-experiments.md).
