@@ -179,6 +179,15 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // Add the name to the set to track it
     virtualServiceNames.add(name);
 
+    // Deny cross-namespace collisions when either route is a catch-all.
+    const ownerNs = PackageStore.findNamespaceForExpose(expose, ns);
+    if (ownerNs && ownerNs !== ns) {
+      return req.Deny(
+        `The endpoint "${getFqdn(expose)}" conflicts with a package in namespace "${ownerNs}". ` +
+          `Each catch-all exposed endpoint must be unique across namespaces; use advancedHTTP.match for path-based routing.`,
+      );
+    }
+
     // Validate uptime probe configuration (paths presence enables uptime)
     if (expose.uptime?.checks?.paths?.length) {
       // Validate paths start with /

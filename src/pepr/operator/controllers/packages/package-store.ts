@@ -9,16 +9,28 @@
  * Used in Pepr Validating Webhook Pods when vetting UDS Package resources for admission
  */
 import { Component, setupLogger } from "../../../logger";
-import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
-import { UDSPackage } from "../../crd";
+import { Expose, UDSPackage } from "../../crd";
 import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
+import { getExposureKey } from "../domain-utils";
+import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
 
 // Map structure: namespace -> (package name -> package)
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
+type IndexedExpose = {
+  namespace: string;
+  packageName: string;
+  hasAdvancedHTTPMatch: boolean;
+};
+// Map structure: "gateway:fqdn" -> indexed expose entries
+let fqdnIndex: Map<string, IndexedExpose[]>;
 let udpGatewayPortIndex: Map<string, Set<string>>;
+
+function hasAdvancedHTTPMatch(expose: Expose): boolean {
+  return expose.advancedHTTP?.match !== undefined || expose.match !== undefined;
+}
 
 /**
  * Initializes the package namespace map, along with the SSO client index and
@@ -27,6 +39,7 @@ let udpGatewayPortIndex: Map<string, Set<string>>;
 function init(): void {
   packageNamespaceMap = new Map();
   ssoIndex = new Map();
+  fqdnIndex = new Map();
   udpGatewayPortIndex = new Map();
 }
 
@@ -97,6 +110,10 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     return;
   }
 
+  // Read stored copy before deletion so FQDN cleanup uses the indexed spec, not the
+  // event-delivered object (which may be stale on watch reconnects).
+  const storedPkg = namespaceMap.get(name);
+
   // Remove the package
   namespaceMap.delete(name);
 
@@ -105,7 +122,10 @@ function remove(pkg: UDSPackage, logger: boolean = true): void {
     packageNamespaceMap.delete(namespace);
   }
 
-  removeIndexes(pkg);
+  // Use the stored spec because the event-delivered object may be stale on watch reconnects.
+  if (storedPkg) {
+    removeIndexes(storedPkg);
+  }
 
   if (logger) {
     log.debug(`Removed package: ${namespace}/${name} from package map`);
@@ -162,6 +182,7 @@ function findPackagesWithUdpGatewayPort(gateway: string | undefined, port: numbe
 
 function addIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
+  const packageName = pkg.metadata!.name!;
 
   for (const client of pkg.spec?.sso ?? []) {
     if (!ssoIndex.has(client.clientId)) {
@@ -172,20 +193,45 @@ function addIndexes(pkg: UDSPackage): void {
   }
 
   for (const expose of pkg.spec?.network?.expose ?? []) {
-    if (expose.protocol !== ExposeProtocol.UDP || expose.port === undefined) {
+    if (expose.protocol === ExposeProtocol.UDP) {
+      if (expose.port === undefined) {
+        continue;
+      }
+
+      const key = getUDPGatewayPortKey(expose.gateway, expose.port);
+      if (!udpGatewayPortIndex.has(key)) {
+        udpGatewayPortIndex.set(key, new Set());
+      }
+      udpGatewayPortIndex.get(key)!.add(namespace);
       continue;
     }
 
-    const key = getUDPGatewayPortKey(expose.gateway, expose.port);
-    if (!udpGatewayPortIndex.has(key)) {
-      udpGatewayPortIndex.set(key, new Set());
-    }
-    udpGatewayPortIndex.get(key)!.add(namespace);
+    const key = getExposureKey(expose);
+    const indexedExposes = fqdnIndex.get(key) ?? [];
+    indexedExposes.push({
+      namespace,
+      packageName,
+      hasAdvancedHTTPMatch: hasAdvancedHTTPMatch(expose),
+    });
+    fqdnIndex.set(key, indexedExposes);
   }
 }
 
 function removeIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
+  const packageName = pkg.metadata!.name!;
+
+  // Remove routes for the package because the configured domain may have changed since it was indexed.
+  for (const [key, indexedExposes] of fqdnIndex) {
+    const remainingExposes = indexedExposes.filter(
+      indexed => indexed.namespace !== namespace || indexed.packageName !== packageName,
+    );
+    if (remainingExposes.length === 0) {
+      fqdnIndex.delete(key);
+    } else {
+      fqdnIndex.set(key, remainingExposes);
+    }
+  }
 
   for (const client of pkg.spec?.sso ?? []) {
     const nsSet = ssoIndex.get(client.clientId);
@@ -209,6 +255,24 @@ function removeIndexes(pkg: UDSPackage): void {
       udpGatewayPortIndex.delete(key);
     }
   }
+}
+
+/**
+ * Finds the namespace of a package whose expose entry conflicts with the given entry.
+ * Catch-all entries conflict with any matching gateway and FQDN; two entries that both
+ * define advancedHTTP.match can share a host for path-based routing.
+ *
+ * @param {Expose} expose - The expose entry to look up.
+ * @param {string} [namespace] - The namespace requesting the lookup, which is excluded.
+ * @returns {string | undefined} - The namespace of the owning package, or undefined if not found.
+ */
+function findNamespaceForExpose(expose: Expose, namespace?: string): string | undefined {
+  const hasMatch = hasAdvancedHTTPMatch(expose);
+  return fqdnIndex
+    .get(getExposureKey(expose))
+    ?.find(
+      indexed => indexed.namespace !== namespace && (!hasMatch || !indexed.hasAdvancedHTTPMatch),
+    )?.namespace;
 }
 
 /**
@@ -248,6 +312,7 @@ export const PackageStore = {
   hasKey,
   getPkgName,
   findPackagesWithSsoClientId,
+  findNamespaceForExpose,
   findPackagesWithUdpGatewayPort,
   getAmbientPackages,
   getPackageByNamespace,
