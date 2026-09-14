@@ -938,7 +938,8 @@
                     "minLength": 1,
                     "type": "string"
                   },
-                  "type": "array"
+                  "type": "array",
+                  "uniqueItems": true
                 }
               },
               "type": "object"
