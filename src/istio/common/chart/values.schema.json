@@ -49,16 +49,6 @@
       "properties": {
         "enabled": {
           "type": "boolean"
-        },
-        "gateways": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 48,
-            "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"
-          }
         }
       }
     }

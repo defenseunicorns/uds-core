@@ -32,10 +32,7 @@ dashboardAnnotations: {}
 
 # Reject HTTP/2 requests whose :authority differs from the TLS SNI that selects
 # a gateway. This prevents a connection established for one gateway from being
-# reused for a hostname owned by another gateway.
+# reused for a hostname owned by another gateway. This is commonly needed when
+# using the passthrough gateway with a certificate/hosts that overlap the tenant.
 misdirectedRequest:
   enabled: true
-  # An empty list applies the filter to all gateway workloads from istio-system.
-  # Each name selects an ingress gateway using istio-<name>-gateway and
-  # <name>-ingressgateway. Egress gateways are not selected by this setting.
-  gateways: []

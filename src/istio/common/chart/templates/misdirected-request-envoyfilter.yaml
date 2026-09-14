@@ -3,27 +3,12 @@
 
 {{- $misdirectedRequest := .Values.misdirectedRequest }}
 {{- if $misdirectedRequest.enabled }}
-{{- $gateways := $misdirectedRequest.gateways | default (list "") }}
-{{- range $gateway := $gateways }}
-{{- if $gateway }}
----
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: istio-{{ $gateway }}-gateway
-{{- end }}
----
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:
   name: misdirected-request
-  namespace: {{ if $gateway }}istio-{{ $gateway }}-gateway{{ else }}istio-system{{ end }}
+  namespace: istio-system
 spec:
-  {{- if $gateway }}
-  workloadSelector:
-    labels:
-      app: {{ $gateway }}-ingressgateway
-  {{- end }}
   configPatches:
     - applyTo: HTTP_FILTER
       match:
@@ -48,5 +33,4 @@ spec:
                   request_handle:respond({[":status"] = "421"}, "Misdirected Request")
                 end
               end
-{{- end }}
 {{- end }}
