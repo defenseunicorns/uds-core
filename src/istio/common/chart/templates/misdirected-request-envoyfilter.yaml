@@ -5,6 +5,13 @@
 {{- if $misdirectedRequest.enabled }}
 {{- $gateways := $misdirectedRequest.gateways | default (list "") }}
 {{- range $gateway := $gateways }}
+{{- if $gateway }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-{{ $gateway }}-gateway
+{{- end }}
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter

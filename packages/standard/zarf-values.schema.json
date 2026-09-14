@@ -3624,6 +3624,10 @@
                   "type": "boolean"
                 },
                 "gateways": {
+                  "items": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
                   "type": "array"
                 }
               },
@@ -23808,11 +23812,7 @@
                     },
                     "gateways": {
                       "items": {
-                        "enum": [
-                          "admin",
-                          "tenant",
-                          "passthrough"
-                        ],
+                        "minLength": 1,
                         "type": "string"
                       },
                       "type": "array"

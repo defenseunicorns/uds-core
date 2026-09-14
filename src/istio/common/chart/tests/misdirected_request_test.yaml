@@ -27,18 +27,28 @@ tests:
     set:
       misdirectedRequest:
         gateways:
-          - tenant
+          - custom
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
+      - isKind:
+          of: Namespace
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: istio-custom-gateway
+        documentIndex: 0
+      - isKind:
+          of: EnvoyFilter
+        documentIndex: 1
       - equal:
           path: metadata.namespace
-          value: istio-tenant-gateway
-        documentIndex: 0
+          value: istio-custom-gateway
+        documentIndex: 1
       - equal:
           path: spec.workloadSelector.labels.app
-          value: tenant-ingressgateway
-        documentIndex: 0
+          value: custom-ingressgateway
+        documentIndex: 1
 
   - it: should render a filter for each named gateway
     set:
@@ -48,23 +58,7 @@ tests:
           - passthrough
     asserts:
       - hasDocuments:
-          count: 2
-      - equal:
-          path: metadata.namespace
-          value: istio-tenant-gateway
-        documentIndex: 0
-      - equal:
-          path: spec.workloadSelector.labels.app
-          value: tenant-ingressgateway
-        documentIndex: 0
-      - equal:
-          path: metadata.namespace
-          value: istio-passthrough-gateway
-        documentIndex: 1
-      - equal:
-          path: spec.workloadSelector.labels.app
-          value: passthrough-ingressgateway
-        documentIndex: 1
+          count: 4
   - it: should not render filters when disabled
     set:
       misdirectedRequest:
