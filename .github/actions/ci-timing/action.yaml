@@ -74,5 +74,8 @@ runs:
       with:
         name: ${{ inputs.artifact_name }}
         path: ${{ steps.resolve_timing_dir.outputs.path }}
+        # The timing directory intentionally uses a dot prefix and upload-artifact
+        # excludes hidden files by default.
+        include-hidden-files: true
         if-no-files-found: warn
         retention-days: ${{ inputs.retention_days }}
