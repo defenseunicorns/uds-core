@@ -158,93 +158,40 @@ tasks:
       - task: util:ci-timing-end
         with:
           phase: test-resources-create-deploy
-      - description: "Run Playwright and Vitest E2E tests concurrently"
+      - task: util:ci-timing-start
+        with:
+          phase: playwright-e2e
+      - description: "Run Playwright E2E tests for all packages"
+        dir: test/playwright
         cmd: |
-          set +e
-
-          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
-          TIMING_ENABLED="${CI_TIMING_ENABLED:-false}"
-          if [ "${TIMING_ENABLED}" = "true" ] && [ -f "${TIMING_SCRIPT}" ]; then
-            bash "${TIMING_SCRIPT}" start e2e-suites
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test \
+            "
+      - task: util:ci-timing-end
+        with:
+          phase: playwright-e2e
+      - task: util:ci-timing-start
+        with:
+          phase: vitest-e2e
+      - description: "Run E2E Tests"
+        env:
+          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
+        cmd: |
+          npm ci
+          # TODO: Remove this conditional exclude once Fleet admin realm updates are included in a released Core baseline.
+          # Upgrade tests start from an older released realm, and this realm update must be applied manually.
+          set --
+          if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
+            set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-
-          # The suites use separate working directories. This opt-in experiment shares the
-          # prepared cluster, so repeated green runs must confirm that suite interactions do not
-          # create false failures before enabling it for normal CI.
-          run_playwright() {
-            cd test/playwright || return
-            # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-            docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
-              cd app && \
-              npm ci && \
-              npx playwright test \
-              "
-          }
-
-          run_vitest() {
-            cd test/vitest || return
-            npm ci || return
-            # TODO: Remove this conditional exclude once Fleet admin realm updates are included in a released Core baseline.
-            # Upgrade tests start from an older released realm, and this realm update must be applied manually.
-            set --
-            if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
-              set -- --exclude "**/keycloak-fleet-admin.spec.ts"
-            fi
-            EGRESS_TESTS="${{ .inputs.validate_egress }}" UDP_EXPOSE_TESTS="${{ .inputs.validate_udp_expose }}" npx vitest run "$@"
-          }
-
-          run_timed() {
-            local phase="$1"
-            shift
-            if [ "${TIMING_ENABLED}" = "true" ] && [ -f "${TIMING_SCRIPT}" ]; then
-              bash "${TIMING_SCRIPT}" start "${phase}"
-            fi
-
-            "$@"
-            command_status=$?
-
-            if [ "${TIMING_ENABLED}" = "true" ] && [ -f "${TIMING_SCRIPT}" ]; then
-              if [ "${command_status}" -eq 0 ]; then
-                bash "${TIMING_SCRIPT}" end "${phase}" success
-              else
-                bash "${TIMING_SCRIPT}" end "${phase}" failure
-              fi
-            fi
-
-            return "${command_status}"
-          }
-
-          playwright_status=0
-          vitest_status=0
-          if [ "${CI_PARALLEL_E2E:-false}" = "true" ]; then
-            run_timed playwright-e2e run_playwright &
-            playwright_pid=$!
-            run_timed vitest-e2e run_vitest &
-            vitest_pid=$!
-            wait "${playwright_pid}" || playwright_status=$?
-            wait "${vitest_pid}" || vitest_status=$?
-          else
-            run_timed playwright-e2e run_playwright
-            playwright_status=$?
-            if [ "${playwright_status}" -eq 0 ]; then
-              run_timed vitest-e2e run_vitest
-              vitest_status=$?
-            fi
-          fi
-
-          if [ "${TIMING_ENABLED}" = "true" ] && [ -f "${TIMING_SCRIPT}" ]; then
-            if [ "${playwright_status}" -eq 0 ] && [ "${vitest_status}" -eq 0 ]; then
-              bash "${TIMING_SCRIPT}" end e2e-suites success
-            else
-              bash "${TIMING_SCRIPT}" end e2e-suites failure
-            fi
-          fi
-
-          if [ "${playwright_status}" -ne 0 ] || [ "${vitest_status}" -ne 0 ]; then
-            echo "Playwright status: ${playwright_status}"
-            echo "Vitest status: ${vitest_status}"
-            exit 1
-          fi
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
+        dir: test/vitest
+      - task: util:ci-timing-end
+        with:
+          phase: vitest-e2e
       - task: util:ci-timing-start
         with:
           phase: test-resources-cleanup

@@ -79,7 +79,7 @@ Each instrumented job uploads a `ci-timing-*` artifact containing `summary.json`
 
 ## Core-only performance experiment
 
-Add the `ci-performance` label to a pull request when measuring the core install and upgrade path. The label selects the `all` package matrix, skips unrelated PR jobs such as lint, unit, values, Slim Dev, Checkpoint, cloud, CLI compatibility, Kubernetes compatibility, and Private PKI tests, and enables the concurrent Playwright and Vitest experiment inside the package-test jobs. The experiment shares the prepared cluster, so repeated green runs must confirm that suite interactions do not create false failures before enabling it for normal CI. Scheduled runs and pull requests without the label keep their normal coverage.
+Add the `ci-performance` label to a pull request when measuring the core install and upgrade path. The label selects the `all` package matrix and skips unrelated PR jobs such as lint, unit, values, Slim Dev, Checkpoint, cloud, CLI compatibility, Kubernetes compatibility, and Private PKI tests. Scheduled runs and pull requests without the label keep their normal coverage.
 
 The label intentionally skips normal PR gates. Remove it before treating the pull request as merge-ready, or run the full matrix separately to confirm coverage.
 
