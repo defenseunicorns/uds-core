@@ -13126,6 +13126,9 @@
                       "properties": {},
                       "type": "object"
                     },
+                    "publishNotReadyAddresses": {
+                      "type": "boolean"
+                    },
                     "trafficDistribution": {
                       "type": "string"
                     }
@@ -21923,6 +21926,9 @@
               },
               "type": "object"
             },
+            "hostUsers": {
+              "type": "string"
+            },
             "imagePullSecrets": {
               "type": "array"
             },
@@ -21963,6 +21969,9 @@
               "type": "object"
             },
             "nameOverride": {
+              "type": "string"
+            },
+            "namespaceOverride": {
               "type": "string"
             },
             "nodeSelector": {
@@ -24136,9 +24145,6 @@
                           },
                           "type": "object"
                         },
-                        "dangerously_allow_unconfined_template_resolution": {
-                          "type": "boolean"
-                        },
                         "encoding": {
                           "properties": {
                             "codec": {
@@ -24194,9 +24200,6 @@
                             }
                           },
                           "type": "object"
-                        },
-                        "dangerously_allow_unconfined_template_resolution": {
-                          "type": "boolean"
                         },
                         "encoding": {
                           "properties": {
@@ -24878,6 +24881,10 @@
             },
             "secrets": {
               "properties": {
+                "annotations": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "generic": {
                   "properties": {},
                   "type": "object"
