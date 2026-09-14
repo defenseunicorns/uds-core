@@ -1,20 +1,61 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+variables:
+  - name: DEFAULT_K3S_VERSION
+    description: "Expected K3s version in the default airgap uds-k3d package"
+    default: "v1.36.4+k3s1"
+
 tasks:
   - name: create-k3d-cluster
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for connected uds-k3d deployments"
     actions:
       - description: "Create the K3d cluster"
-        # renovate: datasource=docker depName=ghcr.io/defenseunicorns/packages/uds-k3d versioning=docker
-        cmd: "./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.2-airgap --confirm"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          if [ -z "${{ .inputs.k3s_version }}" ]; then
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.3-airgap --confirm
+          else
+            K3S_VERSION="${{ .inputs.k3s_version }}"
+            K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.3 --set K3D_IMAGE="$K3D_IMAGE" --confirm
+          fi
 
   - name: k3d-test-cluster
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for connected uds-k3d deployments"
     actions:
       - task: create-k3d-cluster
+        with:
+          k3s_version: "${{ .inputs.k3s_version }}"
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
         cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.85.0 --confirm"
+
+      - description: "Verify K3s server version"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          EXPECTED="${{ .inputs.k3s_version }}"
+          if [ -z "$EXPECTED" ]; then
+            EXPECTED="${DEFAULT_K3S_VERSION}"
+          fi
+          ACTUAL=$(./uds zarf tools kubectl version -o json | ./uds zarf tools yq -r '.serverVersion.gitVersion')
+          test "$ACTUAL" = "$EXPECTED" || {
+            echo "ERROR: Expected K3s $EXPECTED, got $ACTUAL"
+            exit 1
+          }
 
   - name: ha-postgres
     actions:

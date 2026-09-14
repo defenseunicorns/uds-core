@@ -195,6 +195,33 @@ tasks:
           K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
       - task: e2e-tests
 
+  - name: uds-core-values-e2e
+    description: "Build and test UDS Core deployed via Zarf values (equivalency to bundle deploy)"
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for the test cluster"
+    actions:
+      - task: create:standard-package
+        with:
+          create_options: "--skip-sbom"
+      - task: setup:k3d-test-cluster
+        with:
+          k3s_version: "${{ .inputs.k3s_version }}"
+      - description: "Deploy UDS Core standard package via Zarf values"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+          PKG=$(ls build/zarf-package-core-${UDS_ARCH}-*.tar.zst 2>/dev/null | head -1)
+          ./uds zarf package deploy "$PKG" \
+            --values test/values/k3d-standard/values.yaml \
+            --components "*" \
+            --confirm --no-progress
+      - task: validate-packages
+      - task: e2e-tests
+
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
     inputs:
