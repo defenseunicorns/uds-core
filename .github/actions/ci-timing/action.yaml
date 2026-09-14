@@ -25,17 +25,43 @@ inputs:
     required: false
     default: "14"
   timing_dir:
-    description: Directory used for timing files, relative to the workspace.
+    description: Directory used for timing files, relative to the workspace unless absolute.
     required: false
     default: .ci-timings
+
+outputs:
+  timing_dir:
+    description: Absolute path used for timing files in this job.
+    value: ${{ steps.resolve_timing_dir.outputs.path }}
 
 runs:
   using: composite
   steps:
+    - name: Resolve CI timing directory
+      id: resolve_timing_dir
+      shell: bash
+      env:
+        INPUT_TIMING_DIR: ${{ inputs.timing_dir }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "${INPUT_TIMING_DIR}" ]]; then
+          echo "timing_dir must not be empty" >&2
+          exit 1
+        fi
+
+        if [[ "${INPUT_TIMING_DIR}" = /* ]]; then
+          timing_dir="${INPUT_TIMING_DIR}"
+        else
+          timing_dir="${GITHUB_WORKSPACE}/${INPUT_TIMING_DIR}"
+        fi
+
+        printf 'path=%s\n' "${timing_dir}" >> "${GITHUB_OUTPUT}"
+
     - name: Record CI timing
       shell: bash
       env:
-        CI_TIMING_DIR: ${{ inputs.timing_dir }}
+        CI_TIMING_DIR: ${{ steps.resolve_timing_dir.outputs.path }}
         CI_TIMING_MODE: ${{ inputs.mode }}
         CI_TIMING_PHASE: ${{ inputs.phase }}
         CI_TIMING_STATUS: ${{ inputs.status }}
@@ -47,6 +73,6 @@ runs:
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: ${{ inputs.artifact_name }}
-        path: ${{ inputs.timing_dir }}
+        path: ${{ steps.resolve_timing_dir.outputs.path }}
         if-no-files-found: warn
         retention-days: ${{ inputs.retention_days }}

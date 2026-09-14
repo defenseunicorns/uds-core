@@ -29,6 +29,8 @@ permissions:
 
 jobs:
   uds-core-private-pki-nightly:
+    # Keep specialized PKI jobs out of the opt-in core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 45
     name: Private PKI

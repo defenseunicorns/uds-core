@@ -61,6 +61,8 @@ jobs:
     name: Test
     env:
       UDS_LAYER: ${{ inputs.package }}
+      # Enable the first optimization only for the explicitly labeled core performance experiment.
+      CI_PARALLEL_E2E: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
 
     steps:
       - name: Checkout repository

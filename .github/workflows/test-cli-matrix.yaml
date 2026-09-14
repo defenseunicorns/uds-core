@@ -28,6 +28,8 @@ permissions:
 
 jobs:
   cli-upgrade:
+    # Keep compatibility matrix jobs out of the opt-in core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
     name: "Test Upgrade (${{ matrix.mode }}, ${{ matrix.scenario }}, ${{ matrix.flavor }})"
@@ -117,6 +119,8 @@ jobs:
           channel: ${{ vars.SLACK_ALERT_CHANNEL }}
 
   cli-install:
+    # Keep compatibility matrix jobs out of the opt-in core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 30
     name: "Test Install (${{ matrix.mode }}, minimum supported, upstream)"
