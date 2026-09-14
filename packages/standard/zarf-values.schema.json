@@ -3617,6 +3617,14 @@
             },
             "domain": {
               "type": "string"
+            },
+            "misdirectedRequest": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
