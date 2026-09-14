@@ -23812,7 +23812,11 @@
                     },
                     "gateways": {
                       "items": {
-                        "minLength": 1,
+                        "enum": [
+                          "admin",
+                          "tenant",
+                          "passthrough"
+                        ],
                         "type": "string"
                       },
                       "type": "array"
