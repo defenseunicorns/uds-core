@@ -28,6 +28,7 @@ vi.mock("./istio-resources", async () => {
     log: {
       debug: vi.fn(),
       error: vi.fn(),
+      warn: vi.fn(),
     },
   };
 });
@@ -90,6 +91,17 @@ vi.mock("pepr", () => ({
   },
 }));
 
+function resetSharedEgressMocks() {
+  mockPurgeOrphans.mockReset();
+  mockPurgeOrphans.mockResolvedValue();
+  (applySidecarEgressResources as Mock).mockReset();
+  (applySidecarEgressResources as Mock).mockResolvedValue(undefined);
+  (applyAmbientEgressResources as Mock).mockReset();
+  (applyAmbientEgressResources as Mock).mockResolvedValue(undefined);
+  (purgeAmbientEgressResources as Mock).mockReset();
+  (purgeAmbientEgressResources as Mock).mockResolvedValue(undefined);
+}
+
 describe("test reconcileSharedEgressResources", () => {
   const hostResourceMapMock: HostResourceMap = {
     "example.com": {
@@ -121,10 +133,23 @@ describe("test reconcileSharedEgressResources", () => {
     },
   };
 
+  const packageWithMode = (mode: Mode): UDSPackage => ({
+    ...pkgWithAllow,
+    spec: {
+      ...pkgWithAllow.spec,
+      network: {
+        ...pkgWithAllow.spec?.network,
+        serviceMesh: { mode },
+      },
+    },
+  });
+
   beforeEach(async () => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.useFakeTimers();
     vi.clearAllMocks();
+    resetSharedEgressMocks();
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [] });
     // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
@@ -144,6 +169,7 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should populate in-memory vars on action AddOrUpdate, sidecar", async () => {
     updateEgressMocks(defaultEgressMocks);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [pkgWithAllow] });
 
     await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Sidecar);
 
@@ -156,8 +182,10 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should populate in-memory vars on action AddOrUpdate, ambient", async () => {
     updateEgressMocks(defaultEgressMocks);
+    const ambientPackage = packageWithMode(Mode.Ambient);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [ambientPackage] });
 
-    await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Ambient);
+    await reconcileSharedEgressResources(ambientPackage, PackageAction.AddOrUpdate, Mode.Ambient);
 
     // Validate inMemoryPackageMap
     expect(inMemoryPackageMap).toEqual({});
@@ -181,6 +209,8 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should update in-memory vars on action AddOrUpdate, sidecar to ambient", async () => {
     updateEgressMocks(defaultEgressMocks);
+    const ambientPackage = packageWithMode(Mode.Ambient);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [pkgWithAllow] });
 
     await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Sidecar);
 
@@ -191,6 +221,7 @@ describe("test reconcileSharedEgressResources", () => {
     expect(inMemoryAmbientPackageMap).toEqual({});
 
     // Update to ambient
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [ambientPackage] });
     await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Ambient);
 
     // Validate inMemoryPackageMap now empty
@@ -215,8 +246,10 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should update in-memory vars on action AddOrUpdate, ambient to sidecar", async () => {
     updateEgressMocks(defaultEgressMocks);
+    const ambientPackage = packageWithMode(Mode.Ambient);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [ambientPackage] });
 
-    await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Ambient);
+    await reconcileSharedEgressResources(ambientPackage, PackageAction.AddOrUpdate, Mode.Ambient);
 
     // Validate inMemoryPackageMap is empty
     expect(inMemoryPackageMap).toEqual({});
@@ -237,6 +270,7 @@ describe("test reconcileSharedEgressResources", () => {
       },
     });
 
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [pkgWithAllow] });
     await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Sidecar);
 
     // Validate inMemoryPackageMap is populated
@@ -248,6 +282,7 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should update in-memory vars on action Remove, sidecar", async () => {
     updateEgressMocks(defaultEgressMocks);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [pkgWithAllow] });
 
     // Populate inMemoryPackageMap first
     await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Sidecar);
@@ -270,9 +305,11 @@ describe("test reconcileSharedEgressResources", () => {
 
   it("should update in-memory vars on action Remove, ambient", async () => {
     updateEgressMocks(defaultEgressMocks);
+    const ambientPackage = packageWithMode(Mode.Ambient);
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [ambientPackage] });
 
     // Populate inMemoryAmbientPackages first
-    await reconcileSharedEgressResources(pkgWithAllow, PackageAction.AddOrUpdate, Mode.Ambient);
+    await reconcileSharedEgressResources(ambientPackage, PackageAction.AddOrUpdate, Mode.Ambient);
 
     // Validate inMemoryPackageMap is still empty
     expect(inMemoryPackageMap).toEqual({});
@@ -294,7 +331,7 @@ describe("test reconcileSharedEgressResources", () => {
     });
 
     // Remove packageIdMock
-    await reconcileSharedEgressResources(pkgWithAllow, PackageAction.Remove, Mode.Ambient);
+    await reconcileSharedEgressResources(ambientPackage, PackageAction.Remove, Mode.Ambient);
 
     // Validate inMemoryPackageMap is still empty
     expect(inMemoryPackageMap).toEqual({});
@@ -334,6 +371,8 @@ describe("test shared egress reconciliation serialization", () => {
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
     vi.clearAllMocks();
+    resetSharedEgressMocks();
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [] });
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
     }
@@ -365,6 +404,29 @@ describe("test shared egress reconciliation serialization", () => {
       "first-package-test-namespace": sharedHostResourceMap,
       "second-package-test-namespace": sharedHostResourceMap,
     });
+  });
+
+  it("retries transient package snapshot reads before reconciling", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const packageToReconcile = packageWithHost("package-to-reconcile");
+    defaultEgressMocks.getPkgListMock
+      .mockRejectedValueOnce(new Error("temporary API failure"))
+      .mockResolvedValueOnce({ items: [packageToReconcile] });
+
+    vi.useFakeTimers();
+    try {
+      const reconcile = reconcileSharedEgressResources(
+        packageToReconcile,
+        PackageAction.AddOrUpdate,
+        Mode.Sidecar,
+      );
+      await vi.runAllTimersAsync();
+      await expect(reconcile).resolves.toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(defaultEgressMocks.getPkgListMock).toHaveBeenCalledTimes(2);
   });
 
   it("does not let an older package event override newer live state", async () => {
@@ -466,11 +528,33 @@ describe("test shared egress reconciliation serialization", () => {
     await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
     expect(applySidecarEgressResources).toHaveBeenCalledTimes(2);
   });
+
+  it("does not replay a failed add/update after the package disappears", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const packageThatFails = packageWithHost("package-that-fails");
+    const unrelatedPackage = packageWithHost("unrelated-package", "unrelated.example.com");
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [packageThatFails] });
+    vi.mocked(applySidecarEgressResources).mockRejectedValueOnce(
+      new Error("transient apply failure"),
+    );
+
+    await expect(
+      reconcileSharedEgressResources(packageThatFails, PackageAction.AddOrUpdate, Mode.Sidecar),
+    ).rejects.toThrow("Egress reconciliation failed");
+
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [unrelatedPackage] });
+    await reconcileSharedEgressResources(unrelatedPackage, PackageAction.AddOrUpdate, Mode.Sidecar);
+
+    expect(inMemoryPackageMap).not.toHaveProperty("package-that-fails-test-namespace");
+    expect(inMemoryPackageMap).toHaveProperty("unrelated-package-test-namespace");
+  });
 });
 
 describe("test performEgressReconciliation", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetSharedEgressMocks();
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({ items: [] });
 
     // Reset the in-memory vars before each test
     for (const key in inMemoryPackageMap) {

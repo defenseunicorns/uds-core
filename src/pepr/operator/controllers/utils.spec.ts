@@ -405,6 +405,76 @@ describe("purgeOrphans", () => {
     expect(deleteMock).toHaveBeenCalledWith(currentResource);
   });
 
+  it("retries transient fresh reads before deleting", async () => {
+    vi.useFakeTimers();
+
+    try {
+      const listedResource = {
+        kind: "Pod",
+        metadata: {
+          name: "egress-resource",
+          labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+        },
+      };
+      const currentResource = {
+        ...listedResource,
+        metadata: {
+          ...listedResource.metadata,
+          labels: { "uds/package": "shared-egress-resource", "uds/generation": "still-old" },
+        },
+      };
+      const getMock = vi
+        .fn()
+        .mockResolvedValueOnce({ items: [listedResource] })
+        .mockRejectedValueOnce(new Error("temporary API failure"))
+        .mockResolvedValueOnce(currentResource);
+      const deleteMock = vi.fn().mockResolvedValue({});
+      vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock, Delete: deleteMock }));
+
+      const purge = purgeOrphans(
+        "current",
+        "test-ns",
+        "shared-egress-resource",
+        kind.Pod as never,
+        createMockLogger(),
+      );
+      await vi.runAllTimersAsync();
+      await purge;
+
+      expect(getMock).toHaveBeenCalledTimes(3);
+      expect(deleteMock).toHaveBeenCalledWith(currentResource);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("treats a missing fresh resource as already cleaned up", async () => {
+    const listedResource = {
+      kind: "Pod",
+      metadata: {
+        name: "egress-resource",
+        labels: { "uds/package": "shared-egress-resource", "uds/generation": "old" },
+      },
+    };
+    const getMock = vi
+      .fn()
+      .mockResolvedValueOnce({ items: [listedResource] })
+      .mockRejectedValueOnce({ status: 404 });
+    const deleteMock = vi.fn().mockResolvedValue({});
+    vi.mocked(K8s).mockReturnValue(createMockK8sClient({ Get: getMock, Delete: deleteMock }));
+
+    await purgeOrphans(
+      "current",
+      "test-ns",
+      "shared-egress-resource",
+      kind.Pod as never,
+      createMockLogger(),
+    );
+
+    expect(getMock).toHaveBeenCalledTimes(2);
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
   it("does not delete when the fresh resource has the current generation", async () => {
     const listedResource = {
       kind: "Pod",

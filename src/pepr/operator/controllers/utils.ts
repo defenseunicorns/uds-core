@@ -153,15 +153,17 @@ export async function purgeOrphans<T extends GenericClass>(
 
     // Re-read the object before deleting it. The list can be stale while a
     // concurrent apply is updating the same named resource.
-    let currentResource: InstanceType<T>;
-    try {
-      currentResource = await K8s(kind).InNamespace(namespace).Get(name);
-    } catch (e) {
-      if (e?.status === 404) {
-        continue;
+    const getCurrentResource = async (): Promise<InstanceType<T> | undefined> => {
+      try {
+        return await K8s(kind).InNamespace(namespace).Get(name);
+      } catch (e) {
+        if (e?.status === 404) {
+          return undefined;
+        }
+        throw e;
       }
-      throw e;
-    }
+    };
+    const currentResource = await retryWithDelay(getCurrentResource, log, 5, 1000);
 
     if (!currentResource?.metadata?.name) {
       continue;

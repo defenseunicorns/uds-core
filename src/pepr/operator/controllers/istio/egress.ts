@@ -5,7 +5,7 @@
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { K8s } from "pepr";
-import { validateNamespace } from "../utils";
+import { retryWithDelay, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import {
@@ -105,8 +105,8 @@ export async function reconcileSharedEgressResources(
   const pkgId = `${pkgName}-${pkgNamespace}`;
 
   // Keep the event as a short-lived override for the next snapshot. The live
-  // API list is authoritative, but the override preserves the event semantics
-  // for finalizer calls and makes the reconciliation safe during API resyncs.
+  // API list is authoritative, but a newer event can win over a stale snapshot
+  // and a Remove event can still remove a package during finalization.
   pendingPackageOverrides.set(pkgId, { pkg, action, istioMode });
   reconcileDirty = true;
 
@@ -208,7 +208,8 @@ function addPackageToEgressMaps(
 export async function rebuildEgressPackageMaps(
   overrides: ReadonlyMap<string, EgressPackageOverride> = new Map(),
 ): Promise<void> {
-  const packages = await K8s(UDSPackage).Get();
+  const fetchPackages = () => K8s(UDSPackage).Get();
+  const packages = await retryWithDelay(fetchPackages, log, 5, 1000);
   const sidecarMap: PackageHostMap = {};
   const ambientMap: AmbientPackageMap = {};
   const livePackages = new Map<string, UDSPackage>();
@@ -232,7 +233,8 @@ export async function rebuildEgressPackageMaps(
     if (
       override.action === PackageAction.AddOrUpdate &&
       !override.pkg.metadata?.deletionTimestamp &&
-      (!livePackage || eventGeneration > liveGeneration)
+      livePackage &&
+      eventGeneration > liveGeneration
     ) {
       addPackageToEgressMaps(override.pkg, sidecarMap, ambientMap, override.istioMode);
     } else if (override.action === PackageAction.AddOrUpdate && livePackage) {
@@ -310,15 +312,9 @@ export async function performEgressReconciliationWithMutex(): Promise<void> {
           try {
             await performEgressReconciliation(overrides);
           } catch (error) {
-            // Keep overrides available for the next event-driven retry if the
-            // pass fails before the live package state is safely reconciled.
-            // Preserve a newer event that arrived while this pass was running.
-            for (const [pkgId, override] of overrides) {
-              if (!pendingPackageOverrides.has(pkgId)) {
-                pendingPackageOverrides.set(pkgId, override);
-              }
-            }
-
+            // Do not retain failed overrides. A later unrelated event must not
+            // replay an AddOrUpdate for a package that is no longer live. The
+            // original reconciler/finalizer will submit its event again when it retries.
             // A package that arrived while the failed pass was running is
             // already waiting on this promise. Retry the complete snapshot so
             // a transient shared-resource failure does not fail every waiter.
