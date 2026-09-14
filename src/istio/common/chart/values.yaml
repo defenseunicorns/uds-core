@@ -29,3 +29,13 @@ adminDomain: '{{default (default (printf "admin.%s" (default .Variables.DOMAIN .
 # Optional annotations for grouping dashboards in Grafana folders.
 # see docs for more info: https://docs.defenseunicorns.com/core/how-to-guides/monitoring--observability/add-custom-dashboards/
 dashboardAnnotations: {}
+
+# Reject HTTP/2 requests whose :authority differs from the TLS SNI that selects
+# a gateway. This prevents a connection established for one gateway from being
+# reused for a hostname owned by another gateway.
+misdirectedRequest:
+  enabled: true
+  # An empty list applies the filter to all gateway workloads from istio-system.
+  # Each name selects an ingress gateway using istio-<name>-gateway and
+  # <name>-ingressgateway. Egress gateways are not selected by this setting.
+  gateways: []

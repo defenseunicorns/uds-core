@@ -1,0 +1,74 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+suite: common Istio - misdirected request EnvoyFilter
+templates:
+  - templates/misdirected-request-envoyfilter.yaml
+
+tests:
+  - it: should render globally when no gateways are configured
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: misdirected-request
+        documentIndex: 0
+      - equal:
+          path: metadata.namespace
+          value: istio-system
+        documentIndex: 0
+      - notExists:
+          path: spec.workloadSelector
+        documentIndex: 0
+
+  - it: should render a filter for one named gateway
+    set:
+      misdirectedRequest:
+        gateways:
+          - tenant
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.namespace
+          value: istio-tenant-gateway
+        documentIndex: 0
+      - equal:
+          path: spec.workloadSelector.labels.app
+          value: tenant-ingressgateway
+        documentIndex: 0
+
+  - it: should render a filter for each named gateway
+    set:
+      misdirectedRequest:
+        gateways:
+          - tenant
+          - passthrough
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.namespace
+          value: istio-tenant-gateway
+        documentIndex: 0
+      - equal:
+          path: spec.workloadSelector.labels.app
+          value: tenant-ingressgateway
+        documentIndex: 0
+      - equal:
+          path: metadata.namespace
+          value: istio-passthrough-gateway
+        documentIndex: 1
+      - equal:
+          path: spec.workloadSelector.labels.app
+          value: passthrough-ingressgateway
+        documentIndex: 1
+  - it: should not render filters when disabled
+    set:
+      misdirectedRequest:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

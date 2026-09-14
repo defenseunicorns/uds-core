@@ -927,6 +927,17 @@
             },
             "domain": {
               "type": "string"
+            },
+            "misdirectedRequest": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "gateways": {
+                  "type": "array"
+                }
+              },
+              "type": "object"
             }
           },
           "type": "object"
