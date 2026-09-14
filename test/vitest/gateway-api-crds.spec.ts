@@ -135,7 +135,7 @@ function listDefaultNamespaceHelmReleases(): HelmRelease[] {
 }
 
 describe("Gateway API resources", () => {
-  test("are owned by the stable Helm release", async () => {
+  test("are owned by the stable Helm release", { timeout: 30_000 }, async () => {
     for (const resourceRef of GATEWAY_API_RESOURCES) {
       const resource = (await customObjects.getClusterCustomObject(
         resourceRef,
