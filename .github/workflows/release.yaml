@@ -6,7 +6,7 @@ name: Release UDS Core
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
 concurrency:
   group: release-${{ github.ref }}
@@ -28,8 +28,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write
-      pull-requests: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
 
