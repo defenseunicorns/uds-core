@@ -1,0 +1,52 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CI timing
+description: Record best-effort phase timings and upload a small timing artifact.
+
+inputs:
+  mode:
+    description: "Timing operation to perform: init, start, end, or finalize."
+    required: true
+  phase:
+    description: Phase name for start/end operations.
+    required: false
+    default: ""
+  status:
+    description: Status to associate with an end/finalize operation.
+    required: false
+    default: success
+  artifact_name:
+    description: Artifact name used by finalize.
+    required: false
+    default: ci-timing
+  retention_days:
+    description: Number of days to retain the timing artifact.
+    required: false
+    default: "14"
+  timing_dir:
+    description: Directory used for timing files, relative to the workspace.
+    required: false
+    default: .ci-timings
+
+runs:
+  using: composite
+  steps:
+    - name: Record CI timing
+      shell: bash
+      env:
+        CI_TIMING_DIR: ${{ inputs.timing_dir }}
+        CI_TIMING_MODE: ${{ inputs.mode }}
+        CI_TIMING_PHASE: ${{ inputs.phase }}
+        CI_TIMING_STATUS: ${{ inputs.status }}
+      run: |
+        bash "$GITHUB_ACTION_PATH/timing.sh" "$CI_TIMING_MODE" "$CI_TIMING_PHASE" "$CI_TIMING_STATUS"
+
+    - name: Upload CI timing artifact
+      if: ${{ inputs.mode == 'finalize' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.timing_dir }}
+        if-no-files-found: warn
+        retention-days: ${{ inputs.retention_days }}

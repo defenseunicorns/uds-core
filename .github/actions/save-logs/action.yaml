@@ -21,6 +21,13 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Start containerd log timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-containerd
     - name: Pull logs from containerd
       if: ${{ inputs.distro == 'k3d' }}
       run: |
@@ -32,7 +39,22 @@ runs:
           echo "Container $CONTAINER_NAME is not running. Skipping log copy."
         fi
       shell: bash
+    - name: End containerd log timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-containerd
+        status: ${{ job.status }}
 
+    - name: Start node log timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-node
     - name: Dump Node Logs
       if: ${{ inputs.distro == 'k3d' }}
       run: |
@@ -40,20 +62,65 @@ runs:
           docker logs "$line" 2> /tmp/$line.log
         done
       shell: bash
+    - name: End node log timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-node
+        status: ${{ job.status }}
 
+    - name: Start log permission timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-permissions
     - name: Fix log permissions
       run: |
         sudo chown $USER /tmp/zarf-*.log || echo ""
         sudo chown $USER /tmp/uds-*.log || echo ""
       shell: bash
+    - name: End log permission timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-permissions
+        status: ${{ job.status }}
 
+    - name: Start Playwright artifact timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-playwright
     - name: Move Playwright Artifacts
       run: |
         sudo mkdir -p /tmp/playwright
         sudo mv test/playwright/.playwright/* /tmp/playwright || true
       shell: bash
+    - name: End Playwright artifact timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-playwright
+        status: ${{ job.status }}
 
     # Loop over all pods and use kubectl logs since we don't have the same direct node access as k3d
+    - name: Start pod log timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro != 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-pods
     - name: Cluster Pod Logs
       if: ${{ inputs.distro != 'k3d' }}
       run: |
@@ -69,7 +136,22 @@ runs:
           ' _
         echo "::endgroup::"
       shell: bash
+    - name: End pod log timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' && inputs.distro != 'k3d' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-pods
+        status: ${{ job.status }}
 
+    - name: Start AKS control plane log timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'aks' && inputs.resource_group != '' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-aks
     - name: AKS Control Plane Logs
       if: ${{ inputs.distro == 'aks' && inputs.resource_group != '' }}
       run: |
@@ -127,7 +209,22 @@ runs:
         fi
         echo "::endgroup::"
       shell: bash
+    - name: End AKS control plane log timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'aks' && inputs.resource_group != '' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-aks
+        status: ${{ job.status }}
 
+    - name: Start log artifact upload timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: save-logs-upload
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: debug-log${{ inputs.suffix }}
@@ -143,3 +240,11 @@ runs:
           /tmp/k3d-uds-*.log
           /tmp/playwright/output
           /tmp/playwright/reports
+    - name: End log artifact upload timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: save-logs-upload
+        status: ${{ job.status }}

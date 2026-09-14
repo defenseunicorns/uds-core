@@ -69,6 +69,14 @@ The current branch keeps the independent routing and test split, while restoring
 
 The current implementation no longer contains the experimental `build-core`, `core_artifact`, or `use_prebuilt` paths.
 
+The legacy upgrade compatibility task is retained so the existing top-level legacy upgrade wrappers resolve successfully while this baseline is collected.
+
+## Baseline instrumentation
+
+The current branch records best-effort phase timings for the independent PR gates, path routing, multi-architecture validation, and each reusable package-test job. Package-test timings include environment setup, package and bundle creation, deployment, per-package validation, test-resource creation and readiness, Playwright and Vitest execution, test-resource cleanup, debug output, and log collection.
+
+Each instrumented job uploads a `ci-timing-*` artifact containing `summary.json`, `summary.md`, and the raw tab-separated events. The JSON schema is intentionally small: it records GitHub and matrix metadata plus each phase's start, end, duration, and status. Timings begin after checkout because the local timing action is not available until the repository has been checked out. The instrumentation is non-blocking and should not change the pass/fail result of a test job. Task-level timing calls are guarded by `CI_TIMING_ENABLED`, so local task runs keep their existing behavior and do not create timing files.
+
 ## Next measurement
 
 The next comparable run should use the restored full matrix and measure these values against the baseline:
@@ -80,6 +88,7 @@ The next comparable run should use the restored full matrix and measure these va
 - Duration of each Core and layer matrix job.
 - Total workflow duration.
 - Aggregate runner time, where available.
+- Phase durations from the `ci-timing-*` artifacts, especially environment setup, test execution, debug output, and log collection.
 
 Record any failures separately from timing improvements. A faster run that cancels or omits matrix coverage does not establish an equivalent CI improvement.
 
