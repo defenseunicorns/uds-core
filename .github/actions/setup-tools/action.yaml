@@ -17,6 +17,10 @@ inputs:
     description: "Whether to install the helm unittest plugin"
     required: false
     default: 'false'
+  installHcledit:
+    description: "Whether to install hcledit"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -52,3 +56,14 @@ runs:
       shell: bash
       # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
       run: export HELM_UNITTEST_VERSION="v1.1.2" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
+
+    - name: Install hcledit
+      if: ${{ inputs.installHcledit == 'true' }}
+      shell: bash
+      # renovate: datasource=github-releases depName=minamijoyo/hcledit versioning=semver
+      run: |
+        HCLEDIT_VERSION="0.2.18"
+        curl -fsSL "https://github.com/minamijoyo/hcledit/releases/download/v${HCLEDIT_VERSION}/hcledit_${HCLEDIT_VERSION}_linux_amd64.tar.gz" -o hcledit.tar.gz
+        tar -xzf hcledit.tar.gz hcledit
+        sudo install hcledit /usr/local/bin/hcledit
+        rm -f hcledit hcledit.tar.gz

@@ -33,6 +33,10 @@ inputs:
     description: "Whether to install the helm unittest plugin"
     required: false
     default: 'false'
+  installHcledit:
+    description: "Whether to install hcledit"
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -43,6 +47,7 @@ runs:
         installUv: ${{ inputs.installUv }}
         installK3d: ${{ inputs.installK3d }}
         installHelmUnittest: ${{ inputs.installHelmUnittest }}
+        installHcledit: ${{ inputs.installHcledit }}
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' && inputs.registry1Password != '' }}
