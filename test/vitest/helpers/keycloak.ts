@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { K8s, kind } from "pepr";
+import { fetchWithTimeout } from "./fetch";
 
 export async function getAdminToken(baseUrl: string): Promise<string> {
   const secret = await K8s(kind.Secret).InNamespace("keycloak").Get("keycloak-admin-password");
@@ -20,7 +21,7 @@ export async function getAdminToken(baseUrl: string): Promise<string> {
   }
 
   const tokenUrl = `${baseUrl}/realms/master/protocol/openid-connect/token`;
-  const tokenResp = await fetch(tokenUrl, {
+  const tokenResp = await fetchWithTimeout(tokenUrl, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -46,20 +47,23 @@ export async function createRandomClient(
   clientId: string,
   realm = "uds",
 ): Promise<string> {
-  const resp = await fetch(`${baseUrl}/admin/realms/${encodeURIComponent(realm)}/clients`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
+  const resp = await fetchWithTimeout(
+    `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/clients`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        clientId,
+        enabled: true,
+        protocol: "openid-connect",
+        publicClient: true,
+        redirectUris: ["*"],
+      }),
     },
-    body: JSON.stringify({
-      clientId,
-      enabled: true,
-      protocol: "openid-connect",
-      publicClient: true,
-      redirectUris: ["*"],
-    }),
-  });
+  );
 
   if (!(resp.status === 201 || resp.status === 409)) {
     const text = await resp.text();
@@ -80,11 +84,14 @@ export async function createUser(
   const headersJson = { ...headersAuth, "Content-Type": "application/json" } as const;
 
   // Create the user (201 on create, 409 if it exists)
-  const createUserResp = await fetch(`${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users`, {
-    method: "POST",
-    headers: headersJson,
-    body: JSON.stringify({ username, enabled: true }),
-  });
+  const createUserResp = await fetchWithTimeout(
+    `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users`,
+    {
+      method: "POST",
+      headers: headersJson,
+      body: JSON.stringify({ username, enabled: true }),
+    },
+  );
 
   if (!(createUserResp.status === 201 || createUserResp.status === 409)) {
     const text = await createUserResp.text();
@@ -100,7 +107,7 @@ export async function createUser(
 
   // Fallback: query the user by username
   if (!userId) {
-    const usersQuery = await fetch(
+    const usersQuery = await fetchWithTimeout(
       `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users?username=${encodeURIComponent(username)}&exact=true`,
       { headers: headersAuth },
     );
@@ -130,7 +137,7 @@ export async function addUserToGroup(
   const headersAuth = { Authorization: `Bearer ${accessToken}` } as const;
 
   // Resolve group id by path
-  const groupResp = await fetch(
+  const groupResp = await fetchWithTimeout(
     `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/group-by-path/${encodeURIComponent(groupPath)}`,
     { headers: headersAuth },
   );
@@ -146,7 +153,7 @@ export async function addUserToGroup(
   }
 
   // Add membership (201/204 acceptable)
-  const addGroupResp = await fetch(
+  const addGroupResp = await fetchWithTimeout(
     `${baseUrl}/admin/realms/${encodeURIComponent(realm)}/users/${encodeURIComponent(userId)}/groups/${encodeURIComponent(group.id)}`,
     { method: "PUT", headers: headersAuth },
   );

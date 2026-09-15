@@ -106,6 +106,7 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -upgrade-matrix-${{ matrix.mode }}-${{ matrix.scenario }}-${{ matrix.flavor }}
 
@@ -159,6 +160,7 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -install-${{ matrix.mode }}-min-cli-upstream
 

@@ -6,6 +6,7 @@ import * as net from "net";
 import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { fetchWithTimeout } from "./helpers/fetch";
 import { pollUntilSuccess } from "./helpers/polling";
 
 // Global variables
@@ -29,7 +30,7 @@ const sendLog = async (
   };
 
   try {
-    const response = await fetch(getLokiUrl("/loki/api/v1/push", lokiWrite), {
+    const response = await fetchWithTimeout(getLokiUrl("/loki/api/v1/push", lokiWrite), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(logEntry),
@@ -57,7 +58,7 @@ const queryLogs = async (
   data: { result: Array<{ values: string[][] }> };
 }> => {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       getLokiUrl(
         `/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
         lokiRead,
@@ -88,7 +89,7 @@ const checkLokiServices = async (
   urlComponent: { url: string },
 ): Promise<void> => {
   try {
-    const response = await fetch(getLokiUrl("/services", urlComponent));
+    const response = await fetchWithTimeout(getLokiUrl("/services", urlComponent));
     if (!response.ok) throw new Error(`Error checking services for ${component}`);
 
     const servicesList = (await response.text()).split("\n");
@@ -250,7 +251,7 @@ describe("Loki Tests", () => {
   });
 
   test("Validate Loki Gateway is responsive", async () => {
-    const response = await fetch(`${lokiGateway.url}`);
+    const response = await fetchWithTimeout(`${lokiGateway.url}`);
     expect(response.status).toBe(200);
   });
 
@@ -262,7 +263,7 @@ describe("Loki Tests", () => {
     const logEntry = {
       streams: [{ stream: labels, values: [[`${Date.now() * 1_000_000}`, logMessage]] }],
     };
-    const response = await fetch(getLokiUrl("/loki/api/v1/push", lokiGateway), {
+    const response = await fetchWithTimeout(getLokiUrl("/loki/api/v1/push", lokiGateway), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(logEntry),

@@ -114,6 +114,7 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -${{ matrix.flavor }}
 
@@ -158,5 +159,6 @@ jobs:
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
+        continue-on-error: true
         with:
           suffix: -${{ matrix.flavor }}-${{ matrix.layer }}-${{ matrix.arch }}

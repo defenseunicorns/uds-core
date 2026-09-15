@@ -117,6 +117,7 @@ tasks:
           architecture: ${{ .inputs.architecture }}
           validate_egress: ${{ .inputs.validate_egress }}
           validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+      - task: util:prepare-node-test-ca
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -137,7 +138,7 @@ tasks:
           if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
             set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove

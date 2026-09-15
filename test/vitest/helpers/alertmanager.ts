@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { pollUntilSuccess } from "./polling";
+import { fetchWithTimeout } from "./fetch";
 
 /**
  * Checks if a specific alert is currently firing in Alertmanager
@@ -15,7 +16,7 @@ export const checkAlertInAlertmanager = async (
   alertName: string,
 ): Promise<boolean> => {
   try {
-    const response = await fetch(`${alertmanagerUrl}/api/v2/alerts`);
+    const response = await fetchWithTimeout(`${alertmanagerUrl}/api/v2/alerts`);
 
     if (!response.ok) {
       throw new Error(`Alertmanager API returned ${response.status}`);

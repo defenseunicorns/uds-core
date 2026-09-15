@@ -135,17 +135,58 @@ export async function purgeOrphans<T extends GenericClass>(
   const resources = await retryWithDelay(fetchResources, log, 5, 1000);
 
   for (const resource of resources.items) {
+    const name = resource.metadata?.name;
+    if (!name) {
+      continue;
+    }
+
     const resourceGenLabel = resource.metadata?.labels?.["uds/generation"];
 
-    const shouldDelete =
+    const mightBeOrphaned =
       resourceGenLabel === null ||
       resourceGenLabel === undefined ||
       resourceGenLabel !== generation;
 
-    if (shouldDelete) {
-      log.debug({ resource }, `Deleting orphaned ${resource.kind!} ${resource.metadata!.name}`);
-      await K8s(kind).Delete(resource);
+    if (!mightBeOrphaned) {
+      continue;
     }
+
+    // Re-read the object before deleting it. The list can be stale while a
+    // concurrent apply is updating the same named resource.
+    const getCurrentResource = async (): Promise<InstanceType<T> | undefined> => {
+      try {
+        return await K8s(kind).InNamespace(namespace).Get(name);
+      } catch (e) {
+        if (e?.status === 404) {
+          return undefined;
+        }
+        throw e;
+      }
+    };
+    const currentResource = await retryWithDelay(getCurrentResource, log, 5, 1000);
+
+    if (!currentResource?.metadata?.name) {
+      continue;
+    }
+
+    const currentLabels = currentResource.metadata.labels ?? {};
+    const stillMatchesSelector =
+      currentLabels["uds/package"] === pkgName &&
+      Object.entries(additionalLabels ?? {}).every(([key, value]) => currentLabels[key] === value);
+    if (!stillMatchesSelector) {
+      continue;
+    }
+
+    const currentGeneration = currentResource.metadata?.labels?.["uds/generation"];
+    if (currentGeneration === generation) {
+      continue;
+    }
+
+    log.debug(
+      { resource: currentResource },
+      `Deleting orphaned ${currentResource.kind!} ${currentResource.metadata!.name}`,
+    );
+    await K8s(kind).Delete(currentResource);
   }
 }
 
