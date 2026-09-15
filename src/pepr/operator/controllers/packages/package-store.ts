@@ -19,17 +19,10 @@ const log = setupLogger(Component.OPERATOR_PACKAGES);
 export type PackageNamespaceMap = Map<string, Map<string, UDSPackage>>;
 let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
-type IndexedExpose = {
-  namespace: string;
-  packageName: string;
-  hasAdvancedHTTPMatch: boolean;
-};
-// Map structure: "gateway:fqdn" -> indexed expose entries
-let fqdnIndex: Map<string, IndexedExpose[]>;
 let udpGatewayPortIndex: Map<string, Set<string>>;
 
 function hasAdvancedHTTPMatch(expose: Expose): boolean {
-  return expose.advancedHTTP?.match !== undefined || expose.match !== undefined;
+  return Boolean(expose.advancedHTTP?.match?.length || expose.match?.length);
 }
 
 /**
@@ -39,7 +32,6 @@ function hasAdvancedHTTPMatch(expose: Expose): boolean {
 function init(): void {
   packageNamespaceMap = new Map();
   ssoIndex = new Map();
-  fqdnIndex = new Map();
   udpGatewayPortIndex = new Map();
 }
 
@@ -182,7 +174,6 @@ function findPackagesWithUdpGatewayPort(gateway: string | undefined, port: numbe
 
 function addIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
-  const packageName = pkg.metadata!.name!;
 
   for (const client of pkg.spec?.sso ?? []) {
     if (!ssoIndex.has(client.clientId)) {
@@ -193,45 +184,20 @@ function addIndexes(pkg: UDSPackage): void {
   }
 
   for (const expose of pkg.spec?.network?.expose ?? []) {
-    if (expose.protocol === ExposeProtocol.UDP) {
-      if (expose.port === undefined) {
-        continue;
-      }
-
-      const key = getUDPGatewayPortKey(expose.gateway, expose.port);
-      if (!udpGatewayPortIndex.has(key)) {
-        udpGatewayPortIndex.set(key, new Set());
-      }
-      udpGatewayPortIndex.get(key)!.add(namespace);
+    if (expose.protocol !== ExposeProtocol.UDP || expose.port === undefined) {
       continue;
     }
 
-    const key = getExposureKey(expose);
-    const indexedExposes = fqdnIndex.get(key) ?? [];
-    indexedExposes.push({
-      namespace,
-      packageName,
-      hasAdvancedHTTPMatch: hasAdvancedHTTPMatch(expose),
-    });
-    fqdnIndex.set(key, indexedExposes);
+    const key = getUDPGatewayPortKey(expose.gateway, expose.port);
+    if (!udpGatewayPortIndex.has(key)) {
+      udpGatewayPortIndex.set(key, new Set());
+    }
+    udpGatewayPortIndex.get(key)!.add(namespace);
   }
 }
 
 function removeIndexes(pkg: UDSPackage): void {
   const namespace = pkg.metadata!.namespace!;
-  const packageName = pkg.metadata!.name!;
-
-  // Remove routes for the package because the configured domain may have changed since it was indexed.
-  for (const [key, indexedExposes] of fqdnIndex) {
-    const remainingExposes = indexedExposes.filter(
-      indexed => indexed.namespace !== namespace || indexed.packageName !== packageName,
-    );
-    if (remainingExposes.length === 0) {
-      fqdnIndex.delete(key);
-    } else {
-      fqdnIndex.set(key, remainingExposes);
-    }
-  }
 
   for (const client of pkg.spec?.sso ?? []) {
     const nsSet = ssoIndex.get(client.clientId);
@@ -268,11 +234,26 @@ function removeIndexes(pkg: UDSPackage): void {
  */
 function findNamespaceForExpose(expose: Expose, namespace?: string): string | undefined {
   const hasMatch = hasAdvancedHTTPMatch(expose);
-  return fqdnIndex
-    .get(getExposureKey(expose))
-    ?.find(
-      indexed => indexed.namespace !== namespace && (!hasMatch || !indexed.hasAdvancedHTTPMatch),
-    )?.namespace;
+  const exposureKey = getExposureKey(expose);
+
+  // Derive keys from stored packages at lookup time because UDSConfig domains can change at runtime.
+  for (const namespaceMap of packageNamespaceMap.values()) {
+    for (const pkg of namespaceMap.values()) {
+      const packageNamespace = pkg.metadata?.namespace;
+      if (!packageNamespace || packageNamespace === namespace) continue;
+
+      const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
+        indexedExpose =>
+          indexedExpose.protocol !== ExposeProtocol.UDP &&
+          getExposureKey(indexedExpose) === exposureKey &&
+          (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
+      );
+
+      if (hasConflictingExpose) return packageNamespace;
+    }
+  }
+
+  return undefined;
 }
 
 /**

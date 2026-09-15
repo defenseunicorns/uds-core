@@ -456,6 +456,30 @@ describe("Test validation of Package CRs", () => {
       expect(mockReq.Approve).toHaveBeenCalledTimes(1);
     });
 
+    it("allows a terminating package to complete an update despite a cross-namespace collision", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
+      });
+
+      const mockReq = makeMockReq(
+        {
+          metadata: {
+            namespace: "ns-b",
+            name: "app-b",
+            deletionTimestamp: new Date("2026-01-01T00:00:00Z"),
+          },
+        },
+        [{ host: "app" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+      expect(mockReq.Deny).not.toHaveBeenCalled();
+    });
+
     it("allows two packages that expose the same host on different gateways", async () => {
       PackageStore.add({
         metadata: { namespace: "ns-a", name: "app-a" },
@@ -561,6 +585,27 @@ describe("Test validation of Package CRs", () => {
       );
       await validator(mockReq);
       expect(mockReq.Approve).toHaveBeenCalledTimes(1);
+    });
+
+    it("treats an empty advanced match as a catch-all during validation", async () => {
+      PackageStore.add({
+        metadata: { namespace: "ns-a", name: "app-a" },
+        spec: {
+          network: { expose: [{ host: "app", advancedHTTP: { match: [] } }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      });
+
+      const mockReq = makeMockReq(
+        { metadata: { namespace: "ns-b", name: "app-b" } },
+        [{ host: "app" }],
+        [],
+        [],
+        [],
+      );
+      await validator(mockReq);
+      expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("app.uds.dev"));
     });
 
     it("treats deprecated match as an advanced route during validation", async () => {

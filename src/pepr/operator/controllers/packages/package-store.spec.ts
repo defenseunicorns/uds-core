@@ -371,6 +371,19 @@ describe("Package Store", () => {
       expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
     });
 
+    it("uses the current domain when checking stored exposes", () => {
+      const originalDomain = UDSConfig.domain;
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app");
+      PackageStore.add(pkg);
+
+      try {
+        UDSConfig.domain = "new.uds.dev";
+        expect(PackageStore.findNamespaceForExpose({ host: "app" }, "other-ns")).toEqual("test-ns");
+      } finally {
+        UDSConfig.domain = originalDomain;
+      }
+    });
+
     it("does not cross-contaminate expose entries between packages", () => {
       const pkgA = createPackageWithExpose("ns-a", "app-a", "doom");
       const pkgB = createPackageWithExpose("ns-b", "app-b", "grafana");
@@ -449,6 +462,33 @@ describe("Package Store", () => {
           "ns-b",
         ),
       ).toBeUndefined();
+    });
+
+    it("treats an empty advanced match as a catch-all route", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: { expose: [{ host: "app", advancedHTTP: { match: [] } }], allow: [] },
+        },
+      });
+
+      expect(PackageStore.findNamespaceForExpose({ host: "app" }, "ns-b")).toEqual("ns-a");
+    });
+
+    it("treats an empty deprecated match as a catch-all route", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: { expose: [{ host: "app", match: [] }], allow: [] },
+        },
+      });
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } },
+          "ns-b",
+        ),
+      ).toEqual("ns-a");
     });
   });
 
