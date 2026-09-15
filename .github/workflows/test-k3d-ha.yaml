@@ -28,6 +28,8 @@ permissions:
 
 jobs:
   uds-core-ha-upgrade-nightly:
+    # Keep the separate HA matrix out of the opt-in standard Core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 60
     name: HA Testing
