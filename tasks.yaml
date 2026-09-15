@@ -209,7 +209,7 @@ tasks:
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
 
-          channel=$(jq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // empty' uds-docs/src/products.json)
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
           docs_root="uds-docs/src/content/docs/core${channel:+/$channel}"
           mkdir -p "$docs_root"
 
@@ -227,12 +227,12 @@ tasks:
         cmd: |
           mkdir -p uds-docs/.product-configs
 
-          jq '. + {repo: "defenseunicorns/uds-core"}' docs/docs.config.json \
+          ./uds zarf tools yq -o=json '. + {"repo": "defenseunicorns/uds-core"}' docs/docs.config.json \
             > uds-docs/.product-configs/uds-core.json
 
-          channel=$(jq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // empty' uds-docs/src/products.json)
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
           if [ -n "$channel" ]; then
-            jq -n --arg target "/core/$channel/" '{"/core": $target}' \
+            printf '{\n  "/core": "/core/%s/"\n}\n' "$channel" \
               > uds-docs/.product-configs/redirects.json
           fi
       - description: "Start the docs server with npm (this will run until you stop it)"
