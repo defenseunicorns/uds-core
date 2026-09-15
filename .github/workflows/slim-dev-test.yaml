@@ -91,6 +91,19 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: slim-dev
+          CI_TIMING_PACKAGE: slim-dev
+          CI_TIMING_FLAVOR: upstream
+          CI_TIMING_TEST_TYPE: install
+          CI_TIMING_SCENARIO: next
+        with:
+          mode: init
+
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
@@ -106,10 +119,38 @@ jobs:
         shell: bash
         run: |
           sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+      - name: Start Slim Dev deploy timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: slim-dev-deploy
       - name: Deploy Slim Dev Bundle with UDS CLI Next
         run: uds run slim-dev --no-progress
+      - name: End Slim Dev deploy timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: slim-dev-deploy
+          status: ${{ job.status }}
+      - name: Start Slim Dev test timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: slim-dev-test
       - name: Test Slim Dev Bundle
         run: uds run test:slim-dev --no-progress
+      - name: End Slim Dev test timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: slim-dev-test
+          status: ${{ job.status }}
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
@@ -118,6 +159,14 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -slim-dev-next
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-slim-dev-next-${{ github.run_id }}-${{ github.run_attempt }}
 
   # This job runs the Legacy slim-dev bundle create/deploy process.
   test-legacy:
@@ -132,6 +181,19 @@ jobs:
     steps:
       - name: Checkout the code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: slim-dev
+          CI_TIMING_PACKAGE: slim-dev
+          CI_TIMING_FLAVOR: upstream
+          CI_TIMING_TEST_TYPE: install
+          CI_TIMING_SCENARIO: legacy
+        with:
+          mode: init
+
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
@@ -147,10 +209,38 @@ jobs:
         shell: bash
         run: |
           sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+      - name: Start Slim Dev deploy timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: slim-dev-deploy
       - name: Deploy Slim Dev Legacy Bundle
         run: uds run slim-dev-legacy --no-progress
+      - name: End Slim Dev deploy timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: slim-dev-deploy
+          status: ${{ job.status }}
+      - name: Start Slim Dev test timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: slim-dev-test
       - name: Test Slim Dev Bundle
         run: uds run test:slim-dev --no-progress
+      - name: End Slim Dev test timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: slim-dev-test
+          status: ${{ job.status }}
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
@@ -159,3 +249,11 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -slim-dev-legacy
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-slim-dev-legacy-${{ github.run_id }}-${{ github.run_attempt }}

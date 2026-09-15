@@ -73,11 +73,13 @@ The legacy upgrade compatibility task is retained so the existing top-level lega
 
 ## Baseline instrumentation
 
-The current branch records best-effort phase timings for the independent PR gates, path routing, multi-architecture validation, and each reusable package-test job. Package-test timings include environment setup, package and bundle creation, deployment, per-package validation, test-resource creation and readiness, Playwright and Vitest execution, test-resource cleanup, debug output, and log collection.
+The current branch records best-effort phase timings for the independent PR gates, path routing, multi-architecture validation, each reusable package-test job, and selected high-duration HA, CLI compatibility, Slim Dev, and Private PKI jobs. Package-test timings include environment setup, package and bundle creation, deployment, per-package validation, test-resource creation and readiness, Playwright and Vitest execution, test-resource cleanup, debug output, and log collection.
 
-Each instrumented job uploads a `ci-timing-*` artifact containing `summary.json`, `summary.md`, and the raw tab-separated events. The JSON schema is intentionally small: it records GitHub and matrix metadata plus each phase's start, end, duration, and status. Timings begin after checkout because the local timing action is not available until the repository has been checked out. The instrumentation is non-blocking and should not change the pass/fail result of a test job. Task-level timing calls are guarded by `CI_TIMING_ENABLED`, so local task runs keep their existing behavior and do not create timing files.
+HA and CLI compatibility jobs upload one compact artifact per matrix job. Their targeted phases cover baseline release deployment, baseline test-resource setup, and the upgrade or install operation. Slim Dev and Private PKI jobs use similarly small deploy/test or build/deploy/validation phase sets. `scenario` and `k3s_version` metadata make matrix results straightforward to compare without collecting per-test or per-command logs.
 
-## Core-only performance experiment
+Each instrumented job uploads a `ci-timing-*` artifact containing only `summary.json`. The JSON schema is intentionally small: it records GitHub and matrix metadata plus each phase's start, end, duration, and status. Timings begin after checkout because the local timing action is not available until the repository has been checked out. The instrumentation is non-blocking and should not change the pass/fail result of a test job. Task-level timing calls are guarded by `CI_TIMING_ENABLED`, so local task runs keep their existing behavior and do not create timing files.
+
+## Focused performance experiment
 
 Add the `ci-performance` label to a pull request when measuring the Core upgrade path. The label selects the three `all` upgrade jobs (one per flavor) and skips the normal install matrix plus heavy unrelated PR matrices such as Slim Dev, Checkpoint, HA, CI Docs package tests, cloud, CLI compatibility, Kubernetes compatibility, and Private PKI tests. Lightweight documentation checks may still run when the changed paths trigger CI Docs. Scheduled runs and pull requests without the label keep their normal coverage.
 
@@ -95,14 +97,6 @@ The next comparable run should use the restored full matrix and measure these va
 - Total workflow duration.
 - Aggregate runner time, where available.
 - Phase durations from the `ci-timing-*` artifacts, especially environment setup, test execution, debug output, and log collection.
-
-### Core-only upgrade bundle experiment
-
-The upgrade path now builds a Core-only Next bundle after the released cluster has already installed `uds-k3d-dev` and `init`. It retains the existing layer dependency graph and per-package values files, but excludes the large k3d package from the upgrade bundle assembly. Normal install, legacy upgrade, and non-performance CI paths remain unchanged.
-
-When the `ci-performance` label is present, the package-test workflows schedule only the three Core upgrade jobs (upstream, registry1, and unicorn). They do not schedule the normal install matrix or heavy unrelated matrices. Remove the label before treating the PR as merge-ready.
-
-This is an A/B experiment, not a coverage reduction for normal CI. Compare the `current-upgrade-build`, `current-upgrade-deploy`, validation, E2E, and total job durations against the baseline. Confirm that all three flavors pass before considering this path for broader use.
 
 Record any failures separately from timing improvements. A faster run that cancels or omits matrix coverage does not establish an equivalent CI improvement.
 

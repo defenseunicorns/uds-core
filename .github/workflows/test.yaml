@@ -74,6 +74,7 @@ jobs:
           CI_TIMING_PACKAGE: ${{ inputs.package }}
           CI_TIMING_FLAVOR: ${{ inputs.flavor }}
           CI_TIMING_TEST_TYPE: ${{ inputs.test_type }}
+          CI_TIMING_K3S_VERSION: ${{ inputs.k3s_version }}
         with:
           mode: init
 
@@ -170,4 +171,4 @@ jobs:
         with:
           mode: finalize
           status: ${{ job.status }}
-          artifact_name: ci-timing-package-test-${{ inputs.package }}-${{ inputs.flavor }}-${{ inputs.test_type }}-${{ github.run_id }}-${{ github.run_attempt }}
+          artifact_name: ci-timing-package-test-${{ inputs.package }}-${{ inputs.flavor }}-${{ inputs.test_type }}-k3s-${{ inputs.k3s_version || 'default' }}-${{ github.run_id }}-${{ github.run_attempt }}

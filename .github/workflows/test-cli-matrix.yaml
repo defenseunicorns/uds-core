@@ -65,6 +65,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: cli-upgrade
+          CI_TIMING_PACKAGE: all
+          CI_TIMING_FLAVOR: ${{ matrix.flavor }}
+          CI_TIMING_TEST_TYPE: upgrade
+          CI_TIMING_SCENARIO: ${{ matrix.scenario }}
+        with:
+          mode: init
+
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
@@ -79,11 +91,43 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
+      - name: Start latest release deploy timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: latest-release-deploy
+
       - name: Deploy latest release (install phase)
         run: uds run -f tasks/deploy.yaml latest-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
 
+      - name: End latest release deploy timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: latest-release-deploy
+          status: ${{ job.status }}
+
+      - name: Start latest release test resources timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: latest-release-test-resources
+
       - name: Deploy latest release test resources
         run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: End latest release test resources timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: latest-release-test-resources
+          status: ${{ job.status }}
 
       - name: Install CLI for upgrade phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
@@ -93,6 +137,13 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
+      - name: Start CLI upgrade timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: cli-upgrade
+
       - name: Run Legacy upgrade phase
         if: ${{ matrix.mode == 'legacy' }}
         run: uds run -f tasks/test.yaml upgrade-existing-legacy --set FLAVOR=${{ matrix.flavor }} --no-progress
@@ -100,6 +151,15 @@ jobs:
       - name: Run Next upgrade phase
         if: ${{ matrix.mode == 'next' }}
         run: uds run -f tasks/test.yaml upgrade-existing --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: End CLI upgrade timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: cli-upgrade
+          status: ${{ job.status }}
 
       - name: Debug Output
         if: ${{ always() }}
@@ -110,6 +170,15 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -upgrade-matrix-${{ matrix.mode }}-${{ matrix.scenario }}-${{ matrix.flavor }}
+
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-cli-upgrade-${{ matrix.mode }}-${{ matrix.scenario }}-${{ matrix.flavor }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
@@ -139,6 +208,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: cli-install
+          CI_TIMING_PACKAGE: all
+          CI_TIMING_FLAVOR: upstream
+          CI_TIMING_TEST_TYPE: install
+          CI_TIMING_SCENARIO: ${{ matrix.mode }}-minimum-supported
+        with:
+          mode: init
+
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
@@ -153,8 +234,24 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
+      - name: Start CLI install timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: cli-install
+
       - name: Test UDS Core Install (minimum supported CLI)
         run: uds run ${{ matrix.task }} --set FLAVOR=upstream --no-progress
+
+      - name: End CLI install timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: cli-install
+          status: ${{ job.status }}
 
       - name: Debug Output
         if: ${{ always() }}
@@ -165,6 +262,15 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -install-${{ matrix.mode }}-min-cli-upstream
+
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-cli-install-${{ matrix.mode }}-upstream-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

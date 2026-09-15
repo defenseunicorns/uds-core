@@ -43,6 +43,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: ha
+          CI_TIMING_PACKAGE: all
+          CI_TIMING_FLAVOR: ${{ matrix.flavor }}
+          CI_TIMING_TEST_TYPE: ${{ matrix.test-type }}
+          CI_TIMING_SCENARIO: ha
+        with:
+          mode: init
+
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
         uses: ./.github/actions/renovate-readiness
@@ -58,6 +70,13 @@ jobs:
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
+      - name: Start HA test timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: ha-test
+
       - name: Run UDS Core Install HA Test
         if: ${{ matrix.test-type == 'install' }}
         run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
@@ -65,6 +84,15 @@ jobs:
       - name: Run UDS Core Upgrade HA Test
         if: ${{ matrix.test-type == 'upgrade' }}
         run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: End HA test timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: ha-test
+          status: ${{ job.status }}
 
       - name: Debug Output
         if: ${{ always() }}
@@ -75,6 +103,15 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -nightly-${{ matrix.flavor }}-${{ matrix.test-type }}
+
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-ha-${{ matrix.flavor }}-${{ matrix.test-type }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

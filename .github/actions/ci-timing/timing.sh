@@ -17,16 +17,7 @@ else
   timing_dir="${GITHUB_WORKSPACE:-$PWD}/$CI_TIMING_DIR"
 fi
 
-events_file="$timing_dir/events.tsv"
-metadata_file="$timing_dir/metadata.tsv"
 summary_json="$timing_dir/summary.json"
-summary_md="$timing_dir/summary.md"
-
-phase_key() {
-  local value="$1"
-  value="${value//[^[:alnum:]_.-]/_}"
-  printf '%s' "$value"
-}
 
 field_value() {
   local value="$1"
@@ -61,121 +52,147 @@ ensure_directory() {
   fi
 }
 
-record_metadata() {
-  local key value
-  key="$(field_value "$1")"
-  value="$(field_value "${2:-}")"
-  printf '%s\t%s\n' "$key" "$value" >> "$metadata_file"
-}
-
 start_phase() {
-  local name key
+  local name start tmp
   name="$1"
-  key="$(phase_key "$name")"
+  start="$(now_ms)"
   if ! ensure_directory; then
     return 0
   fi
-  printf '%s\n' "$(now_ms)" > "$timing_dir/.${key}.start"
+
+  if ! command -v jq >/dev/null 2>&1 || [[ ! -f "$summary_json" ]]; then
+    return 0
+  fi
+
+  tmp="${summary_json}.tmp"
+  if ! jq \
+    --arg phase "$(field_value "$name")" \
+    --argjson start_ms "$start" \
+    '.phases += [{phase: $phase, start_ms: $start_ms, end_ms: null, duration_ms: null, status: "running"}]' \
+    "$summary_json" > "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    warn "unable to record start for phase: $name"
+    return 0
+  fi
+  if ! mv "$tmp" "$summary_json"; then
+    rm -f "$tmp"
+    warn "unable to save start for phase: $name"
+  fi
 }
 
 end_phase() {
-  local name phase_file start end duration result
+  local name result start end duration tmp
   name="$1"
   result="$(field_value "${2:-success}")"
-  phase_file="$timing_dir/.$(phase_key "$name").start"
 
-  if [[ ! -f "$phase_file" || ! -f "$events_file" ]]; then
+  if ! command -v jq >/dev/null 2>&1 || [[ ! -f "$summary_json" ]]; then
+    return 0
+  fi
+
+  start="$(jq -r --arg phase "$(field_value "$name")" '
+    [.phases[] | select(.phase == $phase and .end_ms == null) | .start_ms] | last // empty
+  ' "$summary_json" 2>/dev/null || true)"
+  if [[ ! "$start" =~ ^[0-9]+$ ]]; then
     warn "no start marker found for phase: $name"
     return 0
   fi
 
-  start="$(<"$phase_file")"
   end="$(now_ms)"
   duration=$((end - start))
   if (( duration < 0 )); then
     duration=0
   fi
 
-  printf '%s\t%s\t%s\t%s\t%s\n' \
-    "$(field_value "$name")" "$start" "$end" "$duration" "$result" >> "$events_file"
-  rm -f "$phase_file"
-}
-
-write_json() {
-  if ! command -v jq >/dev/null 2>&1; then
-    printf '{"schema_version":1,"metadata":{},"phases":[]}\n' > "$summary_json"
+  tmp="${summary_json}.tmp"
+  if ! jq \
+    --arg phase "$(field_value "$name")" \
+    --argjson start_ms "$start" \
+    --argjson end_ms "$end" \
+    --argjson duration_ms "$duration" \
+    --arg status "$result" \
+    '.phases |= map(
+      if .phase == $phase and .start_ms == $start_ms and .end_ms == null
+      then . + {end_ms: $end_ms, duration_ms: $duration_ms, status: $status}
+      else .
+      end
+    )' \
+    "$summary_json" > "$tmp" 2>/dev/null; then
+    rm -f "$tmp"
+    warn "unable to record end for phase: $name"
     return 0
   fi
-
-  local metadata_json phases_json
-  metadata_json="$(jq -Rn '
-    reduce (inputs | select(length > 0) | split("\t")) as $parts
-      ({}; .[$parts[0]] = ($parts[1] // ""))
-  ' "$metadata_file" 2>/dev/null || printf '{}')"
-  phases_json="$(jq -Rsc '
-    split("\n")
-    | .[1:]
-    | map(select(length > 0) | split("\t") |
-      {
-        phase: .[0],
-        start_ms: (.[1] | tonumber),
-        end_ms: (.[2] | tonumber),
-        duration_ms: (.[3] | tonumber),
-        status: .[4]
-      })
-  ' "$events_file" 2>/dev/null || printf '[]')"
-
-  jq -n \
-    --argjson metadata "$metadata_json" \
-    --argjson phases "$phases_json" \
-    '{schema_version: 1, metadata: $metadata, phases: $phases}' \
-    > "$summary_json" 2>/dev/null || printf '{"schema_version":1,"metadata":{},"phases":[]}\n' > "$summary_json"
-}
-
-write_markdown_summary() {
-  {
-    printf '%s\n\n' '## CI timing'
-    printf '%s\n\n' 'These timings are observed after checkout and are best-effort telemetry.'
-    printf '| Phase | Duration | Status |\n'
-    printf '| --- | ---: | --- |\n'
-    if [[ -f "$events_file" ]]; then
-      awk -F '\t' 'NR > 1 { printf "| `%s` | %d ms | %s |\n", $1, $4, $5 }' "$events_file"
-    fi
-  } > "$summary_md"
-
-  if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
-    cat "$summary_md" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+  if ! mv "$tmp" "$summary_json"; then
+    rm -f "$tmp"
+    warn "unable to save end for phase: $name"
   fi
 }
 
 init() {
+  local start tmp
+
   if ! ensure_directory; then
     return 0
   fi
 
-  : > "$events_file"
-  : > "$metadata_file"
-  find "$timing_dir" -maxdepth 1 -type f -name '.*.start' -delete 2>/dev/null || true
-  printf 'phase\tstart_ms\tend_ms\tduration_ms\tstatus\n' > "$events_file"
+  rm -f "$summary_json" "$summary_json.tmp"
   start="$(now_ms)"
 
-  record_metadata schema_version 1
-  record_metadata workflow "${GITHUB_WORKFLOW:-}"
-  record_metadata job "${GITHUB_JOB:-}"
-  record_metadata run_id "${GITHUB_RUN_ID:-}"
-  record_metadata run_attempt "${GITHUB_RUN_ATTEMPT:-}"
-  record_metadata repository "${GITHUB_REPOSITORY:-}"
-  record_metadata sha "${GITHUB_SHA:-}"
-  record_metadata ref "${GITHUB_REF:-}"
-  record_metadata event_name "${GITHUB_EVENT_NAME:-}"
-  record_metadata runner_name "${RUNNER_NAME:-}"
-  record_metadata runner_os "${RUNNER_OS:-}"
-  record_metadata runner_arch "${RUNNER_ARCH:-}"
-  record_metadata job_kind "${CI_TIMING_JOB_KIND:-}"
-  record_metadata package "${CI_TIMING_PACKAGE:-}"
-  record_metadata flavor "${CI_TIMING_FLAVOR:-}"
-  record_metadata test_type "${CI_TIMING_TEST_TYPE:-}"
-  record_metadata observed_start_ms "$start"
+  if command -v jq >/dev/null 2>&1; then
+    tmp="${summary_json}.tmp"
+    if jq -n \
+      --arg workflow "${GITHUB_WORKFLOW:-}" \
+      --arg job "${GITHUB_JOB:-}" \
+      --arg run_id "${GITHUB_RUN_ID:-}" \
+      --arg run_attempt "${GITHUB_RUN_ATTEMPT:-}" \
+      --arg repository "${GITHUB_REPOSITORY:-}" \
+      --arg sha "${GITHUB_SHA:-}" \
+      --arg ref "${GITHUB_REF:-}" \
+      --arg event_name "${GITHUB_EVENT_NAME:-}" \
+      --arg runner_name "${RUNNER_NAME:-}" \
+      --arg runner_os "${RUNNER_OS:-}" \
+      --arg runner_arch "${RUNNER_ARCH:-}" \
+      --arg job_kind "${CI_TIMING_JOB_KIND:-}" \
+      --arg package "${CI_TIMING_PACKAGE:-}" \
+      --arg flavor "${CI_TIMING_FLAVOR:-}" \
+      --arg test_type "${CI_TIMING_TEST_TYPE:-}" \
+      --arg scenario "${CI_TIMING_SCENARIO:-}" \
+      --arg k3s_version "${CI_TIMING_K3S_VERSION:-}" \
+      --arg observed_start_ms "$start" \
+      '{schema_version: 1, metadata: {
+        schema_version: "1",
+        workflow: $workflow,
+        job: $job,
+        run_id: $run_id,
+        run_attempt: $run_attempt,
+        repository: $repository,
+        sha: $sha,
+        ref: $ref,
+        event_name: $event_name,
+        runner_name: $runner_name,
+        runner_os: $runner_os,
+        runner_arch: $runner_arch,
+        job_kind: $job_kind,
+        package: $package,
+        flavor: $flavor,
+        test_type: $test_type,
+        scenario: $scenario,
+        k3s_version: $k3s_version,
+        observed_start_ms: $observed_start_ms
+      }, phases: []}' \
+      > "$tmp" 2>/dev/null; then
+      if ! mv "$tmp" "$summary_json"; then
+        rm -f "$tmp"
+        warn 'unable to save timing summary'
+      fi
+    else
+      rm -f "$tmp"
+      printf '{"schema_version":1,"metadata":{},"phases":[]}\n' > "$summary_json"
+      warn 'unable to initialize timing summary'
+    fi
+  else
+    printf '{"schema_version":1,"metadata":{},"phases":[]}\n' > "$summary_json"
+    warn 'jq is unavailable; timing summary will be empty'
+  fi
 
   if [[ -n "${GITHUB_ENV:-}" ]]; then
     {
@@ -193,8 +210,6 @@ finalize() {
   fi
 
   end_phase job "${status:-success}"
-  write_json
-  write_markdown_summary
 }
 
 case "$mode" in
