@@ -1,0 +1,33 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+velero:
+  velero:
+    credentials:
+      useSecret: true
+      name: "{{ .vars.velero_bucket_credential_name }}"
+      secretContents:
+        cloud: |
+          [default]
+          aws_access_key_id={{ .vars.velero_bucket_key }}
+          aws_secret_access_key={{ .vars.velero_bucket_key_secret }}
+    configuration:
+      backupStorageLocation:
+        - name: default
+          provider: aws
+          bucket: "{{ .vars.velero_bucket }}"
+          prefix: backups
+          config:
+            region: "{{ .vars.velero_bucket_region }}"
+            s3ForcePathStyle: true
+            s3Url: "{{ .vars.velero_bucket_provider_url }}"
+          credential:
+            name: "{{ .vars.velero_bucket_credential_name }}"
+            key: "{{ .vars.velero_bucket_credential_key }}"
+      volumeSnapshotLocation: []
+    snapshotsEnabled: false
+    metrics:
+      serviceMonitor:
+        enabled: true
+    upgradeCRDs: false
+  uds-velero-config: {}

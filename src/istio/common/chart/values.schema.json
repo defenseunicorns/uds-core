@@ -43,6 +43,14 @@
     "classificationBanner": {
       "$ref": "#/definitions/classificationBanner",
       "description": "Deprecated single classification banner configuration. Use classificationBanners instead."
+    },
+    "misdirectedRequest": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }

@@ -1,44 +1,6 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
----
-# Source: istio/templates/envoyfilter.yaml
-apiVersion: networking.istio.io/v1alpha3
-kind: EnvoyFilter
-metadata:
-  name: misdirected-request
-  namespace: istio-system
-spec:
-  configPatches:
-    - applyTo: HTTP_FILTER
-      match:
-        context: GATEWAY
-        listener:
-          filterChain:
-            filter:
-              name: envoy.filters.network.http_connection_manager
-              subFilter:
-                name: envoy.filters.http.router
-      patch:
-        operation: INSERT_BEFORE
-        value:
-          name: envoy.lua
-          typed_config:
-            "@type": "type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua"
-            inlineCode: |
-              function envoy_on_request(request_handle)
-                local serverName = request_handle:streamInfo():requestedServerName()
-                local authority = request_handle:headers():get(":authority")
-                if serverName ~= "" then
-                  local subdomain = string.sub(serverName, 0, 2)
-                  if (subdomain == "*." and not string.find(authority, serverName, 1, true)) then
-                    request_handle:respond({[":status"] = "421"}, "Misdirected Request")
-                  end
-                  if (subdomain ~= "*." and not string.find(authority, serverName, 1, true)) then
-                    request_handle:respond({[":status"] = "421"}, "Misdirected Request")
-                  end
-                end
-              end
 ---
 # Source: istio/templates/envoyfilter.yaml
 apiVersion: networking.istio.io/v1alpha3
