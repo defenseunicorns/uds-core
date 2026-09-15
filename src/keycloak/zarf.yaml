@@ -36,7 +36,7 @@ components:
           - "values/upstream-values.yaml"
     images:
       - quay.io/keycloak/keycloak:26.7.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.31.0
+      - ghcr.io/defenseunicorns/uds/identity-config:0.32.0
 
   - name: keycloak
     required: true
@@ -64,4 +64,4 @@ components:
           - "values/unicorn-values.yaml"
     images:
       - cgr.dev/defenseunicorns.com/keycloak-fips:v26.7.3
-      - ghcr.io/defenseunicorns/uds/identity-config:0.31.0
+      - ghcr.io/defenseunicorns/uds/identity-config:0.32.0
