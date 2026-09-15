@@ -33,6 +33,9 @@ tasks:
       configFile:
         default: ""
         description: "UDS CLI Next config file to use for deployment"
+      bundleName:
+        default: "k3d-core-demo-next"
+        description: "UDS CLI Next bundle metadata name"
       packages:
         default: ""
         description: "Comma-separated packages to deploy"
@@ -57,7 +60,7 @@ tasks:
             set -- "$@" --packages "${PACKAGES}" --force
           fi
 
-          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst "$@"
+          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-${{ .inputs.bundleName }}-${UDS_ARCH}-${VERSION}.tar.zst "$@"
 
   - name: k3d-standard-bundle-ha
     actions:
