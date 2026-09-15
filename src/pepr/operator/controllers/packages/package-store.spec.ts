@@ -5,9 +5,13 @@
 
 import { PeprValidateRequest } from "pepr";
 import { beforeEach, describe, expect, it } from "vitest";
-import { UDSPackage } from "../../crd";
+import { Gateway, UDSPackage } from "../../crd";
 import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
+import { UDSConfig } from "../config/config";
 import { PackageStore } from "./package-store";
+
+UDSConfig.domain = "uds.dev";
+UDSConfig.adminDomain = "admin.uds.dev";
 PackageStore.init();
 
 const makeMockReq = (pkg: Partial<UDSPackage>) => {
@@ -29,6 +33,23 @@ const makeMockReq = (pkg: Partial<UDSPackage>) => {
     Raw: { ...defaultPkg, ...pkg },
   } as unknown as PeprValidateRequest<UDSPackage>;
 };
+
+const createPackageWithExpose = (
+  namespace: string,
+  name: string,
+  host: string,
+  gateway?: Gateway,
+): UDSPackage => ({
+  metadata: { namespace, name },
+  spec: {
+    network: {
+      expose: [{ host, gateway }],
+      allow: [],
+    },
+    sso: [],
+    monitor: [],
+  },
+});
 
 // Helper function to create a package with SSO clients
 const createPackageWithSsoClient = (
@@ -268,6 +289,166 @@ describe("Package Store", () => {
       PackageStore.remove(pkg);
 
       expect(PackageStore.findPackagesWithUdpGatewayPort(undefined, 8125).size).toBe(0);
+    });
+  });
+
+  describe("findNamespaceForExpose", () => {
+    beforeEach(() => {
+      PackageStore.init();
+    });
+
+    it("returns undefined when no package exposes the entry", () => {
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+    });
+
+    it("returns the namespace when a package exposes the entry", () => {
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app");
+      PackageStore.add(pkg);
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toEqual("test-ns");
+    });
+
+    it("returns undefined after the owning package is removed", () => {
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app");
+      PackageStore.add(pkg);
+      PackageStore.remove(pkg);
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+    });
+
+    it("uses the stored package when removing a stale watch event", () => {
+      const storedPkg: UDSPackage = {
+        metadata: { namespace: "test-ns", name: "test-app" },
+        spec: {
+          network: { expose: [{ host: "app" }], allow: [] },
+          sso: [
+            {
+              clientId: "stored-client",
+              name: "Stored Client",
+              redirectUris: ["https://app.uds.dev/callback"],
+            },
+          ],
+          monitor: [],
+        },
+      };
+      PackageStore.add(storedPkg);
+
+      const stalePkg: UDSPackage = {
+        ...storedPkg,
+        spec: {
+          network: { expose: [{ host: "stale-app" }], allow: [] },
+          sso: [],
+          monitor: [],
+        },
+      };
+      PackageStore.remove(stalePkg);
+
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+      expect(PackageStore.findPackagesWithSsoClientId("stored-client").size).toBe(0);
+    });
+
+    it("replaces old expose entry with new one when a package is updated", () => {
+      const pkg = createPackageWithExpose("test-ns", "test-app", "old-host");
+      PackageStore.add(pkg);
+
+      const updatedPkg = createPackageWithExpose("test-ns", "test-app", "new-host");
+      PackageStore.add(updatedPkg);
+
+      expect(PackageStore.findNamespaceForExpose({ host: "old-host" })).toBeUndefined();
+      expect(PackageStore.findNamespaceForExpose({ host: "new-host" })).toEqual("test-ns");
+    });
+
+    it("removes routes using their indexed key when the domain changes", () => {
+      const originalDomain = UDSConfig.domain;
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app");
+      PackageStore.add(pkg);
+
+      try {
+        UDSConfig.domain = "new.uds.dev";
+        PackageStore.remove(pkg);
+      } finally {
+        UDSConfig.domain = originalDomain;
+      }
+
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+    });
+
+    it("does not cross-contaminate expose entries between packages", () => {
+      const pkgA = createPackageWithExpose("ns-a", "app-a", "doom");
+      const pkgB = createPackageWithExpose("ns-b", "app-b", "grafana");
+      PackageStore.add(pkgA);
+      PackageStore.add(pkgB);
+
+      expect(PackageStore.findNamespaceForExpose({ host: "doom" })).toEqual("ns-a");
+      expect(PackageStore.findNamespaceForExpose({ host: "grafana" })).toEqual("ns-b");
+    });
+
+    it("treats hostnames with different casing as the same endpoint", () => {
+      PackageStore.add(createPackageWithExpose("ns-a", "app-a", "App"));
+
+      expect(PackageStore.findNamespaceForExpose({ host: "app" }, "ns-b")).toEqual("ns-a");
+    });
+
+    it("treats admin and tenant gateway entries with the same host as distinct", () => {
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app", Gateway.Admin);
+      PackageStore.add(pkg);
+      expect(PackageStore.findNamespaceForExpose({ host: "app", gateway: Gateway.Admin })).toEqual(
+        "test-ns",
+      );
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+    });
+
+    it("treats passthrough and tenant gateway entries with the same host as distinct", () => {
+      const pkg = createPackageWithExpose("test-ns", "test-app", "app", Gateway.Passthrough);
+      PackageStore.add(pkg);
+      expect(
+        PackageStore.findNamespaceForExpose({ host: "app", gateway: Gateway.Passthrough }),
+      ).toEqual("test-ns");
+      expect(PackageStore.findNamespaceForExpose({ host: "app" })).toBeUndefined();
+    });
+
+    it("treats an advanced route as conflicting with an existing catch-all", () => {
+      PackageStore.add(createPackageWithExpose("ns-a", "app-a", "app"));
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } },
+          "ns-b",
+        ),
+      ).toEqual("ns-a");
+    });
+
+    it("allows two advanced routes to share a host across namespaces", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: {
+            expose: [{ host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } }],
+            allow: [],
+          },
+        },
+      });
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } },
+          "ns-b",
+        ),
+      ).toBeUndefined();
+    });
+
+    it("treats the deprecated match field as an advanced route", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: { expose: [{ host: "app", match: [{ uri: { prefix: "/foo" } }] }], allow: [] },
+        },
+      });
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } },
+          "ns-b",
+        ),
+      ).toBeUndefined();
     });
   });
 
