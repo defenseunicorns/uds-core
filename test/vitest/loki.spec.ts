@@ -3,7 +3,6 @@
  */
 
 import * as net from "net";
-import { K8s, kind } from "kubernetes-fluent-client";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
 import { pollUntilSuccess } from "./helpers/polling";
@@ -16,12 +15,6 @@ let lokiGateway: { server: net.Server; url: string };
 
 // Helper functions
 const getLokiUrl = (path: string, component: { url: string }) => `${component.url}${path}`;
-
-const VECTOR_NAMESPACE = "vector";
-const NODE_LOG_TEST_FILENAME = "/var/log/uds-core-vector-node-log-test.log";
-const NODE_LOG_TEST_MESSAGE = "uds-core-vector-node-log-test";
-const NODE_LOG_TEST_TIMEOUT = 60000;
-const NODE_LOG_TEST_INTERVAL = 2000;
 
 // Reuse Loki URL for sending logs
 const sendLog = async (
@@ -134,18 +127,6 @@ const validateLogInQuery = (
   expect(hasLogLine(queryData, logMessage)).toBe(true);
 };
 
-const getVectorNodeName = async (): Promise<string> => {
-  const nodeName = (
-    await K8s(kind.Pod)
-      .InNamespace(VECTOR_NAMESPACE)
-      .WithLabel("app.kubernetes.io/name", "vector")
-      .Get()
-  ).items.find(pod => pod.spec?.nodeName)?.spec?.nodeName;
-
-  expect(nodeName).toBeDefined();
-  return nodeName as string;
-};
-
 // Vitest test cases
 describe("Loki Tests", () => {
   beforeAll(async () => {
@@ -200,27 +181,6 @@ describe("Loki Tests", () => {
       expect(data).toHaveProperty("status", "success");
       expect(data.data.result.length).toBeGreaterThan(0);
     },
-  );
-
-  test(
-    "Validate Vector node-log host label",
-    async () => {
-      const nodeName = await getVectorNodeName();
-
-      const data = await pollUntilSuccess(
-        () =>
-          queryLogs(
-            `{collector="vector", job="varlogs", host=${JSON.stringify(nodeName)}, filename=${JSON.stringify(NODE_LOG_TEST_FILENAME)}} |= ${JSON.stringify(NODE_LOG_TEST_MESSAGE)}`,
-          ),
-        result => result.status === "success" && hasLogLine(result, NODE_LOG_TEST_MESSAGE),
-        "test package Vector node log with the expected host label to be available in Loki",
-        NODE_LOG_TEST_TIMEOUT,
-        NODE_LOG_TEST_INTERVAL,
-      );
-
-      validateLogInQuery(data, NODE_LOG_TEST_MESSAGE);
-    },
-    NODE_LOG_TEST_TIMEOUT + 20000,
   );
 
   test("Send log to Loki-write and validate in Loki-read", async () => {

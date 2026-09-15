@@ -16,6 +16,7 @@ spec:
     - policies:
         - RequireNonRootUser
         - RestrictHostPathWrite
+        - RestrictSELinuxType
         - RestrictVolumeTypes
       title: "Vector node log test writer"
       description: "Allows the test DaemonSet to write a controlled host log under /var/log so Vector node-log collection can be validated."
@@ -53,18 +54,28 @@ spec:
           args:
             - |
               set -eu
-              LOG_FILE=/host/var/log/uds-core-vector-node-log-test.log
+              LOG_MESSAGE="uds-core-vector-node-log-test-$POD_UID"
+              VARLOG_FILE="/host/var/log/${LOG_MESSAGE}.log"
+              KUBERNETES_LOG_FILE="/host/var/log/kubernetes/${LOG_MESSAGE}.log"
               cleanup() {
-                rm -f "$LOG_FILE"
+                rm -f "$VARLOG_FILE" "$KUBERNETES_LOG_FILE"
                 exit 0
               }
               trap cleanup TERM INT
-              touch "$LOG_FILE"
-              test -w "$LOG_FILE"
+              mkdir -p /host/var/log/kubernetes
+              touch "$VARLOG_FILE" "$KUBERNETES_LOG_FILE"
+              test -w "$VARLOG_FILE"
+              test -w "$KUBERNETES_LOG_FILE"
               while true; do
-                printf '%s\n' "uds-core-vector-node-log-test" >> "$LOG_FILE"
+                printf '%s\n' "$LOG_MESSAGE" >> "$VARLOG_FILE"
+                printf '%s\n' "$LOG_MESSAGE" >> "$KUBERNETES_LOG_FILE"
                 sleep 2
               done
+          env:
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
           resources:
             limits:
               cpu: 50m
@@ -77,6 +88,8 @@ spec:
             privileged: false
             runAsGroup: 0
             runAsUser: 0
+            seLinuxOptions:
+              type: spc_t
             capabilities:
               drop:
                 - ALL
