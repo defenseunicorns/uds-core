@@ -1,6 +1,6 @@
 ---
 title: UDS Core 1.13
-description: UDS Core 1.13 adds control over HTTP 421 misdirected-request protection and improves checkpoint restores, shared egress reconciliation, and startup safety.
+description: UDS Core 1.13 publishes UDS CLI Next demo bundles, expands K3s compatibility testing, and adds control over HTTP 421 misdirected-request protection.
 sidebar:
   order: 3.982
 ---
@@ -8,10 +8,12 @@ sidebar:
 > [!NOTE]
 > For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
 
-UDS Core 1.13 lets you disable HTTP 421 misdirected-request protection when it conflicts with client connection reuse. This release also improves checkpoint restores, shared egress reconciliation, namespace initialization, and Gateway API resource ownership during upgrades.
+UDS Core 1.13 publishes UDS CLI Next demo bundles alongside the legacy bundles and moves primary demo bundle CI coverage to the Next workflow. This release also expands K3s compatibility testing across Kubernetes 1.34 through 1.36, lets you disable HTTP 421 misdirected-request protection, and improves upgrade reliability.
 
 ### Notable features
 
+- **UDS CLI Next demo bundles:** UDS Core now publishes `k3d-core-demo-next` and `k3d-core-slim-dev-next` alongside their legacy counterparts. Primary CI workflows build, deploy, and test the Next bundles where possible, while the CLI compatibility matrix continues to validate legacy bundles during the transition. The standard Next bundle uses functional layer packages, reducing Core deployment times in CI by approximately 25 to 40 percent. Consuming the Next bundles requires UDS CLI v0.36.0 or newer with `NextMode` enabled ([#2941](https://github.com/defenseunicorns/uds-core/pull/2941)).
+- **Expanded Kubernetes compatibility testing:** UDS Core now validates K3s 1.34, 1.35, and 1.36. A nightly matrix tests exact K3s 1.34 and 1.35 releases across the upstream, registry1, and unicorn flavors, while the default CI path validates K3s 1.36. This testing provides earlier visibility into compatibility issues but does not replace the UDS Core support policy. See [Supported Kubernetes distributions](/concepts/platform/supported-distributions/) ([#2948](https://github.com/defenseunicorns/uds-core/pull/2948)).
 - **Configurable misdirected-request protection:** Set `istio-controlplane.uds-global-istio-config.misdirectedRequest.enabled` to `false` to disable the Envoy filter that rejects HTTP/2 requests when the `:authority` header does not match the TLS Server Name Indication (SNI). The filter remains enabled by default in 1.13, but UDS Core 2.0 will disable it by default. Set the value explicitly to `true` if you need to preserve the current behavior across that upgrade. Disabling the filter can improve compatibility with clients such as Safari that do not retry HTTP 421 responses, but removes protection against connection reuse across gateways with overlapping certificates ([#2962](https://github.com/defenseunicorns/uds-core/pull/2962)).
 - **Checkpoint restore ordering:** Checkpoint creation now quiesces Keycloak, the Pepr watcher, Pepr admission, and `ztunnel` in dependency order. Restore starts those components in reverse order and waits for each rollout, preventing timeouts caused by suspending cluster infrastructure such as Istiod ([#2944](https://github.com/defenseunicorns/uds-core/pull/2944)).
 - **Shared egress reconciliation safety:** The UDS Operator now verifies that stale shared egress resources still belong to an old generation before deleting them. This prevents cleanup from deleting newly updated resources during concurrent reconciliation ([#2924](https://github.com/defenseunicorns/uds-core/pull/2924)).
@@ -36,6 +38,7 @@ UDS Core 1.13 lets you disable HTTP 421 misdirected-request protection when it c
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Supported Kubernetes distributions](/concepts/platform/supported-distributions/) - tested Kubernetes versions and CI coverage
 - [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
 - [UDS Core 1.13.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1130-2026-09-15) - full changelog
 - [Full diff (1.12.0...1.13.0)](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) - all changes between versions
