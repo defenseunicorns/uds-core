@@ -4,8 +4,6 @@ This directory contains the UDS CLI Next source for the K3d standard demo bundle
 
 - `bundle.uds.hcl` defines the published `k3d-core-demo-next` bundle.
 - `bundle-no-portal.uds.hcl` defines the no-Portal variant used for registry1 builds.
-- `bundle-core-only.uds.hcl` defines the Core-only bundle used by upgrade experiments.
-- `bundle-core-only-no-portal.uds.hcl` is the registry1 variant of the upgrade bundle.
 - `defaults.uds.hcl` contains bundle defaults.
 - `config-*.uds.hcl` files contain runtime and test configuration.
 - `values/` contains templated Zarf values for functional layer packages.

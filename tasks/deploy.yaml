@@ -33,9 +33,6 @@ tasks:
       configFile:
         default: ""
         description: "UDS CLI Next config file to use for deployment"
-      bundleName:
-        default: "k3d-core-demo-next"
-        description: "UDS CLI Next bundle metadata name"
       packages:
         default: ""
         description: "Comma-separated packages to deploy"
@@ -60,7 +57,68 @@ tasks:
             set -- "$@" --packages "${PACKAGES}" --force
           fi
 
-          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-${{ .inputs.bundleName }}-${UDS_ARCH}-${VERSION}.tar.zst "$@"
+          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst "$@"
+
+  - name: k3d-standard-bundle-next-dependency-waves
+    description: "Experimental Next bundle deployment that overlaps independent dependency waves"
+    inputs:
+      configFile:
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
+        description: "UDS CLI Next config file to use for deployment"
+    actions:
+      - description: "Deploy the required dependency chain"
+        cmd: |
+          CLI_FEATURES=NextMode=true ./uds bundle deploy bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst \
+            --config "${{ .inputs.configFile }}" \
+            --skip-signature-verification \
+            --packages core_crds,core_base,core_identity_authorization \
+            --force
+      - description: "Deploy independent package waves concurrently"
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          set -euo pipefail
+
+          bundle_path="bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${UDS_ARCH}-${VERSION}.tar.zst"
+          config_file="${{ .inputs.configFile }}"
+          wave_tmp_dir="$(mktemp -d)"
+          trap 'rm -rf "${wave_tmp_dir}"' EXIT
+
+          deploy_packages() {
+            local packages="$1"
+            CLI_FEATURES=NextMode=true ./uds bundle deploy "${bundle_path}" \
+              --config "${config_file}" \
+              --skip-signature-verification \
+              --packages "${packages}" \
+              --force
+          }
+
+          base_dependents="core_logging,core_runtime_security,core_backup_restore,core_metrics_server"
+          identity_dependents="core_monitoring,core_portal"
+          if [ "${FLAVOR}" = "registry1" ]; then
+            identity_dependents="core_monitoring"
+          fi
+
+          deploy_packages "${base_dependents}" >"${wave_tmp_dir}/base-dependents.log" 2>&1 &
+          base_dependents_pid=$!
+          deploy_packages "${identity_dependents}" >"${wave_tmp_dir}/identity-dependents.log" 2>&1 &
+          identity_dependents_pid=$!
+
+          base_dependents_status=0
+          identity_dependents_status=0
+          wait "${base_dependents_pid}" || base_dependents_status=$?
+          wait "${identity_dependents_pid}" || identity_dependents_status=$?
+
+          cat "${wave_tmp_dir}/base-dependents.log"
+          cat "${wave_tmp_dir}/identity-dependents.log"
+
+          if [ "${base_dependents_status}" -ne 0 ]; then
+            exit "${base_dependents_status}"
+          fi
+          if [ "${identity_dependents_status}" -ne 0 ]; then
+            exit "${identity_dependents_status}"
+          fi
 
   - name: k3d-standard-bundle-ha
     actions:

@@ -79,7 +79,7 @@ Each instrumented job uploads a `ci-timing-*` artifact containing `summary.json`
 
 ## Core-only performance experiment
 
-Add the `ci-performance` label to a pull request when measuring the Core upgrade path. The label selects the three `all` upgrade jobs (one per flavor) and skips the normal install matrix plus unrelated PR jobs such as lint, unit, values, Slim Dev, Checkpoint, cloud, CLI compatibility, Kubernetes compatibility, and Private PKI tests. Scheduled runs and pull requests without the label keep their normal coverage.
+Add the `ci-performance` label to a pull request when measuring the core install and upgrade path. The label selects the `all` package matrix and skips unrelated PR jobs such as lint, unit, values, Slim Dev, Checkpoint, cloud, CLI compatibility, Kubernetes compatibility, and Private PKI tests. Scheduled runs and pull requests without the label keep their normal coverage.
 
 The label intentionally skips normal PR gates. Remove it before treating the pull request as merge-ready, or run the full matrix separately to confirm coverage.
 
@@ -95,14 +95,6 @@ The next comparable run should use the restored full matrix and measure these va
 - Total workflow duration.
 - Aggregate runner time, where available.
 - Phase durations from the `ci-timing-*` artifacts, especially environment setup, test execution, debug output, and log collection.
-
-### Core-only upgrade bundle experiment
-
-The upgrade path now builds a Core-only Next bundle after the released cluster has already installed `uds-k3d-dev` and `init`. It retains the existing layer dependency graph and per-package values files, but excludes the large k3d package from the upgrade bundle assembly. Normal install, legacy upgrade, and non-performance CI paths remain unchanged.
-
-When the `ci-performance` label is present, the workflow schedules only the three Core upgrade jobs (upstream, registry1, and unicorn). It does not schedule the normal install matrix or unrelated checks. Remove the label before treating the PR as merge-ready.
-
-This is an A/B experiment, not a coverage reduction for normal CI. Compare the `current-upgrade-build`, `current-upgrade-deploy`, validation, E2E, and total job durations against the baseline. Confirm that all three flavors pass before considering this path for broader use.
 
 Record any failures separately from timing improvements. A faster run that cancels or omits matrix coverage does not establish an equivalent CI improvement.
 
