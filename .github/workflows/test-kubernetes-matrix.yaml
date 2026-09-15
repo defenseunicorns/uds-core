@@ -26,6 +26,8 @@ permissions:
 # Keep the complete compatibility matrix at the top of the workflow.
 jobs:
   test:
+    # Keep compatibility matrix jobs out of the opt-in core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     name: Kubernetes compatibility (${{ matrix.k3s_version }}, ${{ matrix.flavor }})
     strategy:
       fail-fast: false
@@ -49,6 +51,7 @@ jobs:
       CHAINGUARD_IDENTITY: ${{ secrets.CHAINGUARD_IDENTITY }}
 
   k8s-version-check:
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     name: Kubernetes version validation
     runs-on: ubuntu-latest
     steps:
@@ -61,7 +64,7 @@ jobs:
 
   aggregate:
     name: Kubernetes compatibility complete
-    if: ${{ always() }}
+    if: ${{ always() && (github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance')) }}
     needs: [test, k8s-version-check]
     runs-on: ubuntu-latest
     steps:

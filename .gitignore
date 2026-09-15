@@ -40,3 +40,4 @@ test-results/**
 coverage/**
 
 **/ca.crt
+.ci-timings/

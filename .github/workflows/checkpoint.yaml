@@ -44,7 +44,7 @@ jobs:
 
   checkpoint:
     needs: routing
-    if: ${{ needs.routing.outputs.run_full_tests == 'true' }}
+    if: ${{ needs.routing.outputs.run_full_tests == 'true' && !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     strategy:
       matrix:
         architecture: [amd64, arm64]

@@ -41,6 +41,13 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Start setup tools timing
+      if: ${{ env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: start
+        phase: setup-tools
     - name: Setup Tools
       uses: ./.github/actions/setup-tools
       with:
@@ -48,6 +55,14 @@ runs:
         installK3d: ${{ inputs.installK3d }}
         installHelmUnittest: ${{ inputs.installHelmUnittest }}
         installHcledit: ${{ inputs.installHcledit }}
+    - name: End setup tools timing
+      if: ${{ always() && env.CI_TIMING_ENABLED == 'true' }}
+      uses: ./.github/actions/ci-timing
+      continue-on-error: true
+      with:
+        mode: end
+        phase: setup-tools
+        status: ${{ job.status }}
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' && inputs.registry1Password != '' }}

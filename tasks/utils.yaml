@@ -11,6 +11,37 @@ variables:
     default: "false"
 
 tasks:
+  - name: ci-timing-start
+    description: "Record the start of a best-effort CI timing phase"
+    inputs:
+      phase:
+        description: Timing phase name
+        required: true
+    actions:
+      - description: Start CI timing phase
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" start "${{ .inputs.phase }}" || true
+          fi
+
+  - name: ci-timing-end
+    description: "Record the end of a best-effort CI timing phase"
+    inputs:
+      phase:
+        description: Timing phase name
+        required: true
+      status:
+        description: Phase result
+        default: success
+    actions:
+      - description: End CI timing phase
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" end "${{ .inputs.phase }}" "${{ .inputs.status }}" || true
+          fi
+
   - name: determine-repo
     actions:
       - description: "Determine repository for the given flavor/type of release"

@@ -29,6 +29,8 @@ permissions:
 
 jobs:
   uds-core-private-pki-nightly:
+    # Keep specialized PKI jobs out of the opt-in core performance experiment.
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'ci-performance') }}
     runs-on: uds-ubuntu-big-boy-8-core
     timeout-minutes: 45
     name: Private PKI
@@ -40,6 +42,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: private-pki
+          CI_TIMING_PACKAGE: all
+          CI_TIMING_FLAVOR: ${{ matrix.flavor }}
+          CI_TIMING_TEST_TYPE: install
+          CI_TIMING_SCENARIO: private-pki
+        with:
+          mode: init
 
       - name: Check renovate readiness
         if: startsWith(github.event.pull_request.head.ref, 'renovate/') # Only call for Renovate PRs
@@ -68,6 +82,15 @@ jobs:
         uses: ./.github/actions/save-logs
         with:
           suffix: -private-pki-${{ matrix.flavor }}
+
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-private-pki-${{ matrix.flavor }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

@@ -71,21 +71,54 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
 
+      - task: utils:ci-timing-start
+        with:
+          phase: test-resources-package-create
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
+      - task: utils:ci-timing-end
+        with:
+          phase: test-resources-package-create
 
+      - task: utils:ci-timing-start
+        if: ${{ eq .inputs.validate_egress "true" }}
+        with:
+          phase: test-resources-package-deploy
       - description: Deploy the test resources (with egress-app)
         if: ${{ eq .inputs.validate_egress "true" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
+      - task: utils:ci-timing-end
+        if: ${{ eq .inputs.validate_egress "true" }}
+        with:
+          phase: test-resources-package-deploy
 
+      - task: utils:ci-timing-start
+        if: ${{ eq .inputs.validate_egress "false" }}
+        with:
+          phase: test-resources-package-deploy
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
+      - task: utils:ci-timing-end
+        if: ${{ eq .inputs.validate_egress "false" }}
+        with:
+          phase: test-resources-package-deploy
 
+      - task: utils:ci-timing-start
+        if: ${{ eq .inputs.validate_udp_expose "true" }}
+        with:
+          phase: test-resources-udp-overlay
       - description: Apply Envoy Gateway UDP test overlay
         if: ${{ eq .inputs.validate_udp_expose "true" }}
         cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
+      - task: utils:ci-timing-end
+        if: ${{ eq .inputs.validate_udp_expose "true" }}
+        with:
+          phase: test-resources-udp-overlay
 
+      - task: utils:ci-timing-start
+        with:
+          phase: test-resources-readiness
       - description: Verify the admin app is accessible
         wait:
           network:
@@ -149,6 +182,9 @@ tasks:
             kind: ServiceMonitor
             name: podinfo-svcmonitor
             namespace: podinfo
+      - task: utils:ci-timing-end
+        with:
+          phase: test-resources-readiness
 
   - name: check-authservice-protection
     description: Verify if a service is protected by authservice by checking redirects
@@ -182,5 +218,11 @@ tasks:
 
   - name: remove
     actions:
+      - task: utils:ci-timing-start
+        with:
+          phase: test-resources-remove
       - description: Remove the test apps zarf package
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+      - task: utils:ci-timing-end
+        with:
+          phase: test-resources-remove

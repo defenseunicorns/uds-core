@@ -33,16 +33,34 @@ tasks:
         default: "--skip-sbom"
         description: "Additional options passed in when creating Zarf packages. Defaults to: --skip-sbom"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: "layer-build-${LAYER}"
       - task: create:single-layer
         with:
           layer: ${LAYER}
           create_options: ${{ .inputs.create_options }}
+      - task: util:ci-timing-end
+        with:
+          phase: "layer-build-${LAYER}"
+      - task: util:ci-timing-start
+        with:
+          phase: "layer-deploy-${LAYER}"
       - task: deploy:single-layer
         with:
           layer: ${LAYER}
+      - task: util:ci-timing-end
+        with:
+          phase: "layer-deploy-${LAYER}"
+      - task: util:ci-timing-start
+        with:
+          phase: "layer-validation-${LAYER}"
       - task: validate-package
         with:
           layer: ${LAYER}
+      - task: util:ci-timing-end
+        with:
+          phase: "layer-validation-${LAYER}"
 
   - name: layer-dependencies
     description: "Sets up a k3d cluster and deploys dependencies for the given layer"
@@ -67,12 +85,23 @@ tasks:
     # loop through each src/* package and run the validate.yaml task
     actions:
       - cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          run_validation() {
+            package_name="$1"
+            shift
+            if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+              bash "$TIMING_SCRIPT" run "package-validation-${package_name}" "$@"
+            else
+              "$@"
+            fi
+          }
+
           for package in $(ls src); do
             if [ ! $(echo ${EXCLUDED_PACKAGES} | grep ${package}) ]; then
               if [ ${package} = "istio" ]; then
-                ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
+                run_validation "${package}" ./uds run -f src/${package}/tasks.yaml validate --no-progress --with validate_passthrough=${{ .inputs.validate_passthrough }}
               else
-                ./uds run -f src/${package}/tasks.yaml validate --no-progress
+                run_validation "${package}" ./uds run -f src/${package}/tasks.yaml validate --no-progress
               fi
             fi
           done
@@ -85,8 +114,14 @@ tasks:
         description: The UDS Core layer to validate
         required: true
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: "package-validation-${{ index .inputs \"layer\" }}"
       - cmd: |
           ./uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
+      - task: util:ci-timing-end
+        with:
+          phase: "package-validation-${{ index .inputs \"layer\" }}"
 
   - name: e2e-tests
     description: "E2E Test all packages"
@@ -107,6 +142,9 @@ tasks:
         default: "false"
     # Run each e2e test type from the e2e folder
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: test-resources-create-deploy
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
@@ -117,6 +155,12 @@ tasks:
           architecture: ${{ .inputs.architecture }}
           validate_egress: ${{ .inputs.validate_egress }}
           validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+      - task: util:ci-timing-end
+        with:
+          phase: test-resources-create-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: playwright-e2e
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
@@ -126,6 +170,12 @@ tasks:
             npm ci && \
             npx playwright test \
             "
+      - task: util:ci-timing-end
+        with:
+          phase: playwright-e2e
+      - task: util:ci-timing-start
+        with:
+          phase: vitest-e2e
       - description: "Run E2E Tests"
         env:
           - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
@@ -139,27 +189,61 @@ tasks:
           fi
           EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
         dir: test/vitest
+      - task: util:ci-timing-end
+        with:
+          phase: vitest-e2e
+      - task: util:ci-timing-start
+        with:
+          phase: test-resources-cleanup
       - description: remove test resources
         task: test-resources:remove
+      - task: util:ci-timing-end
+        with:
+          phase: test-resources-cleanup
 
   - name: unit-tests
-    description: "Run all unit tests for uds-core"
+    description: "Run uds-core source unit tests"
+    actions:
+      - cmd: |
+          npm ci
+          npm run test:unit
+
+  - name: values-tests
+    description: "Run UDS Core package values tests"
     actions:
       - cmd: |
           npm ci
           npx pepr build -z chart
-          npx vitest run
+          npx vitest run test/values/
 
   - name: uds-core
     description: "Build and test UDS Core with UDS CLI Next bundle workflow"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: core-build
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: util:ci-timing-end
+        with:
+          phase: core-build
+      - task: util:ci-timing-start
+        with:
+          phase: core-deploy
       - task: deploy:k3d-standard-bundle-next
         with:
           configFile: bundles/k3d-standard-next/config-test.uds.hcl
+      - task: util:ci-timing-end
+        with:
+          phase: core-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: core-validation
       - task: validate-packages
+      - task: util:ci-timing-end
+        with:
+          phase: core-validation
 
   - name: uds-core-legacy
     description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
@@ -241,11 +325,29 @@ tasks:
   - name: uds-core-ha
     description: "Build and test UDS Core with HA configuration and UDS CLI Next bundle workflow"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: ha-core-build
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: util:ci-timing-end
+        with:
+          phase: ha-core-build
+      - task: util:ci-timing-start
+        with:
+          phase: ha-core-deploy
       - task: deploy:k3d-standard-bundle-ha-next
+      - task: util:ci-timing-end
+        with:
+          phase: ha-core-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: ha-core-validation
       - task: validate-packages
+      - task: util:ci-timing-end
+        with:
+          phase: ha-core-validation
 
   - name: uds-core-ha-legacy
     description: "Build and test UDS Core with HA configuration and UDS CLI Legacy bundle workflow"
@@ -260,13 +362,31 @@ tasks:
   - name: uds-core-ha-upgrade
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Next"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: latest-release-deploy
       - task: deploy:latest-bundle-release
         with:
           configFile: "bundles/k3d-standard/uds-ha-config.yaml"
+      - task: util:ci-timing-end
+        with:
+          phase: latest-release-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: latest-release-test-resources
       - task: deploy:latest-release-test-resources
+      - task: util:ci-timing-end
+        with:
+          phase: latest-release-test-resources
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade
       - task: upgrade-existing
         with:
           configFile: "bundles/k3d-standard-next/config-ha.uds.hcl"
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade
 
   - name: uds-core-ha-upgrade-legacy
     description: "Test an upgrade from the latest released UDS Core package with HA to current branch with HA and UDS CLI Legacy"
@@ -280,13 +400,36 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the latest release deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+      upgradeConfigFile:
+        description: "UDS CLI Next config file to use for the current branch upgrade"
+        default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Test an upgrade from the latest released UDS Core package to current branch"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: latest-release-deploy
       - task: deploy:latest-bundle-release
         with:
-          configFile: ${{ .inputs.configFile }}
+          configFile: "${{ .inputs.configFile }}"
+      - task: util:ci-timing-end
+        with:
+          phase: latest-release-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: latest-release-test-resources
       - task: deploy:latest-release-test-resources
+      - task: util:ci-timing-end
+        with:
+          phase: latest-release-test-resources
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade
       - task: upgrade-existing
+        with:
+          configFile: "${{ .inputs.upgradeConfigFile }}"
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade
 
   - name: uds-core-upgrade-legacy
     inputs:
@@ -310,15 +453,33 @@ tasks:
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-build
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-build
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-deploy
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-next
         with:
           configFile: ${{ .inputs.configFile }}
           packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-validation
       - task: validate-packages
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-validation
       - task: e2e-tests
         # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
         with:
@@ -329,17 +490,35 @@ tasks:
       configFile:
         description: "UDS_CONFIG file to use for the legacy upgrade deployment"
         default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
-    description: "Upgrade phase only with UDS CLI Legacy: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
+    description: "Upgrade phase only: builds and deploys current branch over an existing installation. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-build
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-build
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-deploy
       # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
       - task: deploy:k3d-standard-bundle-upgrade
         with:
           configFile: ${{ .inputs.configFile }}
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: current-upgrade-validation
       - task: validate-packages
+      - task: util:ci-timing-end
+        with:
+          phase: current-upgrade-validation
       - task: e2e-tests
         # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
         with:
@@ -386,20 +565,68 @@ tasks:
   - name: uds-core-private-pki
     description: "Create and deploy Private PKI bundle with UDS CLI Next"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-certs
       - task: private-pki:private-pki-certs
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-certs
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-build
       - task: create:k3d-standard-bundle-next
         with:
           create_options: "--skip-sbom"
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-build
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-deploy
       - task: deploy:k3d-standard-bundle-private-pki-next
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-validation
       - task: private-pki-test-suite
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-validation
 
   - name: uds-core-private-pki-legacy
     description: "Create and deploy Private PKI bundle with UDS CLI Legacy"
     actions:
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-certs
       - task: private-pki:private-pki-certs
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-certs
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-build
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
       - task: create:k3d-standard-bundle
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-build
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-deploy
       - task: deploy:k3d-standard-bundle-private-pki
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-deploy
+      - task: util:ci-timing-start
+        with:
+          phase: private-pki-validation
       - task: private-pki-test-suite
+      - task: util:ci-timing-end
+        with:
+          phase: private-pki-validation
