@@ -54,9 +54,11 @@ spec:
           args:
             - |
               set -eu
-              LOG_MESSAGE="uds-core-vector-node-log-test-$POD_UID"
-              VARLOG_FILE="/host/var/log/${LOG_MESSAGE}.log"
-              KUBERNETES_LOG_FILE="/host/var/log/kubernetes/${LOG_MESSAGE}.log"
+              LOG_MARKER="uds-core-vector-node-log-test-$POD_UID"
+              VARLOG_MESSAGE="${LOG_MARKER}-varlogs"
+              KUBERNETES_LOG_MESSAGE="${LOG_MARKER}-kubernetes-logs"
+              VARLOG_FILE="/host/var/log/${LOG_MARKER}.log"
+              KUBERNETES_LOG_FILE="/host/var/log/kubernetes/${LOG_MARKER}.log"
               cleanup() {
                 rm -f "$VARLOG_FILE" "$KUBERNETES_LOG_FILE"
                 exit 0
@@ -67,8 +69,8 @@ spec:
               test -w "$VARLOG_FILE"
               test -w "$KUBERNETES_LOG_FILE"
               while true; do
-                printf '%s\n' "$LOG_MESSAGE" >> "$VARLOG_FILE"
-                printf '%s\n' "$LOG_MESSAGE" >> "$KUBERNETES_LOG_FILE"
+                printf '%s\n' "$VARLOG_MESSAGE" >> "$VARLOG_FILE"
+                printf '%s\n' "$KUBERNETES_LOG_MESSAGE" >> "$KUBERNETES_LOG_FILE"
                 sleep 2
               done
           env:

@@ -68,41 +68,47 @@ const getVectorNodeName = async (): Promise<string> => {
 
 const getNodeLogMarker = async (
   nodeName: string,
-): Promise<{ message: string; logs: Array<{ job: string; filename: string }> }> => {
+): Promise<{ logs: Array<{ job: string; filename: string; message: string }> }> => {
   const writerPod = (
     await K8s(kind.Pod).InNamespace(NODE_LOG_TEST_NAMESPACE).WithLabel(NODE_LOG_TEST_LABEL).Get()
   ).items.find(pod => pod.spec?.nodeName === nodeName && pod.metadata?.uid);
 
   expect(writerPod).toBeDefined();
 
-  const message = `${NODE_LOG_TEST_MESSAGE_PREFIX}-${writerPod?.metadata?.uid}`;
+  const marker = `${NODE_LOG_TEST_MESSAGE_PREFIX}-${writerPod?.metadata?.uid}`;
   return {
-    message,
     logs: [
-      { job: "varlogs", filename: `/var/log/${message}.log` },
-      { job: "kubernetes-logs", filename: `/var/log/kubernetes/${message}.log` },
+      {
+        job: "varlogs",
+        filename: `/var/log/${marker}.log`,
+        message: `${marker}-varlogs`,
+      },
+      {
+        job: "kubernetes-logs",
+        filename: `/var/log/kubernetes/${marker}.log`,
+        message: `${marker}-kubernetes-logs`,
+      },
     ],
   };
 };
 
 const validateNodeLog = async (
   nodeName: string,
-  log: { job: string; filename: string },
-  message: string,
+  log: { job: string; filename: string; message: string },
 ): Promise<void> => {
   const data = await pollUntilSuccess(
     () =>
       queryLogs(
-        `{collector="vector", job=${JSON.stringify(log.job)}, host=${JSON.stringify(nodeName)}, filename=${JSON.stringify(log.filename)}} |= ${JSON.stringify(message)}`,
+        `{collector="vector", job=${JSON.stringify(log.job)}, host=${JSON.stringify(nodeName)}, filename=${JSON.stringify(log.filename)}} |= ${JSON.stringify(log.message)}`,
       ),
-    result => result.status === "success" && hasLogLine(result, message),
+    result => result.status === "success" && hasLogLine(result, log.message),
     `test package Vector ${log.job} node log with the expected host label to be available in Loki`,
     NODE_LOG_TEST_TIMEOUT,
     NODE_LOG_TEST_INTERVAL,
   );
 
   expect(data).toHaveProperty("status", "success");
-  expect(hasLogLine(data, message)).toBe(true);
+  expect(hasLogLine(data, log.message)).toBe(true);
 };
 
 describe("Vector Node Log Tests", () => {
@@ -120,10 +126,10 @@ describe("Vector Node Log Tests", () => {
     "Validate Vector node-log host label",
     async () => {
       const nodeName = await getVectorNodeName();
-      const { logs, message } = await getNodeLogMarker(nodeName);
+      const { logs } = await getNodeLogMarker(nodeName);
 
       for (const log of logs) {
-        await validateNodeLog(nodeName, log, message);
+        await validateNodeLog(nodeName, log);
       }
     },
     NODE_LOG_TEST_TIMEOUT + 20000,
