@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { PeprValidateRequest } from "pepr";
+import { K8s, type PeprValidateRequest } from "pepr";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
@@ -32,6 +32,21 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
+  let livePackages: UDSPackage[] | undefined;
+  let livePackagesFetched = false;
+
+  const getLivePackages = async (): Promise<UDSPackage[] | undefined> => {
+    if (!livePackagesFetched) {
+      livePackagesFetched = true;
+      try {
+        livePackages = (await K8s(UDSPackage).Get()).items ?? [];
+      } catch {
+        return undefined;
+      }
+    }
+
+    return livePackages;
+  };
 
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
@@ -182,7 +197,14 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
     // Allow terminating packages to complete cleanup even if their existing routes conflict.
     if (!deletionTimestamp) {
       // Deny cross-namespace collisions when either route is a catch-all.
-      const ownerNs = PackageStore.findNamespaceForExpose(expose, ns);
+      // Read from the API server instead of the asynchronous watch-backed store so an already
+      // persisted package cannot be missed while the watch event is still pending.
+      const packages = await getLivePackages();
+      if (!packages) {
+        return req.Deny("Unable to verify exposed endpoint uniqueness; please retry the request.");
+      }
+
+      const ownerNs = PackageStore.findNamespaceForExpose(expose, ns, packages);
       if (ownerNs && ownerNs !== ns) {
         return req.Deny(
           `The endpoint "${getFqdn(expose)}" conflicts with a package in namespace "${ownerNs}". ` +

@@ -22,9 +22,22 @@ import { PackageStore } from "../../controllers/packages/package-store";
 import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
+const mockK8sGet = vi.hoisted(() => vi.fn());
+const mockK8s = vi.hoisted(() => vi.fn());
+
+vi.mock("pepr", async importOriginal => ({
+  ...(await importOriginal<typeof import("pepr")>()),
+  K8s: mockK8s,
+}));
+
 PackageStore.init();
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
+
+beforeEach(() => {
+  mockK8s.mockImplementation(() => ({ Get: mockK8sGet }));
+  mockK8sGet.mockResolvedValue({ items: [] });
+});
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -428,10 +441,11 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("denies a package that exposes an FQDN already owned by another namespace", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "dos-games", name: "dos-games" },
         spec: { network: { expose: [{ host: "doom" }], allow: [] }, sso: [], monitor: [] },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "dos-games-2", name: "dos-games-2" } },
@@ -445,11 +459,23 @@ describe("Test validation of Package CRs", () => {
       expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("doom.uds.dev"));
     });
 
+    it("denies route validation when the live package list cannot be read", async () => {
+      mockK8sGet.mockRejectedValue(new Error("API unavailable"));
+
+      const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
+      await validator(mockReq);
+
+      expect(mockReq.Deny).toHaveBeenCalledWith(
+        "Unable to verify exposed endpoint uniqueness; please retry the request.",
+      );
+    });
+
     it("allows a package to update and retain its own exposed FQDN", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "application-system", name: "application" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
       await validator(mockReq);
@@ -457,10 +483,11 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("allows a terminating package to complete an update despite a cross-namespace collision", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         {
@@ -481,14 +508,15 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("allows two packages that expose the same host on different gateways", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -502,14 +530,15 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("allows two packages that expose the same host on tenant and passthrough gateways", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: { expose: [{ host: "app", gateway: Gateway.Tenant }], allow: [] },
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -523,10 +552,11 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("denies an advanced route when the existing package owns a catch-all route", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -540,7 +570,7 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("denies a catch-all route when the existing package owns an advanced route", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: {
@@ -550,7 +580,8 @@ describe("Test validation of Package CRs", () => {
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -564,7 +595,7 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("allows two advanced routes with the same host in different namespaces", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: {
@@ -574,7 +605,8 @@ describe("Test validation of Package CRs", () => {
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -588,14 +620,15 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("treats an empty advanced match as a catch-all during validation", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: { expose: [{ host: "app", advancedHTTP: { match: [] } }], allow: [] },
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -609,7 +642,7 @@ describe("Test validation of Package CRs", () => {
     });
 
     it("treats deprecated match as an advanced route during validation", async () => {
-      PackageStore.add({
+      const existingPackage: UDSPackage = {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: {
           network: {
@@ -619,7 +652,8 @@ describe("Test validation of Package CRs", () => {
           sso: [],
           monitor: [],
         },
-      });
+      };
+      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },

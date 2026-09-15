@@ -490,6 +490,49 @@ describe("Package Store", () => {
         ),
       ).toEqual("ns-a");
     });
+
+    it("treats matches without request predicates as catch-all routes", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: {
+            expose: [{ host: "app", advancedHTTP: { match: [{ name: "named-route" }] } }],
+          },
+        },
+      });
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/foo" } }] } },
+          "ns-b",
+        ),
+      ).toEqual("ns-a");
+    });
+
+    it("treats an OR entry without a request predicate as a catch-all route", () => {
+      PackageStore.add({
+        ...createPackageWithExpose("ns-a", "app-a", "app"),
+        spec: {
+          network: {
+            expose: [
+              {
+                host: "app",
+                advancedHTTP: {
+                  match: [{ uri: { prefix: "/foo" } }, { ignoreUriCase: true }],
+                },
+              },
+            ],
+          },
+        },
+      });
+
+      expect(
+        PackageStore.findNamespaceForExpose(
+          { host: "app", advancedHTTP: { match: [{ uri: { prefix: "/bar" } }] } },
+          "ns-b",
+        ),
+      ).toEqual("ns-a");
+    });
   });
 
   describe("Ambient Waypoint", () => {

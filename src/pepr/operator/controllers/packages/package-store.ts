@@ -10,7 +10,12 @@
  */
 import { Component, setupLogger } from "../../../logger";
 import { Expose, UDSPackage } from "../../crd";
-import { ExposeProtocol, Mode } from "../../crd/generated/package-v1alpha1";
+import {
+  AdvancedHTTPMatch,
+  ExposeMatch,
+  ExposeProtocol,
+  Mode,
+} from "../../crd/generated/package-v1alpha1";
 import { getExposureKey } from "../domain-utils";
 import { getUDPGatewayPortKey } from "../envoy-gateway/constants";
 const log = setupLogger(Component.OPERATOR_PACKAGES);
@@ -21,8 +26,22 @@ let packageNamespaceMap: PackageNamespaceMap;
 let ssoIndex: Map<string, Set<string>>;
 let udpGatewayPortIndex: Map<string, Set<string>>;
 
+function hasObjectProperties(value: object | undefined): boolean {
+  return value !== undefined && Object.keys(value).length > 0;
+}
+
+function hasEffectiveHTTPMatch(match: AdvancedHTTPMatch | ExposeMatch): boolean {
+  const hasQueryParamMatch = Object.values(match.queryParams ?? {}).some(hasObjectProperties);
+
+  return hasObjectProperties(match.uri) || hasObjectProperties(match.method) || hasQueryParamMatch;
+}
+
 function hasAdvancedHTTPMatch(expose: Expose): boolean {
-  return Boolean(expose.advancedHTTP?.match?.length || expose.match?.length);
+  const matches = expose.advancedHTTP?.match ?? expose.match;
+
+  // Istio treats the entries in match as OR conditions. A single unconstrained
+  // entry therefore makes the whole route a catch-all.
+  return Boolean(matches?.length && matches.every(hasEffectiveHTTPMatch));
 }
 
 /**
@@ -232,25 +251,28 @@ function removeIndexes(pkg: UDSPackage): void {
  * @param {string} [namespace] - The namespace requesting the lookup, which is excluded.
  * @returns {string | undefined} - The namespace of the owning package, or undefined if not found.
  */
-function findNamespaceForExpose(expose: Expose, namespace?: string): string | undefined {
+function findNamespaceForExpose(
+  expose: Expose,
+  namespace?: string,
+  packages: UDSPackage[] = Array.from(packageNamespaceMap.values()).flatMap(namespaceMap =>
+    Array.from(namespaceMap.values()),
+  ),
+): string | undefined {
   const hasMatch = hasAdvancedHTTPMatch(expose);
   const exposureKey = getExposureKey(expose);
 
-  // Derive keys from stored packages at lookup time because UDSConfig domains can change at runtime.
-  for (const namespaceMap of packageNamespaceMap.values()) {
-    for (const pkg of namespaceMap.values()) {
-      const packageNamespace = pkg.metadata?.namespace;
-      if (!packageNamespace || packageNamespace === namespace) continue;
+  for (const pkg of packages) {
+    const packageNamespace = pkg.metadata?.namespace;
+    if (!packageNamespace || packageNamespace === namespace) continue;
 
-      const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
-        indexedExpose =>
-          indexedExpose.protocol !== ExposeProtocol.UDP &&
-          getExposureKey(indexedExpose) === exposureKey &&
-          (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
-      );
+    const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
+      indexedExpose =>
+        indexedExpose.protocol !== ExposeProtocol.UDP &&
+        getExposureKey(indexedExpose) === exposureKey &&
+        (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
+    );
 
-      if (hasConflictingExpose) return packageNamespace;
-    }
+    if (hasConflictingExpose) return packageNamespace;
   }
 
   return undefined;
