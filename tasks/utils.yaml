@@ -107,6 +107,47 @@ tasks:
         cmd: |
           echo "$ADMIN_GW_IP keycloak.admin.uds.dev grafana.admin.uds.dev demo.admin.uds.dev\n$TENANT_GW_IP sso.uds.dev demo-8080.uds.dev demo-8081.uds.dev protected.uds.dev ambient-protected.uds.dev ambient2-protected.uds.dev podinfo.uds.dev portal.uds.dev" | sudo tee -a /etc/hosts
 
+  - name: prepare-node-test-ca
+    description: "Prepare the active gateway CA for Node-based e2e tests"
+    actions:
+      - description: "Extract the final certificate from each gateway serving chain"
+        cmd: |
+          set -euo pipefail
+          CA_FILE="build/uds-test-ca.pem"
+          mkdir -p "$(dirname "${CA_FILE}")"
+          : > "${CA_FILE}"
+
+          for namespace in istio-admin-gateway istio-tenant-gateway; do
+            # `cacert` is the client CA used for mTLS. The serving chain is the
+            # correct trust source for the HTTPS endpoints exercised by Vitest.
+            # Kubernetes stores that chain leaf-to-root, so trust its final
+            # certificate while retaining Node's normal TLS verification.
+            encoded_cert=$(./uds zarf tools kubectl -n "${namespace}" get secret gateway-tls -o=jsonpath='{.data.tls\.crt}' 2>/dev/null || true)
+            if [ -z "${encoded_cert}" ]; then
+              echo "Missing gateway-tls tls.crt in ${namespace}" >&2
+              exit 1
+            fi
+
+            if base64 -d </dev/null >/dev/null 2>&1; then
+              printf '%s' "${encoded_cert}" | base64 -d
+            else
+              printf '%s' "${encoded_cert}" | base64 -D
+            fi | awk '
+              /-----BEGIN CERTIFICATE-----/ { certificate = ""; in_certificate = 1 }
+              in_certificate { certificate = certificate $0 ORS }
+              /-----END CERTIFICATE-----/ { final_certificate = certificate; in_certificate = 0 }
+              END {
+                if (final_certificate == "") exit 1
+                printf "%s", final_certificate
+              }
+            ' >> "${CA_FILE}"
+          done
+
+          if ! grep -q -- "-----BEGIN CERTIFICATE-----" "${CA_FILE}"; then
+            echo "Gateway serving chains did not contain PEM certificates" >&2
+            exit 1
+          fi
+
   - name: rename-flavored-packages
     description: "Rename flavored package files by removing the flavor suffix"
     actions:
