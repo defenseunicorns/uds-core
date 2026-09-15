@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -15,7 +15,6 @@ import {
   inMemoryAmbientPackageMap,
   inMemoryPackageMap,
   performEgressReconciliation,
-  performEgressReconciliationWithMutex,
   reconcileSharedEgressResources,
   removeMapResources,
   updateInMemoryAmbientPackageMap,
@@ -359,149 +358,101 @@ describe("test reconcileSharedEgressResources", () => {
   });
 });
 
-describe("test performEgressReconciliationWithMutex", () => {
+describe("test shared egress reconciliation serialization", () => {
+  const sharedHostResourceMap: HostResourceMap = {
+    "example.com": {
+      portProtocol: [{ port: 443, protocol: RemoteProtocol.TLS }],
+    },
+  };
+
   beforeEach(() => {
     process.env.PEPR_WATCH_MODE = "true";
-    vi.useFakeTimers();
     vi.clearAllMocks();
-    // Reset the map before each test
     for (const key in inMemoryPackageMap) {
       delete inMemoryPackageMap[key];
+    }
+    for (const key in inMemoryAmbientPackageMap) {
+      delete inMemoryAmbientPackageMap[key];
     }
 
     (purgeOrphans as Mock).mockImplementation(mockPurgeOrphans);
   });
 
-  afterEach(() => {
-    vi.runOnlyPendingTimers();
-    vi.useRealTimers();
-  });
-
-  it("should successfully perform reconciliation when no mutex is held", async () => {
+  it("holds the lock through map updates, apply, and purge", async () => {
     updateEgressMocks(defaultEgressMocks);
 
-    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
-
-    // Should have called the namespace check
-    expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
-  });
-
-  it("should handle reconciliation failure and re-throw error", async () => {
-    const errorMessage = "Reconciliation failed";
-    const error = Object.assign(new Error(errorMessage), { status: 500 });
-
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue(error);
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
+    let releaseFirstApply!: () => void;
+    let firstApplyStarted!: () => void;
+    const firstApply = new Promise<void>(resolve => {
+      releaseFirstApply = resolve;
+    });
+    const applyStarted = new Promise<void>(resolve => {
+      firstApplyStarted = resolve;
     });
 
-    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
-      /Egress reconciliation failed: .*/,
+    vi.mocked(applySidecarEgressResources).mockImplementation(async packageMap => {
+      firstApplyStarted();
+      await firstApply;
+      expect(packageMap).toBe(inMemoryPackageMap);
+    });
+
+    const first = reconcileSharedEgressResources(
+      pkgMock,
+      sharedHostResourceMap,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
     );
-  });
+    await applyStarted;
 
-  it("should wait for existing reconciliation to complete", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    // Start first reconciliation (this will hold the mutex)
-    const firstReconciliation = performEgressReconciliationWithMutex();
-
-    // Start second reconciliation while first is in progress
-    const secondReconciliation = performEgressReconciliationWithMutex();
-
-    // Check both can reconcile without error
-    await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
-
-    // The namespace check will be called at least once
-    expect(defaultEgressMocks.getNsMock).toHaveBeenCalled();
-  });
-
-  it("should perform another reconciliation pass when requested during a running reconcile", async () => {
-    updateEgressMocks(defaultEgressMocks);
-
-    let resolveFirst: (() => void) | undefined;
-    const firstCall = new Promise<void>(resolve => {
-      resolveFirst = resolve;
-    });
-    let callCount = 0;
-
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return firstCall.then(() => ({}) as kind.Namespace);
-      }
-      return Promise.resolve({} as kind.Namespace);
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    const firstReconciliation = performEgressReconciliationWithMutex();
-
-    // Ensure the first reconciliation has started and is blocked on the first namespace lookup.
-    await vi.runOnlyPendingTimersAsync();
-
-    const secondReconciliation = performEgressReconciliationWithMutex();
-
-    // Unblock the first reconciliation.
-    resolveFirst?.();
-
-    await expect(Promise.all([firstReconciliation, secondReconciliation])).resolves.not.toThrow();
-
-    // Two passes => validateNamespace invoked twice per pass (sidecar + ambient).
-    expect(getNsMock).toHaveBeenCalledTimes(4);
-  });
-
-  it("should handle previous reconciliation failure and start new one", async () => {
-    // First reconciliation will fail
-    const errorMessage = "First reconciliation failed";
-    const error = Object.assign(new Error(errorMessage), { status: 500 });
-
-    let callCount = 0;
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.reject(error);
-      }
-      return Promise.resolve({} as kind.Namespace);
-    });
-
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
-
-    // First reconciliation should fail
-    await expect(performEgressReconciliationWithMutex()).rejects.toThrow(
-      /Egress reconciliation failed: .*/,
+    const secondPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "second-package" },
+    };
+    const second = reconcileSharedEgressResources(
+      secondPackage,
+      sharedHostResourceMap,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
     );
 
-    // Second reconciliation should succeed despite the previous failure
-    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
+    await Promise.resolve();
+    expect(inMemoryPackageMap).toEqual({
+      "test-package-test-namespace": sharedHostResourceMap,
+    });
 
-    // Should have been called 4 times, once for each ambient and sidecar
-    expect(getNsMock).toHaveBeenCalledTimes(4);
+    releaseFirstApply();
+    await expect(Promise.all([first, second])).resolves.toEqual([undefined, undefined]);
+    expect(inMemoryPackageMap).toEqual({
+      "test-package-test-namespace": sharedHostResourceMap,
+      "second-package-test-namespace": sharedHostResourceMap,
+    });
   });
 
-  it("should handle namespace 404 gracefully", async () => {
-    const getNsMock = vi.fn<() => Promise<kind.Namespace>>().mockRejectedValue({
-      status: 404,
-      message: "Namespace not found",
-    });
+  it("releases the lock after reconciliation failure", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    vi.mocked(applySidecarEgressResources)
+      .mockRejectedValueOnce(new Error("apply failed"))
+      .mockResolvedValueOnce();
 
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getNsMock,
-    });
+    const first = reconcileSharedEgressResources(
+      pkgMock,
+      sharedHostResourceMap,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+    );
+    const second = reconcileSharedEgressResources(
+      {
+        ...pkgMock,
+        metadata: { ...pkgMock.metadata, name: "second-package" },
+      },
+      sharedHostResourceMap,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+    );
 
-    // Should not throw for 404 (early return)
-    await expect(performEgressReconciliationWithMutex()).resolves.not.toThrow();
-
-    expect(getNsMock).toHaveBeenCalled();
+    await expect(first).rejects.toThrow("Egress reconciliation failed");
+    await expect(second).resolves.toBeUndefined();
+    expect(applySidecarEgressResources).toHaveBeenCalledTimes(2);
   });
 });
 

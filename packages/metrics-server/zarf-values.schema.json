@@ -130,6 +130,9 @@
               },
               "type": "object"
             },
+            "hostUsers": {
+              "type": "string"
+            },
             "imagePullSecrets": {
               "type": "array"
             },
@@ -170,6 +173,9 @@
               "type": "object"
             },
             "nameOverride": {
+              "type": "string"
+            },
+            "namespaceOverride": {
               "type": "string"
             },
             "nodeSelector": {

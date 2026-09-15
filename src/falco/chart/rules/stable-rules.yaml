@@ -427,10 +427,23 @@
     and not linux_bench_reading_etc_shadow
     and not user_known_read_sensitive_files_activities
     and not user_read_sensitive_file_containers
+    and not systemd_sensitive_file_readers
   output: Sensitive file opened for reading by non-trusted program | file=%fd.name gparent=%proc.aname[2] ggparent=%proc.aname[3] gggparent=%proc.aname[4] evt_type=%evt.type user=%user.name user_uid=%user.uid user_loginuid=%user.loginuid process=%proc.name proc_exepath=%proc.exepath parent=%proc.pname command=%proc.cmdline terminal=%proc.tty
   priority: WARNING
   tags: [maturity_stable, host, container, filesystem, mitre_credential_access, T1555]
 
+# systemd spawns short-lived helper processes that legitimately read sensitive
+# account/PAM files (e.g. /etc/shadow, /etc/pam.d/*) during normal operation.
+# These helpers report a bare-number or comm-truncated proc.name, so they cannot
+# be matched by name; proc.exepath (kernel-resolved, unspoofable) is used instead,
+# and each entry is anchored to its expected systemd parent to keep it tight.
+#   - systemd-executor: unit (re)exec deserialize handoff (see falcosecurity/falco#3480)
+#   - systemd-userwork: userdb (User/Group Record Lookup) query worker
+# The rule "Read sensitive file untrusted" uses this macro to avoid FPs.
+- macro: systemd_sensitive_file_readers
+  condition: >
+    ((proc.pname=systemd and proc.exepath=/usr/lib/systemd/systemd-executor) or
+     (proc.pname=systemd-userdbd and proc.exepath=/usr/lib/systemd/systemd-userwork))
 - macro: postgres_running_wal_e
   condition: (proc.pname=postgres and (proc.cmdline startswith "sh -c envdir /etc/wal-e.d/env /usr/local/bin/wal-e" or proc.cmdline startswith "sh -c envdir \"/run/etc/wal-e.d/env\" wal-g wal-push"))
 

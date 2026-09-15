@@ -65,9 +65,8 @@ components:
                 ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n istio-system rollout status daemonset ztunnel --timeout=60s || cleanup_status=$?
 
                 ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n pepr-system scale deploy pepr-uds-core --replicas=2 || cleanup_status=$?
-                ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n pepr-system rollout status deploy pepr-uds-core --timeout=60s || cleanup_status=$?
-
                 ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1 || cleanup_status=$?
+                ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n pepr-system rollout status deploy pepr-uds-core --timeout=60s || cleanup_status=$?
                 ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s || cleanup_status=$?
 
                 ./zarf tools kubectl --context "k3d-${ZARF_VAR_CLUSTER_NAME}" -n keycloak scale statefulset keycloak --replicas=1 || cleanup_status=$?
@@ -158,9 +157,8 @@ components:
               ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n istio-system rollout status daemonset ztunnel --timeout=60s
 
               ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system scale deploy pepr-uds-core --replicas=2
-              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system rollout status deploy pepr-uds-core --timeout=60s
-
               ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system scale deploy pepr-uds-core-watcher --replicas=1
+              ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system rollout status deploy pepr-uds-core --timeout=60s
               ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n pepr-system rollout status deploy pepr-uds-core-watcher --timeout=60s
 
               ./zarf tools kubectl --context k3d-${ZARF_VAR_CLUSTER_NAME} -n keycloak scale statefulset keycloak --replicas=1
