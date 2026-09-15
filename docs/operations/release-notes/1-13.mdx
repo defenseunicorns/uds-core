@@ -1,0 +1,41 @@
+---
+title: UDS Core 1.13
+description: UDS Core 1.13 adds control over HTTP 421 misdirected-request protection and improves checkpoint restores, shared egress reconciliation, and startup safety.
+sidebar:
+  order: 3.982
+---
+
+> [!NOTE]
+> For general upgrade procedures, see the [Upgrade Overview](/operations/upgrades/overview/).
+
+UDS Core 1.13 lets you disable HTTP 421 misdirected-request protection when it conflicts with client connection reuse. This release also improves checkpoint restores, shared egress reconciliation, namespace initialization, and Gateway API resource ownership during upgrades.
+
+### Notable features
+
+- **Configurable misdirected-request protection:** Set `istio-controlplane.uds-global-istio-config.misdirectedRequest.enabled` to `false` to disable the Envoy filter that rejects HTTP/2 requests when the `:authority` header does not match the TLS Server Name Indication (SNI). The filter remains enabled by default in 1.13, but UDS Core 2.0 will disable it by default. Set the value explicitly to `true` if you need to preserve the current behavior across that upgrade. Disabling the filter can improve compatibility with clients such as Safari that do not retry HTTP 421 responses, but removes protection against connection reuse across gateways with overlapping certificates ([#2962](https://github.com/defenseunicorns/uds-core/pull/2962)).
+- **Checkpoint restore ordering:** Checkpoint creation now quiesces Keycloak, the Pepr watcher, Pepr admission, and `ztunnel` in dependency order. Restore starts those components in reverse order and waits for each rollout, preventing timeouts caused by suspending cluster infrastructure such as Istiod ([#2944](https://github.com/defenseunicorns/uds-core/pull/2944)).
+- **Shared egress reconciliation safety:** The UDS Operator now verifies that stale shared egress resources still belong to an old generation before deleting them. This prevents cleanup from deleting newly updated resources during concurrent reconciliation ([#2924](https://github.com/defenseunicorns/uds-core/pull/2924)).
+- **Namespace metadata preservation:** Keycloak, Authservice, CA bundle, and uptime initialization now create namespaces only when they do not exist. Existing namespaces retain metadata managed by Pepr, Istio, and other controllers ([#2935](https://github.com/defenseunicorns/uds-core/pull/2935)).
+- **Stable Gateway API Helm ownership:** UDS Core now manages Gateway API resources through a stable local Helm chart instead of a generated chart name. Upgrades automatically migrate resources owned by the previous Zarf-generated release, reducing ownership conflicts across deployment tools ([#2940](https://github.com/defenseunicorns/uds-core/pull/2940)).
+
+### Dependency updates
+
+| Package                   | Previous | Updated                                                                                                   |
+| ------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| Envoy Gateway             | v1.8.3   | [v1.9.1](https://github.com/envoyproxy/gateway/releases/tag/v1.9.1)                                       |
+| Envoy Proxy               | v1.39.0  | [v1.39.1](https://github.com/envoyproxy/envoy/releases/tag/v1.39.1)                                       |
+| Falcosidekick             | 2.34.1   | [2.35.0](https://github.com/falcosecurity/falcosidekick/releases/tag/2.35.0)                              |
+| Keycloak                  | 26.7.2   | [26.7.3](https://github.com/keycloak/keycloak/releases/tag/26.7.3)                                        |
+| Loki                      | 3.7.6    | [3.7.7](https://github.com/grafana/loki/releases/tag/v3.7.7)                                              |
+| Loki Helm chart           | 18.7.6   | [18.12.1](https://github.com/grafana-community/helm-charts/releases/tag/loki-18.12.1)                     |
+| k8s-sidecar               | 2.10.1   | [2.11.2](https://github.com/kiwigrid/k8s-sidecar/releases/tag/2.11.2)                                     |
+| Metrics Server Helm chart | 3.13.1   | [3.14.0](https://github.com/kubernetes-sigs/metrics-server/releases/tag/metrics-server-helm-chart-3.14.0) |
+| Vector                    | 0.57.0   | [0.58.0](https://github.com/vectordotdev/vector/releases/tag/v0.58.0)                                     |
+| Vector Helm chart         | 0.57.0   | [0.58.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.58.0)                          |
+
+## Related documentation
+
+- [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
+- [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
+- [UDS Core 1.13.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1130-2026-09-15) - full changelog
+- [Full diff (1.12.0...1.13.0)](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) - all changes between versions
