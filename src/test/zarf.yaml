@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 kind: ZarfPackageConfig
@@ -16,6 +16,11 @@ components:
       - name: loki-ruler-test-configmap
         files:
           - "loki-ruler-test-configmap.yaml"
+      - name: vector-node-log-test
+        files:
+          - "vector-node-log-test.yaml"
+    images:
+      - curlimages/curl:latest
 
   # Deploy package CRs
   - name: test-app-packages
