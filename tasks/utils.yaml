@@ -111,6 +111,9 @@ tasks:
     description: "Prepare the active gateway CA for Node-based e2e tests"
     actions:
       - description: "Extract the final certificate from each gateway serving chain"
+        shell:
+          darwin: bash
+          linux: bash
         cmd: |
           set -euo pipefail
           CA_FILE="build/uds-test-ca.pem"
