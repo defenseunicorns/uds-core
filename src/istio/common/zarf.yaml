@@ -19,7 +19,7 @@ components:
     required: true
     charts:
       - name: base
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         namespace: istio-system
         # Istio's webhooks currently will cause SSA conflicts - https://github.com/istio/istio/issues/59487
@@ -33,7 +33,7 @@ components:
               - .istio-controlplane.base.global.hub
               - .istio-controlplane.base.global.tag
       - name: istiod
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         namespace: istio-system
         valuesFiles:
@@ -68,7 +68,7 @@ components:
           - sourcePath: .istio-controlplane.uds-global-istio-config
             targetPath: .
       - name: cni
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         namespace: istio-system
         valuesFiles:
@@ -81,7 +81,7 @@ components:
               - .istio-controlplane.cni.global.hub
               - .istio-controlplane.cni.global.tag
       - name: ztunnel
-        url: https://istio-release.storage.googleapis.com/charts
+        url: https://blob.istio.io/istio-release/charts
         version: 1.30.3
         namespace: istio-system
         valuesFiles:
