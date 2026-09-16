@@ -1,0 +1,28 @@
+// Copyright 2026 Defense Unicorns
+// SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pkl"
+
+steps {
+    ["yamllint"] {
+        check = "uvx yamllint . -c .yamllint --no-warnings"
+        glob = List("**/*.yaml", "**/*.yml", ".yamllint")
+    }
+    ["codespell"] {
+        check = "uvx codespell"
+        fix = "uvx codespell -w"
+        glob = List("**/*")
+        exclude = List("build/**", "vendor/**", "uds-docs/**", "package-lock.json")
+    }
+    ["typescript-format"] {
+        check = "npm run format:check"
+        fix = "npm run format"
+        glob = List("**/*.ts")
+    }
+    ["license-check"] {
+        check = "uds run -f tasks/lint.yaml license"
+        fix = "uds run -f tasks/lint.yaml fix-license"
+        glob = List("**/*")
+        exclude = List("build/**", "vendor/**", "uds-docs/**")
+    }
+}
