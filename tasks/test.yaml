@@ -127,18 +127,26 @@ tasks:
             npm ci && \
             npx playwright test \
             "
-      - description: "Run E2E Tests"
+      - description: "Install Vitest E2E dependencies"
+        cmd: npm ci
+        dir: test/vitest
+      - description: "Run isolated network E2E tests"
         env:
           - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
         cmd: |
-          npm ci
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "network.spec.ts"
+        dir: test/vitest
+      - description: "Run remaining E2E tests without network suite"
+        env:
+          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
+        cmd: |
           # TODO: Remove this conditional exclude once Fleet admin realm updates are included in a released Core baseline.
           # Upgrade tests start from an older released realm, and this realm update must be applied manually.
           set --
           if [ "${{ .inputs.skip_fleet_admin }}" = "true" ]; then
             set -- --exclude "**/keycloak-fleet-admin.spec.ts"
           fi
-          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@"
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "$@" --exclude "**/network.spec.ts"
         dir: test/vitest
       - description: remove test resources
         task: test-resources:remove
