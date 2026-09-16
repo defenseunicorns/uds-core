@@ -15,8 +15,8 @@ steps {
         exclude = List("build/**", "vendor/**", "uds-docs/**", "package-lock.json")
     }
     ["typescript-format"] {
-        check = "npm run format:check"
-        fix = "npm run format"
+        check = "npx eslint {{files}} && npx prettier --check {{files}}"
+        fix = "npx eslint --fix {{files}} && npx prettier --write {{files}}"
         glob = List("**/*.ts")
     }
     ["license-check"] {
