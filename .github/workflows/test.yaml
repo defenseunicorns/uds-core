@@ -100,4 +100,4 @@ jobs:
         if: always()
         uses: ./.github/actions/save-logs
         with:
-          suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}
+          suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}${{ inputs.k3s_version != '' && format('-{0}', inputs.k3s_version) || '' }}
