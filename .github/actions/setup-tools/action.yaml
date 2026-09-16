@@ -8,11 +8,12 @@ description: "Installs development tooling from mise.toml"
 runs:
   using: "composite"
   steps:
-    - name: Setup mise
-      # renovate: datasource=github-tags depName=jdx/mise-action versioning=semver
-      uses: jdx/mise-action@v4.2.4
+    - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
       with:
-        install: false
+        # renovate: datasource=github-releases depName=jdx/mise versioning=semver
+        version: 2026.9.7
+        install: true
+        cache: true
 
     - name: Install tools with mise
       run: mise install
