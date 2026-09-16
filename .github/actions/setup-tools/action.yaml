@@ -3,67 +3,17 @@
 
 # action.yml
 name: "Setup Tools"
-description: "Installs UDS CLI and Node along with other conditional tooling"
-inputs:
-  installUv:
-    description: "Whether to install uv"
-    required: false
-    default: 'false'
-  installK3d:
-    description: "Whether to install k3d"
-    required: false
-    default: 'false'
-  installHelmUnittest:
-    description: "Whether to install the helm unittest plugin"
-    required: false
-    default: 'false'
-  installHcledit:
-    description: "Whether to install hcledit"
-    required: false
-    default: 'false'
+description: "Installs development tooling from mise.toml"
 
 runs:
   using: "composite"
   steps:
-    # We always need UDS CLI for running tasks
-    - name: Install UDS CLI
-      uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
+    - name: Setup mise
+      # renovate: datasource=github-tags depName=jdx/mise-action versioning=semver
+      uses: jdx/mise-action@v4.2.4
       with:
-        # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-        version: v0.37.0
+        install: false
 
-    # Node is required for all workflows (either building Pepr or running specific scripts)
-    - name: Use Node.js latest
-      uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-      with:
-        node-version: 24
-
-    - name: Install uv
-      if: ${{ inputs.installUv == 'true' }}
-      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
-      with:
-        # renovate: datasource=github-tags depName=astral-sh/uv versioning=semver
-        version: 0.12.10
-
-    - name: Install k3d
-      if: ${{ inputs.installK3d == 'true' }}
+    - name: Install tools with mise
+      run: mise install
       shell: bash
-      # renovate: datasource=github-tags depName=k3d-io/k3d versioning=semver
-      run: curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG=v5.9.0 bash
-
-    - name: Install helm unittest plugin
-      if: ${{ inputs.installHelmUnittest == 'true' }}
-      shell: bash
-      # renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
-      run: export HELM_UNITTEST_VERSION="v1.1.2" && helm plugin install https://github.com/helm-unittest/helm-unittest.git --version "${HELM_UNITTEST_VERSION}"
-
-    - name: Install hcledit
-      if: ${{ inputs.installHcledit == 'true' }}
-      shell: bash
-      # renovate: datasource=github-releases depName=minamijoyo/hcledit versioning=semver
-      run: |
-        HCLEDIT_VERSION="0.2.18"
-        curl -fsSL "https://github.com/minamijoyo/hcledit/releases/download/v${HCLEDIT_VERSION}/hcledit_${HCLEDIT_VERSION}_linux_amd64.tar.gz" -o hcledit.tar.gz
-        tar -xzf hcledit.tar.gz hcledit
-        sudo install hcledit /usr/local/bin/hcledit
-        rm -f hcledit hcledit.tar.gz

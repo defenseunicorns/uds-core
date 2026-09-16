@@ -45,9 +45,8 @@ tasks:
         cmd: uvx yamllint . -c .yamllint --no-warnings
       - description: codespell lint
         cmd: uvx codespell
-      - description: Install addlicense dep
-        # renovate: datasource=github-tags depName=google/addlicense versioning=semver
-        cmd: GOPATH="$HOME/go" go install github.com/google/addlicense@v1.1.1
+      - description: Ensure addlicense is installed
+        cmd: command -v addlicense
       - description: license lint
         task: license
       - description: Run helm unittest on all charts
@@ -152,7 +151,7 @@ tasks:
           for chart in $(find . -name Chart.yaml -type f -exec dirname {} \;); do
             if [ -d "$chart/tests" ]; then
               echo "Testing $chart"
-              if ! helm unittest "$chart" --color; then
+              if ! untt "$chart" --color; then
                 failed=1
               fi
             else
