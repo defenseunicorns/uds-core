@@ -10,6 +10,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     globalSetup: ['./vitest.setup.js'],
+    teardownTimeout: 30000,
     include: ['**/*.spec.ts'],
     exclude: ['trust-bundle/**'],
     coverage: {
