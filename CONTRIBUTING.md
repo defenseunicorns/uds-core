@@ -65,6 +65,9 @@ mise install
 hk install --mise
 ```
 
+> [!NOTE]
+> Ensure mise is activated in your shell before running repo tools directly, such as `uds`, `hk`, or `helm`. Reference the [mise shell activation docs](https://mise.jdx.dev/getting-started.html#activate-mise) for your shell.
+
 **Required Tools:**
 
 Our pre-commit and linting checks validate:
