@@ -59,7 +59,7 @@ We use pre-commit hooks to ensure code quality and consistency. These checks run
 
 ```console
 # Install pinned development tools
-mise install
+mise trust && mise install
 
 # Initialize hk hooks through mise
 hk install --mise
@@ -82,7 +82,7 @@ The easiest way to install all required dependencies is:
 
 ```console
 # Install pinned development tools
-mise install
+mise trust && mise install
 
 # Install the helm-unittest plugin
 helm plugin install https://github.com/helm-unittest/helm-unittest.git
