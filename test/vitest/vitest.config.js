@@ -10,6 +10,7 @@ const skipFleetAdmin = process.env.SKIP_FLEET_ADMIN === 'true';
 export default defineConfig({
   test: {
     globalSetup: ['./vitest.setup.js'],
+    teardownTimeout: 30000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
