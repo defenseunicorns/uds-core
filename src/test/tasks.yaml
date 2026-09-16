@@ -72,20 +72,49 @@ tasks:
         cmd: "mkdir -p build"
 
       - description: Create zarf package for the test resources
-        cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
+        env:
+          - ARCHITECTURE=${{ index .inputs "architecture" }}
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" run test-resources-package-create uds zarf package create src/test --confirm --skip-sbom -a "${ARCHITECTURE}"
+          else
+            uds zarf package create src/test --confirm --skip-sbom -a "${ARCHITECTURE}"
+          fi
 
       - description: Deploy the test resources (with egress-app)
         if: ${{ eq .inputs.validate_egress "true" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" run test-resources-package-deploy uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app
+          else
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app
+          fi
 
       - description: Deploy the test resources
         if: ${{ eq .inputs.validate_egress "false" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" run test-resources-package-deploy uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
+          else
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
+          fi
 
       - description: Apply Envoy Gateway UDP test overlay
         if: ${{ eq .inputs.validate_udp_expose "true" }}
-        cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" run test-resources-udp-overlay uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml
+          else
+            uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml
+          fi
 
+      - task: utils:ci-timing-start
+        with:
+          phase: test-resources-readiness
       - description: Verify the admin app is accessible
         wait:
           network:
@@ -149,6 +178,9 @@ tasks:
             kind: ServiceMonitor
             name: podinfo-svcmonitor
             namespace: podinfo
+      - task: utils:ci-timing-end
+        with:
+          phase: test-resources-readiness
 
   - name: check-authservice-protection
     description: Verify if a service is protected by authservice by checking redirects
@@ -183,4 +215,10 @@ tasks:
   - name: remove
     actions:
       - description: Remove the test apps zarf package
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: |
+          TIMING_SCRIPT="${GITHUB_WORKSPACE:-$PWD}/.github/actions/ci-timing/timing.sh"
+          if [ "${CI_TIMING_ENABLED:-false}" = "true" ] && [ -f "$TIMING_SCRIPT" ]; then
+            bash "$TIMING_SCRIPT" run test-resources-remove uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm
+          else
+            uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm
+          fi

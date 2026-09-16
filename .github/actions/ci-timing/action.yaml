@@ -1,0 +1,81 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: CI timing
+description: Record best-effort phase timings and upload a small timing artifact.
+
+inputs:
+  mode:
+    description: "Timing operation: init/finalize at job level, or start/end for multi-action phases."
+    required: true
+  phase:
+    description: Phase name for an explicit multi-action start/end operation.
+    required: false
+    default: ""
+  status:
+    description: Status to associate with an end/finalize operation.
+    required: false
+    default: success
+  artifact_name:
+    description: Artifact name used by finalize.
+    required: false
+    default: ci-timing
+  retention_days:
+    description: Number of days to retain the timing artifact.
+    required: false
+    default: "30"
+  timing_dir:
+    description: Directory used for timing files, relative to the workspace unless absolute.
+    required: false
+    default: .ci-timings
+
+outputs:
+  timing_dir:
+    description: Absolute path used for timing files in this job.
+    value: ${{ steps.resolve_timing_dir.outputs.path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve CI timing directory
+      id: resolve_timing_dir
+      shell: bash
+      env:
+        INPUT_TIMING_DIR: ${{ inputs.timing_dir }}
+      run: |
+        set -euo pipefail
+
+        if [[ -z "${INPUT_TIMING_DIR}" ]]; then
+          echo "timing_dir must not be empty" >&2
+          exit 1
+        fi
+
+        if [[ "${INPUT_TIMING_DIR}" = /* ]]; then
+          timing_dir="${INPUT_TIMING_DIR}"
+        else
+          timing_dir="${GITHUB_WORKSPACE}/${INPUT_TIMING_DIR}"
+        fi
+
+        printf 'path=%s\n' "${timing_dir}" >> "${GITHUB_OUTPUT}"
+
+    - name: Record CI timing
+      shell: bash
+      env:
+        CI_TIMING_DIR: ${{ steps.resolve_timing_dir.outputs.path }}
+        # The action is the explicit CI opt-in. Task-level callers still
+        # require this value from the job environment before recording events.
+        CI_TIMING_ENABLED: "true"
+        CI_TIMING_MODE: ${{ inputs.mode }}
+        CI_TIMING_PHASE: ${{ inputs.phase }}
+        CI_TIMING_STATUS: ${{ inputs.status }}
+      run: |
+        bash "$GITHUB_ACTION_PATH/timing.sh" "$CI_TIMING_MODE" "$CI_TIMING_PHASE" "$CI_TIMING_STATUS"
+
+    - name: Upload CI timing artifact
+      if: ${{ inputs.mode == 'finalize' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ steps.resolve_timing_dir.outputs.path }}/summary.json
+        if-no-files-found: warn
+        retention-days: ${{ inputs.retention_days }}

@@ -66,6 +66,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Initialize CI timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        env:
+          CI_TIMING_JOB_KIND: package-test
+          CI_TIMING_PACKAGE: ${{ inputs.package }}
+          CI_TIMING_FLAVOR: ${{ inputs.flavor }}
+          CI_TIMING_TEST_TYPE: ${{ inputs.test_type }}
+          CI_TIMING_K3S_VERSION: ${{ inputs.k3s_version }}
+        with:
+          mode: init
+
+      - name: Start environment setup timing
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: environment-setup
+
       - name: Environment setup
         uses: ./.github/actions/setup
         with:
@@ -75,29 +94,81 @@ jobs:
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: "true"
 
+      - name: End environment setup timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: environment-setup
+          status: ${{ job.status }}
+
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
-        run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
+        run: bash .github/actions/ci-timing/timing.sh run test-single-layer uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
       - name: Test UDS Core Install
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: bash .github/actions/ci-timing/timing.sh run test-core-install uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Test UDS Core Upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: bash .github/actions/ci-timing/timing.sh run test-core-upgrade uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Start debug output timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: debug-output
 
       - name: Test UDS Core values deploy equivalency
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
-        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
+        run: bash .github/actions/ci-timing/timing.sh run test-core-values uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
+
+      - name: End debug output timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: debug-output
+          status: ${{ job.status }}
+
+      - name: Start save logs timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: start
+          phase: save-logs
 
       - name: Save logs
         if: always()
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}${{ inputs.k3s_version != '' && format('-{0}', inputs.k3s_version) || '' }}
+
+      - name: End save logs timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: end
+          phase: save-logs
+          status: ${{ job.status }}
+
+      - name: Finalize CI timing
+        if: ${{ always() }}
+        uses: ./.github/actions/ci-timing
+        continue-on-error: true
+        with:
+          mode: finalize
+          status: ${{ job.status }}
+          artifact_name: ci-timing-package-test-${{ inputs.package }}-${{ inputs.flavor }}-${{ inputs.test_type }}-k3s-${{ inputs.k3s_version || 'default' }}-${{ github.run_id }}-${{ github.run_attempt }}
