@@ -14,7 +14,3 @@ runs:
         version: 2026.9.7
         install: true
         cache: true
-
-    - name: Install tools with mise
-      run: mise install
-      shell: bash
