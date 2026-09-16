@@ -86,6 +86,7 @@ jobs:
           phase: environment-setup
 
       - name: Environment setup
+        id: environment_setup
         uses: ./.github/actions/setup
         with:
           ghToken: ${{ secrets.GITHUB_TOKEN }}
@@ -101,7 +102,7 @@ jobs:
         with:
           mode: end
           phase: environment-setup
-          status: ${{ job.status }}
+          status: ${{ steps.environment_setup.outcome }}
 
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
@@ -116,6 +117,10 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: bash .github/actions/ci-timing/timing.sh run test-core-upgrade uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
+      - name: Test UDS Core values deploy equivalency
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: bash .github/actions/ci-timing/timing.sh run test-core-values uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
+
       - name: Start debug output timing
         if: ${{ always() }}
         uses: ./.github/actions/ci-timing
@@ -124,12 +129,9 @@ jobs:
           mode: start
           phase: debug-output
 
-      - name: Test UDS Core values deploy equivalency
-        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
-        run: bash .github/actions/ci-timing/timing.sh run test-core-values uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
-
       - name: Debug Output
         if: ${{ always() }}
+        id: debug_output
         uses: ./.github/actions/debug-output
 
       - name: End debug output timing
@@ -139,7 +141,7 @@ jobs:
         with:
           mode: end
           phase: debug-output
-          status: ${{ job.status }}
+          status: ${{ steps.debug_output.outcome }}
 
       - name: Start save logs timing
         if: ${{ always() }}
@@ -151,6 +153,7 @@ jobs:
 
       - name: Save logs
         if: always()
+        id: save_logs
         uses: ./.github/actions/save-logs
         with:
           suffix: -${{ inputs.test_type }}-${{ inputs.package }}-${{ inputs.flavor }}${{ inputs.k3s_version != '' && format('-{0}', inputs.k3s_version) || '' }}
@@ -162,7 +165,7 @@ jobs:
         with:
           mode: end
           phase: save-logs
-          status: ${{ job.status }}
+          status: ${{ steps.save_logs.outcome }}
 
       - name: Finalize CI timing
         if: ${{ always() }}

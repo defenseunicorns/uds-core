@@ -74,6 +74,46 @@ append_event() {
   fi
 }
 
+close_open_phases_on_failure() {
+  local timestamp="$1"
+  local failed_phase="${2:-}"
+  local open_phases
+
+  if ! command -v jq >/dev/null 2>&1 || [[ ! -f "$events_jsonl" ]]; then
+    return 0
+  fi
+
+  open_phases="$(jq -s -r '
+    reduce .[] as $event ({open: []};
+      if $event.event == "start" then
+        .open += [$event.phase]
+      elif $event.event == "end" then
+        ([range(0; (.open | length)) as $index
+          | select(.open[$index] == $event.phase)
+          | $index] | last) as $index
+        | if $index == null then
+            .
+          else
+            .open = (.open[:$index] + .open[$index + 1:])
+          end
+      else
+        .
+      end
+    )
+    | .open[]
+  ' "$events_jsonl" 2>/dev/null || true)"
+
+  if [[ -z "$open_phases" ]]; then
+    return 0
+  fi
+
+  while IFS= read -r open_phase; do
+    if [[ -n "$open_phase" && "$open_phase" != "job" && "$open_phase" != "$failed_phase" ]]; then
+      append_event end "$open_phase" "$timestamp" failure
+    fi
+  done <<< "$open_phases"
+}
+
 start_phase() {
   timing_enabled || return 0
   append_event start "$1" "$(now_ms)" running
@@ -249,7 +289,13 @@ aggregate() {
             | select(.phase == "job" and .duration_ms != null)
             | .duration_ms] | last // null
         )
-      | .phases = $timing.phases
+      | .phases = ($timing.phases | map(
+          if .end_ms == null then
+            .status = "incomplete"
+          else
+            .
+          end
+        ))
     ' "$events_jsonl" > "$tmp" 2>/dev/null; then
     if ! mv "$tmp" "$summary_json"; then
       rm -f "$tmp" || true
@@ -271,6 +317,18 @@ finalize() {
   aggregate "$finished_ms" "${status:-success}"
 }
 
+handle_run_failure() {
+  local command_status="$1"
+  local phase_name="$2"
+  local failure_timestamp
+
+  failure_timestamp="$(now_ms)"
+  close_open_phases_on_failure "$failure_timestamp" "$phase_name" || true
+  end_phase "$phase_name" failure || true
+  trap - ERR
+  exit "$command_status"
+}
+
 run_phase() {
   local name="$1"
   shift
@@ -284,7 +342,7 @@ run_phase() {
 
   # The trap records a failed command before returning its exact status. The
   # command is invoked directly, so no eval or string re-parsing is required.
-  trap 'command_status=$?; end_phase "$name" failure || true; trap - ERR; exit "$command_status"' ERR
+  trap 'handle_run_failure "$?" "$name"' ERR
   "$@"
   command_status=$?
   trap - ERR

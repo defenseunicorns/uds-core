@@ -49,6 +49,7 @@ runs:
         mode: start
         phase: setup-tools
     - name: Setup Tools
+      id: setup_tools
       uses: ./.github/actions/setup-tools
       with:
         installUv: ${{ inputs.installUv }}
@@ -62,7 +63,7 @@ runs:
       with:
         mode: end
         phase: setup-tools
-        status: ${{ job.status }}
+        status: ${{ steps.setup_tools.outcome }}
 
     - name: Iron Bank Login
       if: ${{ inputs.registry1Username != '' && inputs.registry1Password != '' }}

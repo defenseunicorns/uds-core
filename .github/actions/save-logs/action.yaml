@@ -29,6 +29,7 @@ runs:
         mode: start
         phase: save-logs-containerd
     - name: Pull logs from containerd
+      id: pull_containerd_logs
       if: ${{ inputs.distro == 'k3d' }}
       run: |
         CONTAINER_NAME="k3d-uds-server-0"
@@ -46,7 +47,7 @@ runs:
       with:
         mode: end
         phase: save-logs-containerd
-        status: ${{ job.status }}
+        status: ${{ steps.pull_containerd_logs.outcome }}
 
     - name: Start node log timing
       if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'k3d' }}
@@ -56,6 +57,7 @@ runs:
         mode: start
         phase: save-logs-node
     - name: Dump Node Logs
+      id: dump_node_logs
       if: ${{ inputs.distro == 'k3d' }}
       run: |
         docker ps --filter "name=k3d" --format "{{.Names}}" | while read line; do
@@ -69,7 +71,7 @@ runs:
       with:
         mode: end
         phase: save-logs-node
-        status: ${{ job.status }}
+        status: ${{ steps.dump_node_logs.outcome }}
 
     - name: Start log permission timing
       if: ${{ env.CI_TIMING_ENABLED == 'true' }}
@@ -79,6 +81,7 @@ runs:
         mode: start
         phase: save-logs-permissions
     - name: Fix log permissions
+      id: fix_log_permissions
       run: |
         sudo chown $USER /tmp/zarf-*.log || echo ""
         sudo chown $USER /tmp/uds-*.log || echo ""
@@ -90,7 +93,7 @@ runs:
       with:
         mode: end
         phase: save-logs-permissions
-        status: ${{ job.status }}
+        status: ${{ steps.fix_log_permissions.outcome }}
 
     - name: Start Playwright artifact timing
       if: ${{ env.CI_TIMING_ENABLED == 'true' }}
@@ -100,6 +103,7 @@ runs:
         mode: start
         phase: save-logs-playwright
     - name: Move Playwright Artifacts
+      id: move_playwright_artifacts
       run: |
         sudo mkdir -p /tmp/playwright
         sudo mv test/playwright/.playwright/* /tmp/playwright || true
@@ -111,7 +115,7 @@ runs:
       with:
         mode: end
         phase: save-logs-playwright
-        status: ${{ job.status }}
+        status: ${{ steps.move_playwright_artifacts.outcome }}
 
     # Loop over all pods and use kubectl logs since we don't have the same direct node access as k3d
     - name: Start pod log timing
@@ -122,6 +126,7 @@ runs:
         mode: start
         phase: save-logs-pods
     - name: Cluster Pod Logs
+      id: cluster_pod_logs
       if: ${{ inputs.distro != 'k3d' }}
       run: |
         echo "::group::Collecting logs for all pods"
@@ -143,7 +148,7 @@ runs:
       with:
         mode: end
         phase: save-logs-pods
-        status: ${{ job.status }}
+        status: ${{ steps.cluster_pod_logs.outcome }}
 
     - name: Start AKS control plane log timing
       if: ${{ env.CI_TIMING_ENABLED == 'true' && inputs.distro == 'aks' && inputs.resource_group != '' }}
@@ -153,6 +158,7 @@ runs:
         mode: start
         phase: save-logs-aks
     - name: AKS Control Plane Logs
+      id: aks_control_plane_logs
       if: ${{ inputs.distro == 'aks' && inputs.resource_group != '' }}
       run: |
         echo "::group::Collecting AKS control plane logs"
@@ -216,7 +222,7 @@ runs:
       with:
         mode: end
         phase: save-logs-aks
-        status: ${{ job.status }}
+        status: ${{ steps.aks_control_plane_logs.outcome }}
 
     - name: Start log artifact upload timing
       if: ${{ env.CI_TIMING_ENABLED == 'true' }}
@@ -225,7 +231,8 @@ runs:
       with:
         mode: start
         phase: save-logs-upload
-    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+    - id: upload_debug_logs
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: debug-log${{ inputs.suffix }}
         retention-days: 7
@@ -247,4 +254,4 @@ runs:
       with:
         mode: end
         phase: save-logs-upload
-        status: ${{ job.status }}
+        status: ${{ steps.upload_debug_logs.outcome }}
