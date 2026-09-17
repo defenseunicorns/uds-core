@@ -7,7 +7,7 @@ sidebar:
   order: 3.003
 ---
 
-import { Steps } from '@astrojs/starlight/components';
+import { Steps } from "@astrojs/starlight/components";
 
 A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) is a single deployable artifact that captures your environment's configuration alongside all packages and images. You'll create two files: a `uds-bundle.yaml` that defines what to deploy and how to configure it, and a `uds-config.yaml` that supplies runtime values (credentials, certificates, domain names).
 
@@ -18,11 +18,11 @@ A [UDS Bundle](/concepts/configuration-and-packaging/bundles/) is a single deplo
 
 UDS Core is published in multiple flavors that differ in the source registry for container images:
 
-| Flavor | Image Source | Use Case |
-|---|---|---|
-| `upstream` | Public registries (Docker Hub, GHCR) | Default; utilizes common upstream container images |
-| `registry1` | [IronBank / Registry One](https://registry1.dso.mil/) | DoD environments requiring hardened, Iron Bank-sourced images |
-| `unicorn` | Defense Unicorns private registry | FIPS-compliant hardened images; reserved for Defense Unicorns customers |
+| Flavor      | Image Source                                          | Use Case                                                                |
+| ----------- | ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| `upstream`  | Public registries (Docker Hub, GHCR)                  | Default; utilizes common upstream container images                      |
+| `registry1` | [IronBank / Registry One](https://registry1.dso.mil/) | DoD environments requiring hardened, Iron Bank-sourced images           |
+| `unicorn`   | Defense Unicorns private registry                     | FIPS-compliant hardened images; reserved for Defense Unicorns customers |
 
 Choose the flavor that matches your environment's registry access and compliance requirements. The bundle `ref` encodes the flavor:
 
@@ -44,14 +44,17 @@ metadata:
   version: 0.1.0
 
 packages:
-    # Enables Zarf in your cluster
+  # Enables Zarf in your cluster
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
     ref: v0.73.0
 
   - name: core
     repository: registry.defenseunicorns.com/public/core
-    ref: 0.62.0-upstream
+    ref: 1.13.0-upstream
+    keylessVerification:
+      certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
 ```
 
 > [!NOTE]
@@ -96,7 +99,7 @@ packages:
             - path: loki.storage.type
               value: "s3"
             - path: loki.storage.s3.endpoint
-              value: ""  # leave empty for AWS; set for MinIO or other S3-compatible providers
+              value: "" # leave empty for AWS; set for MinIO or other S3-compatible providers
 ```
 
 ```yaml title="uds-config.yaml"
@@ -181,8 +184,8 @@ packages:
 ```yaml title="uds-config.yaml"
 variables:
   core:
-    admin_tls_cert: "LS0t..."   # base64-encoded full cert chain
-    admin_tls_key: "LS0t..."    # base64-encoded private key
+    admin_tls_cert: "LS0t..." # base64-encoded full cert chain
+    admin_tls_key: "LS0t..." # base64-encoded private key
     tenant_tls_cert: "LS0t..."
     tenant_tls_key: "LS0t..."
 ```
@@ -210,6 +213,7 @@ packages:
 ```
 
 Use the equivalent annotations for your provider:
+
 - [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/service/annotations/) - set `service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"`
 - [Azure Kubernetes Service](https://learn.microsoft.com/en-us/azure/aks/internal-lb) - set `service.beta.kubernetes.io/azure-load-balancer-internal: "true"`
 - [Google Kubernetes Engine](https://cloud.google.com/kubernetes-engine/docs/how-to/internal-load-balancing) - set `networking.gke.io/load-balancer-type: "Internal"`
@@ -243,10 +247,10 @@ packages:
 ```yaml title="uds-config.yaml"
 variables:
   core:
-    keycloak_db_host: "your-db-host"          # hostname or IP of your database server
-    keycloak_db_username: "keycloak"           # database user created in provision-services step
-    keycloak_db_database: "keycloak"           # database name created in provision-services step
-    keycloak_db_password: "your-db-password"   # password for the database user
+    keycloak_db_host: "your-db-host" # hostname or IP of your database server
+    keycloak_db_username: "keycloak" # database user created in provision-services step
+    keycloak_db_database: "keycloak" # database name created in provision-services step
+    keycloak_db_password: "your-db-password" # password for the database user
 ```
 
 ## Optional components
@@ -285,7 +289,10 @@ packages:
 
   - name: core
     repository: registry.defenseunicorns.com/public/core
-    ref: 0.62.0-upstream
+    ref: 1.13.0-upstream
+    keylessVerification:
+      certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
     overrides:
       loki:
         loki:
@@ -392,10 +399,10 @@ variables:
       aws_access_key_id=your-access-key-id
       aws_secret_access_key=your-secret-access-key
     # Keycloak database
-    keycloak_db_host: "your-db-host"          # hostname or IP of your database server
-    keycloak_db_username: "keycloak"           # database user created in provision-services step
-    keycloak_db_database: "keycloak"           # database name created in provision-services step
-    keycloak_db_password: "your-db-password"   # password for the database user
+    keycloak_db_host: "your-db-host" # hostname or IP of your database server
+    keycloak_db_username: "keycloak" # database user created in provision-services step
+    keycloak_db_database: "keycloak" # database name created in provision-services step
+    keycloak_db_password: "your-db-password" # password for the database user
 ```
 
 > [!NOTE]
@@ -416,11 +423,12 @@ Once your configuration files are ready, create the deployable bundle artifact.
    This command pulls all referenced packages and their images, then packages them into a single archive. Depending on network speed and package sizes, this can take several minutes on first run.
 
    The output is a file named:
+
    ```text title="Output"
    uds-bundle-<name>-<arch>-<version>.tar.zst
    ```
 
-2. **Inspect the bundle** *(optional)*
+2. **Inspect the bundle** _(optional)_
 
    ```bash
    uds inspect uds-bundle-my-uds-core-*.tar.zst
@@ -432,4 +440,3 @@ Once your configuration files are ready, create the deployable bundle artifact.
 
 > [!NOTE]
 > The resulting bundle is self-contained (all images embedded, no internet needed at deploy time), versioned and reproducible, and transferable to airgapped environments or artifact registries.
-

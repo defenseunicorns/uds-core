@@ -62,6 +62,9 @@ The following Core components support `additionalNetworkAllow`:
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            falco:
              uds-falco-config:
@@ -86,6 +89,9 @@ The following Core components support `additionalNetworkAllow`:
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            vector:
              uds-vector-config:
@@ -112,6 +118,9 @@ The following Core components support `additionalNetworkAllow`:
        - name: core
          repository: registry.defenseunicorns.com/public/core
          ref: x.x.x-upstream
+         keylessVerification:
+           certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+           certificateOIDCIssuer: https://token.actions.githubusercontent.com
          overrides:
            grafana:
              uds-grafana-config:

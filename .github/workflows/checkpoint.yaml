@@ -23,7 +23,7 @@ on:
       - "!**.png"
       - "!**.gif"
       - "!**.svg"
-  # triggered by tag-and-release.yaml
+  # triggered by release.yaml
   workflow_call:
 
 jobs:
