@@ -23,12 +23,14 @@ export async function fetchWithTimeout(
   const requestDescription = `${requestMethod} ${requestUrl}`;
   const callerSignal = init.signal ?? request?.signal;
   const controller = new AbortController();
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
   let timedOut = false;
 
-  const timeout = setTimeout(() => {
+  const abortFromTimeout = () => {
     timedOut = true;
-    controller.abort(new Error(`request timed out after ${timeoutMs}ms`));
-  }, timeoutMs);
+    controller.abort(new Error(`${requestDescription} timed out after ${timeoutMs}ms`));
+  };
+  timeoutSignal.addEventListener("abort", abortFromTimeout, { once: true });
 
   const abortFromCaller = () => {
     controller.abort(callerSignal?.reason);
@@ -41,6 +43,8 @@ export async function fetchWithTimeout(
   }
 
   try {
+    // Keep the controller signal active after fetch() receives the headers so
+    // it also aborts a response body that stalls.
     return await fetch(input, { ...init, signal: controller.signal });
   } catch (error: unknown) {
     const cause = error instanceof Error ? error : new Error(String(error));
@@ -53,8 +57,5 @@ export async function fetchWithTimeout(
     }
 
     throw new Error(`${requestDescription} failed: ${cause.message}`, { cause });
-  } finally {
-    clearTimeout(timeout);
-    callerSignal?.removeEventListener("abort", abortFromCaller);
   }
 }

@@ -18,6 +18,12 @@ describe("fetchWithTimeout", () => {
         return;
       }
 
+      if (request.url === "/partial") {
+        response.writeHead(200, { "content-type": "text/plain" });
+        response.write("partial");
+        return;
+      }
+
       response.end("ok");
     });
 
@@ -50,6 +56,14 @@ describe("fetchWithTimeout", () => {
 
   it("fails a stalled request with request context", async () => {
     await expect(fetchWithTimeout(`${url}/slow`, {}, 50)).rejects.toMatchObject({
+      message: expect.stringContaining("GET http://127.0.0.1:"),
+    });
+  });
+
+  it("aborts a response body that stalls after headers", async () => {
+    const response = await fetchWithTimeout(`${url}/partial`, {}, 50);
+
+    await expect(response.text()).rejects.toMatchObject({
       message: expect.stringContaining("GET http://127.0.0.1:"),
     });
   });
