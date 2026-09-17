@@ -13,7 +13,7 @@ import {
   reconcileDefaultGatewayListeners,
   removeDefaultListenerMapEntry,
 } from "../controllers/envoy-gateway/udp-route-resources";
-import { reconcileSharedEgressResources } from "../controllers/istio/egress";
+import { createHostResourceMap, reconcileSharedEgressResources } from "../controllers/istio/egress";
 import { istioEgressResources } from "../controllers/istio/egress-orchestrator";
 import { istioResources } from "../controllers/istio/istio-resources";
 import { cleanupNamespace, enableIstio } from "../controllers/istio/namespace";
@@ -299,6 +299,7 @@ export async function packageFinalizer(pkg: UDSPackage) {
     await retryWithDelay(async function cleanupSharedEgressResources() {
       await reconcileSharedEgressResources(
         pkg,
+        createHostResourceMap(pkg),
         PackageAction.Remove,
         pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient,
       );

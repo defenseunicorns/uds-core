@@ -4,8 +4,7 @@
  */
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
-import { K8s } from "pepr";
-import { retryWithDelay, validateNamespace } from "../utils";
+import { Mutex, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
 import {
@@ -29,18 +28,7 @@ export const inMemoryPackageMap: PackageHostMap = {};
 // Cache for in-memory ambient egress resources from package CRs
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
 
-export type EgressPackageOverride = {
-  pkg: UDSPackage;
-  action: PackageAction;
-  istioMode: Mode;
-};
-
-// Package events can arrive faster than shared resources can be applied. Keep the
-// latest event for each package and reconcile the complete live package set once
-// the current pass finishes.
-const pendingPackageOverrides = new Map<string, EgressPackageOverride>();
-let reconcileInFlight: Promise<ReadonlyMap<string, Error>> | null = null;
-let reconcileDirty = false;
+const sharedEgressMutex = new Mutex();
 
 function validateAmbientProtocolConflicts(
   currentAmbientMap: AmbientPackageMap,
@@ -94,6 +82,7 @@ let ambientGeneration = 0;
 // Handles mode transitions by updating both sidecar and ambient in-memory maps appropriately
 export async function reconcileSharedEgressResources(
   pkg: UDSPackage,
+  hostResourceMap: HostResourceMap | undefined,
   action: PackageAction,
   istioMode: Mode,
 ) {
@@ -104,21 +93,27 @@ export async function reconcileSharedEgressResources(
   }
   const pkgId = `${pkgName}-${pkgNamespace}`;
 
-  // Keep the event as a short-lived override for the next snapshot. The live
-  // API list is authoritative, but a newer event can win over a stale snapshot
-  // and a Remove event can still remove a package during finalization.
-  pendingPackageOverrides.set(pkgId, { pkg, action, istioMode });
-  reconcileDirty = true;
+  const release = await sharedEgressMutex.acquire();
+  try {
+    // Update both maps and reconcile while holding one lock. This keeps the map
+    // state used by apply and purge consistent for each shared-egress transaction.
+    if (istioMode === Mode.Ambient) {
+      // Remove from sidecar map (handles sidecar -> ambient transition)
+      await updateInMemoryPackageMap(hostResourceMap, pkgId, PackageAction.Remove);
 
-  const packageErrors = await performEgressReconciliationWithMutex();
-  if (action === PackageAction.AddOrUpdate) {
-    const packageError = packageErrors.get(pkgId);
-    if (packageError) {
-      throw new Error(
-        `Failed to reconcile shared egress resources for package "${pkgId}": ${packageError.message}`,
-        { cause: packageError },
-      );
+      // Update ambient package list
+      await updateInMemoryAmbientPackageMap(pkg, pkgId, action);
+    } else {
+      // Update sidecar map
+      await updateInMemoryPackageMap(hostResourceMap, pkgId, action);
+
+      // Remove from ambient list (handles ambient -> sidecar transition)
+      await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
     }
+
+    await performEgressReconciliation();
+  } finally {
+    release();
   }
 }
 
@@ -170,130 +165,8 @@ export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry 
   return { name, namespace, rules };
 }
 
-function packageId(pkg: UDSPackage): string | undefined {
-  const name = pkg.metadata?.name;
-  const namespace = pkg.metadata?.namespace;
-  return name && namespace ? `${name}-${namespace}` : undefined;
-}
-
-function setMapContents<T extends object>(target: T, contents: T): void {
-  for (const key of Object.keys(target)) {
-    delete target[key as keyof T];
-  }
-  Object.assign(target, contents);
-}
-
-function addPackageToEgressMaps(
-  pkg: UDSPackage,
-  sidecarMap: PackageHostMap,
-  ambientMap: AmbientPackageMap,
-  mode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient,
-): void {
-  const pkgId = packageId(pkg);
-  if (!pkgId || pkg.metadata?.deletionTimestamp) {
-    return;
-  }
-
-  if (mode === Mode.Ambient) {
-    const entry = createAmbientPackageEntry(pkg);
-    validateAmbientProtocolConflicts(ambientMap, entry, pkgId);
-    ambientMap[pkgId] = entry;
-    return;
-  }
-
-  const hostResourceMap = createHostResourceMap(pkg);
-  if (hostResourceMap) {
-    validateProtocolConflicts(sidecarMap, hostResourceMap, pkgId);
-    sidecarMap[pkgId] = hostResourceMap;
-  }
-}
-
-function addPackageToEgressMapsSafely(
-  pkg: UDSPackage,
-  sidecarMap: PackageHostMap,
-  ambientMap: AmbientPackageMap,
-  packageErrors: Map<string, Error>,
-  mode?: Mode,
-): void {
-  const pkgId = packageId(pkg);
-  if (!pkgId) {
-    return;
-  }
-
-  try {
-    addPackageToEgressMaps(pkg, sidecarMap, ambientMap, mode);
-    packageErrors.delete(pkgId);
-  } catch (error: unknown) {
-    const packageError = error instanceof Error ? error : new Error(String(error));
-    packageErrors.set(pkgId, packageError);
-    log.error(
-      { err: packageError, pkgId },
-      "Skipping shared egress resources for package with invalid configuration",
-    );
-  }
-}
-
-/**
- * Rebuilds both shared-egress maps from the complete live UDSPackage set.
- *
- * The maps are only replaced after the list has been fetched and validated, so
- * a failed API read cannot turn into a purge based on an empty/partial map.
- */
-export async function rebuildEgressPackageMaps(
-  overrides: ReadonlyMap<string, EgressPackageOverride> = new Map(),
-): Promise<Map<string, Error>> {
-  const fetchPackages = () => K8s(UDSPackage).Get();
-  const packages = await retryWithDelay(fetchPackages, log, 5, 1000);
-  const sidecarMap: PackageHostMap = {};
-  const ambientMap: AmbientPackageMap = {};
-  const livePackages = new Map<string, UDSPackage>();
-  const packageErrors = new Map<string, Error>();
-
-  for (const pkg of packages.items ?? []) {
-    const pkgId = packageId(pkg);
-    if (pkgId) {
-      livePackages.set(pkgId, pkg);
-      addPackageToEgressMapsSafely(pkg, sidecarMap, ambientMap, packageErrors);
-    }
-  }
-
-  for (const [pkgId, override] of overrides) {
-    delete sidecarMap[pkgId];
-    delete ambientMap[pkgId];
-
-    const livePackage = livePackages.get(pkgId);
-    const eventGeneration = override.pkg.metadata?.generation ?? 0;
-    const liveGeneration = livePackage?.metadata?.generation ?? 0;
-
-    if (
-      override.action === PackageAction.AddOrUpdate &&
-      !override.pkg.metadata?.deletionTimestamp &&
-      livePackage &&
-      eventGeneration > liveGeneration
-    ) {
-      addPackageToEgressMapsSafely(
-        override.pkg,
-        sidecarMap,
-        ambientMap,
-        packageErrors,
-        override.istioMode,
-      );
-    } else if (override.action === PackageAction.AddOrUpdate && livePackage) {
-      addPackageToEgressMapsSafely(livePackage, sidecarMap, ambientMap, packageErrors);
-    }
-  }
-
-  setMapContents(inMemoryPackageMap, sidecarMap);
-  setMapContents(inMemoryAmbientPackageMap, ambientMap);
-  return packageErrors;
-}
-
-// Perform one sidecar/ambient egress reconciliation pass.
-export async function performEgressReconciliation(
-  overrides: ReadonlyMap<string, EgressPackageOverride> = new Map(),
-) {
-  const packageErrors = await rebuildEgressPackageMaps(overrides);
-
+// Perform sidecar egress resources reconciliation
+export async function performEgressReconciliation() {
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
 
@@ -338,44 +211,43 @@ export async function performEgressReconciliation(
     const aggregatedMessage = errors.map(err => err.message).join("; ");
     throw new Error(`Egress reconciliation failed: ${aggregatedMessage}`);
   }
-
-  return packageErrors;
 }
 
-// Serialize reconciliation passes while coalescing package events that arrive
-// during an in-flight apply/purge operation.
-export async function performEgressReconciliationWithMutex(): Promise<ReadonlyMap<string, Error>> {
-  if (!reconcileInFlight) {
-    reconcileInFlight = (async () => {
-      let packageErrors = new Map<string, Error>();
-      try {
-        do {
-          reconcileDirty = false;
-          const overrides = new Map(pendingPackageOverrides);
-          pendingPackageOverrides.clear();
-
-          try {
-            packageErrors = await performEgressReconciliation(overrides);
-          } catch (error) {
-            // Do not retain failed overrides. A later unrelated event must not
-            // replay an AddOrUpdate for a package that is no longer live. The
-            // original reconciler/finalizer will submit its event again when it retries.
-            // A package that arrived while the failed pass was running is
-            // already waiting on this promise. Retry the complete snapshot so
-            // a transient shared-resource failure does not fail every waiter.
-            if (!reconcileDirty) {
-              throw error;
-            }
-          }
-        } while (reconcileDirty);
-        return packageErrors;
-      } finally {
-        reconcileInFlight = null;
-      }
-    })();
+// Update the inMemoryPackageMap with the latest hostResourceMap
+export async function updateInMemoryPackageMap(
+  hostResourceMap: HostResourceMap | undefined,
+  pkgId: string,
+  action: PackageAction,
+) {
+  if (action === PackageAction.AddOrUpdate) {
+    if (hostResourceMap) {
+      // Validate for protocol conflicts before updating
+      validateProtocolConflicts(inMemoryPackageMap, hostResourceMap, pkgId);
+      // update inMemoryPackageMap
+      inMemoryPackageMap[pkgId] = hostResourceMap;
+    } else {
+      removeMapResources(inMemoryPackageMap, pkgId);
+    }
+  } else if (action === PackageAction.Remove) {
+    removeMapResources(inMemoryPackageMap, pkgId);
   }
+}
 
-  return await reconcileInFlight;
+// Update the inMemoryAmbientPackages list with the latest package
+export async function updateInMemoryAmbientPackageMap(
+  pkg: UDSPackage,
+  pkgId: string,
+  action: PackageAction,
+) {
+  if (action === PackageAction.AddOrUpdate) {
+    const entry = createAmbientPackageEntry(pkg);
+    validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
+    inMemoryAmbientPackageMap[pkgId] = entry;
+  } else if (action === PackageAction.Remove) {
+    if (inMemoryAmbientPackageMap[pkgId]) {
+      delete inMemoryAmbientPackageMap[pkgId];
+    }
+  }
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
@@ -478,6 +350,15 @@ export function getHostPortsProtocol(allow: Allow) {
   });
 
   return { host, ports, protocol };
+}
+
+// Remove resources from a given package map
+export function removeMapResources(packageMap: PackageHostMap, pkgId: string) {
+  if (packageMap[pkgId]) {
+    delete packageMap[pkgId];
+  } else {
+    log.debug({ pkgId }, "No resources found for package");
+  }
 }
 
 // Check if egress is requested from the network from the Allow list

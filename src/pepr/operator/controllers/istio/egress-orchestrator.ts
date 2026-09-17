@@ -62,7 +62,12 @@ export async function istioEgressResources(pkg: UDSPackage, namespace: string) {
 
   // Reconcile shared egress resources
   try {
-    await reconcileSharedEgressResources(pkg, PackageAction.AddOrUpdate, istioMode);
+    await reconcileSharedEgressResources(
+      pkg,
+      hostResourceMap,
+      PackageAction.AddOrUpdate,
+      istioMode,
+    );
   } catch (e) {
     log.error(`Failed to reconcile shared egress resources for package ${pkgId}`, e);
     throw e;
