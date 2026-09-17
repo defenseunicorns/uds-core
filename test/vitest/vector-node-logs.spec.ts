@@ -128,9 +128,7 @@ describe("Vector Node Log Tests", () => {
       const nodeName = await getVectorNodeName();
       const { logs } = await getNodeLogMarker(nodeName);
 
-      for (const log of logs) {
-        await validateNodeLog(nodeName, log);
-      }
+      await Promise.all(logs.map(log => validateNodeLog(nodeName, log)));
     },
     NODE_LOG_TEST_TIMEOUT + 20000,
   );
