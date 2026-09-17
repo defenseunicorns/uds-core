@@ -2,13 +2,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 [tools]
-helm = "4.2.4"
 hk = "2.0.0"
 jq = "1.8.2"
 k3d = "5.9.0"
 node = "24.21.0"
 opentofu = "1.12.6"
-uv = "0.12.10"
 
 # renovate: datasource=pypi depName=codespell versioning=pep440
 "pypi:codespell" = "2.4.3"

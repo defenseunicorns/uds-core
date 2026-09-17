@@ -5,12 +5,12 @@ amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pk
 
 steps {
     ["yamllint"] {
-        check = "uvx yamllint . -c .yamllint --no-warnings"
+        check = "yamllint . -c .yamllint --no-warnings"
         glob = List("**/*.yaml", "**/*.yml", ".yamllint")
     }
     ["codespell"] {
-        check = "uvx codespell"
-        fix = "uvx codespell -w"
+        check = "codespell"
+        fix = "codespell -w"
         glob = List("**/*")
         exclude = List("build/**", "vendor/**", "uds-docs/**", "package-lock.json")
     }

@@ -5,34 +5,19 @@ includes:
   - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.28.2/tasks/lint.yaml
 
 tasks:
-  - name: ensure-uv
-    description: Install linting tool dependencies
-    actions:
-      - description: Check if uv is installed
-        cmd: |
-          if ! command -v uv; then
-            echo "⚠️  uv is not installed."
-            echo "💡 Refer to installation steps: https://docs.astral.sh/uv/getting-started/installation/"
-            exit 1
-          fi
-
   - name: fix
     description: "Fix formatting issues in the repo"
     actions:
-      - description: Ensure uv is installed
-        task: ensure-uv
       - description: "Format"
         cmd: npm run format
       - description: Fix codespell lint issues
         cmd: |
-          uvx codespell || true
-          uvx codespell -w
+          codespell || true
+          codespell -w
 
   - name: check
     description: "Run linting checks"
     actions:
-      - description: Ensure uv is installed
-        task: ensure-uv
       - description: install pepr deps
         cmd: npm ci
       - description: "Format check"
@@ -42,9 +27,9 @@ tasks:
       - description: Lint packages that expose Zarf values
         task: values-lint
       - description: yaml lint
-        cmd: uvx yamllint . -c .yamllint --no-warnings
+        cmd: yamllint . -c .yamllint --no-warnings
       - description: codespell lint
-        cmd: uvx codespell
+        cmd: codespell
       - description: Ensure addlicense is installed
         cmd: command -v addlicense
       - description: license lint
