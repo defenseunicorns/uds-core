@@ -49,6 +49,26 @@ app.kubernetes.io/name: {{ include "keycloak.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/* Determine whether to render the PodDisruptionBudget. */}}
+{{- define "keycloak.podDisruptionBudget.enabled" -}}
+{{- if kindIs "bool" .Values.podDisruptionBudget.enabled -}}
+{{- if .Values.podDisruptionBudget.enabled }}true{{- end -}}
+{{- else -}}
+{{- $pdb := omit .Values.podDisruptionBudget "enabled" -}}
+{{- $configured := or (gt (len $pdb) 2) (ne (toString $pdb.maxUnavailable) "1") (ne (toString $pdb.unhealthyPodEvictionPolicy) "AlwaysAllow") -}}
+{{- if or .Values.autoscaling.enabled $configured }}true{{- end -}}
+{{- end -}}
+{{- end }}
+
+{{/* Render the Kubernetes PodDisruptionBudget spec without chart-only values. */}}
+{{- define "keycloak.podDisruptionBudget.spec" -}}
+{{- $podDisruptionBudget := omit .Values.podDisruptionBudget "enabled" -}}
+{{- if hasKey $podDisruptionBudget "minAvailable" -}}
+{{- $podDisruptionBudget = omit $podDisruptionBudget "maxUnavailable" -}}
+{{- end -}}
+{{- toYaml $podDisruptionBudget -}}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}
@@ -217,4 +237,3 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- "host" -}}
 {{- end -}}
 {{- end -}}
-

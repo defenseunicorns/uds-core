@@ -161,6 +161,24 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
    | Scale-down stabilization | 300 seconds | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` |
    | Scale-down rate | 1 pod per 300 seconds | `autoscaling.behavior.scaleDown.policies[0]` |
 
+   Enabling `autoscaling.enabled` creates a PodDisruptionBudget (PDB) unless `podDisruptionBudget.enabled` is `false`. The `podDisruptionBudget.enabled` setting supports three modes: `null` enables the PDB automatically for HA or a customized legacy PDB configuration, `true` enables it for any replica configuration, and `false` disables it.
+
+   The default PDB configuration protects the remaining Ready replica during voluntary disruptions:
+
+   | Setting | Default | Override path |
+   |---|---|---|
+   | Enabled | `null` (automatic) | `podDisruptionBudget.enabled` |
+   | Maximum unavailable replicas | `1` | `podDisruptionBudget.maxUnavailable` |
+   | Minimum available replicas | Not set | `podDisruptionBudget.minAvailable` |
+   | Unhealthy pod eviction policy | `AlwaysAllow` | `podDisruptionBudget.unhealthyPodEvictionPolicy` |
+
+   If you set `podDisruptionBudget.minAvailable`, the chart omits the default `maxUnavailable` because Kubernetes does not allow both fields.
+
+   Set `podDisruptionBudget.enabled` to `true` for a fixed-replica deployment. This explicit setting also preserves a fixed-replica PDB whose configuration matches the new chart defaults, including a partial override that sets only default values.
+
+   > [!WARNING]
+   > A single-node or fully constrained HA cluster might not have capacity to schedule a replacement after the PDB permits the first eviction. The PDB then blocks eviction of the remaining Ready replica, and the drain cannot complete. Add schedulable capacity before draining the node. If you cannot add capacity, set `podDisruptionBudget.enabled` to `false` before the drain and re-enable it after capacity returns.
+
    > [!CAUTION]
    > **Do not scale Keycloak down rapidly** by modifying the replica count directly in the StatefulSet. This is a [known Keycloak limitation](https://github.com/keycloak/keycloak/issues/44620) that can result in data loss. Let the HPA manage scale-down gradually.
 

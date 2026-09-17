@@ -328,7 +328,33 @@
     },
     "podDisruptionBudget": {
       "type": "object",
-      "properties": {}
+      "properties": {
+        "enabled": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "maxUnavailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "minAvailable": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "unhealthyPodEvictionPolicy": {
+          "type": "string",
+          "enum": [
+            "IfHealthyBudget",
+            "AlwaysAllow"
+          ]
+        }
+      }
     },
     "podLabels": {
       "type": "object",

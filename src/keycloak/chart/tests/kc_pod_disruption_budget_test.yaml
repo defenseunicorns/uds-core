@@ -1,0 +1,120 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+# yaml-language-server: $schema=https://raw.githubusercontent.com/helm-unittest/helm-unittest/main/schema/helm-testsuite.json
+
+suite: Keycloak - PodDisruptionBudget
+templates:
+  - poddisruptionbudget.yaml
+
+tests:
+  - it: should not render a PodDisruptionBudget outside HA mode
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should render the default PodDisruptionBudget in HA mode
+    set:
+      autoscaling:
+        enabled: true
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PodDisruptionBudget
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
+      - notExists:
+          path: spec.enabled
+
+  - it: should render automatically when explicitly set to null in HA mode
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        enabled: null
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: should not render a PodDisruptionBudget when explicitly disabled
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        enabled: false
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should preserve a legacy fixed-replica PodDisruptionBudget configuration
+    set:
+      podDisruptionBudget:
+        maxUnavailable: 2
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.maxUnavailable
+          value: 2
+      - notExists:
+          path: spec.enabled
+
+  - it: should preserve a custom fixed-replica eviction policy
+    set:
+      podDisruptionBudget:
+        unhealthyPodEvictionPolicy: IfHealthyBudget
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: IfHealthyBudget
+
+  - it: should render a fixed-replica PodDisruptionBudget when explicitly enabled
+    set:
+      podDisruptionBudget:
+        enabled: true
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - notExists:
+          path: spec.enabled
+
+  - it: should allow a percentage maxUnavailable
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        maxUnavailable: "25%"
+    template: poddisruptionbudget.yaml
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: "25%"
+
+  - it: should prefer minAvailable over maxUnavailable for fixed replicas
+    set:
+      podDisruptionBudget:
+        minAvailable: 1
+    template: poddisruptionbudget.yaml
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - notExists:
+          path: spec.maxUnavailable

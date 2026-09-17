@@ -251,7 +251,11 @@ persistence:
     size: "512Mi"
 
 # Pod disruption budget
-podDisruptionBudget: {}
+podDisruptionBudget:
+  # Set to true to enforce PDB creation, false to disable it, or null to detect automatically
+  # enabled: null
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
 
 # Additional labels for the StatefulSet
 statefulsetLabels: {}
