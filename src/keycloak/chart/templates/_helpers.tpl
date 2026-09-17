@@ -63,8 +63,8 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/* Render the Kubernetes PodDisruptionBudget spec without chart-only values. */}}
 {{- define "keycloak.podDisruptionBudget.spec" -}}
 {{- $podDisruptionBudget := omit .Values.podDisruptionBudget "enabled" -}}
-{{- if hasKey $podDisruptionBudget "minAvailable" -}}
-{{- $podDisruptionBudget = omit $podDisruptionBudget "maxUnavailable" -}}
+{{- if and (hasKey $podDisruptionBudget "minAvailable") (hasKey $podDisruptionBudget "maxUnavailable") -}}
+{{- fail "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'." -}}
 {{- end -}}
 {{- toYaml $podDisruptionBudget -}}
 {{- end }}

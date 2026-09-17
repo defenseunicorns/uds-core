@@ -107,14 +107,12 @@ tests:
           path: spec.maxUnavailable
           value: "25%"
 
-  - it: should prefer minAvailable over maxUnavailable for fixed replicas
+  - it: should fail when minAvailable and maxUnavailable are set
     set:
       podDisruptionBudget:
         minAvailable: 1
+        maxUnavailable: 2
     template: poddisruptionbudget.yaml
     asserts:
-      - equal:
-          path: spec.minAvailable
-          value: 1
-      - notExists:
-          path: spec.maxUnavailable
+      - failedTemplate:
+          errorMessage: "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'."

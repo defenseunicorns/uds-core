@@ -169,10 +169,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
    |---|---|---|
    | Enabled | `null` (automatic) | `podDisruptionBudget.enabled` |
    | Maximum unavailable replicas | `1` | `podDisruptionBudget.maxUnavailable` |
-   | Minimum available replicas | Not set | `podDisruptionBudget.minAvailable` |
    | Unhealthy pod eviction policy | `AlwaysAllow` | `podDisruptionBudget.unhealthyPodEvictionPolicy` |
 
-   If you set `podDisruptionBudget.minAvailable`, the chart omits the default `maxUnavailable` because Kubernetes does not allow both fields.
+   The chart sets `podDisruptionBudget.maxUnavailable` to `1`. Do not set `podDisruptionBudget.minAvailable`; Helm fails when both fields are present because Kubernetes does not allow both fields.
 
    Set `podDisruptionBudget.enabled` to `true` for a fixed-replica deployment. This explicit setting also preserves a fixed-replica PDB whose configuration matches the new chart defaults, including a partial override that sets only default values.
 
