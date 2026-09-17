@@ -51,13 +51,12 @@ jobs:
             flavor: upstream
             install_cli: v0.34.0 # Minimum supported Legacy CLI
             upgrade_cli: v0.36.0 # Minimum supported CLI Next version
-          # TODO: Uncomment this scenario after the first Next bundle is published.
-          # - mode: next
-          #   scenario: next-min-to-next-latest
-          #   flavor: upstream
-          #   install_cli: v0.36.0 # Minimum supported CLI Next version
-          #   # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-          #   upgrade_cli: v0.37.0
+          - mode: next
+            scenario: next-min-to-next-latest
+            flavor: upstream
+            install_cli: v0.36.0 # Minimum supported CLI Next version
+            # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+            upgrade_cli: v0.37.0
 
     steps:
       - name: Checkout repository
@@ -77,8 +76,13 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
-      - name: Deploy latest release (install phase)
+      - name: Deploy latest Legacy release (install phase)
+        if: ${{ matrix.scenario != 'next-min-to-next-latest' }}
         run: uds run -f tasks/deploy.yaml latest-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy latest Next release (install phase)
+        if: ${{ matrix.scenario == 'next-min-to-next-latest' }}
+        run: uds run -f tasks/deploy.yaml latest-next-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Deploy latest release test resources
         run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
