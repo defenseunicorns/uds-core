@@ -149,11 +149,16 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
+          BASE_BRANCH="${GITHUB_BASE_REF:-}"
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")}}"
 
           TARGET_VERSION=""
-          if [[ "$BRANCH" == release-please--branches--release/* ]]; then
+          if [[ "$BASE_BRANCH" == release/* ]]; then
+            TARGET_VERSION="${BASE_BRANCH#release/}"
+          elif [[ "$BRANCH" == release-please--branches--release/* ]]; then
             TARGET_VERSION="${BRANCH#release-please--branches--release/}"
+          elif [[ "$BRANCH" == release-please--branches--release-* ]]; then
+            TARGET_VERSION="${BRANCH#release-please--branches--release-}"
           fi
 
           if [ -n "${TARGET_VERSION}" ]; then
