@@ -206,8 +206,9 @@ tasks:
         description: "UDS CLI Next config file to use for the deployment"
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     actions:
+      - task: resolve-latest-core-release
       - description: "Deploy the latest UDS Core Standard Bundle with UDS CLI Next"
-        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo-next:latest --config ${{ .inputs.configFile }} --skip-signature-verification
+        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${LATEST_CORE_TAG} --config ${{ .inputs.configFile }} --skip-signature-verification
 
   - name: latest-release-test-resources
     actions:
