@@ -251,28 +251,24 @@ function removeIndexes(pkg: UDSPackage): void {
  * @param {string} [namespace] - The namespace requesting the lookup, which is excluded.
  * @returns {string | undefined} - The namespace of the owning package, or undefined if not found.
  */
-function findNamespaceForExpose(
-  expose: Expose,
-  namespace?: string,
-  packages: UDSPackage[] = Array.from(packageNamespaceMap.values()).flatMap(namespaceMap =>
-    Array.from(namespaceMap.values()),
-  ),
-): string | undefined {
+function findNamespaceForExpose(expose: Expose, namespace?: string): string | undefined {
   const hasMatch = hasAdvancedHTTPMatch(expose);
   const exposureKey = getExposureKey(expose);
 
-  for (const pkg of packages) {
-    const packageNamespace = pkg.metadata?.namespace;
-    if (!packageNamespace || packageNamespace === namespace) continue;
+  for (const namespaceMap of packageNamespaceMap.values()) {
+    for (const pkg of namespaceMap.values()) {
+      const packageNamespace = pkg.metadata?.namespace;
+      if (!packageNamespace || packageNamespace === namespace) continue;
 
-    const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
-      indexedExpose =>
-        indexedExpose.protocol !== ExposeProtocol.UDP &&
-        getExposureKey(indexedExpose) === exposureKey &&
-        (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
-    );
+      const hasConflictingExpose = (pkg.spec?.network?.expose ?? []).some(
+        indexedExpose =>
+          indexedExpose.protocol !== ExposeProtocol.UDP &&
+          getExposureKey(indexedExpose) === exposureKey &&
+          (!hasMatch || !hasAdvancedHTTPMatch(indexedExpose)),
+      );
 
-    if (hasConflictingExpose) return packageNamespace;
+      if (hasConflictingExpose) return packageNamespace;
+    }
   }
 
   return undefined;

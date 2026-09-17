@@ -22,22 +22,9 @@ import { PackageStore } from "../../controllers/packages/package-store";
 import { Mode, RemoteProtocol } from "../generated/package-v1alpha1";
 import { validator } from "./package-validator";
 
-const mockK8sGet = vi.hoisted(() => vi.fn());
-const mockK8s = vi.hoisted(() => vi.fn());
-
-vi.mock("pepr", async importOriginal => ({
-  ...(await importOriginal<typeof import("pepr")>()),
-  K8s: mockK8s,
-}));
-
 PackageStore.init();
 UDSConfig.domain = "uds.dev";
 UDSConfig.adminDomain = "admin.uds.dev";
-
-beforeEach(() => {
-  mockK8s.mockImplementation(() => ({ Get: mockK8sGet }));
-  mockK8sGet.mockResolvedValue({ items: [] });
-});
 
 const makeMockReq = (
   pkg: Partial<UDSPackage>,
@@ -445,7 +432,7 @@ describe("Test validation of Package CRs", () => {
         metadata: { namespace: "dos-games", name: "dos-games" },
         spec: { network: { expose: [{ host: "doom" }], allow: [] }, sso: [], monitor: [] },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "dos-games-2", name: "dos-games-2" } },
@@ -459,23 +446,12 @@ describe("Test validation of Package CRs", () => {
       expect(mockReq.Deny).toHaveBeenCalledWith(expect.stringContaining("doom.uds.dev"));
     });
 
-    it("denies route validation when the live package list cannot be read", async () => {
-      mockK8sGet.mockRejectedValue(new Error("API unavailable"));
-
-      const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
-      await validator(mockReq);
-
-      expect(mockReq.Deny).toHaveBeenCalledWith(
-        "Unable to verify exposed endpoint uniqueness; please retry the request.",
-      );
-    });
-
     it("allows a package to update and retain its own exposed FQDN", async () => {
       const existingPackage: UDSPackage = {
         metadata: { namespace: "application-system", name: "application" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq({}, [{ host: "app" }], [], [], []);
       await validator(mockReq);
@@ -487,7 +463,7 @@ describe("Test validation of Package CRs", () => {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         {
@@ -516,7 +492,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -538,7 +514,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -556,7 +532,7 @@ describe("Test validation of Package CRs", () => {
         metadata: { namespace: "ns-a", name: "app-a" },
         spec: { network: { expose: [{ host: "app" }], allow: [] }, sso: [], monitor: [] },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -581,7 +557,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -606,7 +582,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -628,7 +604,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
@@ -653,7 +629,7 @@ describe("Test validation of Package CRs", () => {
           monitor: [],
         },
       };
-      mockK8sGet.mockResolvedValue({ items: [existingPackage] });
+      PackageStore.add(existingPackage);
 
       const mockReq = makeMockReq(
         { metadata: { namespace: "ns-b", name: "app-b" } },
