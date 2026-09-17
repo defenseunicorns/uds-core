@@ -348,7 +348,11 @@ describe("test shared egress reconciliation serialization", () => {
     },
   };
 
-  const packageWithHost = (name: string, host = "example.com"): UDSPackage => ({
+  const packageWithHost = (
+    name: string,
+    host = "example.com",
+    protocol = RemoteProtocol.TLS,
+  ): UDSPackage => ({
     ...pkgMock,
     metadata: { ...pkgMock.metadata, name },
     spec: {
@@ -360,7 +364,7 @@ describe("test shared egress reconciliation serialization", () => {
           {
             direction: Direction.Egress,
             remoteHost: host,
-            remoteProtocol: RemoteProtocol.TLS,
+            remoteProtocol: protocol,
             port: 443,
           },
         ],
@@ -547,6 +551,109 @@ describe("test shared egress reconciliation serialization", () => {
 
     expect(inMemoryPackageMap).not.toHaveProperty("package-that-fails-test-namespace");
     expect(inMemoryPackageMap).toHaveProperty("unrelated-package-test-namespace");
+  });
+
+  it("continues reconciling valid packages when one package has a protocol conflict", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const validPackage = packageWithHost("valid-package");
+    const conflictingPackage = packageWithHost(
+      "conflicting-package",
+      "example.com",
+      RemoteProtocol.HTTP,
+    );
+    const unrelatedPackage = packageWithHost("unrelated-package", "unrelated.example.com");
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({
+      items: [validPackage, conflictingPackage, unrelatedPackage],
+    });
+
+    await reconcileSharedEgressResources(unrelatedPackage, PackageAction.AddOrUpdate, Mode.Sidecar);
+
+    expect(inMemoryPackageMap).toEqual({
+      "valid-package-test-namespace": createHostResourceMap(validPackage),
+      "unrelated-package-test-namespace": createHostResourceMap(unrelatedPackage),
+    });
+    expect(applySidecarEgressResources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        "valid-package-test-namespace": createHostResourceMap(validPackage),
+        "unrelated-package-test-namespace": createHostResourceMap(unrelatedPackage),
+      }),
+      expect.any(Number),
+    );
+  });
+
+  it("reports a conflict for the offending package after valid resources are reconciled", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const validPackage = packageWithHost("valid-package");
+    const conflictingPackage = packageWithHost(
+      "conflicting-package",
+      "example.com",
+      RemoteProtocol.HTTP,
+    );
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({
+      items: [validPackage, conflictingPackage],
+    });
+
+    await expect(
+      reconcileSharedEgressResources(conflictingPackage, PackageAction.AddOrUpdate, Mode.Sidecar),
+    ).rejects.toThrow('Package "conflicting-package-test-namespace"');
+
+    expect(inMemoryPackageMap).toEqual({
+      "valid-package-test-namespace": createHostResourceMap(validPackage),
+    });
+    expect(applySidecarEgressResources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        "valid-package-test-namespace": createHostResourceMap(validPackage),
+      }),
+      expect.any(Number),
+    );
+  });
+
+  it("does not reject an unrelated event coalesced with a conflicting package", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const validPackage = packageWithHost("valid-package");
+    const conflictingPackage = packageWithHost(
+      "conflicting-package",
+      "example.com",
+      RemoteProtocol.HTTP,
+    );
+    const unrelatedPackage = packageWithHost("unrelated-package", "unrelated.example.com");
+    defaultEgressMocks.getPkgListMock.mockResolvedValue({
+      items: [validPackage, conflictingPackage, unrelatedPackage],
+    });
+
+    let releaseFirstApply!: () => void;
+    let applyStarted!: () => void;
+    const firstApply = new Promise<void>(resolve => {
+      releaseFirstApply = resolve;
+    });
+    const firstApplyStarted = new Promise<void>(resolve => {
+      applyStarted = resolve;
+    });
+    let applyCount = 0;
+    vi.mocked(applySidecarEgressResources).mockImplementation(async () => {
+      applyCount++;
+      if (applyCount === 1) {
+        applyStarted();
+        await firstApply;
+      }
+    });
+
+    const conflictingResult = reconcileSharedEgressResources(
+      conflictingPackage,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+    );
+    await firstApplyStarted;
+
+    const unrelatedResult = reconcileSharedEgressResources(
+      unrelatedPackage,
+      PackageAction.AddOrUpdate,
+      Mode.Sidecar,
+    );
+    releaseFirstApply();
+
+    await expect(conflictingResult).rejects.toThrow('Package "conflicting-package-test-namespace"');
+    await expect(unrelatedResult).resolves.toBeUndefined();
   });
 });
 

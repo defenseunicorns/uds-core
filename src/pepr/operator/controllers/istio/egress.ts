@@ -39,7 +39,7 @@ export type EgressPackageOverride = {
 // latest event for each package and reconcile the complete live package set once
 // the current pass finishes.
 const pendingPackageOverrides = new Map<string, EgressPackageOverride>();
-let reconcileInFlight: Promise<void> | null = null;
+let reconcileInFlight: Promise<ReadonlyMap<string, Error>> | null = null;
 let reconcileDirty = false;
 
 function validateAmbientProtocolConflicts(
@@ -110,7 +110,16 @@ export async function reconcileSharedEgressResources(
   pendingPackageOverrides.set(pkgId, { pkg, action, istioMode });
   reconcileDirty = true;
 
-  await performEgressReconciliationWithMutex();
+  const packageErrors = await performEgressReconciliationWithMutex();
+  if (action === PackageAction.AddOrUpdate) {
+    const packageError = packageErrors.get(pkgId);
+    if (packageError) {
+      throw new Error(
+        `Failed to reconcile shared egress resources for package "${pkgId}": ${packageError.message}`,
+        { cause: packageError },
+      );
+    }
+  }
 }
 
 export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry {
@@ -199,6 +208,31 @@ function addPackageToEgressMaps(
   }
 }
 
+function addPackageToEgressMapsSafely(
+  pkg: UDSPackage,
+  sidecarMap: PackageHostMap,
+  ambientMap: AmbientPackageMap,
+  packageErrors: Map<string, Error>,
+  mode?: Mode,
+): void {
+  const pkgId = packageId(pkg);
+  if (!pkgId) {
+    return;
+  }
+
+  try {
+    addPackageToEgressMaps(pkg, sidecarMap, ambientMap, mode);
+    packageErrors.delete(pkgId);
+  } catch (error: unknown) {
+    const packageError = error instanceof Error ? error : new Error(String(error));
+    packageErrors.set(pkgId, packageError);
+    log.error(
+      { err: packageError, pkgId },
+      "Skipping shared egress resources for package with invalid configuration",
+    );
+  }
+}
+
 /**
  * Rebuilds both shared-egress maps from the complete live UDSPackage set.
  *
@@ -207,19 +241,20 @@ function addPackageToEgressMaps(
  */
 export async function rebuildEgressPackageMaps(
   overrides: ReadonlyMap<string, EgressPackageOverride> = new Map(),
-): Promise<void> {
+): Promise<Map<string, Error>> {
   const fetchPackages = () => K8s(UDSPackage).Get();
   const packages = await retryWithDelay(fetchPackages, log, 5, 1000);
   const sidecarMap: PackageHostMap = {};
   const ambientMap: AmbientPackageMap = {};
   const livePackages = new Map<string, UDSPackage>();
+  const packageErrors = new Map<string, Error>();
 
   for (const pkg of packages.items ?? []) {
     const pkgId = packageId(pkg);
     if (pkgId) {
       livePackages.set(pkgId, pkg);
+      addPackageToEgressMapsSafely(pkg, sidecarMap, ambientMap, packageErrors);
     }
-    addPackageToEgressMaps(pkg, sidecarMap, ambientMap);
   }
 
   for (const [pkgId, override] of overrides) {
@@ -236,21 +271,28 @@ export async function rebuildEgressPackageMaps(
       livePackage &&
       eventGeneration > liveGeneration
     ) {
-      addPackageToEgressMaps(override.pkg, sidecarMap, ambientMap, override.istioMode);
+      addPackageToEgressMapsSafely(
+        override.pkg,
+        sidecarMap,
+        ambientMap,
+        packageErrors,
+        override.istioMode,
+      );
     } else if (override.action === PackageAction.AddOrUpdate && livePackage) {
-      addPackageToEgressMaps(livePackage, sidecarMap, ambientMap);
+      addPackageToEgressMapsSafely(livePackage, sidecarMap, ambientMap, packageErrors);
     }
   }
 
   setMapContents(inMemoryPackageMap, sidecarMap);
   setMapContents(inMemoryAmbientPackageMap, ambientMap);
+  return packageErrors;
 }
 
 // Perform one sidecar/ambient egress reconciliation pass.
 export async function performEgressReconciliation(
   overrides: ReadonlyMap<string, EgressPackageOverride> = new Map(),
 ) {
-  await rebuildEgressPackageMaps(overrides);
+  const packageErrors = await rebuildEgressPackageMaps(overrides);
 
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
@@ -296,13 +338,16 @@ export async function performEgressReconciliation(
     const aggregatedMessage = errors.map(err => err.message).join("; ");
     throw new Error(`Egress reconciliation failed: ${aggregatedMessage}`);
   }
+
+  return packageErrors;
 }
 
 // Serialize reconciliation passes while coalescing package events that arrive
 // during an in-flight apply/purge operation.
-export async function performEgressReconciliationWithMutex(): Promise<void> {
+export async function performEgressReconciliationWithMutex(): Promise<ReadonlyMap<string, Error>> {
   if (!reconcileInFlight) {
     reconcileInFlight = (async () => {
+      let packageErrors = new Map<string, Error>();
       try {
         do {
           reconcileDirty = false;
@@ -310,7 +355,7 @@ export async function performEgressReconciliationWithMutex(): Promise<void> {
           pendingPackageOverrides.clear();
 
           try {
-            await performEgressReconciliation(overrides);
+            packageErrors = await performEgressReconciliation(overrides);
           } catch (error) {
             // Do not retain failed overrides. A later unrelated event must not
             // replay an AddOrUpdate for a package that is no longer live. The
@@ -323,13 +368,14 @@ export async function performEgressReconciliationWithMutex(): Promise<void> {
             }
           }
         } while (reconcileDirty);
+        return packageErrors;
       } finally {
         reconcileInFlight = null;
       }
     })();
   }
 
-  await reconcileInFlight;
+  return await reconcileInFlight;
 }
 
 // Validate that there are no protocol conflicts for the same host/port combination
