@@ -31,7 +31,7 @@ tasks:
           linux: bash
         cmd: |
           echo "Publishing package to ${TARGET_REPO}"
-          if [ "${SNAPSHOT}" = "true" ]; then
+          if [ "${SNAPSHOT:-}" = "true" ]; then
             signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
           else
             signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
@@ -42,12 +42,20 @@ tasks:
             build/zarf-package-core-arm64-${VERSION}.tar.zst
           )
 
-          for package in "${packages[@]}"; do
+          sign_verify_publish() {
+            local package="${1}"
+            local signed_package="${package%.tar.zst}-${FLAVOR}.tar.zst"
+
             ./uds zarf package sign "${package}" --keyless --confirm
-            ./uds zarf package verify "${package}" \
+            test -f "${signed_package}"
+            ./uds zarf package verify "${signed_package}" \
               --certificate-identity-regexp "${signing_identity_regex}" \
               --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-            ./uds zarf package publish "${package}" oci://${TARGET_REPO}
+            ./uds zarf package publish "${signed_package}" oci://${TARGET_REPO}
+          }
+
+          for package in "${packages[@]}"; do
+            sign_verify_publish "${package}"
           done
 
       - description: "Tag the latest package (if a snapshot release)"
@@ -124,15 +132,18 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          if [ "${SNAPSHOT}" = "true" ]; then
+          if [ "${SNAPSHOT:-}" = "true" ]; then
             signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
           else
             signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
           fi
 
           package="build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst"
+          signed_package="${package%.tar.zst}-${FLAVOR}.tar.zst"
+
           ./uds zarf package sign "${package}" --keyless --confirm
-          ./uds zarf package verify "${package}" \
+          test -f "${signed_package}"
+          ./uds zarf package verify "${signed_package}" \
             --certificate-identity-regexp "${signing_identity_regex}" \
             --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
-          ./uds zarf package publish "${package}" oci://${TARGET_REPO}
+          ./uds zarf package publish "${signed_package}" oci://${TARGET_REPO}
