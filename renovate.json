@@ -239,8 +239,15 @@
     },
     {
       "matchManagers": ["mise"],
+      "excludePackageNames": ["opentofu"],
       "groupName": "support-deps",
       "commitMessageTopic": "support dependencies"
+    },
+    {
+      "matchManagers": ["mise"],
+      "matchPackageNames": ["opentofu"],
+      "groupName": "iac-support-deps",
+      "commitMessageTopic": "iac support dependencies"
     }
   ]
 }
