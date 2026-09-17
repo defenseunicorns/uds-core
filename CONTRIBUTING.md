@@ -84,9 +84,6 @@ The easiest way to install all required dependencies is:
 # Install pinned development tools
 mise trust && mise install
 
-# Install the helm-unittest plugin
-helm plugin install https://github.com/helm-unittest/helm-unittest.git
-
 # Run the lint-check task
 uds run lint-check
 ```

@@ -236,6 +236,11 @@
       ],
       "versioning": "regex:^distroless-v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$",
       "description": "Envoy distroless images use a 'distroless-v<semver>' tag prefix that the default docker versioning rejects as invalid-value, blocking updates"
+    },
+    {
+      "matchManagers": ["mise"],
+      "groupName": "support-deps",
+      "commitMessageTopic": "support dependencies"
     }
   ]
 }
