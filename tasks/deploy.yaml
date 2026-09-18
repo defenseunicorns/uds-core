@@ -199,11 +199,12 @@ tasks:
 
           # Create and deploy the bundle
           ./uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
-          BUNDLE_PATH=$(find tmp/core-shim -maxdepth 1 -type f -name 'uds-bundle-*.tar.zst' -print -quit)
-          if [ -z "${BUNDLE_PATH}" ]; then
+          BUNDLE_PATH="tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst"
+          if [ ! -f "${BUNDLE_PATH}" ]; then
             echo "Unable to find the generated latest release bundle" >&2
             exit 1
           fi
+          printf '%s\n' "${LATEST_CORE_TAG}" > tmp/core-shim/latest-core-tag
 
   - name: latest-bundle-release-deploy
     description: "Deploy the previously created latest release bundle"
@@ -216,8 +217,13 @@ tasks:
         cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          BUNDLE_PATH=$(find tmp/core-shim -maxdepth 1 -type f -name 'uds-bundle-*.tar.zst' -print -quit)
-          if [ -z "${BUNDLE_PATH}" ]; then
+          if [ ! -f tmp/core-shim/latest-core-tag ]; then
+            echo "Unable to find the generated latest release bundle metadata" >&2
+            exit 1
+          fi
+          LATEST_CORE_TAG=$(cat tmp/core-shim/latest-core-tag)
+          BUNDLE_PATH="tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst"
+          if [ ! -f "${BUNDLE_PATH}" ]; then
             echo "Unable to find the generated latest release bundle" >&2
             exit 1
           fi

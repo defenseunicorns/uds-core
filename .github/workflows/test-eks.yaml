@@ -122,6 +122,9 @@ jobs:
       - name: Validate UDS Core E2E test resources
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare UDS Core E2E test CA
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run UDS Core Playwright tests
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
 

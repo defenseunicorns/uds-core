@@ -212,6 +212,10 @@ jobs:
         if: ${{ matrix.test-type == 'upgrade' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare upgraded HA E2E test CA
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run upgraded HA Playwright E2E tests
         if: ${{ matrix.test-type == 'upgrade' }}
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress

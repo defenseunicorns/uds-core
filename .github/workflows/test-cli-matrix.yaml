@@ -135,6 +135,10 @@ jobs:
         if: ${{ matrix.mode == 'legacy' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare Legacy upgrade E2E test CA
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run Legacy upgrade Playwright tests
         if: ${{ matrix.mode == 'legacy' }}
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
@@ -212,6 +216,10 @@ jobs:
       - name: Validate Next upgrade E2E test resources
         if: ${{ matrix.mode == 'next' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare Next upgrade E2E test CA
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
 
       - name: Run Next upgrade Playwright tests
         if: ${{ matrix.mode == 'next' }}
@@ -306,6 +314,10 @@ jobs:
         if: ${{ matrix.mode == 'legacy' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare Legacy Core E2E test CA (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run Legacy Core Playwright tests (minimum supported CLI)
         if: ${{ matrix.mode == 'legacy' }}
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=upstream --no-progress
@@ -383,6 +395,10 @@ jobs:
       - name: Validate Next Core E2E resources (minimum supported CLI)
         if: ${{ matrix.mode == 'next' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare Next Core E2E test CA (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
 
       - name: Run Next Core Playwright tests (minimum supported CLI)
         if: ${{ matrix.mode == 'next' }}

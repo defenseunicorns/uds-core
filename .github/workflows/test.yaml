@@ -160,6 +160,10 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run Playwright E2E tests
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ inputs.flavor }} --no-progress
@@ -262,6 +266,10 @@ jobs:
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
 
+      - name: Prepare upgraded E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
       - name: Run upgraded Playwright E2E tests
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
         run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ inputs.flavor }} --no-progress
@@ -305,6 +313,10 @@ jobs:
       - name: Validate values E2E test resources
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
         run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare values E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
 
       - name: Run values Playwright E2E tests
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
