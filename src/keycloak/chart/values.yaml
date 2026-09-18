@@ -251,7 +251,12 @@ persistence:
     size: "512Mi"
 
 # Pod disruption budget
-podDisruptionBudget: {}
+podDisruptionBudget:
+  # Only applies when autoscaling.enabled is true; ignored outside HA mode
+  enabled: true
+  # Set to null when using minAvailable instead
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
 
 # Additional labels for the StatefulSet
 statefulsetLabels: {}

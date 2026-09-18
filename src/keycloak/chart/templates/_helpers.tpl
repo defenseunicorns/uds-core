@@ -217,4 +217,3 @@ Check external PostgreSQL connection information. Fails when required values are
 {{- "host" -}}
 {{- end -}}
 {{- end -}}
-
