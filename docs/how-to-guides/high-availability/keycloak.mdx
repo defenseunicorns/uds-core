@@ -171,9 +171,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
    | Maximum unavailable replicas | `1` | `podDisruptionBudget.maxUnavailable` |
    | Unhealthy pod eviction policy | `AlwaysAllow` | `podDisruptionBudget.unhealthyPodEvictionPolicy` |
 
-   The chart sets `podDisruptionBudget.maxUnavailable` to `1`. Do not set `podDisruptionBudget.minAvailable`; Helm fails when both fields are present because Kubernetes does not allow both fields.
+   In HA mode, the chart uses `maxUnavailable: 1` and `unhealthyPodEvictionPolicy: AlwaysAllow` when you do not provide those fields. If you set `podDisruptionBudget.minAvailable`, it takes precedence over the default `maxUnavailable` value, and the chart renders `minAvailable` without `maxUnavailable`.
 
-   Set `podDisruptionBudget.enabled` to `true` for a fixed-replica deployment. This explicit setting also preserves a fixed-replica PDB whose configuration matches the new chart defaults, including a partial override that sets only default values.
+   Automatic mode preserves fixed-replica PDB configurations, including a PDB that sets `maxUnavailable: 1`. It also preserves the Kubernetes default `IfHealthyBudget` when a fixed-replica PDB omits `unhealthyPodEvictionPolicy`. Set `podDisruptionBudget.enabled` to `true` for a fixed-replica deployment that needs the HA defaults.
 
    > [!WARNING]
    > A single-node or fully constrained HA cluster might not have capacity to schedule a replacement after the PDB permits the first eviction. The PDB then blocks eviction of the remaining Ready replica, and the drain cannot complete. Add schedulable capacity before draining the node. If you cannot add capacity, set `podDisruptionBudget.enabled` to `false` before the drain and re-enable it after capacity returns.

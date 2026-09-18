@@ -55,7 +55,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.podDisruptionBudget.enabled }}true{{- end -}}
 {{- else -}}
 {{- $pdb := omit .Values.podDisruptionBudget "enabled" -}}
-{{- $configured := or (gt (len $pdb) 2) (ne (toString $pdb.maxUnavailable) "1") (ne (toString $pdb.unhealthyPodEvictionPolicy) "AlwaysAllow") -}}
+{{- $configured := gt (len $pdb) 0 -}}
 {{- if or .Values.autoscaling.enabled $configured }}true{{- end -}}
 {{- end -}}
 {{- end }}
@@ -63,6 +63,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/* Render the Kubernetes PodDisruptionBudget spec without chart-only values. */}}
 {{- define "keycloak.podDisruptionBudget.spec" -}}
 {{- $podDisruptionBudget := omit .Values.podDisruptionBudget "enabled" -}}
+{{- $ha := or .Values.autoscaling.enabled (eq .Values.podDisruptionBudget.enabled true) -}}
+{{- if $ha -}}
+{{- if and (not (hasKey $podDisruptionBudget "minAvailable")) (not (hasKey $podDisruptionBudget "maxUnavailable")) -}}
+{{- $_ := set $podDisruptionBudget "maxUnavailable" 1 -}}
+{{- end -}}
+{{- if not (hasKey $podDisruptionBudget "unhealthyPodEvictionPolicy") -}}
+{{- $_ := set $podDisruptionBudget "unhealthyPodEvictionPolicy" "AlwaysAllow" -}}
+{{- end -}}
+{{- end -}}
 {{- if and (hasKey $podDisruptionBudget "minAvailable") (hasKey $podDisruptionBudget "maxUnavailable") -}}
 {{- fail "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'." -}}
 {{- end -}}

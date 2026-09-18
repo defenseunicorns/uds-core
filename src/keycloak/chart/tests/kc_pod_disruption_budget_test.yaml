@@ -69,6 +69,17 @@ tests:
       - notExists:
           path: spec.enabled
 
+  - it: should preserve a legacy PDB matching the HA defaults
+    set:
+      podDisruptionBudget:
+        maxUnavailable: 1
+    template: poddisruptionbudget.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - notExists:
+          path: spec.unhealthyPodEvictionPolicy
+
   - it: should preserve a custom fixed-replica eviction policy
     set:
       podDisruptionBudget:
@@ -106,6 +117,23 @@ tests:
       - equal:
           path: spec.maxUnavailable
           value: "25%"
+
+  - it: should prefer minAvailable over HA maxUnavailable fallback
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        minAvailable: 1
+    template: poddisruptionbudget.yaml
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - notExists:
+          path: spec.maxUnavailable
+      - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
 
   - it: should fail when minAvailable and maxUnavailable are set
     set:
