@@ -218,21 +218,18 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => {
+        Get: vi.fn(async (name?: string) => {
           if (resourceKind === K8sUDPRoute) {
-            return {
-              items: [
-                {
-                  apiVersion: "gateway.networking.k8s.io/v1alpha2",
-                  kind: "UDPRoute",
-                  metadata: {
-                    name: "web-udp-old",
-                    namespace: "web-ns",
-                    labels: { "uds/package": "web", "uds/generation": "1" },
-                  },
-                },
-              ],
+            const resource = {
+              apiVersion: "gateway.networking.k8s.io/v1alpha2",
+              kind: "UDPRoute",
+              metadata: {
+                name: "web-udp-old",
+                namespace: "web-ns",
+                labels: { "uds/package": "web", "uds/generation": "1" },
+              },
             };
+            return name ? resource : { items: [resource] };
           }
 
           return { items: [] };
@@ -275,21 +272,18 @@ describe("envoyGatewayResources", () => {
       const client: K8sClient = {
         Apply: vi.fn(async () => undefined),
         Delete: vi.fn(async () => undefined),
-        Get: vi.fn(async () => {
+        Get: vi.fn(async (name?: string) => {
           if (resourceKind === K8sUDPRoute) {
-            return {
-              items: [
-                {
-                  apiVersion: "gateway.networking.k8s.io/v1alpha2",
-                  kind: "UDPRoute",
-                  metadata: {
-                    name: "web-udp-old",
-                    namespace: "web-ns",
-                    labels: { "uds/package": "web", "uds/generation": "1" },
-                  },
-                },
-              ],
+            const resource = {
+              apiVersion: "gateway.networking.k8s.io/v1alpha2",
+              kind: "UDPRoute",
+              metadata: {
+                name: "web-udp-old",
+                namespace: "web-ns",
+                labels: { "uds/package": "web", "uds/generation": "1" },
+              },
             };
+            return name ? resource : { items: [resource] };
           }
 
           return { items: [] };
