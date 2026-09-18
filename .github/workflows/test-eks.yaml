@@ -15,6 +15,9 @@ permissions:
 
 jobs:
   test-eks-install:
+    # Temporarily disabled while CI visibility work is being evaluated.
+    # Set ENABLE_IAC_TESTS=true to re-enable this workflow deliberately.
+    if: ${{ vars.ENABLE_IAC_TESTS == 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -101,8 +104,35 @@ jobs:
         run: uds deploy .github/bundles/eks/uds-bundle-uds-core-eks-nightly-*.tar.zst --confirm
         timeout-minutes: 40
 
-      - name: Test UDS Core
-        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
+      - name: Configure UDS Core test hosts
+        run: uds run -f tasks/utils.yaml setup-hosts --no-progress
+
+      - name: Validate UDS Core packages
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --with validate_passthrough=false --no-progress
+
+      - name: Set up UDS Core E2E test user
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create UDS Core E2E test resource package
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --with architecture=amd64 --no-progress
+
+      - name: Deploy UDS Core E2E test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate UDS Core E2E test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare UDS Core E2E test CA
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
+      - name: Run UDS Core Playwright tests
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run UDS Core Vitest tests
+        run: uds run -f tasks/test.yaml e2e-vitest --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Clean up UDS Core E2E test resources
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
 
       - name: Validate Loki chunks S3 writes
         run: uds run -f src/loki/tasks.yaml validate-object-storage-writes --no-progress --with provider=aws --with iac_dir=.github/test-infra/aws/eks

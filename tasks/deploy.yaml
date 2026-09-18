@@ -93,15 +93,25 @@ tasks:
         env:
           - UDS_CONFIG=build/private-pki/uds-private-pki-config.yaml
 
-  - name: k3d-standard-bundle-private-pki-next
+  - name: k3d-standard-bundle-private-pki-next-init
+    description: "Deploy the K3d and Zarf initialization packages for Private PKI"
     actions:
       - task: k3d-standard-bundle-next
         with:
           packages: uds_k3d_dev,init
+
+  - name: k3d-standard-bundle-private-pki-next-core
+    description: "Deploy the UDS Core Private PKI packages"
+    actions:
       - task: k3d-standard-bundle-next
         with:
           configFile: build/private-pki/config-private-pki.uds.hcl
           packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
+
+  - name: k3d-standard-bundle-private-pki-next
+    actions:
+      - task: k3d-standard-bundle-private-pki-next-init
+      - task: k3d-standard-bundle-private-pki-next-core
 
   - name: k3d-slim-dev-bundle
     actions:
@@ -168,11 +178,8 @@ tasks:
         setVariables:
           - name: LATEST_CORE_TAG
 
-  - name: latest-bundle-release
-    inputs:
-      configFile:
-        description: "UDS_CONFIG file to use for the deployment"
-        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+  - name: latest-bundle-release-create
+    description: "Create the latest release bundle artifact for upgrade testing"
     actions:
       - task: resolve-latest-core-release
       - description: "Create the latest version with bundle overrides"
@@ -192,13 +199,53 @@ tasks:
 
           # Create and deploy the bundle
           ./uds create tmp/core-shim --confirm --no-progress --architecture=${ZARF_ARCHITECTURE}
+          BUNDLE_PATH="tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst"
+          if [ ! -f "${BUNDLE_PATH}" ]; then
+            echo "Unable to find the generated latest release bundle" >&2
+            exit 1
+          fi
+          printf '%s\n' "${LATEST_CORE_TAG}" > tmp/core-shim/latest-core-tag
+
+  - name: latest-bundle-release-deploy
+    description: "Deploy the previously created latest release bundle"
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployment"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+    actions:
       - description: "Deploy the latest version from the bundle"
         cmd: |
           # Set UDS_CONFIG for bundle deployment
           export UDS_CONFIG="${{ .inputs.configFile }}"
-          ./uds deploy tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst --confirm --no-progress
+          if [ ! -f tmp/core-shim/latest-core-tag ]; then
+            echo "Unable to find the generated latest release bundle metadata" >&2
+            exit 1
+          fi
+          LATEST_CORE_TAG=$(cat tmp/core-shim/latest-core-tag)
+          BUNDLE_PATH="tmp/core-shim/uds-bundle-k3d-core-demo-${UDS_ARCH}-${LATEST_CORE_TAG}.tar.zst"
+          if [ ! -f "${BUNDLE_PATH}" ]; then
+            echo "Unable to find the generated latest release bundle" >&2
+            exit 1
+          fi
+          ./uds deploy "${BUNDLE_PATH}" --confirm --no-progress
+
+  - name: latest-bundle-release-cleanup
+    description: "Clean up the latest release bundle workspace"
+    actions:
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/core-shim
+
+  - name: latest-bundle-release
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the deployment"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+    actions:
+      - task: latest-bundle-release-create
+      - task: latest-bundle-release-deploy
+        with:
+          configFile: ${{ .inputs.configFile }}
+      - task: latest-bundle-release-cleanup
 
   - name: latest-next-bundle-release
     inputs:
@@ -209,7 +256,8 @@ tasks:
       - description: "Deploy the latest UDS Core Standard Bundle with UDS CLI Next"
         cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo-next:latest --config ${{ .inputs.configFile }} --skip-signature-verification
 
-  - name: latest-release-test-resources
+  - name: latest-release-test-resources-fetch
+    description: "Fetch the test resources from the latest Core release"
     actions:
       - task: resolve-latest-core-release
       - description: "Fetch src/test from tagged release"
@@ -221,11 +269,25 @@ tasks:
           git clone --depth 1 --filter=blob:none --sparse --branch v${LATEST_CORE_TAG} https://github.com/defenseunicorns/uds-core.git tmp/test-shim/uds-core
           cd tmp/test-shim/uds-core
           git sparse-checkout set src/test tasks
+
+  - name: latest-release-test-resources-deploy
+    description: "Deploy test resources from the fetched latest Core release"
+    actions:
       - description: "Deploy Latest Release Test Resources"
         cmd: ./uds run -f src/test/tasks.yaml create-deploy
         dir: tmp/test-shim/uds-core/
+
+  - name: latest-release-test-resources-cleanup
+    description: "Clean up the latest release test-resource workspace"
+    actions:
       - description: "Clean up temporary files"
         cmd: rm -rf tmp/test-shim
+
+  - name: latest-release-test-resources
+    actions:
+      - task: latest-release-test-resources-fetch
+      - task: latest-release-test-resources-deploy
+      - task: latest-release-test-resources-cleanup
 
   - name: latest-slim-bundle-release
     actions:

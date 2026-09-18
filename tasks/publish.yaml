@@ -89,16 +89,41 @@ tasks:
   - name: single-layer
     description: "Test and Publish UDS Core layer"
     actions:
+      - task: single-layer-test-dependencies
+      - task: single-layer-build
+      - task: single-layer-deploy
+      - task: single-layer-validate
+      - task: single-layer-publish
+
+  - name: single-layer-test-dependencies
+    description: "Deploy dependencies for the UDS Core layer test"
+    actions:
       - task: test:layer-dependencies
+
+  - name: single-layer-build
+    description: "Build the UDS Core layer package"
+    actions:
       - task: create:single-layer
         with:
           layer: ${LAYER}
+
+  - name: single-layer-deploy
+    description: "Deploy the UDS Core layer package"
+    actions:
       - task: deploy:single-layer
         with:
           layer: ${LAYER}
+
+  - name: single-layer-validate
+    description: "Validate the deployed UDS Core layer package"
+    actions:
       - task: test:validate-package
         with:
           layer: ${LAYER}
+
+  - name: single-layer-publish
+    description: "Sign, verify, and publish the UDS Core layer package"
+    actions:
       - task: utils:determine-repo
       - description: "Publish build of layer"
         cmd: ./uds zarf package publish build/zarf-package-core-${LAYER}-${UDS_ARCH}-${VERSION}.tar.zst oci://${TARGET_REPO}

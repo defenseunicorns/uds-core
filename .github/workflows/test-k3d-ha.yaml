@@ -56,13 +56,177 @@ jobs:
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
-      - name: Run UDS Core Install HA Test
+      - name: Set up HA PostgreSQL
         if: ${{ matrix.test-type == 'install' }}
-        run: uds run test-uds-core-ha --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: uds run -f tasks/setup.yaml ha-postgres --no-progress
 
-      - name: Run UDS Core Upgrade HA Test
+      - name: Set up HA Redis
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/setup.yaml ha-redis --no-progress
+
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build UDS Core HA CRDs package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=crds --no-progress
+
+      - name: Build UDS Core HA base package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build UDS Core HA identity-authorization package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=identity-authorization --no-progress
+
+      - name: Build UDS Core HA logging package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=logging --no-progress
+
+      - name: Build UDS Core HA monitoring package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=monitoring --no-progress
+
+      - name: Build UDS Core HA runtime-security package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=runtime-security --no-progress
+
+      - name: Build UDS Core HA backup-restore package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=backup-restore --no-progress
+
+      - name: Build UDS Core HA metrics-server package
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=metrics-server --no-progress
+
+      - name: Build UDS Core HA portal package
+        if: ${{ matrix.test-type == 'install' && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=portal --no-progress
+
+      - name: Create UDS Core HA bundle
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy UDS Core HA
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-ha-deploy --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Validate UDS Core HA
+        if: ${{ matrix.test-type == 'install' }}
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up HA PostgreSQL for upgrade
         if: ${{ matrix.test-type == 'upgrade' }}
-        run: uds run test-uds-core-ha-upgrade --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: uds run -f tasks/setup.yaml ha-postgres --no-progress
+
+      - name: Set up HA Redis for upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/setup.yaml ha-redis --no-progress
+
+      - name: Create latest Core release bundle for HA upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy latest Core release for HA upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-deploy --with configFile=bundles/k3d-standard/uds-ha-config.yaml --no-progress
+
+      - name: Clean up latest Core release bundle workspace
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-cleanup --no-progress
+
+      - name: Fetch latest release test resources for HA upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-fetch --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy latest release test resources for HA upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-deploy --no-progress
+
+      - name: Clean up latest release test-resource workspace
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-cleanup --no-progress
+
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build UDS Core HA CRDs upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=crds --no-progress
+
+      - name: Build UDS Core HA base upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build UDS Core HA identity-authorization upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=identity-authorization --no-progress
+
+      - name: Build UDS Core HA logging upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=logging --no-progress
+
+      - name: Build UDS Core HA monitoring upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=monitoring --no-progress
+
+      - name: Build UDS Core HA runtime-security upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=runtime-security --no-progress
+
+      - name: Build UDS Core HA backup-restore upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=backup-restore --no-progress
+
+      - name: Build UDS Core HA metrics-server upgrade package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=metrics-server --no-progress
+
+      - name: Build UDS Core HA portal upgrade package
+        if: ${{ matrix.test-type == 'upgrade' && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=portal --no-progress
+
+      - name: Create UDS Core HA upgrade bundle
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy current UDS Core HA for upgrade
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-deploy --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard-next/config-ha.uds.hcl --with packages=core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server --no-progress
+
+      - name: Validate upgraded UDS Core HA
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up upgraded HA E2E test user
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create upgraded HA E2E test resource package
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy upgraded HA E2E test resources
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate upgraded HA E2E test resources
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare upgraded HA E2E test CA
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
+      - name: Run upgraded HA Playwright E2E tests
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run upgraded HA Vitest E2E tests
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --with skip_fleet_admin=true --no-progress
+
+      - name: Clean up upgraded HA E2E test resources
+        if: ${{ matrix.test-type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

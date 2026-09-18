@@ -93,8 +93,8 @@ tasks:
             ./uds run -f tasks/create.yaml single-layer --set FLAVOR="${FLAVOR}" --with layer=portal --with create_options="${{ .inputs.create_options }}" --no-progress
           fi
 
-  - name: k3d-standard-bundle-next
-    description: "Create the K3d-UDS Core functional layer bundle with UDS CLI Next"
+  - name: k3d-standard-bundle-next-packages
+    description: "Create the K3d-UDS Core functional layer packages for UDS CLI Next"
     inputs:
       create_options:
         default: ${CREATE_OPTIONS}
@@ -107,6 +107,14 @@ tasks:
         with:
           create_options: ${{ .inputs.create_options }}
           include_portal: ${{ .inputs.include_portal }}
+
+  - name: k3d-standard-bundle-next-bundle
+    description: "Create the K3d-UDS Core bundle artifact with UDS CLI Next"
+    inputs:
+      include_portal:
+        default: "true"
+        description: "Whether to include Portal in the Next bundle"
+    actions:
       - description: "Prepare the UDS Core Standard Bundle definition for UDS CLI Next"
         cmd: |
           rm -rf build/k3d-standard-next
@@ -129,6 +137,24 @@ tasks:
           rm -f bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-${ZARF_ARCHITECTURE}-*.tar.zst
           CLI_FEATURES=NextMode=true ./uds bundle create --unsigned build/k3d-standard-next "$@"
           cp build/k3d-standard-next/uds-bundle-k3d-core-demo-next-*.tar.zst bundles/k3d-standard-next/
+
+  - name: k3d-standard-bundle-next
+    description: "Create the K3d-UDS Core functional layer bundle with UDS CLI Next"
+    inputs:
+      create_options:
+        default: ${CREATE_OPTIONS}
+        description: "Additional options passed in when creating Zarf packages. For example: --skip-sbom"
+      include_portal:
+        default: "true"
+        description: "Whether to include Portal in the Next bundle"
+    actions:
+      - task: k3d-standard-bundle-next-packages
+        with:
+          create_options: ${{ .inputs.create_options }}
+          include_portal: ${{ .inputs.include_portal }}
+      - task: k3d-standard-bundle-next-bundle
+        with:
+          include_portal: ${{ .inputs.include_portal }}
 
   - name: k3d-slim-dev-bundle
     description: "Create the slim dev bundle (Base and Identity) with UDS CLI Legacy"
