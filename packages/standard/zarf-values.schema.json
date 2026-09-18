@@ -2094,6 +2094,9 @@
             "defaultCurlOptions": {
               "type": "string"
             },
+            "defaultShellOptions": {
+              "type": "string"
+            },
             "deploymentStrategy": {
               "properties": {
                 "type": {
@@ -2237,6 +2240,17 @@
               "properties": {
                 "imagePullSecrets": {
                   "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "goMemLimit": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "factor": {
+                  "type": "number"
                 }
               },
               "type": "object"
@@ -3081,6 +3095,10 @@
                   "type": "string"
                 }
               },
+              "type": "object"
+            },
+            "startupProbe": {
+              "properties": {},
               "type": "object"
             },
             "testFramework": {
