@@ -77,11 +77,23 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
+      - name: Create latest release bundle (install phase)
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
       - name: Deploy latest release (install phase)
-        run: uds run -f tasks/deploy.yaml latest-bundle-release --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-deploy --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Clean up latest release bundle workspace
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-cleanup --no-progress
+
+      - name: Fetch latest release test resources
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-fetch --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Deploy latest release test resources
-        run: uds run -f tasks/deploy.yaml latest-release-test-resources --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-deploy --no-progress
+
+      - name: Clean up latest release test-resource workspace
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-cleanup --no-progress
 
       - name: Install CLI for upgrade phase
         uses: defenseunicorns/setup-uds@d6add59d4c2ca789ed7c92741e91bd340b4e950b # v1.0.2
@@ -91,13 +103,127 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
-      - name: Run Legacy upgrade phase
+      - name: Build Legacy upgrade packages
         if: ${{ matrix.mode == 'legacy' }}
-        run: uds run -f tasks/test.yaml upgrade-existing-legacy --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/test.yaml core-legacy-package-build --set FLAVOR=${{ matrix.flavor }} --no-progress
 
-      - name: Run Next upgrade phase
+      - name: Create Legacy upgrade bundle
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-legacy-bundle-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy current Core Legacy upgrade
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-legacy-upgrade-deploy --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard/uds-upgrade-test-config.yaml --no-progress
+
+      - name: Validate current Core Legacy upgrade
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-validate --no-progress
+
+      - name: Set up Legacy upgrade E2E test user
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create Legacy upgrade E2E test resource package
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy Legacy upgrade E2E test resources
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate Legacy upgrade E2E test resources
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Run Legacy upgrade Playwright tests
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run Legacy upgrade Vitest tests
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --with skip_fleet_admin=true --no-progress
+
+      - name: Clean up Legacy upgrade E2E resources
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
+
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build Next CRDs upgrade package
         if: ${{ matrix.mode == 'next' }}
-        run: uds run -f tasks/test.yaml upgrade-existing --set FLAVOR=${{ matrix.flavor }} --no-progress
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=crds --no-progress
+
+      - name: Build Next base upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build Next identity-authorization upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=identity-authorization --no-progress
+
+      - name: Build Next logging upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=logging --no-progress
+
+      - name: Build Next monitoring upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=monitoring --no-progress
+
+      - name: Build Next runtime-security upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=runtime-security --no-progress
+
+      - name: Build Next backup-restore upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=backup-restore --no-progress
+
+      - name: Build Next metrics-server upgrade package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=metrics-server --no-progress
+
+      - name: Build Next portal upgrade package
+        if: ${{ matrix.mode == 'next' && matrix.flavor != 'registry1' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ matrix.flavor }} --with layer=portal --no-progress
+
+      - name: Create Next upgrade bundle
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy current Core Next upgrade
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-deploy --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard-next/config-upgrade.uds.hcl --with packages=core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server --no-progress
+
+      - name: Validate current Core Next upgrade
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-validate --no-progress
+
+      - name: Set up Next upgrade E2E test user
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create Next upgrade E2E test resource package
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy Next upgrade E2E test resources
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate Next upgrade E2E test resources
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Run Next upgrade Playwright tests
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run Next upgrade Vitest tests
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --with skip_fleet_admin=true --no-progress
+
+      - name: Clean up Next upgrade E2E resources
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
 
       - name: Debug Output
         if: ${{ always() }}
@@ -127,10 +253,8 @@ jobs:
         include:
           - mode: legacy
             cli_version: v0.34.0 # Minimum supported Legacy CLI
-            task: test:uds-core-legacy-e2e
           - mode: next
             cli_version: v0.36.0 # Minimum supported CLI Next version
-            task: test:uds-core-e2e
 
     steps:
       - name: Checkout repository
@@ -150,8 +274,127 @@ jobs:
       - name: Print CLI version for debug
         run: uds version
 
-      - name: Test UDS Core Install (minimum supported CLI)
-        run: uds run ${{ matrix.task }} --set FLAVOR=upstream --no-progress
+      - name: Build Legacy Core packages (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-legacy-package-build --set FLAVOR=upstream --no-progress
+
+      - name: Create Legacy Core bundle (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-legacy-bundle-create --set FLAVOR=upstream --no-progress
+
+      - name: Deploy Legacy Core (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-legacy-install-deploy --set FLAVOR=upstream --no-progress
+
+      - name: Validate Legacy Core (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml core-validate --no-progress
+
+      - name: Set up Legacy Core E2E user (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create Legacy Core E2E resource package (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy Legacy Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate Legacy Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Run Legacy Core Playwright tests (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=upstream --no-progress
+
+      - name: Run Legacy Core Vitest tests (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --no-progress
+
+      - name: Clean up Legacy Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'legacy' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
+
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build Next CRDs package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=crds --no-progress
+
+      - name: Build Next base package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build Next identity-authorization package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=identity-authorization --no-progress
+
+      - name: Build Next logging package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=logging --no-progress
+
+      - name: Build Next monitoring package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=monitoring --no-progress
+
+      - name: Build Next runtime-security package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=runtime-security --no-progress
+
+      - name: Build Next backup-restore package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=backup-restore --no-progress
+
+      - name: Build Next metrics-server package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=metrics-server --no-progress
+
+      - name: Build Next portal package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=upstream --with layer=portal --no-progress
+
+      - name: Create Next Core bundle (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=upstream --no-progress
+
+      - name: Deploy Next Core (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-deploy --set FLAVOR=upstream --with configFile=bundles/k3d-standard-next/config-test.uds.hcl --no-progress
+
+      - name: Validate Next Core (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml core-validate --no-progress
+
+      - name: Set up Next Core E2E user (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create Next Core E2E resource package (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy Next Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate Next Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Run Next Core Playwright tests (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=upstream --no-progress
+
+      - name: Run Next Core Vitest tests (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --no-progress
+
+      - name: Clean up Next Core E2E resources (minimum supported CLI)
+        if: ${{ matrix.mode == 'next' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

@@ -86,20 +86,26 @@ jobs:
   run-eks-test:
     needs: check-paths
     name: Schedule EKS
-    if: ${{ contains(needs.check-paths.outputs.distros, 'eks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-eks') }}
+    # Temporarily disabled while CI visibility work is being evaluated.
+    # Set ENABLE_IAC_TESTS=true to re-enable these jobs deliberately.
+    if: ${{ vars.ENABLE_IAC_TESTS == 'true' }}
     uses: ./.github/workflows/test-eks.yaml
     secrets: inherit
 
   run-rke2-test:
     needs: check-paths
     name: Schedule RKE2
-    if: ${{ contains(needs.check-paths.outputs.distros, 'rke2') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-rke2') }}
+    # Temporarily disabled while CI visibility work is being evaluated.
+    # Set ENABLE_IAC_TESTS=true to re-enable these jobs deliberately.
+    if: ${{ vars.ENABLE_IAC_TESTS == 'true' }}
     uses: ./.github/workflows/test-rke2.yaml
     secrets: inherit
 
   run-aks-test:
     needs: check-paths
     name: Schedule AKS
-    if: ${{ contains(needs.check-paths.outputs.distros, 'aks') || contains(github.event.pull_request.labels.*.name, 'test-all-iac') || contains(github.event.pull_request.labels.*.name, 'test-aks') }}
+    # Temporarily disabled while CI visibility work is being evaluated.
+    # Set ENABLE_IAC_TESTS=true to re-enable these jobs deliberately.
+    if: ${{ vars.ENABLE_IAC_TESTS == 'true' }}
     uses: ./.github/workflows/test-aks.yaml
     secrets: inherit

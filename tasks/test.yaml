@@ -28,6 +28,13 @@ tasks:
 
   - name: single-layer
     description: "Build and test a single layer, requires LAYER and FLAVOR to be set"
+    actions:
+      - task: single-layer-package-build
+      - task: single-layer-deploy
+      - task: single-layer-validate
+
+  - name: single-layer-package-build
+    description: "Build a single UDS Core layer package"
     inputs:
       create_options:
         default: "--skip-sbom"
@@ -37,9 +44,17 @@ tasks:
         with:
           layer: ${LAYER}
           create_options: ${{ .inputs.create_options }}
+
+  - name: single-layer-deploy
+    description: "Deploy a single UDS Core layer package"
+    actions:
       - task: deploy:single-layer
         with:
           layer: ${LAYER}
+
+  - name: single-layer-validate
+    description: "Validate a single UDS Core layer package"
+    actions:
       - task: validate-package
         with:
           layer: ${LAYER}
@@ -88,6 +103,116 @@ tasks:
       - cmd: |
           ./uds run -f packages/${{ index .inputs "layer" }}/tasks.yaml validate --no-progress
 
+  - name: e2e-test-resources
+    description: "Prepare the test applications and test users for E2E tests"
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        required: true
+        default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
+    actions:
+      - task: e2e-test-user
+      - task: e2e-test-resource-package-create
+        with:
+          architecture: ${{ .inputs.architecture }}
+      - task: e2e-test-resource-deploy
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+      - task: e2e-test-resource-validate
+
+  - name: e2e-test-user
+    description: "Set up the Doug user for E2E tests"
+    actions:
+      - description: "Setup the Doug User for testing"
+        task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
+
+  - name: e2e-test-resource-package-create
+    description: "Create the test-apps package for E2E tests"
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        required: true
+        default: ${UDS_ARCH}
+    actions:
+      - task: test-resources:create-package
+        with:
+          architecture: ${{ .inputs.architecture }}
+
+  - name: e2e-test-resource-deploy
+    description: "Deploy the test-apps package for E2E tests"
+    inputs:
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to apply and validate UDP expose resources through the default Envoy Gateway
+        default: "true"
+    actions:
+      - task: test-resources:deploy-package
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+
+  - name: e2e-test-resource-validate
+    description: "Wait for E2E test resources and Core integrations to become ready"
+    actions:
+      - task: test-resources:validate-deployment
+
+  - name: e2e-playwright
+    description: "Run Playwright E2E tests for all packages"
+    actions:
+      - description: "Run Playwright E2E tests for all packages"
+        dir: test/playwright
+        cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test \
+            "
+
+  - name: e2e-vitest
+    description: "Run Vitest E2E tests for all packages"
+    inputs:
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+        default: "true"
+      # TODO: Remove this input once Fleet admin realm updates are included in a released Core baseline.
+      skip_fleet_admin:
+        description: "Skip the Fleet Keycloak admin integration test."
+        default: "false"
+    actions:
+      - description: "Install Vitest E2E dependencies"
+        cmd: npm ci
+        dir: test/vitest
+      - description: "Run Vitest E2E tests"
+        env:
+          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
+          - SKIP_FLEET_ADMIN=${{ .inputs.skip_fleet_admin }}
+        cmd: |
+          # TODO: Remove SKIP_FLEET_ADMIN once Fleet admin realm updates are included in a released Core baseline.
+          # Upgrade tests start from an older released realm, and this realm update must be applied manually.
+          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run
+        dir: test/vitest
+
+  - name: e2e-cleanup
+    description: "Remove E2E test resources"
+    actions:
+      - description: "Remove test resources"
+        task: test-resources:remove
+
   - name: e2e-tests
     description: "E2E Test all packages"
     inputs:
@@ -105,42 +230,20 @@ tasks:
       skip_fleet_admin:
         description: "Skip the Fleet Keycloak admin integration test."
         default: "false"
-    # Run each e2e test type from the e2e folder
     actions:
-      - description: "Setup the Doug User for testing"
-        task: common-setup:keycloak-user
-        with:
-          group: "/UDS Core/Admin"
-      - description: "Create and Deploy Test App Package"
-        task: test-resources:create-deploy
+      - task: e2e-test-resources
         with:
           architecture: ${{ .inputs.architecture }}
           validate_egress: ${{ .inputs.validate_egress }}
           validate_udp_expose: ${{ .inputs.validate_udp_expose }}
       - task: util:prepare-node-test-ca
-      - description: "Run Playwright E2E tests for all packages"
-        dir: test/playwright
-        cmd: |
-          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
-            cd app && \
-            npm ci && \
-            npx playwright test \
-            "
-      - description: "Install Vitest E2E dependencies"
-        cmd: npm ci
-        dir: test/vitest
-      - description: "Run Vitest E2E tests"
-        env:
-          - EXCLUDED_PACKAGES=${EXCLUDED_PACKAGES}
-          - SKIP_FLEET_ADMIN=${{ .inputs.skip_fleet_admin }}
-        cmd: |
-          # TODO: Remove SKIP_FLEET_ADMIN once Fleet admin realm updates are included in a released Core baseline.
-          # Upgrade tests start from an older released realm, and this realm update must be applied manually.
-          NODE_EXTRA_CA_CERTS="${PWD}/../../build/uds-test-ca.pem" EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run
-        dir: test/vitest
-      - description: remove test resources
-        task: test-resources:remove
+      - task: e2e-playwright
+      - task: e2e-vitest
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+          skip_fleet_admin: ${{ .inputs.skip_fleet_admin }}
+      - task: e2e-cleanup
 
   - name: unit-tests
     description: "Run all unit tests for uds-core"
@@ -153,13 +256,124 @@ tasks:
   - name: uds-core
     description: "Build and test UDS Core with UDS CLI Next bundle workflow"
     actions:
-      - task: create:k3d-standard-bundle-next
+      - task: core-package-build
         with:
           create_options: "--skip-sbom"
-      - task: deploy:k3d-standard-bundle-next
+      - task: core-bundle-create
+      - task: core-deploy
         with:
           configFile: bundles/k3d-standard-next/config-test.uds.hcl
+      - task: core-validate
+
+  - name: core-package-build
+    description: "Create the UDS Core functional layer packages with UDS CLI Next"
+    inputs:
+      create_options:
+        default: "--skip-sbom"
+        description: "Additional options passed in when creating Zarf packages."
+    actions:
+      - task: create:k3d-standard-bundle-next-packages
+        with:
+          create_options: ${{ .inputs.create_options }}
+
+  - name: core-package-build-layer
+    description: "Create one UDS Core functional layer package with UDS CLI Next"
+    inputs:
+      layer:
+        description: "The UDS Core functional layer to create"
+        required: true
+      create_options:
+        default: "--skip-sbom"
+        description: "Additional options passed in when creating Zarf packages."
+      shim_bundle:
+        default: "true"
+        description: "Whether to create the base shim bundle when building the base layer"
+    actions:
+      - task: create:single-layer
+        with:
+          layer: ${{ .inputs.layer }}
+          create_options: ${{ .inputs.create_options }}
+          shim_bundle: ${{ .inputs.shim_bundle }}
+
+  - name: core-bundle-create
+    description: "Create the UDS Core bundle artifact with UDS CLI Next"
+    inputs:
+      include_portal:
+        default: "true"
+        description: "Whether to include Portal in the Next bundle"
+    actions:
+      - task: create:k3d-standard-bundle-next-bundle
+        with:
+          include_portal: ${{ .inputs.include_portal }}
+
+  - name: core-deploy
+    description: "Deploy the UDS Core bundle with UDS CLI Next"
+    inputs:
+      configFile:
+        default: ""
+        description: "UDS CLI Next config file to use for deployment"
+      packages:
+        default: ""
+        description: "Comma-separated packages to deploy"
+    actions:
+      - task: deploy:k3d-standard-bundle-next
+        with:
+          configFile: ${{ .inputs.configFile }}
+          packages: ${{ .inputs.packages }}
+
+  - name: core-validate
+    description: "Validate the deployed UDS Core packages"
+    inputs:
+      validate_passthrough:
+        description: Whether to validate the passthrough gateway
+        default: "true"
+    actions:
       - task: validate-packages
+        with:
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
+
+  - name: core-legacy-package-build
+    description: "Create the UDS Core packages with UDS CLI Legacy"
+    inputs:
+      create_options:
+        default: "--skip-sbom"
+        description: "Additional options passed in when creating Zarf packages."
+    actions:
+      - task: create:standard-package
+        with:
+          create_options: ${{ .inputs.create_options }}
+
+  - name: core-legacy-bundle-create
+    description: "Create the UDS Core bundle with UDS CLI Legacy"
+    actions:
+      - task: create:k3d-standard-bundle
+
+  - name: core-legacy-install-deploy
+    description: "Deploy the UDS Core bundle with UDS CLI Legacy"
+    inputs:
+      K3D_EXTRA_ARGS:
+        default: ""
+        description: "Extra args for k3d"
+    actions:
+      - task: deploy:k3d-standard-bundle
+        with:
+          K3D_EXTRA_ARGS: ${{ .inputs.K3D_EXTRA_ARGS }}
+
+  - name: core-legacy-upgrade-deploy
+    description: "Deploy the UDS Core upgrade package with UDS CLI Legacy"
+    inputs:
+      configFile:
+        description: "UDS_CONFIG file to use for the upgrade deployment"
+        default: "bundles/k3d-standard/uds-upgrade-test-config.yaml"
+    actions:
+      - task: deploy:k3d-standard-bundle-upgrade
+        with:
+          configFile: ${{ .inputs.configFile }}
+
+  - name: core-ha-deploy
+    description: "Deploy the UDS Core HA bundle with UDS CLI Next"
+    actions:
+      - task: deploy:k3d-standard-bundle-ha-next
 
   - name: uds-core-legacy
     description: "Build and test UDS Core with UDS CLI Legacy bundle workflow"
@@ -168,14 +382,14 @@ tasks:
         default: ""
         description: "Extra args for k3d"
     actions:
-      - task: create:standard-package
+      - task: core-legacy-package-build
         with:
           create_options: "--skip-sbom"
-      - task: create:k3d-standard-bundle
-      - task: deploy:k3d-standard-bundle
+      - task: core-legacy-bundle-create
+      - task: core-legacy-install-deploy
         with:
-          K3D_EXTRA_ARGS: "${{ .inputs.K3D_EXTRA_ARGS }}"
-      - task: validate-packages
+          K3D_EXTRA_ARGS: ${{ .inputs.K3D_EXTRA_ARGS }}
+      - task: core-validate
 
   - name: uds-core-e2e
     description: "Build and test UDS Core e2e"
@@ -202,12 +416,35 @@ tasks:
         default: ""
         description: "Exact K3s version for the test cluster"
     actions:
+      - task: values-package-build
+      - task: values-cluster-setup
+        with:
+          k3s_version: "${{ .inputs.k3s_version }}"
+      - task: values-deploy
+      - task: values-validate
+      - task: e2e-tests
+
+  - name: values-package-build
+    description: "Create the UDS Core package for values-equivalency testing"
+    actions:
       - task: create:standard-package
         with:
           create_options: "--skip-sbom"
+
+  - name: values-cluster-setup
+    description: "Create the K3d cluster for values-equivalency testing"
+    inputs:
+      k3s_version:
+        default: ""
+        description: "Exact K3s version for the test cluster"
+    actions:
       - task: setup:k3d-test-cluster
         with:
           k3s_version: "${{ .inputs.k3s_version }}"
+
+  - name: values-deploy
+    description: "Deploy UDS Core through Zarf values"
+    actions:
       - description: "Deploy UDS Core standard package via Zarf values"
         shell:
           darwin: bash
@@ -219,8 +456,11 @@ tasks:
             --values test/values/k3d-standard/values.yaml \
             --components "*" \
             --confirm --no-progress
-      - task: validate-packages
-      - task: e2e-tests
+
+  - name: values-validate
+    description: "Validate the UDS Core values deployment"
+    actions:
+      - task: core-validate
 
   - name: uds-core-non-k3d
     description: "Validate and Test UDS Core deployment on a non K3d Cluster"
@@ -241,11 +481,12 @@ tasks:
   - name: uds-core-ha
     description: "Build and test UDS Core with HA configuration and UDS CLI Next bundle workflow"
     actions:
-      - task: create:k3d-standard-bundle-next
+      - task: core-package-build
         with:
           create_options: "--skip-sbom"
-      - task: deploy:k3d-standard-bundle-ha-next
-      - task: validate-packages
+      - task: core-bundle-create
+      - task: core-ha-deploy
+      - task: core-validate
 
   - name: uds-core-ha-legacy
     description: "Build and test UDS Core with HA configuration and UDS CLI Legacy bundle workflow"
@@ -310,15 +551,16 @@ tasks:
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     description: "Upgrade phase only: builds and deploys current branch over an existing installation with UDS CLI Next. Run deploy:latest-bundle-release and deploy:latest-release-test-resources first."
     actions:
-      - task: create:k3d-standard-bundle-next
+      - task: core-package-build
         with:
           create_options: "--skip-sbom"
-      # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here
-      - task: deploy:k3d-standard-bundle-next
+      - task: core-bundle-create
+      # Note: we want to deploy from the bundle since we need overrides, but we don't want to redeploy k3d/zarf init so we pass `--packages` here.
+      - task: core-deploy
         with:
           configFile: ${{ .inputs.configFile }}
           packages: core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server
-      - task: validate-packages
+      - task: core-validate
       - task: e2e-tests
         # TODO: Remove this override once Fleet admin realm updates are included in a released Core baseline.
         with:
@@ -345,22 +587,134 @@ tasks:
         with:
           skip_fleet_admin: "true"
 
-  - name: slim-dev
-    description: "Run validate for the components contained in the slim dev bundle"
+  - name: slim-validate
+    description: "Validate the components contained in the slim dev bundle"
     actions:
       - task: base-layer:validate
         with:
           validate_passthrough: "false"
       - task: idam-layer:validate
-      - task: test-resources:e2e-test
+
+  - name: slim-e2e-test-resources
+    description: "Create and deploy slim-dev test resources"
+    inputs:
+      validate_egress:
+        default: "false"
+        description: Whether to validate egress controls with the egress gateway
+      validate_udp_expose:
+        default: "false"
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+    actions:
+      - task: test-resources:create-deploy
         with:
-          validate_egress: "false"
-          validate_udp_expose: "false"
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+
+  - name: slim-e2e-network-tests
+    description: "Run slim-dev network tests"
+    inputs:
+      validate_egress:
+        default: "false"
+        description: Whether to validate egress controls with the egress gateway
+      validate_udp_expose:
+        default: "false"
+        description: Whether to validate UDP expose routes through the default Envoy Gateway
+    actions:
+      - cmd: |
+          EGRESS_TESTS=${{ .inputs.validate_egress }} UDP_EXPOSE_TESTS=${{ .inputs.validate_udp_expose }} npx vitest run "network.spec.ts"
+        dir: test/vitest
+
+  - name: slim-e2e-test-resource-tests
+    description: "Run slim-dev test-resource tests"
+    actions:
+      - cmd: npx vitest run "test-resources.spec.ts"
+        dir: test/vitest
+
+  - name: slim-e2e-keycloak-user
+    description: "Set up the Doug user for slim-dev tests"
+    actions:
+      - task: common-setup:keycloak-user
+        with:
+          group: "/UDS Core/Admin"
+
+  - name: slim-e2e-playwright
+    description: "Run the slim-dev ambient Playwright test"
+    actions:
+      - cmd: |
+          # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
+          docker run --rm --ipc=host -e FULL_CORE="${FULL_CORE}" --net=host --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
+            cd app && \
+            npm ci && \
+            npx playwright test ambient-waypoint.test.ts \
+            "
+        dir: test/playwright
+
+  - name: slim-e2e-secret-reload-tests
+    description: "Run slim-dev secret reload tests"
+    actions:
+      - cmd: npx vitest run "pod-reload.spec.ts"
+        dir: test/vitest
+
+  - name: slim-e2e-cleanup
+    description: "Remove slim-dev test resources"
+    actions:
+      - task: test-resources:remove
+
+  - name: slim-dev
+    description: "Run validation and tests for the components contained in the slim dev bundle"
+    actions:
+      - task: slim-validate
+      - task: slim-e2e-test-resources
+      - task: slim-e2e-network-tests
+      - task: slim-e2e-test-resource-tests
+      - task: slim-e2e-keycloak-user
+      - task: slim-e2e-playwright
+      - task: slim-e2e-secret-reload-tests
+      - task: slim-e2e-cleanup
 
   - name: private-pki-test-suite
     description: "Run shared Private PKI validation and tests"
     actions:
+      - task: private-pki-validate
+      - task: private-pki-authservice-setup
+      - task: private-pki-playwright
+      - task: private-pki-trust-bundle-tests
+
+  - name: private-pki-certs
+    description: "Generate Private PKI certificates for testing"
+    actions:
+      - task: private-pki:private-pki-certs
+
+  - name: private-pki-package-build
+    description: "Create the UDS Core packages for Private PKI"
+    actions:
+      - task: create:k3d-standard-bundle-next-packages
+        with:
+          create_options: "--skip-sbom"
+
+  - name: private-pki-bundle-create
+    description: "Create the UDS Core Private PKI bundle artifact"
+    actions:
+      - task: create:k3d-standard-bundle-next-bundle
+
+  - name: private-pki-deploy-init
+    description: "Deploy K3d and Zarf initialization packages for Private PKI"
+    actions:
+      - task: deploy:k3d-standard-bundle-private-pki-next-init
+
+  - name: private-pki-deploy-core
+    description: "Deploy UDS Core with Private PKI configuration"
+    actions:
+      - task: deploy:k3d-standard-bundle-private-pki-next-core
+
+  - name: private-pki-validate
+    description: "Validate UDS Core packages for Private PKI testing"
+    actions:
       - task: validate-packages
+
+  - name: private-pki-authservice-setup
+    description: "Set up the Private PKI authservice test applications"
+    actions:
       - description: "Setup the Doug User for testing"
         task: common-setup:keycloak-user
         with:
@@ -380,17 +734,25 @@ tasks:
           ./uds zarf tools kubectl rollout status deployment httpbin -n authservice-ambient-test-app --timeout=60s
           ./uds zarf tools kubectl rollout status deployment httpbin2 -n authservice-ambient-test-app --timeout=60s
           ./uds zarf tools kubectl wait package ambient-httpbin -n authservice-ambient-test-app --for=condition=Ready --timeout=300s
+
+  - name: private-pki-playwright
+    description: "Run Private PKI Playwright tests"
+    actions:
       - task: private-pki:private-pki-tests
+
+  - name: private-pki-trust-bundle-tests
+    description: "Run Private PKI trust-bundle tests"
+    actions:
       - task: trust-bundle:trust-bundle-tests
 
   - name: uds-core-private-pki
     description: "Create and deploy Private PKI bundle with UDS CLI Next"
     actions:
-      - task: private-pki:private-pki-certs
-      - task: create:k3d-standard-bundle-next
-        with:
-          create_options: "--skip-sbom"
-      - task: deploy:k3d-standard-bundle-private-pki-next
+      - task: private-pki-certs
+      - task: private-pki-package-build
+      - task: private-pki-bundle-create
+      - task: private-pki-deploy-init
+      - task: private-pki-deploy-core
       - task: private-pki-test-suite
 
   - name: uds-core-private-pki-legacy

@@ -54,19 +54,12 @@ tasks:
       - description: "Remove Test Apps resources"
         task: remove
 
-  - name: create-deploy
-    description: Test app used for UDS Core validation
+  - name: create-package
+    description: Create the test-apps package used for UDS Core validation
     inputs:
       architecture:
         description: "System architecture that the test-apps package should be built for."
         default: ${UDS_ARCH}
-      validate_egress:
-        description: Whether to validate egress controls with the egress gateway
-        default: "true"
-      validate_udp_expose:
-        description: Whether to apply and validate UDP expose resources through the default Envoy Gateway
-        default: "true"
-
     actions:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
@@ -74,6 +67,16 @@ tasks:
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
 
+  - name: deploy-package
+    description: Deploy the test-apps package used for UDS Core validation
+    inputs:
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to apply and validate UDP expose resources through the default Envoy Gateway
+        default: "true"
+    actions:
       - description: Deploy the test resources (with egress-app)
         if: ${{ eq .inputs.validate_egress "true" }}
         cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
@@ -86,6 +89,9 @@ tasks:
         if: ${{ eq .inputs.validate_udp_expose "true" }}
         cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
 
+  - name: validate-deployment
+    description: Wait for the test-apps deployment and its Core integrations to become ready
+    actions:
       - description: Verify the admin app is accessible
         wait:
           network:
@@ -149,6 +155,28 @@ tasks:
             kind: ServiceMonitor
             name: podinfo-svcmonitor
             namespace: podinfo
+
+  - name: create-deploy
+    description: Create, deploy, and validate the test-apps package used for UDS Core validation
+    inputs:
+      architecture:
+        description: "System architecture that the test-apps package should be built for."
+        default: ${UDS_ARCH}
+      validate_egress:
+        description: Whether to validate egress controls with the egress gateway
+        default: "true"
+      validate_udp_expose:
+        description: Whether to apply and validate UDP expose resources through the default Envoy Gateway
+        default: "true"
+    actions:
+      - task: create-package
+        with:
+          architecture: ${{ .inputs.architecture }}
+      - task: deploy-package
+        with:
+          validate_egress: ${{ .inputs.validate_egress }}
+          validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+      - task: validate-deployment
 
   - name: check-authservice-protection
     description: Verify if a service is protected by authservice by checking redirects

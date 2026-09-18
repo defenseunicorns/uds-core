@@ -75,29 +75,53 @@ jobs:
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/metrics-server/zarf.yaml
           yq -ei '.metadata.version=env(SNAPSHOT_VERSION)' packages/portal/zarf.yaml
 
-      - name: Create Packages and Bundles
-        run: |
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+      - name: Create amd64 Standard Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
-          ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+      - name: Create amd64 Legacy Standard Bundle
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
 
-          ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }}
+      - name: Create amd64 Legacy Slim Dev Bundle
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-          if [ "${{ matrix.flavor }}" = "upstream" ]; then
-            ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next --no-progress --set FLAVOR=${{ matrix.flavor }}
-            ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
-          fi
+      - name: Create arm64 Standard Package
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml standard-package --no-progress --set FLAVOR=${{ matrix.flavor }}
 
-      - name: Test amd64 Bundle
+      - name: Create arm64 Legacy Standard Bundle
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle --no-progress
+
+      - name: Create arm64 Legacy Slim Dev Bundle
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create amd64 Next Standard packages
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next-packages --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create amd64 Next Standard bundle
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-standard-bundle-next-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create amd64 Next Slim Dev Bundle
+        if: ${{ matrix.flavor == 'upstream' }}
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+
+      - name: Create arm64 Next Standard packages
+        if: ${{ matrix.flavor == 'upstream' }}
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next-packages --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create arm64 Next Standard bundle
+        if: ${{ matrix.flavor == 'upstream' }}
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-standard-bundle-next-bundle --no-progress --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Create arm64 Next Slim Dev Bundle
+        if: ${{ matrix.flavor == 'upstream' }}
+        run: ZARF_ARCHITECTURE=arm64 uds run -f tasks/create.yaml k3d-slim-dev-bundle-next --no-progress
+
+      - name: Deploy amd64 Bundle
         if: ${{ !inputs.snapshot }}
-        run: |
-          uds run -f tasks/deploy.yaml k3d-standard-bundle-next --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard-next/config-test.uds.hcl --no-progress
-          uds run -f tasks/test.yaml validate-packages --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: uds run -f tasks/deploy.yaml k3d-standard-bundle-next --set FLAVOR=${{ matrix.flavor }} --with configFile=bundles/k3d-standard-next/config-test.uds.hcl --no-progress
+
+      - name: Validate amd64 Bundle
+        if: ${{ !inputs.snapshot }}
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}
@@ -149,8 +173,20 @@ jobs:
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
-      - name: Test and Publish Core Package Layer
-        run: uds run -f tasks/publish.yaml single-layer --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+      - name: Deploy layer test dependencies
+        run: uds run -f tasks/publish.yaml single-layer-test-dependencies --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+
+      - name: Build Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer-build --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+
+      - name: Deploy Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer-deploy --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+
+      - name: Validate Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer-validate --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
+
+      - name: Publish Core Package Layer
+        run: uds run -f tasks/publish.yaml single-layer-publish --set FLAVOR=${{ matrix.flavor }} --set LAYER=${{ matrix.layer }} --no-progress
 
       - name: Debug Output
         if: ${{ always() && !inputs.snapshot }}

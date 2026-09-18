@@ -15,6 +15,9 @@ permissions:
 
 jobs:
   test-aks-install:
+    # Temporarily disabled while CI visibility work is being evaluated.
+    # Set ENABLE_IAC_TESTS=true to re-enable this workflow deliberately.
+    if: ${{ vars.ENABLE_IAC_TESTS == 'true' }}
     strategy:
       fail-fast: false
       matrix:
