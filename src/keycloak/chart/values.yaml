@@ -251,8 +251,12 @@ persistence:
     size: "512Mi"
 
 # Pod disruption budget
-# Set to true to enforce PDB creation, false to disable it, or null to detect automatically
-podDisruptionBudget: {}
+podDisruptionBudget:
+  # Only applies when autoscaling.enabled is true; ignored outside HA mode
+  enabled: true
+  # Set to null when using minAvailable instead
+  maxUnavailable: 1
+  unhealthyPodEvictionPolicy: AlwaysAllow
 
 # Additional labels for the StatefulSet
 statefulsetLabels: {}

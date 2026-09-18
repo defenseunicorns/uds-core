@@ -55,33 +55,28 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: should preserve a legacy fixed-replica PodDisruptionBudget configuration
+  - it: should ignore a custom budget outside HA mode
     set:
       podDisruptionBudget:
         maxUnavailable: 2
     template: poddisruptionbudget.yaml
     asserts:
       - hasDocuments:
-          count: 1
-      - equal:
-          path: spec.maxUnavailable
-          value: 2
-      - notExists:
-          path: spec.enabled
+          count: 0
 
-  - it: should preserve a legacy PDB matching the HA defaults
+  - it: should ignore a budget matching the defaults outside HA mode
     set:
       podDisruptionBudget:
         maxUnavailable: 1
     template: poddisruptionbudget.yaml
     asserts:
       - hasDocuments:
-          count: 1
-      - notExists:
-          path: spec.unhealthyPodEvictionPolicy
+          count: 0
 
-  - it: should preserve a custom fixed-replica eviction policy
+  - it: should preserve a custom eviction policy in HA mode
     set:
+      autoscaling:
+        enabled: true
       podDisruptionBudget:
         unhealthyPodEvictionPolicy: IfHealthyBudget
     template: poddisruptionbudget.yaml
@@ -92,19 +87,22 @@ tests:
           path: spec.unhealthyPodEvictionPolicy
           value: IfHealthyBudget
 
-  - it: should render a fixed-replica PodDisruptionBudget when explicitly enabled
+  - it: should ignore enabled true outside HA mode
     set:
       podDisruptionBudget:
         enabled: true
     template: poddisruptionbudget.yaml
     asserts:
       - hasDocuments:
-          count: 1
-      - equal:
-          path: spec.maxUnavailable
-          value: 1
-      - notExists:
-          path: spec.enabled
+          count: 0
+
+  - it: should ignore enabled false outside HA mode
+    set:
+      podDisruptionBudget:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
 
   - it: should allow a percentage maxUnavailable
     set:
@@ -118,12 +116,13 @@ tests:
           path: spec.maxUnavailable
           value: "25%"
 
-  - it: should prefer minAvailable over HA maxUnavailable fallback
+  - it: should allow minAvailable when the default maxUnavailable is cleared
     set:
       autoscaling:
         enabled: true
       podDisruptionBudget:
         minAvailable: 1
+        maxUnavailable: null
     template: poddisruptionbudget.yaml
     asserts:
       - equal:
@@ -137,10 +136,43 @@ tests:
 
   - it: should fail when minAvailable and maxUnavailable are set
     set:
+      autoscaling:
+        enabled: true
       podDisruptionBudget:
         minAvailable: 1
         maxUnavailable: 2
     template: poddisruptionbudget.yaml
+    asserts:
+      - failedTemplate:
+          errorMessage: "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'."
+
+  - it: should fail when minAvailable conflicts with the default maxUnavailable
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        minAvailable: 1
+    asserts:
+      - failedTemplate:
+          errorMessage: "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'."
+
+  - it: should reject conflicting zero budgets even when disabled in HA mode
+    set:
+      autoscaling:
+        enabled: true
+      podDisruptionBudget:
+        enabled: false
+        minAvailable: 0
+        maxUnavailable: 0
+    asserts:
+      - failedTemplate:
+          errorMessage: "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'."
+
+  - it: should reject conflicting budgets outside HA mode
+    set:
+      podDisruptionBudget:
+        minAvailable: 1
+        maxUnavailable: 2
     asserts:
       - failedTemplate:
           errorMessage: "Cannot set both 'podDisruptionBudget.minAvailable' and 'podDisruptionBudget.maxUnavailable'."

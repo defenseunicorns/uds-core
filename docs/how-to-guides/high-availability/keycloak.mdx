@@ -161,19 +161,17 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
    | Scale-down stabilization | 300 seconds | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` |
    | Scale-down rate | 1 pod per 300 seconds | `autoscaling.behavior.scaleDown.policies[0]` |
 
-   Enabling `autoscaling.enabled` creates a PodDisruptionBudget (PDB) unless `podDisruptionBudget.enabled` is `false`. The `podDisruptionBudget.enabled` setting supports three modes: `null` enables the PDB automatically for HA or a customized legacy PDB configuration, `true` enables it for any replica configuration, and `false` disables it.
+   Enabling `autoscaling.enabled` creates a PodDisruptionBudget (PDB) by default. Set `podDisruptionBudget.enabled` to `false` to disable it in HA mode. Outside HA mode, the chart never creates a PDB, regardless of this flag or other PDB settings.
 
    The default PDB configuration protects the remaining Ready replica during voluntary disruptions:
 
    | Setting | Default | Override path |
    |---|---|---|
-   | Enabled | `null` (automatic) | `podDisruptionBudget.enabled` |
+   | Enabled in HA mode | `true` | `podDisruptionBudget.enabled` |
    | Maximum unavailable replicas | `1` | `podDisruptionBudget.maxUnavailable` |
    | Unhealthy pod eviction policy | `AlwaysAllow` | `podDisruptionBudget.unhealthyPodEvictionPolicy` |
 
-   In HA mode, the chart uses `maxUnavailable: 1` and `unhealthyPodEvictionPolicy: AlwaysAllow` when you do not provide those fields. If you set `podDisruptionBudget.minAvailable`, it takes precedence over the default `maxUnavailable` value, and the chart renders `minAvailable` without `maxUnavailable`.
-
-   Automatic mode preserves fixed-replica PDB configurations, including a PDB that sets `maxUnavailable: 1`. It also preserves the Kubernetes default `IfHealthyBudget` when a fixed-replica PDB omits `unhealthyPodEvictionPolicy`. Set `podDisruptionBudget.enabled` to `true` for a fixed-replica deployment that needs the HA defaults.
+   The chart defines these defaults in `values.yaml`. To use `podDisruptionBudget.minAvailable`, set `podDisruptionBudget.maxUnavailable` to `null` to remove its default. The chart rejects configurations that set both fields, including when the PDB is disabled.
 
    > [!WARNING]
    > A single-node or fully constrained HA cluster might not have capacity to schedule a replacement after the PDB permits the first eviction. The PDB then blocks eviction of the remaining Ready replica, and the drain cannot complete. Add schedulable capacity before draining the node. If you cannot add capacity, set `podDisruptionBudget.enabled` to `false` before the drain and re-enable it after capacity returns.
