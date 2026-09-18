@@ -467,7 +467,8 @@
                 "maxUnavailable": {
                   "type": [
                     "integer",
-                    "string"
+                    "string",
+                    "null"
                   ]
                 },
                 "minAvailable": {
