@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.14.0](https://github.com/defenseunicorns/uds-core/compare/v1.13.0...v1.14.0) (2026-09-18)
+
+
+### Features
+
+* sign uds core zarf packages ([#2945](https://github.com/defenseunicorns/uds-core/issues/2945)) ([25a0fd8](https://github.com/defenseunicorns/uds-core/commit/25a0fd83fd083b10887569d0c2db6ee98f60803f))
+
+
+### Bug Fixes
+
+* publishing workflow for signed zarf packages ([#2982](https://github.com/defenseunicorns/uds-core/issues/2982)) ([a3b41cc](https://github.com/defenseunicorns/uds-core/commit/a3b41cc245c92af079c597589e481e83fc95daef))
+
+
+### Miscellaneous
+
+* allow velero's package CR for additional network policies ([#2977](https://github.com/defenseunicorns/uds-core/issues/2977)) ([9c40c14](https://github.com/defenseunicorns/uds-core/commit/9c40c141bda2ebfba244c36302a012706454a077))
+* bump identity-config to 0.32.0 ([#2986](https://github.com/defenseunicorns/uds-core/issues/2986)) ([724e139](https://github.com/defenseunicorns/uds-core/commit/724e1397fac539cf381ee66dda82afcb121290ee))
+* **ci:** update cli test matrix min next to latest next ([#2981](https://github.com/defenseunicorns/uds-core/issues/2981)) ([b4debb7](https://github.com/defenseunicorns/uds-core/commit/b4debb7ebbe0c6e9fdbc50de44278ca0920bc9c1))
+* **deps:** update portal to v0.5.2 ([#2967](https://github.com/defenseunicorns/uds-core/issues/2967)) ([1a1ebe1](https://github.com/defenseunicorns/uds-core/commit/1a1ebe109db3ae85bd3119ef147c45db98a8badf))
+* enable test for vector host logs ingestion into loki ([#2971](https://github.com/defenseunicorns/uds-core/issues/2971)) ([dde6fb3](https://github.com/defenseunicorns/uds-core/commit/dde6fb35471c8546cedbec1d8d383fcf490de6f2))
+* modernize dev workflow w/ mise and hk ([#2976](https://github.com/defenseunicorns/uds-core/issues/2976)) ([f9793ac](https://github.com/defenseunicorns/uds-core/commit/f9793ac05140ac225513c38114b943485568a69f))
+
 ## [1.13.0](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) (2026-09-16)
 
 
