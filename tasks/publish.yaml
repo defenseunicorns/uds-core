@@ -93,14 +93,45 @@ tasks:
           ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
           ./uds publish bundles/k3d-slim-dev/uds-bundle-k3d-core-slim-dev-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles --no-progress
 
-      - description: "Publish amd64 and arm64 UDS CLI Next bundles"
+      - description: "Sign and publish amd64 and arm64 UDS CLI Next bundles"
         cmd: |
-          echo "Publishing UDS CLI Next bundles to ${TARGET_REPO}"
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+          echo "Signing UDS CLI Next bundles with Cosign GitHub OIDC"
+          if [ "${SNAPSHOT:-}" = "true" ]; then
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/heads/main$'
+          else
+            signing_identity_regex='^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$'
+          fi
 
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-amd64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
-          CLI_FEATURES=NextMode=true ./uds bundle push bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-arm64-${VERSION}.tar.zst oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
+          standard_next_amd64="bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-amd64-${VERSION}.tar.zst"
+          CLI_FEATURES=NextMode=true ./uds bundle sign "${standard_next_amd64}" --keyless
+          CLI_FEATURES=NextMode=true ./uds bundle verify "${standard_next_amd64}" \
+            --certificate-identity-regexp "${signing_identity_regex}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
+          standard_next_arm64="bundles/k3d-standard-next/uds-bundle-k3d-core-demo-next-arm64-${VERSION}.tar.zst"
+          CLI_FEATURES=NextMode=true ./uds bundle sign "${standard_next_arm64}" --keyless
+          CLI_FEATURES=NextMode=true ./uds bundle verify "${standard_next_arm64}" \
+            --certificate-identity-regexp "${signing_identity_regex}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
+          slim_dev_next_amd64="bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-amd64-${VERSION}.tar.zst"
+          CLI_FEATURES=NextMode=true ./uds bundle sign "${slim_dev_next_amd64}" --keyless
+          CLI_FEATURES=NextMode=true ./uds bundle verify "${slim_dev_next_amd64}" \
+            --certificate-identity-regexp "${signing_identity_regex}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
+          slim_dev_next_arm64="bundles/k3d-slim-dev-next/uds-bundle-k3d-core-slim-dev-next-arm64-${VERSION}.tar.zst"
+          CLI_FEATURES=NextMode=true ./uds bundle sign "${slim_dev_next_arm64}" --keyless
+          CLI_FEATURES=NextMode=true ./uds bundle verify "${slim_dev_next_arm64}" \
+            --certificate-identity-regexp "${signing_identity_regex}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+
+          echo "Publishing UDS CLI Next bundles to ${TARGET_REPO}"
+          CLI_FEATURES=NextMode=true ./uds bundle push "${standard_next_amd64}" oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push "${standard_next_arm64}" oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${VERSION}
+
+          CLI_FEATURES=NextMode=true ./uds bundle push "${slim_dev_next_amd64}" oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
+          CLI_FEATURES=NextMode=true ./uds bundle push "${slim_dev_next_arm64}" oci://${TARGET_REPO}/bundles/k3d-core-slim-dev-next:${VERSION}
 
       - description: "Tag the latest bundles"
         cmd: |
