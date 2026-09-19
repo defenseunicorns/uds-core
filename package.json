@@ -58,10 +58,10 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
-    "@vitest/coverage-v8": "^4.0.0",
+    "@vitest/coverage-v8": "^5.0.0",
     "eslint": "^10.0.0",
     "globals": "^17.0.0",
     "prettier": "^3.6.2",
-    "vitest": "^4.0.0"
+    "vitest": "^5.0.0"
   }
 }

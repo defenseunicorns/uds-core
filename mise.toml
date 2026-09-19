@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 [tools]
-hk = "2.0.0"
+hk = "2.0.1"
 jq = "1.8.2"
 k3d = "5.9.0"
 node = "24.21.0"
@@ -19,9 +19,9 @@ opentofu = "1.12.6"
 # renovate: datasource=github-tags depName=google/go-containerregistry versioning=semver
 "github:google/go-containerregistry" = "0.22.1"
 # renovate: datasource=github-tags depName=google/addlicense versioning=semver
-"aqua:google/addlicense" = "1.1.1"
+"aqua:google/addlicense" = "1.2.0"
 # renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
-"aqua:defenseunicorns/uds-cli" = "0.37.0"
+"aqua:defenseunicorns/uds-cli" = "0.38.0"
 
 [env]
 MISE_USE_VERSIONS_HOST_TRACK = "0"
