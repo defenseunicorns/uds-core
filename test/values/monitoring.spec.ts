@@ -19,16 +19,12 @@ import {
 const PKG = "monitoring";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("monitoring package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         "kube-prometheus-stack": {
           "kube-prometheus-stack": {
@@ -59,9 +55,11 @@ describe("monitoring package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("monitoring package values", () => {
   it("prometheus has seven replicas", () => {
     const r = findResource(manifests, "Prometheus", "kube-prometheus-stack-prometheus");
     expect(resourceNumber(r, "spec", "replicas")).toBe(7);

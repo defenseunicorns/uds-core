@@ -19,16 +19,12 @@ import {
 const PKG = "portal";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("portal package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         "uds-portal": {
           "uds-portal": {
@@ -37,9 +33,11 @@ describe("portal package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("portal package values", () => {
   it("portal deployment has seven replicas", () => {
     const r = findResource(manifests, "Deployment", "uds-portal");
     expect(resourceNumber(r, "spec", "replicas")).toBe(7);
