@@ -12,7 +12,7 @@
     "typescript": "^7.0.0",
     "vitest": "^5.0.0",
     "@types/adm-zip": "^0.5.7",
-    "adm-zip": "^0.6.0",
+    "adm-zip": "^0.6.1",
     "csv-parse": "^7.0.0",
     "js-yaml": "^5.2.2",
     "@types/js-yaml": "^4.0.9"
