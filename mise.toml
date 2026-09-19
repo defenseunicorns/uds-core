@@ -1,6 +1,8 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
+min_version = "2026.9.7"
+
 [tools]
 hk = "2.0.0"
 jq = "1.8.2"
