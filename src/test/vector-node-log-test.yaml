@@ -38,6 +38,8 @@ spec:
       app.kubernetes.io/name: vector-node-log-writer
   template:
     metadata:
+      annotations:
+        uds-core.pepr.dev/uds-core-policies.RequireNonRootUser: exempted
       labels:
         app.kubernetes.io/name: vector-node-log-writer
     spec:
