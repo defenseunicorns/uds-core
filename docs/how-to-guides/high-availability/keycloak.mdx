@@ -163,6 +163,8 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
 
    Enabling `autoscaling.enabled` creates a PodDisruptionBudget (PDB) by default. Set `podDisruptionBudget.enabled` to `false` to disable it in HA mode. Outside HA mode, the chart never creates a PDB, regardless of this flag or other PDB settings.
 
+   Before upgrading a fixed-replica deployment with a chart-managed PDB, configure HA with an external PostgreSQL database and enable autoscaling if you need to retain chart-managed PDB protection.
+
    The default PDB configuration protects the remaining Ready replica during voluntary disruptions:
 
    | Setting | Default | Override path |
