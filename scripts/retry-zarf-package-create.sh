@@ -24,7 +24,7 @@ while [ "${attempt}" -le "${MAX_ATTEMPTS}" ]; do
   log_file=$(mktemp)
   echo "Creating ${PACKAGE_PATH} (attempt ${attempt}/${MAX_ATTEMPTS})"
 
-  if ZARF_CONFIG="${CONFIG}" ./zarf package create "${PACKAGE_PATH}" \
+  if ZARF_CONFIG="${CONFIG}" uds zarf package create "${PACKAGE_PATH}" \
     --confirm \
     --architecture="${ARCHITECTURE}" \
     --flavor "${FLAVOR}" \
