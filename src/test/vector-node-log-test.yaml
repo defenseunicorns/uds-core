@@ -1,0 +1,105 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: vector-node-log-test
+---
+apiVersion: uds.dev/v1alpha1
+kind: Exemption
+metadata:
+  name: vector-node-log-test
+  namespace: uds-policy-exemptions
+spec:
+  exemptions:
+    - policies:
+        - RequireNonRootUser
+        - RestrictHostPathWrite
+        - RestrictSELinuxType
+        - RestrictVolumeTypes
+      title: "Vector node log test writer"
+      description: "Allows the test DaemonSet to write a controlled host log under /var/log so Vector node-log collection can be validated."
+      matcher:
+        namespace: vector-node-log-test
+        name: "^vector-node-log-writer.*"
+        kind: pod
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vector-node-log-writer
+  namespace: vector-node-log-test
+  labels:
+    app.kubernetes.io/name: vector-node-log-writer
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: vector-node-log-writer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: vector-node-log-writer
+    spec:
+      terminationGracePeriodSeconds: 5
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: writer
+          image: curlimages/curl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/sh
+            - -c
+          args:
+            - |
+              set -eu
+              LOG_MARKER="uds-core-vector-node-log-test-$POD_UID"
+              VARLOG_MESSAGE="${LOG_MARKER}-varlogs"
+              KUBERNETES_LOG_MESSAGE="${LOG_MARKER}-kubernetes-logs"
+              VARLOG_FILE="/host/var/log/${LOG_MARKER}.log"
+              KUBERNETES_LOG_FILE="/host/var/log/kubernetes/${LOG_MARKER}.log"
+              cleanup() {
+                rm -f "$VARLOG_FILE" "$KUBERNETES_LOG_FILE"
+                exit 0
+              }
+              trap cleanup TERM INT
+              mkdir -p /host/var/log/kubernetes
+              touch "$VARLOG_FILE" "$KUBERNETES_LOG_FILE"
+              test -w "$VARLOG_FILE"
+              test -w "$KUBERNETES_LOG_FILE"
+              while true; do
+                printf '%s\n' "$VARLOG_MESSAGE" >> "$VARLOG_FILE"
+                printf '%s\n' "$KUBERNETES_LOG_MESSAGE" >> "$KUBERNETES_LOG_FILE"
+                sleep 2
+              done
+          env:
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+          resources:
+            limits:
+              cpu: 50m
+              memory: 64Mi
+            requests:
+              cpu: 10m
+              memory: 16Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 0
+            runAsUser: 0
+            seLinuxOptions:
+              type: spc_t
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: varlog
+              mountPath: /host/var/log
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+            type: Directory
