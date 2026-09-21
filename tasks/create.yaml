@@ -213,12 +213,16 @@ tasks:
       - description: "Create build output directory"
         cmd: "mkdir -p build"
       - description: "Create the UDS Core Zarf Package"
-        task: common:package
-        with:
-          path: packages/${{ index .inputs "layer" }}
-          config: ./zarf-config.yaml
-          options: ${{ .inputs.create_options }}
-          architecture: ${ZARF_ARCHITECTURE}
+        shell:
+          darwin: bash
+          linux: bash
+        cmd: |
+          bash ./scripts/retry-zarf-package-create.sh \
+            "packages/${{ .inputs.layer }}" \
+            "${ZARF_ARCHITECTURE}" \
+            "${FLAVOR}" \
+            "./zarf-config.yaml" \
+            ${{ .inputs.create_options }}
       - description: "Rename flavored package files by removing the flavor suffix"
         task: utils:rename-flavored-packages
       - description: "Create the shim bundle (Base only)"
