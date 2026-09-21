@@ -18,6 +18,9 @@ UDS Core runs on any [CNCF-conformant Kubernetes distribution](https://www.cncf.
 | [RKE2](https://github.com/rancher/rke2) (on AWS) | **1.36** | [![RKE2 Test](https://github.com/defenseunicorns/uds-core/actions/workflows/test-rke2.yaml/badge.svg?branch=main&event=schedule)](https://github.com/defenseunicorns/uds-core/actions/workflows/test-rke2.yaml?query=event%3Aschedule+branch%3Amain) | Weekly and before each release |
 
 > [!NOTE]
+> Amazon EKS CI currently uses a non-FIPS Bottlerocket AMI and does not validate FIPS node operating system compatibility. This temporary coverage gap avoids the [`registry1` Bottlerocket FIPS compatibility issue](/concepts/platform/flavors/#bottlerocket-fips-compatibility).
+
+> [!NOTE]
 > Unlisted CNCF-conformant distributions are expected to work but are not validated in CI. Bug reports and contributions for compatibility issues are welcome.
 
 The [Kubernetes compatibility workflow](https://github.com/defenseunicorns/uds-core/blob/main/.github/workflows/test-kubernetes-matrix.yaml) tests exact K3s releases. This workflow does not define the UDS Core support policy. Kubernetes release support is tracked by the [Kubernetes release calendar](https://kubernetes.io/releases/).
