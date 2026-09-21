@@ -18,6 +18,8 @@ On PRs opened by [Renovate](https://github.com/renovatebot/renovate), pipelines 
 
 This test validates an install of the `k3d-core-demo-next` bundle with UDS CLI Next. The demo bundle includes all functional layers and components in Core, so this test provides full application coverage.
 
+CI creates the Next bundle artifact with `--unsigned` and deploys it with `--skip-signature-verification`. This keeps pull request validation independent of signing credentials. The publish task signs each upstream Next artifact with `uds bundle sign --keyless` through GitHub Actions OIDC immediately before it pushes the artifact to the registry.
+
 When: On all PRs
 
 Where: k3d
