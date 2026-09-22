@@ -157,28 +157,27 @@ function withClusterIPService(spec: Record<string, unknown>): Record<string, unk
   return { ...spec, provider };
 }
 
-// This suite verifies Gateway reconciliation and managed proxy readiness. The real
-// external LoadBalancer path is covered by network.spec.ts, so use a per-Gateway
-// ClusterIP override here to avoid making namespace teardown depend on a cloud load
-// balancer controller.
-async function createProxyConfig(): Promise<void> {
-  let spec: Record<string, unknown> = {
-    provider: {
-      type: "Kubernetes",
-    },
-  };
-
+// This suite verifies Gateway reconciliation and managed proxy readiness. When the
+// flavor provides a default EnvoyProxy, use a per-Gateway ClusterIP override so
+// teardown does not depend on a cloud load balancer controller. Otherwise, keep the
+// existing GatewayClass behavior so the packaged Envoy image is used.
+async function createProxyConfig(): Promise<boolean> {
+  let defaultProxy: CustomObject;
   try {
-    const defaultProxy = (await customObjects.getNamespacedCustomObject({
+    defaultProxy = (await customObjects.getNamespacedCustomObject({
       group: "gateway.envoyproxy.io",
       version: "v1alpha1",
       namespace: "envoy-gateway-system",
       plural: "envoyproxies",
       name: DEFAULT_PROXY_CONFIG,
     })) as CustomObject;
-    spec = defaultProxy.spec ?? spec;
   } catch (error) {
-    if (!isNotFound(error)) throw error;
+    if (isNotFound(error)) return false;
+    throw error;
+  }
+
+  if (!defaultProxy.spec) {
+    throw new Error(`EnvoyProxy ${DEFAULT_PROXY_CONFIG} has no spec`);
   }
 
   await customObjects.createNamespacedCustomObject({
@@ -193,9 +192,11 @@ async function createProxyConfig(): Promise<void> {
         name: TEST_PROXY_CONFIG,
         namespace: TEST_NAMESPACE,
       },
-      spec: withClusterIPService(spec),
+      spec: withClusterIPService(defaultProxy.spec),
     },
   });
+
+  return true;
 }
 
 async function waitForNamespaceDeleted(): Promise<void> {
@@ -218,7 +219,28 @@ async function waitForNamespaceDeleted(): Promise<void> {
   );
 }
 
-async function createGateway(): Promise<void> {
+async function createGateway(useProxyConfig: boolean): Promise<void> {
+  const spec: Record<string, unknown> = {
+    gatewayClassName: "envoy-gateway",
+    listeners: [
+      {
+        name: "udp-7777",
+        protocol: "UDP",
+        port: 7777,
+      },
+    ],
+  };
+
+  if (useProxyConfig) {
+    spec.infrastructure = {
+      parametersRef: {
+        group: "gateway.envoyproxy.io",
+        kind: "EnvoyProxy",
+        name: TEST_PROXY_CONFIG,
+      },
+    };
+  }
+
   await customObjects.createNamespacedCustomObject({
     group: "gateway.networking.k8s.io",
     version: "v1",
@@ -230,23 +252,7 @@ async function createGateway(): Promise<void> {
       metadata: {
         name: GATEWAY_NAME,
       },
-      spec: {
-        gatewayClassName: "envoy-gateway",
-        infrastructure: {
-          parametersRef: {
-            group: "gateway.envoyproxy.io",
-            kind: "EnvoyProxy",
-            name: TEST_PROXY_CONFIG,
-          },
-        },
-        listeners: [
-          {
-            name: "udp-7777",
-            protocol: "UDP",
-            port: 7777,
-          },
-        ],
-      },
+      spec,
     },
   });
 }
@@ -301,8 +307,8 @@ describe("Envoy Gateway", () => {
     await deleteNamespace();
     await waitForNamespaceDeleted();
     await createNamespace();
-    await createProxyConfig();
-    await createGateway();
+    const useProxyConfig = await createProxyConfig();
+    await createGateway(useProxyConfig);
   });
 
   afterAll(async () => {
