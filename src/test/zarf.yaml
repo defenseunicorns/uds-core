@@ -8,6 +8,13 @@ metadata:
   url: https://github.com/defenseunicorns/uds-core
 
 components:
+  - name: vector-node-log-test-exemption
+    required: true
+    manifests:
+      - name: vector-node-log-test-exemption
+        files:
+          - "vector-node-log-test-exemption.yaml"
+
   # Things needed for Loki testing
   - name: loki-test
     required: true
@@ -18,7 +25,7 @@ components:
           - "loki-ruler-test-configmap.yaml"
       - name: vector-node-log-test
         files:
-          - "vector-node-log-test.yaml"
+          - "vector-node-log-test-daemonset.yaml"
     images:
       - curlimages/curl:latest
 
