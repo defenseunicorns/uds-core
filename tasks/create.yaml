@@ -217,12 +217,20 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          bash ./scripts/retry-zarf-package-create.sh \
-            "packages/${{ .inputs.layer }}" \
-            "${ZARF_ARCHITECTURE}" \
-            "${FLAVOR}" \
-            "./zarf-config.yaml" \
-            ${{ .inputs.create_options }}
+          create_package() {
+            ZARF_CONFIG="./zarf-config.yaml" ./uds zarf package create \
+              "packages/${{ .inputs.layer }}" \
+              --confirm \
+              --architecture="${ZARF_ARCHITECTURE}" \
+              --flavor "${FLAVOR}" \
+              --features values=true \
+              ${{ .inputs.create_options }}
+          }
+
+          if ! create_package; then
+            echo "Package creation failed; retrying once." >&2
+            create_package
+          fi
       - description: "Rename flavored package files by removing the flavor suffix"
         task: utils:rename-flavored-packages
       - description: "Create the shim bundle (Base only)"
