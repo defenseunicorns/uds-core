@@ -35,10 +35,27 @@ UDS Core 1.13 publishes UDS CLI Next demo bundles alongside the legacy bundles a
 | Vector                    | 0.57.0   | [0.58.0](https://github.com/vectordotdev/vector/releases/tag/v0.58.0)                                     |
 | Vector Helm chart         | 0.57.0   | [0.58.0](https://github.com/vectordotdev/helm-charts/releases/tag/vector-0.58.0)                          |
 
+## Upgrade considerations
+
+> [!NOTE]
+> Upgrade directly to `v1.13.1` when possible. The `v1.13.1` patch updates UDS Identity Config to `0.32.0`.
+
+### UDS Identity Config 0.32.0
+
+The `v1.13.1` patch updates UDS Identity Config to [`0.32.0`](https://github.com/defenseunicorns/uds-identity-config/releases/tag/v0.32.0). This release adds the CNSS policy object identifier for SIPR tokens and includes plugin and dependency updates. The upstream release notes do not identify breaking changes or manual Keycloak realm steps.
+
+### Gateway API server-side apply conflicts
+
+UDS Core 1.13 moves Gateway API CRDs and the Gateway API safe-upgrades admission policy resources from the previous generated Helm release to the stable `gateway-api-crds` chart. Long-running clusters may fail this migration if they previously deployed those resources with UDS CLI versions before `v0.30.0`, when Helm used `uds` as its field manager. UDS CLI `v0.30.0` and later use the `zarf` field manager by default.
+
+**Symptom:** The `gateway-api-crds` deployment fails with server-side apply conflicts on Gateway API CRDs or `safe-upgrades.gateway.networking.k8s.io` admission resources.
+
+**Solution:** Run the affected UDS CLI bundle deploy once with `uds deploy uds-bundle-<name>-<arch>-<version>.tar.zst --force-conflicts`, substituting your generated bundle name, architecture, and version. Remove the flag after the migration succeeds.
+
 ## Related documentation
 
 - [Upgrade Overview](/operations/upgrades/overview/) - general upgrade procedures and checklists
 - [Supported Kubernetes distributions](/concepts/platform/supported-distributions/) - tested Kubernetes versions and CI coverage
 - [Zarf values reference](/reference/configuration/zarf-values/) - configure UDS Core packages with native Zarf values
 - [UDS Core 1.13.0 Changelog](https://github.com/defenseunicorns/uds-core/blob/main/CHANGELOG.md#1130-2026-09-15) - full changelog
-- [Full diff (1.12.0...1.13.0)](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.0) - all changes between versions
+- [Full diff (1.12.0...1.13.1)](https://github.com/defenseunicorns/uds-core/compare/v1.12.0...v1.13.1) - all changes between versions
