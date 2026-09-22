@@ -1,30 +1,6 @@
 # Copyright 2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vector-node-log-test
----
-apiVersion: uds.dev/v1alpha1
-kind: Exemption
-metadata:
-  name: vector-node-log-test
-  namespace: uds-policy-exemptions
-spec:
-  exemptions:
-    - policies:
-        - RequireNonRootUser
-        - RestrictHostPathWrite
-        - RestrictSELinuxType
-        - RestrictVolumeTypes
-      title: "Vector node log test writer"
-      description: "Allows the test DaemonSet to write a controlled host log under /var/log so Vector node-log collection can be validated."
-      matcher:
-        namespace: vector-node-log-test
-        name: "^vector-node-log-writer.*"
-        kind: pod
----
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -38,8 +14,6 @@ spec:
       app.kubernetes.io/name: vector-node-log-writer
   template:
     metadata:
-      annotations:
-        uds-core.pepr.dev/uds-core-policies.RequireNonRootUser: exempted
       labels:
         app.kubernetes.io/name: vector-node-log-writer
     spec:
