@@ -73,7 +73,6 @@ jobs:
           registry1Username: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
           registry1Password: ${{ (inputs.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
-          installK3d: "true"
 
       - name: Test a single layer package
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes

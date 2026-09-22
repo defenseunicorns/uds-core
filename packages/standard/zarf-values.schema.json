@@ -4257,7 +4257,34 @@
               "type": "object"
             },
             "podDisruptionBudget": {
-              "properties": {},
+              "properties": {
+                "enabled": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "maxUnavailable": {
+                  "type": [
+                    "integer",
+                    "string",
+                    "null"
+                  ]
+                },
+                "minAvailable": {
+                  "type": [
+                    "integer",
+                    "string"
+                  ]
+                },
+                "unhealthyPodEvictionPolicy": {
+                  "enum": [
+                    "IfHealthyBudget",
+                    "AlwaysAllow"
+                  ],
+                  "type": "string"
+                }
+              },
               "type": "object"
             },
             "podLabels": {
@@ -25021,6 +25048,9 @@
       "properties": {
         "uds-velero-config": {
           "properties": {
+            "additionalNetworkAllow": {
+              "type": "array"
+            },
             "storage": {
               "properties": {
                 "egressCidr": {

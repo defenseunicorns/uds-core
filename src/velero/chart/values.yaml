@@ -7,3 +7,12 @@ storage:
     remoteSelector: {}
     remoteNamespace: ""
   egressCidr: ""
+
+# Support for custom `network.allow` entries on the Package CR
+additionalNetworkAllow: []
+# ref: https://docs.defenseunicorns.com/core/reference/operator--crds/packages-v1alpha1-cr/#allow
+#   - direction: Egress
+#     selector:
+#       app.kubernetes.io/name: velero
+#     remoteGenerated: KubeAPI
+#     description: "velero kubeApi"

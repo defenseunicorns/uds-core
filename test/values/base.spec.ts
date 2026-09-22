@@ -18,16 +18,12 @@ import {
 const PKG = "base";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("base package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         "pepr-uds-core": {
           module: {
@@ -149,9 +145,11 @@ describe("base package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("base package values", () => {
   it("pepr deployment has probe label", () => {
     const r = findResource(manifests, "Deployment", "pepr-uds-core", "pepr-system");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(
