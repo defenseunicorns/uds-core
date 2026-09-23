@@ -9,12 +9,7 @@ import { expect, test } from "@playwright/test";
 import { domain } from "./uds.config";
 
 const wildcardHosts = [`demo-8080.${domain}`, `demo-8081.${domain}`];
-const tenantHosts = [
-  wildcardHosts[0],
-  wildcardHosts[1],
-  wildcardHosts[0],
-  wildcardHosts[1],
-];
+const tenantHosts = [wildcardHosts[0], wildcardHosts[1], wildcardHosts[0], wildcardHosts[1]];
 const passthroughHost = `passthrough-test.${domain}`;
 
 async function connectToTenant(): Promise<ClientHttp2Session> {
