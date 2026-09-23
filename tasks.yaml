@@ -208,24 +208,33 @@ tasks:
       - description: "Clone the docs repo and symlink the reference docs"
         cmd: |
           git clone https://github.com/defenseunicorns/uds-docs.git uds-docs
-          mkdir -p uds-docs/src/content/docs/core
+
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
+          docs_root="uds-docs/src/content/docs/core${channel:+/$channel}"
+          mkdir -p "$docs_root"
 
           # Symlink only dirs listed in sidebarOrder (mirrors integration-script cleanup logic)
           allowed=$(./uds zarf tools yq -r '.sidebarOrder[] | (.dir // .)' docs/docs.config.json)
           for dir in $(pwd)/docs/*/; do
             name="$(basename "$dir")"
-            echo "$allowed" | grep -qx "$name" && ln -s "$dir" uds-docs/src/content/docs/core/
+            echo "$allowed" | grep -qx "$name" && ln -s "$dir" "$docs_root/"
           done
           # Also symlink the top-level index page if present
-          [ -f "$(pwd)/docs/index.mdx" ] && ln -s "$(pwd)/docs/index.mdx" uds-docs/src/content/docs/core/
+          [ -f "$(pwd)/docs/index.mdx" ] && ln -s "$(pwd)/docs/index.mdx" "$docs_root/"
           ln -s $(pwd)/docs/.c4 uds-docs/src/content/docs/.c4
-          ln -s $(pwd)/docs/.images uds-docs/src/content/docs/core/.images
+          ln -s $(pwd)/docs/.images "$docs_root/.images"
       - description: "Create product config for dev server"
         cmd: |
           mkdir -p uds-docs/.product-configs
 
-          jq '. + {repo: "defenseunicorns/uds-core"}' docs/docs.config.json \
+          ./uds zarf tools yq -o=json '. + {"repo": "defenseunicorns/uds-core"}' docs/docs.config.json \
             > uds-docs/.product-configs/uds-core.json
+
+          channel=$(./uds zarf tools yq -r '.[] | select(.repo == "defenseunicorns/uds-core") | .branch // ""' uds-docs/src/products.json)
+          if [ -n "$channel" ]; then
+            printf '{\n  "/core": "/core/%s/"\n}\n' "$channel" \
+              > uds-docs/.product-configs/redirects.json
+          fi
       - description: "Start the docs server with npm (this will run until you stop it)"
         cmd: |
           # Actual startup takes up to a minute because of the npm install
@@ -262,11 +271,10 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
-          # check for addlicense bin
-          if [ -x "$HOME/go/bin/addlicense" ]; then
-            echo "addlicense installed in $HOME/go/bin"
+          if command -v addlicense >/dev/null 2>&1; then
+            echo "addlicense installed"
           else
-            echo "Error: addlicense is not installed in $HOME/go/bin" >&2
+            echo "Error: addlicense is not installed" >&2
             exit 1
           fi
-          $HOME/go/bin/addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml
+          addlicense -l "AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial" -s=only -v -c "Defense Unicorns" src/pepr/uds-operator-config/templates/uds-ca-certs.yaml

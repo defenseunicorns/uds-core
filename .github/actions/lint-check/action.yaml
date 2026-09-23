@@ -9,9 +9,6 @@ runs:
   steps:
     - name: Environment setup
       uses: ./.github/actions/setup-tools
-      with:
-        installUv: 'true'
-        installHelmUnittest: 'true'
 
     - name: Run Formatting Checks
       run: uds run lint-check --no-progress
