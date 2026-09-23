@@ -74,7 +74,7 @@ After completing this guide, your application will be accessible through one of 
      </TabItem>
      <TabItem label="Shared SAN certificate">
 
-   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. The shared server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not configure `rootDomain.tls` fields with this option.
+   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. The shared server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not set `rootDomain.enabled` or configure `rootDomain.tls` fields with this option.
 
    ```yaml title="uds-bundle.yaml"
    packages:

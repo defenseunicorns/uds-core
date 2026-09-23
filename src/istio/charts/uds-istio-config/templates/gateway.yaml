@@ -5,12 +5,15 @@
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
 {{- $rootServerName := "" -}}
 {{- range $name, $server := .Values.tls.servers }}
-  {{- if and $.Values.rootDomain.enabled $server.includeRootDomain }}
+  {{- if $server.includeRootDomain }}
     {{- if $rootServerName }}
       {{- fail "only one tls.servers entry may set includeRootDomain" }}
     {{- end }}
     {{- $rootServerName = $name }}
   {{- end }}
+{{- end }}
+{{- if and $rootServerName .Values.rootDomain.enabled }}
+  {{- fail "rootDomain.enabled cannot be set when tls.servers includes the root domain" }}
 {{- end }}
 {{- if and $rootServerName (not (empty $rootTLS)) }}
   {{- fail "rootDomain.tls cannot be configured when tls.servers includes the root domain" }}
@@ -36,7 +39,7 @@ spec:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
-        {{- if and $.Values.rootDomain.enabled (eq $rootServerName $name) }}
+        {{- if eq $rootServerName $name }}
         - "{{ $domain }}"
         {{- end }}
       port:
@@ -51,7 +54,7 @@ spec:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
-        {{- if and $.Values.rootDomain.enabled (eq $rootServerName $name) }}
+        {{- if eq $rootServerName $name }}
         - "{{ $domain }}"
         {{- end }}
       port:
@@ -69,7 +72,7 @@ spec:
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}
-    {{- if and .Values.rootDomain.enabled (not $rootServerName) }}
+    {{- if .Values.rootDomain.enabled }}
     - hosts:
         - "{{ $domain }}"
       port:

@@ -80,8 +80,6 @@ istio-admin-gateway:
 {{- $tenantPorts := index .vars "tenant_service_ports" }}
 istio-tenant-gateway:
   uds-istio-config:
-    rootDomain:
-      enabled: true
     tls:
       servers:
         tenant:

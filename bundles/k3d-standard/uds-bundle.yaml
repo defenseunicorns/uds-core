@@ -135,8 +135,6 @@ packages:
       istio-tenant-gateway:
         uds-istio-config:
           values:
-            - path: rootDomain.enabled
-              value: true
             - path: tls.servers.tenant.includeRootDomain
               value: true
           variables:

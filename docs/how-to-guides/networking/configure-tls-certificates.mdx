@@ -155,6 +155,9 @@ If you are planning to [expose an app on the root (apex) domain](/how-to-guides/
 overrides:
   istio-tenant-gateway:
     uds-istio-config:
+      values:
+        - path: rootDomain.enabled
+          value: true
       variables:
         - path: rootDomain.tls.cert
           name: "ROOT_TLS_CERT"
@@ -166,7 +169,7 @@ overrides:
 ```
 
 > [!TIP]
-> If your SAN certificate covers both `*.yourdomain.com` and `yourdomain.com`, set `tls.servers.tenant.includeRootDomain: true` and omit `rootDomain.tls`. Reference [Enable root domain support](/how-to-guides/networking/expose-apps-on-gateways/#optional-enable-root-domain-support) for the full shared-certificate configuration.
+> If your SAN certificate covers both `*.yourdomain.com` and `yourdomain.com`, set `tls.servers.tenant.includeRootDomain: true`. Do not set `rootDomain.enabled` or configure `rootDomain.tls`. Reference [Enable root domain support](/how-to-guides/networking/expose-apps-on-gateways/#optional-enable-root-domain-support) for the full shared-certificate configuration.
 
 ## Enable TLS 1.2 support
 

@@ -33,8 +33,6 @@ tests:
             hosts: ["*"]
             mode: SIMPLE
             includeRootDomain: true
-      rootDomain:
-        enabled: true
     asserts:
       - equal:
           path: spec.servers[0].hosts
@@ -80,7 +78,6 @@ tests:
             mode: SIMPLE
             includeRootDomain: true
       rootDomain:
-        enabled: true
         tls:
           credentialName: root-domain-tls
     asserts:
@@ -95,7 +92,6 @@ tests:
             mode: SIMPLE
             includeRootDomain: true
       rootDomain:
-        enabled: true
         tls:
           supportTLSV1_2: true
     asserts:
@@ -114,7 +110,6 @@ tests:
             includeRootDomain: true
             enableHttpsRedirect: true
       rootDomain:
-        enabled: true
         enableHttpsRedirect: false
     asserts:
       - equal:
@@ -148,8 +143,19 @@ tests:
           other:
             mode: SIMPLE
             includeRootDomain: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "only one tls.servers entry may set includeRootDomain"
+
+  - it: rejects a dedicated root server with a shared root server
+    set:
+      tls:
+        servers:
+          tenant:
+            mode: SIMPLE
+            includeRootDomain: true
       rootDomain:
         enabled: true
     asserts:
       - failedTemplate:
-          errorMessage: "only one tls.servers entry may set includeRootDomain"
+          errorMessage: "rootDomain.enabled cannot be set when tls.servers includes the root domain"
