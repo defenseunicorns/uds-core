@@ -81,6 +81,10 @@ packages:
                 service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
                 service.beta.kubernetes.io/aws-load-balancer-target-node-labels: "kubernetes.io/os=linux"
       istio-tenant-gateway:
+        uds-istio-config:
+          values:
+            - path: tls.servers.tenant.includeRootDomain
+              value: true
         gateway:
           values:
             - path: service.annotations
