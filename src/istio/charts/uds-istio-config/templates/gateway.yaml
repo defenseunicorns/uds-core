@@ -3,7 +3,22 @@
 
 {{- $domain := tpl .Values.domain . }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
-{{- $rootEnableHttpsRedirect := .Values.rootDomain.enableHttpsRedirect | default true -}}
+{{- $rootServerName := "" -}}
+{{- range $name, $server := .Values.tls.servers }}
+  {{- if and $.Values.rootDomain.enabled $server.includeRootDomain }}
+    {{- if $rootServerName }}
+      {{- fail "only one tls.servers entry may set includeRootDomain" }}
+    {{- end }}
+    {{- $rootServerName = $name }}
+  {{- end }}
+{{- end }}
+{{- if and $rootServerName (not (empty $rootTLS)) }}
+  {{- fail "rootDomain.tls cannot be configured when tls.servers includes the root domain" }}
+{{- end }}
+{{- $rootEnableHttpsRedirect := true -}}
+{{- if hasKey .Values.rootDomain "enableHttpsRedirect" }}
+  {{- $rootEnableHttpsRedirect = .Values.rootDomain.enableHttpsRedirect -}}
+{{- end }}
 {{- $rootMode := $rootTLS.mode | default ($.Values.tls.mode | default "SIMPLE") -}}
 {{- $rootSupportTLS := $rootTLS.supportTLSV1_2 | default ($.Values.tls.supportTLSV1_2 | default false) -}}
 {{- if .Values.tls }}
@@ -21,6 +36,9 @@ spec:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
         {{- end }}
+        {{- if and $.Values.rootDomain.enabled (eq $rootServerName $name) }}
+        - "{{ $domain }}"
+        {{- end }}
       port:
         name: "http-{{ $name }}"
         number: 80
@@ -32,6 +50,9 @@ spec:
     - hosts:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
+        {{- end }}
+        {{- if and $.Values.rootDomain.enabled (eq $rootServerName $name) }}
+        - "{{ $domain }}"
         {{- end }}
       port:
         name: "https-{{ $name }}"
@@ -48,7 +69,7 @@ spec:
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}
-    {{- if .Values.rootDomain.enabled }}
+    {{- if and .Values.rootDomain.enabled (not $rootServerName) }}
     - hosts:
         - "{{ $domain }}"
       port:

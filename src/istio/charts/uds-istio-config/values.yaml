@@ -31,6 +31,10 @@ domain: ""
 #       hosts:
 #         - "*"
 
+#       # Add the root domain to this server instead of creating a dedicated root-domain server.
+#       # The default is false.
+#       includeRootDomain: false
+
 #       # TLS certificate scoped to this specific server, if not set, will default to the gateway-level TLS certificate
 #       cert: ""
 
@@ -43,8 +47,10 @@ domain: ""
 #   # Whether to support TLS 1.2 (if false, only TLS 1.3 will be supported)
 #   supportTLSV1_2: true
 
-# Enable root (apex) domain configuration. When true, the Gateway creates dedicated server blocks
-# for the root domain (e.g. uds.dev). This is required because wildcard hosts (e.g. *.uds.dev) do not match the root.
+# Enable root (apex) domain routing (e.g. uds.dev). A wildcard host and certificate (e.g. *.uds.dev)
+# do not cover the root domain. By default, the Gateway creates a dedicated root-domain server. Set
+# exactly one tls.servers entry's includeRootDomain to true when that server's certificate covers both
+# the root and subdomains, allowing HTTP/2 connection coalescing.
 rootDomain:
   enabled: false
   enableHttpsRedirect: true

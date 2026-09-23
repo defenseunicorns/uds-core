@@ -21,3 +21,135 @@ tests:
       - matchRegex:
           path: spec.servers[0].hosts[0]
           pattern: '\*\.custom\.example\.com'
+
+  - it: shares the server that includes the root domain
+    set:
+      name: tenant
+      domain: "custom.example.com"
+      tls:
+        credentialName: tenant-tls
+        servers:
+          tenant:
+            hosts: ["*"]
+            mode: SIMPLE
+            includeRootDomain: true
+      rootDomain:
+        enabled: true
+    asserts:
+      - equal:
+          path: spec.servers[0].hosts
+          value: ["*.custom.example.com", "custom.example.com"]
+      - equal:
+          path: spec.servers[1].hosts
+          value: ["*.custom.example.com", "custom.example.com"]
+      - equal:
+          path: spec.servers[1].tls.credentialName
+          value: tenant-tls
+      - lengthEqual:
+          path: spec.servers
+          count: 2
+
+  - it: keeps a dedicated root-domain server by default
+    set:
+      name: tenant
+      domain: "custom.example.com"
+      tls:
+        credentialName: tenant-tls
+        servers:
+          tenant:
+            hosts: ["*"]
+            mode: SIMPLE
+            includeRootDomain: false
+      rootDomain:
+        enabled: true
+        tls:
+          credentialName: root-domain-tls
+    asserts:
+      - lengthEqual:
+          path: spec.servers
+          count: 4
+      - equal:
+          path: spec.servers[3].tls.credentialName
+          value: root-domain-tls
+
+  - it: rejects root TLS configuration when sharing a server
+    set:
+      tls:
+        servers:
+          tenant:
+            mode: SIMPLE
+            includeRootDomain: true
+      rootDomain:
+        enabled: true
+        tls:
+          credentialName: root-domain-tls
+    asserts:
+      - failedTemplate:
+          errorMessage: "rootDomain.tls cannot be configured when tls.servers includes the root domain"
+
+  - it: rejects root TLS version configuration when sharing a server
+    set:
+      tls:
+        servers:
+          tenant:
+            mode: SIMPLE
+            includeRootDomain: true
+      rootDomain:
+        enabled: true
+        tls:
+          supportTLSV1_2: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "rootDomain.tls cannot be configured when tls.servers includes the root domain"
+
+  - it: uses the shared server redirect setting for the root domain
+    set:
+      name: tenant
+      domain: "custom.example.com"
+      tls:
+        servers:
+          tenant:
+            hosts: ["*"]
+            mode: SIMPLE
+            includeRootDomain: true
+            enableHttpsRedirect: true
+      rootDomain:
+        enabled: true
+        enableHttpsRedirect: false
+    asserts:
+      - equal:
+          path: spec.servers[0].tls.httpsRedirect
+          value: true
+
+  - it: honors a disabled redirect on a dedicated root-domain server
+    set:
+      name: tenant
+      domain: "custom.example.com"
+      tls:
+        credentialName: tenant-tls
+        servers:
+          tenant:
+            hosts: ["*"]
+            mode: SIMPLE
+      rootDomain:
+        enabled: true
+        enableHttpsRedirect: false
+    asserts:
+      - notExists:
+          path: spec.servers[2].tls
+
+  - it: rejects multiple servers that include the root domain
+    set:
+      tls:
+        servers:
+          tenant:
+            mode: SIMPLE
+            includeRootDomain: true
+          other:
+            mode: SIMPLE
+            includeRootDomain: true
+      rootDomain:
+        enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "only one tls.servers entry may set includeRootDomain"

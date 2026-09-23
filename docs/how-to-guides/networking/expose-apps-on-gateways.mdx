@@ -31,7 +31,12 @@ After completing this guide, your application will be accessible through one of 
 
 1. **(Optional) Enable root domain support**
 
-   By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. If you need to serve traffic at `https://yourdomain.com`, enable root domain support in your UDS Core bundle:
+   By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. If you need to serve traffic at `https://yourdomain.com`, choose a dedicated root certificate or a SAN certificate shared with the tenant server.
+
+   <Tabs>
+     <TabItem label="Dedicated root certificate">
+
+   Configure a separate root-domain TLS server and certificate:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -64,7 +69,30 @@ After completing this guide, your application will be accessible through one of 
    ```
 
    > [!NOTE]
-   > If you provide a non-empty value for `credentialName`, UDS Core assumes you have pre-created the Kubernetes secret and will not auto-generate it. If your SAN certificate covers both subdomains and the root, you can point `credentialName` to that existing secret (the default gateway TLS secret name is `gateway-tls`).
+   > If you provide a non-empty value for `credentialName`, UDS Core assumes you have pre-created the Kubernetes secret and will not auto-generate it.
+
+     </TabItem>
+     <TabItem label="Shared SAN certificate">
+
+   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. The shared server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not configure `rootDomain.tls` fields with this option.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-tenant-gateway:
+           uds-istio-config:
+             values:
+               - path: rootDomain.enabled
+                 value: true
+               - path: tls.servers.tenant.includeRootDomain
+                 value: true
+   ```
+
+     </TabItem>
+   </Tabs>
 
    Create and deploy the bundle:
 

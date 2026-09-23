@@ -3873,6 +3873,9 @@
                     },
                     "tenant": {
                       "properties": {
+                        "includeRootDomain": {
+                          "type": "boolean"
+                        },
                         "mode": {
                           "type": "string"
                         }
