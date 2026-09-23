@@ -128,10 +128,14 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
+      - description: Fetch the passthrough gateway IP address
+        if: ${{ eq .inputs.validate_passthrough "true" }}
+        maxRetries: 5
+        task: utils:passthrough-gw-ip
       - description: Verify the passthrough app is accessible
         if: ${{ eq .inputs.validate_passthrough "true" }}
         maxRetries: 5
-        cmd: curl --fail --silent --show-error --insecure https://passthrough-test.uds.dev/
+        cmd: curl --fail --silent --show-error --insecure --resolve "passthrough-test.uds.dev:443:$PASSTHROUGH_GW_IP" https://passthrough-test.uds.dev/
 
       # Check standard sidecar authservice protection
       - task: check-authservice-protection
