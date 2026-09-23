@@ -23,7 +23,7 @@ data "aws_ami" "eks_bottlerocket_ami" {
 # Create EKS Cluster
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 21.25.0"
+  version = "~> 21.26.0"
 
   name                    = var.name
   kubernetes_version      = var.kubernetes_version
