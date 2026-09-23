@@ -20,6 +20,7 @@ describe("fetchWithTimeout", () => {
 
       if (request.url === "/partial") {
         response.writeHead(200, { "content-type": "text/plain" });
+        response.flushHeaders();
         response.write("partial");
         return;
       }
@@ -61,7 +62,7 @@ describe("fetchWithTimeout", () => {
   });
 
   it("aborts a response body that stalls after headers", async () => {
-    const response = await fetchWithTimeout(`${url}/partial`, {}, 50);
+    const response = await fetchWithTimeout(`${url}/partial`, {}, 1000);
 
     await expect(response.text()).rejects.toMatchObject({
       message: expect.stringContaining("GET http://127.0.0.1:"),
