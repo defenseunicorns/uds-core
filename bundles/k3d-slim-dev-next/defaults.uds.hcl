@@ -14,6 +14,8 @@ variables = {
   proxy_cpu_request     = "10m"
   proxy_cpu_limit       = "2000m"
 
+  tenant_include_root_domain = true
+
   authservice_replica_count = "1"
 
   keycloak_memory_request          = "700Mi"

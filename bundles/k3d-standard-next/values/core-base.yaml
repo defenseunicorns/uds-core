@@ -78,12 +78,13 @@ istio-admin-gateway:
 {{- $tenantTLSCert := index .vars "tenant_tls_cert" }}
 {{- $tenantTLSKey := index .vars "tenant_tls_key" }}
 {{- $tenantPorts := index .vars "tenant_service_ports" }}
+{{- $tenantIncludeRootDomain := index .vars "tenant_include_root_domain" }}
 istio-tenant-gateway:
   uds-istio-config:
     tls:
       servers:
         tenant:
-          includeRootDomain: true
+          includeRootDomain: {{ $tenantIncludeRootDomain }}
 {{- with $tenantTLS12 }}
       supportTLSV1_2: {{ . }}
 {{- end }}

@@ -85,8 +85,6 @@ After completing this guide, your application will be accessible through one of 
          istio-tenant-gateway:
            uds-istio-config:
              values:
-               - path: rootDomain.enabled
-                 value: true
                - path: tls.servers.tenant.includeRootDomain
                  value: true
    ```
@@ -306,9 +304,10 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Subdomains work but `https://yourdomain.com` does not.
 
 **Solution:**
-- Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
+- Confirm either `rootDomain.enabled` or `tls.servers.tenant.includeRootDomain` is set to `true` in your bundle overrides, not both
 - Verify DNS has an A record for the root domain (not just a wildcard)
-- Check that TLS certificates are provided for the root domain configuration
+- For a shared SAN certificate, verify the tenant certificate covers both `yourdomain.com` and `*.yourdomain.com`
+- For a dedicated root certificate, verify the root-domain certificate covers `yourdomain.com`
 
 ## Related documentation
 

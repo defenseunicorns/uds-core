@@ -134,10 +134,11 @@ packages:
               path: tls.supportTLSV1_2
       istio-tenant-gateway:
         uds-istio-config:
-          values:
-            - path: tls.servers.tenant.includeRootDomain
-              value: true
           variables:
+            - name: TENANT_INCLUDE_ROOT_DOMAIN
+              description: "Serve the root domain on the tenant gateway"
+              default: true
+              path: tls.servers.tenant.includeRootDomain
             - name: TENANT_TLS_CERT
               description: "The TLS cert for the tenant gateway (must be base64 encoded)"
               path: tls.cert
