@@ -121,6 +121,10 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
+      - description: Verify the passthrough app is accessible
+        maxRetries: 5
+        cmd: curl --fail --silent --show-error --insecure https://passthrough-test.uds.dev/
+
       # Check standard sidecar authservice protection
       - task: check-authservice-protection
         with:
