@@ -75,22 +75,260 @@ jobs:
           chainguardIdentity: ${{ (inputs.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: "true"
 
-      - name: Test a single layer package
+      - name: Set up single layer test dependencies
         # Guard against portal+registry1 since workflow_dispatch and workflow_call triggers bypass matrix excludes
         if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
-        run: uds run test-single-layer --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
+        run: uds run test-single-layer-dependencies --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
 
-      - name: Test UDS Core Install
+      - name: Build single layer package
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
+        run: uds run test-single-layer-package-build --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
+
+      - name: Deploy single layer package
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
+        run: uds run test-single-layer-deploy --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
+
+      - name: Validate single layer package
+        if: ${{ inputs.package != 'all' && inputs.test_type == 'install' && !(inputs.package == 'portal' && inputs.flavor == 'registry1') }}
+        run: uds run test-single-layer-validate --set FLAVOR=${{ inputs.flavor }} --set LAYER=${{ inputs.package }} --no-progress
+
+      # Keep the long-running Core phases as separate Actions steps so GitHub's
+      # native timing view exposes the same major boundaries as the local task graph.
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build UDS Core CRDs package
         if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
-        run: uds run test:uds-core-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=crds --no-progress
 
-      - name: Test UDS Core Upgrade
+      - name: Build UDS Core base package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build UDS Core identity-authorization package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=identity-authorization --no-progress
+
+      - name: Build UDS Core logging package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=logging --no-progress
+
+      - name: Build UDS Core monitoring package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=monitoring --no-progress
+
+      - name: Build UDS Core runtime-security package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=runtime-security --no-progress
+
+      - name: Build UDS Core backup-restore package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=backup-restore --no-progress
+
+      - name: Build UDS Core metrics-server package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=metrics-server --no-progress
+
+      - name: Build UDS Core portal package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' && inputs.flavor != 'registry1' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=portal --no-progress
+
+      - name: Create UDS Core bundle
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Deploy UDS Core
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-deploy --set FLAVOR=${{ inputs.flavor }} --with configFile=bundles/k3d-standard-next/config-test.uds.hcl --no-progress
+
+      - name: Validate UDS Core
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up E2E test user
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create E2E test resource package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
+      - name: Run Playwright E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Run Vitest E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Clean up E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'install' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
+
+      - name: Create latest Core release bundle for upgrade
         if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
-        run: uds run test-uds-core-upgrade --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-create --set FLAVOR=${{ inputs.flavor }} --no-progress
 
-      - name: Test UDS Core values deploy equivalency
+      - name: Deploy latest Core release for upgrade
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-deploy --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Clean up latest Core release bundle workspace
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-bundle-release-cleanup --no-progress
+
+      - name: Fetch latest release test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-fetch --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Deploy latest release test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-deploy --no-progress
+
+      - name: Clean up latest release test-resource workspace
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/deploy.yaml latest-release-test-resources-cleanup --no-progress
+
+      # Keep these package builds sequential because they share the build directory.
+      # Separate steps expose the layer-level timing without changing the task order.
+      - name: Build UDS Core CRDs upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=crds --no-progress
+
+      - name: Build UDS Core base upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=base --with shim_bundle=false --no-progress
+
+      - name: Build UDS Core identity-authorization upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=identity-authorization --no-progress
+
+      - name: Build UDS Core logging upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=logging --no-progress
+
+      - name: Build UDS Core monitoring upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=monitoring --no-progress
+
+      - name: Build UDS Core runtime-security upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=runtime-security --no-progress
+
+      - name: Build UDS Core backup-restore upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=backup-restore --no-progress
+
+      - name: Build UDS Core metrics-server upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=metrics-server --no-progress
+
+      - name: Build UDS Core portal upgrade package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' && inputs.flavor != 'registry1' }}
+        run: uds run -f tasks/test.yaml core-package-build-layer --set FLAVOR=${{ inputs.flavor }} --with layer=portal --no-progress
+
+      - name: Create UDS Core upgrade bundle
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-bundle-create --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Deploy current UDS Core for upgrade
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-deploy --set FLAVOR=${{ inputs.flavor }} --with configFile=bundles/k3d-standard-next/config-upgrade.uds.hcl --with packages=core_crds,core_base,core_identity_authorization,core_logging,core_monitoring,core_runtime_security,core_backup_restore,core_portal,core_metrics_server --no-progress
+
+      - name: Validate upgraded UDS Core
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml core-validate --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up upgraded E2E test user
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create upgraded E2E test resource package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy upgraded E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate upgraded E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare upgraded E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
+      - name: Run upgraded Playwright E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Run upgraded Vitest E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with skip_fleet_admin=true --no-progress
+
+      - name: Clean up upgraded E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'upgrade' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
+
+      - name: Build UDS Core values package
         if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
-        run: uds run test:uds-core-values-e2e --set FLAVOR=${{ inputs.flavor }} --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --with k3s_version=${{ inputs.k3s_version }} --no-progress
+        run: uds run -f tasks/test.yaml values-package-build --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Set up values test cluster
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml values-cluster-setup --with k3s_version=${{ inputs.k3s_version }} --no-progress
+
+      - name: Deploy UDS Core through values
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml values-deploy --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Validate values deployment
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml values-validate --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up values E2E test user
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-test-user --no-progress
+
+      - name: Create values E2E test resource package
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+
+      - name: Deploy values E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --no-progress
+
+      - name: Validate values E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+
+      - name: Prepare values E2E test CA
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml util:prepare-node-test-ca --no-progress
+
+      - name: Run values Playwright E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-playwright --set FLAVOR=${{ inputs.flavor }} --no-progress
+
+      - name: Run values Vitest E2E tests
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-vitest --set EXCLUDED_PACKAGES=${{ inputs.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Clean up values E2E test resources
+        if: ${{ inputs.package == 'all' && inputs.test_type == 'values' }}
+        run: uds run -f tasks/test.yaml e2e-cleanup --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

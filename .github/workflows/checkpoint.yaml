@@ -77,10 +77,13 @@ jobs:
         run: |
           uds run -f tasks/deploy.yaml latest-slim-bundle-release --no-progress
 
+      - name: Build K3d + Source UDS Core Slim Bundle
+        if: ${{ github.event_name == 'pull_request' }}
+        run: uds run slim-dev-build-next --no-progress
+
       - name: Deploy K3d + Source UDS Core Slim Bundle
         if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          uds run slim-dev --no-progress
+        run: uds run slim-dev-deploy-next --no-progress
 
       - name: Create Checkpoint Package
         run: |

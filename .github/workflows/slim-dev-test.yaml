@@ -104,10 +104,30 @@ jobs:
         shell: bash
         run: |
           sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+      - name: Build Slim Dev Bundle with UDS CLI Next
+        run: uds run slim-dev-build-next --no-progress
       - name: Deploy Slim Dev Bundle with UDS CLI Next
-        run: uds run slim-dev --no-progress
-      - name: Test Slim Dev Bundle
-        run: uds run test:slim-dev --no-progress
+        run: uds run slim-dev-deploy-next --no-progress
+      - name: Validate Slim Dev Bundle
+        run: uds run -f tasks/test.yaml slim-validate --no-progress
+      - name: Create Slim Dev test resource package
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+      - name: Deploy Slim Dev test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --with validate_egress=false --with validate_udp_expose=false --no-progress
+      - name: Validate Slim Dev test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+      - name: Run Slim Dev network tests
+        run: uds run -f tasks/test.yaml slim-e2e-network-tests --no-progress
+      - name: Run Slim Dev test-resource tests
+        run: uds run -f tasks/test.yaml slim-e2e-test-resource-tests --no-progress
+      - name: Set up Slim Dev test user
+        run: uds run -f tasks/test.yaml slim-e2e-keycloak-user --no-progress
+      - name: Run Slim Dev Playwright tests
+        run: uds run -f tasks/test.yaml slim-e2e-playwright --no-progress
+      - name: Run Slim Dev secret reload tests
+        run: uds run -f tasks/test.yaml slim-e2e-secret-reload-tests --no-progress
+      - name: Clean up Slim Dev test resources
+        run: uds run -f tasks/test.yaml slim-e2e-cleanup --no-progress
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output
@@ -146,10 +166,30 @@ jobs:
         shell: bash
         run: |
           sudo rm -rf /usr/local/lib/android /opt/ghc /usr/share/dotnet /opt/hostedtoolcache/CodeQL || true
+      - name: Build Slim Dev Legacy Bundle
+        run: uds run slim-dev-build-legacy --no-progress
       - name: Deploy Slim Dev Legacy Bundle
-        run: uds run slim-dev-legacy --no-progress
-      - name: Test Slim Dev Bundle
-        run: uds run test:slim-dev --no-progress
+        run: uds run slim-dev-deploy-legacy --no-progress
+      - name: Validate Slim Dev Legacy Bundle
+        run: uds run -f tasks/test.yaml slim-validate --no-progress
+      - name: Create Slim Dev Legacy test resource package
+        run: uds run -f tasks/test.yaml e2e-test-resource-package-create --no-progress
+      - name: Deploy Slim Dev Legacy test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-deploy --with validate_egress=false --with validate_udp_expose=false --no-progress
+      - name: Validate Slim Dev Legacy test resources
+        run: uds run -f tasks/test.yaml e2e-test-resource-validate --no-progress
+      - name: Run Slim Dev Legacy network tests
+        run: uds run -f tasks/test.yaml slim-e2e-network-tests --no-progress
+      - name: Run Slim Dev Legacy test-resource tests
+        run: uds run -f tasks/test.yaml slim-e2e-test-resource-tests --no-progress
+      - name: Set up Slim Dev Legacy test user
+        run: uds run -f tasks/test.yaml slim-e2e-keycloak-user --no-progress
+      - name: Run Slim Dev Legacy Playwright tests
+        run: uds run -f tasks/test.yaml slim-e2e-playwright --no-progress
+      - name: Run Slim Dev Legacy secret reload tests
+        run: uds run -f tasks/test.yaml slim-e2e-secret-reload-tests --no-progress
+      - name: Clean up Slim Dev Legacy test resources
+        run: uds run -f tasks/test.yaml slim-e2e-cleanup --no-progress
       - name: Debug Output
         if: ${{ always() }}
         uses: ./.github/actions/debug-output

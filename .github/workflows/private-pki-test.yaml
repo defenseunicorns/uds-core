@@ -56,8 +56,32 @@ jobs:
           chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
           installK3d: 'true'
 
-      - name: Run UDS Core Private PKI Test
-        run: uds run -f tasks/test.yaml uds-core-private-pki --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+      - name: Generate Private PKI certificates
+        run: uds run -f tasks/test.yaml private-pki-certs --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Build Private PKI Core packages
+        run: uds run -f tasks/test.yaml private-pki-package-build --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Create Private PKI Core bundle
+        run: uds run -f tasks/test.yaml private-pki-bundle-create --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy Private PKI initialization packages
+        run: uds run -f tasks/test.yaml private-pki-deploy-init --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Deploy Private PKI Core packages
+        run: uds run -f tasks/test.yaml private-pki-deploy-core --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Validate Private PKI Core
+        run: uds run -f tasks/test.yaml private-pki-validate --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }} --no-progress
+
+      - name: Set up Private PKI authservice tests
+        run: uds run -f tasks/test.yaml private-pki-authservice-setup --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run Private PKI Playwright tests
+        run: uds run -f tasks/test.yaml private-pki-playwright --set FLAVOR=${{ matrix.flavor }} --no-progress
+
+      - name: Run Private PKI trust-bundle tests
+        run: uds run -f tasks/test.yaml private-pki-trust-bundle-tests --set FLAVOR=${{ matrix.flavor }} --no-progress
 
       - name: Debug Output
         if: ${{ always() }}

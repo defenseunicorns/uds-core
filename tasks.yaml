@@ -67,19 +67,33 @@ tasks:
 
   - name: slim-dev
     actions:
-      - description: "Build slim dev bundle with UDS CLI Next"
-        task: create:k3d-slim-dev-bundle-next
+      - task: slim-dev-build-next
+      - task: slim-dev-deploy-next
 
-      - description: "Deploy slim dev bundle with UDS CLI Next"
-        task: deploy:k3d-slim-dev-bundle-next
+  - name: slim-dev-build-next
+    description: "Build the slim dev bundle with UDS CLI Next"
+    actions:
+      - task: create:k3d-slim-dev-bundle-next
+
+  - name: slim-dev-deploy-next
+    description: "Deploy the slim dev bundle with UDS CLI Next"
+    actions:
+      - task: deploy:k3d-slim-dev-bundle-next
 
   - name: slim-dev-legacy
     actions:
-      - description: "Build slim dev Legacy bundle"
-        task: create:k3d-slim-dev-bundle
+      - task: slim-dev-build-legacy
+      - task: slim-dev-deploy-legacy
 
-      - description: "Deploy slim dev Legacy bundle"
-        task: deploy:k3d-slim-dev-bundle
+  - name: slim-dev-build-legacy
+    description: "Build the slim dev bundle with UDS CLI Legacy"
+    actions:
+      - task: create:k3d-slim-dev-bundle
+
+  - name: slim-dev-deploy-legacy
+    description: "Deploy the slim dev bundle with UDS CLI Legacy"
+    actions:
+      - task: deploy:k3d-slim-dev-bundle
 
   - name: slim-dev-ha
     description: "Build and deploy slim dev bundle with HA configuration"
@@ -121,8 +135,30 @@ tasks:
   - name: test-single-layer
     description: "Deploys k3d cluster, layer dependencies and the provided layer (based on LAYER variable)"
     actions:
+      - task: test-single-layer-dependencies
+      - task: test-single-layer-package-build
+      - task: test-single-layer-deploy
+      - task: test-single-layer-validate
+
+  - name: test-single-layer-dependencies
+    description: "Deploy the dependencies required by a UDS Core layer"
+    actions:
       - task: test:layer-dependencies
-      - task: test:single-layer
+
+  - name: test-single-layer-package-build
+    description: "Build the requested UDS Core layer package"
+    actions:
+      - task: test:single-layer-package-build
+
+  - name: test-single-layer-deploy
+    description: "Deploy the requested UDS Core layer package"
+    actions:
+      - task: test:single-layer-deploy
+
+  - name: test-single-layer-validate
+    description: "Validate the requested UDS Core layer package"
+    actions:
+      - task: test:single-layer-validate
 
   - name: deploy-standard-bundle
     actions:
