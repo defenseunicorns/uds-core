@@ -256,6 +256,26 @@ describe("handleFailure", () => {
     });
   });
 
+  it("should update retry status when event creation fails", async () => {
+    const err = { status: 500, message: "Internal server error" };
+    const cr = {
+      kind: "Package",
+      apiVersion: "v1",
+      metadata: { namespace: "default", name: "test", generation: 1, uid: "1" },
+    };
+    Create.mockRejectedValueOnce(new Error("event creation failed"));
+
+    await expect(handleFailure(err, cr as UDSPackage)).resolves.not.toThrow();
+
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { namespace: "default", name: "test" },
+      status: expect.objectContaining({
+        phase: Phase.Retrying,
+        retryAttempt: 1,
+      }),
+    });
+  });
+
   it("should fail after 5 retries", async () => {
     const err = { status: 500, message: "Internal server error" };
     const cr = {
