@@ -300,6 +300,8 @@ function isPodReady(pod: k8s.V1Pod): boolean {
 }
 
 describe("Envoy Gateway", () => {
+  let usesClusterIPOverride = false;
+
   beforeAll(async () => {
     await deleteGateway();
     await waitForGatewayDeleted();
@@ -307,8 +309,8 @@ describe("Envoy Gateway", () => {
     await deleteNamespace();
     await waitForNamespaceDeleted();
     await createNamespace();
-    const useProxyConfig = await createProxyConfig();
-    await createGateway(useProxyConfig);
+    usesClusterIPOverride = await createProxyConfig();
+    await createGateway(usesClusterIPOverride);
   });
 
   afterAll(async () => {
@@ -339,10 +341,12 @@ describe("Envoy Gateway", () => {
     );
 
     expect(services.length).toBeGreaterThan(0);
-    expect(
-      services.every(service => service.spec?.type === "ClusterIP"),
-      "Expected the test Gateway service to use ClusterIP",
-    ).toBe(true);
+    if (usesClusterIPOverride) {
+      expect(
+        services.every(service => service.spec?.type === "ClusterIP"),
+        "Expected the test Gateway service to use ClusterIP",
+      ).toBe(true);
+    }
 
     const pods = await pollUntilSuccess(
       listManagedPods,
