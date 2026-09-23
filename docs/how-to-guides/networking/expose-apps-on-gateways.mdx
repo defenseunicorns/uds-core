@@ -38,6 +38,9 @@ After completing this guide, your application will be accessible through one of 
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          istio-tenant-gateway:
            uds-istio-config:
@@ -160,6 +163,9 @@ After completing this guide, your application will be accessible through one of 
 
    > [!WARNING]
    > `advancedHTTP` cannot be used with the passthrough gateway. Passthrough gateways forward raw TLS without terminating it, so HTTP-level routing is not possible.
+
+   > [!IMPORTANT]
+   > A catch-all expose entry, which has no non-empty `advancedHTTP.match` or legacy `match` list, must use a unique gateway and FQDN across namespaces. To share a gateway and FQDN across namespaces, define non-empty match conditions on every route. If admission rejects a conflicting endpoint, change the gateway, host, or domain, or add match conditions to both routes.
 
    **Example: Add response headers and configure retries**
 

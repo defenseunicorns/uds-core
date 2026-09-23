@@ -8,7 +8,7 @@ variables:
   - name: VERSION
     description: "The version of the packages to deploy"
     # x-release-please-start-version
-    default: "1.12.0"
+    default: "1.13.0"
     # x-release-please-end
   - name: FLAVOR
     default: upstream
@@ -149,11 +149,16 @@ tasks:
           darwin: bash
           linux: bash
         cmd: |
+          BASE_BRANCH="${GITHUB_BASE_REF:-}"
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")}}"
 
           TARGET_VERSION=""
-          if [[ "$BRANCH" == release-please--branches--release/* ]]; then
+          if [[ "$BASE_BRANCH" == release/* ]]; then
+            TARGET_VERSION="${BASE_BRANCH#release/}"
+          elif [[ "$BRANCH" == release-please--branches--release/* ]]; then
             TARGET_VERSION="${BRANCH#release-please--branches--release/}"
+          elif [[ "$BRANCH" == release-please--branches--release-* ]]; then
+            TARGET_VERSION="${BRANCH#release-please--branches--release-}"
           fi
 
           if [ -n "${TARGET_VERSION}" ]; then
@@ -206,8 +211,9 @@ tasks:
         description: "UDS CLI Next config file to use for the deployment"
         default: "bundles/k3d-standard-next/config-upgrade.uds.hcl"
     actions:
+      - task: resolve-latest-core-release
       - description: "Deploy the latest UDS Core Standard Bundle with UDS CLI Next"
-        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://ghcr.io/defenseunicorns/packages/uds/bundles/k3d-core-demo-next:latest --config ${{ .inputs.configFile }} --skip-signature-verification
+        cmd: CLI_FEATURES=NextMode=true ./uds bundle deploy oci://${TARGET_REPO}/bundles/k3d-core-demo-next:${LATEST_CORE_TAG} --config ${{ .inputs.configFile }} --skip-signature-verification
 
   - name: latest-release-test-resources
     actions:

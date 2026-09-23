@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { PeprValidateRequest } from "pepr";
+import { type PeprValidateRequest } from "pepr";
 
 import { Direction, Gateway, Protocol, RemoteGenerated, RemoteProtocol, UDSPackage } from "..";
 import { UDSConfig } from "../../controllers/config/config";
@@ -32,7 +32,6 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
   const ns = pkg.metadata?.namespace ?? "_unknown_";
   const deletionTimestamp = pkg.metadata?.deletionTimestamp ?? null;
   const istioMode = pkg.spec?.network?.serviceMesh?.mode || Mode.Ambient;
-
   if (invalidNamespaces.includes(ns)) {
     return req.Deny("invalid namespace");
   }
@@ -178,6 +177,18 @@ export async function validator(req: PeprValidateRequest<UDSPackage>) {
 
     // Add the name to the set to track it
     virtualServiceNames.add(name);
+
+    // Allow terminating packages to complete cleanup even if their existing routes conflict.
+    if (!deletionTimestamp) {
+      // Deny cross-namespace collisions when either route is a catch-all.
+      const ownerNs = PackageStore.findNamespaceForExpose(expose, ns);
+      if (ownerNs && ownerNs !== ns) {
+        return req.Deny(
+          `The endpoint "${getFqdn(expose)}" conflicts with a package in namespace "${ownerNs}". ` +
+            `Each catch-all exposed endpoint must be unique across namespaces; use advancedHTTP.match for path-based routing.`,
+        );
+      }
+    }
 
     // Validate uptime probe configuration (paths presence enables uptime)
     if (expose.uptime?.checks?.paths?.length) {

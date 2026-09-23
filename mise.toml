@@ -1,0 +1,29 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+min_version = "2026.9.7"
+
+[tools]
+hk = "2.0.0"
+jq = "1.8.2"
+k3d = "5.9.0"
+node = "24.21.0"
+opentofu = "1.12.6"
+
+# renovate: datasource=pypi depName=codespell versioning=pep440
+"pypi:codespell" = "2.4.3"
+# renovate: datasource=pypi depName=yamllint versioning=pep440
+"pypi:yamllint" = "1.38.0"
+# renovate: datasource=github-tags depName=helm-unittest/helm-unittest versioning=semver
+"github:helm-unittest/helm-unittest" = "1.1.2"
+# renovate: datasource=github-releases depName=minamijoyo/hcledit versioning=semver
+"github:minamijoyo/hcledit" = "0.2.18"
+# renovate: datasource=github-tags depName=google/go-containerregistry versioning=semver
+"github:google/go-containerregistry" = "0.22.1"
+# renovate: datasource=github-tags depName=google/addlicense versioning=semver
+"aqua:google/addlicense" = "1.1.1"
+# renovate: datasource=github-tags depName=defenseunicorns/uds-cli versioning=semver
+"aqua:defenseunicorns/uds-cli" = "0.37.0"
+
+[env]
+MISE_USE_VERSIONS_HOST_TRACK = "0"

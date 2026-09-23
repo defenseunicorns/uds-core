@@ -143,12 +143,19 @@ tasks:
         task: test-resources:remove
 
   - name: unit-tests
-    description: "Run all unit tests for uds-core"
+    description: "Run uds-core source unit tests"
+    actions:
+      - cmd: |
+          npm ci
+          npm run test:unit
+
+  - name: values-tests
+    description: "Run UDS Core package values tests"
     actions:
       - cmd: |
           npm ci
           npx pepr build -z chart
-          npx vitest run
+          npx vitest run test/values/
 
   - name: uds-core
     description: "Build and test UDS Core with UDS CLI Next bundle workflow"

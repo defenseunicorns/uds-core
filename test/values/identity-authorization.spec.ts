@@ -19,16 +19,12 @@ import {
 const PKG = "identity-authorization";
 
 let scenarioManifests: Map<string, K8sResource[]>;
+let manifests: K8sResource[];
 
 beforeAll(async () => {
-  scenarioManifests = await preRenderDomainScenarios(PKG);
-});
-
-describe("identity-authorization package values", () => {
-  let manifests: K8sResource[];
-
-  beforeAll(async () => {
-    manifests = await renderManifests(PKG, {
+  [scenarioManifests, manifests] = await Promise.all([
+    preRenderDomainScenarios(PKG),
+    renderManifests(PKG, {
       values: {
         keycloak: {
           keycloak: {
@@ -43,9 +39,11 @@ describe("identity-authorization package values", () => {
           },
         },
       },
-    });
-  });
+    }),
+  ]);
+});
 
+describe("identity-authorization package values", () => {
   it("keycloak statefulset has probe label", () => {
     const r = findResource(manifests, "StatefulSet", "keycloak");
     expect(resourceString(r, "spec", "template", "metadata", "labels", "probe")).toBe(

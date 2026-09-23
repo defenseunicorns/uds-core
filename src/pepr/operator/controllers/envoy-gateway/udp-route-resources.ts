@@ -13,7 +13,7 @@ import {
   K8sUDPRoute,
   UDSPackage,
 } from "../../crd";
-import { ParentRefElement } from "../../crd/generated/k8s/udproute-v1alpha2";
+import { ParentRefElement } from "../../crd/generated/k8s/udproute-v1";
 import { Expose, ExposeProtocol } from "../../crd/generated/package-v1alpha1";
 import {
   Mutex,
@@ -159,7 +159,7 @@ function generateUDPRoute(
   }
 
   return {
-    apiVersion: "gateway.networking.k8s.io/v1alpha2",
+    apiVersion: "gateway.networking.k8s.io/v1",
     kind: "UDPRoute",
     metadata: {
       name: routeName,

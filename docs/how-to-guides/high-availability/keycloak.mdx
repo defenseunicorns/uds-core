@@ -43,6 +43,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
          - name: core
            repository: registry.defenseunicorns.com/public/core
            ref: x.x.x-upstream
+           keylessVerification:
+             certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+             certificateOIDCIssuer: https://token.actions.githubusercontent.com
            overrides:
              keycloak:
                keycloak:
@@ -86,6 +89,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
          - name: core
            repository: registry.defenseunicorns.com/public/core
            ref: x.x.x-upstream
+           keylessVerification:
+             certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+             certificateOIDCIssuer: https://token.actions.githubusercontent.com
            overrides:
              keycloak:
                keycloak:
@@ -129,6 +135,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
            keycloak:
@@ -152,6 +161,23 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
    | Scale-down stabilization | 300 seconds | `autoscaling.behavior.scaleDown.stabilizationWindowSeconds` |
    | Scale-down rate | 1 pod per 300 seconds | `autoscaling.behavior.scaleDown.policies[0]` |
 
+   Enabling `autoscaling.enabled` creates a PodDisruptionBudget (PDB) by default. Set `podDisruptionBudget.enabled` to `false` to disable it in HA mode. Outside HA mode, the chart never creates a PDB, regardless of this flag or other PDB settings.
+
+   Before upgrading a fixed-replica deployment with a chart-managed PDB, configure HA with an external PostgreSQL database and enable autoscaling if you need to retain chart-managed PDB protection.
+
+   The default PDB configuration protects the remaining Ready replica during voluntary disruptions:
+
+   | Setting | Default | Override path |
+   |---|---|---|
+   | Enabled in HA mode | `true` | `podDisruptionBudget.enabled` |
+   | Maximum unavailable replicas | `1` | `podDisruptionBudget.maxUnavailable` |
+   | Unhealthy pod eviction policy | `AlwaysAllow` | `podDisruptionBudget.unhealthyPodEvictionPolicy` |
+
+   The chart defines these defaults in `values.yaml`. To use `podDisruptionBudget.minAvailable`, set `podDisruptionBudget.maxUnavailable` to `null` to remove its default. The chart rejects configurations that set both fields, including when the PDB is disabled.
+
+   > [!WARNING]
+   > A single-node or fully constrained HA cluster might not have capacity to schedule a replacement after the PDB permits the first eviction. The PDB then blocks eviction of the remaining Ready replica, and the drain cannot complete. Add schedulable capacity before draining the node. If you cannot add capacity, set `podDisruptionBudget.enabled` to `false` before the drain and re-enable it after capacity returns.
+
    > [!CAUTION]
    > **Do not scale Keycloak down rapidly** by modifying the replica count directly in the StatefulSet. This is a [known Keycloak limitation](https://github.com/keycloak/keycloak/issues/44620) that can result in data loss. Let the HPA manage scale-down gradually.
 
@@ -164,6 +190,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
            keycloak:
@@ -198,6 +227,9 @@ Keycloak is the identity provider for the entire platform; if it becomes unavail
      - name: core
        repository: registry.defenseunicorns.com/public/core
        ref: x.x.x-upstream
+       keylessVerification:
+         certificateIdentityRegexp: ^https://github\.com/defenseunicorns/uds-core/\.github/workflows/publish\.yaml@refs/tags/v[0-9]+\.[0-9]+\.[0-9]+$
+         certificateOIDCIssuer: https://token.actions.githubusercontent.com
        overrides:
          keycloak:
            keycloak:
