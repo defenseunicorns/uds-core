@@ -32,25 +32,29 @@ async function request(session: ClientHttp2Session, authority: string): Promise<
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test("serves tenant hosts on one HTTP/2 connection", async () => {
-  const session = await connectToTenant();
+test.describe("misdirected requests", () => {
+  test.skip(process.env.VALIDATE_PASSTHROUGH === "false", "Passthrough gateway is not deployed");
 
-  try {
-    for (const host of tenantHosts) {
-      await expect(request(session, host)).resolves.toBe(200);
+  test("serves tenant hosts on one HTTP/2 connection", async () => {
+    const session = await connectToTenant();
+
+    try {
+      for (const host of tenantHosts) {
+        await expect(request(session, host)).resolves.toBe(200);
+      }
+    } finally {
+      session.close();
     }
-  } finally {
-    session.close();
-  }
-});
+  });
 
-test("returns 421 when a tenant connection targets a passthrough authority", async () => {
-  const session = await connectToTenant();
+  test("returns 421 when a tenant connection targets a passthrough authority", async () => {
+    const session = await connectToTenant();
 
-  try {
-    await expect(request(session, wildcardHosts[0])).resolves.toBe(200);
-    await expect(request(session, passthroughHost)).resolves.toBe(421);
-  } finally {
-    session.close();
-  }
+    try {
+      await expect(request(session, wildcardHosts[0])).resolves.toBe(200);
+      await expect(request(session, passthroughHost)).resolves.toBe(421);
+    } finally {
+      session.close();
+    }
+  });
 });
