@@ -20,6 +20,11 @@ UDS Core is published in multiple **flavors**. A flavor determines the container
 > [!WARNING]
 > Do not use the `upstream` flavor in production. Its community-maintained images may not meet the hardening or CVE-scanning requirements of regulated environments.
 
+### Bottlerocket FIPS compatibility
+
+> [!WARNING]
+> The `registry1` flavor is incompatible with Bottlerocket FIPS AMIs `v1.54.0` and later. These AMIs enable Go native FIPS 140-3 mode, which conflicts with the `boringcrypto` build used by the Iron Bank Istio CNI image. The CNI process panics during pod network setup and prevents pods from starting. Use a different supported node operating system, or use a non-FIPS Bottlerocket AMI when your compliance requirements permit it. Track resolution progress in [issue #2490](https://github.com/defenseunicorns/uds-core/issues/2490).
+
 <Card title="Unicorn flavor" icon="star">
 The `unicorn` flavor is the Defense Unicorns supported option for production. Its images are FIPS-validated and undergo additional patching and curation, giving it a near-zero CVE posture.
 
