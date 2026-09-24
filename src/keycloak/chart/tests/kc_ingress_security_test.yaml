@@ -1,0 +1,90 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+suite: Keycloak ingress security
+templates:
+  - uds-package.yaml
+
+tests:
+  - it: pins forwarding metadata and sets HSTS on every route
+    asserts:
+      - equal:
+          path: spec.network.expose[*].advancedHTTP.headers.response.add.Vary
+          value: Origin
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: sso.uds.dev
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: sso.uds.dev
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: keycloak.admin.uds.dev
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[*].advancedHTTP.headers.response.add.strict-transport-security
+          value: "max-age=31536000; includeSubDomains"
+      - contains:
+          path: spec.network.expose[0].advancedHTTP.headers.response.remove
+          content: strict-transport-security
+      - contains:
+          path: spec.network.expose[1].advancedHTTP.headers.response.remove
+          content: strict-transport-security
+      - contains:
+          path: spec.network.expose[2].advancedHTTP.headers.response.remove
+          content: strict-transport-security
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix
+      - notContains:
+          path: spec.network.expose
+          any: true
+          content:
+            gateway: passthrough
+  - it: pins forwarding metadata and sets HSTS on every route with custom domains and third-party TLS
+    set:
+      domain: example.com
+      adminDomain: ops.example.com
+      thirdPartyIntegration.tls.tlsCertificateHeader: x-amzn-mtls-clientcert
+    asserts:
+      - equal:
+          path: spec.network.expose[*].advancedHTTP.headers.response.add.Vary
+          value: Origin
+      - equal:
+          path: spec.network.expose[0].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: sso.example.com
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[1].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: sso.example.com
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[2].advancedHTTP.headers.request.set
+          value:
+            X-Forwarded-Host: keycloak.ops.example.com
+            X-Forwarded-Proto: https
+            X-Forwarded-Port: "443"
+      - equal:
+          path: spec.network.expose[*].advancedHTTP.headers.response.add.strict-transport-security
+          value: "max-age=31536000; includeSubDomains"
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: Forwarded
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Prefix

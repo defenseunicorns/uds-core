@@ -75,6 +75,10 @@ tests:
       - equal:
           path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.ttl
           value: 0s
+      - equal:
+          path: spec.trafficPolicy.loadBalancer.consistentHash.httpCookie.attributes
+          value:
+            - name: Secure
 
   - it: should NOT render KC_SPI_STICKY_SESSION_ENCODER__INFINISPAN__SHOULD_ATTACH_ROUTE when autoscaling is disabled
     set:
