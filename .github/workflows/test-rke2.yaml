@@ -117,17 +117,36 @@ jobs:
           suffix: -rke2-${{ matrix.flavor }}
           distro: "rke2"
 
+      - name: Capture RKE2 cluster names
+        if: always()
+        run: |
+          set -euo pipefail
+          RKE2_CLUSTER_NAMES="$(
+            aws ec2 describe-instances \
+              --region "$UDS_REGION" \
+              --filters "Name=tag:run_id,Values=${GITHUB_RUN_ID}" \
+              --output json |
+            jq -r '.Reservations[].Instances[].Tags[]? | select(.Key == "cluster_name") | .Value' |
+            sort -u |
+            paste -sd ' ' -
+          )"
+          echo "RKE2_CLUSTER_NAMES=$RKE2_CLUSTER_NAMES" >> "$GITHUB_ENV"
+          echo "Captured RKE2 cluster names: ${RKE2_CLUSTER_NAMES:-none}"
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
         timeout-minutes: 20
-        continue-on-error: true
 
       - name: Remove IAC
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
-        continue-on-error: true
+
+      - name: Cleanup AWS load balancers
+        if: always()
+        run: .github/scripts/cleanup-aws-load-balancers.sh
+        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
