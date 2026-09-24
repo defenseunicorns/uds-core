@@ -52,6 +52,8 @@ The existing Istio cookie configuration now adds the native `Secure` attribute. 
 
 The companion Identity Config change removes the unused `uds-operator` redirect and sets `fullScopeAllowed: false` on three clients. Required service-account role grants remain in place, with matching explicit client scope mappings:
 
+Core remains pinned to Identity Config `0.32.0`; this Core PR does not ship those realm changes. The scope evidence below uses the temporary image built from [Identity Config PR #935](https://github.com/defenseunicorns/uds-identity-config/pull/935). Production delivery requires an Identity Config release and a subsequent Core image update.
+
 | Client | Explicit `realm-management` scope role | Browser flows |
 |---|---|---|
 | `uds-operator` | `manage-clients` | Standard, implicit, and direct access grants disabled |
