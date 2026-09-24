@@ -130,7 +130,7 @@ jobs:
 
       - name: Cleanup AWS load balancers
         if: always()
-        run: .github/scripts/cleanup-aws-load-balancers.sh --eks-cluster "$UDS_CLUSTER_NAME"
+        run: .github/scripts/cleanup-aws-load-balancers.sh eks "$UDS_CLUSTER_NAME"
         timeout-minutes: 20
 
       - name: Send Slack notification
