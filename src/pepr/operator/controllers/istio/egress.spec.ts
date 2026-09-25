@@ -193,6 +193,38 @@ describe("test reconcileSharedEgressResources", () => {
     });
   });
 
+  it("should retry after an apply failure", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const pkgWithAmbientEgress = {
+      ...pkgWithAllow,
+      metadata: { ...pkgWithAllow.metadata, name: "ambient-retry" },
+    };
+    const applyError = new Error("waypoint apply failed");
+    vi.mocked(applyAmbientEgressResources)
+      .mockRejectedValueOnce(applyError)
+      .mockResolvedValueOnce();
+
+    await expect(
+      reconcileSharedEgressResources(
+        pkgWithAmbientEgress,
+        hostResourceMapMock,
+        PackageAction.AddOrUpdate,
+        Mode.Ambient,
+      ),
+    ).rejects.toThrow("waypoint apply failed");
+
+    await expect(
+      reconcileSharedEgressResources(
+        pkgWithAmbientEgress,
+        hostResourceMapMock,
+        PackageAction.AddOrUpdate,
+        Mode.Ambient,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(applyAmbientEgressResources).toHaveBeenCalledTimes(2);
+  });
+
   it("should update in-memory vars on action AddOrUpdate, sidecar to ambient", async () => {
     updateEgressMocks(defaultEgressMocks);
 
@@ -434,17 +466,23 @@ describe("test shared egress reconciliation serialization", () => {
       .mockRejectedValueOnce(new Error("apply failed"))
       .mockResolvedValueOnce();
 
+    const firstPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "serialization-failure-first" },
+    };
+    const secondPackage = {
+      ...pkgMock,
+      metadata: { ...pkgMock.metadata, name: "serialization-failure-second" },
+    };
+
     const first = reconcileSharedEgressResources(
-      pkgMock,
+      firstPackage,
       sharedHostResourceMap,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
     );
     const second = reconcileSharedEgressResources(
-      {
-        ...pkgMock,
-        metadata: { ...pkgMock.metadata, name: "second-package" },
-      },
+      secondPackage,
       sharedHostResourceMap,
       PackageAction.AddOrUpdate,
       Mode.Sidecar,
@@ -514,6 +552,14 @@ describe("test performEgressReconciliation", () => {
 
     // Purges sidecar (Gateway, VirtualService, ServiceEntry) and ambient (Gateway, ServiceEntry, AuthorizationPolicy)
     expect(purgeOrphans).toHaveBeenCalledTimes(6);
+  });
+
+  it("should preserve the low-level ambient apply error", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const applyError = new Error("waypoint apply conflict");
+    vi.mocked(applyAmbientEgressResources).mockRejectedValueOnce(applyError);
+
+    await expect(performEgressReconciliation()).rejects.toThrow("waypoint apply conflict");
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {
