@@ -18,18 +18,6 @@ UDS Core manages four areas of Keycloak configuration through the `uds-identity-
 
 Non-persistent components (themes, truststore, plugins) are automatically updated when the Keycloak package is upgraded. Realm configuration is persisted in Keycloak's database and does **not** automatically update on upgrade; see [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for manual steps.
 
-## SSO transport and origin security
-
-The Keycloak `Package` configures the public `sso.<domain>` and admin `keycloak.<adminDomain>` HTTPS routes. Both routes, including gateway redirects and static responses, emit one `Strict-Transport-Security: max-age=31536000; includeSubDomains` header. The gateway removes an upstream HSTS header before adding its own. HTTP-to-HTTPS redirects remain separate from this browser policy.
-
-`includeSubDomains` applies beneath each SSO hostname, not to sibling application hosts. Verify that any descendants of your SSO hostnames also use HTTPS, and that an external load balancer does not add a second HSTS header. This policy does not extend to other applications, custom gateways, or TLS passthrough routes.
-
-The routes overwrite `X-Forwarded-Host`, `X-Forwarded-Proto`, and `X-Forwarded-Port` with their configured HTTPS authority and remove client-supplied `Forwarded` and `X-Forwarded-Prefix`. External proxies must expose Keycloak at the configured public or admin hostname on HTTPS port 443. Existing client-certificate forwarding remains supported. Responses append `Vary: Origin` so shared caches separate responses by requesting origin.
-
-When HA session stickiness is enabled, the existing Istio-generated affinity cookie includes `Secure`. Its SameSite behavior remains unchanged. The routes do not add framing restrictions that would block OIDC cookie-check iframes.
-
-Grafana declares its exact HTTPS origin and retains both required redirect paths: `/login/generic_oauth` for sign-in and `/login` for sign-out. These client settings do not control Keycloak's built-in account or discovery endpoints. Reference the [SSO client configuration guide](/how-to-guides/identity-and-authorization/register-and-customize-sso-clients/) for application client settings.
-
 ## Realm initialization variables
 
 Variables under the `realmInitEnv` Helm chart path configure the `uds` Keycloak realm during its initial import. These values are **not** applied at runtime. To change them on a running cluster, you must destroy and recreate the Keycloak deployment to trigger a fresh realm import. See [Upgrade Keycloak realm](/operations/upgrades/upgrade-keycloak-realm/) for version-specific steps.

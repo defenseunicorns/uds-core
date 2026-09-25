@@ -18,7 +18,7 @@ for (const gateway of [publicOrigin, `https://keycloak.admin.${domain}`]) {
       page,
     }) => {
       // Serve an inert page at each origin without loading application code or client secrets.
-      const probePage = `${origin}/core692-browser-test`;
+      const probePage = `${origin}/sso-origin-test`;
       await page.route(probePage, route =>
         route.fulfill({ contentType: "text/html", body: "<title>CORS test</title>" }),
       );
@@ -50,7 +50,7 @@ for (const gateway of [publicOrigin, `https://keycloak.admin.${domain}`]) {
 }
 
 test("keeps the OIDC cookie-check iframe functional", async ({ page }) => {
-  const probePage = `${grafanaOrigin}/core692-iframe-test`;
+  const probePage = `${grafanaOrigin}/sso-iframe-test`;
   await page.route(probePage, route =>
     route.fulfill({ contentType: "text/html", body: "<title>OIDC iframe test</title>" }),
   );
