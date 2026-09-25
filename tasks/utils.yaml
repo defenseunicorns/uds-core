@@ -98,6 +98,19 @@ tasks:
         setVariables:
           - name: TENANT_GW_IP
 
+  - name: passthrough-gw-ip
+    actions:
+      - description: Fetch Passthrough Gateway IP Address
+        cmd: |
+          IP_ADDR=$(./uds zarf tools kubectl get service -n istio-passthrough-gateway passthrough-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null)
+          if [ -z "$IP_ADDR" ]; then
+            HOSTNAME=$(./uds zarf tools kubectl get service -n istio-passthrough-gateway passthrough-ingressgateway -o=jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)
+            IP_ADDR=$(dig +short $HOSTNAME | head -n1)
+          fi; echo $IP_ADDR
+        mute: true
+        setVariables:
+          - name: PASSTHROUGH_GW_IP
+
   - name: setup-hosts
     actions:
       - task: admin-gw-ip

@@ -29,8 +29,24 @@ spec:
               function envoy_on_request(request_handle)
                 local server_name = request_handle:streamInfo():requestedServerName()
                 local authority = request_handle:headers():get(":authority") or ""
-                if server_name ~= "" and not string.find(authority, server_name, 1, true) then
+                local is_routed = request_handle:filterContext():get("uds_route") == "true"
+                if server_name ~= "" and not string.find(authority, server_name, 1, true) and not is_routed then
                   request_handle:respond({[":status"] = "421"}, "Misdirected Request")
                 end
               end
+    - applyTo: HTTP_ROUTE
+      match:
+        context: GATEWAY
+        routeConfiguration:
+          vhost:
+            route:
+              action: ANY
+      patch:
+        operation: MERGE
+        value:
+          typed_per_filter_config:
+            envoy.lua:
+              "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.LuaPerRoute
+              filter_context:
+                uds_route: "true"
 {{- end }}

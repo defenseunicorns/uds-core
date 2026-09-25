@@ -1,0 +1,87 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: test-passthrough-app
+---
+apiVersion: uds.dev/v1alpha1
+kind: Package
+metadata:
+  name: test-passthrough-app
+  namespace: test-passthrough-app
+spec:
+  network:
+    expose:
+      - service: test-passthrough-app
+        selector:
+          app: test-passthrough-app
+        gateway: passthrough
+        host: passthrough-test
+        port: 8443
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-passthrough-app
+  namespace: test-passthrough-app
+  labels:
+    app: test-passthrough-app
+spec:
+  ports:
+    - name: https
+      port: 8443
+      targetPort: 8443
+  selector:
+    app: test-passthrough-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-passthrough-app
+  namespace: test-passthrough-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-passthrough-app
+  template:
+    metadata:
+      labels:
+        app: test-passthrough-app
+    spec:
+      securityContext:
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: httpbin
+          image: docker.io/kong/httpbin:0.2.3
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsUser: 10001
+            runAsGroup: 10001
+            runAsNonRoot: true
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+          command: ["sh", "-ec"]
+          args:
+            - |
+              openssl req -x509 -newkey rsa:2048 -nodes -days 3650 \
+                -subj /CN=passthrough-test.uds.dev \
+                -addext subjectAltName=DNS:passthrough-test.uds.dev \
+                -keyout /tmp/tls.key -out /tmp/tls.crt
+              exec pipenv run gunicorn --bind 0.0.0.0:8443 \
+                --certfile /tmp/tls.crt --keyfile /tmp/tls.key httpbin:app
+          ports:
+            - containerPort: 8443
+          readinessProbe:
+            tcpSocket:
+              port: 8443
+          livenessProbe:
+            tcpSocket:
+              port: 8443

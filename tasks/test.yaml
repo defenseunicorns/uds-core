@@ -101,6 +101,9 @@ tasks:
       validate_udp_expose:
         description: Whether to validate UDP expose routes through the default Envoy Gateway
         default: "true"
+      validate_passthrough:
+        description: Whether to validate passthrough gateway routes
+        default: "true"
       # TODO: Remove this input once Fleet admin realm updates are included in a released Core baseline.
       skip_fleet_admin:
         description: "Skip the Fleet Keycloak admin integration test."
@@ -117,11 +120,12 @@ tasks:
           architecture: ${{ .inputs.architecture }}
           validate_egress: ${{ .inputs.validate_egress }}
           validate_udp_expose: ${{ .inputs.validate_udp_expose }}
+          validate_passthrough: ${{ .inputs.validate_passthrough }}
       - description: "Run Playwright E2E tests for all packages"
         dir: test/playwright
         cmd: |
           # renovate: datasource=docker depName=mcr.microsoft.com/playwright versioning=docker
-          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
+          docker run --rm --ipc=host --net=host -e FULL_CORE="true" -e FLAVOR="${FLAVOR}" -e VALIDATE_PASSTHROUGH="${{ .inputs.validate_passthrough }}" --mount type=bind,source="$(pwd)",target=/app mcr.microsoft.com/playwright:v1.63.0-noble sh -c " \
             cd app && \
             npm ci && \
             npx playwright test \
@@ -244,6 +248,7 @@ tasks:
         with:
           architecture: "amd64"
           validate_udp_expose: "${{ .inputs.validate_udp_expose }}"
+          validate_passthrough: "false"
 
   - name: uds-core-ha
     description: "Build and test UDS Core with HA configuration and UDS CLI Next bundle workflow"
@@ -363,6 +368,7 @@ tasks:
         with:
           validate_egress: "false"
           validate_udp_expose: "false"
+          validate_passthrough: "false"
 
   - name: private-pki-test-suite
     description: "Run shared Private PKI validation and tests"
