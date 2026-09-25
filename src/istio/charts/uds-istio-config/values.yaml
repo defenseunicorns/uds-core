@@ -31,10 +31,6 @@ domain: ""
 #       hosts:
 #         - "*"
 
-#       # Add the root domain to this server instead of creating a dedicated root-domain server.
-#       # The default is false.
-#       includeRootDomain: false
-
 #       # TLS certificate scoped to this specific server, if not set, will default to the gateway-level TLS certificate
 #       cert: ""
 
@@ -47,14 +43,14 @@ domain: ""
 #   # Whether to support TLS 1.2 (if false, only TLS 1.3 will be supported)
 #   supportTLSV1_2: true
 
-# Enable a dedicated root (apex) domain server (e.g. uds.dev). A wildcard host and certificate (e.g.
-# *.uds.dev) do not cover the root domain. Alternatively, set exactly one tls.servers entry's
-# includeRootDomain to true when that server's certificate covers both the root and subdomains.
-# Do not set rootDomain.enabled and includeRootDomain together.
+# Enable root (apex) domain support (e.g. uds.dev). A wildcard host and certificate (e.g.
+# *.uds.dev) do not cover the root domain. Set server to share a named TLS server when its certificate
+# covers both the root and subdomains; otherwise, a dedicated root-domain server is created.
 rootDomain:
   enabled: false
-  enableHttpsRedirect: true
+  server: ""
   tls: {}
+  # enableHttpsRedirect: true               # Dedicated root-domain server only. Defaults to true.
   #   mode: SIMPLE                          # TLS mode (e.g., SIMPLE, MUTUAL). Default is SIMPLE.
   #   credentialName: ""                    # Specify a TLS secret name if pre-created. Set to "" to auto-create using the cert data.
   #   supportTLSV1_2: true                  # Set to true to support TLS 1.2, or false to enforce TLS 1.3 only.

@@ -14,7 +14,8 @@ variables = {
   proxy_cpu_request     = "10m"
   proxy_cpu_limit       = "2000m"
 
-  tenant_include_root_domain = true
+  root_domain_enabled = true
+  root_domain_server  = "tenant"
 
   authservice_replica_count = "1"
 

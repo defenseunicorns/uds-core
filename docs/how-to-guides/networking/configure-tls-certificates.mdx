@@ -169,7 +169,7 @@ overrides:
 ```
 
 > [!TIP]
-> If your SAN certificate covers both `*.yourdomain.com` and `yourdomain.com`, set `tls.servers.tenant.includeRootDomain: true`. Do not set `rootDomain.enabled` or configure `rootDomain.tls`. Reference [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) for the full shared-certificate configuration.
+> If your SAN certificate covers both `*.yourdomain.com` and `yourdomain.com`, set `rootDomain.enabled: true` and `rootDomain.server: tenant`. Do not configure `rootDomain.tls` or `rootDomain.enableHttpsRedirect`. Reference [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) for the full shared-certificate configuration.
 
 ## Enable TLS 1.2 support
 

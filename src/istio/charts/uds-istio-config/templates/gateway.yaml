@@ -3,20 +3,19 @@
 
 {{- $domain := tpl .Values.domain . }}
 {{- $rootTLS := .Values.rootDomain.tls | default dict -}}
-{{- $rootServerName := "" -}}
-{{- range $name, $server := .Values.tls.servers }}
-  {{- if $server.includeRootDomain }}
-    {{- if $rootServerName }}
-      {{- fail "only one tls.servers entry may set includeRootDomain" }}
-    {{- end }}
-    {{- $rootServerName = $name }}
-  {{- end }}
+{{- $servers := .Values.tls.servers | default dict -}}
+{{- $rootServerName := .Values.rootDomain.server | default "" -}}
+{{- if and $rootServerName (not .Values.rootDomain.enabled) }}
+  {{- fail "rootDomain.server requires rootDomain.enabled to be true" }}
 {{- end }}
-{{- if and $rootServerName .Values.rootDomain.enabled }}
-  {{- fail "rootDomain.enabled cannot be set when tls.servers includes the root domain" }}
+{{- if and $rootServerName (not (hasKey $servers $rootServerName)) }}
+  {{- fail "rootDomain.server must name an existing tls.servers entry" }}
 {{- end }}
 {{- if and $rootServerName (not (empty $rootTLS)) }}
-  {{- fail "rootDomain.tls cannot be configured when tls.servers includes the root domain" }}
+  {{- fail "rootDomain.tls cannot be configured when rootDomain.server is set" }}
+{{- end }}
+{{- if and $rootServerName (hasKey .Values.rootDomain "enableHttpsRedirect") }}
+  {{- fail "rootDomain.enableHttpsRedirect cannot be configured when rootDomain.server is set" }}
 {{- end }}
 {{- $rootEnableHttpsRedirect := true -}}
 {{- if hasKey .Values.rootDomain "enableHttpsRedirect" }}
@@ -34,7 +33,7 @@ spec:
   selector:
     app: {{ .Values.name }}-ingressgateway
   servers:
-    {{ range $name,$server := .Values.tls.servers }}
+    {{ range $name,$server := $servers }}
     - hosts:
         {{- range $server.hosts | default (list "*") }}
         - "{{ . }}.{{ $domain }}"
@@ -72,7 +71,7 @@ spec:
         minProtocolVersion: {{ if $.Values.tls.supportTLSV1_2 }}TLSV1_2{{ else }}TLSV1_3{{ end }}
         {{- end }}
     {{ end }}
-    {{- if .Values.rootDomain.enabled }}
+    {{- if and .Values.rootDomain.enabled (not $rootServerName) }}
     - hosts:
         - "{{ $domain }}"
       port:

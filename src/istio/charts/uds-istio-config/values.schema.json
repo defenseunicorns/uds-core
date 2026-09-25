@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "domain": {
+      "type": "string"
+    },
+    "tls": {
+      "type": "object",
+      "properties": {
+        "cert": {
+          "type": "string"
+        },
+        "key": {
+          "type": "string"
+        },
+        "cacert": {
+          "type": "string"
+        },
+        "credentialName": {
+          "type": "string"
+        },
+        "supportTLSV1_2": {
+          "type": "boolean"
+        },
+        "servers": {
+          "type": "object"
+        }
+      }
+    },
+    "rootDomain": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "server": {
+          "type": "string"
+        },
+        "enableHttpsRedirect": {
+          "type": "boolean"
+        },
+        "tls": {
+          "type": "object"
+        }
+      }
+    },
+    "proxyProtocol": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

@@ -74,7 +74,7 @@ After completing this guide, your application will be accessible through one of 
      </TabItem>
      <TabItem label="Shared SAN certificate">
 
-   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. The shared server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not set `rootDomain.enabled` or configure `rootDomain.tls` fields with this option.
+   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. Set `rootDomain.enabled` to enable root-domain support and `rootDomain.server` to the TLS server that will serve it. That server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not configure `rootDomain.tls` or `rootDomain.enableHttpsRedirect` with this option.
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -85,8 +85,10 @@ After completing this guide, your application will be accessible through one of 
          istio-tenant-gateway:
            uds-istio-config:
              values:
-               - path: tls.servers.tenant.includeRootDomain
+               - path: rootDomain.enabled
                  value: true
+               - path: rootDomain.server
+                 value: tenant
    ```
 
      </TabItem>
@@ -304,7 +306,8 @@ curl -v https://my-app.yourdomain.com
 **Symptom:** Subdomains work but `https://yourdomain.com` does not.
 
 **Solution:**
-- Confirm either `rootDomain.enabled` or `tls.servers.tenant.includeRootDomain` is set to `true` in your bundle overrides, not both
+- Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
+- For a shared SAN certificate, confirm `rootDomain.server` names the TLS server that serves the root domain
 - Verify DNS has an A record for the root domain (not just a wildcard)
 - For a shared SAN certificate, verify the tenant certificate covers both `yourdomain.com` and `*.yourdomain.com`
 - For a dedicated root certificate, verify the root-domain certificate covers `yourdomain.com`

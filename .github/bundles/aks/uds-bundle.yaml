@@ -56,8 +56,10 @@ packages:
       istio-tenant-gateway:
         uds-istio-config:
           values:
-            - path: tls.servers.tenant.includeRootDomain
+            - path: rootDomain.enabled
               value: true
+            - path: rootDomain.server
+              value: tenant
         gateway:
           values:
             - path: service.annotations

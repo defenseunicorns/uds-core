@@ -46,10 +46,9 @@ istio-controlplane:
 # --- base: tenant gateway root-domain E2E coverage ---
 istio-tenant-gateway:
   uds-istio-config:
-    tls:
-      servers:
-        tenant:
-          includeRootDomain: true
+    rootDomain:
+      enabled: true
+      server: tenant
 
 # --- identity-authorization ---
 authservice:

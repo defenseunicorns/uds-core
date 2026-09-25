@@ -375,9 +375,7 @@
                   },
                   "type": "array"
                 },
-                "priorityClassName": {
-                  "type": "string"
-                },
+                "priorityClassName": {},
                 "replicas": {
                   "type": "number"
                 }
@@ -585,6 +583,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -598,6 +599,9 @@
                   "type": "string"
                 },
                 "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
                   "type": "string"
                 },
                 "key": {
@@ -629,6 +633,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
@@ -663,12 +670,8 @@
               },
               "type": "object"
             },
-            "cniBinDir": {
-              "type": "string"
-            },
-            "cniConfDir": {
-              "type": "string"
-            },
+            "cniBinDir": {},
+            "cniConfDir": {},
             "excludeNamespaces": {
               "items": {
                 "type": "string"
@@ -1075,6 +1078,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -1084,6 +1090,18 @@
             },
             "tls": {
               "properties": {
+                "cacert": {
+                  "type": "string"
+                },
+                "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
                 "servers": {
                   "properties": {
                     "passthrough": {
@@ -1096,6 +1114,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
@@ -1147,6 +1168,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -1160,6 +1184,9 @@
                   "type": "string"
                 },
                 "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
                   "type": "string"
                 },
                 "key": {
@@ -1183,9 +1210,6 @@
                     },
                     "tenant": {
                       "properties": {
-                        "includeRootDomain": {
-                          "type": "boolean"
-                        },
                         "mode": {
                           "type": "string"
                         }
@@ -1194,6 +1218,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
@@ -1253,9 +1280,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },
@@ -1581,9 +1606,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },

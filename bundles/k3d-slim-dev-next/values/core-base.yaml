@@ -52,13 +52,16 @@ istio-admin-gateway:
 {{- $tenantTLSCert := index .vars "tenant_tls_cert" }}
 {{- $tenantTLSKey := index .vars "tenant_tls_key" }}
 {{- $tenantPorts := index .vars "tenant_service_ports" }}
-{{- $tenantIncludeRootDomain := index .vars "tenant_include_root_domain" }}
+{{- $rootDomainEnabled := index .vars "root_domain_enabled" }}
+{{- $rootDomainServer := index .vars "root_domain_server" }}
 istio-tenant-gateway:
   uds-istio-config:
+    rootDomain:
+      enabled: {{ $rootDomainEnabled }}
+      server: {{ $rootDomainServer | quote }}
     tls:
       servers:
         tenant:
-          includeRootDomain: {{ $tenantIncludeRootDomain }}
 {{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey }}
 {{- with $tenantTLS12 }}
       supportTLSV1_2: {{ . }}
