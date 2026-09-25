@@ -175,14 +175,23 @@ export async function handleFailure(
   }
 
   // Write an event for the error with the most detailed message available
-  await writeEvent(cr, { message: detailedMessage });
+  try {
+    await writeEvent(cr, { message: detailedMessage });
+  } catch (eventErr) {
+    log.error({ err: eventErr }, `Error writing reconciliation event for ${identifier}`);
+  }
 
   // Update the status of the package with the error
-  updateStatus(cr, status).catch(finalErr => {
-    // If the status update fails, write log the error and and try to write an event
+  try {
+    await updateStatus(cr, status);
+  } catch (finalErr) {
     log.error({ err: finalErr }, `Error updating status for ${identifier} failed`);
-    void writeEvent(cr, { message: finalErr.message });
-  });
+    try {
+      await writeEvent(cr, { message: finalErr.message });
+    } catch (eventErr) {
+      log.error({ err: eventErr }, `Error writing status failure event for ${identifier}`);
+    }
+  }
 }
 
 export function getReadinessConditions(ready: boolean = true) {
