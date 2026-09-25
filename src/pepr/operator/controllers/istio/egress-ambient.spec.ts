@@ -4,7 +4,14 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, Mock, MockedFunction, vi } from "vitest";
-import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
+import {
+  Allow,
+  Direction,
+  K8sGateway,
+  RemoteGenerated,
+  RemoteProtocol,
+  UDSPackage,
+} from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
 import { purgeOrphans } from "../utils";
 import { defaultEgressMocks, updateEgressMocks } from "./defaultTestMocks";
@@ -1038,8 +1045,22 @@ describe("test purgeAmbientEgressResources", () => {
 
     await purgeAmbientEgressResources({}, "1");
 
-    // Purges Gateway, ServiceEntry, and AuthorizationPolicy in ambient namespace
-    expect(mockPurgeOrphans).toHaveBeenCalledTimes(3);
+    // Purges ServiceEntry and AuthorizationPolicy; the shared waypoint is deleted directly.
+    expect(mockPurgeOrphans).toHaveBeenCalledTimes(2);
+  });
+
+  it("should delete the shared waypoint when no package contributes ambient egress", async () => {
+    updateEgressMocks(defaultEgressMocks);
+    const waypoint = {
+      metadata: { name: "egress-waypoint", namespace: "istio-egress-ambient" },
+    } as K8sGateway;
+    defaultEgressMocks.getWaypointMock.mockResolvedValueOnce({
+      items: [waypoint],
+    } as unknown as K8sGateway);
+
+    await purgeAmbientEgressResources({}, "1");
+
+    expect(defaultEgressMocks.deleteWaypointMock).toHaveBeenCalledWith(waypoint);
   });
 
   it("should handle purge error", async () => {
