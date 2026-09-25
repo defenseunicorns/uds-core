@@ -85,17 +85,19 @@ istio-tenant-gateway:
     rootDomain:
       enabled: {{ $rootDomainEnabled }}
       server: {{ printf "%q" $rootDomainServer }}
+{{- if or $tenantTLS12 $tenantTLSCert $tenantTLSKey }}
     tls:
       servers:
         tenant:
 {{- with $tenantTLS12 }}
-      supportTLSV1_2: {{ . }}
+          supportTLSV1_2: {{ . }}
 {{- end }}
 {{- with $tenantTLSCert }}
-      cert: "{{ . }}"
+          cert: "{{ . }}"
 {{- end }}
 {{- with $tenantTLSKey }}
-      key: "{{ . }}"
+          key: "{{ . }}"
+{{- end }}
 {{- end }}
 {{- with $tenantPorts }}
   gateway:
