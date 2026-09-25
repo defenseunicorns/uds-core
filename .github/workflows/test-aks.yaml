@@ -217,6 +217,11 @@ jobs:
           distro: "aks"
           resource_group: ${{ env.AKS_RESOURCE_GROUP }}
 
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: set +e; for i in $(seq 0 2); do uds remove .github/bundles/aks/uds-bundle-uds-core-aks-nightly-*.tar.zst --confirm; if [ $? -eq 0 ]; then break; fi; done

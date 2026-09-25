@@ -117,6 +117,11 @@ jobs:
           suffix: -rke2-${{ matrix.flavor }}
           distro: "rke2"
 
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
