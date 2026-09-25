@@ -1,0 +1,76 @@
+---
+title: Configure UDS Core for IPv4-only clusters
+description: Disable IPv6 in Istio ambient components and the Loki gateway when deploying UDS Core to a cluster without IPv6.
+sidebar:
+  order: 2.013
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+Configure UDS Core for a cluster where only IPv4 is available. Add these overrides before deploying UDS Core, or add them to your existing bundle and redeploy it.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- [UDS Registry](https://registry.defenseunicorns.com) account created and authenticated locally with a read token
+- Access to a Kubernetes cluster with IPv4 networking and no usable IPv6
+
+## Before you begin
+
+These settings control IPv6 behavior in individual components. They do not change your cluster's Pod or Service IP families. Keep any other overrides already defined for the same components when you add the values below.
+
+## Steps
+
+<Steps>
+
+1. **Add the IPv4-only overrides**
+
+   Add these values under the `core` package in your bundle. They adapt the IPv6 settings from the [Azure Proton RKE2 bundle](https://github.com/defenseunicorns/azure-tf-proton/blob/bd78e0e1720f33dad882bd49c47156701b1d0de6/bundles/rke2/uds-bundle.yaml) for the combined package.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       overrides:
+         istio-controlplane:
+           ztunnel:
+             values:
+               - path: meshConfig.defaultConfig.proxyMetadata
+                 value:
+                   IPV6_ENABLED: "false"
+           cni:
+             values:
+               - path: ambient.ipv6
+                 value: false
+         loki:
+           loki:
+             values:
+               - path: gateway.nginxConfig.enableIPv6
+                 value: false
+   ```
+
+2. **Create and deploy your bundle**
+
+   Run these commands from the directory containing your bundle manifest:
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Check that the Istio daemonsets are ready and Loki pods are running:
+
+```bash
+uds zarf tools kubectl get daemonset ztunnel istio-cni-node -n istio-system
+uds zarf tools kubectl get pods -n loki
+```
+
+The Istio daemonsets should show their desired pods as ready, and the Loki gateway pod should be `Running`. If a component still fails to start, inspect its pod logs for the specific error before changing other networking settings.
+
+## Related documentation
+
+- [Istio ztunnel troubleshooting](https://istio.io/latest/docs/ambient/usage/troubleshoot-ztunnel/) - Understand the `IPV6_ENABLED` setting.
