@@ -6,6 +6,7 @@
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { fetchWithTimeout } from "./helpers/fetch";
 
 describe("Blackbox Exporter", { retry: 3 }, () => {
   let blackboxExporterProxy: { server: net.Server; url: string };
@@ -25,7 +26,7 @@ describe("Blackbox Exporter", { retry: 3 }, () => {
 
   test("blackbox exporter should probe Prometheus and generate probe metrics", async () => {
     // Test that blackbox-exporter can probe Prometheus and generate probe metrics
-    const probeResponse = await fetch(
+    const probeResponse = await fetchWithTimeout(
       `${blackboxExporterProxy.url}/probe?target=http://prometheus-operated.monitoring.svc.cluster.local:9090/metrics&module=http_2xx`,
     );
     expect(probeResponse.status).toBe(200);
@@ -37,7 +38,7 @@ describe("Blackbox Exporter", { retry: 3 }, () => {
     expect(probeData).toContain("probe_duration_seconds");
 
     // Verify that Prometheus is scraping blackbox-exporter's own metrics
-    const metricsResponse = await fetch(
+    const metricsResponse = await fetchWithTimeout(
       `${prometheusProxy.url}/api/v1/query?query=up{job="prometheus-blackbox-exporter"}`,
     );
     expect(metricsResponse.status).toBe(200);
@@ -66,7 +67,7 @@ describe("Blackbox Exporter", { retry: 3 }, () => {
 
   test("blackbox exporter should probe Keycloak service", async () => {
     // Test that blackbox-exporter can probe Keycloak metrics endpoint
-    const probeResponse = await fetch(
+    const probeResponse = await fetchWithTimeout(
       `${blackboxExporterProxy.url}/probe?target=http://keycloak-http.keycloak.svc.cluster.local:9000/metrics&module=http_2xx`,
     );
     expect(probeResponse.status).toBe(200);
