@@ -4,7 +4,7 @@
 variables:
   - name: DEFAULT_K3S_VERSION
     description: "Expected K3s version in the default airgap uds-k3d package"
-    default: "v1.36.4+k3s1"
+    default: "v1.37.0+k3s1"
 
 tasks:
   - name: create-k3d-cluster
@@ -20,11 +20,11 @@ tasks:
         cmd: |
           set -euo pipefail
           if [ -z "${{ .inputs.k3s_version }}" ]; then
-            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.3-airgap --confirm
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.0-airgap --confirm
           else
             K3S_VERSION="${{ .inputs.k3s_version }}"
             K3D_IMAGE="ghcr.io/defenseunicorns/uds-k3d/k3s:${K3S_VERSION/+k3s/-k3s}"
-            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.20.3 --set K3D_IMAGE="$K3D_IMAGE" --confirm
+            ./uds zarf package deploy oci://defenseunicorns/uds-k3d:0.21.0 --set K3D_IMAGE="$K3D_IMAGE" --confirm
           fi
 
   - name: k3d-test-cluster
