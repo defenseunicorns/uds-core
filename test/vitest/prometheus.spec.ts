@@ -6,6 +6,7 @@
 import * as net from "net";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { closeForward, getForward } from "./helpers/forward";
+import { fetchWithTimeout } from "./helpers/fetch";
 import { pollUntilSuccess } from "./helpers/polling";
 
 describe("Prometheus and Alertmanager", { retry: 1 }, () => {
@@ -23,12 +24,12 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   });
 
   test("alert manager service should be responsive via the internal service address", async () => {
-    const response = await fetch(`${alertmanagerProxy.url}`);
+    const response = await fetchWithTimeout(`${alertmanagerProxy.url}`);
     expect(response.status).toBe(200);
   });
 
   test("alert manager should be firing watchdog alert", async () => {
-    const response = await fetch(`${alertmanagerProxy.url}/api/v2/alerts`);
+    const response = await fetchWithTimeout(`${alertmanagerProxy.url}/api/v2/alerts`);
 
     expect(response.status).toBe(200);
     const body = (await response.json()) as Array<{
@@ -42,12 +43,12 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   });
 
   test("prometheus web ui should be responsive via the internal service address", async () => {
-    const response = await fetch(`${prometheusProxy.url}`);
+    const response = await fetchWithTimeout(`${prometheusProxy.url}`);
     expect(response.status).toBe(200);
   });
 
   test("prometheus should use EndpointSlice service discovery", async () => {
-    const response = await fetch(`${prometheusProxy.url}/api/v1/status/config`);
+    const response = await fetchWithTimeout(`${prometheusProxy.url}/api/v1/status/config`);
     expect(response.status).toBe(200);
 
     const body = (await response.json()) as {
@@ -64,7 +65,7 @@ describe("Prometheus and Alertmanager", { retry: 1 }, () => {
   test("all prometheus targets should be up", { timeout: 220000 }, async () => {
     const targets = await pollUntilSuccess(
       async () => {
-        const response = await fetch(`${prometheusProxy.url}/api/v1/targets`);
+        const response = await fetchWithTimeout(`${prometheusProxy.url}/api/v1/targets`);
         if (!response.ok) {
           throw new Error(`Prometheus targets API returned ${response.status}`);
         }
