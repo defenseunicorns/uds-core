@@ -218,43 +218,24 @@ tasks:
           set -- build/zarf-package-uds-core-test-apps-*.zst
           if [ -f "$1" ]; then
             uds zarf package remove "$1" --confirm
-            if [ "${{ .inputs.validate_udp_expose }}" = "true" ]; then
-              gateway_crd=$(uds zarf tools kubectl get crd \
-                gateways.gateway.networking.k8s.io --ignore-not-found -o name)
-              if [ -n "$gateway_crd" ]; then
-                if GATEWAY=$(uds zarf tools kubectl get gateway envoy-default-gateway -n envoy-default-gateway --ignore-not-found -o name); then
-                  if [ -n "$GATEWAY" ]; then
-                    uds zarf tools kubectl wait --for=delete "$GATEWAY" -n envoy-default-gateway --timeout=5m
-                  fi
-                else
-                  echo "Failed to query the shared UDP Gateway."
-                  exit 1
-                fi
-              fi
-            fi
           fi
+
   - name: cleanup-udp-expose
-    description: Remove UDP test Package resources applied directly by an older release before upgrade
+    description: Remove UDP test Packages before UDS Core teardown
     actions:
-      - description: Delete the legacy test Package resources while the Core operator is available
+      - description: Delete the test Package CRs while the Core operator is available
         cmd: |
           set -e
-          package_crd=$(uds zarf tools kubectl get crd packages.uds.dev \
-            --ignore-not-found -o name)
-          if [ -n "$package_crd" ]; then
-            udp_packages=$(uds zarf tools yq eval-all \
-              'select(.kind == "Package")' src/test/app-curl-envoy-udp-packages.yaml)
-            printf '%s\n' "$udp_packages" | uds zarf tools kubectl delete -f - \
-              --ignore-not-found --wait=true --timeout=2m
+          if uds zarf tools kubectl get crd packages.uds.dev >/dev/null 2>&1; then
+            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-server -n curl-ns-udp-server --ignore-not-found --wait=true --timeout=2m
+            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-allow -n curl-ns-udp-allow --ignore-not-found --wait=true --timeout=2m
           else
-            echo "UDS Package CRD is not installed; skipping legacy UDP Package cleanup."
+            echo "UDS Package CRD is not installed; skipping UDP test Package cleanup."
           fi
       - description: Wait for Pepr to remove the shared UDP Gateway
         cmd: |
           set -e
-          gateway_crd=$(uds zarf tools kubectl get crd \
-            gateways.gateway.networking.k8s.io --ignore-not-found -o name)
-          if [ -n "$gateway_crd" ]; then
+          if uds zarf tools kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then
             if GATEWAY=$(uds zarf tools kubectl get gateway envoy-default-gateway -n envoy-default-gateway --ignore-not-found -o name); then
               if [ -n "$GATEWAY" ]; then
                 uds zarf tools kubectl wait --for=delete "$GATEWAY" -n envoy-default-gateway --timeout=5m

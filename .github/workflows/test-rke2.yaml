@@ -135,10 +135,15 @@ jobs:
           )"
           echo "RKE2_CLUSTER_NAMES=$RKE2_CLUSTER_NAMES" >> "$GITHUB_ENV"
           echo "Captured RKE2 cluster names: ${RKE2_CLUSTER_NAMES:-none}"
-      
+
       - name: Remove test apps after failed tests
         if: ${{ always() && steps.test_uds_core.outcome == 'failure' }}
         run: uds run -f src/test/tasks.yaml remove --no-progress
+        timeout-minutes: 10
+
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
         timeout-minutes: 10
 
       - name: Remove UDS Core
