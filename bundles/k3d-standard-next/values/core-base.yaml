@@ -84,7 +84,7 @@ istio-tenant-gateway:
   uds-istio-config:
     rootDomain:
       enabled: {{ $rootDomainEnabled }}
-      server: {{ $rootDomainServer | quote }}
+      server: {{ printf "%q" $rootDomainServer }}
     tls:
       servers:
         tenant:
