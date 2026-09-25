@@ -59,9 +59,39 @@ tasks:
             name: kubernetes.io/os=linux
         maxTotalSeconds: 900
 
+  - name: rke2-longhorn-ready
+    actions:
+      - description: Wait for Longhorn storage to be ready before deploying Zarf
+        cmd: |
+          set -eu
+          ATTEMPTS=180
+          SLEEP=5
+
+          for i in $(seq 1 ${ATTEMPTS}); do
+            storage_class_default=$(./uds zarf tools kubectl get storageclass longhorn \
+              -o jsonpath='{.metadata.annotations.storageclass\.kubernetes\.io/is-default-class}' \
+              2>/dev/null || true)
+            driver_available=$(./uds zarf tools kubectl -n kube-system get deployment longhorn-driver-deployer \
+              -o jsonpath='{.status.availableReplicas}' 2>/dev/null || true)
+
+            if [ "${storage_class_default}" = "true" ] && [ "${driver_available:-0}" -ge 1 ]; then
+              echo "Longhorn storage is ready"
+              exit 0
+            fi
+
+            echo "[$i/$ATTEMPTS] Waiting for Longhorn storage; retrying in ${SLEEP}s"
+            sleep ${SLEEP}
+          done
+
+          echo "Longhorn storage did not become ready in time" >&2
+          ./uds zarf tools kubectl get storageclass longhorn -o yaml || true
+          ./uds zarf tools kubectl -n kube-system get deployment longhorn-driver-deployer -o wide || true
+          exit 1
+
   - name: rke2-cluster-ready
     actions:
       - task: cluster-nodes-ready
+      - task: rke2-longhorn-ready
       - cmd: |
           # wait for nodes to be ready
           echo "Waiting for all cluster nodes to be ready...";

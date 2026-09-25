@@ -66,6 +66,7 @@ resource "azurerm_kubernetes_cluster" "aks_cluster" {
   depends_on = [
     azurerm_role_assignment.aks_network_role,
     azurerm_subnet_nat_gateway_association.cluster_node_subnet,
+    azurerm_nat_gateway_public_ip_association.this,
   ]
 
   tags = {
