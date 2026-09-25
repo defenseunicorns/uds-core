@@ -193,6 +193,8 @@ After completing this guide, your application will be accessible through one of 
                retryOn: "5xx,reset,connect-failure"
    ```
 
+   UDS Core adds HTTP Strict Transport Security (HSTS) with `includeSubDomains` to Keycloak's public and admin routes. Ensure that any subdomains beneath those Keycloak hostnames also use HTTPS. This is not a gateway-wide policy.
+
    **Example: CORS policy for a browser-consumed API**
 
    ```yaml title="uds-package.yaml"

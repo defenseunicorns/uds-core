@@ -155,14 +155,26 @@ spec:
                 prefix: /metrics
           redirect:
             uri: "/realms/{{ .Values.realm }}/account"
-          {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
           headers:
-            request:
+            response:
               remove:
+                - strict-transport-security
+              add:
+                Vary: Origin
+                strict-transport-security: "max-age=31536000; includeSubDomains"
+            request:
+              set:
+                X-Forwarded-Host: "sso.{{ .Values.domain }}"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
+              remove:
+                - Forwarded
+                - X-Forwarded-Prefix
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
-          {{- end }}
+                {{- end }}
 
       - description: "public auth access with optional client certificate"
         service: keycloak-http
@@ -170,15 +182,27 @@ spec:
           app.kubernetes.io/name: keycloak
         host: sso
         port: 8080
-        {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
-            request:
+            response:
               remove:
+                - strict-transport-security
+              add:
+                Vary: Origin
+                strict-transport-security: "max-age=31536000; includeSubDomains"
+            request:
+              set:
+                X-Forwarded-Host: "sso.{{ .Values.domain }}"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
+              remove:
+                - Forwarded
+                - X-Forwarded-Prefix
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
-        {{- end }}
+                {{- end }}
 
       - description: "admin access with optional client certificate"
         service: keycloak-http
@@ -193,13 +217,25 @@ spec:
             paths:
               - /
         {{- end }}
-        {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
         advancedHTTP:
           headers:
-            request:
+            response:
               remove:
+                - strict-transport-security
+              add:
+                Vary: Origin
+                strict-transport-security: "max-age=31536000; includeSubDomains"
+            request:
+              set:
+                X-Forwarded-Host: "keycloak.{{ .Values.adminDomain | default (printf "admin.%s" .Values.domain) }}"
+                X-Forwarded-Proto: "https"
+                X-Forwarded-Port: "443"
+              remove:
+                - Forwarded
+                - X-Forwarded-Prefix
+                {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
               add:
                 istio-mtls-client-certificate: "%DOWNSTREAM_PEER_CERT%"
-        {{- end }}
+                {{- end }}
     # @lulaEnd 506992d2-64cf-4fb3-95de-40a8ad127626

@@ -127,16 +127,19 @@ describe.each(DOMAIN_SCENARIOS)(
       expect(ini).toContain(`grafana.${expectedAdminDomain}%2Flogin`);
     });
 
-    it("grafana SSO redirect URI for generic_oauth uses expected admin domain", () => {
+    it("grafana SSO web origin uses the exact admin domain", () => {
       const r = findResource(manifests, "Package", "grafana");
-      const redirectUris = resourceStringArray(r, "spec", "sso", 0, "redirectUris");
-      expect(redirectUris).toContain(`https://grafana.${expectedAdminDomain}/login/generic_oauth`);
+      const webOrigins = resourceStringArray(r, "spec", "sso", 0, "webOrigins");
+      expect(webOrigins).toEqual([`https://grafana.${expectedAdminDomain}`]);
     });
 
-    it("grafana SSO redirect URI for login uses expected admin domain", () => {
+    it("grafana SSO redirect URIs use the exact admin domain and required paths", () => {
       const r = findResource(manifests, "Package", "grafana");
       const redirectUris = resourceStringArray(r, "spec", "sso", 0, "redirectUris");
-      expect(redirectUris).toContain(`https://grafana.${expectedAdminDomain}/login`);
+      expect(redirectUris).toEqual([
+        `https://grafana.${expectedAdminDomain}/login/generic_oauth`,
+        `https://grafana.${expectedAdminDomain}/login`,
+      ]);
     });
   },
 );
