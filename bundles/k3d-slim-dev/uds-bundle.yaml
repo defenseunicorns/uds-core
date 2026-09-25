@@ -105,6 +105,14 @@ packages:
       istio-tenant-gateway:
         uds-istio-config:
           variables:
+            - name: ROOT_DOMAIN_ENABLED
+              description: "Enable root-domain support"
+              default: true
+              path: rootDomain.enabled
+            - name: ROOT_DOMAIN_SERVER
+              description: "TLS server that serves the root domain"
+              default: tenant
+              path: rootDomain.server
             - name: TENANT_TLS_CERT
               description: "The TLS cert for the tenant gateway (must be base64 encoded)"
               path: tls.cert

@@ -585,6 +585,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -598,6 +601,9 @@
                   "type": "string"
                 },
                 "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
                   "type": "string"
                 },
                 "key": {
@@ -629,6 +635,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
@@ -1075,6 +1084,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -1084,6 +1096,18 @@
             },
             "tls": {
               "properties": {
+                "cacert": {
+                  "type": "string"
+                },
+                "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                },
                 "servers": {
                   "properties": {
                     "passthrough": {
@@ -1096,6 +1120,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"
@@ -1147,6 +1174,9 @@
                 "enabled": {
                   "type": "boolean"
                 },
+                "server": {
+                  "type": "string"
+                },
                 "tls": {
                   "properties": {},
                   "type": "object"
@@ -1160,6 +1190,9 @@
                   "type": "string"
                 },
                 "cert": {
+                  "type": "string"
+                },
+                "credentialName": {
                   "type": "string"
                 },
                 "key": {
@@ -1191,6 +1224,9 @@
                     }
                   },
                   "type": "object"
+                },
+                "supportTLSV1_2": {
+                  "type": "boolean"
                 }
               },
               "type": "object"

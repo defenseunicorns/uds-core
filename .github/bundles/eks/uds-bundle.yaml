@@ -52,6 +52,13 @@ packages:
               value:
                 service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
                 service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+      istio-tenant-gateway:
+        uds-istio-config:
+          values:
+            - path: rootDomain.enabled
+              value: true
+            - path: rootDomain.server
+              value: tenant
       velero:
         velero:
           variables:
