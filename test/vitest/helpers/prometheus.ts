@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
+import { fetchWithTimeout } from "./fetch";
+
 /**
  * Queries Prometheus for a specific metric and returns its value
  * @param prometheusUrl - The base URL of the Prometheus instance
@@ -13,7 +15,7 @@ export const queryPrometheusMetric = async (
   metric: string,
 ): Promise<number | null> => {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${prometheusUrl}/api/v1/query?query=${encodeURIComponent(metric)}`,
     );
 

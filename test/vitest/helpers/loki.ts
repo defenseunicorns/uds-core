@@ -3,6 +3,7 @@
  */
 
 import * as net from "net";
+import { fetchWithTimeout } from "./fetch";
 
 export interface LokiQueryResult {
   status: string;
@@ -15,7 +16,7 @@ export const queryLoki = async (
   limit = 100,
 ): Promise<LokiQueryResult> => {
   try {
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       `${lokiRead.url}/loki/api/v1/query_range?query=${encodeURIComponent(query)}&limit=${limit}`,
       {
         method: "GET",

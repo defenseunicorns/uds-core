@@ -6,6 +6,7 @@
 import { spawn } from "node:child_process";
 import { openSync, closeSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { performance } from "node:perf_hooks";
 import { join } from "node:path";
 import { expect } from "vitest";
 import { parseAllDocuments } from "yaml";
@@ -40,11 +41,25 @@ export interface DomainScenario {
 type ResourcePathSegment = string | number;
 
 const ROOT = process.cwd();
+const DEBUG_RENDERING = process.env.DEBUG_VALUES_RENDERING === "true";
+const SLOW_RENDER_THRESHOLD_MS = 30_000;
 
 const renderCache = new Map<string, Promise<K8sResource[]>>();
 
 function cacheKey(pkg: string, opts?: RenderOptions): string {
   return JSON.stringify({ pkg, values: opts?.values, variables: opts?.variables });
+}
+
+function renderDescription(pkg: string, opts?: RenderOptions): string {
+  const valueKeys =
+    Object.keys(opts?.values ?? {})
+      .sort()
+      .join(",") || "none";
+  const variableKeys =
+    Object.keys(opts?.variables ?? {})
+      .sort()
+      .join(",") || "none";
+  return `package=${pkg} values=[${valueKeys}] variables=[${variableKeys}]`;
 }
 
 export async function renderManifests(pkg: string, opts?: RenderOptions): Promise<K8sResource[]> {
@@ -62,6 +77,13 @@ export async function renderManifests(pkg: string, opts?: RenderOptions): Promis
 
 async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promise<K8sResource[]> {
   const tmp = mkdtempSync(join(tmpdir(), "zarf-values-test-"));
+  const description = renderDescription(pkg, opts);
+  const startedAt = performance.now();
+
+  if (DEBUG_RENDERING) {
+    console.warn(`[values] starting manifest render (${description}, pid=${process.pid})`);
+  }
+
   try {
     const args = [
       "zarf",
@@ -98,9 +120,25 @@ async function renderManifestsUncached(pkg: string, opts?: RenderOptions): Promi
     const stdout = readFileSync(outPath, "utf-8");
 
     const docs = parseAllDocuments(stdout);
-    return docs
+    const manifests = docs
       .map(d => d.toJS() as K8sResource)
       .filter((d): d is K8sResource => d != null && typeof d === "object" && "kind" in d);
+
+    const durationMs = Math.round(performance.now() - startedAt);
+    if (DEBUG_RENDERING || durationMs >= SLOW_RENDER_THRESHOLD_MS) {
+      console.warn(
+        `[values] completed manifest render in ${durationMs}ms (${description}, pid=${process.pid})`,
+      );
+    }
+
+    return manifests;
+  } catch (error) {
+    const durationMs = Math.round(performance.now() - startedAt);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `[values] manifest render failed after ${durationMs}ms (${description}, pid=${process.pid}): ${message}`,
+      { cause: error },
+    );
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -311,6 +349,7 @@ export async function preRenderDomainScenarios(pkg: string): Promise<Map<string,
       return [s.name, manifests] as const;
     }),
   );
+
   return new Map(entries);
 }
 
