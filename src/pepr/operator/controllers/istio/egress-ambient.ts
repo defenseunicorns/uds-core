@@ -174,7 +174,7 @@ export async function applyAmbientEgressResources(
   }
 
   // Generate and apply the shared waypoint.
-  const waypoint = createEgressWaypointGateway(contributingPkgIds, generation);
+  const waypoint = createEgressWaypointGateway(contributingPkgIds);
   const waypointName = waypoint.metadata?.name ?? "undefined";
   log.debug(waypoint, `Applying Waypoint ${waypointName}`);
   await K8s(K8sGateway).Apply(waypoint, { force: true });
@@ -308,18 +308,17 @@ export async function purgeAmbientEgressResources(
       entry.rules.some(rule => rule.kind === "host"),
     );
 
-    const currentGenGateways = await K8s(K8sGateway)
+    const sharedGateways = await K8s(K8sGateway)
       .InNamespace(ambientEgressNamespace)
       .WithLabel("uds/package", sharedEgressPkgId)
-      .WithLabel("uds/generation", generation)
       .Get();
 
-    const currentGenGatewayCount =
-      (currentGenGateways as { items?: unknown[] } | undefined)?.items?.length ?? 0;
-    if (currentGenGatewayCount === 0 && hasRemoteHostContributors) {
+    const sharedGatewayItems =
+      (sharedGateways as { items?: K8sGateway[] } | undefined)?.items ?? [];
+    if (sharedGatewayItems.length === 0 && hasRemoteHostContributors) {
       log.warn(
         { generation },
-        "Skipping purge of ambient egress resources because no current-generation waypoint exists",
+        "Skipping purge of ambient egress resources because no shared waypoint exists",
       );
       return;
     }
@@ -340,7 +339,14 @@ export async function purgeAmbientEgressResources(
       return;
     }
 
-    await purgeOrphans(generation, ambientEgressNamespace, sharedEgressPkgId, K8sGateway, log);
+    // The shared waypoint is intentionally not generation-labeled. Updating that label on every
+    // package reconciliation causes Istio to roll the waypoint Deployment unnecessarily.
+    // Remove the singleton only when no package still contributes ambient host egress.
+    if (!hasRemoteHostContributors) {
+      for (const gateway of sharedGatewayItems) {
+        await K8s(K8sGateway).Delete(gateway);
+      }
+    }
     await purgeOrphans(
       generation,
       ambientEgressNamespace,

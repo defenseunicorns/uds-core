@@ -184,8 +184,9 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile sidecar egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    errors.push(new Error(`${errText}: ${errorMessage}`, { cause: e }));
   }
 
   // Reconcile ambient egress resources if namespace is found
@@ -202,8 +203,9 @@ export async function performEgressReconciliation() {
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
-    log.error(errText, e);
-    errors.push(new Error(errText));
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    errors.push(new Error(`${errText}: ${errorMessage}`, { cause: e }));
   }
 
   // If any errors occurred, aggregate them and throw
@@ -241,6 +243,10 @@ export async function updateInMemoryAmbientPackageMap(
 ) {
   if (action === PackageAction.AddOrUpdate) {
     const entry = createAmbientPackageEntry(pkg);
+    if (entry.rules.length === 0) {
+      delete inMemoryAmbientPackageMap[pkgId];
+      return;
+    }
     validateAmbientProtocolConflicts(inMemoryAmbientPackageMap, entry, pkgId);
     inMemoryAmbientPackageMap[pkgId] = entry;
   } else if (action === PackageAction.Remove) {
