@@ -12,6 +12,8 @@ vi.setConfig({ hookTimeout: 270000, testTimeout: 180000 });
 
 const TEST_NAMESPACE = "envoy-gateway-e2e";
 const GATEWAY_NAME = "uds-core-eg-e2e";
+const TEST_PROXY_CONFIG = "uds-core-eg-e2e-proxy-config";
+const DEFAULT_PROXY_CONFIG = "envoy-gateway-proxy-config";
 const OWNING_GATEWAY_LABEL = "gateway.envoyproxy.io/owning-gateway-name";
 
 const kc = new k8s.KubeConfig();
@@ -31,6 +33,10 @@ type GatewayObject = k8s.KubernetesObject & {
   status?: {
     conditions?: Condition[];
   };
+};
+
+type CustomObject = k8s.KubernetesObject & {
+  spec?: Record<string, unknown>;
 };
 
 function isConflict(error: unknown): boolean {
@@ -89,6 +95,110 @@ async function deleteNamespace(): Promise<void> {
   }
 }
 
+async function deleteGateway(): Promise<void> {
+  try {
+    await customObjects.deleteNamespacedCustomObject({
+      group: "gateway.networking.k8s.io",
+      version: "v1",
+      namespace: TEST_NAMESPACE,
+      plural: "gateways",
+      name: GATEWAY_NAME,
+    });
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+}
+
+async function waitForGatewayDeleted(): Promise<void> {
+  await pollUntilSuccess(
+    async () => {
+      try {
+        await readGateway();
+        return false;
+      } catch (error) {
+        if (isNotFound(error)) return true;
+        throw error;
+      }
+    },
+    deleted => deleted,
+    `Gateway ${TEST_NAMESPACE}/${GATEWAY_NAME} deleted`,
+    120000,
+    5000,
+  );
+}
+
+async function deleteProxyConfig(): Promise<void> {
+  try {
+    await customObjects.deleteNamespacedCustomObject({
+      group: "gateway.envoyproxy.io",
+      version: "v1alpha1",
+      namespace: TEST_NAMESPACE,
+      plural: "envoyproxies",
+      name: TEST_PROXY_CONFIG,
+    });
+  } catch (error) {
+    if (!isNotFound(error)) throw error;
+  }
+}
+
+function withClusterIPService(spec: Record<string, unknown>): Record<string, unknown> {
+  const provider = { ...((spec.provider as Record<string, unknown> | undefined) ?? {}) };
+  const kubernetes = {
+    ...((provider.kubernetes as Record<string, unknown> | undefined) ?? {}),
+  };
+  const envoyService = {
+    ...((kubernetes.envoyService as Record<string, unknown> | undefined) ?? {}),
+    type: "ClusterIP",
+  };
+
+  kubernetes.envoyService = envoyService;
+  provider.kubernetes = kubernetes;
+
+  return { ...spec, provider };
+}
+
+// This suite verifies Gateway reconciliation and managed proxy readiness. When the
+// flavor provides a default EnvoyProxy, use a per-Gateway ClusterIP override so
+// teardown does not depend on a cloud load balancer controller. Otherwise, keep the
+// existing GatewayClass behavior so the packaged Envoy image is used.
+async function createProxyConfig(): Promise<boolean> {
+  let defaultProxy: CustomObject;
+  try {
+    defaultProxy = (await customObjects.getNamespacedCustomObject({
+      group: "gateway.envoyproxy.io",
+      version: "v1alpha1",
+      namespace: "envoy-gateway-system",
+      plural: "envoyproxies",
+      name: DEFAULT_PROXY_CONFIG,
+    })) as CustomObject;
+  } catch (error) {
+    if (isNotFound(error)) return false;
+    throw error;
+  }
+
+  if (!defaultProxy.spec) {
+    throw new Error(`EnvoyProxy ${DEFAULT_PROXY_CONFIG} has no spec`);
+  }
+
+  await customObjects.createNamespacedCustomObject({
+    group: "gateway.envoyproxy.io",
+    version: "v1alpha1",
+    namespace: TEST_NAMESPACE,
+    plural: "envoyproxies",
+    body: {
+      apiVersion: "gateway.envoyproxy.io/v1alpha1",
+      kind: "EnvoyProxy",
+      metadata: {
+        name: TEST_PROXY_CONFIG,
+        namespace: TEST_NAMESPACE,
+      },
+      spec: withClusterIPService(defaultProxy.spec),
+    },
+  });
+
+  return true;
+}
+
 async function waitForNamespaceDeleted(): Promise<void> {
   await pollUntilSuccess(
     async () => {
@@ -109,7 +219,28 @@ async function waitForNamespaceDeleted(): Promise<void> {
   );
 }
 
-async function createGateway(): Promise<void> {
+async function createGateway(useProxyConfig: boolean): Promise<void> {
+  const spec: Record<string, unknown> = {
+    gatewayClassName: "envoy-gateway",
+    listeners: [
+      {
+        name: "udp-7777",
+        protocol: "UDP",
+        port: 7777,
+      },
+    ],
+  };
+
+  if (useProxyConfig) {
+    spec.infrastructure = {
+      parametersRef: {
+        group: "gateway.envoyproxy.io",
+        kind: "EnvoyProxy",
+        name: TEST_PROXY_CONFIG,
+      },
+    };
+  }
+
   await customObjects.createNamespacedCustomObject({
     group: "gateway.networking.k8s.io",
     version: "v1",
@@ -121,16 +252,7 @@ async function createGateway(): Promise<void> {
       metadata: {
         name: GATEWAY_NAME,
       },
-      spec: {
-        gatewayClassName: "envoy-gateway",
-        listeners: [
-          {
-            name: "udp-7777",
-            protocol: "UDP",
-            port: 7777,
-          },
-        ],
-      },
+      spec,
     },
   });
 }
@@ -178,14 +300,23 @@ function isPodReady(pod: k8s.V1Pod): boolean {
 }
 
 describe("Envoy Gateway", () => {
+  let usesClusterIPOverride = false;
+
   beforeAll(async () => {
+    await deleteGateway();
+    await waitForGatewayDeleted();
+    await deleteProxyConfig();
     await deleteNamespace();
     await waitForNamespaceDeleted();
     await createNamespace();
-    await createGateway();
+    usesClusterIPOverride = await createProxyConfig();
+    await createGateway(usesClusterIPOverride);
   });
 
   afterAll(async () => {
+    await deleteGateway();
+    await waitForGatewayDeleted();
+    await deleteProxyConfig();
     await deleteNamespace();
     await waitForNamespaceDeleted();
   });
@@ -210,6 +341,12 @@ describe("Envoy Gateway", () => {
     );
 
     expect(services.length).toBeGreaterThan(0);
+    if (usesClusterIPOverride) {
+      expect(
+        services.every(service => service.spec?.type === "ClusterIP"),
+        "Expected the test Gateway service to use ClusterIP",
+      ).toBe(true);
+    }
 
     const pods = await pollUntilSuccess(
       listManagedPods,
