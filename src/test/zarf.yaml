@@ -55,6 +55,14 @@ components:
     images:
       - curlimages/curl:latest
 
+  # UDP expose test Package resources are opt-in with the UDP tests.
+  - name: udp-expose-test
+    required: false
+    manifests:
+      - name: envoy-gateway-udp-test-packages
+        files:
+          - "app-curl-envoy-udp-packages.yaml"
+
   # Deploy test workloads
   - name: test-apps
     required: true

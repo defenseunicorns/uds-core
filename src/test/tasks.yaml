@@ -74,17 +74,25 @@ tasks:
       - description: Create zarf package for the test resources
         cmd: uds zarf package create src/test --confirm --skip-sbom -a ${{ index .inputs "architecture" }}
 
-      - description: Deploy the test resources (with egress-app)
-        if: ${{ eq .inputs.validate_egress "true" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components egress-app"
+      - description: Deploy the test resources and selected optional apps
+        cmd: |
+          COMPONENTS=""
+          if [ "${{ .inputs.validate_egress }}" = "true" ]; then
+            COMPONENTS="egress-app"
+          fi
+          if [ "${{ .inputs.validate_udp_expose }}" = "true" ]; then
+            if [ -n "$COMPONENTS" ]; then
+              COMPONENTS="$COMPONENTS,udp-expose-test"
+            else
+              COMPONENTS="udp-expose-test"
+            fi
+          fi
 
-      - description: Deploy the test resources
-        if: ${{ eq .inputs.validate_egress "false" }}
-        cmd: "uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm"
-
-      - description: Apply Envoy Gateway UDP test overlay
-        if: ${{ eq .inputs.validate_udp_expose "true" }}
-        cmd: "uds zarf tools kubectl apply -f src/test/app-curl-envoy-udp-packages.yaml"
+          if [ -n "$COMPONENTS" ]; then
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm --components "$COMPONENTS"
+          else
+            uds zarf package deploy build/zarf-package-uds-core-test-apps-*.zst --confirm
+          fi
 
       - description: Verify the admin app is accessible
         wait:
@@ -184,3 +192,29 @@ tasks:
     actions:
       - description: Remove the test apps zarf package
         cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+
+  - name: cleanup-udp-expose
+    description: Remove UDP test Packages before UDS Core teardown
+    actions:
+      - description: Delete the test Package CRs while the Core operator is available
+        cmd: |
+          if uds zarf tools kubectl get crd packages.uds.dev >/dev/null 2>&1; then
+            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-server -n curl-ns-udp-server --ignore-not-found --wait=true --timeout=2m
+            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-allow -n curl-ns-udp-allow --ignore-not-found --wait=true --timeout=2m
+          else
+            echo "UDS Package CRD is not installed; skipping UDP test Package cleanup."
+          fi
+      - description: Wait for Pepr to remove the shared UDP Gateway
+        cmd: |
+          if uds zarf tools kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then
+            if GATEWAY=$(uds zarf tools kubectl get gateway envoy-default-gateway -n envoy-default-gateway --ignore-not-found -o name); then
+              if [ -n "$GATEWAY" ]; then
+                uds zarf tools kubectl wait --for=delete "$GATEWAY" -n envoy-default-gateway --timeout=5m
+              fi
+            else
+              echo "Failed to query the shared UDP Gateway."
+              exit 1
+            fi
+          else
+            echo "Gateway API CRD is not installed; skipping UDP Gateway wait."
+          fi
