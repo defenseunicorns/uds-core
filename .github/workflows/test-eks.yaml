@@ -118,17 +118,25 @@ jobs:
           suffix: -eks-${{ matrix.flavor }}
           distro: "eks"
 
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/eks/uds-bundle-uds-core-eks-*.tar.zst --confirm
         timeout-minutes: 10
-        continue-on-error: true
 
       - name: Teardown EKS cluster
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=eks --set CLOUD=aws
         timeout-minutes: 30
-        continue-on-error: true
+
+      - name: Cleanup AWS load balancers
+        if: always()
+        run: .github/scripts/cleanup-aws-load-balancers.sh eks "$UDS_CLUSTER_NAME"
+        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'

@@ -117,17 +117,25 @@ jobs:
           suffix: -rke2-${{ matrix.flavor }}
           distro: "rke2"
 
+      - name: Cleanup UDP test resources
+        if: always()
+        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
+        timeout-minutes: 10
+
       - name: Remove UDS Core
         if: always()
         run: uds remove .github/bundles/rke2/uds-bundle-uds-core-rke2-*.tar.zst --confirm
         timeout-minutes: 20
-        continue-on-error: true
 
       - name: Remove IAC
         if: always()
         run: uds run -f tasks/iac.yaml destroy-iac --no-progress --set K8S_DISTRO=rke2 --set CLOUD=aws
         timeout-minutes: 10
-        continue-on-error: true
+
+      - name: Cleanup AWS load balancers
+        if: always()
+        run: .github/scripts/cleanup-aws-load-balancers.sh rke2 "$UDS_CLUSTER_NAME"
+        timeout-minutes: 20
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
