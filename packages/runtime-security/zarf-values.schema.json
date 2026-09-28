@@ -1113,16 +1113,12 @@
               "properties": {},
               "type": "object"
             },
-            "podHostname": {
-              "type": "string"
-            },
+            "podHostname": {},
             "podLabels": {
               "properties": {},
               "type": "object"
             },
-            "podPriorityClassName": {
-              "type": "string"
-            },
+            "podPriorityClassName": {},
             "rbac": {
               "properties": {
                 "create": {
@@ -1233,9 +1229,7 @@
               },
               "type": "object"
             },
-            "services": {
-              "type": "string"
-            },
+            "services": {},
             "tolerations": {
               "items": {
                 "properties": {
