@@ -43,6 +43,7 @@ type ResourcePathSegment = string | number;
 const ROOT = process.cwd();
 const DEBUG_RENDERING = process.env.DEBUG_VALUES_RENDERING === "true";
 const SLOW_RENDER_THRESHOLD_MS = 30_000;
+const MANIFEST_RENDER_TIMEOUT_MS = 240_000;
 
 const renderCache = new Map<string, Promise<K8sResource[]>>();
 
@@ -154,8 +155,12 @@ function spawnToFile(cmd: string, args: string[], outPath: string, cwd: string):
     });
     const timer = setTimeout(() => {
       child.kill();
-      reject(new Error(`Timed out after 300s: ${cmd} ${args.join(" ")}`));
-    }, 300_000);
+      reject(
+        new Error(
+          `Timed out after ${MANIFEST_RENDER_TIMEOUT_MS / 1_000}s: ${cmd} ${args.join(" ")}`,
+        ),
+      );
+    }, MANIFEST_RENDER_TIMEOUT_MS);
     child.on("close", code => {
       clearTimeout(timer);
       closeSync(fd);
