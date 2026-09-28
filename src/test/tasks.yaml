@@ -214,7 +214,10 @@ tasks:
     actions:
       - description: Delete the test Package CRs while the Core operator is available
         cmd: |
-          if uds zarf tools kubectl get crd packages.uds.dev >/dev/null 2>&1; then
+          set -e
+          package_crd=$(uds zarf tools kubectl get crd packages.uds.dev \
+            --ignore-not-found -o name)
+          if [ -n "$package_crd" ]; then
             uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-server -n curl-ns-udp-server --ignore-not-found --wait=true --timeout=2m
             uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-allow -n curl-ns-udp-allow --ignore-not-found --wait=true --timeout=2m
           else
@@ -222,7 +225,10 @@ tasks:
           fi
       - description: Wait for Pepr to remove the shared UDP Gateway
         cmd: |
-          if uds zarf tools kubectl get crd gateways.gateway.networking.k8s.io >/dev/null 2>&1; then
+          set -e
+          gateway_crd=$(uds zarf tools kubectl get crd \
+            gateways.gateway.networking.k8s.io --ignore-not-found -o name)
+          if [ -n "$gateway_crd" ]; then
             if GATEWAY=$(uds zarf tools kubectl get gateway envoy-default-gateway -n envoy-default-gateway --ignore-not-found -o name); then
               if [ -n "$GATEWAY" ]; then
                 uds zarf tools kubectl wait --for=delete "$GATEWAY" -n envoy-default-gateway --timeout=5m
