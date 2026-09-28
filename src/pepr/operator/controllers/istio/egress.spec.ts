@@ -146,6 +146,57 @@ describe("test reconcileSharedEgressResources", () => {
     vi.clearAllMocks();
   });
 
+  it("loads all live ambient contributors before reconciling the first host package", async () => {
+    const liveContributor: UDSPackage = {
+      ...pkgWithAllow,
+      metadata: { name: "live-package", namespace: "live-namespace" },
+    };
+    const terminatingContributor: UDSPackage = {
+      ...pkgWithAllow,
+      metadata: {
+        name: "terminating-package",
+        namespace: "terminating-namespace",
+        deletionTimestamp: new Date("2026-09-28T00:00:00Z"),
+      },
+    };
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getPkgListMock: vi
+        .fn<() => Promise<{ items: UDSPackage[] }>>()
+        .mockResolvedValue({ items: [liveContributor, terminatingContributor] }),
+    });
+
+    await reconcileSharedEgressResources(
+      pkgWithAllow,
+      hostResourceMapMock,
+      PackageAction.AddOrUpdate,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).toHaveProperty("live-package-live-namespace");
+    expect(inMemoryAmbientPackageMap).toHaveProperty("test-package-test-namespace");
+    expect(inMemoryAmbientPackageMap).not.toHaveProperty(
+      "terminating-package-terminating-namespace",
+    );
+    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(Number),
+    );
+    expect(purgeAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(String),
+    );
+
+    await reconcileSharedEgressResources(
+      liveContributor,
+      undefined,
+      PackageAction.Remove,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).not.toHaveProperty("live-package-live-namespace");
+  });
+
   it("should populate in-memory vars on action AddOrUpdate, sidecar", async () => {
     updateEgressMocks(defaultEgressMocks);
 
@@ -191,53 +242,6 @@ describe("test reconcileSharedEgressResources", () => {
         ],
       },
     });
-  });
-
-  it("loads live ambient contributors before purging after a process restart", async () => {
-    const liveContributor: UDSPackage = {
-      ...pkgWithAllow,
-      metadata: { name: "live-package", namespace: "live-namespace" },
-    };
-    const packageWithoutHostEgress: UDSPackage = {
-      ...pkgMock,
-      metadata: { name: "first-package", namespace: "first-namespace" },
-    };
-    const getPkgListMock = vi.fn().mockResolvedValue({ items: [liveContributor] });
-    updateEgressMocks({ ...defaultEgressMocks, getPkgListMock });
-
-    await reconcileSharedEgressResources(
-      packageWithoutHostEgress,
-      undefined,
-      PackageAction.AddOrUpdate,
-      Mode.Ambient,
-    );
-
-    expect(inMemoryAmbientPackageMap).toHaveProperty("live-package-live-namespace");
-    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
-      inMemoryAmbientPackageMap,
-      expect.any(Number),
-    );
-    expect(purgeAmbientEgressResources).toHaveBeenCalledWith(
-      inMemoryAmbientPackageMap,
-      expect.any(String),
-    );
-  });
-
-  it("does not reload a package that is being removed from the live map", async () => {
-    updateEgressMocks({
-      ...defaultEgressMocks,
-      getPkgListMock: vi.fn().mockResolvedValue({ items: [pkgWithAllow] }),
-    });
-
-    await reconcileSharedEgressResources(
-      pkgWithAllow,
-      hostResourceMapMock,
-      PackageAction.Remove,
-      Mode.Ambient,
-    );
-
-    expect(inMemoryAmbientPackageMap).toEqual({});
-    expect(purgeAmbientEgressResources).toHaveBeenCalledWith({}, expect.any(String));
   });
 
   it("should retry after an apply failure", async () => {
