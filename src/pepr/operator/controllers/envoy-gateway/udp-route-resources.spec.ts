@@ -14,6 +14,10 @@ import {
   reconcileDefaultGatewayListeners,
 } from "./udp-route-resources";
 
+const kubernetesObjectApiMock = vi.hoisted(() => ({
+  delete: vi.fn().mockResolvedValue({}),
+}));
+
 vi.mock("pepr", () => ({
   K8s: vi.fn(),
   kind: {
@@ -29,6 +33,19 @@ vi.mock("pepr", () => ({
     })),
   },
 }));
+
+vi.mock("@kubernetes/client-node", async importOriginal => {
+  const actual = await importOriginal<typeof import("@kubernetes/client-node")>();
+  return {
+    ...actual,
+    KubeConfig: class {
+      loadFromDefault = vi.fn();
+    },
+    KubernetesObjectApi: {
+      makeApiClient: vi.fn(() => kubernetesObjectApiMock),
+    },
+  };
+});
 
 type K8sClient = {
   Apply: ReturnType<typeof vi.fn>;
@@ -226,6 +243,8 @@ describe("envoyGatewayResources", () => {
               metadata: {
                 name: "web-udp-old",
                 namespace: "web-ns",
+                uid: "udp-route-uid",
+                resourceVersion: "10",
                 labels: { "uds/package": "web", "uds/generation": "1" },
               },
             };
@@ -244,8 +263,19 @@ describe("envoyGatewayResources", () => {
 
     await envoyGatewayResources(pkg, "web-ns");
 
-    expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
+    expect(kubernetesObjectApiMock.delete).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        preconditions: {
+          uid: "udp-route-uid",
+          resourceVersion: "10",
+        },
+      },
     );
   });
 
@@ -280,6 +310,8 @@ describe("envoyGatewayResources", () => {
               metadata: {
                 name: "web-udp-old",
                 namespace: "web-ns",
+                uid: "udp-route-uid",
+                resourceVersion: "10",
                 labels: { "uds/package": "web", "uds/generation": "1" },
               },
             };
@@ -298,8 +330,19 @@ describe("envoyGatewayResources", () => {
 
     await envoyGatewayResources(pkg, "web-ns");
 
-    expect(clientFor(K8sUDPRoute).Delete).toHaveBeenCalledWith(
+    expect(kubernetesObjectApiMock.delete).toHaveBeenCalledWith(
       expect.objectContaining({ metadata: expect.objectContaining({ name: "web-udp-old" }) }),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        preconditions: {
+          uid: "udp-route-uid",
+          resourceVersion: "10",
+        },
+      },
     );
     expect(clientFor(K8sGateway).Apply).not.toHaveBeenCalled();
   });

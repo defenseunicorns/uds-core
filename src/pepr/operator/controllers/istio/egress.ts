@@ -4,6 +4,7 @@
  */
 import { Allow, Direction, RemoteGenerated, RemoteProtocol, UDSPackage } from "../../crd";
 import { Mode } from "../../crd/generated/package-v1alpha1";
+import { K8s } from "pepr";
 import { Mutex, validateNamespace } from "../utils";
 import { applyAmbientEgressResources, purgeAmbientEgressResources } from "./egress-ambient";
 import { getAllowedPorts, getPortsForHostAllow } from "./egress-ports";
@@ -111,7 +112,7 @@ export async function reconcileSharedEgressResources(
       await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
     }
 
-    await performEgressReconciliation();
+    await performEgressReconciliation(action === PackageAction.Remove ? pkgId : undefined);
   } finally {
     release();
   }
@@ -166,7 +167,7 @@ export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry 
 }
 
 // Perform sidecar egress resources reconciliation
-export async function performEgressReconciliation() {
+export async function performEgressReconciliation(excludedAmbientPackageId?: string) {
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
 
@@ -196,10 +197,24 @@ export async function performEgressReconciliation() {
       ambientGeneration++;
 
       // Apply ambient egress resources (waypoint). Only purge if apply succeeds.
-      await applyAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration);
+      const hasRemoteHostContributors = Object.values(inMemoryAmbientPackageMap).some(entry =>
+        entry.rules.some(rule => rule.kind === "host"),
+      );
+      let ambientMapForReconciliation = inMemoryAmbientPackageMap;
+      if (!hasRemoteHostContributors) {
+        // An empty cache after restart does not mean no other package needs the shared waypoint.
+        ambientMapForReconciliation =
+          await loadAmbientPackageMapFromCluster(excludedAmbientPackageId);
+        for (const pkgId of Object.keys(inMemoryAmbientPackageMap)) {
+          delete inMemoryAmbientPackageMap[pkgId];
+        }
+        Object.assign(inMemoryAmbientPackageMap, ambientMapForReconciliation);
+        ambientMapForReconciliation = inMemoryAmbientPackageMap;
+      }
+      await applyAmbientEgressResources(ambientMapForReconciliation, ambientGeneration);
 
       // Purge any orphaned ambient resources (waypoint)
-      await purgeAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration.toString());
+      await purgeAmbientEgressResources(ambientMapForReconciliation, ambientGeneration.toString());
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
@@ -211,8 +226,33 @@ export async function performEgressReconciliation() {
   // If any errors occurred, aggregate them and throw
   if (errors.length > 0) {
     const aggregatedMessage = errors.map(err => err.message).join("; ");
-    throw new Error(`Egress reconciliation failed: ${aggregatedMessage}`);
+    throw new AggregateError(errors, `Egress reconciliation failed: ${aggregatedMessage}`);
   }
+}
+
+async function loadAmbientPackageMapFromCluster(
+  excludedPackageId?: string,
+): Promise<AmbientPackageMap> {
+  const packages = await K8s(UDSPackage).Get();
+  const ambientMap: AmbientPackageMap = {};
+
+  for (const pkg of packages.items ?? []) {
+    const name = pkg.metadata?.name;
+    const namespace = pkg.metadata?.namespace;
+    if (!name || !namespace || `${name}-${namespace}` === excludedPackageId) {
+      continue;
+    }
+    if ((pkg.spec?.network?.serviceMesh?.mode ?? Mode.Ambient) !== Mode.Ambient) {
+      continue;
+    }
+
+    const entry = createAmbientPackageEntry(pkg);
+    if (entry.rules.length > 0) {
+      ambientMap[`${name}-${namespace}`] = entry;
+    }
+  }
+
+  return ambientMap;
 }
 
 // Update the inMemoryPackageMap with the latest hostResourceMap

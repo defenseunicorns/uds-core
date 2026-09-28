@@ -193,6 +193,53 @@ describe("test reconcileSharedEgressResources", () => {
     });
   });
 
+  it("loads live ambient contributors before purging after a process restart", async () => {
+    const liveContributor: UDSPackage = {
+      ...pkgWithAllow,
+      metadata: { name: "live-package", namespace: "live-namespace" },
+    };
+    const packageWithoutHostEgress: UDSPackage = {
+      ...pkgMock,
+      metadata: { name: "first-package", namespace: "first-namespace" },
+    };
+    const getPkgListMock = vi.fn().mockResolvedValue({ items: [liveContributor] });
+    updateEgressMocks({ ...defaultEgressMocks, getPkgListMock });
+
+    await reconcileSharedEgressResources(
+      packageWithoutHostEgress,
+      undefined,
+      PackageAction.AddOrUpdate,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).toHaveProperty("live-package-live-namespace");
+    expect(applyAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(Number),
+    );
+    expect(purgeAmbientEgressResources).toHaveBeenCalledWith(
+      inMemoryAmbientPackageMap,
+      expect.any(String),
+    );
+  });
+
+  it("does not reload a package that is being removed from the live map", async () => {
+    updateEgressMocks({
+      ...defaultEgressMocks,
+      getPkgListMock: vi.fn().mockResolvedValue({ items: [pkgWithAllow] }),
+    });
+
+    await reconcileSharedEgressResources(
+      pkgWithAllow,
+      hostResourceMapMock,
+      PackageAction.Remove,
+      Mode.Ambient,
+    );
+
+    expect(inMemoryAmbientPackageMap).toEqual({});
+    expect(purgeAmbientEgressResources).toHaveBeenCalledWith({}, expect.any(String));
+  });
+
   it("should retry after an apply failure", async () => {
     updateEgressMocks(defaultEgressMocks);
     const pkgWithAmbientEgress = {
@@ -559,7 +606,10 @@ describe("test performEgressReconciliation", () => {
     const applyError = new Error("waypoint apply conflict");
     vi.mocked(applyAmbientEgressResources).mockRejectedValueOnce(applyError);
 
-    await expect(performEgressReconciliation()).rejects.toThrow("waypoint apply conflict");
+    await expect(performEgressReconciliation()).rejects.toMatchObject({
+      message: expect.stringContaining("waypoint apply conflict"),
+      errors: [expect.objectContaining({ cause: applyError })],
+    });
   });
 
   it("should skip sidecar reconciliation when namespace is not found", async () => {

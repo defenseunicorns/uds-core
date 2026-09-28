@@ -1,16 +1,16 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 import { GenericClass } from "kubernetes-fluent-client";
 import { K8s } from "pepr";
 import { IstioAuthorizationPolicy, IstioServiceEntry, K8sGateway, RemoteProtocol } from "../../crd";
-import { purgeOrphans } from "../utils";
+import { AmbientPackageMap } from "./types";
+import { deleteResourceIfUnchanged, purgeOrphans } from "../utils";
 import { createEgressWaypointGateway, waitForWaypointPodHealthy } from "./ambient-waypoint";
 import { generateCentralAmbientEgressAuthorizationPolicy } from "./auth-policy";
 import { ambientEgressNamespace, log, sharedEgressPkgId } from "./istio-resources";
 import { generateSharedAmbientServiceEntry } from "./service-entry";
-import { AmbientPackageMap } from "./types";
 
 function addPortsToMap(map: Map<string, Set<number>>, key: string, ports: number[]) {
   const portSet = map.get(key) ?? new Set<number>();
@@ -73,8 +73,7 @@ export async function applyAmbientEgressResources(
     byHostPort: new Map(),
   };
 
-  // Build merged per-host resources from live packages (not the in-memory map) so that
-  // shared ambient egress reconciliation remains correct across watcher restarts/OOM.
+  // Build merged per-host resources from the reconciled package map.
   const merged: Record<
     string,
     { packages: string[]; portProtocols: Array<{ port: number; protocol: RemoteProtocol }> }
@@ -315,6 +314,7 @@ export async function purgeAmbientEgressResources(
 
     const sharedGatewayItems =
       (sharedGateways as { items?: K8sGateway[] } | undefined)?.items ?? [];
+
     if (sharedGatewayItems.length === 0 && hasRemoteHostContributors) {
       log.warn(
         { generation },
@@ -344,7 +344,7 @@ export async function purgeAmbientEgressResources(
     // Remove the singleton only when no package still contributes ambient host egress.
     if (!hasRemoteHostContributors) {
       for (const gateway of sharedGatewayItems) {
-        await K8s(K8sGateway).Delete(gateway);
+        await deleteResourceIfUnchanged(gateway);
       }
     }
     await purgeOrphans(
@@ -363,7 +363,8 @@ export async function purgeAmbientEgressResources(
     );
   } catch (e) {
     const errText = `Failed to purge orphaned ambient egress resources`;
-    log.error(`Failed to purge orphaned ambient egress resources`, e);
-    throw errText;
+    const errorMessage = e instanceof Error ? e.message : String(e);
+    log.error({ err: e }, errText);
+    throw new Error(`${errText}: ${errorMessage}`, { cause: e });
   }
 }

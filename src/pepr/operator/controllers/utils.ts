@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
-import { V1OwnerReference } from "@kubernetes/client-node";
+import {
+  KubeConfig,
+  KubernetesObjectApi,
+  type KubernetesObject,
+  type V1OwnerReference,
+} from "@kubernetes/client-node";
 import { GenericClass, GenericKind, WatchCfg, WatchEvent } from "kubernetes-fluent-client";
 import { WatcherType } from "kubernetes-fluent-client/dist/fluent/types";
 import { K8s, kind } from "pepr";
@@ -32,6 +37,47 @@ export const watchCfg: WatchCfg = {
     ? parseInt(process.env.PEPR_RELIST_INTERVAL_SECONDS, 10)
     : 600,
 };
+
+let kubernetesObjectApi: KubernetesObjectApi | undefined;
+
+function getKubernetesObjectApi(): KubernetesObjectApi {
+  if (!kubernetesObjectApi) {
+    const kubeConfig = new KubeConfig();
+    kubeConfig.loadFromDefault();
+    kubernetesObjectApi = KubernetesObjectApi.makeApiClient(kubeConfig);
+  }
+  return kubernetesObjectApi;
+}
+
+/** Delete only the exact Kubernetes object version that was inspected. */
+export async function deleteResourceIfUnchanged(resource: KubernetesObject): Promise<boolean> {
+  const { uid, resourceVersion } = resource.metadata ?? {};
+  if (!uid || !resourceVersion) {
+    throw new Error(
+      "Cannot safely delete a Kubernetes resource without its UID and resourceVersion",
+    );
+  }
+
+  try {
+    // The fluent client's Delete method does not expose Kubernetes DeleteOptions.
+    await getKubernetesObjectApi().delete(
+      resource,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { preconditions: { uid, resourceVersion } },
+    );
+    return true;
+  } catch (error) {
+    const status = (error as { code?: number } | undefined)?.code;
+    if (status === 404 || status === 409) {
+      return false;
+    }
+    throw error;
+  }
+}
 
 export function registerWatchEventHandlers(
   watcher: WatcherType<GenericClass>,
@@ -186,7 +232,13 @@ export async function purgeOrphans<T extends GenericClass>(
       { resource: currentResource },
       `Deleting orphaned ${currentResource.kind!} ${currentResource.metadata!.name}`,
     );
-    await K8s(kind).Delete(currentResource);
+    const deleted = await deleteResourceIfUnchanged(currentResource);
+    if (!deleted) {
+      log.debug(
+        { resource: currentResource },
+        "Skipping orphan deletion because the resource changed or was already removed",
+      );
+    }
   }
 }
 
