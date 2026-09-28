@@ -164,6 +164,7 @@ spec:
                 strict-transport-security: "max-age=31536000; includeSubDomains"
             request:
               set:
+                X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
                 X-Forwarded-Host: "sso.{{ .Values.domain }}"
                 X-Forwarded-Proto: "https"
                 X-Forwarded-Port: "443"
@@ -192,6 +193,7 @@ spec:
                 strict-transport-security: "max-age=31536000; includeSubDomains"
             request:
               set:
+                X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
                 X-Forwarded-Host: "sso.{{ .Values.domain }}"
                 X-Forwarded-Proto: "https"
                 X-Forwarded-Port: "443"
@@ -227,6 +229,7 @@ spec:
                 strict-transport-security: "max-age=31536000; includeSubDomains"
             request:
               set:
+                X-Forwarded-For: "%DOWNSTREAM_REMOTE_ADDRESS_WITHOUT_PORT%"
                 X-Forwarded-Host: "keycloak.{{ .Values.adminDomain | default (printf "admin.%s" .Values.domain) }}"
                 X-Forwarded-Proto: "https"
                 X-Forwarded-Port: "443"
