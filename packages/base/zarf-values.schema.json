@@ -375,9 +375,7 @@
                   },
                   "type": "array"
                 },
-                "priorityClassName": {
-                  "type": "string"
-                },
+                "priorityClassName": {},
                 "replicas": {
                   "type": "number"
                 }
@@ -663,12 +661,8 @@
               },
               "type": "object"
             },
-            "cniBinDir": {
-              "type": "string"
-            },
-            "cniConfDir": {
-              "type": "string"
-            },
+            "cniBinDir": {},
+            "cniConfDir": {},
             "excludeNamespaces": {
               "items": {
                 "type": "string"
@@ -1250,9 +1244,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },
@@ -1578,9 +1570,7 @@
                       "name": {
                         "type": "string"
                       },
-                      "value": {
-                        "type": "string"
-                      }
+                      "value": {}
                     },
                     "type": "object"
                   },

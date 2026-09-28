@@ -39,7 +39,7 @@ tasks:
 
       - description: "Initialize the cluster with Zarf"
         # renovate: datasource=github-tags depName=zarf-dev/zarf versioning=semver
-        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.85.0 --confirm"
+        cmd: "./uds zarf package deploy oci://ghcr.io/zarf-dev/packages/init:v0.86.0 --confirm"
 
       - description: "Verify K3s server version"
         shell:
@@ -145,7 +145,7 @@ tasks:
       - description: "Start Redis Docker container"
         cmd: |
           # renovate: datasource=docker depName=redis versioning=docker
-          REDIS_VERSION=8.10.1
+          REDIS_VERSION=8.10.2
           docker run -p 6379:6379 --network=k3d-uds --rm --name redis \
             -v $(pwd)/build/redis/users.acl:/usr/local/etc/redis/users.acl:ro \
             -d redis:${REDIS_VERSION} \

@@ -166,9 +166,7 @@
               "properties": {},
               "type": "object"
             },
-            "dnsPolicy": {
-              "type": "string"
-            },
+            "dnsPolicy": {},
             "downloadDashboards": {
               "properties": {
                 "env": {
@@ -456,9 +454,7 @@
             "hostAliases": {
               "type": "array"
             },
-            "hostUsers": {
-              "type": "string"
-            },
+            "hostUsers": {},
             "imageRenderer": {
               "properties": {
                 "affinity": {
@@ -500,9 +496,7 @@
                   "properties": {},
                   "type": "object"
                 },
-                "dnsPolicy": {
-                  "type": "string"
-                },
+                "dnsPolicy": {},
                 "enabled": {
                   "type": "boolean"
                 },
@@ -551,9 +545,7 @@
                 "hostAliases": {
                   "type": "array"
                 },
-                "hostUsers": {
-                  "type": "string"
-                },
+                "hostUsers": {},
                 "networkPolicy": {
                   "properties": {
                     "extraIngressSelectors": {
@@ -582,9 +574,7 @@
                 "priorityClassName": {
                   "type": "string"
                 },
-                "progressDeadlineSeconds": {
-                  "type": "string"
-                },
+                "progressDeadlineSeconds": {},
                 "renderingCallbackURL": {
                   "type": "string"
                 },
@@ -891,9 +881,7 @@
             "podPortName": {
               "type": "string"
             },
-            "progressDeadlineSeconds": {
-              "type": "string"
-            },
+            "progressDeadlineSeconds": {},
             "rbac": {
               "properties": {
                 "create": {
@@ -1378,12 +1366,8 @@
                     "dnsPolicy": {
                       "type": "string"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
-                    "externalUrl": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
+                    "externalUrl": {},
                     "forceEnableClusterMode": {
                       "type": "boolean"
                     },
@@ -1393,9 +1377,7 @@
                     "hostNetwork": {
                       "type": "boolean"
                     },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostUsers": {},
                     "initContainers": {
                       "type": "array"
                     },
@@ -1467,16 +1449,12 @@
                     "secrets": {
                       "type": "array"
                     },
-                    "serviceName": {
-                      "type": "string"
-                    },
+                    "serviceName": {},
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "tlsConfig": {
                       "properties": {},
                       "type": "object"
@@ -2065,9 +2043,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "enableHttp2": {
                       "type": "boolean"
                     },
@@ -2820,9 +2796,7 @@
               },
               "type": "object"
             },
-            "extraManifests": {
-              "type": "string"
-            },
+            "extraManifests": {},
             "fullnameOverride": {
               "type": "string"
             },
@@ -2937,12 +2911,8 @@
                     "folder": {
                       "type": "string"
                     },
-                    "folderRef": {
-                      "type": "string"
-                    },
-                    "folderUID": {
-                      "type": "string"
-                    },
+                    "folderRef": {},
+                    "folderUID": {},
                     "matchLabels": {
                       "properties": {},
                       "type": "object"
@@ -3300,12 +3270,8 @@
                       },
                       "type": "object"
                     },
-                    "port": {
-                      "type": "string"
-                    },
-                    "targetPort": {
-                      "type": "string"
-                    }
+                    "port": {},
+                    "targetPort": {}
                   },
                   "type": "object"
                 },
@@ -3318,12 +3284,8 @@
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {
-                      "type": "string"
-                    },
-                    "insecureSkipVerify": {
-                      "type": "string"
-                    },
+                    "https": {},
+                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3358,9 +3320,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
+                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
@@ -3731,12 +3691,8 @@
                       },
                       "type": "object"
                     },
-                    "port": {
-                      "type": "string"
-                    },
-                    "targetPort": {
-                      "type": "string"
-                    }
+                    "port": {},
+                    "targetPort": {}
                   },
                   "type": "object"
                 },
@@ -3749,12 +3705,8 @@
                     "enabled": {
                       "type": "boolean"
                     },
-                    "https": {
-                      "type": "string"
-                    },
-                    "insecureSkipVerify": {
-                      "type": "string"
-                    },
+                    "https": {},
+                    "insecureSkipVerify": {},
                     "interval": {
                       "type": "string"
                     },
@@ -3806,9 +3758,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "serverName": {
-                      "type": "string"
-                    },
+                    "serverName": {},
                     "targetLabels": {
                       "type": "array"
                     },
@@ -4233,9 +4183,7 @@
                     "flavor": {
                       "type": "string"
                     },
-                    "namespace": {
-                      "type": "string"
-                    }
+                    "namespace": {}
                   },
                   "type": "object"
                 },
@@ -4353,9 +4301,7 @@
                     "enableRemoteWriteReceiver": {
                       "type": "boolean"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
                     "enforcedBodySizeLimit": {
                       "type": "string"
                     },
@@ -4403,9 +4349,7 @@
                     "hostNetwork": {
                       "type": "boolean"
                     },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostUsers": {},
                     "ignoreNamespaceSelectors": {
                       "type": "boolean"
                     },
@@ -4668,9 +4612,7 @@
                     "serviceMonitorSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
-                    "serviceName": {
-                      "type": "string"
-                    },
+                    "serviceName": {},
                     "shardRetentionPolicy": {
                       "properties": {},
                       "type": "object"
@@ -4719,9 +4661,7 @@
                     "targetLimit": {
                       "type": "number"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "thanos": {
                       "properties": {},
                       "type": "object"
@@ -5001,9 +4941,7 @@
                     "publishNotReadyAddresses": {
                       "type": "boolean"
                     },
-                    "reloaderWebNodePort": {
-                      "type": "string"
-                    },
+                    "reloaderWebNodePort": {},
                     "reloaderWebPort": {
                       "type": "number"
                     },
@@ -5059,9 +4997,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "interval": {
                       "type": "string"
                     },
@@ -5304,9 +5240,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "enabled": {
                       "type": "boolean"
                     },
@@ -5549,9 +5483,7 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {
-                              "type": "string"
-                            }
+                            "revisionHistoryLimit": {}
                           },
                           "type": "object"
                         },
@@ -5563,9 +5495,7 @@
                             "duration": {
                               "type": "string"
                             },
-                            "revisionHistoryLimit": {
-                              "type": "string"
-                            }
+                            "revisionHistoryLimit": {}
                           },
                           "type": "object"
                         }
@@ -5965,9 +5895,7 @@
                 "hostNetwork": {
                   "type": "boolean"
                 },
-                "hostUsers": {
-                  "type": "string"
-                },
+                "hostUsers": {},
                 "kubeletEndpointSliceEnabled": {
                   "type": "boolean"
                 },
@@ -6550,9 +6478,7 @@
                       "properties": {},
                       "type": "object"
                     },
-                    "bearerTokenFile": {
-                      "type": "string"
-                    },
+                    "bearerTokenFile": {},
                     "interval": {
                       "type": "string"
                     },
@@ -6654,9 +6580,7 @@
                     "enableFeatures": {
                       "type": "array"
                     },
-                    "enableServiceLinks": {
-                      "type": "string"
-                    },
+                    "enableServiceLinks": {},
                     "enforcedNamespaceLabel": {
                       "type": "string"
                     },
@@ -6666,9 +6590,7 @@
                     "excludedFromEnforcement": {
                       "type": "array"
                     },
-                    "externalPrefix": {
-                      "type": "string"
-                    },
+                    "externalPrefix": {},
                     "externalPrefixNilUsesHelmValues": {
                       "type": "boolean"
                     },
@@ -6682,9 +6604,7 @@
                     "hostAliases": {
                       "type": "array"
                     },
-                    "hostUsers": {
-                      "type": "string"
-                    },
+                    "hostUsers": {},
                     "imagePullPolicy": {
                       "type": "string"
                     },
@@ -6704,9 +6624,7 @@
                     "logLevel": {
                       "type": "string"
                     },
-                    "minReadySeconds": {
-                      "type": "string"
-                    },
+                    "minReadySeconds": {},
                     "nodeSelector": {
                       "properties": {},
                       "type": "object"
@@ -6784,9 +6702,7 @@
                     "routePrefix": {
                       "type": "string"
                     },
-                    "ruleConcurrentEval": {
-                      "type": "string"
-                    },
+                    "ruleConcurrentEval": {},
                     "ruleGracePeriod": {
                       "type": "string"
                     },
@@ -6807,16 +6723,12 @@
                     "ruleSelectorNilUsesHelmValues": {
                       "type": "boolean"
                     },
-                    "serviceName": {
-                      "type": "string"
-                    },
+                    "serviceName": {},
                     "storage": {
                       "properties": {},
                       "type": "object"
                     },
-                    "terminationGracePeriodSeconds": {
-                      "type": "string"
-                    },
+                    "terminationGracePeriodSeconds": {},
                     "tolerations": {
                       "type": "array"
                     },
@@ -7145,12 +7057,8 @@
               "properties": {},
               "type": "object"
             },
-            "dnsConfig": {
-              "type": "string"
-            },
-            "dnsPolicy": {
-              "type": "string"
-            },
+            "dnsConfig": {},
+            "dnsPolicy": {},
             "extraArgs": {
               "type": "array"
             },
@@ -7402,9 +7310,7 @@
                   },
                   "type": "object"
                 },
-                "targets": {
-                  "type": "string"
-                },
+                "targets": {},
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"
@@ -7604,9 +7510,7 @@
                 "create": {
                   "type": "boolean"
                 },
-                "name": {
-                  "type": "string"
-                }
+                "name": {}
               },
               "type": "object"
             },
@@ -7615,9 +7519,7 @@
                 "apiVersion": {
                   "type": "string"
                 },
-                "bearerTokenFile": {
-                  "type": "string"
-                },
+                "bearerTokenFile": {},
                 "defaults": {
                   "properties": {
                     "additionalMetricsRelabels": {
@@ -7690,9 +7592,7 @@
                   },
                   "type": "object"
                 },
-                "targets": {
-                  "type": "string"
-                },
+                "targets": {},
                 "tlsConfig": {
                   "properties": {},
                   "type": "object"

@@ -213,6 +213,11 @@
       "allowedVersions": "<10"
     },
     {
+      "matchFileNames": ["test/vitest/package.json"],
+      "matchPackageNames": ["vitest"],
+      "allowedVersions": "<5"
+    },
+    {
       "matchFileNames": [
         ".github/workflows/test-kubernetes-matrix.yaml"
       ],
