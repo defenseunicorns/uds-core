@@ -7,8 +7,8 @@ import * as k8s from "@kubernetes/client-node";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { pollUntilSuccess } from "./helpers/polling";
 
-// hookTimeout must exceed waitForNamespaceDeleted's own timeout below.
-vi.setConfig({ hookTimeout: 270000, testTimeout: 180000 });
+// Allow both deletion polls to finish in one hook, with time for API overhead.
+vi.setConfig({ hookTimeout: 420000, testTimeout: 180000 });
 
 const TEST_NAMESPACE = "envoy-gateway-e2e";
 const GATEWAY_NAME = "uds-core-eg-e2e";
