@@ -198,6 +198,7 @@
                 },
                 "daemonset": {
                   "properties": {
+                    "revisionHistoryLimit": {},
                     "updateStrategy": {
                       "properties": {
                         "type": {
@@ -213,7 +214,8 @@
                   "properties": {
                     "replicas": {
                       "type": "number"
-                    }
+                    },
+                    "revisionHistoryLimit": {}
                   },
                   "type": "object"
                 },
@@ -1181,6 +1183,10 @@
                 },
                 "imagePullSecrets": {
                   "type": "array"
+                },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
                 },
                 "name": {
                   "type": "string"
