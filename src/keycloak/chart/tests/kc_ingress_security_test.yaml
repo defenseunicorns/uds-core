@@ -49,6 +49,18 @@ tests:
           content: Forwarded
       - contains:
           path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-For
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Host
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Proto
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Port
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
           content: X-Forwarded-Prefix
       - notContains:
           path: spec.network.expose
@@ -91,6 +103,18 @@ tests:
       - contains:
           path: spec.network.expose[*].advancedHTTP.headers.request.remove
           content: Forwarded
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-For
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Host
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Proto
+      - contains:
+          path: spec.network.expose[*].advancedHTTP.headers.request.remove
+          content: X-Forwarded-Port
       - contains:
           path: spec.network.expose[*].advancedHTTP.headers.request.remove
           content: X-Forwarded-Prefix

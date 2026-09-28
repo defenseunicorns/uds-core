@@ -170,6 +170,10 @@ spec:
                 X-Forwarded-Port: "443"
               remove:
                 - Forwarded
+                - X-Forwarded-For
+                - X-Forwarded-Host
+                - X-Forwarded-Proto
+                - X-Forwarded-Port
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
@@ -199,6 +203,10 @@ spec:
                 X-Forwarded-Port: "443"
               remove:
                 - Forwarded
+                - X-Forwarded-For
+                - X-Forwarded-Host
+                - X-Forwarded-Proto
+                - X-Forwarded-Port
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
@@ -235,6 +243,10 @@ spec:
                 X-Forwarded-Port: "443"
               remove:
                 - Forwarded
+                - X-Forwarded-For
+                - X-Forwarded-Host
+                - X-Forwarded-Proto
+                - X-Forwarded-Port
                 - X-Forwarded-Prefix
                 {{- if not .Values.thirdPartyIntegration.tls.tlsCertificateHeader }}
                 - istio-mtls-client-certificate
