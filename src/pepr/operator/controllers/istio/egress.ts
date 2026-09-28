@@ -28,6 +28,7 @@ export const inMemoryPackageMap: PackageHostMap = {};
 
 // Cache for in-memory ambient egress resources from package CRs
 export const inMemoryAmbientPackageMap: AmbientPackageMap = {};
+let ambientPackageMapInitialized = false;
 
 const sharedEgressMutex = new Mutex();
 
@@ -96,6 +97,19 @@ export async function reconcileSharedEgressResources(
 
   const release = await sharedEgressMutex.acquire();
   try {
+    // Load the full desired state before applying this event. A non-empty map
+    // can still be incomplete immediately after an operator restart.
+    if (!ambientPackageMapInitialized) {
+      const ambientMap = await loadAmbientPackageMapFromCluster(
+        action === PackageAction.Remove ? pkgId : undefined,
+      );
+      for (const existingPkgId of Object.keys(inMemoryAmbientPackageMap)) {
+        delete inMemoryAmbientPackageMap[existingPkgId];
+      }
+      Object.assign(inMemoryAmbientPackageMap, ambientMap);
+      ambientPackageMapInitialized = true;
+    }
+
     // Update both maps and reconcile while holding one lock. This keeps the map
     // state used by apply and purge consistent for each shared-egress transaction.
     if (istioMode === Mode.Ambient) {
@@ -112,7 +126,7 @@ export async function reconcileSharedEgressResources(
       await updateInMemoryAmbientPackageMap(pkg, pkgId, PackageAction.Remove);
     }
 
-    await performEgressReconciliation(action === PackageAction.Remove ? pkgId : undefined);
+    await performEgressReconciliation();
   } finally {
     release();
   }
@@ -167,7 +181,7 @@ export function createAmbientPackageEntry(pkg: UDSPackage): AmbientPackageEntry 
 }
 
 // Perform sidecar egress resources reconciliation
-export async function performEgressReconciliation(excludedAmbientPackageId?: string) {
+export async function performEgressReconciliation() {
   // Array to collect any errors that occur during reconciliation
   const errors: Error[] = [];
 
@@ -197,24 +211,10 @@ export async function performEgressReconciliation(excludedAmbientPackageId?: str
       ambientGeneration++;
 
       // Apply ambient egress resources (waypoint). Only purge if apply succeeds.
-      const hasRemoteHostContributors = Object.values(inMemoryAmbientPackageMap).some(entry =>
-        entry.rules.some(rule => rule.kind === "host"),
-      );
-      let ambientMapForReconciliation = inMemoryAmbientPackageMap;
-      if (!hasRemoteHostContributors) {
-        // An empty cache after restart does not mean no other package needs the shared waypoint.
-        ambientMapForReconciliation =
-          await loadAmbientPackageMapFromCluster(excludedAmbientPackageId);
-        for (const pkgId of Object.keys(inMemoryAmbientPackageMap)) {
-          delete inMemoryAmbientPackageMap[pkgId];
-        }
-        Object.assign(inMemoryAmbientPackageMap, ambientMapForReconciliation);
-        ambientMapForReconciliation = inMemoryAmbientPackageMap;
-      }
-      await applyAmbientEgressResources(ambientMapForReconciliation, ambientGeneration);
+      await applyAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration);
 
       // Purge any orphaned ambient resources (waypoint)
-      await purgeAmbientEgressResources(ambientMapForReconciliation, ambientGeneration.toString());
+      await purgeAmbientEgressResources(inMemoryAmbientPackageMap, ambientGeneration.toString());
     }
   } catch (e) {
     const errText = `Failed to reconcile ambient egress resources`;
@@ -239,7 +239,12 @@ async function loadAmbientPackageMapFromCluster(
   for (const pkg of packages.items ?? []) {
     const name = pkg.metadata?.name;
     const namespace = pkg.metadata?.namespace;
-    if (!name || !namespace || `${name}-${namespace}` === excludedPackageId) {
+    if (
+      !name ||
+      !namespace ||
+      pkg.metadata?.deletionTimestamp ||
+      `${name}-${namespace}` === excludedPackageId
+    ) {
       continue;
     }
     if ((pkg.spec?.network?.serviceMesh?.mode ?? Mode.Ambient) !== Mode.Ambient) {
