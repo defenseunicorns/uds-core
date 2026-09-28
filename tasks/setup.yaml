@@ -4,7 +4,7 @@
 variables:
   - name: DEFAULT_K3S_VERSION
     description: "Expected K3s version in the default airgap uds-k3d package"
-    default: "v1.37.0+k3s1"
+    default: "v1.36.4+k3s1"
 
 tasks:
   - name: create-k3d-cluster

@@ -229,6 +229,11 @@
       "commitMessageTopic": "k3s test matrix"
     },
     {
+      "matchFileNames": ["tasks/setup.yaml"],
+      "matchDepNames": ["k3s-io/k3s"],
+      "enabled": false
+    },
+    {
       "matchPackageNames": [
         "registry1.dso.mil/ironbank/opensource/falcosecurity/falcosidekick"
       ],
