@@ -207,6 +207,26 @@ describe("packageReconciler", () => {
 
     expect(Log.error).toHaveBeenCalled();
   });
+
+  test("continues package retry when writing the backoff event fails", async () => {
+    vi.useFakeTimers();
+    mockPackage.status = { phase: Phase.Retrying, retryAttempt: 1 };
+    (writeEvent as Mock).mockRejectedValueOnce(new Error("event creation failed"));
+
+    try {
+      const reconciliation = packageReconciler(mockPackage);
+      await vi.advanceTimersByTimeAsync(3_000);
+      await reconciliation;
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(Log.warn).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "Error writing retry event for test-namespace/test-package; continuing with retry",
+    );
+    expect(networkPolicies).toHaveBeenCalled();
+  });
 });
 
 describe("packageFinalizer", () => {
