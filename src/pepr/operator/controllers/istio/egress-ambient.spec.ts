@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -27,11 +27,13 @@ import * as seMod from "./service-entry";
 
 // Mock purge orphans
 const mockPurgeOrphans: MockedFunction<() => Promise<void>> = vi.fn();
+const mockDeleteResourceIfUnchanged = vi.hoisted(() => vi.fn());
 vi.mock("../utils", async () => {
   const originalModule = (await vi.importActual("../utils")) as object;
   return {
     ...originalModule,
     purgeOrphans: vi.fn(async <T>(fn: () => Promise<T>) => fn()),
+    deleteResourceIfUnchanged: mockDeleteResourceIfUnchanged.mockResolvedValue(true),
   };
 });
 
@@ -1060,16 +1062,17 @@ describe("test purgeAmbientEgressResources", () => {
 
     await purgeAmbientEgressResources({}, "1");
 
-    expect(defaultEgressMocks.deleteWaypointMock).toHaveBeenCalledWith(waypoint);
+    expect(mockDeleteResourceIfUnchanged).toHaveBeenCalledWith(waypoint);
   });
 
   it("should handle purge error", async () => {
-    const errorMessage = "Purge error";
+    const purgeError = new Error("Purge error");
 
-    mockPurgeOrphans.mockRejectedValueOnce(new Error(errorMessage));
+    mockPurgeOrphans.mockRejectedValueOnce(purgeError);
 
-    await expect(purgeAmbientEgressResources({}, "1")).rejects.toThrow(
-      "Failed to purge orphaned ambient egress resources",
-    );
+    await expect(purgeAmbientEgressResources({}, "1")).rejects.toMatchObject({
+      message: expect.stringContaining("Failed to purge orphaned ambient egress resources"),
+      cause: purgeError,
+    });
   });
 });
