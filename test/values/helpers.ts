@@ -43,7 +43,7 @@ type ResourcePathSegment = string | number;
 const ROOT = process.cwd();
 const DEBUG_RENDERING = process.env.DEBUG_VALUES_RENDERING === "true";
 const SLOW_RENDER_THRESHOLD_MS = 30_000;
-const MANIFEST_RENDER_TIMEOUT_MS = 240_000;
+const MANIFEST_RENDER_TIMEOUT_MS = 300_000;
 
 const renderCache = new Map<string, Promise<K8sResource[]>>();
 
