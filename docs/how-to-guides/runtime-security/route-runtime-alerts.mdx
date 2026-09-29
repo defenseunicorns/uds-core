@@ -52,8 +52,6 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
              falco:
                falco:
                  values:
-                   - path: falcosidekick.config.slack.channel
-                     value: "#<YOUR_SLACK_CHANNEL>"
                    - path: falcosidekick.config.slack.outputformat
                      value: "all"
                    - path: falcosidekick.config.slack.minimumpriority
@@ -85,9 +83,10 @@ By default, Falco events are shipped to Loki for centralized log aggregation and
        | Setting | Description |
        |---|---|
        | `webhookurl` | Slack incoming webhook URL (format: `https://hooks.slack.com/services/XXXX/YYYY/ZZZZ`) |
-       | `channel` | Slack channel to post to (optional, defaults to the webhook's configured channel) |
        | `outputformat` | `all` (default), `text` (text only), or `fields` (fields only) |
        | `minimumpriority` | Minimum Falco priority to forward: `emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `informational`, `debug` |
+
+       The webhook posts to the channel selected when it was created. [Slack incoming webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks/) do not allow the payload to override that channel.
 
      </TabItem>
      <TabItem label="Mattermost">
