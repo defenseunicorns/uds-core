@@ -45,13 +45,13 @@ UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Nex
 
 ### Pre-upgrade steps
 
-Before upgrading, review package verification, Keycloak overrides, and HTTP expose entries:
+Before upgrading, review these changes:
 
 <Steps>
 
 1. **Configure Core package signature verification**
 
-   Add the following verification block to every standard or functional layer Core package reference in your bundle. Release signatures use the tagged `publish.yaml` workflow identity and GitHub's OIDC issuer:
+   Add `keylessVerification` to every Core package reference in your bundle, including functional layers:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -64,33 +64,19 @@ Before upgrading, review package verification, Keycloak overrides, and HTTP expo
          certificateOIDCIssuer: https://token.actions.githubusercontent.com
    ```
 
-   See [Build a functional layer bundle](/how-to-guides/platform-features/build-functional-layer-bundle/) for examples covering individual Core layers.
+   For layer examples, see [Build a functional layer bundle](/how-to-guides/platform-features/build-functional-layer-bundle/).
 
 2. **Review Keycloak PDB overrides**
 
-   If you require an existing chart-managed PDB outside HA mode, configure an external PostgreSQL database and set `autoscaling.enabled` to `true` before upgrading. Follow [Keycloak high availability](/how-to-guides/high-availability/keycloak/) for the database and autoscaling configuration.
-
-   If you use `minAvailable`, clear the new `maxUnavailable` default. Add this override under the existing Core package reference in your bundle:
-
-   ```yaml title="uds-bundle.yaml"
-   overrides:
-     keycloak:
-       keycloak:
-         values:
-           # Remove the default when retaining your existing minAvailable override
-           - path: podDisruptionBudget.maxUnavailable
-             value: null
-   ```
-
-   HA deployments need schedulable capacity for replacement pods during a node drain. If replacement capacity is unavailable, the PDB can block the drain after the first eviction. Add capacity before maintenance, or set `podDisruptionBudget.enabled` to `false` before draining and re-enable it after capacity returns.
+   To retain a chart-managed PDB with autoscaling currently disabled, configure an external PostgreSQL database and set `autoscaling.enabled` to `true`. If you use `podDisruptionBudget.minAvailable`, set `podDisruptionBudget.maxUnavailable` to `null`. See [Keycloak high availability](/how-to-guides/high-availability/keycloak/) for setup and node-drain precautions.
 
 3. **Resolve conflicting HTTP expose entries**
 
-   Review `Package` resources in different namespaces that share the same gateway and fully qualified domain name (FQDN). Use distinct hosts or gateways, or give both routes effective `advancedHTTP.match` conditions, such as URI paths. An empty match remains a catch-all. Existing conflicts can prevent subsequent `Package` updates. See [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) ([#2783](https://github.com/defenseunicorns/uds-core/pull/2783)).
+   Review `Package` resources in different namespaces that share a gateway and hostname. Use distinct hosts or gateways, or constrain both routes with `advancedHTTP.match`, such as URI paths. Catch-all routes can block subsequent `Package` updates. See [Expose applications on gateways](/how-to-guides/networking/expose-apps-on-gateways/) ([#2783](https://github.com/defenseunicorns/uds-core/pull/2783)).
 
 4. **Review custom Grafana overrides**
 
-   The Grafana chart now sets `readOnlyRootFilesystem: true` for Grafana, dashboard download, and sidecar containers, and tightens test and image-renderer security contexts ([upstream chart changes](https://github.com/grafana-community/helm-charts/compare/grafana-12.7.2...grafana-13.2.6)). Check custom commands and containers against these defaults. Use explicit writable mounts for paths your customization writes to. UDS Core continues to set explicit Grafana image tags for each flavor; the upstream chart's default distroless image tag does not replace those tags.
+   If you customize Grafana containers or commands, review the [chart changes](https://github.com/grafana-community/helm-charts/compare/grafana-12.7.2...grafana-13.2.6). Grafana, dashboard download, and sidecar containers now default to `readOnlyRootFilesystem: true`; mount writable paths where needed.
 
 </Steps>
 
