@@ -225,7 +225,7 @@ watcher:
           - serviceAccountToken:
               path: token
               expirationSeconds: 600
-              audience: http://keycloak-http.keycloak.svc.cluster.local/realms/uds
+              audience: https://sso.###ZARF_VAR_DOMAIN###/realms/uds
   env:
     - name: UDS_LOG_LEVEL
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
@@ -256,7 +256,7 @@ admission:
           - serviceAccountToken:
               path: token
               expirationSeconds: 600
-              audience: http://keycloak-http.keycloak.svc.cluster.local/realms/uds
+              audience: https://sso.###ZARF_VAR_DOMAIN###/realms/uds
   env:
     - name: UDS_LOG_LEVEL
       value: ###ZARF_VAR_UDS_LOG_LEVEL###
