@@ -28,7 +28,7 @@ const TEST_POD_SELECTOR = {
 };
 const KEYCLOAK_INTERNAL_URL = "http://keycloak-http.keycloak.svc.cluster.local:8080";
 const KEYCLOAK_REALM = "uds";
-const KEYCLOAK_REALM_ISSUER = "https://sso.uds.dev/realms/uds";
+const KEYCLOAK_REALM_ISSUER = "http://keycloak-http.keycloak.svc.cluster.local/realms/uds";
 const TOKEN_PATH = "/var/run/secrets/fleet/token";
 const ACCESS_TOKEN_PATH = "/tmp/fleet-keycloak-access-token";
 const CLIENT_SUFFIX = Math.random().toString(36).slice(2, 10);

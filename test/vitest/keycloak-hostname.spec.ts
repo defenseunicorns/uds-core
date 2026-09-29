@@ -18,12 +18,12 @@ describe("Keycloak hostname routing", () => {
     });
   });
 
-  it("uses the public issuer for admin realm discovery", async () => {
+  it("uses the admin origin for admin realm discovery", async () => {
     const response = await fetch(`${adminOrigin}/realms/uds/.well-known/openid-configuration`);
 
     expect(response.ok).toBe(true);
     await expect(response.json()).resolves.toMatchObject({
-      issuer: `${publicOrigin}/realms/uds`,
+      issuer: `${adminOrigin}/realms/uds`,
     });
   });
 
