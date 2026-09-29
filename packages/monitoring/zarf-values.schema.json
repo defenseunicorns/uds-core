@@ -154,6 +154,9 @@
             "defaultCurlOptions": {
               "type": "string"
             },
+            "defaultShellOptions": {
+              "type": "string"
+            },
             "deploymentStrategy": {
               "properties": {
                 "type": {
@@ -301,6 +304,17 @@
               },
               "type": "object"
             },
+            "goMemLimit": {
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "factor": {
+                  "type": "number"
+                }
+              },
+              "type": "object"
+            },
             "gossipPortName": {
               "type": "string"
             },
@@ -419,6 +433,9 @@
                 },
                 "plugins": {
                   "properties": {
+                    "preinstall_auto_update": {
+                      "type": "string"
+                    },
                     "preinstall_disabled": {
                       "type": "boolean"
                     },
@@ -1141,6 +1158,10 @@
                   "type": "string"
                 }
               },
+              "type": "object"
+            },
+            "startupProbe": {
+              "properties": {},
               "type": "object"
             },
             "testFramework": {
