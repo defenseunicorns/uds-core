@@ -121,6 +121,13 @@ tasks:
             address: demo-8081.uds.dev
             code: 200
 
+      - description: Verify the root domain app is accessible
+        wait:
+          network:
+            protocol: https
+            address: uds.dev
+            code: 200
+
       # Check standard sidecar authservice protection
       - task: check-authservice-protection
         with:

@@ -31,7 +31,12 @@ After completing this guide, your application will be accessible through one of 
 
 1. **(Optional) Enable root domain support**
 
-   By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. If you need to serve traffic at `https://yourdomain.com`, enable root domain support in your UDS Core bundle:
+   By default, UDS Core gateways use wildcard hosts (e.g., `*.yourdomain.com`), which match subdomains but not the root domain itself. If you need to serve traffic at `https://yourdomain.com`, choose a dedicated root certificate or a SAN certificate shared with the tenant server.
+
+   <Tabs>
+     <TabItem label="Dedicated root certificate">
+
+   Configure a separate root-domain TLS server and certificate:
 
    ```yaml title="uds-bundle.yaml"
    packages:
@@ -64,7 +69,30 @@ After completing this guide, your application will be accessible through one of 
    ```
 
    > [!NOTE]
-   > If you provide a non-empty value for `credentialName`, UDS Core assumes you have pre-created the Kubernetes secret and will not auto-generate it. If your SAN certificate covers both subdomains and the root, you can point `credentialName` to that existing secret (the default gateway TLS secret name is `gateway-tls`).
+   > If you provide a non-empty value for `credentialName`, UDS Core assumes you have pre-created the Kubernetes secret and will not auto-generate it.
+
+     </TabItem>
+     <TabItem label="Shared SAN certificate">
+
+   Use this configuration when the tenant server certificate covers both `*.yourdomain.com` and `yourdomain.com`. Set `rootDomain.enabled` to enable root-domain support and `rootDomain.server` to the TLS server that will serve it. That server controls TLS mode, minimum TLS version, and HTTPS redirects. Do not configure `rootDomain.tls` or `rootDomain.enableHttpsRedirect` with this option.
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       repository: registry.defenseunicorns.com/public/core
+       ref: x.x.x-upstream
+       overrides:
+         istio-tenant-gateway:
+           uds-istio-config:
+             values:
+               - path: rootDomain.enabled
+                 value: true
+               - path: rootDomain.server
+                 value: tenant
+   ```
+
+     </TabItem>
+   </Tabs>
 
    Create and deploy the bundle:
 
@@ -279,8 +307,10 @@ curl -v https://my-app.yourdomain.com
 
 **Solution:**
 - Confirm `rootDomain.enabled` is set to `true` in your bundle overrides
+- For a shared SAN certificate, confirm `rootDomain.server` names the TLS server that serves the root domain
 - Verify DNS has an A record for the root domain (not just a wildcard)
-- Check that TLS certificates are provided for the root domain configuration
+- For a shared SAN certificate, verify the tenant certificate covers both `yourdomain.com` and `*.yourdomain.com`
+- For a dedicated root certificate, verify the root-domain certificate covers `yourdomain.com`
 
 ## Related documentation
 
