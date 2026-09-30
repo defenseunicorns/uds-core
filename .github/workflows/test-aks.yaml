@@ -27,10 +27,8 @@ jobs:
       - name: Inspect US region quotas and SKUs without provisioning
         run: |
           mkdir -p region-diagnostics
-          for region in eastus2 westus2 westus3 centralus southcentralus; do
+          for region in eastus northcentralus westus westcentralus; do
             az vm list-usage --location "$region" --output json > "region-diagnostics/$region-usage.json" || true
-            az vm list-skus --location "$region" --size Standard_F8s_v2 --all --output json > "region-diagnostics/$region-vm.json" || true
-            az postgres flexible-server list-skus --location "$region" --output json > "region-diagnostics/$region-postgres.json" || true
           done
 
       - name: Save region diagnostics
