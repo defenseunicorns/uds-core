@@ -24,40 +24,19 @@ const makeProbe = (name: string, namespace: string, module: string) => ({
   },
 });
 
-function isNotFound(error: unknown): boolean {
-  const maybeError = error as {
-    code?: number;
-    status?: number;
-    statusCode?: number;
-    response?: { status?: number; statusCode?: number };
-  };
-
-  return (
-    maybeError.code === 404 ||
-    maybeError.status === 404 ||
-    maybeError.statusCode === 404 ||
-    maybeError.response?.status === 404 ||
-    maybeError.response?.statusCode === 404
-  );
-}
-
-async function deleteProbe(name: string): Promise<void> {
-  try {
-    await K8s(PrometheusProbe).InNamespace(POLICY_TEST_NAMESPACE).Delete(name);
-  } catch (error) {
-    if (!isNotFound(error)) throw error;
-  }
-}
-
 async function applyAllowedProbe(name: string, module: string): Promise<void> {
   try {
-    const probe = await K8s(PrometheusProbe, {
+    await K8s(PrometheusProbe, {
       name,
       namespace: POLICY_TEST_NAMESPACE,
     }).Apply(makeProbe(name, POLICY_TEST_NAMESPACE, module));
-    expect(probe).toBeDefined();
+    await expect(
+      K8s(PrometheusProbe).InNamespace(POLICY_TEST_NAMESPACE).Get(name),
+    ).resolves.toMatchObject({
+      metadata: { name, namespace: POLICY_TEST_NAMESPACE },
+    });
   } finally {
-    await deleteProbe(name);
+    await K8s(PrometheusProbe).InNamespace(POLICY_TEST_NAMESPACE).Delete(name);
   }
 }
 
