@@ -28,7 +28,7 @@ jobs:
       pull-requests: write # Allows writing to pull requests (needed for renovate-readiness)
     env:
       SHA: ${{ github.sha }}
-      UDS_REGION: centralus
+      UDS_REGION: westus3
       UDS_RESOURCE_GROUP_NAME: ${{ secrets.AZURE_RESOURCE_GROUP }}
       UDS_STORAGE_ACCOUNT_NAME: ${{ secrets.AZURE_STORAGE_ACCOUNT_NAME }}
       UDS_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
