@@ -114,13 +114,29 @@ spec:
               end
             end
 
-            -- Enabled applications receive real rows for the banners and a constrained,
-            -- scrollable middle row for the original page. This is CSS-only, so application CSP
-            -- can continue to reject inline JavaScript without disabling the layout adjustment.
-            local function viewportLayoutStyle(addFooter)
+            -- Keep a CSS banner visible when full-document hydration replaces the injected
+            -- body elements. Escape CSS string delimiters and HTML raw-text delimiters.
+            local function cssString(text)
+              return (text:gsub("[\\\"<>\n\r\f]", function(character)
+                return string.format("\\%X ", string.byte(character))
+              end))
+            end
+
+            -- Enabled applications receive real rows for the initial banners and a constrained,
+            -- scrollable middle row. The fallback pseudo-elements appear only if hydration removes
+            -- the injected elements; they do not add nodes to React's document tree.
+            local function viewportLayoutStyle(addFooter, classification, colors)
               local gridRows = "24px minmax(0, 1fr)"
+              local fallbackSelectors = "body:not(:has(> #classification-banner-top))::before"
+              local footerFallback = ""
               if addFooter then
                 gridRows = gridRows .. " 24px"
+                fallbackSelectors = fallbackSelectors .. ", body:not(:has(> #classification-banner-bottom))::after"
+                footerFallback = [[
+              body:not(:has(> #classification-banner-bottom))::after {
+                bottom: 0 !important;
+              }
+            ]]
               end
 
               return [[
@@ -154,6 +170,36 @@ spec:
                 overflow-y: auto;
                 position: relative;
               }
+
+              ]] .. fallbackSelectors .. [[ {
+                align-items: center !important;
+                background-color: ]] .. colors.backgroundColor .. [[ !important;
+                box-sizing: border-box !important;
+                color: ]] .. colors.textColor .. [[ !important;
+                content: "]] .. cssString(classification) .. [[" !important;
+                display: flex !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+                font-size: 16px !important;
+                font-weight: 400 !important;
+                height: 24px !important;
+                justify-content: center !important;
+                left: 0 !important;
+                line-height: 24px !important;
+                overflow: hidden !important;
+                padding: 0 8px !important;
+                pointer-events: none !important;
+                position: fixed !important;
+                right: 0 !important;
+                text-align: center !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
+                z-index: 2147483647 !important;
+              }
+
+              body:not(:has(> #classification-banner-top))::before {
+                top: 0 !important;
+              }
+              ]] .. footerFallback .. [[
             </style>
             ]]
             end
@@ -221,7 +267,7 @@ spec:
                 addFooter = banner.addFooter,
                 footer = "<div id=\"classification-banner-bottom\" style=\"" .. style .. "\">" .. classification .. "</div>",
                 header = "<div id=\"classification-banner-top\" style=\"" .. style .. "\">" .. classification .. "</div>",
-                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter),
+                viewportLayoutStyle = viewportLayoutStyle(banner.addFooter, classification, colors),
               }
             end
 
