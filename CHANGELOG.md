@@ -32,7 +32,6 @@ All notable changes to this project will be documented in this file.
 
 ### Miscellaneous
 
-* 1.14 release notes ([#3016](https://github.com/defenseunicorns/uds-core/issues/3016)) ([7dab543](https://github.com/defenseunicorns/uds-core/commit/7dab543a29ab96ce00f858c70d95d801cdeacfe6))
 * add upgrade considerations to 1.13 release notes ([#2994](https://github.com/defenseunicorns/uds-core/issues/2994)) ([b365eca](https://github.com/defenseunicorns/uds-core/commit/b365eca3dd2919d5a6c232588bba37bd6b550828))
 * allow velero's package CR for additional network policies ([#2977](https://github.com/defenseunicorns/uds-core/issues/2977)) ([9c40c14](https://github.com/defenseunicorns/uds-core/commit/9c40c141bda2ebfba244c36302a012706454a077))
 * bump identity-config to 0.32.0 ([#2986](https://github.com/defenseunicorns/uds-core/issues/2986)) ([724e139](https://github.com/defenseunicorns/uds-core/commit/724e1397fac539cf381ee66dda82afcb121290ee))
@@ -48,9 +47,7 @@ All notable changes to this project will be documented in this file.
 * **deps:** update support-deps ([#2955](https://github.com/defenseunicorns/uds-core/issues/2955)) ([ecf64ed](https://github.com/defenseunicorns/uds-core/commit/ecf64edc08fea0de8ed24fa8448b22eea20ecb37))
 * **deps:** update uds-k3d to 0.21.0 ([#3002](https://github.com/defenseunicorns/uds-core/issues/3002)) ([74a8879](https://github.com/defenseunicorns/uds-core/commit/74a8879b512ea4e39455bb0016b3375110a5e2ce))
 * enable test for vector host logs ingestion into loki ([#2971](https://github.com/defenseunicorns/uds-core/issues/2971)) ([dde6fb3](https://github.com/defenseunicorns/uds-core/commit/dde6fb35471c8546cedbec1d8d383fcf490de6f2))
-* **main:** release 1.14.0 ([#2979](https://github.com/defenseunicorns/uds-core/issues/2979)) ([b803ec2](https://github.com/defenseunicorns/uds-core/commit/b803ec22f483e2d38608cd633635001e89ca1eac))
 * modernize dev workflow w/ mise and hk ([#2976](https://github.com/defenseunicorns/uds-core/issues/2976)) ([f9793ac](https://github.com/defenseunicorns/uds-core/commit/f9793ac05140ac225513c38114b943485568a69f))
-* revert UDS Core 1.14.0 release and notes ([#3019](https://github.com/defenseunicorns/uds-core/issues/3019)) ([b04dc60](https://github.com/defenseunicorns/uds-core/commit/b04dc60a3eed1a5d5c71a8b1d69c3e15ec764478))
 * upgrade udproute to v1 from v1alpha2 ([#2999](https://github.com/defenseunicorns/uds-core/issues/2999)) ([4f3b72b](https://github.com/defenseunicorns/uds-core/commit/4f3b72b6ec00a073aead8fc513993d3f30b18920))
 
 
