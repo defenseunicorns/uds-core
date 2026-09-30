@@ -15,7 +15,7 @@ variable "resource_group_name" {
 variable "location" {
   description = "(Required) Specifies the location where the AKS cluster will be deployed."
   type        = string
-  default     = "westus3"
+  default     = "eastus2"
 }
 
 variable "log_analytics_retention_days" {
