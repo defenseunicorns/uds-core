@@ -4,9 +4,11 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { closeForward, getForward } from "./helpers/forward";
 
 const publicOrigin = "https://sso.uds.dev";
 const adminOrigin = "https://keycloak.admin.uds.dev";
+const internalHost = "keycloak-http.keycloak.svc.cluster.local";
 
 describe("Keycloak hostname routing", () => {
   it("uses the public origin for public realm discovery", async () => {
@@ -25,6 +27,27 @@ describe("Keycloak hostname routing", () => {
     await expect(response.json()).resolves.toMatchObject({
       issuer: `${adminOrigin}/realms/uds`,
     });
+  });
+
+  it("preserves the internal realm issuer used by projected service account tokens", async () => {
+    const forward = await getForward("keycloak-http", "keycloak", 8080);
+    try {
+      const response = await fetch(`${forward.url}/realms/uds/.well-known/openid-configuration`, {
+        headers: {
+          Host: `${internalHost}:8080`,
+          "X-Forwarded-Host": internalHost,
+          "X-Forwarded-Proto": "http",
+          "X-Forwarded-Port": "80",
+        },
+      });
+
+      expect(response.ok).toBe(true);
+      await expect(response.json()).resolves.toMatchObject({
+        issuer: `http://${internalHost}/realms/uds`,
+      });
+    } finally {
+      await closeForward(forward.server);
+    }
   });
 
   it("keeps private admin paths redirected on the public gateway", async () => {
