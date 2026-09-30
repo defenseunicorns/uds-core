@@ -129,6 +129,7 @@ jobs:
               echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
+            uds run -f src/test/tasks.yaml remove --no-progress
             if [ "$attempt" -lt 3 ]; then
               echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
               sleep 30
@@ -216,11 +217,6 @@ jobs:
           suffix: -aks-${{ matrix.flavor }}
           distro: "aks"
           resource_group: ${{ env.AKS_RESOURCE_GROUP }}
-
-      - name: Cleanup UDP test resources
-        if: always()
-        run: uds run -f tasks/test.yaml test-resources:cleanup-udp-expose --no-progress
-        timeout-minutes: 10
 
       - name: Remove UDS Core
         if: always()

@@ -207,10 +207,14 @@ tasks:
   - name: remove
     actions:
       - description: Remove the test apps zarf package
-        cmd: "uds zarf package remove build/zarf-package-uds-core-test-apps-*.zst --confirm"
+        cmd: |
+          set -- build/zarf-package-uds-core-test-apps-*.zst
+          if [ -f "$1" ]; then
+            uds zarf package remove "$1" --confirm
+          fi
 
   - name: cleanup-udp-expose
-    description: Remove UDP test Packages before UDS Core teardown
+    description: Remove UDP test Packages before upgrading from a release that applied them directly
     actions:
       - description: Delete the test Package CRs while the Core operator is available
         cmd: |
@@ -218,8 +222,10 @@ tasks:
           package_crd=$(uds zarf tools kubectl get crd packages.uds.dev \
             --ignore-not-found -o name)
           if [ -n "$package_crd" ]; then
-            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-server -n curl-ns-udp-server --ignore-not-found --wait=true --timeout=2m
-            uds zarf tools kubectl delete package.uds.dev curl-pkg-udp-allow -n curl-ns-udp-allow --ignore-not-found --wait=true --timeout=2m
+            udp_packages=$(uds zarf tools yq eval-all \
+              'select(.kind == "Package")' src/test/app-curl-envoy-udp-packages.yaml)
+            printf '%s\n' "$udp_packages" | uds zarf tools kubectl delete -f - \
+              --ignore-not-found --wait=true --timeout=2m
           else
             echo "UDS Package CRD is not installed; skipping UDP test Package cleanup."
           fi
