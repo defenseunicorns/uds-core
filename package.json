@@ -48,6 +48,7 @@
     "format:check": "eslint \"**/*.ts\" && prettier --check \"**/*.ts\""
   },
   "dependencies": {
+    "kubernetes-fluent-client": "3.12.3",
     "pepr": "2.0.3"
   },
   "devDependencies": {
