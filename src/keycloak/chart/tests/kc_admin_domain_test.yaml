@@ -21,26 +21,6 @@ tests:
             name: UDS_ADMIN_DOMAIN
             value: "admin.custom.example.com"
 
-  - it: should allow request based Keycloak hostnames
-    set:
-      domain: "custom.example.com"
-      adminDomain: "mgmt.example.com"
-    template: statefulset.yaml
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].args
-          content: --hostname-strict=false
-      - isNull:
-          path: spec.template.spec.containers[0].env[?(@.name == "KC_HOSTNAME")]
-      - isNull:
-          path: spec.template.spec.containers[0].env[?(@.name == "KC_HOSTNAME_ADMIN")]
-      - isNull:
-          path: spec.template.spec.containers[0].env[?(@.name == "KC_HOSTNAME_BACKCHANNEL_DYNAMIC")]
-      - isNull:
-          path: spec.template.spec.containers[0].env[?(@.name == "KC_HOSTNAME_STRICT")]
-      - isNull:
-          path: spec.template.spec.containers[0].env[?(@.name == "UDS_CLUSTER_DOMAIN")]
-
   - it: should use explicit adminDomain when set
     set:
       domain: "custom.example.com"

@@ -1,9 +1,6 @@
 # Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
-{{- $domain := .Values.domain }}
-{{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
-
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -209,6 +206,8 @@ spec:
               value: "-Djava.security.properties=/opt/keycloak/data/fips-sunjce.security"
             {{- end }}
             # Common configuration
+            {{- $domain := .Values.domain }}
+            {{- $adminDomain := .Values.adminDomain | default (printf "admin.%s" $domain) }}
             - name: UDS_DOMAIN
               value: "{{ $domain }}"
             - name: UDS_ADMIN_DOMAIN
