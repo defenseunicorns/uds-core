@@ -77,6 +77,9 @@ components:
       - name: egress-ambient-test
         files:
           - "app-egress-ambient.yaml"
+      - name: passthrough-test
+        files:
+          - "app-passthrough.yaml"
     images:
       - docker.io/kong/httpbin:0.2.3
       - hashicorp/http-echo:latest

@@ -14,7 +14,7 @@ uds {
 
 locals {
   # x-release-please-start-version
-  version = "1.13.0"
+  version = "1.14.0"
   # x-release-please-end
 }
 
@@ -25,13 +25,13 @@ metadata {
 }
 
 package "uds_k3d_dev" {
-  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.20.2-airgap"
+  source = "oci://ghcr.io/defenseunicorns/packages/uds-k3d:0.21.0-airgap"
   signature_verification { verify = false }
   values_files = ["values/uds-k3d-dev.yaml"]
 }
 
 package "init" {
-  source = "oci://ghcr.io/zarf-dev/packages/init:v0.85.0"
+  source = "oci://ghcr.io/zarf-dev/packages/init:v0.86.0"
   signature_verification {
     keyless {
       certificate_identity_regexp = "https://github\\.com/zarf-dev/zarf/\\.github/workflows/release\\.yml@refs/tags/v\\d+\\.\\d+\\.\\d+"

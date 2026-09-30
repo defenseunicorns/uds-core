@@ -6,13 +6,16 @@ metadata:
   name: k3d-core-demo
   description: A UDS bundle for deploying the standard UDS Core package on a development cluster
   # x-release-please-start-version
-  version: "1.13.0"
+  version: "1.14.0"
   # x-release-please-end
 
 packages:
   - name: uds-k3d-dev
     repository: ghcr.io/defenseunicorns/packages/uds-k3d
-    ref: 0.20.3-airgap
+    ref: 0.21.0-airgap
+    keylessVerification:
+      certificateIdentityRegexp: https://github\.com/defenseunicorns/uds-k3d/\.github/workflows/publish\.yaml@refs/tags/v\d+\.\d+\.\d+
+      certificateOIDCIssuer: https://token.actions.githubusercontent.com
     overrides:
       uds-dev-stack:
         minio:
@@ -32,7 +35,7 @@ packages:
 
   - name: init
     repository: ghcr.io/zarf-dev/packages/init
-    ref: v0.85.0
+    ref: v0.86.0
     keylessVerification:
       certificateIdentityRegexp: https://github\.com/zarf-dev/zarf/\.github/workflows/release\.yml@refs/tags/v\d+\.\d+\.\d+
       certificateOIDCIssuer: https://token.actions.githubusercontent.com
@@ -40,7 +43,7 @@ packages:
   - name: core
     path: ../../build/
     # x-release-please-start-version
-    ref: 1.13.0
+    ref: 1.14.0
     # x-release-please-end
     optionalComponents:
       - istio-passthrough-gateway

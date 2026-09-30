@@ -198,6 +198,7 @@
                 },
                 "daemonset": {
                   "properties": {
+                    "revisionHistoryLimit": {},
                     "updateStrategy": {
                       "properties": {
                         "type": {
@@ -213,7 +214,8 @@
                   "properties": {
                     "replicas": {
                       "type": "number"
-                    }
+                    },
+                    "revisionHistoryLimit": {}
                   },
                   "type": "object"
                 },
@@ -1113,16 +1115,12 @@
               "properties": {},
               "type": "object"
             },
-            "podHostname": {
-              "type": "string"
-            },
+            "podHostname": {},
             "podLabels": {
               "properties": {},
               "type": "object"
             },
-            "podPriorityClassName": {
-              "type": "string"
-            },
+            "podPriorityClassName": {},
             "rbac": {
               "properties": {
                 "create": {
@@ -1186,6 +1184,10 @@
                 "imagePullSecrets": {
                   "type": "array"
                 },
+                "labels": {
+                  "properties": {},
+                  "type": "object"
+                },
                 "name": {
                   "type": "string"
                 }
@@ -1233,9 +1235,7 @@
               },
               "type": "object"
             },
-            "services": {
-              "type": "string"
-            },
+            "services": {},
             "tolerations": {
               "items": {
                 "properties": {
