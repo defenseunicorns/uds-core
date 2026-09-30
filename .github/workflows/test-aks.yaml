@@ -14,7 +14,33 @@ permissions:
   packages: read
 
 jobs:
+  diagnose-aks-region:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login
+        uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Inspect US region quotas and SKUs without provisioning
+        run: |
+          mkdir -p region-diagnostics
+          for region in eastus2 westus2 westus3 centralus southcentralus; do
+            az vm list-usage --location "$region" --output json > "region-diagnostics/$region-usage.json" || true
+            az vm list-skus --location "$region" --size Standard_F8s_v2 --all --output json > "region-diagnostics/$region-vm.json" || true
+            az postgres flexible-server list-skus --location "$region" --output json > "region-diagnostics/$region-postgres.json" || true
+          done
+
+      - name: Save region diagnostics
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: aks-region-diagnostics
+          path: region-diagnostics
+
   test-aks-install:
+    if: false # Temporary read-only diagnostic run; restore the full matrix before validation.
     strategy:
       fail-fast: false
       matrix:
