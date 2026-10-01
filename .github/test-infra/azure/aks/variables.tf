@@ -79,7 +79,7 @@ variable "enable_autoscaling" {
 
 variable "default_node_pool_vm_size" {
   description = "Specifies the vm size of the default node pool"
-  default     = "Standard_F8s_v2"
+  default     = "Standard_D8as_v5"
   type        = string
 }
 
