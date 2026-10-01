@@ -189,10 +189,15 @@ tasks:
           curl -sSL https://raw.githubusercontent.com/defenseunicorns/uds-core/v${LATEST_CORE_TAG}/bundles/k3d-standard/uds-bundle.yaml -o tmp/core-shim/uds-bundle.yaml
 
           # Update the bundle: pin core to the latest release OCI ref
-          ./uds zarf tools yq e -i "
-            del(.packages[] | select(.name == \"core\").path) |
-            .packages[] |= (select(.name == \"core\") |
-            .repository = \"${TARGET_REPO}/core\" | .ref = \"${LATEST_VERSION}\")" \
+          ./uds zarf tools yq e -i '
+            del(.packages[] | select(.name == "core").path) |
+            .packages[] |= (select(.name == "core") |
+            .repository = strenv(TARGET_REPO) + "/core" |
+            .ref = strenv(LATEST_VERSION) |
+            .keylessVerification = {
+              "certificateIdentityRegexp": "^https://github\\.com/defenseunicorns/uds-core/\\.github/workflows/publish\\.yaml@refs/tags/v\\d+\\.\\d+\\.\\d+$",
+              "certificateOIDCIssuer": "https://token.actions.githubusercontent.com"
+            })' \
             tmp/core-shim/uds-bundle.yaml
 
           # Create and deploy the bundle
