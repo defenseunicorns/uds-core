@@ -77,6 +77,8 @@ jobs:
               - ".github/workflows/test-rke2.yaml"
             k0s:
               - "tasks/setup.yaml"
+              - "tasks/create.yaml"
+              - "tasks/test.yaml"
               - "test/values/k3d-standard/values.yaml"
               - ".github/workflows/test-k0s.yaml"
             eks:

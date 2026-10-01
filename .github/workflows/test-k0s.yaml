@@ -66,16 +66,38 @@ jobs:
       - name: Test UDS Core
         run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
 
+      - name: Collect K0s node logs
+        if: always()
+        timeout-minutes: 3
+        run: |
+          LOG_DIR="$RUNNER_TEMP/k0s-logs"
+          mkdir -p "$LOG_DIR"
+          if docker container inspect k0s-uds --format '{{json .State}}' > "$LOG_DIR/container-state.json" 2> "$LOG_DIR/collection-errors.log"; then
+            docker logs --timestamps k0s-uds > "$LOG_DIR/k0s.log" 2>&1 || echo "::warning::Could not collect K0s process logs"
+            # Read node files directly, including rotated pod logs, even when the Kubernetes API is unavailable.
+            docker cp k0s-uds:/var/log/. "$LOG_DIR/node" 2>> "$LOG_DIR/collection-errors.log" || echo "::warning::Could not copy K0s node logs"
+          fi
+
+      - name: Upload K0s node logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: k0s-node-logs-${{ matrix.flavor }}
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/k0s-logs
+            /tmp/zarf-*.log
+            /tmp/uds-*.log
+            /tmp/maru-*.log
+
       - name: Debug Output
         if: always()
+        timeout-minutes: 3
         uses: ./.github/actions/debug-output
-
-      - name: K0s logs
-        if: always()
-        run: docker logs k0s-uds > /tmp/uds-k0s.log 2>&1
 
       - name: Save logs
         if: always()
+        timeout-minutes: 5
         uses: ./.github/actions/save-logs
         with:
           suffix: -k0s-${{ matrix.flavor }}
@@ -83,7 +105,10 @@ jobs:
 
       - name: Remove K0s
         if: always()
-        run: docker rm -fv k0s-uds
+        run: |
+          if docker container inspect k0s-uds > /dev/null 2>&1; then
+            docker rm -fv k0s-uds
+          fi
 
       - name: Send Slack notification
         if: failure() && github.event_name == 'schedule'
