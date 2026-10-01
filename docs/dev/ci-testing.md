@@ -90,6 +90,8 @@ What: Standard Core with the development stack, across the `upstream`, `registry
 
 To run the test manually, select **Actions > K0s Test > Run workflow**. Each flavor uploads a `k0s-node-logs-<flavor>` artifact with container state, K0s process logs, node pod logs, and available CLI logs. Collection runs before cleanup and does not require a working Kubernetes API. The separate `debug-log-k0s-<flavor>` artifact includes cluster diagnostics and test reports when their collection succeeds. Both artifacts have a 30-day retention period.
 
+For local setup, smoke tests, and cleanup on Linux or macOS, see [Run K0s locally](k0s.md).
+
 ## Test types
 
 Core pipelines include two types of testing. They provide faster feedback on some failures and options for local developer testing.
