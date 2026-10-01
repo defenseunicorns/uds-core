@@ -12,6 +12,9 @@ import { Steps } from "@astrojs/starlight/components";
 
 UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Next demo bundles. This release also adds default disruption budgets for HA Keycloak deployments, rejects conflicting HTTP expose routes across namespaces, and improves HTTP/2 gateway routing.
 
+> [!WARNING]
+> UDS Core 1.12 through 1.14 may disrupt login through an additional Keycloak SSO hostname. See [Known issue: additional Keycloak SSO hostnames](#known-issue-additional-keycloak-sso-hostnames) before upgrading.
+
 ### ⚠ Breaking changes
 
 | Change                              | Impact                                                                                                                                                                                                                                          | Action required                                                                                                                                                                                                                                     |
@@ -43,6 +46,12 @@ UDS Core 1.14 adds keyless signatures to published Core packages and UDS CLI Nex
 | Portal                | 0.5.1    | [0.5.2](https://github.com/defenseunicorns/uds-portal/releases/tag/v0.5.2)             |
 
 ## Upgrade considerations
+
+### Known issue: additional Keycloak SSO hostnames
+
+UDS Core 1.12 introduced configured public and administrative Keycloak hostnames ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)). Deployments that route an additional public SSO hostname to the same Keycloak instance, such as a vanity or VDI login domain, may fail to complete login on UDS Core 1.12 through 1.14. Users have reported the error "Restart login cookie not found" when accessing the additional hostname. OIDC clients that use that hostname for discovery and issuer validation may also be affected.
+
+If your deployment depends on an additional SSO hostname, test the complete login flow and token issuer validation in a non-production environment before upgrading. Defer the production upgrade if that flow fails, and contact Product Support. A generally applicable fix has not yet been validated.
 
 ### Pre-upgrade steps
 
