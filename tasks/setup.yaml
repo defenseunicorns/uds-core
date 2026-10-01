@@ -72,6 +72,8 @@ tasks:
             k0s controller --single --config=/etc/k0s/k0s.yaml \
             --disable-components=metrics-server --kubelet-root-dir=/var/lib/kubelet
           test "$(docker exec k0s-uds k0s version)" = "$DEFAULT_K0S_VERSION"
+          # Istio CNI requires shared propagation for /var/run/netns.
+          docker exec k0s-uds mount --make-rshared /run
       - description: "Get K0s kubeconfig"
         maxRetries: 30
         maxTotalSeconds: 180
