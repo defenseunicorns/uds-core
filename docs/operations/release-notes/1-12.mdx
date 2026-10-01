@@ -10,6 +10,9 @@ sidebar:
 
 UDS Core 1.12 gives you more control over network access and Keycloak client configuration. This release also separates public and administrative Keycloak hostnames and updates UDS Identity Config and monitoring dependencies.
 
+> [!WARNING]
+> UDS Core 1.12 through 1.14 may disrupt login through an additional Keycloak SSO hostname. See [Known issue: additional Keycloak SSO hostnames](#known-issue-additional-keycloak-sso-hostnames) before upgrading.
+
 ### Notable features
 
 - **Envoy Gateway network access:** Set `additionalNetworkAllow` to add `network.allow` entries to the Envoy Gateway `Package`, enabling integrations such as Envoy AI Gateway. See [Configure Core network access](/how-to-guides/networking/configure-core-network-access/) ([#2891](https://github.com/defenseunicorns/uds-core/pull/2891)).
@@ -30,6 +33,12 @@ UDS Core 1.12 gives you more control over network access and Keycloak client con
 | kube-prometheus-stack Helm chart | 88.2.0   | [88.5.2](https://github.com/prometheus-community/helm-charts/releases/tag/kube-prometheus-stack-88.5.2) |
 
 ## Upgrade considerations
+
+### Known issue: additional Keycloak SSO hostnames
+
+UDS Core 1.12 introduced configured public and administrative Keycloak hostnames ([#2898](https://github.com/defenseunicorns/uds-core/pull/2898)). Deployments that route an additional public SSO hostname to the same Keycloak instance, such as a vanity or VDI login domain, may fail to complete login on UDS Core 1.12 through 1.14. Users have reported the error "Restart login cookie not found" when accessing the additional hostname. OIDC clients that use that hostname for discovery and issuer validation may also be affected.
+
+If your deployment depends on an additional SSO hostname, test the complete login flow and token issuer validation in a non-production environment before upgrading. Defer the production upgrade if that flow fails, and contact Product Support. A generally applicable fix has not yet been validated.
 
 ### Identity Config updates (0.31.0)
 
