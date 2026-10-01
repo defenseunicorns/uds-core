@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -187,6 +187,7 @@ describe("handleFailure", () => {
   let PatchStatus: Mock;
   beforeEach(() => {
     vi.clearAllMocks();
+    uidSeen.clear();
 
     Create = vi.fn();
     PatchStatus = vi.fn();
@@ -203,6 +204,37 @@ describe("handleFailure", () => {
     await handleFailure(err, cr as UDSPackage);
     expect(Log.warn).toHaveBeenCalledWith({ err }, "Package metadata seems to have been deleted");
     expect(Create).not.toHaveBeenCalled();
+  });
+
+  it("should persist retry status when writing the error event fails", async () => {
+    const err = { status: 400, message: "fetch failed" };
+    const cr = {
+      metadata: { namespace: "default", name: "test", uid: "1" },
+      status: { phase: Phase.Pending },
+    } as UDSPackage;
+    Create.mockRejectedValue(err);
+
+    await expect(handleFailure(err, cr)).resolves.toBeUndefined();
+
+    expect(PatchStatus).toHaveBeenCalledWith({
+      metadata: { namespace: "default", name: "test" },
+      status: expect.objectContaining({ phase: Phase.Retrying, retryAttempt: 1 }),
+    });
+  });
+
+  it("should reprocess a pending package after the API recovers from failed status and event writes", async () => {
+    const err = { status: 400, message: "fetch failed" };
+    const cr = {
+      metadata: { namespace: "default", name: "test", uid: "1", generation: 1 },
+      status: { phase: Phase.Pending, observedGeneration: 1, retryAttempt: 0 },
+    } as UDSPackage;
+    uidSeen.add("1");
+    PatchStatus.mockRejectedValue(err);
+    Create.mockRejectedValue(err);
+
+    await expect(handleFailure(err, cr)).resolves.toBeUndefined();
+
+    expect(shouldSkip(cr)).toBe(false);
   });
 
   it("should retry a failure", async () => {
