@@ -1,0 +1,93 @@
+# Copyright 2026 Defense Unicorns
+# SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
+
+name: K0s Test
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+  pull-requests: write # Needed for renovate-readiness
+
+concurrency:
+  group: test-k0s-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-k0s-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        flavor: [upstream, registry1, unicorn]
+    runs-on: uds-ubuntu-big-boy-8-core
+    timeout-minutes: 60
+    name: test-k0s
+    env:
+      KUBECONFIG: ${{ github.workspace }}/build/k0s/kubeconfig
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check renovate readiness
+        if: startsWith(github.event.pull_request.head.ref, 'renovate/')
+        uses: ./.github/actions/renovate-readiness
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Environment setup
+        uses: ./.github/actions/setup
+        with:
+          ghToken: ${{ secrets.GITHUB_TOKEN }}
+          registry1Username: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_USERNAME || '' }}
+          registry1Password: ${{ (matrix.flavor == 'registry1') && secrets.IRON_BANK_ROBOT_PASSWORD || '' }}
+          chainguardIdentity: ${{ (matrix.flavor == 'unicorn') && secrets.CHAINGUARD_IDENTITY || '' }}
+
+      - name: Create UDS Core Package
+        run: ZARF_ARCHITECTURE=amd64 uds run -f tasks/create.yaml standard-package --no-progress --with create_options="--skip-sbom" --set FLAVOR=${{ matrix.flavor }}
+
+      - name: Setup K0s
+        run: uds run -f tasks/setup.yaml k0s-test-cluster --no-progress
+        timeout-minutes: 15
+
+      - name: Deploy UDS Core
+        run: |
+          uds zarf tools yq '.falco.falco.collectors.containerEngine.engines.cri.sockets = ["/run/k0s/containerd.sock"]' \
+            test/values/k3d-standard/values.yaml > build/k0s/values.yaml
+          uds zarf package deploy build/zarf-package-core-amd64-*.tar.zst \
+            --values build/k0s/values.yaml --components '*' --confirm --no-progress
+        timeout-minutes: 30
+
+      - name: Test UDS Core
+        run: uds run -f tasks/test.yaml uds-core-non-k3d --set FLAVOR=${{ matrix.flavor }} --set EXCLUDED_PACKAGES=${{ matrix.flavor == 'registry1' && 'portal' || '' }}
+
+      - name: Debug Output
+        if: always()
+        uses: ./.github/actions/debug-output
+
+      - name: K0s logs
+        if: always()
+        run: docker logs k0s-uds > /tmp/uds-k0s.log 2>&1
+
+      - name: Save logs
+        if: always()
+        uses: ./.github/actions/save-logs
+        with:
+          suffix: -k0s-${{ matrix.flavor }}
+          distro: k0s
+
+      - name: Remove K0s
+        if: always()
+        run: docker rm -fv k0s-uds
+
+      - name: Send Slack notification
+        if: failure() && github.event_name == 'schedule'
+        uses: ./.github/actions/slack-alert
+        with:
+          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          channel: ${{ vars.SLACK_ALERT_CHANNEL }}
