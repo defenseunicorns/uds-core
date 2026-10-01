@@ -15,7 +15,7 @@ variables:
 
 tasks:
   - name: k0s-test-cluster
-    description: "Create a single-node K0s test cluster (Linux with Docker)"
+    description: "Create a single-node K0s test cluster (Linux or macOS with Docker)"
     actions:
       - description: "Require KUBECONFIG to target the K0s test cluster"
         cmd: test "${KUBECONFIG}" = "$(pwd)/build/k0s/kubeconfig"
@@ -58,22 +58,32 @@ tasks:
                               loadbalance
                             }
           EOF
-      - description: "Start K0s"
+      - description: "Download the dev stack source"
+        cmd: |
+          set -e
+          mkdir -p build/k0s/dev-stack
+          curl -fsSL "https://github.com/defenseunicorns/uds-k3d/archive/refs/tags/${K0S_DEV_STACK_VERSION}.tar.gz" \
+            | tar -xz --strip-components=1 -C build/k0s/dev-stack
+      - description: "Start K0s with FIPS CNI compatibility libraries"
         shell:
+          darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
-          K0S_IMAGE="docker.io/k0sproject/k0s:${DEFAULT_K0S_VERSION/+k0s./-k0s.}"
+          # Reuse the pinned dev stack's glibc/OpenSSL layer with the K0s base image.
+          sed 's|FROM rancher/k3s:|FROM k0sproject/k0s:|' build/k0s/dev-stack/docker/Dockerfile \
+            | docker build --build-arg "K3S_TAG=${DEFAULT_K0S_VERSION/+k0s./-k0s.}" \
+                --tag uds-k0s-test --file - build/k0s/dev-stack/docker
           docker run -d --name k0s-uds --hostname k0s-uds --privileged \
             --ulimit nofile=1048576:1048576 \
             --tmpfs /run -v /var/lib/k0s -v /var/log/pods -v /var/lib/kubelet \
             -v "$(pwd)/build/k0s/config.yaml:/etc/k0s/k0s.yaml:ro" \
-            -p 127.0.0.1:6443:6443 "$K0S_IMAGE" \
+            -p 127.0.0.1:6443:6443 uds-k0s-test \
             k0s controller --single --config=/etc/k0s/k0s.yaml \
             --disable-components=metrics-server --kubelet-root-dir=/var/lib/kubelet
           test "$(docker exec k0s-uds k0s version)" = "$DEFAULT_K0S_VERSION"
-          # Istio CNI requires shared propagation for /var/run/netns.
-          docker exec k0s-uds mount --make-rshared /run
+          # Istio CNI and node-exporter require shared host-mount propagation.
+          docker exec k0s-uds mount --make-rshared /
       - description: "Get K0s kubeconfig"
         maxRetries: 30
         maxTotalSeconds: 180
@@ -93,12 +103,10 @@ tasks:
         cmd: ./uds zarf tools kubectl rollout status deployment/coredns -n kube-system --timeout=300s
       - description: "Deploy the existing dev stack without creating K3d"
         shell:
+          darwin: bash
           linux: bash
         cmd: |
           set -euo pipefail
-          mkdir -p build/k0s/dev-stack
-          curl -fsSL "https://github.com/defenseunicorns/uds-k3d/archive/refs/tags/${K0S_DEV_STACK_VERSION}.tar.gz" \
-            | tar -xz --strip-components=1 -C build/k0s/dev-stack
           ./uds zarf tools yq -i '.components = [.components[] | select(.name == "uds-dev-stack")]' build/k0s/dev-stack/zarf.yaml
           ./uds zarf package create build/k0s/dev-stack --confirm --skip-sbom --output build/k0s
           ./uds zarf package deploy build/k0s/zarf-package-uds-k3d-*.tar.zst --confirm
