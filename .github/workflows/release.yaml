@@ -28,6 +28,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
+      pull-requests: write
     uses: ./.github/workflows/checkpoint.yaml
     secrets: inherit
 
