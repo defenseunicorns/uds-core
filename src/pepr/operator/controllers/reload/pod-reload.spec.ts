@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Defense Unicorns
+ * Copyright 2025-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -1080,6 +1080,277 @@ describe("pod-reload", () => {
       const result = await discoverConfigMapConsumers(namespace, configMapName);
       expect(result).toHaveLength(1);
       expect(result[0]?.metadata?.name).toBe("pod-with-configmap-envfrom");
+    });
+  });
+
+  describe("resource creation for optional mounts", () => {
+    const namespace = "default";
+    const resourceName = "late-config";
+    const beforeResource = "2026-09-30T10:00:00Z";
+    const resourceCreated = "2026-09-30T10:05:00Z";
+    const afterResource = "2026-09-30T10:10:00Z";
+
+    function pod(
+      name: string,
+      volumes: NonNullable<kind.Pod["spec"]>["volumes"],
+      created = beforeResource,
+    ) {
+      return {
+        metadata: { name, namespace, creationTimestamp: new Date(created) },
+        status: { phase: "Running", startTime: new Date(created) },
+        spec: {
+          containers: [
+            {
+              name: "app",
+              image: "example:latest",
+              volumeMounts: [{ name: "config", mountPath: "/config" }],
+            },
+          ],
+          volumes,
+        },
+      } as kind.Pod;
+    }
+
+    function secret(created = resourceCreated) {
+      return {
+        metadata: {
+          name: resourceName,
+          namespace,
+          creationTimestamp: new Date(created),
+          labels: { "uds.dev/pod-reload": "true" },
+        },
+        data: { key: "dmFsdWU=" },
+      } as kind.Secret;
+    }
+
+    function configMap(created = resourceCreated) {
+      return {
+        metadata: {
+          name: resourceName,
+          namespace,
+          creationTimestamp: new Date(created),
+          labels: { "uds.dev/pod-reload": "true" },
+        },
+        data: { key: "value" },
+      } as kind.ConfigMap;
+    }
+
+    it("reloads only older pods with a matching optional Secret volume", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({
+        items: [
+          affected,
+          pod("required", [{ name: "config", secret: { secretName: resourceName } }]),
+          pod("other-secret", [
+            { name: "config", secret: { secretName: "other", optional: true } },
+          ]),
+          pod("required-projected-secret", [
+            { name: "config", projected: { sources: [{ secret: { name: resourceName } }] } },
+          ]),
+          pod(
+            "started-after-creation",
+            [{ name: "config", secret: { secretName: resourceName, optional: true } }],
+            afterResource,
+          ),
+          {
+            metadata: {
+              name: "optional-env-only",
+              namespace,
+              creationTimestamp: new Date(beforeResource),
+            },
+            spec: {
+              containers: [
+                {
+                  name: "app",
+                  env: [
+                    {
+                      name: "KEY",
+                      valueFrom: {
+                        secretKeyRef: { name: resourceName, key: "key", optional: true },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          } as kind.Pod,
+        ],
+      });
+
+      await handleSecretUpdate(secret());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        namespace,
+        [affected],
+        expect.any(String),
+        expect.anything(),
+        expect.any(String),
+      );
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("reloads an older pod with a matching optional ConfigMap volume", async () => {
+      const affected = pod("affected", [
+        { name: "config", configMap: { name: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+
+      await handleConfigMapUpdate(configMap());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        namespace,
+        [affected],
+        expect.any(String),
+        expect.anything(),
+        expect.any(String),
+      );
+    });
+
+    it("reloads an older pod with a matching optional projected Secret", async () => {
+      const affected = pod("affected", [
+        {
+          name: "config",
+          projected: { sources: [{ secret: { name: resourceName, optional: true } }] },
+        },
+      ]);
+      setupK8sMock({ items: [affected] });
+
+      await handleSecretUpdate(secret());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        namespace,
+        [affected],
+        expect.any(String),
+        expect.anything(),
+        expect.any(String),
+      );
+    });
+
+    it("reloads an older pod with a matching optional projected ConfigMap", async () => {
+      const affected = pod("affected", [
+        {
+          name: "config",
+          projected: { sources: [{ configMap: { name: resourceName, optional: true } }] },
+        },
+      ]);
+      setupK8sMock({ items: [affected] });
+
+      await handleConfigMapUpdate(configMap());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledWith(
+        namespace,
+        [affected],
+        expect.any(String),
+        expect.anything(),
+        expect.any(String),
+      );
+    });
+
+    it("does not reload a pod created after the resource already existed", async () => {
+      setupK8sMock({
+        items: [
+          pod(
+            "new-pod",
+            [{ name: "config", secret: { secretName: resourceName, optional: true } }],
+            afterResource,
+          ),
+        ],
+      });
+
+      await handleSecretUpdate(secret());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+    });
+
+    it("does not confuse the cleanup annotation with a completed creation reload", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.cleanupOverClaimedControllerFields).not.toHaveBeenCalled();
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not reload the same pod twice for repeated observations of the resource", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const createdSecret = secret();
+
+      await handleSecretUpdate(createdSecret);
+      await startupCleanupQueue;
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("reloads after deletion and recreation when the pod predates the new Secret", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      const original = secret("2026-09-30T09:00:00Z");
+
+      await handleSecretUpdate(original);
+      await startupCleanupQueue;
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+
+      handleSecretDelete(original);
+      await handleSecretUpdate(secret());
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("waits for first-observation cleanup before reloading", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      let finishCleanup: (() => void) | undefined;
+      vi.mocked(utils.cleanupOverClaimedControllerFields).mockImplementation(
+        () =>
+          new Promise<void>(resolve => {
+            finishCleanup = resolve;
+          }),
+      );
+
+      const observation = handleSecretUpdate(secret());
+      await vi.waitFor(() => expect(finishCleanup).toBeDefined());
+      expect(utils.reloadPods).not.toHaveBeenCalled();
+      finishCleanup?.();
+      await observation;
+      await startupCleanupQueue;
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("can retry a creation reload after a transient failure", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      setupK8sMock({ items: [affected] });
+      vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("temporary failure"));
+      const createdSecret = secret();
+
+      await handleSecretUpdate(createdSecret);
+      await startupCleanupQueue;
+      await handleSecretUpdate(createdSecret);
+
+      expect(utils.reloadPods).toHaveBeenCalledTimes(2);
     });
   });
 });

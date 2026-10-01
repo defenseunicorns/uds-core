@@ -114,7 +114,7 @@ export async function reloadPods(
  * @param log Logger instance for logging
  * @returns The resolved kind class and name, or null for unhandled controller kinds
  */
-async function resolveControllerKindAndName(
+export async function resolveControllerKindAndName(
   namespace: string,
   ref: { kind: string; name: string },
   log: Logger,
