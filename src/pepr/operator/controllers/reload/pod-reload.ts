@@ -50,6 +50,13 @@ export function computeResourceChecksum(data: Record<string, string>): string {
   return hash.digest("hex");
 }
 
+// Watch and list responses contain JSON timestamp strings, while the Kubernetes
+// client types describe these fields as Dates.
+function timestampMs(value: Date | string | undefined): number | undefined {
+  const ms = value instanceof Date ? value.getTime() : Date.parse(value ?? "");
+  return Number.isFinite(ms) ? ms : undefined;
+}
+
 /**
  * Auto-discovers pods that use the given secret
  *
@@ -190,127 +197,131 @@ export async function handleResourceUpdate(
   // Record the current checksum so later data changes use the update path.
   checksumCache.set(cacheKey, currentChecksum);
 
-  // Determine which pods to reload based on the strategy
-  let podsToReload: kind.Pod[] = [];
+  try {
+    // Determine which pods to reload based on the strategy
+    let podsToReload: kind.Pod[] = [];
 
-  // First time we've seen this resource — proactively clean up any over-claimed controller
-  // fields so Helm upgrades don't conflict before the first reload fires.
-  if (!previousChecksum) {
-    // Has not been cleaned up by a prior run.
-    if (!resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
-      // Chain onto the queue so concurrent first-observation events on startup
-      // run sequentially rather than fanning out parallel API calls.
-      startupCleanupQueue = startupCleanupQueue
-        .then(async () => {
-          const pods = await discoverResourceConsumers(namespace, name);
-          await cleanupOverClaimedControllerFields(namespace, pods, log);
-          // Mark complete so future restarts skip this work entirely.
-          // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
-          // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
-          // (e.g. the CA cert in uds-trust-bundle).
-          try {
-            const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
-            // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
-            const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
-            // If the resource has no annotations map yet, we must create it first —
-            // JSON Patch `add` on a child key fails if the parent object is absent.
-            const ops: { op: "add"; path: string; value: unknown }[] = [];
-            if (!resource.metadata?.annotations) {
-              ops.push({ op: "add", path: "/metadata/annotations", value: {} });
+    // First time we've seen this resource — proactively clean up any over-claimed controller
+    // fields so Helm upgrades don't conflict before the first reload fires.
+    if (previousChecksum === undefined) {
+      // Has not been cleaned up by a prior run.
+      if (!resource.metadata?.annotations?.[SSA_CLEANUP_ANNOTATION]) {
+        // Chain onto the queue so concurrent first-observation events on startup
+        // run sequentially rather than fanning out parallel API calls.
+        startupCleanupQueue = startupCleanupQueue
+          .then(async () => {
+            const pods = await discoverResourceConsumers(namespace, name);
+            await cleanupOverClaimedControllerFields(namespace, pods, log);
+            // Mark complete so future restarts skip this work entirely.
+            // Use JSON Patch (not SSA Apply) so we don't affect field ownership — an SSA Apply
+            // that omits `data` would cause Kubernetes to drop any fields Pepr previously owned
+            // (e.g. the CA cert in uds-trust-bundle).
+            try {
+              const kindClass = resourceType === "Secret" ? kind.Secret : kind.ConfigMap;
+              // RFC 6901 JSON Pointer encoding: ~ → ~0, / → ~1
+              const annotationPath = `/metadata/annotations/${SSA_CLEANUP_ANNOTATION.replace(/~/g, "~0").replace(/\//g, "~1")}`;
+              // If the resource has no annotations map yet, we must create it first —
+              // JSON Patch `add` on a child key fails if the parent object is absent.
+              const ops: { op: "add"; path: string; value: unknown }[] = [];
+              if (!resource.metadata?.annotations) {
+                ops.push({ op: "add", path: "/metadata/annotations", value: {} });
+              }
+              ops.push({ op: "add", path: annotationPath, value: "true" });
+              await K8s(kindClass, { name, namespace }).Patch(ops);
+            } catch (annotationErr) {
+              log.warn(
+                { resource: name, namespace, type: resourceType, annotationErr },
+                "Failed to mark cleanup complete; will retry on next restart",
+              );
             }
-            ops.push({ op: "add", path: annotationPath, value: "true" });
-            await K8s(kindClass, { name, namespace }).Patch(ops);
-          } catch (annotationErr) {
+          })
+          .catch(err =>
             log.warn(
-              { resource: name, namespace, type: resourceType, annotationErr },
-              "Failed to mark cleanup complete; will retry on next restart",
-            );
-          }
-        })
-        .catch(err =>
-          log.warn(
-            { resource: name, namespace, type: resourceType, err },
-            "Field manager cleanup failed",
-          ),
-        );
-    }
+              { resource: name, namespace, type: resourceType, err },
+              "Field manager cleanup failed",
+            ),
+          );
+      }
 
-    // evaluate if resource is new and pods should be reloaded
-    await startupCleanupQueue;
-    const resourceCreatedAt = resource.metadata?.creationTimestamp?.getTime();
-    const pods = await discoverResourceConsumers(namespace, name);
-    const candidates = pods.filter(pod => {
-      const usesOptionalMount =
-        pod.spec?.volumes?.some(volume => {
-          if (resourceType === "Secret") {
+      // evaluate if resource is new and pods should be reloaded
+      await startupCleanupQueue;
+      const resourceTimestamp = resource.metadata?.creationTimestamp;
+      const resourceCreatedAt = timestampMs(resourceTimestamp);
+      if (resourceTimestamp !== undefined && resourceCreatedAt === undefined) {
+        throw new Error(`Invalid creation timestamp for ${resourceType} ${namespace}/${name}`);
+      }
+      const pods = await discoverResourceConsumers(namespace, name);
+      const candidates = pods.filter(pod => {
+        const usesOptionalMount =
+          pod.spec?.volumes?.some(volume => {
+            if (resourceType === "Secret") {
+              return (
+                (volume.secret?.secretName === name && volume.secret?.optional === true) ||
+                (volume.projected?.sources?.some(
+                  source => source.secret?.name === name && source.secret?.optional === true,
+                ) ??
+                  false)
+              );
+            }
+
             return (
-              (volume.secret?.secretName === name && volume.secret?.optional === true) ||
+              (volume.configMap?.name === name && volume.configMap?.optional === true) ||
               (volume.projected?.sources?.some(
-                source => source.secret?.name === name && source.secret?.optional === true,
+                source => source.configMap?.name === name && source.configMap?.optional === true,
               ) ??
                 false)
             );
-          }
+          }) ?? false;
 
-          return (
-            (volume.configMap?.name === name && volume.configMap?.optional === true) ||
-            (volume.projected?.sources?.some(
-              source => source.configMap?.name === name && source.configMap?.optional === true,
-            ) ??
-              false)
-          );
-        }) ?? false;
+        const startedAt = timestampMs(pod.status?.startTime);
 
-      const startedAt = pod.status?.startTime?.getTime();
+        return (
+          usesOptionalMount &&
+          startedAt !== undefined &&
+          resourceCreatedAt !== undefined &&
+          startedAt < resourceCreatedAt &&
+          !pod.metadata?.deletionTimestamp &&
+          pod.status?.phase !== "Succeeded" &&
+          pod.status?.phase !== "Failed"
+        );
+      });
 
-      return (
-        usesOptionalMount &&
-        startedAt !== undefined &&
-        resourceCreatedAt !== undefined &&
-        startedAt < resourceCreatedAt &&
-        !pod.metadata?.deletionTimestamp &&
-        pod.status?.phase !== "Succeeded" &&
-        pod.status?.phase !== "Failed"
+      log.info(
+        { resource: name, namespace, type: resourceType },
+        `${resourceType} data created, processing pod reload`,
       );
-    });
 
-    log.info(
-      { resource: name, namespace, type: resourceType },
-      `${resourceType} data created, processing pod reload`,
-    );
+      for (const pod of candidates) {
+        const owner = pod.metadata?.ownerReferences?.find(ref => ref.controller === true);
 
-    for (const pod of candidates) {
-      const owner = pod.metadata?.ownerReferences?.find(ref => ref.controller === true);
+        if (!owner) {
+          // Standalone pod: there is no controller template to inspect.
+          podsToReload.push(pod);
+          continue;
+        }
 
-      if (!owner) {
-        // Standalone pod: there is no controller template to inspect.
+        // Resolve the owner (including ReplicaSet → Deployment), then fetch it.
+        const resolved = await resolveControllerKindAndName(namespace, owner, log);
+        if (!resolved) {
+          podsToReload.push(pod);
+          continue;
+        }
+        const controller = await K8s(resolved.kindClass).InNamespace(namespace).Get(resolved.name);
+        const restartedAt =
+          controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
+
+        if (
+          resourceCreatedAt !== undefined &&
+          restartedAt &&
+          Date.parse(restartedAt) >= resourceCreatedAt
+        ) {
+          continue; // A restart has already been requested since creation.
+        }
+
         podsToReload.push(pod);
-        continue;
       }
 
-      // Resolve the owner (including ReplicaSet → Deployment), then fetch it.
-      const resolved = await resolveControllerKindAndName(namespace, owner, log);
-      if (!resolved) {
-        podsToReload.push(pod);
-        continue;
-      }
-      const controller = await K8s(resolved.kindClass).InNamespace(namespace).Get(resolved.name);
-      const restartedAt =
-        controller?.spec?.template?.metadata?.annotations?.["uds.dev/restartedAt"];
-
-      if (
-        resourceCreatedAt !== undefined &&
-        restartedAt &&
-        Date.parse(restartedAt) >= resourceCreatedAt
-      ) {
-        continue; // A restart has already been requested since creation.
-      }
-
-      podsToReload.push(pod);
-    }
-
-    if (podsToReload.length > 0) {
-      try {
+      if (podsToReload.length > 0) {
         await reloadPods(
           namespace,
           podsToReload,
@@ -318,103 +329,94 @@ export async function handleResourceUpdate(
           log,
           `${resourceType}Changed`,
         );
-      } catch (error) {
+      }
+      return;
+    }
+
+    // Data unchanged — nothing to do
+    if (previousChecksum === currentChecksum) {
+      return;
+    }
+
+    log.info(
+      { resource: name, namespace, type: resourceType },
+      `${resourceType} data changed, processing pod reload`,
+    );
+
+    // Check if we have an explicit pod selector in annotations
+    const selectorStr = resource.metadata?.annotations?.["uds.dev/pod-reload-selector"];
+
+    if (selectorStr) {
+      const selector = parseSelectorString(selectorStr);
+      if (!selector) {
+        const errorMsg = `Invalid selector format in uds.dev/pod-reload-selector annotation for ${resourceType.toLowerCase()} ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
         log.error(
-          { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
-          `Failed to reload pods after ${resourceType.toLowerCase()} change`,
+          { resource: name, namespace, selector: selectorStr, type: resourceType },
+          errorMsg,
         );
-
-        // Let a later observation retry the failed creation reload.
-        checksumCache.delete(cacheKey);
-
         return;
       }
-    }
-    return;
-  }
 
-  // Data unchanged — nothing to do
-  if (previousChecksum === currentChecksum) {
-    return;
-  }
+      log.debug(
+        { resource: name, namespace, selector, type: resourceType },
+        `Using explicit pod selector from ${resourceType.toLowerCase()} annotation for reload`,
+      );
 
-  log.info(
-    { resource: name, namespace, type: resourceType },
-    `${resourceType} data changed, processing pod reload`,
-  );
-
-  // Check if we have an explicit pod selector in annotations
-  const selectorStr = resource.metadata?.annotations?.["uds.dev/pod-reload-selector"];
-
-  if (selectorStr) {
-    const selector = parseSelectorString(selectorStr);
-    if (!selector) {
-      const errorMsg = `Invalid selector format in uds.dev/pod-reload-selector annotation for ${resourceType.toLowerCase()} ${namespace}/${name}: ${selectorStr}. Expected format: key1=value1,key2=value2`;
-      log.error({ resource: name, namespace, selector: selectorStr, type: resourceType }, errorMsg);
-      return;
-    }
-
-    log.debug(
-      { resource: name, namespace, selector, type: resourceType },
-      `Using explicit pod selector from ${resourceType.toLowerCase()} annotation for reload`,
-    );
-
-    // Build query with each label
-    let podQuery = K8s(kind.Pod).InNamespace(namespace);
-    for (const [key, value] of Object.entries(selector)) {
-      podQuery = podQuery.WithLabel(key, value);
-    }
-
-    try {
-      async function getPodsWithSelector() {
-        return podQuery.Get();
+      // Build query with each label
+      let podQuery = K8s(kind.Pod).InNamespace(namespace);
+      for (const [key, value] of Object.entries(selector)) {
+        podQuery = podQuery.WithLabel(key, value);
       }
 
-      const pods = await retryWithDelay(getPodsWithSelector, log);
-      podsToReload = pods.items;
-    } catch (error) {
-      log.error(
-        { resource: name, namespace, selector, error, type: resourceType },
-        `Failed to get pods using selector from ${resourceType.toLowerCase()} annotation`,
+      try {
+        async function getPodsWithSelector() {
+          return podQuery.Get();
+        }
+
+        const pods = await retryWithDelay(getPodsWithSelector, log);
+        podsToReload = pods.items;
+      } catch (error) {
+        log.error(
+          { resource: name, namespace, selector, error, type: resourceType },
+          `Failed to get pods using selector from ${resourceType.toLowerCase()} annotation`,
+        );
+        throw error;
+      }
+    } else {
+      // No explicit selector, use auto-discovery
+      log.debug(
+        { resource: name, namespace, type: resourceType },
+        `Auto-discovering ${resourceType.toLowerCase()} consumers`,
+      );
+      try {
+        async function getPodsUsingResource() {
+          return discoverResourceConsumers(namespace, name);
+        }
+        podsToReload = await retryWithDelay(getPodsUsingResource, log);
+      } catch (error) {
+        log.error(
+          { resource: name, namespace, error, type: resourceType },
+          `Failed to discover ${resourceType.toLowerCase()} consumers`,
+        );
+        throw error;
+      }
+    }
+
+    // If no pods found, log and exit
+    if (podsToReload.length === 0) {
+      log.warn(
+        { resource: name, namespace, type: resourceType },
+        `No pods found to reload for ${resourceType.toLowerCase()} change`,
       );
       return;
     }
-  } else {
-    // No explicit selector, use auto-discovery
-    log.debug(
-      { resource: name, namespace, type: resourceType },
-      `Auto-discovering ${resourceType.toLowerCase()} consumers`,
+
+    // Reload the pods
+    log.info(
+      { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
+      `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
     );
-    try {
-      async function getPodsUsingResource() {
-        return discoverResourceConsumers(namespace, name);
-      }
-      podsToReload = await retryWithDelay(getPodsUsingResource, log);
-    } catch (error) {
-      log.error(
-        { resource: name, namespace, error, type: resourceType },
-        `Failed to discover ${resourceType.toLowerCase()} consumers`,
-      );
-      return;
-    }
-  }
 
-  // If no pods found, log and exit
-  if (podsToReload.length === 0) {
-    log.warn(
-      { resource: name, namespace, type: resourceType },
-      `No pods found to reload for ${resourceType.toLowerCase()} change`,
-    );
-    return;
-  }
-
-  // Reload the pods
-  log.info(
-    { resource: name, namespace, podCount: podsToReload.length, type: resourceType },
-    `Reloading ${podsToReload.length} pods due to ${resourceType.toLowerCase()} change`,
-  );
-
-  try {
     await reloadPods(
       namespace,
       podsToReload,
@@ -423,11 +425,19 @@ export async function handleResourceUpdate(
       `${resourceType}Changed`,
     );
   } catch (error) {
+    // A failed read or restart must not mark this observation as processed.
+    if (checksumCache.get(cacheKey) === currentChecksum) {
+      if (previousChecksum === undefined) {
+        checksumCache.delete(cacheKey);
+      } else {
+        checksumCache.set(cacheKey, previousChecksum);
+      }
+    }
     log.error(
-      { resource: name, namespace, podCount: podsToReload.length, error, type: resourceType },
-      `Failed to reload pods after ${resourceType.toLowerCase()} change`,
+      { resource: name, namespace, error, type: resourceType },
+      `Failed to process ${resourceType.toLowerCase()} pod reload`,
     );
-    return;
+    throw error;
   }
 }
 

@@ -53,6 +53,7 @@ vi.mock("pepr", async importOriginal => {
       Pod: "Pod",
       Secret: "Secret",
       ConfigMap: "ConfigMap",
+      StatefulSet: "StatefulSet",
     },
   };
 });
@@ -61,6 +62,7 @@ vi.mock("./reload-utils", async () => {
   return {
     reloadPods: vi.fn(),
     cleanupOverClaimedControllerFields: vi.fn(),
+    resolveControllerKindAndName: vi.fn(),
   };
 });
 
@@ -1096,8 +1098,8 @@ describe("pod-reload", () => {
       created = beforeResource,
     ) {
       return {
-        metadata: { name, namespace, creationTimestamp: new Date(created) },
-        status: { phase: "Running", startTime: new Date(created) },
+        metadata: { name, namespace, creationTimestamp: created },
+        status: { phase: "Running", startTime: created },
         spec: {
           containers: [
             {
@@ -1108,7 +1110,7 @@ describe("pod-reload", () => {
           ],
           volumes,
         },
-      } as kind.Pod;
+      } as unknown as kind.Pod;
     }
 
     function secret(created = resourceCreated) {
@@ -1116,11 +1118,11 @@ describe("pod-reload", () => {
         metadata: {
           name: resourceName,
           namespace,
-          creationTimestamp: new Date(created),
+          creationTimestamp: created,
           labels: { "uds.dev/pod-reload": "true" },
         },
         data: { key: "dmFsdWU=" },
-      } as kind.Secret;
+      } as unknown as kind.Secret;
     }
 
     function configMap(created = resourceCreated) {
@@ -1128,11 +1130,11 @@ describe("pod-reload", () => {
         metadata: {
           name: resourceName,
           namespace,
-          creationTimestamp: new Date(created),
+          creationTimestamp: created,
           labels: { "uds.dev/pod-reload": "true" },
         },
         data: { key: "value" },
-      } as kind.ConfigMap;
+      } as unknown as kind.ConfigMap;
     }
 
     it("reloads only older pods with a matching optional Secret volume", async () => {
@@ -1346,11 +1348,65 @@ describe("pod-reload", () => {
       vi.mocked(utils.reloadPods).mockRejectedValueOnce(new Error("temporary failure"));
       const createdSecret = secret();
 
-      await handleSecretUpdate(createdSecret);
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("temporary failure");
       await startupCleanupQueue;
       await handleSecretUpdate(createdSecret);
 
       expect(utils.reloadPods).toHaveBeenCalledTimes(2);
+    });
+
+    it("retries creation processing after pod discovery fails", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      setupK8sMock({ items: [affected] });
+      mockGet.mockRejectedValueOnce(new Error("pod list unavailable"));
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("pod list unavailable");
+      expect(secretChecksumCache.has(`${namespace}/${resourceName}`)).toBe(false);
+
+      await handleSecretUpdate(createdSecret);
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
+    });
+
+    it("retries creation processing after controller lookup fails", async () => {
+      const affected = pod("affected", [
+        { name: "config", secret: { secretName: resourceName, optional: true } },
+      ]);
+      affected.metadata!.ownerReferences = [
+        {
+          apiVersion: "apps/v1",
+          kind: "StatefulSet",
+          name: "controller",
+          uid: "owner",
+          controller: true,
+        },
+      ];
+      const createdSecret = secret();
+      createdSecret.metadata!.annotations = { [SSA_CLEANUP_ANNOTATION]: "true" };
+      setupK8sMock({ items: [affected] });
+      vi.mocked(utils.resolveControllerKindAndName).mockResolvedValue({
+        kindClass: kind.StatefulSet,
+        name: "controller",
+      });
+      mockGet.mockImplementation((name?: string) =>
+        name
+          ? Promise.reject(new Error("controller unavailable"))
+          : Promise.resolve({ items: [affected] }),
+      );
+
+      await expect(handleSecretUpdate(createdSecret)).rejects.toThrow("controller unavailable");
+      expect(secretChecksumCache.has(`${namespace}/${resourceName}`)).toBe(false);
+
+      mockGet.mockImplementation((name?: string) =>
+        name
+          ? Promise.resolve({ spec: { template: { metadata: { annotations: {} } } } })
+          : Promise.resolve({ items: [affected] }),
+      );
+      await handleSecretUpdate(createdSecret);
+      expect(utils.reloadPods).toHaveBeenCalledTimes(1);
     });
   });
 });
