@@ -78,6 +78,20 @@ Where: AKS, EKS, RKE2 (on AWS)
 
 What: [Infrastructure specific bundles](https://github.com/defenseunicorns/uds-core/tree/main/.github/bundles), configured with external dependencies
 
+### K0s
+
+The [K0s workflow](../../.github/workflows/test-k0s.yaml) deploys Core on a single-node K0s cluster in Docker and runs the non-k3d validation and end-to-end tests. It tests one version, pinned by `DEFAULT_K0S_VERSION` in [the setup tasks](../../tasks/setup.yaml). Renovate updates this pin to the latest K0s release.
+
+When: Nightly at 02:00 UTC, on manual dispatch, and on PRs selected by the IaC path filter or the `test-k0s` and `test-all-iac` labels
+
+Where: K0s in Docker
+
+What: Standard Core with the development stack, across the `upstream`, `registry1`, and `unicorn` flavors
+
+To run the test manually, select **Actions > K0s Test > Run workflow**. Each flavor uploads a `k0s-node-logs-<flavor>` artifact with container state, K0s process logs, node pod logs, and available CLI logs. Collection runs before cleanup and does not require a working Kubernetes API. The separate `debug-log-k0s-<flavor>` artifact includes cluster diagnostics and test reports when their collection succeeds. Both artifacts have a 30-day retention period.
+
+For local setup, smoke tests, and cleanup on Linux or macOS, see [Run K0s locally](k0s.md).
+
 ## Test types
 
 Core pipelines include two types of testing. They provide faster feedback on some failures and options for local developer testing.

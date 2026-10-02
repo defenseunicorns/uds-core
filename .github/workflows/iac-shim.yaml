@@ -1,4 +1,4 @@
-# Copyright 2024 Defense Unicorns
+# Copyright 2024-2026 Defense Unicorns
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 name: IaC Shim
@@ -16,6 +16,7 @@ on:
       - ".github/workflows/test-aks.yaml"
       - ".github/workflows/test-eks.yaml"
       - ".github/workflows/test-rke2.yaml"
+      - ".github/workflows/test-k0s.yaml"
       - ".github/bundles/**"
       - ".github/test-infra/**"
       - "tasks/iac.yaml"
