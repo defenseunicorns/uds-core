@@ -129,6 +129,7 @@ jobs:
               echo "TEST_ATTEMPTS=$attempt" >> $GITHUB_ENV
               exit 0
             fi
+            uds run -f src/test/tasks.yaml remove --no-progress
             if [ "$attempt" -lt 3 ]; then
               echo "Tests failed on attempt $attempt; sleeping 30s before retry..."
               sleep 30
