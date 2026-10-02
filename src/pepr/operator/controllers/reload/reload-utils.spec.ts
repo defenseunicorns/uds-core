@@ -7,6 +7,7 @@ import { GenericClass } from "kubernetes-fluent-client";
 import { K8s, kind } from "pepr";
 import { Logger } from "pino";
 import { beforeEach, describe, expect, it, Mock, vi } from "vitest";
+import { handleSecretUpdate, secretChecksumCache, SSA_CLEANUP_ANNOTATION } from "./pod-reload";
 import * as reloadUtils from "./reload-utils";
 import {
   cleanupOverClaimedControllerFields,
@@ -29,6 +30,14 @@ vi.mock("pepr", () => {
   return {
     K8s: vi.fn(),
     kind: actualKind,
+    Log: {
+      child: vi.fn(() => ({
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+      })),
+    },
   };
 });
 
@@ -375,7 +384,7 @@ describe("reloadPods", () => {
     );
   });
 
-  it("should log an error if controller applying fails", async () => {
+  it("should report an error if controller applying fails", async () => {
     // Create a statefulset-controlled pod
     const pods = [
       {
@@ -412,7 +421,9 @@ describe("reloadPods", () => {
     });
 
     // Execute the function under test
-    await reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret");
+    await expect(
+      reloadPods("default", pods as kind.Pod[], "Test eviction", mockLogger, "Secret"),
+    ).rejects.toThrow("Failed to reload pods");
 
     // Verify Apply was called
     expect(mockK8sClient.Apply).toHaveBeenCalledWith(sparseRestartPatch(), { force: true });
@@ -429,6 +440,56 @@ describe("reloadPods", () => {
       }),
       expect.stringContaining("Failed to handle controller for pod"),
     );
+  });
+
+  it("reports a standalone pod failure only when eviction and deletion both fail", async () => {
+    mockK8sClient.Evict.mockRejectedValue(new Error("eviction failed"));
+    mockK8sClient.Delete.mockRejectedValue(new Error("deletion failed"));
+    const pod = { metadata: { name: "standalone", namespace: "default" } } as kind.Pod;
+
+    await expect(
+      reloadPods("default", [pod], "Test eviction", mockLogger, "Secret"),
+    ).rejects.toThrow("Failed to reload pods");
+    expect(mockK8sClient.Evict).toHaveBeenCalledWith("standalone");
+    expect(mockK8sClient.Delete).toHaveBeenCalledWith(pod);
+
+    mockK8sClient.Delete.mockResolvedValue({});
+    await expect(
+      reloadPods("default", [pod], "Test eviction", mockLogger, "Secret"),
+    ).resolves.toBeUndefined();
+  });
+
+  it("retries a creation reload after real eviction and deletion failures", async () => {
+    secretChecksumCache.clear();
+    const pod = {
+      metadata: { name: "standalone", namespace: "default" },
+      status: { phase: "Running", startTime: "2026-09-30T10:00:00Z" },
+      spec: {
+        containers: [{ name: "app", image: "example:latest" }],
+        volumes: [{ name: "config", secret: { secretName: "late-secret", optional: true } }],
+      },
+    } as unknown as kind.Pod;
+    const secret = {
+      metadata: {
+        name: "late-secret",
+        namespace: "default",
+        creationTimestamp: "2026-09-30T10:05:00Z",
+        annotations: { [SSA_CLEANUP_ANNOTATION]: "true" },
+      },
+      data: { key: "dmFsdWU=" },
+    } as unknown as kind.Secret;
+    mockK8sClient.Get.mockResolvedValue({ items: [pod] });
+    mockK8sClient.Evict.mockRejectedValue(new Error("eviction failed"));
+    mockK8sClient.Delete.mockRejectedValue(new Error("deletion failed"));
+
+    await expect(handleSecretUpdate(secret)).rejects.toThrow("Failed to reload pods");
+    expect(secretChecksumCache.has("default/late-secret")).toBe(false);
+
+    mockK8sClient.Evict.mockResolvedValue({});
+    await handleSecretUpdate(secret);
+    expect(mockK8sClient.Evict).toHaveBeenCalledTimes(2);
+    expect(secretChecksumCache.has("default/late-secret")).toBe(true);
+    secretChecksumCache.clear();
   });
 });
 

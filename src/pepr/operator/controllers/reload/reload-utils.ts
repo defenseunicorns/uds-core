@@ -17,7 +17,9 @@ import { createEvent, retryWithDelay } from "../utils";
  * For Deployments, StatefulSets, DaemonSets, and ReplicaSets, it will trigger a
  * rolling restart by apply an update to the controller with a restartedAt annotation.
  *
- * For standalone pods or when controller handling fails, it will use direct pod eviction.
+ * For standalone pods or unsupported controllers, it will use direct pod eviction.
+ * Failed controller restarts and failed eviction/deletion attempts are reported
+ * after all pods have been attempted.
  *
  * @param namespace The namespace containing the pods
  * @param pods List of pods to evict or restart
@@ -42,6 +44,7 @@ export async function reloadPods(
   // Track which controllers we've already handled to avoid duplicate restarts
   const handledControllers: Record<string, boolean> = {};
   const standalonePodsToEvict: kind.Pod[] = [];
+  const failures: Error[] = [];
 
   // First pass - identify controllers and standalone pods
   for (const pod of pods) {
@@ -96,12 +99,25 @@ export async function reloadPods(
         },
         `Failed to handle controller for pod: ${message}`,
       );
+      failures.push(
+        new Error(`Failed to restart controller ${controllerRef.kind}/${controllerRef.name}`, {
+          cause: error,
+        }),
+      );
     }
   }
 
   // Now handle any standalone pods with direct eviction
   if (standalonePodsToEvict.length > 0) {
-    await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
+    try {
+      await evictStandalonePods(namespace, standalonePodsToEvict, message, log);
+    } catch (error) {
+      failures.push(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new AggregateError(failures, `Failed to reload pods in namespace ${namespace}`);
   }
 }
 
@@ -114,7 +130,7 @@ export async function reloadPods(
  * @param log Logger instance for logging
  * @returns The resolved kind class and name, or null for unhandled controller kinds
  */
-async function resolveControllerKindAndName(
+export async function resolveControllerKindAndName(
   namespace: string,
   ref: { kind: string; name: string },
   log: Logger,
@@ -371,6 +387,8 @@ export async function evictStandalonePods(
 ) {
   if (pods.length === 0) return;
 
+  const failures: Error[] = [];
+
   log.info(`Directly evicting ${pods.length} standalone pods in namespace ${namespace}`);
 
   // Group pods by owner UID for ordered eviction (handling StatefulSets differently)
@@ -414,8 +432,17 @@ export async function evictStandalonePods(
           log.error(
             `Failed to delete pod ${namespace}/${pod.metadata?.name}: ${deleteErr.message}`,
           );
+          failures.push(
+            new Error(`Failed to evict or delete pod ${namespace}/${pod.metadata?.name}`, {
+              cause: deleteErr,
+            }),
+          );
         }
       }
     }
+  }
+
+  if (failures.length > 0) {
+    throw new AggregateError(failures, `Failed to evict pods in namespace ${namespace}`);
   }
 }
