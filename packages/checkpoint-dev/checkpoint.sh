@@ -25,6 +25,14 @@ kind: KubeletConfiguration
 nodeStatusReportFrequency: 10s
 EOF
 
+# Clean up the source node on success or failure; the snapshot keeps its taint.
+cleanup() {
+  docker unpause "$CONTAINER_ID" 2>/dev/null || true
+  docker exec "$CONTAINER_ID" kubectl taint node "$K3S_CONTAINER" \
+    node.cloudprovider.kubernetes.io/uninitialized- >/dev/null || true
+}
+trap cleanup EXIT
+
 # A checkpoint preserves the source node Docker IP, but Docker can assign the
 # restored node a new IP. Kubelet preserves cloud provider addresses already in
 # Node status, while the embedded K3s cloud controller can reuse the stale
@@ -43,8 +51,6 @@ docker exec "$CONTAINER_ID" kubectl patch node "$K3S_CONTAINER" \
 # Pause once to get a consistent snapshot of image and volumes together.
 echo "Pausing container ${K3S_CONTAINER} ..."
 docker pause "$CONTAINER_ID"
-
-trap 'docker unpause "$CONTAINER_ID" 2>/dev/null || true' EXIT
 
 echo "Committing container ${K3S_CONTAINER} ..."
 docker commit "$CONTAINER_ID" "$IMAGE_NAME" >/dev/null
