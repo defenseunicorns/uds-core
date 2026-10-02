@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Defense Unicorns
+ * Copyright 2024-2026 Defense Unicorns
  * SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
  */
 
@@ -515,7 +515,7 @@ export async function reconcileExistingResources(
 }
 
 // Generate Waypoint for ambient egress
-export function createEgressWaypointGateway(pkgs: Set<string>, generation: number) {
+export function createEgressWaypointGateway(pkgs: Set<string>) {
   // Add annotations from resource
   const annotations: Record<string, string> = {};
   for (const pkgId of pkgs) {
@@ -530,7 +530,6 @@ export function createEgressWaypointGateway(pkgs: Set<string>, generation: numbe
       annotations,
       labels: {
         "uds/package": sharedEgressPkgId,
-        "uds/generation": generation.toString(),
         "istio.io/gateway-name": egressWaypointName,
       },
     },
