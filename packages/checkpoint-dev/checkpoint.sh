@@ -14,6 +14,17 @@ if [ -z "$CONTAINER_ID" ]; then
   exit 1
 fi
 
+# K3s network policy waits for a fresh Ready heartbeat on restore.
+# Persist the shorter reporting interval in the checkpoint volume.
+docker exec -i "$CONTAINER_ID" sh -ec '
+  mkdir -p /var/lib/rancher/k3s/agent/etc/kubelet.conf.d
+  cat > /var/lib/rancher/k3s/agent/etc/kubelet.conf.d/99-uds-checkpoint.conf
+' <<'EOF'
+apiVersion: kubelet.config.k8s.io/v1beta1
+kind: KubeletConfiguration
+nodeStatusReportFrequency: 10s
+EOF
+
 # A checkpoint preserves the source node Docker IP, but Docker can assign the
 # restored node a new IP. Kubelet preserves cloud provider addresses already in
 # Node status, while the embedded K3s cloud controller can reuse the stale
