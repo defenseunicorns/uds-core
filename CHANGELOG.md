@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 > [!IMPORTANT]
 > This changelog only tracks changes across minor versions and is automatically generated, ensuring all commits are captured. The [GitHub Releases](https://github.com/defenseunicorns/uds-core/releases) provide a summary of changes for each release and list all patch releases as well.
 
+## [1.15.0](https://github.com/defenseunicorns/uds-core/compare/v1.14.0...v1.15.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ci:** move AKS tests to eastus2 ([#3025](https://github.com/defenseunicorns/uds-core/issues/3025)) ([95c0f88](https://github.com/defenseunicorns/uds-core/commit/95c0f882af469c80d54b4a4850e154dec82af028))
+* **ci:** verify signed core release in upgrade tests ([#3028](https://github.com/defenseunicorns/uds-core/issues/3028)) ([17dc423](https://github.com/defenseunicorns/uds-core/commit/17dc4231ccd698f9084a91fa00c414f49b88431a))
+
+
+### Miscellaneous
+
+* **deps-dev:** bump ip-address from 10.4.0 to 10.7.2 in /test/vitest ([#3012](https://github.com/defenseunicorns/uds-core/issues/3012)) ([fafd187](https://github.com/defenseunicorns/uds-core/commit/fafd18785ac1ba8e800ab10b84637661bacdc895))
+* **deps:** bump brace-expansion ([#3022](https://github.com/defenseunicorns/uds-core/issues/3022)) ([4e0bc3e](https://github.com/defenseunicorns/uds-core/commit/4e0bc3e06a091488857122910828eef81f4db1fa))
+* **deps:** bump ip-address from 10.7.0 to 10.7.2 ([#3023](https://github.com/defenseunicorns/uds-core/issues/3023)) ([de8efbb](https://github.com/defenseunicorns/uds-core/commit/de8efbbdb505558628e6aac25a8a239afaca69f1))
+* **deps:** bump undici and kubernetes-fluent-client in /test/vitest ([#3020](https://github.com/defenseunicorns/uds-core/issues/3020)) ([75a7798](https://github.com/defenseunicorns/uds-core/commit/75a7798fd7c81a7f77831298be06669694700ccb))
+* **deps:** update envoy-gateway ([#3010](https://github.com/defenseunicorns/uds-core/issues/3010)) ([80ced5d](https://github.com/defenseunicorns/uds-core/commit/80ced5d75b4dfd1e65879b1f2e461151abd20f8e))
+* **deps:** update iac-support-deps ([#2968](https://github.com/defenseunicorns/uds-core/issues/2968)) ([1233cb8](https://github.com/defenseunicorns/uds-core/commit/1233cb87a2a9662efb8a25eb303dffa2f6ad2b87))
+* **deps:** update velero ([#2975](https://github.com/defenseunicorns/uds-core/issues/2975)) ([b8ec7f2](https://github.com/defenseunicorns/uds-core/commit/b8ec7f22534e57ec40fbff14ea5220caeecb85b5))
+* **docs:** note additional Keycloak sso hostname issue ([#3029](https://github.com/defenseunicorns/uds-core/issues/3029)) ([5c1153b](https://github.com/defenseunicorns/uds-core/commit/5c1153b9146c95cf9c2cce4366c72a8a0c9c199f))
+
+
+### Documentation
+
+* docs fix for cilium and ipv4 only cluster ([#3027](https://github.com/defenseunicorns/uds-core/issues/3027)) ([50f5a4e](https://github.com/defenseunicorns/uds-core/commit/50f5a4e4a0ab955f3a9afaa47298f0a3ed542ca7))
+
 ## [1.14.0](https://github.com/defenseunicorns/uds-core/compare/v1.13.0...v1.14.0) (2026-09-30)
 
 
