@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later OR LicenseRef-Defense-Unicorns-Commercial
 
 includes:
-  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/v1.30.0/tasks/lint.yaml
+  - remote: https://raw.githubusercontent.com/defenseunicorns/uds-common/9c864d1ddf7e3b6023079184135d172d536e056b/tasks/lint.yaml
 
 tasks:
   - name: fix
@@ -20,6 +20,7 @@ tasks:
     actions:
       - description: install pepr deps
         cmd: npm ci
+      - task: renovate
       - description: "Format check"
         cmd: npm run format:check
       - description: Build the Pepr module for values lint
@@ -36,6 +37,11 @@ tasks:
         task: license
       - description: Run helm unittest on all charts
         task: helm-unittest
+  - name: renovate
+    description: "Validate Renovate configuration"
+    actions:
+      - task: remote:renovate
+
   - name: values-lint
     description: "Lint each package that exposes Zarf values to catch mapping/schema regressions"
     inputs:

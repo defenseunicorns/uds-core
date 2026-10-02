@@ -4,6 +4,10 @@
 amends "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Config.pkl"
 
 steps {
+    ["renovate-config"] {
+        check = "uds run -f tasks/lint.yaml renovate"
+        glob = List("renovate.json")
+    }
     ["yamllint"] {
         check = "yamllint . -c .yamllint --no-warnings"
         glob = List("**/*.yaml", "**/*.yml", ".yamllint")
