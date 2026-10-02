@@ -1,0 +1,75 @@
+---
+title: Configure IPv4-only clusters
+description: Configure Istio ambient components and the Loki gateway to run on a cluster without IPv6.
+sidebar:
+  order: 2.013
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+## What you'll accomplish
+
+After completing this guide, you will have disabled IPv6 in Istio's ztunnel and CNI components and the Loki gateway so they can run on a cluster where IPv6 is unavailable.
+
+## Prerequisites
+
+- [UDS CLI](https://github.com/defenseunicorns/uds-cli/releases) installed
+- Access to a Kubernetes cluster with IPv4 networking
+
+## Before you begin
+
+These overrides affect only the listed components. They do not change your cluster's Pod or Service IP families. Preserve any existing overrides for these components when you add the values below.
+
+## Steps
+
+<Steps>
+
+1. **Add the IPv4-only overrides**
+
+   Add these values under the `core` package in your `uds-bundle.yaml`:
+
+   ```yaml title="uds-bundle.yaml"
+   packages:
+     - name: core
+       overrides:
+         istio-controlplane:
+           ztunnel:
+             values:
+               - path: meshConfig.defaultConfig.proxyMetadata
+                 value:
+                   IPV6_ENABLED: "false"
+           cni:
+             values:
+               - path: ambient.ipv6
+                 value: false
+         loki:
+           loki:
+             values:
+               - path: gateway.nginxConfig.enableIPv6
+                 value: false
+   ```
+
+2. **Create and deploy your bundle**
+
+   Run these commands from the directory containing `uds-bundle.yaml`:
+
+   ```bash
+   uds create --confirm && uds deploy uds-bundle-*.tar.zst --confirm
+   ```
+
+</Steps>
+
+## Verification
+
+Check that the Istio daemonsets are ready and Loki pods are running:
+
+```bash
+uds zarf tools kubectl get daemonset ztunnel istio-cni-node -n istio-system
+uds zarf tools kubectl get pods -n loki
+```
+
+The Istio DaemonSets should show all desired pods as ready, and the Loki gateway pod should show `Running`. If a component fails to start, inspect its pod logs before changing other networking settings.
+
+## Related documentation
+
+- [Istio ztunnel troubleshooting](https://istio.io/latest/docs/ambient/usage/troubleshoot-ztunnel/) - Understand the `IPV6_ENABLED` setting.
